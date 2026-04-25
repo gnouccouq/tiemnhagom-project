@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tất cả sản phẩm - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="products-page-container">
+        <h1 class="page-title">Tất cả sản phẩm</h1>
+
+        <div class="products-content">
+            <aside class="sidebar">
+                <h3>Bộ lọc</h3>
+                <div class="filter-group">
+                    <h4>Tìm theo tên</h4>
+                    <input type="text" id="search-name" placeholder="Nhập tên sản phẩm..." class="search-input">
+                </div>
+                <div class="filter-group">
+                    <h4>Danh mục</h4>
+                    <ul id="category-filters" class="filter-list">
+                        <li><a href="#" data-filter-category="all" class="active">Tất cả</a></li>
+                        <li><a href="#" data-filter-category="Ly & Chén">Ly & Chén</a></li>
+                        <li><a href="#" data-filter-category="Bình hoa">Bình hoa</a></li>
+                        <li><a href="#" data-filter-category="Đồ trang trí">Đồ trang trí</a></li>
+                        <li><a href="#" data-filter-category="Khác">Khác</a></li>
+                    </ul>
+                </div>
+                <div class="filter-group">
+                    <h4>Khoảng giá (VNĐ)</h4>
+                    <div class="price-range-inputs">
+                        <input type="number" id="price-min" placeholder="Từ..." class="search-input">
+                        <input type="number" id="price-max" placeholder="Đến..." class="search-input">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <h4>Khác</h4>
+                    <ul class="filter-list">
+                        <li><a href="#" data-filter-sale="true">Đang giảm giá</a></li>
+                        <li><a href="#" data-filter-sale="false">Không giảm giá</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <section class="product-listing">
+                <div class="sort-options">
+                    <label for="sort-by">Sắp xếp theo:</label>
+                    <select id="sort-by">
+                        <option value="newest">Mới nhất</option>
+                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                        <option value="price-desc">Giá: Cao đến Thấp</option>
+                        <option value="rating-desc">Đánh giá: Cao nhất</option>
+                        <option value="sale-desc">Giảm giá: Cao nhất</option>
+                    </select>
+                </div>
+
+                <div id="all-product-grid" class="grid">
+                    <!-- Sản phẩm sẽ được render từ Firebase ở đây -->
+                    <div style="text-align: center; grid-column: 1/-1; padding: 5rem;">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 1rem; color: #888;">Đang tải sản phẩm...</p>
+                    </div>
+                </div>
+
+                <div class="pagination-container">
+                    <button id="prev-page" class="btn-minimal" disabled>Trang trước</button>
+                    <span id="page-info">Trang 1</span>
+                    <button id="next-page" class="btn-minimal">Trang sau</button>
+                </div>
+
+                <div id="no-products-found" style="display: none; text-align: center; padding: 5rem;">
+                    <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/products.js"></script>
+</body>
+</html>

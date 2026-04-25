@@ -1,0 +1,66 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Quy tắc cho collection Sản phẩm (products)
+    match /products/{productId} {
+      // Cho phép tất cả mọi người (khách hàng) đọc dữ liệu sản phẩm
+      allow read: if true;
+      
+      // Chỉ cho phép ghi (tạo, cập nhật, xóa) nếu người dùng đã đăng nhập 
+      // và UID của họ tồn tại trong collection 'admins'
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Quy tắc cho collection Admins
+    match /admins/{adminId} {
+      // Chỉ Admin mới được xem profile của chính mình
+      allow read: if request.auth != null && request.auth.uid == adminId;
+      
+      // Không cho phép ai chỉnh sửa danh sách Admin thông qua Code (tránh tự cấp quyền)
+      // Bạn sẽ thêm/xóa Admin trực tiếp bằng tay trên Firebase Console
+      allow write: if false;
+    }
+
+    match /carts/{userId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Quy tắc cho collection Orders
+    match /orders/{orderId} {
+        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    match /favorites/{userId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Chặn tất cả các truy cập khác mặc định để bảo mật
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Quy tắc cho thư mục ảnh sản phẩm (products)
+    match /products/{allPaths=**} {
+      // Cho phép mọi người xem ảnh sản phẩm
+      allow read: if true;
+      
+      // Chỉ cho phép upload, sửa hoặc xóa ảnh nếu UID người dùng nằm trong danh sách Admin bên Firestore
+      allow write: if request.auth != null && 
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Mặc định chặn các truy cập khác
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

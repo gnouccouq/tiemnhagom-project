@@ -6,6 +6,15 @@
         <ul class="nav-links">
             <li><a href="./">Trang chủ</a></li>
             <li><a href="products/">Sản phẩm</a></li>
+            <!-- Link Tài khoản sẽ được thêm bởi JS khi đăng nhập -->
+            <li>
+                <a href="cart/" class="cart-link">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    <span id="cart-count" class="badge">0</span>
+                </a>
+            </li>
             <li id="auth-section">
                 <button id="btn-login" class="btn-minimal">Đăng nhập</button>
             </li>

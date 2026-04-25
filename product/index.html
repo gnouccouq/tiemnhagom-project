@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="product-detail-container">
+        <div id="product-detail-content" class="product-detail-grid">
+            <!-- Dữ liệu sẽ được render từ Firebase -->
+            <p style="text-align: center; grid-column: 1/-1; padding: 5rem;">Đang tải thông tin sản phẩm...</p>
+        </div>
+    </main>
+
+    <section id="related-products-section" style="padding: 4rem 5%; max-width: 1200px; margin: 0 auto; display: none;">
+        <h2 style="text-align: center; margin-bottom: 2rem; font-family: var(--font-serif);">Sản phẩm gợi ý khác</h2>
+        <div id="related-product-grid" class="grid">
+            <!-- Sản phẩm gợi ý sẽ được render ở đây -->
+        </div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/product-detail.js"></script>
+</body>
+</html>

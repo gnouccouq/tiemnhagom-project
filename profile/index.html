@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản của bạn - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="profile-container">
+        <h1 class="profile-title">Tài khoản của bạn</h1>
+        
+        <div class="profile-tabs">
+            <button class="tab-btn active" data-target="info-section">Thông tin</button>
+            <button class="tab-btn" data-target="fav-section">Yêu thích</button>
+            <button class="tab-btn" data-target="order-section">Đơn hàng</button>
+        </div>
+
+        <div id="info-section" class="profile-section active">
+            <div id="profile-info" class="profile-card">
+                <h3>Thông tin cá nhân</h3>
+                <p><strong>Email:</strong> <span id="user-email">Đang tải...</span></p>
+                <p><strong>Tên hiển thị:</strong> <span id="user-display-name">Đang tải...</span></p>
+                <div id="admin-action-container" style="display: none; border-top: 1px dashed #eee; margin-top: 1.5rem; padding-top: 1.5rem;"></div>
+                <button id="btn-logout-profile" class="btn-minimal" style="margin-top: 1rem;">Đăng xuất</button>
+            </div>
+        </div>
+
+        <div id="fav-section" class="profile-section">
+            <div class="profile-card">
+                <h3>Sản phẩm yêu thích</h3>
+                <div id="favorites-list" class="grid" style="padding: 1rem 0;">
+                    <p style="text-align: center;">Đang tải danh sách yêu thích...</p>
+                </div>
+                <div id="no-favorites-msg" style="display: none; text-align: center; padding: 2rem;">
+                    <p>Bạn chưa có sản phẩm yêu thích nào.</p>
+                    <a href="../" class="btn-dark" style="margin-top: 1rem;">Khám phá sản phẩm</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="order-section" class="profile-section">
+            <div class="profile-card">
+                <h3>Lịch sử đơn hàng</h3>
+                <div id="order-history-list" class="order-list">
+                    <p style="text-align: center;">Đang tải lịch sử đơn hàng...</p>
+                </div>
+                <div id="no-orders-msg" style="display: none; text-align: center; padding: 2rem;">
+                    <p>Bạn chưa có đơn hàng nào.</p>
+                    <a href="../" class="btn-dark" style="margin-top: 1rem;">Bắt đầu mua sắm</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="not-logged-in-msg" style="display: none; text-align: center; padding: 5rem;">
+            <p style="margin-bottom: 2rem;">Vui lòng đăng nhập để xem thông tin tài khoản và lịch sử đơn hàng.</p>
+            <button id="btn-login-profile" class="btn-dark">Đăng nhập ngay</button>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/profile.js"></script>
+</body>
+</html>

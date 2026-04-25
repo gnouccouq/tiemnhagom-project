@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="cart-container">
+        <h1 class="cart-title">Giỏ hàng của bạn</h1>
+        
+        <div id="cart-content" class="cart-grid" style="display: none;">
+            <!-- Header của bảng giỏ hàng -->
+            <div class="cart-table-header">
+                <span>Sản phẩm</span>
+                <span>Giá</span>
+                <span>Số lượng</span>
+                <span>Tạm tính</span>
+                <span></span>
+            </div>
+            
+            <div id="cart-items">
+                <!-- Danh sách sản phẩm sẽ được đổ vào đây từ localStorage -->
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Tổng tiền:</span>
+                    <span id="total-price">0đ</span>
+                </div>
+                <div class="cart-actions">
+                    <a href="../" class="btn-minimal" style="text-decoration: none;">Tiếp tục mua sắm</a>
+                    <button class="btn-dark" id="btn-checkout">Thanh toán qua Zalo</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="empty-cart-msg" style="display: none; text-align: center; padding: 5rem;">
+            <p style="margin-bottom: 2rem;">Giỏ hàng của bạn đang trống.</p>
+            <a href="../" class="btn-dark">Quay lại mua sắm</a>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/cart.js"></script>
+</body>
+</html>

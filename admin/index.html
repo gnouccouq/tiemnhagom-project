@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body class="admin-page" style="display: none;"> <!-- Ẩn trang mặc định -->
+    <div id="header-placeholder"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="admin-container">
+        <div class="admin-header">
+            <h1>Bảng điều khiển quản trị</h1>
+            <p>Thêm mới và quản lý danh mục sản phẩm của Tiệm.</p>
+            <a href="../index.html" class="btn-minimal" style="margin-top: 1rem; display: inline-block; text-decoration: none;">← Về trang chủ</a>
+        </div>
+
+        <section class="admin-grid">
+            <!-- Form thêm sản phẩm -->
+            <div class="admin-card">
+                <h3>Thêm sản phẩm mới</h3>
+                <form id="product-form" class="admin-form">
+                    <div class="form-group">
+                        <label>Mã sản phẩm (ID tự đặt)</label>
+                        <input type="text" id="productId" required placeholder="VD: CHEN-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" id="name" required placeholder="Tên sản phẩm...">
+                    </div>
+                    <div class="form-group">
+                        <label>Phân loại</label>
+                        <select id="category" required>
+                            <option value="Ly & Chén">Ly & Chén</option>
+                            <option value="Bình hoa">Bình hoa</option>
+                            <option value="Đồ trang trí">Đồ trang trí</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Giá tiền (VNĐ)</label>
+                        <input type="number" id="price" required placeholder="250000">
+                    </div>
+                    <div class="form-group">
+                        <label>Tồn kho</label>
+                        <input type="number" id="stock" required placeholder="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Đánh giá (1-5 sao)</label>
+                        <input type="number" id="rating" min="1" max="5" step="0.1" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Giảm giá (%)</label>
+                        <input type="number" id="sale" min="0" max="100" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Hình ảnh sản phẩm (Chọn nhiều ảnh)</label>
+                        <input type="file" id="imageFile" accept="image/*" multiple>
+                        <div id="image-preview-container" class="image-preview-grid">
+                            <!-- Ảnh hiện có sẽ hiện ở đây khi nhấn Sửa -->
+                        </div>
+                        <small style="color: #666;">* Chọn file mới để thêm ảnh. Nhấn dấu X trên ảnh để xóa ảnh cũ.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea id="description" rows="3" placeholder="Thông tin chi tiết..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-dark">Lưu sản phẩm</button>
+                </form>
+            </div>
+
+            <!-- Danh sách sản phẩm -->
+            <div class="admin-card">
+                <h3>Danh sách sản phẩm hiện có</h3>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mã ID</th>
+                                <th>Ảnh</th>
+                                <th>Tên</th>
+                                <th>Giá</th>
+                                <th>Tồn</th>
+                                <th>Sao</th>
+                                <th>Sale</th>
+                                <th>Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-product-list">
+                            <!-- Dữ liệu load từ Firebase -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script type="module" src="../js/admin.js"></script>
+</body>
+</html>
