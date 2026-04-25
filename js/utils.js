@@ -178,6 +178,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
     const hasSale = product.sale > 0;
+    const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
     
@@ -186,13 +187,15 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
 
     const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
+    const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
+    const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     return `
         <a href="${linkBase}?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card ${sparkleClass}" style="position: relative;">
-                ${saleBadge}
+            <div class="product-card ${sparkleClass} ${outOfStockClass}" style="position: relative;">
+                ${isOutOfStock ? stockBadge : saleBadge}
                 <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')" 
                         aria-label="${isFav ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}" aria-pressed="${isFav}">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true">

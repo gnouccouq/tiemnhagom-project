@@ -22,7 +22,7 @@ async function fetchFeaturedProducts() {
     const grid = document.getElementById('product-grid');
     try {
         // Hiển thị skeleton loading trong khi chờ query Firestore
-        grid.innerHTML = Array(4).fill(0).map(() => `
+        grid.innerHTML = Array(5).fill(0).map(() => `
             <div class="skeleton-card">
                 <div class="skeleton skeleton-img"></div>
                 <div class="skeleton skeleton-text skeleton-title"></div>
@@ -59,7 +59,7 @@ async function fetchSaleProducts() {
     const saleGrid = document.getElementById('sale-product-grid');
 
     // Hiển thị skeleton loading trong khi chờ query Firestore
-    saleGrid.innerHTML = Array(4).fill(0).map(() => `
+    saleGrid.innerHTML = Array(5).fill(0).map(() => `
         <div class="skeleton-card">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton skeleton-text skeleton-title"></div>
@@ -104,7 +104,7 @@ async function fetchRecommendations() {
 
     // 0. Hiển thị skeleton loading trong khi chờ query Firestore
     recSection.style.display = 'block';
-    recGrid.innerHTML = Array(4).fill(0).map(() => `
+    recGrid.innerHTML = Array(5).fill(0).map(() => `
         <div class="skeleton-card">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton skeleton-text skeleton-title"></div>

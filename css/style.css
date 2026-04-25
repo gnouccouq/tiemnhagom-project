@@ -33,7 +33,7 @@ body {
     z-index: 1100;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 5%; /* Tối ưu padding */
+    padding: 1.5rem 5%; /* Trả về lề chuẩn cho các trang */
     flex-wrap: nowrap;
     box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
@@ -180,9 +180,9 @@ body {
 /* Grid */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Tự động xuống dòng linh hoạt cho trang chuẩn */
     gap: 2rem;
-    padding: 5%;
+    padding: 2rem 5%; /* Trả về lề chuẩn cho các trang */
 }
 
 /* Product Card */
@@ -245,14 +245,14 @@ body {
 }
 
 section {
-    padding: 4rem 5%; /* Chuẩn hóa padding cho tất cả các section */
+    padding: 4rem 5%; /* Trả về lề chuẩn cho các trang */
     margin-top: 2rem;
 }
 
 .special-offers {
     display: none; /* Ẩn mặc định, JS sẽ hiện khi có data */
     background-color: #ffffff;
-    padding: 6rem 5%; /* Thêm 5% lề để đồng bộ với các mục khác */
+    padding: 6rem 5%;
     margin-top: 4rem;
 }
 
@@ -288,6 +288,26 @@ section {
     letter-spacing: 0.5px;
     z-index: 10;
     box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+}
+
+/* Out of Stock Styles */
+.out-of-stock-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #888;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    z-index: 12;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.product-card.is-out-of-stock {
+    opacity: 0.7;
 }
 
 h2 {
@@ -1120,6 +1140,11 @@ footer {
 .stock-info {
     font-size: 0.9rem; color: #666; margin-bottom: 1rem; font-style: italic;
 }
+.stock-info.out {
+    color: #e74c3c;
+    font-weight: 600;
+    font-style: normal;
+}
 
 /* Purchase Area Styles */
 .purchase-area {
@@ -1169,7 +1194,7 @@ footer {
 /* Products Page Specific Styles */
 .products-page-container {
     padding: 4rem 5%;
-    max-width: 1400px;
+    max-width: 1400px; /* Trả về chiều rộng chuẩn */
     margin: 0 auto;
 }
 .page-title {
@@ -1962,6 +1987,29 @@ footer {
 .detail-row span:first-child { color: #666; }
 .detail-row span:last-child { font-weight: 600; }
 
+/* Review Styles */
+.reviews-list { display: flex; flex-direction: column; gap: 2rem; }
+.review-item { padding-bottom: 2rem; border-bottom: 1px solid #f0f0f0; }
+.review-header { display: flex; align-items: center; gap: 15px; margin-bottom: 1rem; }
+.review-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; }
+.review-user-info h5 { margin: 0; font-size: 1rem; }
+.review-date { font-size: 0.8rem; color: #888; }
+.review-content p { color: #555; line-height: 1.6; margin-bottom: 1rem; }
+.review-images-gallery { display: flex; gap: 10px; flex-wrap: wrap; }
+.review-img { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+.review-img:hover { transform: scale(1.05); }
+
+.star-rating-input { display: flex; gap: 5px; font-size: 1.5rem; }
+.star-rating-input span { cursor: pointer; color: #ddd; transition: color 0.2s; }
+.star-rating-input span.active { color: #f1c40f; }
+
+/* Định dạng modal phóng to ảnh review */
+.review-modal-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
 /* Điều chỉnh nút Search trong thanh bar */
 #header-search-btn {
     background: none;
@@ -2094,4 +2142,84 @@ footer {
         font-size: 1rem;
     }
     .receipt-footer { text-align: center; margin-top: 5mm; font-size: 0.7rem; font-style: italic; }
+}
+
+/* --- Coupon List UI --- */
+.available-coupons {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.coupon-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px dashed var(--text-black);
+    border-left: 5px solid var(--text-black);
+    padding: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.coupon-card:hover {
+    background-color: var(--bg-cream);
+    transform: translateX(5px);
+}
+.coupon-card.active {
+    background-color: #f0f7f0;
+    border-color: #27ae60;
+    border-left-color: #27ae60;
+    animation: coupon-pop 0.4s ease-out;
+}
+
+@keyframes coupon-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+.coupon-info { flex: 1; }
+.coupon-info h5 {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.coupon-info p {
+    font-size: 0.75rem;
+    color: #666;
+    margin: 0;
+}
+.btn-use-coupon {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-black);
+    border: 1px solid var(--text-black);
+    padding: 4px 10px;
+    border-radius: 2px;
+}
+
+/* --- Full Width Layout Overrides (Dành riêng cho trang Sản phẩm) --- */
+.full-width-layout .navbar,
+.full-width-layout footer,
+.full-width-layout .products-page-container {
+    padding-left: 5% !important;
+    padding-right: 5% !important;
+    max-width: 100% !important;
+}
+
+.full-width-layout .grid {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    gap: 10px; /* Thu nhỏ khoảng cách giữa các món để sát nhau hơn */
+}
+
+@media (min-width: 769px) {
+    .full-width-layout .grid {
+        grid-template-columns: repeat(5, 1fr) !important; /* Ép 5 cột trên màn hình lớn */
+    }
 }

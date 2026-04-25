@@ -1,8 +1,9 @@
 import { 
-    db, auth, initHeader, showToast, updateCartCount, updateFavoriteCount, 
+    db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
     renderProductCard, addToCart, addToHistory 
 } from "./utils.js";
-import { doc, getDoc, collection, query, where, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // Hàm hỗ trợ cập nhật các thẻ meta cho SEO
 function updateMetaTag(attr, value, content) {
@@ -126,6 +127,7 @@ async function fetchProductDetail() {
         if (docSnap.exists()) {
             const p = docSnap.data();
             
+            const isOutOfStock = (p.stock || 0) <= 0;
             // Lưu vào lịch sử kèm danh mục để tối ưu gợi ý ở trang chủ
             addToHistory(productId, p.category);
 
@@ -194,20 +196,20 @@ async function fetchProductDetail() {
                         <h4>Mô tả sản phẩm</h4>
                         <p>${p.description || 'Chưa có mô tả chi tiết cho sản phẩm này.'}</p>
                     </div>
-                    <div class="stock-info">Tồn kho: ${p.stock} sản phẩm</div>
+                    <div class="stock-info ${isOutOfStock ? 'out' : ''}">${isOutOfStock ? 'Hết hàng' : `Tồn kho: ${p.stock} sản phẩm`}</div>
                     
                     <div class="purchase-area">
                         <div class="quantity-wrapper">
                             <label for="product-quantity">Số lượng</label>
                             <div class="quantity-controls">
-                                <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepDown()" aria-label="Giảm số lượng">&minus;</button>
+                                <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepDown()" aria-label="Giảm số lượng" ${isOutOfStock ? 'disabled' : ''}>&minus;</button>
                                 <input type="number" id="product-quantity" value="1" min="1" max="${p.stock}" readonly>
-                                <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" aria-label="Tăng số lượng">&plus;</button>
+                                <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" aria-label="Tăng số lượng" ${isOutOfStock ? 'disabled' : ''}>&plus;</button>
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button id="btn-buy-now" class="btn-dark main-action">Mua ngay</button>
-                            <button id="btn-add-to-cart" class="btn-outline">Thêm vào giỏ hàng</button>
+                            <button id="btn-buy-now" class="btn-dark main-action" ${isOutOfStock ? 'disabled' : ''}>${isOutOfStock ? 'Hết hàng' : 'Mua ngay'}</button>
+                            <button id="btn-add-to-cart" class="btn-outline" ${isOutOfStock ? 'disabled' : ''}>Thêm vào giỏ hàng</button>
                             <button class="detail-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavoriteDetail('${productId}')" aria-label="${isFav ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}" aria-pressed="${isFav}">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                             </button>
@@ -328,6 +330,7 @@ async function fetchProductDetail() {
 
             fetchRelatedProducts(productId, p.category); // Gọi hàm lấy sản phẩm liên quan
             fetchRecentlyViewed(productId); // Gọi hàm lấy sản phẩm đã xem gần đây
+            fetchReviews(productId); // Tải đánh giá của khách hàng
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";
         }
@@ -400,8 +403,150 @@ async function fetchRecentlyViewed(currentProductId) {
     }
 }
 
+// --- Logic Đánh giá & Bình luận ---
+let selectedRating = 5;
+
+async function fetchReviews(productId) {
+    const list = document.getElementById('reviews-list');
+    try {
+        const q = query(collection(db, "reviews"), where("productId", "==", productId), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+            list.innerHTML = '<p style="color: #888; font-style: italic;">Chưa có đánh giá nào cho sản phẩm này.</p>';
+            return;
+        }
+
+        list.innerHTML = snap.docs.map(doc => {
+            const r = doc.data();
+            const date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('vi-VN') : 'Mới đây';
+            let stars = '';
+            for(let i=1; i<=5; i++) stars += i <= r.rating ? '★' : '☆';
+
+            const imagesHtml = (r.images || []).map(url => `
+                <img src="${url}" class="review-img" onclick="window.zoomReviewImg('${url}')" alt="Ảnh feedback">
+            `).join('');
+
+            return `
+                <div class="review-item">
+                    <div class="review-header">
+                        <img src="${r.userAvatar || '../Asset/images/logo.png'}" class="review-avatar" alt="User">
+                        <div class="review-user-info">
+                            <h5>${r.userName || 'Khách hàng'}</h5>
+                            <div style="color: #f1c40f; font-size: 0.8rem;">${stars} <span class="review-date">${date}</span></div>
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        <p>${r.comment}</p>
+                        <div class="review-images-gallery">${imagesHtml}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) { console.error(e); }
+}
+
+// Khởi tạo Form Đánh giá
+function initReviewForm(productId) {
+    const btnShow = document.getElementById('btn-show-review-form');
+    const formContainer = document.getElementById('review-form-container');
+    const starInput = document.getElementById('star-rating-input');
+    const form = document.getElementById('product-review-form');
+
+    if (!btnShow || !formContainer) return;
+
+    btnShow.onclick = () => {
+        if (!auth.currentUser) {
+            showToast("Vui lòng đăng nhập để viết đánh giá", "error");
+            return;
+        }
+        formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Tạo UI chọn sao
+    starInput.innerHTML = [1, 2, 3, 4, 5].map(i => `<span data-val="${i}" class="active">★</span>`).join('');
+    starInput.querySelectorAll('span').forEach(star => {
+        star.onclick = (e) => {
+            selectedRating = parseInt(e.target.dataset.val);
+            starInput.querySelectorAll('span').forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.val) <= selectedRating);
+            });
+        };
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const comment = document.getElementById('review-comment').value.trim();
+        const imageFiles = document.getElementById('review-images').files;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        if (!comment) return;
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
+
+            // 1. Upload ảnh feedback (nếu có)
+            const imageUrls = [];
+            if (imageFiles.length > 0) {
+                for (const file of imageFiles) {
+                    const storageRef = ref(storage, `reviews/${productId}/${auth.currentUser.uid}_${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(snapshot.ref);
+                    imageUrls.push(url);
+                }
+            }
+
+            // 2. Lưu vào Firestore
+            await addDoc(collection(db, "reviews"), {
+                productId,
+                userId: auth.currentUser.uid,
+                userName: auth.currentUser.displayName || auth.currentUser.email.split('@')[0],
+                userAvatar: auth.currentUser.photoURL,
+                rating: selectedRating,
+                comment,
+                images: imageUrls,
+                createdAt: serverTimestamp()
+            });
+
+            showToast("Cảm ơn bạn đã đánh giá sản phẩm!");
+            form.reset();
+            formContainer.style.display = 'none';
+            fetchReviews(productId);
+        } catch (error) {
+            showToast("Lỗi khi gửi đánh giá: " + error.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Gửi đánh giá";
+        }
+    };
+}
+
+window.zoomReviewImg = (url) => {
+    let modal = document.getElementById('img-zoom-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'img-zoom-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div class="modal-content" style="background: none; box-shadow: none; text-align: center;">
+            <span class="modal-close" style="color: #fff;" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+            <img src="${url}" class="review-modal-img">
+        </div>
+    `;
+    modal.classList.add('active');
+    modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('../', (user) => {
         fetchProductDetail();
+        
+        // Lấy productId từ URL để khởi tạo Form
+        const urlParams = new URLSearchParams(window.location.search);
+        const pid = urlParams.get('id');
+        if (pid) initReviewForm(pid);
     });
 });

@@ -33,9 +33,11 @@ service cloud.firestore {
 
     // Quy tắc cho collection Thông tin người dùng (users)
     match /users/{userId} {
-        // Người dùng xem/sửa thông tin chính mình, Admin được quyền xem tất cả
-        allow read: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
-        allow write: if request.auth != null && request.auth.uid == userId;
+        // Người dùng xem/sửa thông tin chính mình
+        // Admin được quyền xem và ghi (để tạo tài khoản chờ/Ghost accounts tại shop)
+        allow read, write: if request.auth != null && 
+          (request.auth.uid == userId || 
+           exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
     // Quy tắc cho collection Orders
@@ -55,8 +57,25 @@ service cloud.firestore {
         );
     }
 
+    // Quy tắc cho collection Coupons (Mã giảm giá)
+    match /coupons/{couponId} {
+        // Cho phép mọi người đọc để áp dụng mã khi thanh toán
+        allow read: if true;
+        // Chỉ Admin mới được tạo hoặc sửa mã giảm giá
+        allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     match /favorites/{userId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Quy tắc cho collection Đánh giá (reviews)
+    match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        // Chỉ người tạo hoặc Admin mới được xóa/sửa (tùy chọn)
+        allow update, delete: if request.auth != null && 
+            (request.auth.uid == resource.data.userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
     // Chặn tất cả các truy cập khác mặc định để bảo mật
@@ -88,6 +107,13 @@ service firebase.storage {
 
       // Người dùng chỉ được phép upload, sửa hoặc xóa ảnh đại diện của chính mình
       allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 3. Quy tắc cho ảnh đánh giá
+    match /reviews/{productId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
 
     // 3. Mặc định chặn tất cả các truy cập khác để đảm bảo an toàn tuyệt đối

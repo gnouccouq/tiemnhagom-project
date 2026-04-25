@@ -462,6 +462,62 @@ function initUserListener() {
     });
 }
 
+function initCouponListener() {
+    const list = document.getElementById('admin-coupon-list');
+    if (!list) return;
+
+    onSnapshot(collection(db, "coupons"), (snapshot) => {
+        list.innerHTML = snapshot.docs.map(doc => {
+            const c = doc.data();
+            const usage = c.limit > 0 ? `${c.usedCount || 0} / ${c.limit}` : `${c.usedCount || 0} / ∞`;
+            const expiry = c.expiryDate ? new Date(c.expiryDate).toLocaleDateString('vi-VN') : 'Vô thời hạn';
+            return `
+                <tr>
+                    <td><strong>${doc.id}</strong></td>
+                    <td>${c.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
+                    <td>${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value) + 'đ'}</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(c.minOrder)}đ</td>
+                    <td>${usage}</td>
+                    <td>${expiry}</td>
+                    <td><button class="btn-delete" onclick="window.deleteCoupon('${doc.id}')">Xóa</button></td>
+                </tr>
+            `;
+        }).join('') || '<tr><td colspan="7" style="text-align:center;">Chưa có mã giảm giá nào.</td></tr>';
+    });
+}
+
+window.deleteCoupon = async (code) => {
+    if (confirm(`Bạn có muốn xóa mã giảm giá ${code}?`)) {
+        try {
+            await deleteDoc(doc(db, "coupons", code));
+            showToast(`Đã xóa mã ${code}`);
+        } catch (e) { showToast("Lỗi xóa mã: " + e.message, "error"); }
+    }
+};
+
+const couponForm = document.getElementById('coupon-form');
+if (couponForm) {
+    couponForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+        const type = document.getElementById('coupon-type').value;
+        const value = Number(document.getElementById('coupon-value').value);
+        const minOrder = Number(document.getElementById('coupon-min-order').value || 0);
+        const usageLimit = Number(document.getElementById('coupon-limit').value || 0);
+        const expiryDate = document.getElementById('coupon-expiry').value; // YYYY-MM-DD
+
+        try {
+            await setDoc(doc(db, "coupons", code), {
+                type, value, minOrder, limit: usageLimit, usedCount: 0, expiryDate, createdAt: new Date().toISOString()
+            });
+            showToast(`Đã tạo thành công mã giảm giá: ${code}`);
+            couponForm.reset();
+        } catch (error) {
+            showToast("Lỗi lưu dữ liệu: " + error.message, "error");
+        }
+    });
+}
+
 window.viewUserOrders = (userId) => {
     // Chuyển sang tab đơn hàng và lọc theo mã người dùng (hoặc thực hiện query riêng)
     showToast("Tính năng lọc đơn hàng theo User đang được phát triển", "info");
@@ -775,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initProductListener();
             initOrderListener();
             initUserListener();
+            initCouponListener();
         }
     });
 

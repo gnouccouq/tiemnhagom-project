@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Cấu hình phân trang
-const PAGE_SIZE = 6; // Số sản phẩm mỗi trang
+const PAGE_SIZE = 10; // Đổi thành 10 để hiển thị tròn 2 hàng (mỗi hàng 5 món)
 let lastVisible = null; // Document cuối cùng của trang hiện tại
 let firstVisible = null; // Document đầu tiên của trang hiện tại
 let currentPage = 1;
@@ -29,6 +29,7 @@ function renderProductCard(product, id, favsList = []) {
     for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
     const hasSale = product.sale > 0;
+    const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
     
@@ -37,14 +38,16 @@ function renderProductCard(product, id, favsList = []) {
         : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
 
     const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
+    const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
 
     const isFav = favsList.includes(id);
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
+    const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     return `
         <a href="../product/index.html?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card ${sparkleClass}" style="position: relative;">
-                ${saleBadge}
+            <div class="product-card ${sparkleClass} ${outOfStockClass}" style="position: relative;">
+                ${isOutOfStock ? stockBadge : saleBadge}
                 <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
