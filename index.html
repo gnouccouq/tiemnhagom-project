@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiệm Nhà Gốm - Nghệ thuật gốm sứ thủ công</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <img src="assets/images/logo.png" alt="Tiệm Nhà Gốm">
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">Trang chủ</a></li>
+                <li><a href="/products">Sản phẩm</a></li>
+                <li id="auth-section">
+                    <button id="btn-login" class="btn-minimal">Đăng nhập</button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Vẻ đẹp từ đất mẹ</h1>
+                <p>Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.</p>
+                <a href="/products" class="btn-dark">Xem ngay</a>
+            </div>
+        </section>
+
+        <section class="featured-products">
+            <h2>Sản phẩm nổi bật</h2>
+            <div id="product-grid" class="grid">
+                <!-- Sản phẩm sẽ được render từ Firebase ở đây -->
+                <div class="product-card skeleton">Đang tải...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Tiệm Nhà Gốm. Cảm hứng từ sự giản đơn.</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
