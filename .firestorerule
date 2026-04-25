@@ -8,10 +8,13 @@ service cloud.firestore {
       // Cho phép tất cả mọi người (khách hàng) đọc dữ liệu sản phẩm
       allow read: if true;
       
-      // Chỉ cho phép ghi (tạo, cập nhật, xóa) nếu người dùng đã đăng nhập 
-      // và UID của họ tồn tại trong collection 'admins'
-      allow write: if request.auth != null && 
+      // Admin có toàn quyền tạo và xóa sản phẩm
+      allow create, delete: if request.auth != null && 
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+
+      // Cho phép cập nhật: Admin có toàn quyền, hoặc Khách hàng CHỈ được phép cập nhật kho và số lượng đã bán
+      allow update: if (request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid))) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']));
     }
     
     // Quy tắc cho collection Admins
@@ -28,9 +31,28 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Quy tắc cho collection Thông tin người dùng (users)
+    match /users/{userId} {
+        // Người dùng xem/sửa thông tin chính mình, Admin được quyền xem tất cả
+        allow read: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+        allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Quy tắc cho collection Orders
     match /orders/{orderId} {
-        allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+        // Cho phép tạo đơn hàng (hỗ trợ cả khách vãng lai và thành viên)
+        allow create: if true;
+        
+        // Người dùng xem đơn hàng của mình, Admin được quyền xem và cập nhật (để đổi trạng thái)
+        allow read: if request.auth != null && (request.auth.uid == resource.data.userId || 
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+        
+        // Admin có thể cập nhật bất kỳ trường nào
+        // Người dùng chỉ có thể cập nhật trạng thái của đơn hàng của chính mình thành "Đã hủy"
+        allow update: if request.auth != null && (
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+          (request.auth.uid == resource.data.userId && resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy")
+        );
     }
 
     match /favorites/{userId} {
@@ -48,17 +70,27 @@ service cloud.firestore {
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Quy tắc cho thư mục ảnh sản phẩm (products)
-    match /products/{allPaths=**} {
-      // Cho phép mọi người xem ảnh sản phẩm
+    // 1. Quy tắc cho thư mục ảnh sản phẩm (products)
+    match /products/{productId}/{allPaths=**} {
+      // Cho phép mọi người xem ảnh sản phẩm để hiển thị trên website
       allow read: if true;
-      
-      // Chỉ cho phép upload, sửa hoặc xóa ảnh nếu UID người dùng nằm trong danh sách Admin bên Firestore
-      allow write: if request.auth != null && 
+
+      // Ngăn chặn "người lạ" xóa hoặc sửa ảnh
+      // Chỉ cho phép Admin (đã xác thực qua Firestore) thực hiện các thao tác thay đổi dữ liệu
+      allow create, update, delete: if request.auth != null && 
         firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
-    
-    // Mặc định chặn các truy cập khác
+
+    // 2. Quy tắc cho thư mục ảnh đại diện (avatars) - Chuẩn bị cho tính năng upload avatar
+    match /avatars/{userId}/{allPaths=**} {
+      // Ảnh đại diện có thể để chế độ công khai để hiển thị trên đánh giá/header
+      allow read: if true;
+
+      // Người dùng chỉ được phép upload, sửa hoặc xóa ảnh đại diện của chính mình
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 3. Mặc định chặn tất cả các truy cập khác để đảm bảo an toàn tuyệt đối
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -1,11 +1,11 @@
 import { 
-    db, auth, loginWithGoogle, logout, updateCartCount, 
-    showToast, loadSharedComponents 
+    db, auth, logout, loginWithGoogle, updateCartCount, 
+    showToast, initHeader, renderProductCard 
 } from "./utils.js";
+import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Hàm điều khiển Tab
 function setupTabs() {
@@ -16,9 +16,25 @@ function setupTabs() {
             btns.forEach(b => b.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById(btn.dataset.target).classList.add('active');
+            const targetSection = document.getElementById(btn.dataset.target);
+            if (targetSection) targetSection.classList.add('active');
         });
     });
+
+    // Tự động chuyển tab dựa trên hash URL (ví dụ: #orders)
+    const handleHash = () => {
+        const hash = window.location.hash;
+        if (hash === '#orders') {
+            // Tìm nút tab có chứa văn bản "Lịch sử"
+            const orderBtn = Array.from(btns).find(b => 
+                b.innerText.toLowerCase().includes('lịch sử')
+            );
+            if (orderBtn) orderBtn.click();
+        }
+    };
+
+    handleHash(); // Kiểm tra ngay khi load trang
+    window.addEventListener('hashchange', handleHash); // Lắng nghe khi hash thay đổi mà không load lại trang
 }
 
 window.toggleFavorite = async (event, productId) => {
@@ -62,7 +78,9 @@ async function fetchFavorites(userId) {
         for (const pid of productIds) {
             const pSnap = await getDoc(doc(db, "products", pid));
             if (pSnap.exists()) {
-                htmlContent += renderProductCard(pSnap.data(), pid);
+                // Lấy danh sách yêu thích để render đúng trạng thái nút
+                const favs = favSnap.data().productIds;
+                htmlContent += renderProductCard(pSnap.data(), pid, favs, '../product/index.html');
             }
         }
 
@@ -74,110 +92,233 @@ async function fetchFavorites(userId) {
     }
 }
 
-// Hàm tạo HTML cho thẻ sản phẩm trong mục yêu thích
-function renderProductCard(product, id) {
-    const hasSale = product.sale > 0;
-    const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
-    const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
+// Hàm hủy đơn hàng
+window.cancelOrder = async (orderId) => {
+    if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
+        return;
+    }
 
-    return `
-        <a href="../product/index.html?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card" style="position: relative; min-height: 350px;">
-                ${saleBadge}
-                <button class="favorite-btn active" onclick="toggleFavorite(event, '${id}')">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="currentColor" stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
-                     alt="${product.name}" 
-                     style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
-                <h3>${product.name}</h3>
-                <p class="price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>
+    const user = auth.currentUser;
+    if (!user) {
+        showToast("Vui lòng đăng nhập để hủy đơn hàng.", "error");
+        return;
+    }
+
+    try {
+        await setDoc(doc(db, "orders", orderId), { status: "Đã hủy", canceledBy: user.uid, canceledAt: new Date().toISOString() }, { merge: true });
+        showToast("Đơn hàng đã được hủy thành công!", "success");
+        fetchOrderHistory(user.uid); // Tải lại lịch sử đơn hàng để cập nhật UI
+    } catch (error) {
+        showToast("Lỗi khi hủy đơn hàng: " + error.message, "error");
+    }
+};
+
+// Hàm xem chi tiết đơn hàng
+window.viewOrderDetails = async (orderId) => {
+    try {
+        const docSnap = await getDoc(doc(db, "orders", orderId));
+        if (!docSnap.exists()) return;
+        
+        const order = docSnap.data();
+        const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
+        
+        // Tạo modal nếu chưa có
+        let modal = document.getElementById('order-detail-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'order-detail-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+                <div class="modal-header">
+                    <h3 style="font-family: var(--font-serif);">Chi tiết đơn hàng</h3>
+                    <p style="font-size: 0.8rem; color: #888;">ID: ${orderId}</p>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-row"><span>Ngày đặt:</span> <span>${orderDate}</span></div>
+                    <div class="detail-row"><span>Trạng thái:</span> <span class="order-status-${order.status.toLowerCase().replace(/\s/g, '-')}">${order.status}</span></div>
+                    <div class="detail-row"><span>Họ tên:</span> <span>${order.shippingAddress?.fullName || 'N/A'}</span></div>
+                    <div class="detail-row"><span>Số điện thoại:</span> <span>${order.shippingAddress?.phone || 'N/A'}</span></div>
+                    <div class="detail-row"><span>Địa chỉ:</span> <span style="text-align: right; max-width: 60%;">${order.shippingAddress?.address || 'N/A'}</span></div>
+                    <hr style="margin: 1.5rem 0; border: none; border-top: 1px dashed #eee;">
+                    <h4 style="margin-bottom: 1rem;">Danh sách sản phẩm</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        ${order.items.map(item => `
+                            <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.9rem;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <img src="${item.image}" alt="${item.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
+                                    <div>
+                                        <div style="font-weight: 600;">${item.name}</div>
+                                        <div style="font-size: 0.8rem; color: #777;">x ${item.quantity}</div>
+                                    </div>
+                                </div>
+                                <span style="font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(item.price * item.quantity)}đ</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div class="detail-row" style="margin-top: 1.5rem; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+                        <span>Tổng cộng:</span>
+                        <span style="color: var(--text-black);">${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</span>
+                    </div>
+                </div>
             </div>
-        </a>
-    `;
-}
+        `;
+        
+        modal.classList.add('active');
+        // Đóng khi click ra ngoài
+        modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
+    } catch (error) {
+        showToast("Không thể tải chi tiết đơn hàng", "error");
+    }
+};
 
 // Hàm thiết lập listener cho trạng thái đăng nhập và hiển thị thông tin người dùng
-function setupAuthListener() {
-    onAuthStateChanged(auth, async (user) => {
-        const authSection = document.getElementById('auth-section');
-        const navLinks = document.querySelector('.nav-links');
-        const profileInfo = document.getElementById('profile-info');
-        const notLoggedInMsg = document.getElementById('not-logged-in-msg');
-        const btnLoginProfile = document.getElementById('btn-login-profile');
-        const btnLogoutProfile = document.getElementById('btn-logout-profile');
+async function handleProfileAuth(user) {
+    const profileInfo = document.getElementById('profile-info');
+    const notLoggedInMsg = document.getElementById('not-logged-in-msg');
+    const btnLoginProfile = document.getElementById('btn-login-profile');
+    const btnLogoutProfile = document.getElementById('btn-logout-profile');
 
-        // Xóa nút admin cũ nếu có
-        const existingAdminLink = document.getElementById('admin-link');
-        if (existingAdminLink) existingAdminLink.remove();
+    if (user) {
+        // Tải thêm thông tin từ Firestore (users collection)
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        
+        // Lấy ngày tham gia từ metadata của Firebase Auth
+        const joinDate = user.metadata.creationTime 
+            ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') 
+            : 'N/A';
 
-        if (user) {
-            // Đồng bộ giỏ hàng từ localStorage lên Firestore khi vừa đăng nhập
-            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-            if (localCart.length > 0) {
-                const cartRef = doc(db, "carts", user.uid);
-                const cartSnap = await getDoc(cartRef);
-                let firebaseCart = cartSnap.exists() ? cartSnap.data().items : [];
-                localCart.forEach(localItem => {
-                    const existing = firebaseCart.find(i => i.id === localItem.id);
-                    if (existing) existing.quantity += localItem.quantity;
-                    else firebaseCart.push(localItem);
-                });
-                await setDoc(cartRef, { items: firebaseCart });
-                localStorage.removeItem('cart');
-            }
-            updateCartCount();
+        // Cấu trúc lại giao diện trang cá nhân
+        profileInfo.innerHTML = `
+            <div class="profile-card">
+                <h3>Thông tin cá nhân</h3>
+                <div id="profile-display">
+                    <p><strong>Tên hiển thị:</strong> <span id="disp-name">${user.displayName || 'Chưa cập nhật'}</span></p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Số điện thoại:</strong> <span>${userData.phone || 'Chưa cập nhật'}</span></p>
+                    <p><strong>Giới tính:</strong> <span>${userData.gender || 'Chưa cập nhật'}</span></p>
+                    <p><strong>Ngày sinh:</strong> <span>${userData.birthday ? new Date(userData.birthday).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</span></p>
+                    <p><strong>Ngày tham gia:</strong> ${joinDate}</p>
+                    <p><strong>Tiền tích lũy:</strong> <span id="user-total-spent" style="color: #27ae60; font-weight: 600;">Đang tính...</span></p>
+                    <button id="btn-edit-profile" class="btn-outline" style="margin-top: 1.5rem; width: 100%;">Chỉnh sửa thông tin</button>
+                </div>
 
-            // Hiển thị thông tin người dùng
-            document.getElementById('user-email').innerText = user.email;
-            document.getElementById('user-display-name').innerText = user.displayName || "Chưa cập nhật";
-            profileInfo.style.display = 'block';
-            notLoggedInMsg.style.display = 'none';
-            if (btnLogoutProfile) btnLogoutProfile.onclick = logout;
+                <form id="edit-profile-form" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Tên hiển thị</label>
+                        <input type="text" id="edit-name" value="${user.displayName || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="edit-phone" value="${userData.phone || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Giới tính</label>
+                        <select id="edit-gender">
+                            <option value="">Chọn giới tính</option>
+                            <option value="Nam" ${userData.gender === 'Nam' ? 'selected' : ''}>Nam</option>
+                            <option value="Nữ" ${userData.gender === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                            <option value="Khác" ${userData.gender === 'Khác' ? 'selected' : ''}>Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày sinh</label>
+                        <input type="date" id="edit-birthday" value="${userData.birthday || ''}">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn-dark" style="flex: 1;">Lưu</button>
+                        <button type="button" id="btn-cancel-edit" class="btn-minimal" style="flex: 1;">Hủy</button>
+                    </div>
+                </form>
 
-            // Kiểm tra quyền Admin và thêm link Admin nếu có
-            const adminRef = doc(db, "admins", user.uid);
-            const adminSnap = await getDoc(adminRef);
-            if (adminSnap.exists()) {
-                const adminContainer = document.getElementById('admin-action-container');
-                if (adminContainer) {
-                    adminContainer.innerHTML = `
-                        <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
-                        <a href="../admin/" class="btn-dark" style="display: block; text-align: center; margin-top: 0;">Vào bảng điều khiển Admin</a>
-                    `;
-                    adminContainer.style.display = 'block';
+                <div id="admin-action-container" style="display: none; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed #eee;"></div>
+                <button id="btn-logout-profile" class="btn-minimal" style="margin-top: 2rem; width: 100%; color: #e74c3c; border-color: #e74c3c;">Đăng xuất</button>
+            </div>
+        `;
+
+        profileInfo.style.display = 'block';
+        notLoggedInMsg.style.display = 'none';
+
+        // Điều khiển ẩn/hiện Form sửa
+        const displayDiv = document.getElementById('profile-display');
+        const editForm = document.getElementById('edit-profile-form');
+        
+        document.getElementById('btn-edit-profile').onclick = () => {
+            displayDiv.style.display = 'none';
+            editForm.style.display = 'block';
+        };
+        
+        document.getElementById('btn-cancel-edit').onclick = () => {
+            editForm.style.display = 'none';
+            displayDiv.style.display = 'block';
+        };
+
+        // Xử lý lưu thông tin
+        editForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('edit-name').value;
+            const newPhone = document.getElementById('edit-phone').value;
+            const newGender = document.getElementById('edit-gender').value;
+            const newBirthday = document.getElementById('edit-birthday').value;
+            
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+
+            try {
+                // Cập nhật Profile của Firebase Auth
+                if (newName !== user.displayName) {
+                    await updateProfile(user, { displayName: newName });
                 }
+                
+                // Cập nhật dữ liệu mở rộng vào Firestore
+                await setDoc(userRef, {
+                    phone: newPhone,
+                    gender: newGender,
+                    birthday: newBirthday,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+
+                showToast("Cập nhật thông tin thành công!");
+                handleProfileAuth(auth.currentUser); // Tải lại giao diện
+            } catch (error) {
+                showToast("Lỗi khi cập nhật: " + error.message, "error");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Lưu";
             }
+        };
 
-            // Cập nhật UI Header
-            authSection.innerHTML = `
-                <a href="./" class="user-info-link">Chào, ${user.displayName || user.email.split('@')[0]}!</a>
-                <button id="btn-logout" class="btn-minimal">Đăng xuất</button>
-            `;
-            document.getElementById('btn-logout').addEventListener('click', logout);
+        document.getElementById('btn-logout-profile').onclick = logout;
 
-            // Tải sản phẩm yêu thích
-            fetchFavorites(user.uid);
-
-            // Tải lịch sử đơn hàng
-            fetchOrderHistory(user.uid);
-
-        } else {
-            // Người dùng chưa đăng nhập
-            profileInfo.style.display = 'none';
-            document.getElementById('order-history-list').innerHTML = '';
-            document.getElementById('no-orders-msg').style.display = 'none';
-            notLoggedInMsg.style.display = 'block';
-            if (btnLoginProfile) btnLoginProfile.onclick = loginWithGoogle;
-
-            authSection.innerHTML = `
-                <button id="btn-login" class="btn-minimal">Đăng nhập</button>
-            `;
-            document.getElementById('btn-login').addEventListener('click', loginWithGoogle);
+        // Kiểm tra quyền Admin và thêm link Admin nếu có
+        const adminRef = doc(db, "admins", user.uid);
+        const adminSnap = await getDoc(adminRef);
+        if (adminSnap.exists()) {
+            const adminContainer = document.getElementById('admin-action-container');
+            if (adminContainer) {
+                adminContainer.innerHTML = `
+                    <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
+                    <a href="../admin/" class="btn-dark" style="display: block; text-align: center; margin-top: 0;">Vào bảng điều khiển Admin</a>
+                `;
+                adminContainer.style.display = 'block';
+            }
         }
-    });
+
+        fetchFavorites(user.uid);
+        fetchOrderHistory(user.uid);
+    } else {
+        profileInfo.style.display = 'none';
+        document.getElementById('order-history-list').innerHTML = '';
+        document.getElementById('no-orders-msg').style.display = 'none';
+        notLoggedInMsg.style.display = 'block';
+        if (btnLoginProfile) btnLoginProfile.onclick = loginWithGoogle;
+    }
 }
 
 // Hàm tải lịch sử đơn hàng
@@ -193,16 +334,26 @@ async function fetchOrderHistory(userId) {
         if (querySnapshot.empty) {
             orderListContainer.style.display = 'none';
             noOrdersMsg.style.display = 'block';
+            // Cập nhật số tiền tích luỹ về 0 nếu chưa có đơn
+            const spentEl = document.getElementById('user-total-spent');
+            if (spentEl) spentEl.innerText = '0đ';
             return;
         }
 
         let htmlContent = '';
+        let totalSpent = 0;
         querySnapshot.forEach((doc) => {
             const order = doc.data();
+            totalSpent += (order.totalAmount || 0);
             const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
             const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
             const status = order.status || 'Đang xử lý';
 
+            const canCancel = status === 'Đang xử lý'; // Chỉ cho phép hủy khi đang xử lý
+            const cancelBtn = canCancel 
+                ? `<button class="btn-minimal" style="color: #e74c3c; border-color: #e74c3c; margin-top: 1rem;" onclick="window.cancelOrder('${doc.id}')">Hủy đơn hàng</button>` 
+                : '';
+            const detailBtn = `<button class="btn-outline" style="margin-top: 1rem; margin-right: 10px;" onclick="window.viewOrderDetails('${doc.id}')">Xem chi tiết</button>`;
             htmlContent += `
                 <div class="order-item">
                     <div class="order-header">
@@ -212,17 +363,26 @@ async function fetchOrderHistory(userId) {
                     </div>
                     <div class="order-details">
                         <h4>Sản phẩm:</h4>
-                        <ul>
+                        <ul style="list-style: none; padding: 0;">
                             ${order.items.map(item => `
-                                <li>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)}đ)</li>
+                                <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                    <span>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)}đ)</span>
+                                </li>
                             `).join('')}
                         </ul>
                         <p><strong>Tổng tiền:</strong> ${totalAmount}đ</p>
+                        <div style="display: flex; gap: 10px;">${detailBtn} ${cancelBtn}</div>
                     </div>
                 </div>
             `;
         });
         orderListContainer.innerHTML = htmlContent;
+        
+        // Hiển thị tổng tiền tích luỹ lên mục thông tin cá nhân
+        const spentEl = document.getElementById('user-total-spent');
+        if (spentEl) spentEl.innerText = new Intl.NumberFormat('vi-VN').format(totalSpent) + 'đ';
+        
         orderListContainer.style.display = 'block';
         noOrdersMsg.style.display = 'none';
 
@@ -232,16 +392,7 @@ async function fetchOrderHistory(userId) {
     }
 }
 
-// Hàm tải các component dùng chung (header, footer)
-async function loadProfileComponents() {
-    const success = await loadSharedComponents('../');
-    if (success) {
-        setupAuthListener();
-        updateCartCount();
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    loadProfileComponents();
+    initHeader('../', handleProfileAuth);
     setupTabs();
 });

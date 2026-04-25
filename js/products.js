@@ -1,11 +1,9 @@
 import { 
-    db, auth, loginWithGoogle, logout, updateCartCount, 
-    updateFavoriteCount, toggleFavoriteLogic, loadSharedComponents 
+    db, auth, toggleFavoriteLogic, initHeader 
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Cấu hình phân trang
 const PAGE_SIZE = 6; // Số sản phẩm mỗi trang
@@ -31,6 +29,7 @@ function renderProductCard(product, id, favsList = []) {
     for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
     const hasSale = product.sale > 0;
+    const soldCount = product.sold || 0;
     const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
     
     const priceHtml = hasSale 
@@ -55,7 +54,10 @@ function renderProductCard(product, id, favsList = []) {
                      alt="${product.name}" 
                      style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
                 <h3>${product.name}</h3>
-                <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">${starsHtml}</div>
+                <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    ${starsHtml}
+                    <span style="color: #666; font-size: 0.75rem; margin-left: 5px; font-weight: 400;">(Đã bán ${soldCount})</span>
+                </div>
                 ${priceHtml}
             </div>
         </a>
@@ -70,7 +72,14 @@ async function fetchProducts(navigation = 'init') {
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
 
-    productGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 5rem;">Đang tải sản phẩm...</p>';
+    productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
+        <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton skeleton-text skeleton-title"></div>
+            <div class="skeleton skeleton-text skeleton-small"></div>
+            <div class="skeleton skeleton-text skeleton-price"></div>
+        </div>
+    `).join('');
     noProductsMsg.style.display = 'none';
 
     try {
@@ -193,59 +202,25 @@ async function fetchProducts(navigation = 'init') {
     }
 }
 
-// Hàm thiết lập Auth Listener (tương tự các file khác)
-function setupAuthListener() {
-    onAuthStateChanged(auth, async (user) => {
-        const authSection = document.getElementById('auth-section');
-        const navLinks = document.querySelector('.nav-links');
-
-        const existingAdminLink = document.getElementById('admin-link');
-        if (existingAdminLink) existingAdminLink.remove();
-        const existingProfileLink = document.getElementById('profile-link');
-        if (existingProfileLink) existingProfileLink.remove();
-
-        if (authSection) {
-            if (user) {
-                updateCartCount();
-                updateFavoriteCount();
-                fetchProducts();
-
-                if (navLinks && !document.getElementById('profile-link')) {
-                    const profileLi = document.createElement('li');
-                    profileLi.id = 'profile-link';
-                    profileLi.innerHTML = '<a href="../profile/">Tài khoản</a>';
-                    navLinks.insertBefore(profileLi, authSection);
-                }
-
-                const adminRef = doc(db, "admins", user.uid);
-                const adminSnap = await getDoc(adminRef);
-                if (adminSnap.exists() && navLinks) {
-                    const adminLi = document.createElement('li');
-                    adminLi.id = 'admin-link';
-                    adminLi.innerHTML = '<a href="../admin/">Trang Admin</a>';
-                    navLinks.insertBefore(adminLi, authSection);
-                }
-
-                authSection.innerHTML = `
-                    <a href="../profile/" class="user-info-link">Chào, ${user.displayName || user.email.split('@')[0]}!</a>
-                    <button id="btn-logout" class="btn-minimal">Đăng xuất</button>
-                `;
-                document.getElementById('btn-logout').addEventListener('click', logout);
-            } else {
-                authSection.innerHTML = `<button id="btn-login" class="btn-minimal">Đăng nhập</button>`;
-                document.getElementById('btn-login').addEventListener('click', loginWithGoogle);
-            }
-        }
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    loadSharedComponents('../').then((success) => {
-        if (!success) return;
-        setupAuthListener();
-        updateCartCount();
-        updateFavoriteCount();
-        fetchProducts(); // Tải sản phẩm lần đầu
+    initHeader('../', (user) => {
+        // Xử lý lọc theo danh mục từ URL (nếu có)
+        const urlParams = new URLSearchParams(window.location.search);
+        const catParam = urlParams.get('category');
+        if (catParam) {
+            document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
+            const targetLink = document.querySelector(`#category-filters a[data-filter-category="${catParam}"]`);
+            if (targetLink) targetLink.classList.add('active');
+        }
+
+        // Xử lý từ khóa tìm kiếm từ Header
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+            const sidebarSearch = document.getElementById('search-name');
+            if (sidebarSearch) sidebarSearch.value = searchParam;
+        }
+
+        fetchProducts();
 
         // Gán sự kiện cho bộ lọc danh mục
         document.querySelectorAll('#category-filters a').forEach(link => {

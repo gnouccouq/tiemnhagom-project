@@ -1,16 +1,8 @@
 // js/main.js
 import { 
-    db, auth, loginWithGoogle, logout, updateCartCount, 
-    updateFavoriteCount, toggleFavoriteLogic, loadSharedComponents 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard 
 } from "./utils.js";
-import { collection, getDocs, doc, getDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-// Hàm tải các component dùng chung (header, footer)
-async function loadComponents() {
-    const success = await loadSharedComponents('./');
-    if (success) setupAuthListener();
-}
+import { collection, getDocs, doc, getDoc, query, where, setDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Hàm toggle yêu thích
 window.toggleFavorite = async (event, productId) => {
@@ -29,6 +21,16 @@ window.toggleFavorite = async (event, productId) => {
 async function fetchFeaturedProducts() {
     const grid = document.getElementById('product-grid');
     try {
+        // Hiển thị skeleton loading trong khi chờ query Firestore
+        grid.innerHTML = Array(4).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-img"></div>
+                <div class="skeleton skeleton-text skeleton-title"></div>
+                <div class="skeleton skeleton-text skeleton-small"></div>
+                <div class="skeleton skeleton-text skeleton-price"></div>
+            </div>
+        `).join('');
+
         const querySnapshot = await getDocs(collection(db, "products"));
         let htmlContent = ''; // Sử dụng biến tạm để tối ưu hiệu suất
 
@@ -42,7 +44,7 @@ async function fetchFeaturedProducts() {
         }
 
         querySnapshot.forEach((doc) => {
-            htmlContent += renderProductCard(doc.data(), doc.id, favs);
+            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm nào.</p>';
     } catch (error) {
@@ -55,6 +57,17 @@ async function fetchFeaturedProducts() {
 async function fetchSaleProducts() {
     const saleSection = document.getElementById('sale-section');
     const saleGrid = document.getElementById('sale-product-grid');
+
+    // Hiển thị skeleton loading trong khi chờ query Firestore
+    saleGrid.innerHTML = Array(4).fill(0).map(() => `
+        <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton skeleton-text skeleton-title"></div>
+            <div class="skeleton skeleton-text skeleton-small"></div>
+            <div class="skeleton skeleton-text skeleton-price"></div>
+        </div>
+    `).join('');
+
     try {
         const q = query(collection(db, "products"), where("sale", ">", 0));
         const querySnapshot = await getDocs(q);
@@ -69,7 +82,7 @@ async function fetchSaleProducts() {
 
         let htmlContent = '';
         querySnapshot.forEach((doc) => {
-            htmlContent += renderProductCard(doc.data(), doc.id, favs);
+            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
         });
 
         if (htmlContent) {
@@ -81,115 +94,67 @@ async function fetchSaleProducts() {
     }
 }
 
-// Hàm bổ trợ render thẻ sản phẩm (dùng chung cho cả 2 section)
-function renderProductCard(product, id, favsList = []) {
-    const rating = product.rating || 5;
-    let starsHtml = '';
-    for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
-
-    const hasSale = product.sale > 0;
-    const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
+// Hàm gợi ý sản phẩm dựa trên lịch sử xem (Categories đã xem)
+async function fetchRecommendations() {
+    const recSection = document.getElementById('recommendation-section');
+    const recGrid = document.getElementById('recommendation-grid');
+    const history = JSON.parse(localStorage.getItem('viewed_products')) || [];
     
-    const priceHtml = hasSale 
-        ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>`
-        : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
+    if (history.length === 0) return;
 
-    const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
+    // 0. Hiển thị skeleton loading trong khi chờ query Firestore
+    recSection.style.display = 'block';
+    recGrid.innerHTML = Array(4).fill(0).map(() => `
+        <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton skeleton-text skeleton-title"></div>
+            <div class="skeleton skeleton-text skeleton-small"></div>
+            <div class="skeleton skeleton-text skeleton-price"></div>
+        </div>
+    `).join('');
 
-    const isFav = favsList.includes(id);
-    const sparkleClass = hasSale ? 'sale-sparkle' : '';
+    try {
+        // 1. Lấy trực tiếp categories từ LocalStorage (Đã được lưu ở trang chi tiết)
+        // Việc này giúp loại bỏ hoàn toàn các lượt đọc Firestore không cần thiết tại đây
+        const recentCategories = new Set();
+        history.slice(0, 3).forEach(item => {
+            if (item && item.category) recentCategories.add(item.category);
+        });
 
-    return `
-        <a href="product/index.html?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card ${sparkleClass}" style="position: relative;">
-                ${saleBadge}
-                <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
-                     alt="${product.name}" 
-                     style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
-                <h3>${product.name}</h3>
-                <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">${starsHtml}</div>
-                ${priceHtml}
-            </div>
-        </a>
-    `;
-}
+        if (recentCategories.size === 0) return;
 
-// Hàm thiết lập listener cho trạng thái đăng nhập
-function setupAuthListener() {
-    onAuthStateChanged(auth, async (user) => {
-        const authSection = document.getElementById('auth-section');
-        const navLinks = document.querySelector('.nav-links');
+        // 2. Query sản phẩm thuộc các categories này
+        let htmlContent = '';
+        const cats = Array.from(recentCategories);
+        const historyIds = history.map(item => typeof item === 'string' ? item : item.id);
+        
+        const q = query(collection(db, "products"), where("category", "in", cats), limit(4));
+        const querySnapshot = await getDocs(q);
 
-        // Xóa nút admin cũ nếu có (để tránh lặp lại hoặc xóa khi logout)
-        const existingAdminLink = document.getElementById('admin-link');
-        if (existingAdminLink) existingAdminLink.remove();
-
-        if (authSection) {
-            if (user) {
-                // Đồng bộ giỏ hàng từ localStorage lên Firestore khi vừa đăng nhập
-                const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-                if (localCart.length > 0) {
-                    const cartRef = doc(db, "carts", user.uid);
-                    const cartSnap = await getDoc(cartRef);
-                    let firebaseCart = cartSnap.exists() ? cartSnap.data().items : [];
-                    
-                    // Hợp nhất đơn giản: thêm đồ từ máy vào giỏ trên mây
-                    localCart.forEach(localItem => {
-                        const existing = firebaseCart.find(i => i.id === localItem.id);
-                        if (existing) existing.quantity += localItem.quantity;
-                        else firebaseCart.push(localItem);
-                    });
-                    await setDoc(cartRef, { items: firebaseCart });
-                    localStorage.removeItem('cart');
-                }
-                updateCartCount();
-                
-                // Đồng bộ Favorites
-                const localFavs = JSON.parse(localStorage.getItem('favorites')) || [];
-                if (localFavs.length > 0) {
-                    const favRef = doc(db, "favorites", user.uid);
-                    const favSnap = await getDoc(favRef);
-                    let firebaseFavs = favSnap.exists() ? favSnap.data().productIds : [];
-                    localFavs.forEach(id => {
-                        if (!firebaseFavs.includes(id)) firebaseFavs.push(id);
-                    });
-                    await setDoc(favRef, { productIds: firebaseFavs });
-                    localStorage.removeItem('favorites');
-                }
-                updateFavoriteCount();
-                fetchSaleProducts(); // Cập nhật lại danh sách để hiện tim đúng
-                fetchFeaturedProducts();
-
-                // Người dùng đã đăng nhập
-                authSection.innerHTML = `
-                    <a href="profile/" class="user-info-link">Xin chào, ${user.displayName || user.email.split('@')[0]}!</a>
-                    <button id="btn-logout" class="btn-minimal">Đăng xuất</button>
-                `;
-                document.getElementById('btn-logout').addEventListener('click', logout);
-            } else {
-                // Người dùng chưa đăng nhập
-                authSection.innerHTML = `
-                    <button id="btn-login" class="btn-minimal">Đăng nhập</button>
-                `;
-                document.getElementById('btn-login').addEventListener('click', loginWithGoogle);
+        querySnapshot.forEach((doc) => {
+            // Không hiện lại sản phẩm đã nằm trong lịch sử xem gần đây
+            if (!historyIds.slice(0, 4).includes(doc.id)) {
+                htmlContent += renderProductCard(doc.data(), doc.id, [], 'product/index.html');
             }
+        });
+
+        if (htmlContent) {
+            recGrid.innerHTML = htmlContent;
+        } else {
+            recSection.style.display = 'none'; // Ẩn nếu không có dữ liệu thực tế phù hợp
         }
-    });
+    } catch (error) {
+        console.error("Lỗi lấy gợi ý:", error);
+        recSection.style.display = 'none';
+    }
 }
 
 // Chạy các hàm khi DOM đã tải xong
 document.addEventListener('DOMContentLoaded', () => {
-    loadComponents().then(() => {
-        // Sau khi components được tải và auth listener được setup,
-        // mới gọi fetchFeaturedProducts để đảm bảo mọi thứ sẵn sàng
-        updateCartCount();
-        updateFavoriteCount();
+    initHeader('./', (user) => {
+        // Chỉ cần chạy logic lấy sản phẩm ở đây
         fetchSaleProducts();
         fetchFeaturedProducts();
+        fetchRecommendations(); // Thêm dòng này
     });
 });

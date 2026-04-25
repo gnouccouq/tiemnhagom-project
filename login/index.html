@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2 style="margin-bottom: 0.5rem;">Chào mừng bạn</h2>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 2rem;">Đăng nhập để quản lý đơn hàng và yêu thích</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-target="email-section">Email</button>
+                <button class="auth-tab" data-target="phone-section">Số điện thoại</button>
+            </div>
+
+            <!-- Email Login -->
+            <div id="email-section" class="auth-form active">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="login-email" required placeholder="example@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="login-password" required placeholder="******">
+                    </div>
+                    <button type="submit" class="btn-dark" style="width: 100%;">Đăng nhập</button>
+                    <div style="margin-top: 1rem; text-align: center; font-size: 0.85rem;">
+                        <a href="javascript:void(0)" id="btn-forgot-pw" style="color: #666;">Quên mật khẩu?</a>
+                    </div>
+                    <button type="button" id="toggle-register" class="btn-minimal" style="width: 100%; margin-top: 1rem; border: none;">Chưa có tài khoản? Đăng ký ngay</button>
+                </form>
+
+                <form id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Email mới</label>
+                        <input type="email" id="reg-email" required placeholder="example@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <input type="password" id="reg-password" required minlength="6" placeholder="Tối thiểu 6 ký tự">
+                    </div>
+                    <button type="submit" class="btn-dark" style="width: 100%;">Tạo tài khoản</button>
+                    <button type="button" id="toggle-login" class="btn-minimal" style="width: 100%; margin-top: 1rem; border: none;">Đã có tài khoản? Đăng nhập</button>
+                </form>
+            </div>
+
+            <!-- Phone Login -->
+            <div id="phone-section" class="auth-form">
+                <div id="recaptcha-container"></div>
+                <form id="phone-login-form">
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="phone-number" placeholder="+84 123 456 789">
+                    </div>
+                    <button type="button" id="btn-send-otp" class="btn-dark" style="width: 100%;">Gửi mã xác thực</button>
+                    
+                    <div id="otp-group" style="display: none; margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label>Nhập mã OTP</label>
+                            <input type="text" id="otp-code" maxlength="6" placeholder="000000">
+                        </div>
+                        <button type="button" id="btn-verify-otp" class="btn-dark" style="width: 100%;">Xác nhận đăng nhập</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="auth-divider"><span>HOẶC</span></div>
+            <button id="btn-google-login" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
+                Tiếp tục với Google
+            </button>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script type="module" src="../js/login.js"></script>
+</body>
+</html>

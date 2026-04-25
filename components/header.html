@@ -3,9 +3,22 @@
         <a href="./" class="logo">
             <img src="Asset/images/logo.png" alt="Tiệm Nhà Gốm">
         </a>
-        <ul class="nav-links">
-            <li><a href="./">Trang chủ</a></li>
-            <li><a href="products/">Sản phẩm</a></li>
+        
+        <button class="menu-toggle" id="menu-toggle" aria-label="Mở menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <ul class="nav-links" id="nav-links">
+            <li class="dropdown">
+                <a href="products/" class="nav-item">Sản phẩm</a>
+                <ul class="dropdown-menu">
+                    <li><a href="products/?category=Ly & Chén">Ly & Chén</a></li>
+                    <li><a href="products/?category=Bình hoa">Bình hoa</a></li>
+                    <li><a href="products/?category=Đồ trang trí">Đồ trang trí</a></li>
+                    <li><a href="products/?category=Khác">Khác</a></li>
+                </ul>
+            </li>
             <!-- Link Tài khoản sẽ được thêm bởi JS khi đăng nhập -->
             <li>
                 <a href="cart/" class="cart-link">
@@ -18,6 +31,7 @@
             <li id="auth-section">
                 <button id="btn-login" class="btn-minimal">Đăng nhập</button>
             </li>
+            <button id="menu-close" class="btn-close-menu" aria-label="Đóng menu">&times;</button>
         </ul>
     </nav>
 </header>
