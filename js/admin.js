@@ -38,8 +38,18 @@ async function convertToWebP(file) {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+            
+            // TỐI ƯU: Giảm xuống 400px để file cực nhẹ (phù hợp hiển thị 150px trên web)
+            const MAX_WIDTH = 400;
+            let width = img.width;
+            let height = img.height;
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 canvas.toBlob((blob) => {

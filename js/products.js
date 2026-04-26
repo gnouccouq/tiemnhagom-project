@@ -54,7 +54,8 @@ function renderProductCard(product, id, favsList = []) {
                     </svg>
                 </button>
                 <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
-                     alt="${product.name}" 
+                     alt="${product.name}"
+                     loading="lazy"
                      style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
                 <h3>${product.name}</h3>
                 <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">

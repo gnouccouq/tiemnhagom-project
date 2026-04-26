@@ -1,9 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, limit, getDocs 
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, limit, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
-    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
     signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
     RecaptchaVerifier, signInWithPhoneNumber
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -21,7 +21,14 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+
+// Khởi tạo Firestore với cấu hình cache mới (thay thế enableIndexedDbPersistence)
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager() // Tự động xử lý khi mở nhiều tab
+    })
+});
+
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -55,9 +62,12 @@ export function setupScrollToTop() {
 // 4. Logic Auth: Đăng nhập & Đăng xuất
 export async function loginWithGoogle() {
     try {
+        // Dùng Popup cho Desktop, nếu lỗi trình duyệt không an toàn (mobile/in-app) 
+        // thì Firebase sẽ có gợi ý dùng Redirect.
         await signInWithPopup(auth, googleProvider);
         showToast("Đăng nhập thành công!");
     } catch (error) {
+        console.error(error);
         showToast("Lỗi đăng nhập: " + error.message, "error");
     }
 }
@@ -104,36 +114,36 @@ export async function logout() {
 }
 
 // 5. Logic Giỏ hàng: Cập nhật số lượng
-export async function updateCartCount() {
+export async function updateCartCount(user = auth.currentUser) {
     let cart = [];
-    if (auth.currentUser) {
-        const cartSnap = await getDoc(doc(db, "carts", auth.currentUser.uid));
+    if (user) {
+        const cartSnap = await getDoc(doc(db, "carts", user.uid));
         if (cartSnap.exists()) cart = cartSnap.data().items || [];
     } else {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
     const total = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const countEl = document.getElementById('cart-count');
-    if (countEl) {
-        countEl.innerText = total;
-        countEl.style.display = total > 0 ? 'flex' : 'none';
-    }
+    const countEls = document.querySelectorAll('.cart-count-badge');
+    countEls.forEach(el => {
+        el.innerText = total;
+        el.style.display = total > 0 ? 'flex' : 'none';
+    });
 }
 
 // 6. Logic Yêu thích: Cập nhật số lượng
-export async function updateFavoriteCount() {
+export async function updateFavoriteCount(user = auth.currentUser) {
     let favs = [];
-    if (auth.currentUser) {
-        const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
+    if (user) {
+        const favSnap = await getDoc(doc(db, "favorites", user.uid));
         if (favSnap.exists()) favs = favSnap.data().productIds || [];
     } else {
         favs = JSON.parse(localStorage.getItem('favorites')) || [];
     }
-    const countEl = document.getElementById('favorite-count');
-    if (countEl) {
-        countEl.innerText = favs.length;
-        countEl.style.display = favs.length > 0 ? 'flex' : 'none';
-    }
+    const countEls = document.querySelectorAll('.fav-count-badge');
+    countEls.forEach(el => {
+        el.innerText = favs.length;
+        el.style.display = favs.length > 0 ? 'flex' : 'none';
+    });
 }
 
 // 7. Logic Yêu thích: Toggle
@@ -204,7 +214,10 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                 </button>
                 <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
                      alt="${product.name}" 
-                     style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
+                     loading="lazy"
+                     decoding="async"
+                     width="300" height="300"
+                     style="width:100%; height: auto; object-fit: cover; aspect-ratio: 1/1; background-color: #f0f0f0;">
                 <h3>${product.name}</h3>
                 <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">
                     ${starsHtml}
@@ -252,53 +265,67 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         if (!authSection) return;
 
         if (user) {
-            // Tự động đồng bộ dữ liệu từ máy lên server khi vừa đăng nhập
-            await syncLocalToCloud(user.uid);
+            // Bọc logic xử lý dữ liệu trong try-catch để không làm treo UI Header
+            try {
+                // Tự động đồng bộ dữ liệu từ máy lên server khi vừa đăng nhập
+                await syncLocalToCloud(user.uid);
 
-            // Logic Liên kết tài khoản: Kiểm tra xem có dữ liệu "chờ" từ Admin không
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
+                // Logic Liên kết tài khoản: Kiểm tra xem có dữ liệu "chờ" từ Admin không
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
 
-            if (!userSnap.exists()) {
-                // Nếu là user mới tinh trên hệ thống Auth, tìm kiếm trong "Ghost records"
-                let ghostData = {};
-                let ghostDocId = null;
+                if (!userSnap.exists()) {
+                    // Nếu là user mới tinh trên hệ thống Auth, tìm kiếm trong "Ghost records"
+                    let ghostData = {};
+                    let ghostDocId = null;
 
-                // Tìm theo SĐT hoặc Email
-                const phone = user.phoneNumber;
-                const email = user.email;
-                const qGhost = query(collection(db, "users"), 
-                    where("isGhost", "==", true),
-                    where("identifiers", "array-contains-any", [phone, email].filter(Boolean)));
-                
-                const ghostSnaps = await getDocs(qGhost);
-                if (!ghostSnaps.empty) {
-                    ghostData = ghostSnaps.docs[0].data();
-                    ghostDocId = ghostSnaps.docs[0].id;
+                    // Tìm theo SĐT hoặc Email
+                    const phone = user.phoneNumber;
+                    const email = user.email;
+                    const qGhost = query(collection(db, "users"), 
+                        where("isGhost", "==", true),
+                        where("identifiers", "array-contains-any", [phone, email].filter(Boolean)));
+                    
+                    const ghostSnaps = await getDocs(qGhost);
+                    if (!ghostSnaps.empty) {
+                        ghostData = ghostSnaps.docs[0].data();
+                        ghostDocId = ghostSnaps.docs[0].id;
+                    }
+
+                    await setDoc(userRef, {
+                        ...ghostData, // Gộp dữ liệu cũ (nếu có)
+                        uid: user.uid,
+                        email: email || ghostData.email || null,
+                        phoneNumber: phone || ghostData.phone || null,
+                        displayName: user.displayName || ghostData.displayName || null,
+                        isGhost: false, // Chính thức trở thành tài khoản thật
+                        lastLogin: new Date().toISOString()
+                    }, { merge: true });
+
+                    // Xóa bỏ tài khoản ghost cũ để tránh trùng lặp
+                    if (ghostDocId) await deleteDoc(doc(db, "users", ghostDocId));
+                } else {
+                    await updateDoc(userRef, { lastLogin: new Date().toISOString() });
                 }
-
-                await setDoc(userRef, {
-                    ...ghostData, // Gộp dữ liệu cũ (nếu có)
-                    uid: user.uid,
-                    email: email || ghostData.email || null,
-                    phoneNumber: phone || ghostData.phone || null,
-                    displayName: user.displayName || ghostData.displayName || null,
-                    isGhost: false, // Chính thức trở thành tài khoản thật
-                    lastLogin: new Date().toISOString()
-                }, { merge: true });
-
-                // Xóa bỏ tài khoản ghost cũ để tránh trùng lặp
-                if (ghostDocId) await deleteDoc(doc(db, "users", ghostDocId));
-            } else {
-                await updateDoc(userRef, { lastLogin: new Date().toISOString() });
+            } catch (dataError) {
+                console.error("Lỗi đồng bộ dữ liệu người dùng:", dataError);
             }
             
             // Cập nhật giao diện Header (Tên user và nút đăng xuất)
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
+            const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
 
             // Xác định trạng thái active ban đầu dựa trên URL và Hash
             const isProfilePage = window.location.pathname.includes('profile');
             const isOrdersTab = window.location.hash === '#orders';
+            const isFavsTab = window.location.hash === '#favs';
+
+            // Kiểm tra quyền Admin để hiển thị menu quản trị
+            let isAdmin = false;
+            try {
+                const adminSnap = await getDoc(doc(db, "admins", user.uid));
+                isAdmin = adminSnap.exists();
+            } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
 
             authSection.innerHTML = `
                 <div class="user-dropdown">
@@ -309,10 +336,27 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         </svg>
                     </a>
                     <ul class="user-dropdown-menu">
-                        <li><a href="${profilePath}" class="${isProfilePage && !isOrdersTab ? 'active' : ''}">Trang cá nhân</a></li>
-                        <li><a href="${profilePath}#orders" class="${isProfilePage && isOrdersTab ? 'active' : ''}">Lịch sử đơn hàng</a></li>
+                        <li><a href="${profilePath}" class="${isProfilePage && !isOrdersTab && !isFavsTab ? 'active' : ''}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Trang cá nhân
+                        </a></li>
+                        <li><a href="${profilePath}#favs" class="${isProfilePage && isFavsTab ? 'active' : ''}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            Danh sách yêu thích
+                        </a></li>
+                        <li><a href="${profilePath}#orders" class="${isProfilePage && isOrdersTab ? 'active' : ''}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            Lịch sử đơn hàng
+                        </a></li>
+                        ${isAdmin ? `<li><a href="${adminPath}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            Trang quản trị
+                        </a></li>` : ''}
                         <li><hr></li>
-                        <li><button id="btn-logout-header" class="btn-minimal">Đăng xuất</button></li>
+                        <li><button id="btn-logout-header" class="btn-minimal">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            Đăng xuất
+                        </button></li>
                     </ul>
                 </div>
             `;
@@ -321,11 +365,14 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             // Lắng nghe thay đổi hash để cập nhật trạng thái active tức thì khi đang ở trang profile
             window.addEventListener('hashchange', () => {
                 if (window.location.pathname.includes('profile')) {
-                    const currentIsOrders = window.location.hash === '#orders';
+                    const hash = window.location.hash;
                     const links = authSection.querySelectorAll('.user-dropdown-menu a');
                     links.forEach(link => {
-                        const isLinkForOrders = link.getAttribute('href').includes('#orders');
-                        link.classList.toggle('active', isLinkForOrders === currentIsOrders);
+                        const href = link.getAttribute('href');
+                        const isOrders = hash === '#orders' && href.includes('#orders');
+                        const isFavs = hash === '#favs' && href.includes('#favs');
+                        const isProfile = !hash && !href.includes('#') && href.includes('profile');
+                        link.classList.toggle('active', isOrders || isFavs || isProfile);
                     });
                 }
             });
@@ -335,8 +382,8 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         }
 
         // Luôn cập nhật con số trên icon giỏ hàng/yêu thích
-        updateCartCount();
-        updateFavoriteCount();
+        updateCartCount(user);
+        updateFavoriteCount(user);
 
         // Chạy logic riêng của từng trang (nếu có)
         if (onAuthChangeCallback) onAuthChangeCallback(user);
@@ -399,51 +446,37 @@ export async function loadSharedComponents(pathPrefix = './') {
             const prefix = pathPrefix === './' ? '' : pathPrefix;
             
             // Kích hoạt menu mobile sau khi load xong HTML
-            const toggle = document.getElementById('menu-toggle');
-            const nav = document.getElementById('nav-links');
-            
-            if (toggle && nav) {
-                toggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const isActive = toggle.classList.toggle('active');
-                    toggle.setAttribute('aria-expanded', isActive);
-                    nav.classList.toggle('active');
-                    // Cấm cuộn trang khi menu mở
-                    document.body.classList.toggle('no-scroll', isActive);
-                });
+            const menuToggle = document.getElementById('menu-toggle');
+            const navLinks = document.getElementById('nav-links');
 
-                // Logic cho nút đóng menu mới
-                const closeBtn = document.getElementById('menu-close');
-                const closeMenu = () => {
-                    toggle.classList.remove('active');
-                    nav.classList.remove('active');
-                    toggle.setAttribute('aria-expanded', 'false');
-                    document.body.classList.remove('no-scroll');
+            if (menuToggle && navLinks) {
+                menuToggle.onclick = () => {
+                    const isActive = navLinks.classList.toggle('active');
+                    menuToggle.classList.toggle('active');
+                    document.body.classList.toggle('menu-open', isActive);
                 };
-
-                if (closeBtn) closeBtn.onclick = closeMenu;
-
-                // Đóng menu khi nhấn vào một link
-                nav.querySelectorAll('a').forEach(link => {
-                    link.onclick = () => {
-                        closeMenu();
-                    };
+                // Đóng menu khi click ra ngoài hoặc vào link
+                document.addEventListener('click', (e) => {
+                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+                        navLinks.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        document.body.classList.remove('menu-open');
+                    }
                 });
             }
 
-            // Logic tìm kiếm nhanh trên Header
+            // Logic Tìm kiếm Overlay
+            const btnOpenSearch = document.getElementById('btn-open-search');
+            const btnCloseSearch = document.getElementById('btn-close-search');
+            const searchOverlay = document.getElementById('search-overlay');
             const searchInput = document.getElementById('header-search-input');
-            const searchBtn = document.getElementById('header-search-btn');
-            if (searchInput && searchBtn) {
-                const performSearch = () => {
-                    const q = searchInput.value.trim();
-                    if (q) {
-                        const target = pathPrefix === './' ? 'products/' : `${pathPrefix}products/`;
-                        window.location.href = `${target}?search=${encodeURIComponent(q)}`;
-                    }
+
+            if (btnOpenSearch && searchOverlay) {
+                btnOpenSearch.onclick = () => {
+                    searchOverlay.classList.add('active');
+                    searchInput.focus();
                 };
-                searchBtn.onclick = performSearch;
-                searchInput.onkeydown = (e) => { if (e.key === 'Enter') performSearch(); };
+                btnCloseSearch.onclick = () => searchOverlay.classList.remove('active');
             }
 
             // Logic gợi ý sản phẩm tức thì (Autocomplete)

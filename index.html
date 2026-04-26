@@ -3,8 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiệm Nhà Gốm - Nghệ thuật gốm sứ thủ công</title>
+    <title>Tiệm Nhà Gốm - Gốm & Decor</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="Asset/icons/favicon.png">
+
+    <!-- TỐI ƯU: Ưu tiên tải ảnh Hero ngay lập tức -->
+    <link rel="preload" as="image" href="Asset/images/hero-bg.jpg" fetchpriority="high">
+
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Tiệm Nhà Gốm - Gốm & Decor">
+    <meta name="description" content="Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tiemnhagom-project.firebaseapp.com/">
+    <meta property="og:title" content="Tiệm Nhà Gốm - Gốm & Decor">
+    <meta property="og:description" content="Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
+    <meta property="og:image" content="https://tiemnhagom-project.firebaseapp.com/Asset/images/hero-bg.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Tiệm Nhà Gốm - Gốm & Decor">
+    <meta property="twitter:description" content="Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
+    <meta property="twitter:image" content="https://tiemnhagom-project.firebaseapp.com/Asset/images/hero-bg.jpg">
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
 </head>
@@ -20,14 +42,14 @@
                 <!-- Thanh tìm kiếm nổi bật trên trang chủ -->
                 <div class="search-container-home">
                     <div class="search-bar-home">
-                        <input type="text" id="header-search-input" placeholder="Bạn đang tìm món gốm nào?">
-                        <button id="header-search-btn" title="Tìm kiếm">
+                        <input type="text" id="home-search-input" placeholder="Bạn đang tìm món gốm nào?">
+                        <button id="home-search-btn" title="Tìm kiếm">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                         </button>
                     </div>
-                    <div id="search-suggestions" class="search-suggestions"></div>
+                    <div id="home-search-suggestions" class="search-suggestions"></div>
                 </div>
 
                 <a href="products/" class="btn-dark btn-hero-cta">Xem toàn bộ sản phẩm</a>
@@ -37,14 +59,14 @@
         <section class="categories-section">
             <div class="category-grid">
                 <a href="products/?category=Ly & Chén" class="category-banner">
-                    <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=800&fm=webp" alt="Ly và Chén" loading="lazy">
+                    <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=600&fm=webp&auto=format&fit=crop" alt="Ly và Chén" loading="lazy">
                     <div class="category-overlay">
                         <h3>Ly & Chén</h3>
                         <span>Khám phá ngay</span>
                     </div>
                 </a>
                 <a href="products/?category=Bình hoa" class="category-banner">
-                    <img src="https://images.unsplash.com/photo-1581783898377-1c85bf937427?q=80&w=800&fm=webp" alt="Bình hoa" loading="lazy">
+                    <img src="https://images.unsplash.com/photo-1581783898377-1c85bf937427?q=80&w=600&fm=webp&auto=format&fit=crop" alt="Bình hoa" loading="lazy">
                     <div class="category-overlay">
                         <h3>Bình Hoa</h3>
                         <span>Khám phá ngay</span>

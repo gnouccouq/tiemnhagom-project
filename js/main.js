@@ -2,7 +2,7 @@
 import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard 
 } from "./utils.js";
-import { collection, getDocs, doc, getDoc, query, where, setDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Hàm toggle yêu thích
 window.toggleFavorite = async (event, productId) => {
@@ -31,7 +31,10 @@ async function fetchFeaturedProducts() {
             </div>
         `).join('');
 
-        const querySnapshot = await getDocs(collection(db, "products"));
+        // TỐI ƯU: Chỉ lấy 10 sản phẩm mới nhất thay vì toàn bộ collection
+        const q = query(collection(db, "products"), orderBy("updatedAt", "desc"), limit(10));
+        const querySnapshot = await getDocs(q);
+        
         let htmlContent = ''; // Sử dụng biến tạm để tối ưu hiệu suất
 
         // Lấy danh sách yêu thích để hiển thị icon đúng

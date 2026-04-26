@@ -3,82 +3,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Quy tắc cho collection Sản phẩm (products)
-    match /products/{productId} {
-      // Cho phép tất cả mọi người (khách hàng) đọc dữ liệu sản phẩm
-      allow read: if true;
-      
-      // Admin có toàn quyền tạo và xóa sản phẩm
-      allow create, delete: if request.auth != null && 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    // Hàm kiểm tra xem User có phải là Admin không
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
 
-      // Cho phép cập nhật: Admin có toàn quyền, hoặc Khách hàng CHỈ được phép cập nhật kho và số lượng đã bán
-      allow update: if (request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid))) ||
+    // 1. Sản phẩm (products)
+    match /products/{productId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      // Admin sửa mọi thứ, hoặc khách cập nhật kho/đã bán khi mua hàng
+      allow update: if isAdmin() || 
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']));
     }
     
-    // Quy tắc cho collection Admins
+    // 2. Danh sách Admin
     match /admins/{adminId} {
-      // Chỉ Admin mới được xem profile của chính mình
       allow read: if request.auth != null && request.auth.uid == adminId;
-      
-      // Không cho phép ai chỉnh sửa danh sách Admin thông qua Code (tránh tự cấp quyền)
-      // Bạn sẽ thêm/xóa Admin trực tiếp bằng tay trên Firebase Console
-      allow write: if false;
+      allow write: if false; // Chỉ chỉnh sửa tay trên Firebase Console
     }
 
+    // 3. Giỏ hàng & Yêu thích
     match /carts/{userId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // Quy tắc cho collection Thông tin người dùng (users)
-    match /users/{userId} {
-        // Người dùng xem/sửa thông tin chính mình
-        // Admin được quyền xem và ghi (để tạo tài khoản chờ/Ghost accounts tại shop)
-        allow read, write: if request.auth != null && 
-          (request.auth.uid == userId || 
-           exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
-    }
-
-    // Quy tắc cho collection Orders
-    match /orders/{orderId} {
-        // Cho phép tạo đơn hàng (hỗ trợ cả khách vãng lai và thành viên)
-        allow create: if true;
-        
-        // Người dùng xem đơn hàng của mình, Admin được quyền xem và cập nhật (để đổi trạng thái)
-        allow read: if request.auth != null && (request.auth.uid == resource.data.userId || 
-          exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
-        
-        // Admin có thể cập nhật bất kỳ trường nào
-        // Người dùng chỉ có thể cập nhật trạng thái của đơn hàng của chính mình thành "Đã hủy"
-        allow update: if request.auth != null && (
-          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-          (request.auth.uid == resource.data.userId && resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy")
-        );
-    }
-
-    // Quy tắc cho collection Coupons (Mã giảm giá)
-    match /coupons/{couponId} {
-        // Cho phép mọi người đọc để áp dụng mã khi thanh toán
-        allow read: if true;
-        // Chỉ Admin mới được tạo hoặc sửa mã giảm giá
-        allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     match /favorites/{userId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Quy tắc cho collection Đánh giá (reviews)
+    // 4. Thông tin người dùng (users)
+    match /users/{userId} {
+      // Cho phép đọc nếu là chính chủ, admin, hoặc là tài khoản ghost (để tìm kiếm khi login)
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
+      // Cho phép ghi/xóa nếu là chính chủ, admin, hoặc thao tác trên tài khoản ghost
+      allow write, delete: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
+      allow create: if true; // Cho phép tạo ghost account khi đặt hàng
+    }
+
+    // 5. Đơn hàng (orders)
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      // Admin sửa mọi thứ, User chỉ được Hủy khi đang xử lý
+      allow update: if isAdmin() || 
+        (request.auth != null && request.auth.uid == resource.data.userId && 
+         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy");
+    }
+
+    // 6. Mã giảm giá (coupons)
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 7. Đánh giá (reviews)
     match /reviews/{reviewId} {
-        allow read: if true;
-        allow create: if request.auth != null;
-        // Chỉ người tạo hoặc Admin mới được xóa/sửa (tùy chọn)
-        allow update, delete: if request.auth != null && 
-            (request.auth.uid == resource.data.userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
     }
 
-    // Chặn tất cả các truy cập khác mặc định để bảo mật
     match /{document=**} {
       allow read, write: if false;
     }
@@ -89,36 +73,21 @@ service cloud.firestore {
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // 1. Quy tắc cho thư mục ảnh sản phẩm (products)
     match /products/{productId}/{allPaths=**} {
-      // Cho phép mọi người xem ảnh sản phẩm để hiển thị trên website
       allow read: if true;
-
-      // Ngăn chặn "người lạ" xóa hoặc sửa ảnh
-      // Chỉ cho phép Admin (đã xác thực qua Firestore) thực hiện các thao tác thay đổi dữ liệu
       allow create, update, delete: if request.auth != null && 
         firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
 
-    // 2. Quy tắc cho thư mục ảnh đại diện (avatars) - Chuẩn bị cho tính năng upload avatar
     match /avatars/{userId}/{allPaths=**} {
-      // Ảnh đại diện có thể để chế độ công khai để hiển thị trên đánh giá/header
       allow read: if true;
-
-      // Người dùng chỉ được phép upload, sửa hoặc xóa ảnh đại diện của chính mình
       allow create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // 3. Quy tắc cho ảnh đánh giá
     match /reviews/{productId}/{allPaths=**} {
       allow read: if true;
       allow create: if request.auth != null;
       allow delete: if request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
-    }
-
-    // 3. Mặc định chặn tất cả các truy cập khác để đảm bảo an toàn tuyệt đối
-    match /{allPaths=**} {
-      allow read, write: if false;
     }
   }
 }
