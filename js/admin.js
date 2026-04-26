@@ -623,7 +623,7 @@ function printPOSReceipt(orderId, customer, items, total) {
         <div class="receipt-header">
             <h2>TIỆM NHÀ GỐM</h2>
             <p>Gốm & Decor thủ công</p>
-            <p>SĐT: 0901 234 567</p>
+            <p>SĐT: 033 769 6231 - 090 938 0652</p>
         </div>
         <div class="receipt-info">
             <p><strong>Mã ĐH:</strong> #${orderId}</p>

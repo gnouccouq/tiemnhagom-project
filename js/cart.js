@@ -422,7 +422,7 @@ window.placeOrder = async () => {
 };
 
 function sendOrderToZalo(orderId, items, total, address, discount = 0) {
-    const shopPhone = "0901234567"; // Thay bằng SĐT Zalo thật của shop bạn
+    const shopPhone = "0337696231"; // Thay bằng SĐT Zalo thật của shop bạn
     let msg = `*ĐƠN HÀNG MỚI: #${orderId}*\n`;
     msg += `👤 Khách hàng: ${address.fullName}\n`;
     msg += `📞 Số điện thoại: ${address.phone}\n`;
