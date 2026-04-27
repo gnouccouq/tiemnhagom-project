@@ -262,7 +262,7 @@ function setupCookieConsent(pathPrefix) {
         <div class="cookie-text">
             <p style="font-size: 0.85rem; margin: 0; color: #555;">
                 <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
-                <a href="../privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
+                <a href="${pathPrefix}privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
             </p>
         </div>
         <div class="cookie-actions" style="display: flex; gap: 10px;">
