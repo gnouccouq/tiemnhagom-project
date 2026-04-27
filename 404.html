@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Không tìm thấy trang | Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .error-container {
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        /* Hiệu ứng bình gốm vỡ */
+        .vase-wrapper {
+            position: relative;
+            width: 200px;
+            height: 220px;
+            margin-bottom: 1rem;
+        }
+        .error-code {
+            font-family: var(--font-serif);
+            font-size: 8rem;
+            line-height: 1;
+            color: #eceae6; /* Màu nhạt hơn để làm nền sau bình */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+        .broken-vase {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.05));
+        }
+        .vase-part {
+            fill: url(#vaseGradient); /* Sử dụng gradient để tạo độ bóng */
+            stroke: #5a8f79;
+            stroke-width: 0.5;
+            transition: all 0.5s ease;
+        }
+        .vase-gloss-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.4);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            pointer-events: none;
+        }
+        /* Các mảnh vỡ nhỏ */
+        .vase-shard {
+            fill: url(#vaseGradient);
+            stroke: #5a8f79;
+            stroke-width: 0.2;
+            opacity: 0;
+        }
+        /* Hiệu ứng bụi mờ (smoke) */
+        .vase-smoke {
+            fill: #d1d1d1;
+            opacity: 0;
+        }
+        .smoke-1 { animation: smoke-rise 2s ease-out forwards; animation-delay: 1.2s; }
+        .smoke-2 { animation: smoke-rise 2.2s ease-out forwards; animation-delay: 1.3s; }
+        .smoke-3 { animation: smoke-rise 1.8s ease-out forwards; animation-delay: 1.4s; }
+
+        @keyframes smoke-rise {
+            0% { 
+                transform: translateY(80px) scale(0.5); 
+                opacity: 0; 
+            }
+            20% { 
+                opacity: 0.4; 
+            }
+            100% { 
+                transform: translateY(20px) scale(2.5); 
+                opacity: 0; 
+                filter: blur(5px);
+            }
+        }
+
+        .vase-left {
+            transform-origin: 50% 100%;
+            animation: break-left 2.5s ease-out forwards;
+            animation-delay: 0.5s;
+        }
+        .vase-right {
+            transform-origin: 50% 100%;
+            animation: break-right 2.5s ease-out forwards;
+            animation-delay: 0.5s;
+        }
+
+        /* Animation cho các mảnh vỡ */
+        .shard-1 { animation: shard-fly-1 2s ease-out forwards; animation-delay: 0.7s; }
+        .shard-2 { animation: shard-fly-2 2.2s ease-out forwards; animation-delay: 0.7s; }
+        .shard-3 { animation: shard-fly-3 1.8s ease-out forwards; animation-delay: 0.7s; }
+
+        @keyframes shard-fly-1 {
+            0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate(-100px, 30px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes shard-fly-2 {
+            0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate(80px, 50px) rotate(-450deg); opacity: 0; }
+        }
+        @keyframes shard-fly-3 {
+            0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate(-30px, 80px) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes break-left {
+            0% { transform: rotate(0) translate(0); }
+            15% { transform: rotate(-2deg) translate(-2px, 0); } /* Rung nhẹ trước khi vỡ */
+            30% { transform: rotate(-25deg) translate(-40px, 20px); opacity: 0.9; }
+            100% { transform: rotate(-35deg) translate(-60px, 40px); opacity: 0.7; }
+        }
+        @keyframes break-right {
+            0% { transform: rotate(0) translate(0); }
+            15% { transform: rotate(2deg) translate(2px, 0); }
+            30% { transform: rotate(25deg) translate(40px, 20px); opacity: 0.9; }
+            100% { transform: rotate(35deg) translate(60px, 40px); opacity: 0.7; }
+        }
+
+        .error-message {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            z-index: 3;
+        }
+    </style>
+    <!-- Logic điều hướng thông minh cho GitHub Pages -->
+    <script type="text/javascript">
+        // Nếu bạn muốn tự động quay về trang chủ sau 5 giây
+        setTimeout(function() {
+            window.location.href = './';
+        }, 5000);
+    </script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="error-container">
+        <div class="vase-wrapper">
+            <div class="error-code">404</div>
+            <svg class="broken-vase" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <!-- Định nghĩa dải màu tạo khối cho bình -->
+                    <linearGradient id="vaseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#8ec6ad" />
+                        <stop offset="40%" style="stop-color:#72b095" />
+                        <stop offset="100%" style="stop-color:#5a8f79" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Nửa bình bên trái với đường nứt răng cưa -->
+                <path class="vase-part vase-left" d="M50 15 L50 30 L47 35 L52 45 L48 55 L52 70 L50 85 L25 85 C20 85 20 75 20 60 C20 35 35 15 50 15Z" />
+                <path class="vase-gloss-line vase-left" d="M35 25 Q28 45 32 75" /> <!-- Điểm bóng bên trái -->
+
+                <!-- Nửa bình bên phải khớp với đường nứt -->
+                <path class="vase-part vase-right" d="M50 15 L50 30 L47 35 L52 45 L48 55 L52 70 L50 85 L75 85 C80 85 80 75 80 60 C80 35 65 15 50 15Z" />
+                <path class="vase-gloss-line vase-right" d="M68 28 Q72 45 70 65" style="stroke: rgba(255,255,255,0.15); stroke-width: 1.5;" /> <!-- Điểm bóng phụ bên phải -->
+
+                <!-- Các mảnh vỡ nhỏ bắn ra -->
+                <path class="vase-shard shard-1" d="M48 40 L44 42 L47 45 Z" />
+                <path class="vase-shard shard-2" d="M52 50 L55 53 L51 55 Z" />
+                <path class="vase-shard shard-3" d="M49 65 L53 67 L50 70 Z" />
+
+                <!-- Các làn bụi bốc lên -->
+                <circle class="vase-smoke smoke-1" cx="30" cy="10" r="5" />
+                <circle class="vase-smoke smoke-2" cx="50" cy="15" r="7" />
+                <circle class="vase-smoke smoke-3" cx="70" cy="10" r="4" />
+            </svg>
+        </div>
+        <h1 class="error-message">Rất tiếc, trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.</h1>
+        <p style="color: #888; margin-bottom: 2rem;">Bạn sẽ được tự động đưa về trang chủ sau vài giây...</p>
+        <a href="./" class="btn-dark">Quay về trang chủ ngay</a>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { initHeader } from "./js/utils.js";
+        document.addEventListener('DOMContentLoaded', () => {
+            initHeader('./');
+        });
+    </script>
+</body>
+</html>

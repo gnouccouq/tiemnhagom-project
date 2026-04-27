@@ -1,6 +1,6 @@
 // js/main.js
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, initAutocomplete 
 } from "./utils.js";
 import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -159,5 +159,16 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchSaleProducts();
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
+
+        // Khởi tạo tìm kiếm trang chủ
+        initAutocomplete('home-search-input', 'home-search-suggestions', '');
+
+        const searchInput = document.getElementById('home-search-input');
+        const navigateToSearch = () => {
+            const val = searchInput.value.trim();
+            if (val) window.location.href = `products/?search=${encodeURIComponent(val)}`;
+        };
+        document.getElementById('home-search-btn')?.addEventListener('click', navigateToSearch);
+        searchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigateToSearch(); });
     });
 });

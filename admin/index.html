@@ -82,6 +82,22 @@
                             <label>Mô tả</label>
                             <textarea id="description" rows="3" placeholder="Thông tin chi tiết..."></textarea>
                         </div>
+                        <hr style="margin: 2rem 0; border-top: 1px dashed #ddd;">
+                        <h4 style="margin-bottom: 1rem; font-family: var(--font-serif);">Tối ưu SEO</h4>
+                        <div class="form-group">
+                            <label>SEO Title (Tiêu đề Google)</label>
+                            <input type="text" id="seoTitle" placeholder="Để trống nếu dùng tên sản phẩm...">
+                            <small style="color: #888;">Nên dưới 60 ký tự.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>SEO Description (Mô tả Google)</label>
+                            <textarea id="seoDescription" rows="2" placeholder="Mô tả ngắn gọn thu hút khách hàng click..."></textarea>
+                            <small style="color: #888;">Nên từ 150-160 ký tự.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Slug (URL thân thiện - Không dấu, gạch ngang)</label>
+                            <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
+                        </div>
                         <button type="submit" class="btn-dark" style="width: 100%;">Lưu sản phẩm</button>
                     </form>
                 </div>
@@ -89,6 +105,12 @@
                 <!-- Danh sách sản phẩm -->
                 <div class="admin-card">
                     <h3>Danh sách sản phẩm hiện có</h3>
+                    
+                    <!-- Ô tìm kiếm sản phẩm trong quản trị -->
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <input type="text" id="admin-product-search" placeholder="Tìm nhanh theo tên hoặc mã sản phẩm...">
+                    </div>
+
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
@@ -150,7 +172,14 @@
                     </div>
                     <div class="form-group">
                         <label>Tổng tiền thanh toán</label>
-                        <input type="number" id="pos-total-amount" style="font-size: 1.5rem; font-weight: bold;">
+                        <div style="display: flex; gap: 10px; align-items: stretch;">
+                            <input type="text" id="pos-total-amount" style="font-size: 1.5rem; font-weight: bold; flex: 1;" readonly>
+                            <div style="display: flex; gap: 5px;">
+                                <button type="button" class="btn-minimal" onclick="window.applyQuickDiscount(5)" style="margin: 0; padding: 0 10px; font-weight: 600;">-5%</button>
+                                <button type="button" class="btn-minimal" onclick="window.applyQuickDiscount(10)" style="margin: 0; padding: 0 10px; font-weight: 600;">-10%</button>
+                            </div>
+                        </div>
+                        <p id="pos-discount-info" style="font-size: 0.8rem; color: #27ae60; margin-top: 5px; display: none; font-weight: 600;"></p>
                     </div>
                     <button type="button" onclick="createPOSOrder()" class="btn-dark" style="width: 100%;">Hoàn tất & Lưu doanh thu</button>
                 </div>

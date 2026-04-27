@@ -1,6 +1,6 @@
 import { 
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
-    renderProductCard, addToCart, addToHistory 
+    renderProductCard, addToCart, addToHistory, initAutocomplete
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -276,12 +276,12 @@ async function fetchProductDetail() {
             </div>`;
 
             // Tối ưu SEO: Cập nhật Title và các thẻ Meta (Description, Open Graph)
-            const seoTitle = `${p.name} | ${p.category} | Tiệm Nhà Gốm`;
+            const seoTitle = p.seoTitle || `${p.name} | ${p.category} | Tiệm Nhà Gốm`;
             document.title = seoTitle;
             
-            const seoDesc = p.description 
-                ? p.description.substring(0, 160).replace(/\s+/g, ' ').trim() 
-                : `Sản phẩm ${p.name} thủ công tinh xảo từ Tiệm Nhà Gốm. Khám phá ngay bộ sưu tập gốm sứ ${p.category} độc đáo.`;
+            const seoDesc = p.seoDescription || (p.description 
+                ? p.description.substring(0, 160).replace(/\s+/g, ' ').trim()
+                : `Sản phẩm ${p.name} thủ công tinh xảo từ Tiệm Nhà Gốm. Khám phá ngay bộ sưu tập gốm sứ ${p.category} độc đáo.`);
             
             updateMetaTag('name', 'description', seoDesc);
             updateMetaTag('property', 'og:title', seoTitle);
@@ -405,15 +405,16 @@ async function fetchRelatedProducts(currentProductId, currentCategory) {
         const q = query(
             collection(db, "products"),
             where("category", "==", currentCategory),
-            limit(4) // TỐI ƯU: Luôn giới hạn số lượng sản phẩm liên quan
+            limit(11) // Lấy dư 1 để phòng trường hợp trùng sản phẩm hiện tại
         );
         const querySnapshot = await getDocs(q);
         
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
-            if (doc.id !== currentProductId && count < 4) { // Lấy tối đa 4 sản phẩm khác
-                htmlContent += renderProductCard(doc.data(), doc.id);
+            if (doc.id !== currentProductId && count < 10) { // Hiển thị tối đa 10 sản phẩm (2 hàng x 5 cột)
+                // Truyền './index.html' làm linkBase vì chúng ta đang ở trong thư mục /product/
+                htmlContent += renderProductCard(doc.data(), doc.id, [], './index.html');
                 count++;
             }
         });
@@ -437,7 +438,7 @@ async function fetchRecentlyViewed(currentProductId) {
     const historyToShow = history
         .map(item => typeof item === 'string' ? item : item.id) // Trích xuất ID từ object
         .filter(id => id !== currentProductId)
-        .slice(0, 4);
+        .slice(0, 10); // Lấy tối đa 10 sản phẩm để chia đều 2 hàng x 5 cột
 
     if (historyToShow.length === 0) return;
 
@@ -737,5 +738,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const pid = urlParams.get('id');
         if (pid) initReviewForm(pid);
+
+        // Khởi tạo tìm kiếm thông minh bằng hàm dùng chung
+        initAutocomplete('detail-search-input', 'detail-search-suggestions', '../');
+
+        const searchInput = document.getElementById('detail-search-input');
+        const navigateToSearch = () => {
+            const val = searchInput.value.trim();
+            if (val) window.location.href = `../products/?search=${encodeURIComponent(val)}`;
+        };
+
+        document.getElementById('detail-search-btn')?.addEventListener('click', navigateToSearch);
+        searchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') navigateToSearch();
+        });
+
+        // Tự động ẩn/hiện thanh tìm kiếm thông minh (Smart Header pattern)
+        let lastScrollY = window.scrollY;
+        const searchContainer = document.querySelector('.product-detail-container .search-container-home');
+        if (searchContainer) {
+            window.addEventListener('scroll', () => {
+                const currentScrollY = window.scrollY;
+                
+                // 1. Ẩn khi cuộn xuống và đã vượt qua 400px
+                if (currentScrollY > lastScrollY && currentScrollY > 400) {
+                    searchContainer.classList.add('hidden-scroll');
+                } 
+                // 2. Hiện lại khi cuộn ngược lên HOẶC khi đang ở gần đầu trang (dưới 100px)
+                else if (currentScrollY < lastScrollY || currentScrollY < 100) {
+                    searchContainer.classList.remove('hidden-scroll');
+                }
+                
+                lastScrollY = currentScrollY;
+            }, { passive: true });
+        }
     });
 });

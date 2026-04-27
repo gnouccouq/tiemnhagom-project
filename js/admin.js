@@ -39,8 +39,8 @@ async function convertToWebP(file) {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
             
-            // TỐI ƯU: Giảm xuống 400px để file cực nhẹ (phù hợp hiển thị 150px trên web)
-            const MAX_WIDTH = 400;
+            // TĂNG ĐỘ PHÂN GIẢI: Nâng lên 1200px để ảnh sắc nét trên mọi thiết bị
+            const MAX_WIDTH = 1200;
             let width = img.width;
             let height = img.height;
             if (width > MAX_WIDTH) {
@@ -55,7 +55,7 @@ async function convertToWebP(file) {
                 canvas.toBlob((blob) => {
                     const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
                     resolve(newFile);
-                }, 'image/webp', 0.8); // Nén chất lượng 80% để cân bằng dung lượng/chất lượng
+                }, 'image/webp', 0.85); // Tăng chất lượng nén lên 85% để giữ chi tiết tốt hơn
             };
             img.src = e.target.result;
         };
@@ -65,6 +65,7 @@ async function convertToWebP(file) {
 
 // Quản lý trạng thái kho hàng để phát hiện thay đổi tức thì
 const stockTracker = new Map();
+let posProductsLocal = []; // KHẮC PHỤC LỖI: Khai báo mảng chứa sản phẩm để tìm kiếm POS
 
 function notifyOutOfStock(productName) {
     // 1. Hiển thị thông báo Toast trong UI Admin
@@ -129,6 +130,14 @@ productForm.addEventListener('submit', async (e) => {
     const imageFiles = document.getElementById('imageFile').files;
     const submitBtn = productForm.querySelector('button[type="submit"]');
     
+    // Validation cơ bản
+    const price = Number(document.getElementById('price').value);
+    if (price <= 0) {
+        showToast("Giá sản phẩm phải lớn hơn 0", "error");
+        submitBtn.disabled = false;
+        return;
+    }
+    
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu sản phẩm...';
 
@@ -169,6 +178,9 @@ productForm.addEventListener('submit', async (e) => {
         imageUrl: finalImageUrl,
         additionalImages: currentAdditionals,
         description: document.getElementById('description').value,
+        seoTitle: document.getElementById('seoTitle').value.trim(),
+        seoDescription: document.getElementById('seoDescription').value.trim(),
+        slug: document.getElementById('slug').value.trim(),
         updatedAt: new Date().toISOString()
     };
 
@@ -191,6 +203,7 @@ productForm.addEventListener('submit', async (e) => {
 // Lắng nghe danh sách sản phẩm thời gian thực
 function initProductListener() {
     onSnapshot(collection(db, "products"), (snapshot) => {
+        posProductsLocal = []; // Reset mảng cache mỗi khi dữ liệu Firestore thay đổi
         // Logic theo dõi biến động kho hàng
         snapshot.docChanges().forEach(change => {
             const id = change.doc.id;
@@ -207,40 +220,54 @@ function initProductListener() {
             stockTracker.set(id, p.stock);
         });
 
-        let htmlContent = '';
         snapshot.forEach((doc) => {
             const p = doc.data();
-            const stockDisplay = p.stock <= 0 
-                ? `<span class="stock-badge stock-out">Hết hàng</span>` 
-                : p.stock;
-
-            htmlContent += `
-                <tr>
-                    <td><small>${doc.id}</small></td>
-                    <td><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                    <td><a href="javascript:void(0)" class="edit-link" data-id="${doc.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
-                    <td>${stockDisplay}</td>
-                    <td>${p.rating || 5}★</td>
-                    <td>${p.sale || 0}%</td>
-                    <td>
-                        <button class="btn-delete" data-id="${doc.id}">Xóa</button>
-                    </td>
-                </tr>
-            `;
-        });
-        productListTable.innerHTML = htmlContent || '<tr><td colspan="8">Chưa có sản phẩm.</td></tr>';
-
-        // Gán sự kiện xóa cho các nút mới render
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.onclick = () => deleteProduct(btn.getAttribute('data-id'));
+            // Đổ dữ liệu vào mảng local để phục vụ tìm kiếm POS không cần gọi API lại
+            posProductsLocal.push({ id: doc.id, ...p });
         });
 
-        // Gán sự kiện chỉnh sửa khi click vào tên
-        document.querySelectorAll('.edit-link').forEach(link => {
-            link.onclick = () => editProduct(link.getAttribute('data-id'));
-        });
+        renderAdminProductTable(); // Gọi hàm hiển thị bảng
     });
+}
+
+// Hàm hiển thị bảng sản phẩm Admin (có hỗ trợ lọc tìm kiếm)
+function renderAdminProductTable() {
+    const listTable = document.getElementById('admin-product-list');
+    const searchInput = document.getElementById('admin-product-search');
+    if (!listTable) return;
+
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    // Lọc sản phẩm dựa trên từ khóa tìm kiếm từ mảng local đã cache
+    const filtered = posProductsLocal.filter(p => 
+        (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term)
+    );
+
+    let htmlContent = '';
+    filtered.forEach((p) => {
+        const stockDisplay = p.stock <= 0 
+            ? `<span class="stock-badge stock-out">Hết hàng</span>` 
+            : p.stock;
+
+        htmlContent += `
+            <tr>
+                <td><small>${p.id}</small></td>
+                <td><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
+                <td><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
+                <td>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td>${stockDisplay}</td>
+                <td>${p.rating || 5}★</td>
+                <td>${p.sale || 0}%</td>
+                <td>
+                    <button class="btn-delete" data-id="${p.id}">Xóa</button>
+                </td>
+            </tr>`;
+    });
+    
+    listTable.innerHTML = htmlContent || '<tr><td colspan="8" style="text-align:center;">Không tìm thấy sản phẩm phù hợp.</td></tr>';
+
+    // Gán lại sự kiện cho các nút mới render
+    document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = () => deleteProduct(btn.getAttribute('data-id')));
+    document.querySelectorAll('.edit-link').forEach(link => link.onclick = () => editProduct(link.getAttribute('data-id')));
 }
 
 async function editProduct(id) {
@@ -259,6 +286,9 @@ async function editProduct(id) {
             document.getElementById('rating').value = p.rating || 5;
             document.getElementById('sale').value = p.sale || 0;
             document.getElementById('description').value = p.description || '';
+            document.getElementById('seoTitle').value = p.seoTitle || '';
+            document.getElementById('seoDescription').value = p.seoDescription || '';
+            document.getElementById('slug').value = p.slug || '';
             
             // Lưu URL ảnh hiện tại để không bị mất nếu không upload ảnh mới
             document.getElementById('productId').dataset.currentImageUrl = p.imageUrl;
@@ -536,21 +566,25 @@ window.viewUserOrders = (userId) => {
 // --- Logic POS (Bán tại shop) ---
 let posCart = [];
 window.currentPOSCustomerId = null;
+let posDiscountPercent = 0; // Biến lưu tỷ lệ chiết khấu
 
 function renderPOSCart() {
     const list = document.getElementById('pos-cart-list');
     const totalInput = document.getElementById('pos-total-amount');
+    const discountInfo = document.getElementById('pos-discount-info');
     if (!list) return;
 
     if (posCart.length === 0) {
         list.innerHTML = '<p style="color: #999; font-size: 0.9rem; text-align: center; margin-top: 2rem;">Chưa có sản phẩm nào được chọn.</p>';
-        if (totalInput) totalInput.value = 0;
+        if (totalInput) totalInput.value = "0";
+        if (discountInfo) discountInfo.style.display = 'none';
+        posDiscountPercent = 0;
         return;
     }
 
-    let total = 0;
+    let subtotal = 0;
     list.innerHTML = posCart.map((item, index) => {
-        total += item.price * item.quantity;
+        subtotal += item.price * item.quantity;
         return `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f5f5f5;">
                 <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
@@ -568,8 +602,27 @@ function renderPOSCart() {
         `;
     }).join('');
 
-    if (totalInput) totalInput.value = total;
+    const discountVal = Math.round(subtotal * (posDiscountPercent / 100));
+    const total = subtotal - discountVal;
+
+    if (totalInput) totalInput.value = new Intl.NumberFormat('vi-VN').format(total);
+    
+    if (discountInfo) {
+        if (posDiscountPercent > 0) {
+            discountInfo.innerText = `Đã chiết khấu ${posDiscountPercent}% (-${new Intl.NumberFormat('vi-VN').format(discountVal)}đ)`;
+            discountInfo.style.display = 'block';
+        } else {
+            discountInfo.style.display = 'none';
+        }
+    }
 }
+
+window.applyQuickDiscount = (percent) => {
+    if (posCart.length === 0) return;
+    // Toggle logic: nhấn lại cùng mức % thì hủy bỏ
+    posDiscountPercent = (posDiscountPercent === percent) ? 0 : percent;
+    renderPOSCart();
+};
 
 window.changePOSQty = (index, delta) => {
     posCart[index].quantity += delta;
@@ -583,10 +636,22 @@ window.removePOSItem = (index) => {
 };
 
 window.addProductToPOS = (id, name, price, image) => {
+    // Tìm thông tin sản phẩm trong cache local để kiểm tra tồn kho
+    const productInfo = posProductsLocal.find(p => p.id === id);
+    const currentStock = productInfo ? (productInfo.stock || 0) : 0;
+
     const existing = posCart.find(i => i.id === id);
     if (existing) {
+        if (existing.quantity >= currentStock) {
+            showToast(`Sản phẩm "${name}" chỉ còn tối đa ${currentStock} trong kho`, "error");
+            return;
+        }
         existing.quantity++;
     } else {
+        if (currentStock <= 0) {
+            showToast("Sản phẩm này đã hết hàng!", "error");
+            return;
+        }
         posCart.push({ id, name, price, image, quantity: 1 });
     }
     document.getElementById('pos-product-search').value = '';
@@ -660,7 +725,8 @@ window.createPOSOrder = async () => {
     const name = document.getElementById('pos-cust-name').value;
     const phone = document.getElementById('pos-cust-phone').value;
     const email = document.getElementById('pos-cust-email').value;
-    const total = Number(document.getElementById('pos-total-amount').value);
+    const totalText = document.getElementById('pos-total-amount').value;
+    const total = Number(totalText.replace(/\./g, ''));
 
     if (!name || !phone || total <= 0 || posCart.length === 0) {
         showToast("Vui lòng điền đủ thông tin khách, chọn sản phẩm và đảm bảo số tiền > 0", "error");
@@ -679,7 +745,7 @@ window.createPOSOrder = async () => {
                 identifiers: [phone, email].filter(Boolean), isGhost: true, createdAt: new Date().toISOString()
             });
         }
-        await addDoc(collection(db, "orders"), {
+        const docRef = await addDoc(collection(db, "orders"), {
             userId: customerId, productNames: posCart.map(i => i.name),
             items: posCart, totalAmount: total, status: "Đã hoàn thành",
             paymentMethod: "Tại cửa hàng", orderDate: serverTimestamp(),
@@ -696,6 +762,7 @@ window.createPOSOrder = async () => {
         showToast("Đã lưu đơn hàng thành công!");
         document.getElementById('pos-customer-form').reset();
         posCart = [];
+        posDiscountPercent = 0;
         renderPOSCart();
     } catch (e) { showToast("Lỗi POS: " + e.message, "error"); }
     finally { if (btn) { btn.disabled = false; btn.innerHTML = "Hoàn tất & Lưu doanh thu"; } }
@@ -849,42 +916,110 @@ document.addEventListener('DOMContentLoaded', () => {
     const posSearchInput = document.getElementById('pos-product-search');
     const posSuggestions = document.getElementById('pos-product-suggestions');
     let posSearchTimer;
+    let posHighlightedIndex = -1; // Theo dõi vị trí đang chọn bằng phím mũi tên
 
     if (posSearchInput && posSuggestions) {
+        // Phím tắt toàn cục: Nhấn F2 hoặc '/' để focus vào ô tìm kiếm POS
+        document.addEventListener('keydown', (e) => {
+            const posSection = document.getElementById('pos-section');
+            if (posSection?.classList.contains('active')) {
+                if (e.key === 'F2' || (e.key === '/' && document.activeElement !== posSearchInput)) {
+                    e.preventDefault();
+                    posSearchInput.focus();
+                }
+            }
+        });
+
+        // Điều hướng bằng bàn phím (Lên/Xuống/Enter/Esc) trong ô tìm kiếm
+        posSearchInput.addEventListener('keydown', (e) => {
+            const items = posSuggestions.querySelectorAll('.suggestion-item');
+            if (posSuggestions.style.display === 'none' || items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                posHighlightedIndex = (posHighlightedIndex + 1) % items.length;
+                updatePosHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                posHighlightedIndex = (posHighlightedIndex - 1 + items.length) % items.length;
+                updatePosHighlight(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (posHighlightedIndex >= 0 && items[posHighlightedIndex]) {
+                    items[posHighlightedIndex].click();
+                } else if (items.length === 1) {
+                    items[0].click(); // Tự động chọn nếu chỉ có 1 kết quả khớp
+                }
+            } else if (e.key === 'Escape') {
+                posSuggestions.style.display = 'none';
+            }
+        });
+
+        const updatePosHighlight = (items) => {
+            items.forEach((item, index) => {
+                item.style.backgroundColor = (index === posHighlightedIndex) ? '#f0f0f0' : '';
+                if (index === posHighlightedIndex) item.scrollIntoView({ block: 'nearest' });
+            });
+        };
+
         posSearchInput.addEventListener('input', () => {
             clearTimeout(posSearchTimer);
             const val = posSearchInput.value.trim();
-            if (val.length < 2) {
+            if (!val) {
                 posSuggestions.style.display = 'none';
                 return;
             }
 
             posSearchTimer = setTimeout(async () => {
-                const q = query(collection(db, "products"), 
-                    where("name", ">=", val), 
-                    where("name", "<=", val + '\uf8ff'), 
-                    limit(5));
-                const snap = await getDocs(q);
+                posHighlightedIndex = -1; // Reset highlight khi có kết quả mới
+
+                // Hiển thị spinner trong khi chờ dữ liệu
+                posSuggestions.innerHTML = `<div style="padding: 15px; text-align: center;"><div class="spinner"></div></div>`;
+                posSuggestions.style.display = 'block';
+
+                const searchLower = val.toLowerCase();
+                // TỐI ƯU: Tìm kiếm trực tiếp trên mảng local đã có từ onSnapshot
+                const results = posProductsLocal.filter(p => 
+                    (p.name || "").toLowerCase().includes(searchLower) || p.id.toLowerCase().includes(searchLower)
+                ).sort((a, b) => {
+                    const aIdMatch = a.id.toLowerCase().startsWith(searchLower);
+                    const bIdMatch = b.id.toLowerCase().startsWith(searchLower);
+                    const aNameStart = (a.name || "").toLowerCase().startsWith(searchLower);
+                    const bNameStart = (b.name || "").toLowerCase().startsWith(searchLower);
+
+                    if (aIdMatch && !bIdMatch) return -1;
+                    if (!aIdMatch && bIdMatch) return 1;
+                    if (aNameStart && !bNameStart) return -1;
+                    if (!aNameStart && bNameStart) return 1;
+                    return (a.name || "").localeCompare(b.name || "");
+                }).slice(0, 5);
                 
-                if (snap.empty) {
-                    posSuggestions.style.display = 'none';
+                if (results.length === 0) {
+                    posSuggestions.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy</div>`;
                     return;
                 }
 
-                posSuggestions.innerHTML = snap.docs.map(doc => {
-                    const p = doc.data();
+                posSuggestions.innerHTML = results.map(p => {
+                    const isOut = (p.stock || 0) <= 0;
                     return `
-                        <div class="suggestion-item" onclick="window.addProductToPOS('${doc.id}', '${p.name}', ${p.price}, '${p.imageUrl}')">
+                        <div class="suggestion-item" 
+                             onclick="${isOut ? "showToast('Sản phẩm đã hết hàng', 'error')" : `window.addProductToPOS('${p.id}', '${p.name}', ${p.price}, '${p.imageUrl}')`}" 
+                             style="${isOut ? 'opacity: 0.5; cursor: not-allowed;' : 'cursor: pointer;'}">
                             <img src="${p.imageUrl}" alt="${p.name}">
                             <div class="suggestion-info">
                                 <h5>${p.name}</h5>
-                                <p>${new Intl.NumberFormat('vi-VN').format(p.price)}đ - Kho: ${p.stock}</p>
+                                <p style="margin:0; font-size:0.8rem;">
+                                    ${new Intl.NumberFormat('vi-VN').format(p.price)}đ &bull; 
+                                    <span style="color: ${isOut ? '#c0392b' : '#27ae60'}; font-weight: 600;">
+                                        ${isOut ? 'Hết hàng' : `Tồn kho: ${p.stock}`}
+                                   </span>
+                                </p>
                             </div>
                         </div>
                     `;
                 }).join('');
                 posSuggestions.style.display = 'block';
-            }, 300);
+            }, 200); // Giảm xuống 200ms để hiện kết quả nhanh hơn
         });
 
         document.addEventListener('click', (e) => {
@@ -894,6 +1029,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Gán sự kiện tìm kiếm "tức thì" cho tab Quản lý sản phẩm
+    document.getElementById('admin-product-search')?.addEventListener('input', renderAdminProductTable);
+
     renderPOSCart(); // Khởi tạo giao diện giỏ hàng trống cho POS
 
     // Lắng nghe sự kiện cho các bộ lọc đơn hàng

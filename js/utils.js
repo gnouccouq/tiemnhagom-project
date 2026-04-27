@@ -181,6 +181,109 @@ export function addToHistory(productId, category = null) {
     localStorage.setItem('viewed_products', JSON.stringify(history));
 }
 
+// 9. Logic Tìm kiếm tức thì dùng chung (Autocomplete)
+let allProductsCache = null; // Đưa ra ngoài để cache toàn cục, tránh tải lại khi chuyển trang
+
+export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(suggestionsId);
+    let timer;
+
+    if (!input || !box) return;
+
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        const val = input.value.trim().toLowerCase();
+        if (!val) { box.style.display = 'none'; return; }
+
+        timer = setTimeout(async () => {
+            box.innerHTML = `<div style="padding: 15px; text-align: center;"><div class="spinner"></div></div>`;
+            box.style.display = 'block';
+
+            try {
+                if (!allProductsCache) {
+                    const snap = await getDocs(collection(db, "products"));
+                    allProductsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                }
+
+                let results = allProductsCache.filter(p => 
+                    (p.name || "").toLowerCase().includes(val) || p.id.toLowerCase().includes(val)
+                ).sort((a, b) => {
+                    // Ưu tiên khớp mã sản phẩm (ID) trước, sau đó tới tên bắt đầu bằng từ khóa
+                    const aIdMatch = a.id.toLowerCase().startsWith(val);
+                    const bIdMatch = b.id.toLowerCase().startsWith(val);
+                    const aNameStart = (a.name || "").toLowerCase().startsWith(val);
+                    const bNameStart = (b.name || "").toLowerCase().startsWith(val);
+
+                    if (aIdMatch && !bIdMatch) return -1;
+                    if (!aIdMatch && bIdMatch) return 1;
+                    if (aNameStart && !bNameStart) return -1;
+                    if (!aNameStart && bNameStart) return 1;
+                    return (a.name || "").localeCompare(b.name || "");
+                }).slice(0, 6);
+
+                if (results.length === 0) {
+                    box.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy sản phẩm phù hợp</div>`;
+                    return;
+                }
+
+                box.innerHTML = results.map(p => {
+                    const hasSale = p.sale > 0;
+                    const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
+                    return `
+                        <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
+                            <img src="${p.imageUrl}" alt="${p.name}">
+                            <div class="suggestion-info">
+                                <h5>${p.name}</h5>
+                                <div class="suggestion-price-container">
+                                    ${hasSale ? `<span class="suggestion-old-price">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
+                                    <span class="suggestion-current-price ${hasSale ? 'sale' : ''}">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
+                                    ${hasSale ? `<span class="suggestion-sale-tag">-${p.sale}%</span>` : ''}
+                                </div>
+                            </div>
+                        </a>`;
+                }).join('');
+            } catch (e) { console.error(e); }
+        }, 200);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
+    });
+}
+
+// 10. Logic: Cookie Consent Popup
+function setupCookieConsent(pathPrefix) {
+    if (localStorage.getItem('cookie_choice_v1')) return;
+
+    const consentDiv = document.createElement('div');
+    consentDiv.className = 'cookie-consent';
+    consentDiv.innerHTML = `
+        <div class="cookie-text">
+            <p style="font-size: 0.85rem; margin: 0; color: #555;">
+                <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
+                <a href="${pathPrefix}legal/privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
+            </p>
+        </div>
+        <div class="cookie-actions" style="display: flex; gap: 10px;">
+            <button id="btn-decline-cookie" class="btn-outline" style="margin: 0; padding: 0.6rem 1.5rem; font-size: 0.8rem; border-radius: 30px; white-space: nowrap;">Từ chối</button>
+            <button id="btn-accept-cookie" class="btn-dark" style="margin: 0; padding: 0.6rem 2rem; font-size: 0.8rem; border-radius: 30px; white-space: nowrap;">Chấp nhận</button>
+        </div>
+    `;
+    document.body.appendChild(consentDiv);
+
+    setTimeout(() => consentDiv.classList.add('show'), 2000);
+
+    const handleChoice = (choice) => {
+        localStorage.setItem('cookie_choice_v1', choice);
+        consentDiv.classList.remove('show');
+        setTimeout(() => consentDiv.remove(), 600);
+    };
+
+    document.getElementById('btn-accept-cookie').onclick = () => handleChoice('accepted');
+    document.getElementById('btn-decline-cookie').onclick = () => handleChoice('declined');
+}
+
 // 8. Logic UI: Render thẻ sản phẩm dùng chung
 export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html') {
     const rating = product.rating || 5;
@@ -385,6 +488,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         updateCartCount(user);
         updateFavoriteCount(user);
 
+        // Khởi tạo popup Cookie
+        setupCookieConsent(pathPrefix);
+
         // Chạy logic riêng của từng trang (nếu có)
         if (onAuthChangeCallback) onAuthChangeCallback(user);
     });
@@ -437,7 +543,8 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="\.\/"/g, `href="${pathPrefix}"`)
                 .replace(/href="products\/"/g, `href="${pathPrefix}products/"`)
                 .replace(/href="cart\/"/g, `href="${pathPrefix}cart/"`)
-                .replace(/href="profile\/"/g, `href="${pathPrefix}profile/"`);
+                .replace(/href="profile\/"/g, `href="${pathPrefix}profile/"`)
+                .replace(/href="legal\//g, `href="${pathPrefix}legal/`); // Sửa để khớp với link trong footer
         };
 
         if (h.ok) {
@@ -476,60 +583,12 @@ export async function loadSharedComponents(pathPrefix = './') {
                     searchOverlay.classList.add('active');
                     searchInput.focus();
                 };
-                btnCloseSearch.onclick = () => searchOverlay.classList.remove('active');
-            }
-
-            // Logic gợi ý sản phẩm tức thì (Autocomplete)
-            const suggestionsBox = document.getElementById('search-suggestions');
-            let typingTimer;
-            if (searchInput && suggestionsBox) {
-                searchInput.setAttribute('aria-autocomplete', 'list');
-                searchInput.setAttribute('aria-controls', 'search-suggestions');
-                suggestionsBox.setAttribute('role', 'listbox');
-
-                searchInput.addEventListener('input', () => {
-                    clearTimeout(typingTimer);
-                    const val = searchInput.value.trim();
-                    
-                    if (val.length < 2) {
-                        suggestionsBox.style.display = 'none';
-                        return;
-                    }
-
-                    typingTimer = setTimeout(async () => {
-                        const q = query(collection(db, "products"), 
-                            where("name", ">=", val), 
-                            where("name", "<=", val + '\uf8ff'), 
-                            limit(5));
-                        const snap = await getDocs(q);
-                        
-                        if (snap.empty) {
-                            suggestionsBox.style.display = 'none';
-                            return;
-                        }
-
-                        suggestionsBox.innerHTML = snap.docs.map(doc => {
-                            const p = doc.data();
-                            return `
-                                <a href="${prefix}product/index.html?id=${doc.id}" class="suggestion-item" role="option">
-                                    <img src="${p.imageUrl}" alt="${p.name}">
-                                    <div class="suggestion-info">
-                                        <h5>${p.name}</h5>
-                                        <p>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</p>
-                                    </div>
-                                </a>
-                            `;
-                        }).join('');
-                        suggestionsBox.style.display = 'block';
-                    }, 300);
-                });
-
-                // Đóng box khi click ra ngoài
-                document.addEventListener('click', (e) => {
-                    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                        suggestionsBox.style.display = 'none';
-                    }
-                });
+                btnCloseSearch.onclick = () => {
+                    searchOverlay.classList.remove('active');
+                    document.getElementById('search-suggestions').style.display = 'none';
+                };
+                // Khởi tạo tìm kiếm cho Header Overlay
+                initAutocomplete('header-search-input', 'search-suggestions', prefix);
             }
         }
         if (f.ok) {

@@ -6,6 +6,9 @@
     <title>Sản phẩm - Tiệm Nhà Gốm</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+
+    <!-- Bảo mật: Ép trình duyệt nâng cấp các request HTTP lên HTTPS -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -13,20 +16,33 @@
     <div id="toast-container" class="toast-container"></div>
 
     <main class="product-detail-container">
+        <!-- Thanh tìm kiếm tích hợp cho trang chi tiết -->
+        <div class="search-container-home" style="max-width: 100%; margin-bottom: 2.5rem;">
+            <div class="search-bar-home">
+                <input type="text" id="detail-search-input" placeholder="Tìm sản phẩm khác hoặc mã sản phẩm...">
+                <button id="detail-search-btn" title="Tìm kiếm" style="background:none; border:none; cursor:pointer; display:flex; align-items:center;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+                <div id="detail-search-suggestions" class="search-suggestions"></div>
+            </div>
+        </div>
+
         <div id="product-detail-content" class="product-detail-grid">
             <!-- Dữ liệu sẽ được render từ Firebase -->
             <p style="text-align: center; grid-column: 1/-1; padding: 5rem;">Đang tải thông tin sản phẩm...</p>
         </div>
     </main>
 
-    <section id="recently-viewed-section" style="padding: 2rem 5%; max-width: 1200px; margin: 0 auto; display: none;">
+    <section id="recently-viewed-section" style="padding: 2rem 5%; max-width: 1600px; margin: 0 auto; display: none;">
         <h2 style="text-align: center; margin-bottom: 2rem; font-family: var(--font-serif);">Sản phẩm bạn đã xem</h2>
         <div id="recently-viewed-grid" class="grid">
             <!-- Sản phẩm đã xem sẽ render ở đây -->
         </div>
     </section>
 
-    <section id="related-products-section" style="padding: 4rem 5%; max-width: 1200px; margin: 0 auto; display: none;">
+    <section id="related-products-section" style="padding: 4rem 5%; max-width: 1600px; margin: 0 auto; display: none;">
         <h2 style="text-align: center; margin-bottom: 2rem; font-family: var(--font-serif);">Sản phẩm gợi ý khác</h2>
         <div id="related-product-grid" class="grid">
             <!-- Sản phẩm gợi ý sẽ được render ở đây -->
