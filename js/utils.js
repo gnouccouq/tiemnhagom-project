@@ -262,7 +262,7 @@ function setupCookieConsent(pathPrefix) {
         <div class="cookie-text">
             <p style="font-size: 0.85rem; margin: 0; color: #555;">
                 <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
-                <a href="${pathPrefix}legal/privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
+                <a href="../privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
             </p>
         </div>
         <div class="cookie-actions" style="display: flex; gap: 10px;">
@@ -537,14 +537,14 @@ export async function loadSharedComponents(pathPrefix = './') {
 
         const fixPaths = (html) => {
             // Tự động điều chỉnh đường dẫn dựa trên vị trí trang
-            if (pathPrefix === './') return html;
             return html
                 .replace(/src="Asset\//g, `src="${pathPrefix}Asset/`)
                 .replace(/href="\.\/"/g, `href="${pathPrefix}"`)
                 .replace(/href="products\/"/g, `href="${pathPrefix}products/"`)
                 .replace(/href="cart\/"/g, `href="${pathPrefix}cart/"`)
                 .replace(/href="profile\/"/g, `href="${pathPrefix}profile/"`)
-                .replace(/href="legal\//g, `href="${pathPrefix}legal/`); // Sửa để khớp với link trong footer
+                .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}privacy-policy.html"`)
+                .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`);
         };
 
         if (h.ok) {
