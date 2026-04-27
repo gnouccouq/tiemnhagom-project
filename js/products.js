@@ -132,15 +132,19 @@ async function fetchProducts(navigation = 'init') {
         if (searchTerm) {
             productsQuery = query(productsQuery, orderBy("name"));
         } else if (minPrice > 0 || maxPrice > 0) {
-            productsQuery = query(productsQuery, orderBy("price"));
+            // Firestore yêu cầu field dùng trong inequality filter (price) phải được orderBy đầu tiên.
+            // Ta lồng luôn logic chọn direction từ currentSort để tránh bị duplicate orderBy field price.
+            const priceDir = currentSort === 'price-desc' ? 'desc' : 'asc';
+            productsQuery = query(productsQuery, orderBy("price", priceDir));
         }
 
         switch (currentSort) {
             case 'price-asc':
-                productsQuery = query(productsQuery, orderBy("price", "asc"));
-                break;
             case 'price-desc':
-                productsQuery = query(productsQuery, orderBy("price", "desc"));
+                // Chỉ thêm orderBy price nếu trước đó chưa thêm (do không có lọc khoảng giá)
+                if (!(minPrice > 0 || maxPrice > 0)) {
+                    productsQuery = query(productsQuery, orderBy("price", currentSort === 'price-asc' ? 'asc' : 'desc'));
+                }
                 break;
             case 'rating-desc':
                 productsQuery = query(productsQuery, orderBy("rating", "desc"));
