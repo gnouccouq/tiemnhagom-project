@@ -106,9 +106,9 @@ window.moveImage = (direction, isUserAction = true) => {
 
     window.changeMainImage(allImages[nextIndex], nextIndex, isUserAction);
     
-    // Cuộn thumbnail tương ứng vào tầm nhìn
+    // Chỉ cuộn thumbnail vào tầm nhìn khi người dùng chủ động bấm (tránh giật trang khi auto-slide)
     const activeThumb = document.querySelectorAll('.thumbnail')[nextIndex];
-    if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (activeThumb && isUserAction) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 };
 
 async function fetchProductDetail() {
@@ -759,11 +759,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchContainer) {
             window.addEventListener('scroll', () => {
                 const currentScrollY = window.scrollY;
+                // Thêm một ngưỡng nhỏ (ví dụ 10px) để tránh việc ẩn/hiện quá nhạy gây giật trên mobile
+                const delta = 10;
+                if (Math.abs(currentScrollY - lastScrollY) < delta) return;
                 
                 // 1. Ẩn khi cuộn xuống và đã vượt qua 400px
                 if (currentScrollY > lastScrollY && currentScrollY > 400) {
                     searchContainer.classList.add('hidden-scroll');
-                } 
+                }
                 // 2. Hiện lại khi cuộn ngược lên HOẶC khi đang ở gần đầu trang (dưới 100px)
                 else if (currentScrollY < lastScrollY || currentScrollY < 100) {
                     searchContainer.classList.remove('hidden-scroll');
