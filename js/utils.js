@@ -576,10 +576,12 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/src="Asset\//g, `src="${pathPrefix}Asset/`)
                 .replace(/href="\.\/"/g, `href="${pathPrefix}"`)
                 .replace(/href="products\//g, `href="${pathPrefix}products/`)
+                .replace(/href="flash-sale\//g, `href="${pathPrefix}flash-sale/`)
                 .replace(/href="cart\//g, `href="${pathPrefix}cart/`)
                 .replace(/href="profile\//g, `href="${pathPrefix}profile/`)
                 .replace(/href="hoa-nha-gom\//g, `href="${pathPrefix}hoa-nha-gom/`)
                 .replace(/href="trang-tri-su-kien\//g, `href="${pathPrefix}trang-tri-su-kien/`)
+                .replace(/href="contact\//g, `href="${pathPrefix}contact/`)
                 .replace(/href="index\.html"/g, `href="${pathPrefix}index.html"`)
                 .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}privacy-policy.html"`)
                 .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`);

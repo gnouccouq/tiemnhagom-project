@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Sale | Ưu Đãi Giảm Giá Sốc | Tiệm Nhà Gốm</title>
+    <meta name="description" content="Khám phá các sản phẩm gốm sứ thủ công đang giảm giá cực sốc tại Flash Sale của Tiệm Nhà Gốm. Nhanh tay sở hữu những món đồ độc đáo với giá tốt nhất!">
+    <link rel="canonical" href="https://gnouccouq.github.io/tiemnhagom-project/flash-sale/">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Flash Sale | Ưu Đãi Giảm Giá Sốc | Tiệm Nhà Gốm">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gnouccouq.github.io/tiemnhagom-project/flash-sale/">
+    <meta property="og:title" content="Flash Sale | Ưu Đãi Giảm Giá Sốc | Tiệm Nhà Gốm">
+    <meta property="og:description" content="Khám phá các sản phẩm gốm sứ thủ công đang giảm giá cực sốc tại Flash Sale của Tiệm Nhà Gốm. Nhanh tay sở hữu những món đồ độc đáo với giá tốt nhất!">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1200&fm=webp&auto=format&fit=crop">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://gnouccouq.github.io/tiemnhagom-project/flash-sale/">
+    <meta name="twitter:title" content="Flash Sale | Ưu Đãi Giảm Giá Sốc | Tiệm Nhà Gốm">
+    <meta name="twitter:description" content="Khám phá các sản phẩm gốm sứ thủ công đang giảm giá cực sốc tại Flash Sale của Tiệm Nhà Gốm. Nhanh tay sở hữu những món đồ độc đáo với giá tốt nhất!">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1200&fm=webp&auto=format&fit=crop">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="products-page-container">
+        <h1 class="page-title">Flash Sale</h1>
+        <p style="text-align: center; margin-top: -2rem; margin-bottom: 3rem; color: #555;">Nhanh tay sở hữu những sản phẩm gốm thủ công độc đáo với giá ưu đãi!</p>
+
+        <div class="sort-options">
+            <label for="sort-by">Sắp xếp theo:</label>
+            <select id="sort-by">
+                <option value="sale-desc">Giảm giá nhiều nhất</option>
+                <option value="newest">Mới nhất</option>
+                <option value="price-asc">Giá tăng dần</option>
+                <option value="price-desc">Giá giảm dần</option>
+                <option value="rating-desc">Đánh giá cao nhất</option>
+            </select>
+        </div>
+
+        <div id="flash-sale-grid" class="grid">
+            <!-- Sản phẩm Flash Sale sẽ được render tại đây -->
+        </div>
+
+        <div id="no-flash-sale-products" style="text-align: center; padding: 5rem; display: none;">
+            <p style="font-size: 1.2rem; color: #888;">Rất tiếc, hiện tại không có sản phẩm nào đang Flash Sale.</p>
+            <p style="margin-top: 1rem;"><a href="../products/" class="btn-dark">Khám phá các sản phẩm khác</a></p>
+        </div>
+
+        <div class="pagination-container">
+            <button id="prev-page" class="btn-minimal">&larr; Trang trước</button>
+            <span id="page-info">Trang 1</span>
+            <button id="next-page" class="btn-minimal">Trang sau &rarr;</button>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/flash-sale.js"></script>
+</body>
+</html>
