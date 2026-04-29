@@ -1957,6 +1957,52 @@ footer {
 .btn-dark, .btn-outline {
     margin-top: 1.5rem; /* Đảm bảo khoảng cách với nội dung phía trên */
 }
+
+/* Flash Sale Page Banner */
+.flash-sale-banner {
+    width: 100%;
+    height: 450px;
+    background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1200&fm=webp&auto=format&fit=crop') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    margin-bottom: 4rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.banner-title {
+    font-family: var(--font-serif);
+    font-size: 4.5rem;
+    color: #fff !important;
+    margin-bottom: 0.8rem;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.flash-sale-banner p {
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
+}
+.sale-tag-hero {
+    display: inline-block;
+    background: #e74c3c;
+    color: #fff;
+    padding: 10px 30px;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.95rem;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    animation: banner-pulse 2s infinite;
+}
+@keyframes banner-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
 /* Hiệu ứng Loading Spinner */
 .spinner {
     width: 40px;
@@ -2760,6 +2806,17 @@ footer {
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         z-index: 2001;
     }
+}
+
+@media (max-width: 992px) {
+    .flash-sale-banner { height: 350px; }
+    .banner-title { font-size: 3.2rem; }
+}
+
+@media (max-width: 768px) {
+    .flash-sale-banner { height: 300px; padding: 20px; }
+    .banner-title { font-size: 2.5rem; }
+    .flash-sale-banner p { font-size: 1.1rem; }
 }
 
 @media (max-width: 480px) {
