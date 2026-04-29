@@ -12,6 +12,17 @@ let firstVisible = null; // Document đầu tiên của trang hiện tại
 let currentPage = 1;
 let searchTimeout; // Biến để xử lý debounce cho tìm kiếm
 
+// Hàm hỗ trợ cập nhật thẻ Meta cho SEO
+function updateMetaTag(attr, value, content) {
+    let element = document.querySelector(`meta[${attr}="${value}"]`);
+    if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attr, value);
+        document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+}
+
 // Hàm toggle yêu thích (dùng chung cho các trang hiển thị sản phẩm)
 window.toggleFavorite = async (event, productId) => {
     event.preventDefault();
@@ -101,6 +112,16 @@ async function fetchProducts(navigation = 'init') {
             firstVisible = null;
             currentPage = 1;
         }
+
+        // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục đang xem
+        const categoryDisplay = currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm';
+        const seoTitle = `${categoryDisplay} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
+        const seoDesc = `Khám phá bộ sưu tập ${categoryDisplay.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm thủ công chất lượng cao, thiết kế mộc mạc cho không gian sống.`;
+        
+        document.title = seoTitle;
+        updateMetaTag('name', 'description', seoDesc);
+        updateMetaTag('property', 'og:title', seoTitle);
+        updateMetaTag('property', 'og:description', seoDesc);
 
         // Apply filters
         if (searchTerm) {

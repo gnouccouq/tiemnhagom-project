@@ -819,15 +819,82 @@ h2 {
 .story-section {
     padding: 6rem 10%;
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 1.2fr 1fr;
     gap: 4rem;
     align-items: center;
-    background-color: #f2f0eb;
+    background-color: #fff;
 }
 .story-content { text-align: left; }
 .story-content h2 { text-align: center; margin-top: 0; margin-bottom: 2rem; }
 .story-content p { color: #555; margin-bottom: 2rem; font-size: 1.1rem; }
 .story-image img {
+    width: 100%;
+    border-radius: 2px;
+    box-shadow: 20px 20px 0px rgba(0,0,0,0.05);
+}
+
+/* Scroll Reveal Animation Classes */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(30px); /* Mặc định trượt lên cho các section khác */
+    transition: opacity 1s cubic-bezier(0.5, 0, 0, 1), transform 1s cubic-bezier(0.5, 0, 0, 1);
+}
+
+.reveal-on-scroll.reveal-left {
+    transform: translateX(-100px); /* Trượt từ trái qua */
+}
+
+.reveal-on-scroll.reveal-right {
+    transform: translateX(100px); /* Trượt từ phải qua */
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+/* Flower Intro Section */
+.flower-intro-section {
+    padding: 6rem 10%;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    background-color: #fff;
+}
+.flower-intro-content { text-align: left; }
+.flower-intro-content h2 { text-align: left; margin-bottom: 1.5rem; }
+.flower-intro-content p { color: #555; margin-bottom: 1.5rem; font-size: 1.1rem; }
+.flower-services-tags { display: flex; gap: 15px; margin-bottom: 2rem; flex-wrap: wrap; }
+.flower-services-tags span { 
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; 
+    padding: 5px 15px; border: 1px solid #ddd; border-radius: 20px; color: #777;
+}
+.flower-intro-image img {
+    width: 100%;
+    border-radius: 2px;
+    box-shadow: -20px 20px 0px rgba(0,0,0,0.05);
+}
+
+/* Event Intro Section */
+.event-intro-section {
+    padding: 6rem 10%;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 4rem;
+    align-items: center;
+    background-color: #f2f0eb;
+}
+.event-intro-content { text-align: left; }
+.event-intro-content h2 { text-align: left; margin-bottom: 1.5rem; }
+.event-intro-content p { color: #555; margin-bottom: 1.5rem; font-size: 1.1rem; }
+.event-services-tags { display: flex; gap: 15px; margin-bottom: 2rem; flex-wrap: wrap; }
+.event-services-tags span { 
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; 
+    padding: 5px 15px; border: 1px solid #ddd; border-radius: 20px; color: #777;
+    background: #fff;
+}
+.event-intro-image img {
     width: 100%;
     border-radius: 2px;
     box-shadow: 20px 20px 0px rgba(0,0,0,0.05);
@@ -924,8 +991,29 @@ footer {
 
 .social-links {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.social-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(247, 246, 242, 0.1);
+    transition: all 0.3s ease;
+    color: var(--bg-cream);
+    border: 1px solid rgba(247, 246, 242, 0.2);
+}
+
+.social-icon:hover {
+    background: var(--bg-cream);
+    color: var(--text-black);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 .footer-bottom {
@@ -962,6 +1050,15 @@ footer {
 @media (max-width: 992px) {
     .story-section { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
     .story-content h2 { text-align: center; }
+
+    .flower-intro-section { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
+    .flower-intro-content h2 { text-align: center; }
+    .flower-services-tags { justify-content: center; }
+    .flower-intro-image { order: -1; }
+
+    .event-intro-section { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
+    .event-intro-content h2 { text-align: center; }
+    .event-services-tags { justify-content: center; }
 }
 
 /* Skeleton Loading UI */
@@ -1094,7 +1191,7 @@ footer {
 
 @media (max-width: 768px) {
     .floating-widgets {
-        bottom: 20px;
+        bottom: 90px; /* Tăng khoảng cách để không bị đè bởi mobile-bottom-nav */
         right: 20px;
     }
     .float-btn {
@@ -1142,6 +1239,25 @@ footer {
 
 .heartbeat-anim {
     animation: heartbeat 0.4s ease-in-out;
+}
+
+/* Hiệu ứng rung nhẹ thu hút sự chú ý cho nút liên hệ */
+@keyframes ring-zalo {
+    0% { transform: scale(1) rotate(0); }
+    5% { transform: scale(1.1) rotate(15deg); }
+    10% { transform: scale(1.1) rotate(-15deg); }
+    15% { transform: scale(1.1) rotate(15deg); }
+    20% { transform: scale(1.1) rotate(-15deg); }
+    25% { transform: scale(1) rotate(0); }
+    100% { transform: scale(1) rotate(0); }
+}
+
+.vibrate-btn {
+    animation: ring-zalo 3s infinite; /* Rung mỗi 3 giây một lần */
+}
+
+.vibrate-btn:hover {
+    animation: none; /* Dừng rung khi rê chuột vào để khách dễ nhấn */
 }
 
 /* Admin Styles */

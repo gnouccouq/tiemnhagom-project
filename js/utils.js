@@ -48,6 +48,24 @@ export function showToast(message, type = 'success') {
     }, 4000);
 }
 
+// Logic UI: Xem ảnh toàn màn hình dùng chung cho Gallery
+export function setupFullScreenImages() {
+    window.openFullScreen = (src) => {
+        let overlay = document.getElementById('fullscreen-image-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'fullscreen-image-overlay';
+            overlay.className = 'fullscreen-overlay';
+            overlay.innerHTML = `<img src="" alt="Toàn màn hình">`;
+            overlay.onclick = () => overlay.style.display = 'none';
+            document.body.appendChild(overlay);
+        }
+        const img = overlay.querySelector('img');
+        img.src = src;
+        overlay.style.display = 'flex';
+    };
+}
+
 // 3. Logic UI: Nút cuộn lên đầu trang
 export function setupScrollToTop() {
     const btnScrollTop = document.getElementById('btn-scroll-top');
@@ -491,6 +509,23 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Khởi tạo popup Cookie
         setupCookieConsent(pathPrefix);
 
+        // Khởi tạo tính năng xem ảnh full screen
+        setupFullScreenImages();
+
+        // Khởi tạo hiệu ứng Scroll Reveal nếu có class reveal-on-scroll
+        const reveals = document.querySelectorAll('.reveal-on-scroll');
+        if (reveals.length > 0) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            reveals.forEach(r => observer.observe(r));
+        }
+
         // Chạy logic riêng của từng trang (nếu có)
         if (onAuthChangeCallback) onAuthChangeCallback(user);
     });
@@ -540,9 +575,12 @@ export async function loadSharedComponents(pathPrefix = './') {
             return html
                 .replace(/src="Asset\//g, `src="${pathPrefix}Asset/`)
                 .replace(/href="\.\/"/g, `href="${pathPrefix}"`)
-                .replace(/href="products\/"/g, `href="${pathPrefix}products/"`)
-                .replace(/href="cart\/"/g, `href="${pathPrefix}cart/"`)
-                .replace(/href="profile\/"/g, `href="${pathPrefix}profile/"`)
+                .replace(/href="products\//g, `href="${pathPrefix}products/`)
+                .replace(/href="cart\//g, `href="${pathPrefix}cart/`)
+                .replace(/href="profile\//g, `href="${pathPrefix}profile/`)
+                .replace(/href="hoa-nha-gom\//g, `href="${pathPrefix}hoa-nha-gom/`)
+                .replace(/href="trang-tri-su-kien\//g, `href="${pathPrefix}trang-tri-su-kien/`)
+                .replace(/href="index\.html"/g, `href="${pathPrefix}index.html"`)
                 .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}privacy-policy.html"`)
                 .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`);
         };

@@ -24,4 +24,16 @@
         <loc>https://gnouccouq.github.io/tiemnhagom-project/terms-of-service.html</loc>
         <priority>0.5</priority>
     </url>
+    <url>
+    <loc>https://gnouccouq.github.io/tiemnhagom-project/</loc>
+    <priority>1.0</priority>
+    </url>
+    <url>
+      <loc>https://gnouccouq.github.io/tiemnhagom-project/hoa-nha-gom/</loc>
+      <priority>0.8</priority>
+    </url>
+    <url>
+      <loc>https://gnouccouq.github.io/tiemnhagom-project/trang-tri-su-kien/</loc>
+      <priority>0.8</priority>
+    </url>
 </urlset>

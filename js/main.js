@@ -170,5 +170,24 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         document.getElementById('home-search-btn')?.addEventListener('click', navigateToSearch);
         searchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigateToSearch(); });
+
+        // Hiệu ứng Animation khi cuộn trang (Scroll Reveal)
+        const observerOptions = {
+            threshold: 0.15 // Section hiện ra 15% thì mới bắt đầu chạy hiệu ứng
+        };
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    // Sau khi đã hiện rồi thì ngừng quan sát để tối ưu hiệu suất
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-on-scroll').forEach(section => {
+            revealObserver.observe(section);
+        });
     });
 });

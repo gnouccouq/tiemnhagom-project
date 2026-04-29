@@ -16,6 +16,17 @@ function updateMetaTag(attr, value, content) {
     element.setAttribute('content', content);
 }
 
+// Hàm hỗ trợ cập nhật các thẻ link (như canonical)
+function updateLinkTag(rel, href) {
+    let element = document.querySelector(`link[rel="${rel}"]`);
+    if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        document.head.appendChild(element);
+    }
+    element.setAttribute('href', href);
+}
+
 // Biến toàn cục để quản lý gallery
 let allImages = [];
 let currentIndex = 0;
@@ -288,6 +299,13 @@ async function fetchProductDetail() {
             updateMetaTag('property', 'og:description', seoDesc);
             updateMetaTag('property', 'og:image', p.imageUrl);
             updateMetaTag('property', 'og:url', window.location.href);
+
+            // Tối ưu SEO: Thẻ Twitter Card & Canonical
+            updateMetaTag('name', 'twitter:card', 'summary_large_image');
+            updateMetaTag('name', 'twitter:title', seoTitle);
+            updateMetaTag('name', 'twitter:description', seoDesc);
+            updateMetaTag('name', 'twitter:image', p.imageUrl);
+            updateLinkTag('canonical', window.location.href);
 
             // Tối ưu SEO: Dữ liệu có cấu trúc Schema.org (JSON-LD)
             const productSchema = {
