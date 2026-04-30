@@ -1,11 +1,11 @@
 import { 
-    db, auth, storage, showToast, initHeader, updateCartCount 
+    db, auth, storage, showToast, initHeader, updateCartCount, PRODUCT_CATEGORIES
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
     limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // Thiết lập Auth Listener để cập nhật UI Header và kiểm tra quyền Admin
 async function checkAdminRights(user) {
@@ -31,35 +31,63 @@ async function checkAdminRights(user) {
 
 // Hàm hỗ trợ chuyển đổi file ảnh sang WebP để tối ưu dung lượng
 async function convertToWebP(file) {
+    let currentFile = file;
+
+    // 1. Xử lý định dạng HEIC/HEIF từ iPhone
+    const isHEIC = file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif") || file.type === "image/heic";
+    if (isHEIC && typeof heic2any === "function") {
+        try {
+            const convertedBlob = await heic2any({
+                blob: file,
+                toType: "image/jpeg",
+                quality: 0.7
+            });
+            // Nếu trả về mảng (trường hợp file HEIC chứa nhiều ảnh), lấy ảnh đầu tiên
+            const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            currentFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+        } catch (e) {
+            console.error("Lỗi chuyển đổi HEIC:", e);
+        }
+    }
+
     return new Promise((resolve) => {
-        if (!file.type.startsWith('image/')) return resolve(file);
+        if (!currentFile.type.startsWith('image/')) return resolve(currentFile);
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
             
-            // TĂNG ĐỘ PHÂN GIẢI: Nâng lên 1200px để ảnh sắc nét trên mọi thiết bị
-            const MAX_WIDTH = 1200;
-            let width = img.width;
-            let height = img.height;
-            if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-            }
+                // TỐI ƯU HÓA: Tự động cắt thành hình vuông 1:1 ở tâm và giới hạn 1000px
+                const TARGET_SIZE = 1000;
+                let sWidth = img.width;
+                let sHeight = img.height;
+                let sx = 0, sy = 0;
 
-            canvas.width = width;
-            canvas.height = height;
+                // Tính toán để cắt lấy hình vuông ở giữa ảnh gốc
+                if (sWidth > sHeight) {
+                    sx = (sWidth - sHeight) / 2;
+                    sWidth = sHeight;
+                } else if (sHeight > sWidth) {
+                    sy = (sHeight - sWidth) / 2;
+                    sHeight = sWidth;
+                }
+
+                let finalSize = Math.min(sWidth, TARGET_SIZE);
+                canvas.width = finalSize;
+                canvas.height = finalSize;
+                
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
+                // Vẽ phần ảnh đã được cắt (sx, sy, sWidth, sHeight) vào canvas vuông (0, 0, finalSize, finalSize)
+                ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, finalSize, finalSize);
                 canvas.toBlob((blob) => {
-                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
+                    const newFile = new File([blob], currentFile.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
                     resolve(newFile);
-                }, 'image/webp', 0.85); // Tăng chất lượng nén lên 85% để giữ chi tiết tốt hơn
+                }, 'image/webp', 0.7); // Nén ở mức 70% để tối ưu dung lượng (file sẽ nhẹ hơn ~50% so với mức 85%)
             };
             img.src = e.target.result;
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(currentFile);
     });
 }
 
@@ -121,6 +149,18 @@ function renderImagePreviews() {
     });
 }
 
+// Hàm tự động đổ danh mục vào Select của Admin Form
+function populateCategorySelect() {
+    const categorySelect = document.getElementById('category');
+    if (!categorySelect) return;
+
+    let html = '<option value="">-- Chọn danh mục --</option>';
+    PRODUCT_CATEGORIES.forEach(cat => {
+        html += `<option value="${cat}">${cat}</option>`;
+    });
+    categorySelect.innerHTML = html;
+}
+
 // Hàm lưu/cập nhật sản phẩm
 if (productForm) {
 productForm.addEventListener('submit', async (e) => {
@@ -131,28 +171,108 @@ productForm.addEventListener('submit', async (e) => {
     const submitBtn = productForm.querySelector('button[type="submit"]');
     
     // Validation cơ bản
+    if (!productId) {
+        showToast("Vui lòng nhập Mã sản phẩm (SKU)", "error");
+        return;
+    }
+
     const price = Number(document.getElementById('price').value);
     if (price <= 0) {
         showToast("Giá sản phẩm phải lớn hơn 0", "error");
-        submitBtn.disabled = false;
         return;
     }
     
+    if (!db || !storage) {
+        showToast("Hệ thống chưa sẵn sàng hoặc bị chặn (Ad-block). Vui lòng tải lại trang.", "error");
+        submitBtn.disabled = false;
+        return;
+    }
+
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu sản phẩm...';
+    
+    // 1. Tạo hoặc reset khu vực hiển thị tiến trình chi tiết
+    let progressContainer = document.getElementById('upload-progress-container');
+    if (!progressContainer) {
+        progressContainer = document.createElement('div');
+        progressContainer.id = 'upload-progress-container';
+        progressContainer.style = "margin: 15px 0; display: none;";
+        productForm.insertBefore(progressContainer, submitBtn);
+    }
+    progressContainer.innerHTML = ''; // Xóa các tiến trình cũ
+    progressContainer.style.display = 'block';
+    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang nén ảnh...';
 
     try {
         // Lấy danh sách ảnh cũ còn sót lại sau khi xóa
         let currentMain = document.getElementById('productId').dataset.currentImageUrl || '';
         let currentAdditionals = JSON.parse(document.getElementById('productId').dataset.currentAdditionalImages || '[]');
 
-        // 1. Xử lý upload thêm ảnh mới
+        // 2. Xử lý upload thêm ảnh mới với Progress Bar CHI TIẾT
         if (imageFiles.length > 0) {
-            const uploadPromises = Array.from(imageFiles).map(async (file) => {
-                const webpFile = await convertToWebP(file); // Chuyển đổi sang WebP trước khi upload
+            const files = Array.from(imageFiles);
+            const totalFiles = files.length;
+            const progressMap = new Map(); // Lưu tiến trình của từng file: index -> percent
+
+            const uploadPromises = files.map(async (file, index) => {
+                // Tạo URL xem trước cục bộ cho ảnh
+                const previewUrl = URL.createObjectURL(file);
+
+                // Tạo UI cho từng file riêng lẻ
+                const fileProgressDiv = document.createElement('div');
+                fileProgressDiv.style = "margin-bottom: 10px; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee;";
+                fileProgressDiv.innerHTML = `
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <img src="${previewUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px; color: #666;">
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">${file.name}</span>
+                                <span id="percent-${index}" style="font-weight: 600;">0%</span>
+                            </div>
+                            <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; overflow: hidden;">
+                                <div id="bar-${index}" style="width: 0%; height: 100%; background: #27ae60; transition: width 0.2s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                progressContainer.appendChild(fileProgressDiv);
+
+                const webpFile = await convertToWebP(file); 
                 const storageRef = ref(storage, `products/${productId}/${Date.now()}_${webpFile.name}`);
-                const snapshot = await uploadBytes(storageRef, webpFile);
-                return getDownloadURL(snapshot.ref);
+                const uploadTask = uploadBytesResumable(storageRef, webpFile);
+
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+
+                            // Cập nhật thanh tiến trình riêng lẻ
+                            const bar = document.getElementById(`bar-${index}`);
+                            const text = document.getElementById(`percent-${index}`);
+                            if (bar) bar.style.width = progress + '%';
+                            if (text) text.innerText = Math.round(progress) + '%';
+
+                            progressMap.set(index, progress);
+                            
+                            // Tính tổng tiến trình trung bình để cập nhật nút Submit
+                            let totalProgress = 0;
+                            progressMap.forEach(p => totalProgress += p);
+                            const overallPercent = totalProgress / totalFiles;
+                            
+                            // Cập nhật text trên nút
+                            submitBtn.innerHTML = `<span class="spinner-small"></span> Đang tải lên: ${Math.round(overallPercent)}%`;
+                        }, 
+                        (error) => {
+                            // Thu hồi bộ nhớ URL tạm thời khi có lỗi
+                            URL.revokeObjectURL(previewUrl);
+                            reject(error);
+                        }, 
+                        () => {
+                            // Thu hồi bộ nhớ URL tạm thời khi thành công
+                            URL.revokeObjectURL(previewUrl);
+                            getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+                        }
+                    );
+                });
             });
             
             const urls = await Promise.all(uploadPromises);
@@ -187,12 +307,14 @@ productForm.addEventListener('submit', async (e) => {
         await setDoc(doc(db, "products", productId), productData);
         showToast(`Đã lưu sản phẩm ${productId} thành công!`);
         productForm.reset();
+        progressContainer.style.display = 'none';
         document.getElementById('image-preview-container').innerHTML = '';
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
     } catch (error) {
         console.error("Lỗi khi lưu:", error);
         showToast("Lỗi lưu dữ liệu: " + error.message, "error");
+        if (progressContainer) progressContainer.style.display = 'none';
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = "Lưu sản phẩm";
@@ -250,14 +372,14 @@ function renderAdminProductTable() {
 
         htmlContent += `
             <tr>
-                <td><small>${p.id}</small></td>
-                <td><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
-                <td>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
-                <td>${stockDisplay}</td>
-                <td>${p.rating || 5}★</td>
-                <td>${p.sale || 0}%</td>
-                <td>
+                <td data-label="ID"><small>${p.id}</small></td>
+                <td data-label="Ảnh"><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
+                <td data-label="Tên"><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
+                <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td data-label="Kho">${stockDisplay}</td>
+                <td data-label="Đánh giá">${p.rating || 5}★</td>
+                <td data-label="Giảm giá">${p.sale || 0}%</td>
+                <td data-label="Thao tác">
                     <button class="btn-delete" data-id="${p.id}">Xóa</button>
                 </td>
             </tr>`;
@@ -381,13 +503,13 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
 
             htmlContent += `
                 <tr>
-                    <td><small>${doc.id}</small></td>
-                    <td>${orderDate}</td>
-                    <td>
+                    <td data-label="Mã đơn"><small>${doc.id}</small></td>
+                    <td data-label="Ngày đặt">${orderDate}</td>
+                    <td data-label="Khách hàng">
                         <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
                         <small>${order.shippingAddress?.phone || ''}</small>
                     </td>
-                    <td>
+                    <td data-label="Sản phẩm">
                         <div style="display: flex; flex-direction: column; gap: 5px;">
                             ${order.items.map(i => `
                                 <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
@@ -397,8 +519,8 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
                             `).join('')}
                         </div>
                     </td>
-                    <td>${totalAmount}đ</td>
-                    <td>
+                    <td data-label="Tổng tiền">${totalAmount}đ</td>
+                    <td data-label="Trạng thái">
                         <select class="status-select" onchange="window.updateOrderStatus('${doc.id}', this.value)">
                             <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
                             <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
@@ -406,7 +528,7 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
                             <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
                         </select>
                     </td>
-                    <td>
+                    <td data-label="Thao tác">
                         <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${doc.id}')">Chi tiết</button>
                     </td>
                 </tr>
@@ -484,15 +606,15 @@ function initUserListener() {
 
             htmlContent += `
                 <tr>
-                    <td>
+                    <td data-label="Người dùng">
                         <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'}</strong><br>
                         <small style="color: #888;">ID: ${doc.id}</small>
                     </td>
-                    <td>${u.phoneNumber || u.phone || '---'}</td>
-                    <td>${u.gender || '---'}</td>
-                    <td>${birthday}</td>
-                    <td>${updatedAt}</td>
-                    <td>
+                    <td data-label="SĐT">${u.phoneNumber || u.phone || '---'}</td>
+                    <td data-label="Giới tính">${u.gender || '---'}</td>
+                    <td data-label="Ngày sinh">${birthday}</td>
+                    <td data-label="Cập nhật">${updatedAt}</td>
+                    <td data-label="Thao tác">
                         <button class="btn-minimal" onclick="window.viewUserOrders('${doc.id}')">Xem đơn hàng</button>
                     </td>
                 </tr>
@@ -909,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initOrderListener();
             initUserListener();
             initCouponListener();
+            populateCategorySelect(); // Nạp danh mục vào form ngay khi xác thực thành công
         }
     });
 

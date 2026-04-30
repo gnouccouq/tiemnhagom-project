@@ -12,9 +12,9 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      // Admin sửa mọi thứ, hoặc khách cập nhật kho/đã bán khi mua hàng
+      // Cho phép Admin update hoặc khách update stock/sold
       allow update: if isAdmin() || 
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']));
+        (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']));
     }
     
     // 2. Danh sách Admin
@@ -72,11 +72,14 @@ service cloud.firestore {
 
 service firebase.storage {
   match /b/{bucket}/o {
+    // Hàm kiểm tra admin bên Storage
+    function isAdmin() {
+      return request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
     
     match /products/{productId}/{allPaths=**} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null && 
-        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+      allow create, update, delete: if isAdmin();
     }
 
     match /avatars/{userId}/{allPaths=**} {

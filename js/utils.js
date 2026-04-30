@@ -20,18 +20,26 @@ const firebaseConfig = {
     measurementId: "G-4FNKRZ13JC"
 };
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+    app = initializeApp(firebaseConfig);
+} catch (error) {
+    console.error("Firebase Initialization Error: Có thể SDK bị chặn bởi Ad-blocker.", error);
+}
 
 // Khởi tạo Firestore với cấu hình cache mới (thay thế enableIndexedDbPersistence)
-export const db = initializeFirestore(app, {
+export const db = app ? initializeFirestore(app, {
     localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager() // Tự động xử lý khi mở nhiều tab
+        tabManager: persistentMultipleTabManager()
     })
-});
+}) : null;
 
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+export const auth = app ? getAuth(app) : null;
+export const storage = app ? getStorage(app) : null;
 export const googleProvider = new GoogleAuthProvider();
+
+// Trả về danh sách danh mục đơn giản như cũ
+export const PRODUCT_CATEGORIES = ["Ly & Chén", "Bình hoa", "Đồ trang trí", "Khác"];
 
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {

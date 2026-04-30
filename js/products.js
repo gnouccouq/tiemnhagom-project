@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader 
+    db, auth, toggleFavoriteLogic, initHeader, PRODUCT_CATEGORIES
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
@@ -77,6 +77,27 @@ function renderProductCard(product, id, favsList = []) {
             </div>
         </a>
     `;
+}
+
+// Hàm tự động tạo bộ lọc danh mục ở Sidebar
+function renderFilterSidebar() {
+    const sidebarContainer = document.getElementById('category-filters');
+    if (!sidebarContainer) return;
+
+    let html = `
+        <div class="filter-group expanded">
+            <ul class="filter-list">
+                <li><a href="#" class="active" data-filter-category="all">Tất cả sản phẩm</a></li>
+                ${PRODUCT_CATEGORIES.map(cat => `
+                    <li><a href="#" data-filter-category="${cat}">${cat}</a></li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
+    sidebarContainer.innerHTML = html;
+
+    // Sau khi render xong, gán lại sự kiện click cho các link vừa tạo
+    setupFilterEvents();
 }
 
 // Hàm chính để lấy và hiển thị sản phẩm
@@ -231,79 +252,92 @@ async function fetchProducts(navigation = 'init') {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initHeader('../', (user) => {
-        // Xử lý lọc theo danh mục từ URL (nếu có)
-        const urlParams = new URLSearchParams(window.location.search);
-        const catParam = urlParams.get('category');
-        if (catParam) {
+// Tách logic gán sự kiện để gọi lại sau khi render sidebar
+function setupFilterEvents() {
+    document.querySelectorAll('#category-filters a').forEach(link => {
+        link.onclick = (e) => {
+            e.preventDefault();
             document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
-            const targetLink = document.querySelector(`#category-filters a[data-filter-category="${catParam}"]`);
-            if (targetLink) targetLink.classList.add('active');
-        }
+            e.currentTarget.classList.add('active');
+            
+            // Bỏ chọn các filter sale/khác khi chọn danh mục cụ thể
+            document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
+            
+            fetchProducts('init');
+        };
+    });
+}
 
-        // Xử lý từ khóa tìm kiếm từ Header
-        const searchParam = urlParams.get('search');
-        if (searchParam) {
-            const sidebarSearch = document.getElementById('search-name');
-            if (sidebarSearch) sidebarSearch.value = searchParam;
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Render bộ lọc Sidebar NGAY LẬP TỨC để tránh UI bị trống
+    renderFilterSidebar();
 
-        fetchProducts();
+    // 2. Xử lý lọc theo danh mục từ URL (nếu khách click từ Header/Menu)
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('category');
+    if (catParam) {
+        document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
+        const targetLink = document.querySelector(`#category-filters a[data-filter-category="${catParam}"]`);
+        if (targetLink) targetLink.classList.add('active');
+    }
 
-        // Gán sự kiện cho bộ lọc danh mục
-        document.querySelectorAll('#category-filters a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
-                e.target.classList.add('active');
-                document.querySelector('.filter-list a[data-filter-sale].active')?.classList.remove('active'); // Bỏ chọn filter sale khi đổi category
-                fetchProducts();
-            });
+    // 3. Xử lý từ khóa tìm kiếm từ Header
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+        const sidebarSearch = document.getElementById('search-name');
+        if (sidebarSearch) sidebarSearch.value = searchParam;
+    }
+
+    // 4. Khởi tạo Header và lắng nghe Auth (để cập nhật icon tim)
+    initHeader('../', (user) => {
+        // Chỉ fetch lại nếu trạng thái auth thay đổi để cập nhật icon tim theo user
+        fetchProducts('init');
+    });
+
+    // 5. Lần đầu tải sản phẩm
+    fetchProducts('init');
+
+    // 6. Gán sự kiện cho bộ lọc sale
+    document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
+            e.target.classList.add('active');
+            fetchProducts('init');
         });
+    });
 
-        // Gán sự kiện cho bộ lọc sale
-        document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
-                e.target.classList.add('active');
-                fetchProducts();
-            });
+    // Gán sự kiện cho sắp xếp
+    document.getElementById('sort-by')?.addEventListener('change', () => fetchProducts('init'));
+
+    // Gán sự kiện cho lọc giá (với debounce)
+    ['price-min', 'price-max'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchProducts('init');
+            }, 800);
         });
+    });
 
-        // Gán sự kiện cho sắp xếp
-        document.getElementById('sort-by').addEventListener('change', () => fetchProducts('init'));
-
-        // Gán sự kiện cho lọc giá (với debounce)
-        ['price-min', 'price-max'].forEach(id => {
-            document.getElementById(id)?.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    fetchProducts('init');
-                }, 800);
-            });
+    // Gán sự kiện cho ô tìm kiếm với kỹ thuật Debounce
+    const searchInput = document.getElementById('search-name');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchProducts('init');
+            }, 500);
         });
+    }
 
-        // Gán sự kiện cho ô tìm kiếm với kỹ thuật Debounce (chờ người dùng gõ xong 500ms mới tìm)
-        const searchInput = document.getElementById('search-name');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    fetchProducts('init');
-                }, 500);
-            });
-        }
-
-        // Gán sự kiện cho phân trang
-        document.getElementById('next-page').addEventListener('click', () => {
-            currentPage++;
-            fetchProducts('next');
-        });
-        document.getElementById('prev-page').addEventListener('click', () => {
-            currentPage--;
-            fetchProducts('prev');
-        });
+    // Gán sự kiện cho phân trang
+    document.getElementById('next-page')?.addEventListener('click', () => {
+        currentPage++;
+        fetchProducts('next');
+    });
+    document.getElementById('prev-page')?.addEventListener('click', () => {
+        currentPage--;
+        fetchProducts('prev');
     });
 });
