@@ -85,15 +85,23 @@ function renderFilterSidebar() {
     if (!sidebarContainer) return;
 
     let html = `
-        <div class="filter-group expanded">
+        <div class="filter-group expanded" style="margin-bottom: 1.5rem;">
             <ul class="filter-list">
                 <li><a href="#" class="active" data-filter-category="all">Tất cả sản phẩm</a></li>
-                ${PRODUCT_CATEGORIES.map(cat => `
-                    <li><a href="#" data-filter-category="${cat}">${cat}</a></li>
-                `).join('')}
             </ul>
         </div>
     `;
+
+    for (const [group, subs] of Object.entries(PRODUCT_CATEGORIES)) {
+        html += `
+            <div class="filter-group expanded">
+                <h4 style="cursor: default; color: var(--text-black); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">${group}</h4>
+                <ul class="filter-list">
+                    ${subs.map(sub => `<li><a href="#" data-filter-category="${sub}">${sub}</a></li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
     sidebarContainer.innerHTML = html;
 
     // Sau khi render xong, gán lại sự kiện click cho các link vừa tạo

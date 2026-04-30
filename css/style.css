@@ -224,14 +224,18 @@ body {
     
     .nav-links {
         position: fixed; top: 0; left: -100%; width: 80%; height: 100vh;
-        background: var(--bg-cream); flex-direction: column; padding: 80px 40px;
+        background: var(--bg-cream); flex-direction: column; padding: 70px 20px 20px 20px; /* Giảm padding trên và dưới */
+        height: 100dvh; /* Tự động điều chỉnh theo thanh công cụ trình duyệt mobile */
         transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 3100; 
         box-shadow: 10px 0 30px rgba(0,0,0,0.1);
-        gap: 1.5rem;
+        gap: 0.5rem; /* Giảm khoảng cách giữa các mục menu chính */
+        overflow-y: auto; /* Cho phép cuộn nếu danh mục quá dài */
+        -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt hơn trên iPhone */
     }
     .nav-links.active { left: 0; }
     
-    .nav-links a { font-size: 1.1rem; letter-spacing: 2px; }
+    .nav-links a { font-size: 1.1rem; letter-spacing: 2px; } /* Giữ nguyên font-size */
+    .nav-links > li > a { padding: 8px 0; } /* Thêm padding dọc cho các mục menu cấp cao nhất */
     
     /* Overlay khi mở menu */
     body.menu-open::after {
@@ -245,6 +249,52 @@ body {
     .menu-toggle.active span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
     .menu-toggle.active span:nth-child(2) { opacity: 0; }
     .menu-toggle.active span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+    /* Tối ưu Mega Menu trên Mobile thành dạng Accordion */
+    .nav-links li.dropdown .mega-menu {
+        position: static !important;
+        display: none !important; /* Mặc định ẩn trên mobile */
+        width: 100% !important;
+        padding: 8px 0 8px 15px !important; /* Giảm padding cho mega-menu con */
+        background: rgba(0,0,0,0.02) !important;
+        box-shadow: none !important;
+        transform: none !important;
+        flex-direction: column;
+        gap: 0.5rem !important; /* Giảm khoảng cách giữa các cột trong mega-menu */
+        border: none !important;
+    }
+
+    /* Hiện menu con khi cha có class mobile-expanded */
+    .nav-links li.dropdown.mobile-expanded .mega-menu {
+        display: flex !important;
+    }
+
+    .mega-col {
+        flex: 1 1 100% !important;
+        width: 100%;
+    }
+
+    .mega-col h4 {
+        font-size: 0.8rem !important;
+        margin-bottom: 10px !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        color: #888;
+    }
+
+    .mega-col a {
+        padding: 8px 0 !important;
+        display: block;
+        font-size: 0.9rem !important;
+        text-transform: none !important;
+        opacity: 0.8;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Hiệu ứng xoay mũi tên khi mở rộng */
+    li.dropdown > a svg { transition: transform 0.3s; }
+    li.dropdown.mobile-expanded > a svg {
+        transform: rotate(180deg);
+    }
 }
 
 

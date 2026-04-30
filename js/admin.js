@@ -155,9 +155,13 @@ function populateCategorySelect() {
     if (!categorySelect) return;
 
     let html = '<option value="">-- Chọn danh mục --</option>';
-    PRODUCT_CATEGORIES.forEach(cat => {
-        html += `<option value="${cat}">${cat}</option>`;
-    });
+    for (const [group, subs] of Object.entries(PRODUCT_CATEGORIES)) {
+        html += `<optgroup label="${group}">`;
+        subs.forEach(sub => {
+            html += `<option value="${sub}">${sub}</option>`;
+        });
+        html += `</optgroup>`;
+    }
     categorySelect.innerHTML = html;
 }
 

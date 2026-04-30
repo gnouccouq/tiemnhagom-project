@@ -38,8 +38,24 @@ export const auth = app ? getAuth(app) : null;
 export const storage = app ? getStorage(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
-// Trả về danh sách danh mục đơn giản như cũ
-export const PRODUCT_CATEGORIES = ["Ly & Chén", "Bình hoa", "Đồ trang trí", "Khác"];
+// Cấu trúc danh mục sản phẩm đầy đủ theo nhóm
+export const PRODUCT_CATEGORIES = {
+    "Dụng cụ Bếp": [
+        "Chén, Tô, Dĩa", "Đũa, Muỗng, Gác đũa", 
+        "Dao, Kéo, Thớt", "Nồi, Chảo & Rổ", 
+        "Giá múc & Hủ gia vị"
+    ],
+    "Phòng khách": [
+        "Bình hoa", "Dĩa & Khay bánh", "Đèn bàn",
+        "Ấm chén uống trà", "Trang trí (Tượng, Decor)"
+    ],
+    "Nhà tắm": [
+        "Hộp khăn giấy", "Dụng cụ đựng xà phòng"
+    ],
+    "Phụ kiện": [
+        "Lót ly", "Lót nồi (Gốm, Mây)"
+    ]
+};
 
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
@@ -616,6 +632,20 @@ export async function loadSharedComponents(pathPrefix = './') {
                         navLinks.classList.remove('active');
                         menuToggle.classList.remove('active');
                         document.body.classList.remove('menu-open');
+                    }
+                });
+
+                // Logic Accordion cho menu danh mục trên Mobile
+                const dropdowns = navLinks.querySelectorAll('.dropdown');
+                dropdowns.forEach(dropdown => {
+                    const toggleBtn = dropdown.querySelector('.nav-item');
+                    if (toggleBtn) {
+                        toggleBtn.addEventListener('click', (e) => {
+                            if (window.innerWidth <= 992) {
+                                e.preventDefault(); // Ngăn chuyển trang ngay lập tức
+                                dropdown.classList.toggle('mobile-expanded');
+                            }
+                        });
                     }
                 });
             }
