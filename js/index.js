@@ -1,4 +1,4 @@
-nconst functions = require('firebase-functions');
+const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
 // Khởi tạo Firebase Admin SDK

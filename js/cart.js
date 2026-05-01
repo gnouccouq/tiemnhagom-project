@@ -3,7 +3,7 @@ import {
 } from "./utils.js";
 import { 
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment,
-    query, where, getDocs, limit 
+    query, where, getDocs, limit, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- Logic xử lý giỏ hàng ---
@@ -19,10 +19,11 @@ async function renderCart() {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
 
-    const cartItemsContainer = document.getElementById('cart-items');
+    const cartItemsContainer = document.getElementById('cart-items-summary');
+    const checkoutFormContainer = document.getElementById('checkout-form-container');
     const emptyMsg = document.getElementById('empty-cart-msg');
     const cartGrid = document.getElementById('cart-content');
-    const totalPriceEl = document.getElementById('total-price');
+    const priceBreakdownEl = document.getElementById('price-breakdown');
 
     if (cart.length === 0) {
         cartGrid.style.display = 'none';
@@ -38,91 +39,98 @@ async function renderCart() {
         const subtotal = item.price * item.quantity;
         total += subtotal;
         return `
-            <div class="cart-item">
-                <div class="item-info">
-                    <img src="${item.image}" alt="${item.name}">
-                    <div>
-                        <h4>${item.name}</h4>
-                    </div>
-                </div>
-                <div class="item-price">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</div>
-                <div class="item-quantity">
+            <div class="summary-item">
+                <img src="${item.image}" alt="${item.name}" class="summary-item-img">
+                <div class="summary-item-details">
+                    <h4>${item.name}</h4>
+                    <p class="summary-item-variant">${item.variant || 'Mặc định'}</p>
                     <div class="quantity-controls">
                         <button class="q-btn" onclick="changeQty(${index}, -1)">-</button>
-                        <input type="number" value="${item.quantity}" readonly>
+                        <span>${item.quantity}</span>
                         <button class="q-btn" onclick="changeQty(${index}, 1)">+</button>
                     </div>
                 </div>
-                <div class="item-subtotal">${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</div>
-                <div class="item-remove">
-                    <button onclick="removeItem(${index})" title="Xóa">&times;</button>
+                <div class="summary-item-price">
+                    <p>${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</p>
+                    <button class="btn-remove-small" onclick="removeItem(${index})">Xóa</button>
                 </div>
             </div>
         `;
     }).join('');
 
-    // Tính toán giảm giá
     let discountAmount = 0;
     if (appliedCoupon) {
         discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
     }
-    const finalTotal = Math.max(0, total - discountAmount);
+    
+    // Phí ship: 30k nếu giao tận nơi, 0đ nếu nhận tại tiệm
+    const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
+    const shippingFee = shippingMethod === 'pickup' ? 0 : 30000;
+    
+    const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
-    totalPriceEl.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: flex-end;">
-            ${discountAmount > 0 ? `<span style="font-size: 0.9rem; color: #888; text-decoration: line-through; font-weight: 400; margin-bottom: 2px;">${new Intl.NumberFormat('vi-VN').format(total)}đ</span>` : ''}
-            ${discountAmount > 0 ? `<span style="font-size: 0.9rem; color: #27ae60; font-weight: 600; margin-bottom: 8px;">Tiết kiệm: -${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span>` : ''}
-            <span style="display: block;">${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span>
-        </div>
+    priceBreakdownEl.innerHTML = `
+        <div class="price-row"><span>Tạm tính (Gồm VAT)</span><span>${new Intl.NumberFormat('vi-VN').format(total)}đ</span></div>
+        <div class="price-row"><span>Phí vận chuyển</span><span>${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ</span></div>
+        ${discountAmount > 0 ? `<div class="price-row discount"><span>Discount</span><span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span></div>` : ''}
+        <div class="price-row total"><span>Total</span><span>${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span></div>
     `;
 
-    // Hiển thị Form thông tin giao hàng nếu chưa có
-    renderCheckoutForm();
+    if (checkoutFormContainer) {
+        renderCheckoutForm(checkoutFormContainer);
+        fetchAvailableCoupons();
+    }
 }
 
-function renderCheckoutForm() {
-    const cartFooter = document.querySelector('.cart-footer');
-    if (!cartFooter || document.getElementById('checkout-form')) return;
-
-    const formHtml = `
-        <div id="checkout-form" style="margin-top: 3rem; border-top: 1px dashed #ddd; padding-top: 2rem; width: 100%;">
-            <div id="available-coupons-container">
-                <h4 style="font-family: var(--font-serif); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; color: #888;">Ưu đãi dành cho bạn</h4>
-                <div class="available-coupons" id="coupons-list-render">
-                    <!-- Danh sách coupon sẽ render tại đây -->
+function renderCheckoutForm(container) {
+    // Kiểm tra xem một phần tử đặc trưng của form đã tồn tại chưa thay vì kiểm tra innerHTML
+    if (document.getElementById('shipping-name')) return; 
+    
+    container.innerHTML = `
+        <div class="checkout-section">
+            <h3 class="checkout-title">Billing information | Thông tin thanh toán</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Full Name *</label><input type="text" id="shipping-name" required></div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="shipping-email"></div>
+            </div>
+            <div class="form-group"><label>Phone Number *</label><input type="tel" id="shipping-phone" required></div>
+            <div class="form-group"><label>Shipping Address | Địa chỉ nhận hàng *</label><input type="text" id="shipping-address" required></div>
+            <div class="form-group"><label>Order Note</label><textarea id="order-note" rows="3"></textarea></div>
+            
+            <div class="form-group">
+                <label>Delivery Method | Phương thức nhận hàng</label>
+                <div class="radio-group">
+                    <label class="radio-container">Giao hàng tận nơi
+                        <input type="radio" name="shipping-method" value="delivery" checked>
+                        <span class="radio-checkmark"></span>
+                    </label>
+                    <label class="radio-container">Nhận tại cửa hàng
+                        <input type="radio" name="shipping-method" value="pickup">
+                        <span class="radio-checkmark"></span>
+                    </label>
                 </div>
             </div>
+        </div>
 
-            <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 2.5rem; max-width: 400px;">
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; color: #888;">Mã ưu đãi</label>
-                    <input type="text" id="coupon-input" placeholder="TIEMNHAGOM10, CHAOBAN..." value="${appliedCoupon ? appliedCoupon.code : ''}" 
-                           style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;">
-                </div>
-                <button onclick="applyCoupon()" class="btn-minimal" style="height: 46px; white-space: nowrap; padding: 0 1.5rem;">Áp dụng</button>
+        <div class="checkout-section">
+            <h3 class="checkout-title">Payment method | Thanh toán</h3>
+            <div class="radio-group">
+                <label class="radio-container">Cash on Delivery ( COD )
+                    <input type="radio" name="payment-method" value="COD" checked>
+                    <span class="radio-checkmark"></span>
+                </label>
+                <label class="radio-container">Bank transfer | Chuyển khoản
+                    <input type="radio" name="payment-method" value="bank_transfer">
+                    <span class="radio-checkmark"></span>
+                </label>
             </div>
-
-            <h3 style="font-family: var(--font-serif); margin-bottom: 1.5rem;">Thông tin giao hàng</h3>
-            <div class="form-group">
-                <label>Họ và tên người nhận</label>
-                <input type="text" id="shipping-name" placeholder="Nhập họ tên đầy đủ" required>
-            </div>
-            <div class="form-group">
-                <label>Số điện thoại</label>
-                <input type="tel" id="shipping-phone" placeholder="Nhập số điện thoại liên lạc" required>
-            </div>
-            <div class="form-group">
-                <label>Địa chỉ nhận hàng</label>
-                <textarea id="shipping-address" rows="3" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required></textarea>
-            </div>
-            <div style="margin: 1.5rem 0; padding: 1rem; background: #fdfdfd; border: 1px solid #eee; border-radius: 4px;">
-                <p style="font-size: 0.9rem;"><strong>Phương thức thanh toán:</strong> Thanh toán khi nhận hàng (COD)</p>
-            </div>
-            <button onclick="placeOrder()" class="btn-dark" style="width: 100%; height: 50px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Xác nhận đặt hàng</button>
         </div>
     `;
-    cartFooter.insertAdjacentHTML('beforebegin', formHtml);
-    fetchAvailableCoupons();
+
+    // Lắng nghe thay đổi để cập nhật phí vận chuyển ngay lập tức
+    container.querySelectorAll('input[name="shipping-method"]').forEach(radio => {
+        radio.addEventListener('change', renderCart);
+    });
 }
 
 async function fetchAvailableCoupons() {
@@ -310,12 +318,26 @@ window.removeItem = async (index) => {
 };
 
 window.placeOrder = async () => {
-    const name = document.getElementById('shipping-name').value.trim();
-    const phone = document.getElementById('shipping-phone').value.trim();
-    const address = document.getElementById('shipping-address').value.trim();
+    const name = document.getElementById('shipping-name')?.value.trim();
+    const phone = document.getElementById('shipping-phone')?.value.trim();
+    const email = document.getElementById('shipping-email')?.value.trim();
+    const address = document.getElementById('shipping-address')?.value.trim();
+    const note = document.getElementById('order-note')?.value.trim();
+    const termsAccepted = document.getElementById('terms-agreement')?.checked;
+    
+    const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
 
     if (!name || !phone || !address) {
-        showToast("Vui lòng điền đầy đủ thông tin giao hàng", "error");
+        showToast("Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ", "error");
+        return;
+    }
+
+    if (!termsAccepted) {
+        const termsLabel = document.querySelector('.terms-agreement');
+        termsLabel.classList.add('heartbeat-anim');
+        setTimeout(() => termsLabel.classList.remove('heartbeat-anim'), 400);
+        showToast("Vui lòng đồng ý với điều khoản dịch vụ", "error");
         return;
     }
 
@@ -334,13 +356,16 @@ window.placeOrder = async () => {
     if (appliedCoupon) {
         discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
     }
-    const finalTotal = Math.max(0, total - discountAmount);
+
+    const shippingFee = shippingMethod === 'pickup' ? 0 : 30000;
+    const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
     const orderData = {
         userId: auth.currentUser ? auth.currentUser.uid : 'guest',
-        productNames: cart.map(item => item.name), // Thêm mảng tên sản phẩm để dễ tìm kiếm
+        productNames: cart.map(item => item.name),
         items: cart,
         totalAmount: finalTotal,
+        shippingFee: shippingFee,
         discountAmount: discountAmount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         status: "Đang xử lý",
@@ -350,11 +375,12 @@ window.placeOrder = async () => {
             phone: phone,
             address: address
         },
-        paymentMethod: "COD"
+        shippingMethod: shippingMethod,
+        paymentMethod: paymentMethod || "COD"
     };
 
     try {
-        const btn = document.querySelector('#checkout-form button');
+        const btn = document.querySelector('.btn-place-order');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-small"></span> Đang xử lý...';
 
@@ -399,10 +425,7 @@ window.placeOrder = async () => {
             });
         }
 
-        // 3. Gửi thông báo qua Zalo (Copy thông tin và redirect)
-        sendOrderToZalo(docRef.id, cart, finalTotal, orderData.shippingAddress, discountAmount);
-
-        // 3. Xóa giỏ hàng sau khi đặt thành công
+        // 2. Xóa giỏ hàng sau khi đặt thành công
         if (auth.currentUser) {
             await setDoc(doc(db, "carts", auth.currentUser.uid), { items: [] });
         } else {
@@ -413,39 +436,24 @@ window.placeOrder = async () => {
         updateCartCount();
 
         setTimeout(() => {
-            window.location.href = auth.currentUser ? '../profile/#orders' : '../';
-        }, 2000);
+            window.location.href = `thank-you.html?id=${docRef.id}`;
+        }, 1500);
     } catch (error) {
         showToast("Lỗi đặt hàng: " + error.message, "error");
         console.error(error);
     }
 };
 
-function sendOrderToZalo(orderId, items, total, address, discount = 0) {
-    const shopPhone = "0337696231"; // Thay bằng SĐT Zalo thật của shop bạn
-    let msg = `*ĐƠN HÀNG MỚI: #${orderId}*\n`;
-    msg += `👤 Khách hàng: ${address.fullName}\n`;
-    msg += `📞 Số điện thoại: ${address.phone}\n`;
-    msg += `📍 Địa chỉ: ${address.address}\n`;
-    msg += `📦 Danh sách sản phẩm:\n`;
-    items.forEach(item => { msg += `- ${item.name} x ${item.quantity}\n`; });
-    if (discount > 0) msg += `📉 Giảm giá: -${new Intl.NumberFormat('vi-VN').format(discount)}đ\n`;
-    msg += `💰 *Tổng thanh toán: ${new Intl.NumberFormat('vi-VN').format(total)}đ*`;
-    msg += `\n*Phương thức: COD*`;
-    
-    // Copy vào clipboard và mở Zalo để khách gửi cho shop
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(msg).then(() => {
-            showToast("Đã copy chi tiết đơn hàng! Vui lòng gửi cho shop qua Zalo để xác nhận.");
-            setTimeout(() => window.open(`https://zalo.me/${shopPhone}`, '_blank'), 1500);
-        });
-    } else {
-        window.open(`https://zalo.me/${shopPhone}`, '_blank');
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('../', (user) => {
         renderCart();
+
+        // Thêm sự kiện nhấn Enter cho ô nhập mã giảm giá
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && document.activeElement.id === 'coupon-input') {
+                window.applyCoupon();
+            }
+        });
     });
 });

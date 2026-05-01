@@ -12,30 +12,38 @@
     <div id="header-placeholder"></div>
 
     <main class="cart-container">
-        <h1 class="cart-title">Giỏ hàng của bạn</h1>
-        
-        <div id="cart-content" class="cart-grid" style="display: none;">
-            <!-- Header của bảng giỏ hàng -->
-            <div class="cart-table-header">
-                <span>Sản phẩm</span>
-                <span>Giá</span>
-                <span>Số lượng</span>
-                <span>Tạm tính</span>
-                <span></span>
-            </div>
-            
-            <div id="cart-items">
-                <!-- Danh sách sản phẩm sẽ được đổ vào đây từ localStorage -->
+        <div id="cart-content" class="checkout-layout" style="display: none;">
+            <!-- Cột trái: Billing & Payment -->
+            <div class="checkout-col-left" id="checkout-form-container">
+                <!-- Rendered by JS -->
             </div>
 
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Tổng tiền:</span>
-                    <span id="total-price">0đ</span>
-                </div>
-                <div class="cart-actions">
-                    <a href="../" class="btn-minimal" style="text-decoration: none;">Tiếp tục mua sắm</a>
-                    <button class="btn-dark" id="btn-checkout">Thanh toán qua Zalo</button>
+            <!-- Cột phải: Order Summary -->
+            <div class="checkout-col-right">
+                <div class="order-summary-box">
+                    <h3 class="summary-title">Order Summary | Tóm tắt đơn hàng</h3>
+                    <div id="cart-items-summary">
+                        <!-- Sản phẩm render ở đây -->
+                    </div>
+                    
+                    <div class="coupon-section">
+                        <input type="text" id="coupon-input" placeholder="Mã ưu đãi...">
+                        <button onclick="applyCoupon()" class="btn-minimal">Áp dụng</button>
+                    </div>
+
+                    <div id="price-breakdown" class="price-breakdown">
+                        <!-- Chi tiết tiền render ở đây -->
+                    </div>
+
+                    <div class="terms-agreement">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="terms-agreement">
+                            <span class="checkmark"></span>
+                            Tôi đã đọc và đồng ý với <a href="../terms-of-service.html" target="_blank">Điều khoản dịch vụ</a> của website.
+                        </label>
+                    </div>
+
+                    <button onclick="placeOrder()" class="btn-dark btn-place-order">Đặt hàng ngay</button>
                 </div>
             </div>
         </div>

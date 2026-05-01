@@ -21,7 +21,7 @@ body {
     color: var(--text-black);
     font-family: var(--font-sans);
     line-height: 1.6;
-    overflow-x: hidden; /* Ngăn chặn tràn màn hình theo chiều ngang */
+    overflow-x: hidden;
     padding-top: 80px; 
 }
 
@@ -2071,6 +2071,33 @@ footer {
     font-size: 1.1rem;
 }
 
+/* Coupon Section Styling */
+.coupon-section {
+    display: flex;
+    gap: 10px;
+    margin: 1.5rem 0;
+    padding: 15px;
+    background: #fcfbf8;
+    border-radius: 6px;
+    border: 1px dashed #ddd;
+}
+
+#coupon-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    text-transform: uppercase; /* Mã giảm giá thường là chữ hoa */
+}
+
+#coupon-input:focus {
+    border-color: var(--text-black);
+    outline: none;
+    background: #fff;
+}
+
 /* Products Page Specific Styles */
 .products-page-container {
     padding: 2rem 5% 4rem;
@@ -2512,8 +2539,194 @@ footer {
     overflow: hidden;
     background: #fff;
     width: 130px;
+    }
+
+/* Cart Summary Items */
+.summary-item-price {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    height: 40px;
+    align-items: flex-end;
+}
+
+.btn-remove-small {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 5px 0;
+    text-decoration: underline;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.btn-remove-small:hover {
+    opacity: 1;
+}
+
+/* Checkout Layout */
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3rem;
+    align-items: start;
+    margin-top: 2rem;
+    width: 100%;
+}
+
+/* Form row layout */
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 0; /* Ngăn chặn flex item phình to hơn container */
+}
+
+.checkout-section {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    max-width: 100%;
+}
+
+.checkout-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.order-summary-box {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    position: sticky;
+    top: 100px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.summary-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.summary-item-img { 
+    width: 60px; 
+    height: 60px; 
+    flex-shrink: 0; 
+    object-fit: cover; 
+    border-radius: 4px; 
+}
+.summary-item-details { 
+    flex: 1; 
+    min-width: 0; /* Quan trọng: cho phép container co lại khi text dài */
+}
+.summary-item-details h4 { 
+    font-size: 0.9rem; 
+    margin-bottom: 4px; 
+    word-break: break-word; /* Tự xuống dòng nếu tên sản phẩm quá dài */
+}
+.summary-item-variant { font-size: 0.75rem; color: #888; }
+.price-breakdown { margin: 2rem 0; border-top: 2px solid #eee; padding-top: 1.5rem; }
+.price-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+.price-row.total { font-size: 1.3rem; font-weight: 700; border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+.price-row.discount { color: #27ae60; font-weight: 600; }
+
+/* Radio & Checkbox Custom */
+.radio-group { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.radio-container, .checkbox-container {
+    display: block; position: relative; padding-left: 30px; cursor: pointer; font-size: 0.9rem;
+    user-select: none; margin-bottom: 12px;
+}
+.radio-container input, .checkbox-container input { position: absolute; opacity: 0; cursor: pointer; }
+.radio-checkmark, .checkmark {
+    position: absolute; top: 0; left: 0; height: 20px; width: 20px;
+    background-color: #eee; border-radius: 50%;
+}
+.checkbox-container .checkmark { border-radius: 4px; }
+.radio-container:hover input ~ .radio-checkmark { background-color: #ccc; }
+.radio-container input:checked ~ .radio-checkmark { background-color: var(--text-black); }
+
+.checkbox-container .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #eee;
+    border-radius: 4px;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+    background-color: var(--text-black);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.checkbox-container .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.terms-agreement { margin-top: 2rem; }
+.terms-agreement a { color: var(--text-black); text-decoration: underline; }
+
+.btn-place-order { width: 100%; height: 55px; font-size: 1rem; font-weight: 700; margin-top: 1rem; }
+
+@media (max-width: 992px) {
+    .checkout-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+    .order-summary-box { position: static; }
+
+    .checkout-section {
+        padding: 1.5rem;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .summary-item {
+        gap: 10px;
+    }
+}
+
+/* Sửa lỗi tràn màn hình cho thiết bị cực nhỏ */
+@media (max-width: 480px) {
+    .cart-container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    .checkout-section, .order-summary-box {
+        padding: 1rem !important;
+    }
+    .summary-item-price p {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
 }
 .q-btn {
     background: #fff;
