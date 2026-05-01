@@ -146,11 +146,11 @@ body {
     right: 0 !important;
     top: 80px; /* Khớp với chiều cao của navbar */
     display: flex;
-    padding: 40px 10% !important; /* Căn lề lùi vào cho nội dung cân đối */
-    gap: 20px;
+    padding: 60px 10% !important; /* Tăng thêm padding để dồn nội dung vào giữa */
+    gap: 80px; /* Tăng khoảng cách giữa các cột (từ 60px lên 80px) */
     flex-wrap: wrap; /* Cho phép rớt dòng nếu quá nhiều danh mục */
     transform: translateY(10px) !important;
-    justify-content: center;
+    justify-content: space-between; /* Giãn đều các cột ra hết chiều ngang container */
     border-radius: 0; /* Tràn ngang thường không để bo góc */
     border-left: none;
     border-right: none;
@@ -158,7 +158,9 @@ body {
 .dropdown:hover .mega-menu { transform: translateY(0) !important; }
 
 .mega-col { 
-    flex: 0 0 200px; /* Giữ độ rộng cột ổn định */
+    flex: 0 0 auto; /* Không cho cột co giãn tùy tiện */
+    width: 180px; /* Cố định độ rộng cột để căn lề thẳng hàng */
+    min-width: 180px;
 }
 .mega-col h4 {
     font-family: var(--font-serif);
@@ -166,14 +168,14 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 700;
-    margin-bottom: 15px;
+    margin-bottom: 25px; /* Tăng khoảng cách dưới tiêu đề */
     color: #888;
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
 }
 
 .mega-col a {
-    padding: 7px 0 !important;
+    padding: 12px 0 !important; /* Tăng khoảng cách dòng (từ 10px lên 12px) giúp menu "thở" hơn */
     color: var(--text-black) !important;
     opacity: 0.6;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2101,7 +2103,7 @@ footer {
 .category-grid-section { margin-bottom: 4rem; }
 .category-square-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 15px;
 }
 .category-square-item {
@@ -2128,11 +2130,11 @@ footer {
     color: #fff;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     z-index: 2;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     pointer-events: none;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-align: center;
     width: 90%;
 }
@@ -2250,7 +2252,7 @@ footer {
 
 @media (max-width: 1200px) {
     #all-product-grid { grid-template-columns: repeat(4, 1fr); }
-    .category-square-grid { grid-template-columns: repeat(3, 1fr); }
+    .category-square-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 768px) {
     #all-product-grid { grid-template-columns: repeat(2, 1fr); }

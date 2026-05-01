@@ -40,21 +40,21 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Cấu trúc danh mục sản phẩm đầy đủ theo nhóm
 export const PRODUCT_CATEGORIES = {
-    "Nghệ thuật Bàn ăn": [
-        "Bộ đồ ăn (Chén, Dĩa)", "Phụ kiện bàn tiệc", 
-        "Hũ gia vị gốm sứ", "Khay & Thớt gỗ", 
-        "Dụng cụ pha chế"
+    "Dining Decor": [
+        "Bát & Chén", "Dĩa & Khay", "Thìa Muỗng & Đũa",
+        "Gia Vị & Nước Chấm", "Gác Đũa & Phụ Kiện"
+    ],
+    "Teatime & Drinks": [
+        "Ấm Trà", "Ly & Tách", "Lót Ly & Đế Lót"
     ],
     "Home Decor": [
-        "Lọ hoa nghệ thuật", "Ấm trà & Thưởng thức", 
-        "Đèn gốm trang trí", "Tượng & Vật phẩm decor",
-        "Khay bánh mứt"
+        "Lọ Hoa Nghệ Thuật", "Đèn & Tượng Decor", "Khay Bánh Mứt"
     ],
-    "Gốm & Đời sống": [
-        "Phụ kiện phòng tắm", "Hộp khăn giấy cao cấp"
+    "Kitchenware": [
+        "Nồi & Chảo", "Dao & Kéo", "Thớt", "Dụng Cụ Sơ Chế"
     ],
-    "Tạp vật Tinh tế": [
-        "Lót ly thủ công", "Đế lót gốm sứ", "Vật phẩm nhỏ lẻ"
+    "Lifestyle": [
+        "Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"
     ]
 };
 

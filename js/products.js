@@ -41,10 +41,11 @@ function renderCategoryGrid() {
 
     // Map ảnh cho các danh mục (Bạn có thể thay link ảnh thật ở đây)
     const categoryImages = {
-        "Nghệ thuật Bàn ăn": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
+        "Dining Decor": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
+        "Teatime & Drinks": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=400",
         "Home Decor": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=400",
-        "Gốm & Đời sống": "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?q=80&w=400",
-        "Tạp vật Tinh tế": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=400"
+        "Kitchenware": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
+        "Lifestyle": "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?q=80&w=400"
     };
 
     let html = `

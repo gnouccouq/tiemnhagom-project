@@ -169,27 +169,26 @@ window.migrateProductCategories = async () => {
     if (!confirm("Hành động này sẽ cập nhật lại toàn bộ danh mục của sản phẩm trong Database để khớp với UI mới. Bạn có chắc chắn?")) return;
 
     const mapping = {
-        // Map Group cũ sang Group mới
-        "Dụng cụ Bếp": "Nghệ thuật Bàn ăn",
-        "Phòng khách": "Điểm nhấn Không gian",
+        // Map các danh mục từ cấu trúc cũ sang cấu trúc mới nhất
+        "Nghệ thuật Bàn ăn": "Dining Decor",
         "Điểm nhấn Không gian": "Home Decor",
-        "Nhà tắm": "Gốm & Đời sống",
-        "Phụ kiện": "Tạp vật Tinh tế",
-
-        // Map Sub-category cũ sang Sub-category mới
-        "Chén, Tô, Dĩa": "Bộ đồ ăn (Chén, Dĩa)",
-        "Đũa, Muỗng, Gác đũa": "Phụ kiện bàn tiệc",
-        "Dao, Kéo, Thớt": "Khay & Thớt gỗ",
-        "Giá múc & Hủ gia vị": "Hũ gia vị gốm sứ",
-        "Bình hoa": "Lọ hoa nghệ thuật",
-        "Ấm chén uống trà": "Ấm trà & Thưởng thức",
-        "Đèn bàn": "Đèn gốm trang trí",
-        "Trang trí (Tượng, Decor)": "Tượng & Vật phẩm decor",
-        "Dĩa & Khay bánh": "Khay bánh mứt",
-        "Hộp khăn giấy": "Hộp khăn giấy cao cấp",
-        "Dụng cụ đựng xà phòng": "Phụ kiện phòng tắm",
-        "Lót ly": "Lót ly thủ công",
-        "Lót nồi (Gốm, Mây)": "Đế lót gốm sứ"
+        "Gốm & Đời sống": "Lifestyle",
+        "Tạp vật Tinh tế": "Lifestyle",
+        
+        "Bộ đồ ăn (Chén, Dĩa)": "Bát & Chén",
+        "Phụ kiện bàn tiệc": "Gác Đũa & Phụ Kiện",
+        "Hũ gia vị gốm sứ": "Gia Vị & Nước Chấm",
+        "Khay & Thớt gỗ": "Thớt",
+        "Dụng cụ pha chế": "Ly & Tách",
+        "Lọ hoa nghệ thuật": "Lọ Hoa Nghệ Thuật",
+        "Ấm trà & Thưởng thức": "Ấm Trà",
+        "Đèn gốm trang trí": "Đèn & Tượng Decor",
+        "Tượng & Vật phẩm decor": "Đèn & Tượng Decor",
+        "Khay bánh mứt": "Khay Bánh Mứt",
+        "Hộp khăn giấy cao cấp": "Tạp Vật Tinh Tế",
+        "Phụ kiện phòng tắm": "Phụ Kiện Phòng Tắm",
+        "Lót ly thủ công": "Lót Ly & Đế Lót",
+        "Đế lót gốm sứ": "Lót Ly & Đế Lót"
     };
 
     try {
