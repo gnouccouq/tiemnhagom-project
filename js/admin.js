@@ -57,9 +57,8 @@ async function convertToWebP(file) {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-            
-                // TỐI ƯU HÓA: Tự động cắt thành hình vuông 1:1 ở tâm và giới hạn 1000px
-                const TARGET_SIZE = 1000;
+                // Cho phép truyền size động để tạo thumbnail
+                const TARGET_SIZE = window._processingSize || 1000;
                 let sWidth = img.width;
                 let sHeight = img.height;
                 let sx = 0, sy = 0;
@@ -165,6 +164,56 @@ function populateCategorySelect() {
     categorySelect.innerHTML = html;
 }
 
+// Hàm Migration: Cập nhật toàn bộ sản phẩm cũ sang danh mục mới (Chạy 1 lần duy nhất)
+window.migrateProductCategories = async () => {
+    if (!confirm("Hành động này sẽ cập nhật lại toàn bộ danh mục của sản phẩm trong Database để khớp với UI mới. Bạn có chắc chắn?")) return;
+
+    const mapping = {
+        // Map Group cũ sang Group mới
+        "Dụng cụ Bếp": "Nghệ thuật Bàn ăn",
+        "Phòng khách": "Điểm nhấn Không gian",
+        "Điểm nhấn Không gian": "Home Decor",
+        "Nhà tắm": "Gốm & Đời sống",
+        "Phụ kiện": "Tạp vật Tinh tế",
+
+        // Map Sub-category cũ sang Sub-category mới
+        "Chén, Tô, Dĩa": "Bộ đồ ăn (Chén, Dĩa)",
+        "Đũa, Muỗng, Gác đũa": "Phụ kiện bàn tiệc",
+        "Dao, Kéo, Thớt": "Khay & Thớt gỗ",
+        "Giá múc & Hủ gia vị": "Hũ gia vị gốm sứ",
+        "Bình hoa": "Lọ hoa nghệ thuật",
+        "Ấm chén uống trà": "Ấm trà & Thưởng thức",
+        "Đèn bàn": "Đèn gốm trang trí",
+        "Trang trí (Tượng, Decor)": "Tượng & Vật phẩm decor",
+        "Dĩa & Khay bánh": "Khay bánh mứt",
+        "Hộp khăn giấy": "Hộp khăn giấy cao cấp",
+        "Dụng cụ đựng xà phòng": "Phụ kiện phòng tắm",
+        "Lót ly": "Lót ly thủ công",
+        "Lót nồi (Gốm, Mây)": "Đế lót gốm sứ"
+    };
+
+    try {
+        showToast("Đang bắt đầu chuyển đổi dữ liệu...", "info");
+        const q = query(collection(db, "products"));
+        const snap = await getDocs(q);
+        let count = 0;
+
+        for (const productDoc of snap.docs) {
+            const data = productDoc.data();
+            if (mapping[data.category]) {
+                await updateDoc(doc(db, "products", productDoc.id), {
+                    category: mapping[data.category]
+                });
+                count++;
+            }
+        }
+        showToast(`Thành công! Đã cập nhật ${count} sản phẩm sang danh mục mới.`, "success");
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi Migration: " + e.message, "error");
+    }
+};
+
 // Hàm lưu/cập nhật sản phẩm
 if (productForm) {
 productForm.addEventListener('submit', async (e) => {
@@ -240,9 +289,18 @@ productForm.addEventListener('submit', async (e) => {
                 `;
                 progressContainer.appendChild(fileProgressDiv);
 
-                const webpFile = await convertToWebP(file); 
+                // Tạo 2 phiên bản: Ảnh lớn và Thumbnail
+                window._processingSize = 1000;
+                const webpFile = await convertToWebP(file);
+                window._processingSize = 400; // Size cho thumbnail
+                const thumbWebp = await convertToWebP(file);
+
                 const storageRef = ref(storage, `products/${productId}/${Date.now()}_${webpFile.name}`);
+                const thumbRef = ref(storage, `products/${productId}/thumb_${Date.now()}_${webpFile.name}`);
+                
                 const uploadTask = uploadBytesResumable(storageRef, webpFile);
+                await uploadBytes(thumbRef, thumbWebp);
+                const thumbUrl = await getDownloadURL(thumbRef);
 
                 return new Promise((resolve, reject) => {
                     uploadTask.on('state_changed', 
@@ -273,19 +331,20 @@ productForm.addEventListener('submit', async (e) => {
                         () => {
                             // Thu hồi bộ nhớ URL tạm thời khi thành công
                             URL.revokeObjectURL(previewUrl);
-                            getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+                            getDownloadURL(uploadTask.snapshot.ref).then(fullUrl => resolve({fullUrl, thumbUrl})).catch(reject);
                         }
                     );
                 });
             });
             
-            const urls = await Promise.all(uploadPromises);
+            const results = await Promise.all(uploadPromises);
             
             if (!currentMain) {
-                currentMain = urls[0];
-                currentAdditionals = [...currentAdditionals, ...urls.slice(1)];
+                currentMain = results[0].fullUrl;
+                currentThumb = results[0].thumbUrl; // Cần thêm trường thumbUrl vào Firestore
+                currentAdditionals = [...currentAdditionals, ...results.slice(1).map(r => r.fullUrl)];
             } else {
-                currentAdditionals = [...currentAdditionals, ...urls];
+                currentAdditionals = [...currentAdditionals, ...results.map(r => r.fullUrl)];
             }
         }
 
@@ -1064,149 +1123,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                posHighlightedIndex = (posHighlightedIndex + 1) % items.length;
-                updatePosHighlight(items);
+                posHighlightedIndex = Math.min(posHighlightedIndex + 1, items.length - 1);
+                items.forEach((item, idx) => item.classList.toggle('highlighted', idx === posHighlightedIndex));
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                posHighlightedIndex = (posHighlightedIndex - 1 + items.length) % items.length;
-                updatePosHighlight(items);
-            } else if (e.key === 'Enter') {
+                posHighlightedIndex = Math.max(posHighlightedIndex - 1, 0);
+                items.forEach((item, idx) => item.classList.toggle('highlighted', idx === posHighlightedIndex));
+            } else if (e.key === 'Enter' && posHighlightedIndex >= 0) {
                 e.preventDefault();
-                if (posHighlightedIndex >= 0 && items[posHighlightedIndex]) {
-                    items[posHighlightedIndex].click();
-                } else if (items.length === 1) {
-                    items[0].click(); // Tự động chọn nếu chỉ có 1 kết quả khớp
-                }
+                items[posHighlightedIndex].click();
             } else if (e.key === 'Escape') {
                 posSuggestions.style.display = 'none';
             }
         });
-
-        const updatePosHighlight = (items) => {
-            items.forEach((item, index) => {
-                item.style.backgroundColor = (index === posHighlightedIndex) ? '#f0f0f0' : '';
-                if (index === posHighlightedIndex) item.scrollIntoView({ block: 'nearest' });
-            });
-        };
-
-        posSearchInput.addEventListener('input', () => {
-            clearTimeout(posSearchTimer);
-            const val = posSearchInput.value.trim();
-            if (!val) {
-                posSuggestions.style.display = 'none';
-                return;
-            }
-
-            posSearchTimer = setTimeout(async () => {
-                posHighlightedIndex = -1; // Reset highlight khi có kết quả mới
-
-                // Hiển thị spinner trong khi chờ dữ liệu
-                posSuggestions.innerHTML = `<div style="padding: 15px; text-align: center;"><div class="spinner"></div></div>`;
-                posSuggestions.style.display = 'block';
-
-                const searchLower = val.toLowerCase();
-                // TỐI ƯU: Tìm kiếm trực tiếp trên mảng local đã có từ onSnapshot
-                const results = posProductsLocal.filter(p => 
-                    (p.name || "").toLowerCase().includes(searchLower) || p.id.toLowerCase().includes(searchLower)
-                ).sort((a, b) => {
-                    const aIdMatch = a.id.toLowerCase().startsWith(searchLower);
-                    const bIdMatch = b.id.toLowerCase().startsWith(searchLower);
-                    const aNameStart = (a.name || "").toLowerCase().startsWith(searchLower);
-                    const bNameStart = (b.name || "").toLowerCase().startsWith(searchLower);
-
-                    if (aIdMatch && !bIdMatch) return -1;
-                    if (!aIdMatch && bIdMatch) return 1;
-                    if (aNameStart && !bNameStart) return -1;
-                    if (!aNameStart && bNameStart) return 1;
-                    return (a.name || "").localeCompare(b.name || "");
-                }).slice(0, 5);
-                
-                if (results.length === 0) {
-                    posSuggestions.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy</div>`;
-                    return;
-                }
-
-                posSuggestions.innerHTML = results.map(p => {
-                    const isOut = (p.stock || 0) <= 0;
-                    return `
-                        <div class="suggestion-item" 
-                             onclick="${isOut ? "showToast('Sản phẩm đã hết hàng', 'error')" : `window.addProductToPOS('${p.id}', '${p.name}', ${p.price}, '${p.imageUrl}')`}" 
-                             style="${isOut ? 'opacity: 0.5; cursor: not-allowed;' : 'cursor: pointer;'}">
-                            <img src="${p.imageUrl}" alt="${p.name}">
-                            <div class="suggestion-info">
-                                <h5>${p.name}</h5>
-                                <p style="margin:0; font-size:0.8rem;">
-                                    ${new Intl.NumberFormat('vi-VN').format(p.price)}đ &bull; 
-                                    <span style="color: ${isOut ? '#c0392b' : '#27ae60'}; font-weight: 600;">
-                                        ${isOut ? 'Hết hàng' : `Tồn kho: ${p.stock}`}
-                                   </span>
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                posSuggestions.style.display = 'block';
-            }, 200); // Giảm xuống 200ms để hiện kết quả nhanh hơn
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!posSearchInput.contains(e.target) && !posSuggestions.contains(e.target)) {
-                posSuggestions.style.display = 'none';
-            }
-        });
     }
-    
-    // Gán sự kiện tìm kiếm "tức thì" cho tab Quản lý sản phẩm
-    document.getElementById('admin-product-search')?.addEventListener('input', renderAdminProductTable);
-
-    renderPOSCart(); // Khởi tạo giao diện giỏ hàng trống cho POS
-
-    // Lắng nghe sự kiện cho các bộ lọc đơn hàng
-    const orderSearchProductInput = document.getElementById('order-search-product');
-    const orderFilterStatusSelect = document.getElementById('order-filter-status');
-    const btnApplyOrderFilters = document.getElementById('btn-apply-order-filters');
-
-    if (btnApplyOrderFilters) {
-        btnApplyOrderFilters.onclick = () => {
-            const productName = orderSearchProductInput ? orderSearchProductInput.value.trim() : '';
-            const status = orderFilterStatusSelect ? orderFilterStatusSelect.value : 'all';
-            initOrderListener(productName, status);
-        };
-    }
-
-    // Sự kiện phân trang đơn hàng
-    document.getElementById('next-order-page')?.addEventListener('click', () => {
-        currentOrderPage++;
-        initOrderListener(orderSearchProductInput.value.trim(), orderFilterStatusSelect.value, 'next');
-    });
-
-    document.getElementById('prev-order-page')?.addEventListener('click', () => {
-        currentOrderPage--;
-        initOrderListener(orderSearchProductInput.value.trim(), orderFilterStatusSelect.value, 'prev');
-    });
-
-    // Tab switching logic cho Admin
-    const tabBtns = document.querySelectorAll('.admin-tab-btn');
-    const sections = document.querySelectorAll('.admin-section');
-    tabBtns.forEach(btn => {
-        btn.onclick = () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            sections.forEach(s => s.classList.remove('active'));
-            btn.classList.add('active');
-            const target = document.getElementById(btn.dataset.target);
-            if (target) target.classList.add('active');
-            
-            // Nếu mở tab thống kê thì khởi tạo biểu đồ
-            if (btn.dataset.target === 'stats-section') {
-                const currentType = document.getElementById('chartTypeToggle')?.value || 'bar';
-                initStatistics(currentType);
-                initRevenueChart();
-            }
-        };
-    });
-
-    // Lắng nghe đổi kiểu biểu đồ
-    document.getElementById('chartTypeToggle')?.addEventListener('change', (e) => {
-        initStatistics(e.target.value);
-    });
 });

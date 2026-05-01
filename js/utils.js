@@ -40,20 +40,21 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Cấu trúc danh mục sản phẩm đầy đủ theo nhóm
 export const PRODUCT_CATEGORIES = {
-    "Dụng cụ Bếp": [
-        "Chén, Tô, Dĩa", "Đũa, Muỗng, Gác đũa", 
-        "Dao, Kéo, Thớt", "Nồi, Chảo & Rổ", 
-        "Giá múc & Hủ gia vị"
+    "Nghệ thuật Bàn ăn": [
+        "Bộ đồ ăn (Chén, Dĩa)", "Phụ kiện bàn tiệc", 
+        "Hũ gia vị gốm sứ", "Khay & Thớt gỗ", 
+        "Dụng cụ pha chế"
     ],
-    "Phòng khách": [
-        "Bình hoa", "Dĩa & Khay bánh", "Đèn bàn",
-        "Ấm chén uống trà", "Trang trí (Tượng, Decor)"
+    "Home Decor": [
+        "Lọ hoa nghệ thuật", "Ấm trà & Thưởng thức", 
+        "Đèn gốm trang trí", "Tượng & Vật phẩm decor",
+        "Khay bánh mứt"
     ],
-    "Nhà tắm": [
-        "Hộp khăn giấy", "Dụng cụ đựng xà phòng"
+    "Gốm & Đời sống": [
+        "Phụ kiện phòng tắm", "Hộp khăn giấy cao cấp"
     ],
-    "Phụ kiện": [
-        "Lót ly", "Lót nồi (Gốm, Mây)"
+    "Tạp vật Tinh tế": [
+        "Lót ly thủ công", "Đế lót gốm sứ", "Vật phẩm nhỏ lẻ"
     ]
 };
 
@@ -348,29 +349,39 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     return `
-        <a href="${linkBase}?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card ${sparkleClass} ${outOfStockClass}" style="position: relative;">
-                ${isOutOfStock ? stockBadge : saleBadge}
-                <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')" 
-                        aria-label="${isFav ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}" aria-pressed="${isFav}">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" aria-hidden="true">
+    <div class="product-card ${sparkleClass} ${outOfStockClass}">
+        <div class="product-card-image">
+            <a href="${linkBase}?id=${id}">
+                <img src="${product.thumbUrl || product.imageUrl || 'https://via.placeholder.com/300'}" 
+                     alt="${product.name}" loading="lazy" width="300" height="300">
+            </a>
+            ${isOutOfStock ? stockBadge : saleBadge}
+            <div class="product-card-actions">
+                <button class="action-icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')" title="Yêu thích">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
-                     alt="${product.name}" 
-                     loading="lazy"
-                     decoding="async"
-                     width="300" height="300"
-                     style="width:100%; height: auto; object-fit: cover; aspect-ratio: 1/1; background-color: #f0f0f0;">
+                <button class="quick-add-btn" onclick="addToCart({id: '${id}', name: '${product.name.replace(/'/g, "\\'")}', price: ${currentPrice}, image: '${product.imageUrl}', quantity: 1})" title="Thêm nhanh vào giỏ">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="product-card-info">
+            <a href="${linkBase}?id=${id}" class="product-title-link">
                 <h3>${product.name}</h3>
-                <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                    ${starsHtml}
-                    <span style="color: #666; font-size: 0.75rem; margin-left: 5px; font-weight: 400;">(Đã bán ${soldCount})</span>
-                </div>
+            </a>
+            <div class="product-rating-row">
+                <div class="rating-mini">${starsHtml}</div>
+                <span class="sold-count">Đã bán ${soldCount}</span>
+            </div>
+            <div class="product-price-block">
                 ${priceHtml}
             </div>
-        </a>
+        </div>
+    </div>
     `;
 }
 
@@ -586,6 +597,41 @@ async function syncLocalToCloud(userId) {
     }
 }
 
+// 11. Logic SEO: Cập nhật Meta tags dùng chung
+export function updateSEO(title, description, imageUrl, url = window.location.href) {
+    document.title = title;
+    const metaMap = [
+        { attr: 'name', key: 'description', content: description },
+        { attr: 'property', key: 'og:title', content: title },
+        { attr: 'property', key: 'og:description', content: description },
+        { attr: 'property', key: 'og:image', content: imageUrl },
+        { attr: 'property', key: 'og:url', content: url },
+        { attr: 'name', key: 'twitter:card', content: 'summary_large_image' },
+        { attr: 'name', key: 'twitter:title', content: title },
+        { attr: 'name', key: 'twitter:description', content: description },
+        { attr: 'name', key: 'twitter:image', content: imageUrl }
+    ];
+
+    metaMap.forEach(({ attr, key, content }) => {
+        if (!content) return;
+        let el = document.querySelector(`meta[${attr}="${key}"]`);
+        if (!el) {
+            el = document.createElement('meta');
+            el.setAttribute(attr, key);
+            document.head.appendChild(el);
+        }
+        el.setAttribute('content', content);
+    });
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', url);
+}
+
 // 8. Logic Component: Tải Header/Footer dùng chung
 export async function loadSharedComponents(pathPrefix = './') {
     try {
@@ -649,34 +695,18 @@ export async function loadSharedComponents(pathPrefix = './') {
                     }
                 });
             }
-
-            // Logic Tìm kiếm Overlay
-            const btnOpenSearch = document.getElementById('btn-open-search');
-            const btnCloseSearch = document.getElementById('btn-close-search');
-            const searchOverlay = document.getElementById('search-overlay');
-            const searchInput = document.getElementById('header-search-input');
-
-            if (btnOpenSearch && searchOverlay) {
-                btnOpenSearch.onclick = () => {
-                    searchOverlay.classList.add('active');
-                    searchInput.focus();
-                };
-                btnCloseSearch.onclick = () => {
-                    searchOverlay.classList.remove('active');
-                    document.getElementById('search-suggestions').style.display = 'none';
-                };
-                // Khởi tạo tìm kiếm cho Header Overlay
-                initAutocomplete('header-search-input', 'search-suggestions', prefix);
-            }
         }
+
         if (f.ok) {
-            document.getElementById('footer-placeholder').innerHTML = fixPaths(await f.text());
-            setupScrollToTop();
+            const footerHTML = fixPaths(await f.text());
+            const footerPlaceholder = document.getElementById('footer-placeholder');
+            if (footerPlaceholder) footerPlaceholder.innerHTML = footerHTML;
         }
-        
+
         return true;
-    } catch (e) {
-        console.error("Lỗi tải component dùng chung:", e);
+    } catch (error) {
+        console.error("Lỗi tải component dùng chung:", error);
         return false;
     }
 }
+                        

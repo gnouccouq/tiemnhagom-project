@@ -1,31 +1,9 @@
 import { 
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
-    renderProductCard, addToCart, addToHistory, initAutocomplete
+    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-// Hàm hỗ trợ cập nhật các thẻ meta cho SEO
-function updateMetaTag(attr, value, content) {
-    let element = document.querySelector(`meta[${attr}="${value}"]`);
-    if (!element) {
-        element = document.createElement('meta');
-        element.setAttribute(attr, value);
-        document.head.appendChild(element);
-    }
-    element.setAttribute('content', content);
-}
-
-// Hàm hỗ trợ cập nhật các thẻ link (như canonical)
-function updateLinkTag(rel, href) {
-    let element = document.querySelector(`link[rel="${rel}"]`);
-    if (!element) {
-        element = document.createElement('link');
-        element.setAttribute('rel', rel);
-        document.head.appendChild(element);
-    }
-    element.setAttribute('href', href);
-}
 
 // Biến toàn cục để quản lý gallery
 let allImages = [];
@@ -222,7 +200,7 @@ async function fetchProductDetail() {
                             <h1>${p.name}</h1>
                             <div class="rating" style="color: #f1c40f;">
                                 ${starsHtml} 
-                                <span style="color: #888; font-size: 0.85rem; font-weight:400; margin-left:8px;">(${p.rating || 5}/5 từ khách hàng) &bull; Đã bán ${soldCount}</span>
+                                <span style="color: #888; font-size: 0.85rem; font-weight:400; margin-left:8px;">(${p.rating || 5}/5) &bull; Đã bán ${soldCount}</span>
                             </div>
                             <div class="product-price-row">
                                 <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
@@ -294,18 +272,7 @@ async function fetchProductDetail() {
                 ? p.description.substring(0, 160).replace(/\s+/g, ' ').trim()
                 : `Sản phẩm ${p.name} thủ công tinh xảo từ Tiệm Nhà Gốm. Khám phá ngay bộ sưu tập gốm sứ ${p.category} độc đáo.`);
             
-            updateMetaTag('name', 'description', seoDesc);
-            updateMetaTag('property', 'og:title', seoTitle);
-            updateMetaTag('property', 'og:description', seoDesc);
-            updateMetaTag('property', 'og:image', p.imageUrl);
-            updateMetaTag('property', 'og:url', window.location.href);
-
-            // Tối ưu SEO: Thẻ Twitter Card & Canonical
-            updateMetaTag('name', 'twitter:card', 'summary_large_image');
-            updateMetaTag('name', 'twitter:title', seoTitle);
-            updateMetaTag('name', 'twitter:description', seoDesc);
-            updateMetaTag('name', 'twitter:image', p.imageUrl);
-            updateLinkTag('canonical', window.location.href);
+            updateSEO(seoTitle, seoDesc, p.imageUrl);
 
             // Tối ưu SEO: Dữ liệu có cấu trúc Schema.org (JSON-LD)
             const productSchema = {

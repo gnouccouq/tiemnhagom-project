@@ -8,55 +8,51 @@
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
-<body class="full-width-layout">
+<body class="products-page">
     <div id="header-placeholder"></div>
 
+    <!-- Banner đầu trang full chiều ngang -->
+    <section class="product-banner">
+        <div class="banner-content">
+            <h1>Cửa Hàng</h1>
+            <p>Khám phá vẻ đẹp mộc mạc của gốm thủ công</p>
+        </div>
+    </section>
+
     <main class="products-page-container">
-        <h1 class="page-title">Tất cả sản phẩm</h1>
+        <!-- Phần danh mục sản phẩm ô vuông -->
+        <section class="category-grid-section">
+            <div id="category-grid-display" class="category-square-grid">
+                <!-- Danh mục render từ JS -->
+            </div>
+        </section>
 
         <div class="products-content">
-            <aside class="sidebar">
-                <h3>Bộ lọc</h3>
-                <div class="filter-group">
-                    <h4>Tìm theo tên</h4>
-                    <input type="text" id="search-name" placeholder="Nhập tên sản phẩm..." class="search-input">
-                </div>
-                <div class="filter-group">
-                    <h4>Danh mục</h4>
-                    <ul id="category-filters" class="filter-list">
-                        <li><a href="#" data-filter-category="all" class="active">Tất cả</a></li>
-                        <li><a href="#" data-filter-category="Ly & Chén">Ly & Chén</a></li>
-                        <li><a href="#" data-filter-category="Bình hoa">Bình hoa</a></li>
-                        <li><a href="#" data-filter-category="Đồ trang trí">Đồ trang trí</a></li>
-                        <li><a href="#" data-filter-category="Khác">Khác</a></li>
-                    </ul>
-                </div>
-                <div class="filter-group">
-                    <h4>Khoảng giá (VNĐ)</h4>
-                    <div class="price-range-inputs">
-                        <input type="number" id="price-min" placeholder="Từ..." class="search-input">
-                        <input type="number" id="price-max" placeholder="Đến..." class="search-input">
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <h4>Khác</h4>
-                    <ul class="filter-list">
-                        <li><a href="#" data-filter-sale="true">Đang giảm giá</a></li>
-                        <li><a href="#" data-filter-sale="false">Không giảm giá</a></li>
-                    </ul>
-                </div>
-            </aside>
-
             <section class="product-listing">
-                <div class="sort-options">
-                    <label for="sort-by">Sắp xếp theo:</label>
-                    <select id="sort-by">
-                        <option value="newest">Mới nhất</option>
-                        <option value="price-asc">Giá: Thấp đến Cao</option>
-                        <option value="price-desc">Giá: Cao đến Thấp</option>
-                        <option value="rating-desc">Đánh giá: Cao nhất</option>
-                        <option value="sale-desc">Giảm giá: Cao nhất</option>
-                    </select>
+                <div class="listing-toolbar">
+                    <div class="toolbar-left">
+                        <input type="text" id="search-name" placeholder="Tìm kiếm sản phẩm..." class="search-input">
+                    </div>
+                    <div class="toolbar-right">
+                        <button id="mobile-filter-btn" class="btn-minimal mobile-filter-trigger">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <span>Bộ lọc</span>
+                        </button>
+
+                        <div class="sort-options">
+                            <label for="sort-by">Sắp xếp:</label>
+                            <select id="sort-by">
+                                <option value="newest">Mới nhất</option>
+                                <option value="popular">Bán chạy nhất</option>
+                                <option value="name-asc">Tên: A-Z</option>
+                                <option value="name-desc">Tên: Z-A</option>
+                                <option value="price-asc">Giá: Thấp đến Cao</option>
+                                <option value="price-desc">Giá: Cao đến Thấp</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="all-product-grid" class="grid">
@@ -77,6 +73,37 @@
                     <p>Không tìm thấy sản phẩm nào phù hợp.</p>
                 </div>
             </section>
+        </div>
+
+        <!-- Popup Bộ lọc cho Mobile -->
+        <div id="mobile-filter-modal" class="mobile-filter-modal">
+            <div class="mobile-filter-content">
+                <div class="mobile-filter-header">
+                    <h3>Bộ lọc</h3>
+                    <button class="close-filter-modal">&times;</button>
+                </div>
+                <div class="mobile-filter-body">
+                    <div class="filter-group">
+                        <h4>Khoảng giá (VNĐ)</h4>
+                        <div class="price-range-inputs">
+                            <input type="number" id="price-min" placeholder="Từ..." class="search-input">
+                            <input type="number" id="price-max" placeholder="Đến..." class="search-input">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <h4>Trạng thái</h4>
+                        <ul class="filter-list">
+                            <li><a href="#" data-filter-sale="all" class="active">Tất cả</a></li>
+                            <li><a href="#" data-filter-sale="true">Đang giảm giá</a></li>
+                            <li><a href="#" data-filter-sale="false">Không giảm giá</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mobile-filter-footer">
+                    <button id="reset-filter-btn" class="btn-outline">Xóa lọc</button>
+                    <button id="apply-filter-btn" class="btn-dark">Áp dụng</button>
+                </div>
+            </div>
         </div>
     </main>
 

@@ -1,15 +1,16 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, PRODUCT_CATEGORIES
+    db, auth, toggleFavoriteLogic, initHeader, PRODUCT_CATEGORIES, renderProductCard
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Cấu hình phân trang
-const PAGE_SIZE = 10; // Đổi thành 10 để hiển thị tròn 2 hàng (mỗi hàng 5 món)
+const PAGE_SIZE = 25; // 5 hàng x 5 sản phẩm
 let lastVisible = null; // Document cuối cùng của trang hiện tại
 let firstVisible = null; // Document đầu tiên của trang hiện tại
 let currentPage = 1;
+let activeSubCategory = null; // Lưu trữ danh mục con từ URL
 let searchTimeout; // Biến để xử lý debounce cho tìm kiếm
 
 // Hàm hỗ trợ cập nhật thẻ Meta cho SEO
@@ -33,90 +34,51 @@ window.toggleFavorite = async (event, productId) => {
     await toggleFavoriteLogic(productId, fetchProducts);
 };
 
-// Hàm bổ trợ render thẻ sản phẩm (dùng chung cho cả 2 section)
-function renderProductCard(product, id, favsList = []) {
-    const rating = product.rating || 5;
-    let starsHtml = '';
-    for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
+// Hàm render danh mục sản phẩm (Dạng ô vuông có chữ ở giữa)
+function renderCategoryGrid() {
+    const container = document.getElementById('category-grid-display');
+    if (!container) return;
 
-    const hasSale = product.sale > 0;
-    const isOutOfStock = (product.stock || 0) <= 0;
-    const soldCount = product.sold || 0;
-    const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
-    
-    const priceHtml = hasSale 
-        ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>`
-        : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
-
-    const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
-    const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
-
-    const isFav = favsList.includes(id);
-    const sparkleClass = hasSale ? 'sale-sparkle' : '';
-    const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
-
-    return `
-        <a href="../product/index.html?id=${id}" class="product-link" style="text-decoration: none; color: inherit;">
-            <div class="product-card ${sparkleClass} ${outOfStockClass}" style="position: relative;">
-                ${isOutOfStock ? stockBadge : saleBadge}
-                <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${id}')">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                </button>
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" 
-                     alt="${product.name}"
-                     loading="lazy"
-                     style="width:100%; object-fit: cover; aspect-ratio: 1/1;">
-                <h3>${product.name}</h3>
-                <div class="rating" style="color: #f1c40f; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                    ${starsHtml}
-                    <span style="color: #666; font-size: 0.75rem; margin-left: 5px; font-weight: 400;">(Đã bán ${soldCount})</span>
-                </div>
-                ${priceHtml}
-            </div>
-        </a>
-    `;
-}
-
-// Hàm tự động tạo bộ lọc danh mục ở Sidebar
-function renderFilterSidebar() {
-    const sidebarContainer = document.getElementById('category-filters');
-    if (!sidebarContainer) return;
+    // Map ảnh cho các danh mục (Bạn có thể thay link ảnh thật ở đây)
+    const categoryImages = {
+        "Nghệ thuật Bàn ăn": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
+        "Home Decor": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=400",
+        "Gốm & Đời sống": "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?q=80&w=400",
+        "Tạp vật Tinh tế": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=400"
+    };
 
     let html = `
-        <div class="filter-group expanded" style="margin-bottom: 1.5rem;">
-            <ul class="filter-list">
-                <li><a href="#" class="active" data-filter-category="all">Tất cả sản phẩm</a></li>
-            </ul>
+        <div class="category-square-item active" data-filter-category="all">
+            <div class="category-square-content">
+                <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=400" alt="Tất cả">
+                <span>Tất cả</span>
+            </div>
         </div>
     `;
 
     for (const [group, subs] of Object.entries(PRODUCT_CATEGORIES)) {
         html += `
-            <div class="filter-group expanded">
-                <h4 style="cursor: default; color: var(--text-black); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">${group}</h4>
-                <ul class="filter-list">
-                    ${subs.map(sub => `<li><a href="#" data-filter-category="${sub}">${sub}</a></li>`).join('')}
-                </ul>
+            <div class="category-square-item" data-filter-category="${group}">
+                <div class="category-square-content">
+                    <img src="${categoryImages[group] || 'https://via.placeholder.com/400'}" alt="${group}">
+                    <span>${group}</span>
+                </div>
             </div>
         `;
     }
-    sidebarContainer.innerHTML = html;
-
-    // Sau khi render xong, gán lại sự kiện click cho các link vừa tạo
-    setupFilterEvents();
+    container.innerHTML = html;
+    setupCategoryEvents();
 }
 
 // Hàm chính để lấy và hiển thị sản phẩm
-async function fetchProducts(navigation = 'init') {
+async function fetchProducts(navigation = 'init', categoryOverride = null) {
     const productGrid = document.getElementById('all-product-grid');
     const noProductsMsg = document.getElementById('no-products-found');
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
 
-    productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
+    if (navigation === 'init') productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
         <div class="skeleton-card">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton skeleton-text skeleton-title"></div>
@@ -128,7 +90,9 @@ async function fetchProducts(navigation = 'init') {
 
     try {
         let productsQuery = collection(db, "products");
-        let currentCategory = document.querySelector('.filter-list a.active')?.dataset.filterCategory || 'all';
+        if (navigation === 'init') activeSubCategory = categoryOverride;
+        
+        let currentCategory = activeSubCategory || document.querySelector('.category-square-item.active')?.dataset.filterCategory || 'all';
         let currentSort = document.getElementById('sort-by')?.value || 'newest';
         let filterSale = document.querySelector('.filter-list a[data-filter-sale].active')?.dataset.filterSale;
         let searchTerm = document.getElementById('search-name')?.value.trim() || '';
@@ -163,48 +127,55 @@ async function fetchProducts(navigation = 'init') {
 
         // Chỉ áp dụng lọc giá nếu KHÔNG đang tìm kiếm theo tên (Hạn chế của Firestore)
         if (!searchTerm) {
+            const hasPriceFilter = minPrice > 0 || maxPrice > 0;
             if (minPrice > 0) productsQuery = query(productsQuery, where("price", ">=", minPrice));
             if (maxPrice > 0) productsQuery = query(productsQuery, where("price", "<=", maxPrice));
+            
+            // Lọc theo trạng thái Sale
+            // Lưu ý: Firestore không cho phép lọc inequality trên nhiều field khác nhau (price và sale) trong 1 query
+            if (filterSale === 'true' && !hasPriceFilter) {
+                productsQuery = query(productsQuery, where("sale", ">", 0));
+            } else if (filterSale === 'false') {
+                productsQuery = query(productsQuery, where("sale", "==", 0));
+            }
         }
 
+        // Lọc theo Category (Hỗ trợ cả Group hoặc Sub-category)
         if (currentCategory !== 'all') {
-            productsQuery = query(productsQuery, where("category", "==", currentCategory));
-        }
-        if (filterSale === 'true') {
-            productsQuery = query(productsQuery, where("sale", ">", 0));
-        } else if (filterSale === 'false') {
-            productsQuery = query(productsQuery, where("sale", "==", 0));
+            // Nếu currentCategory là group (VD: Dụng cụ Bếp), ta cần lấy các sub-categories của nó
+            if (PRODUCT_CATEGORIES[currentCategory]) {
+                productsQuery = query(productsQuery, where("category", "in", PRODUCT_CATEGORIES[currentCategory]));
+            } else {
+                productsQuery = query(productsQuery, where("category", "==", currentCategory));
+            }
         }
 
-        // Apply sorting
-        // Nếu đang có search term, Firestore bắt buộc phải orderBy("name") trước
-        // Nếu đang lọc giá, Firestore bắt buộc phải orderBy("price") trước
+        // Apply sorting logic
         if (searchTerm) {
             productsQuery = query(productsQuery, orderBy("name"));
         } else if (minPrice > 0 || maxPrice > 0) {
-            // Firestore yêu cầu field dùng trong inequality filter (price) phải được orderBy đầu tiên.
-            // Ta lồng luôn logic chọn direction từ currentSort để tránh bị duplicate orderBy field price.
             const priceDir = currentSort === 'price-desc' ? 'desc' : 'asc';
             productsQuery = query(productsQuery, orderBy("price", priceDir));
         }
 
         switch (currentSort) {
+            case 'name-asc':
+                if (!searchTerm) productsQuery = query(productsQuery, orderBy("name", "asc"));
+                break;
+            case 'name-desc':
+                if (!searchTerm) productsQuery = query(productsQuery, orderBy("name", "desc"));
+                break;
+            case 'popular':
+                productsQuery = query(productsQuery, orderBy("sold", "desc"));
+                break;
             case 'price-asc':
+                if (!(minPrice > 0 || maxPrice > 0)) productsQuery = query(productsQuery, orderBy("price", "asc"));
+                break;
             case 'price-desc':
-                // Chỉ thêm orderBy price nếu trước đó chưa thêm (do không có lọc khoảng giá)
-                if (!(minPrice > 0 || maxPrice > 0)) {
-                    productsQuery = query(productsQuery, orderBy("price", currentSort === 'price-asc' ? 'asc' : 'desc'));
-                }
+                if (!(minPrice > 0 || maxPrice > 0)) productsQuery = query(productsQuery, orderBy("price", "desc"));
                 break;
-            case 'rating-desc':
-                productsQuery = query(productsQuery, orderBy("rating", "desc"));
-                break;
-            case 'sale-desc':
-                productsQuery = query(productsQuery, orderBy("sale", "desc"));
-                break;
-            case 'newest':
             default:
-                productsQuery = query(productsQuery, orderBy("updatedAt", "desc"));
+                if (!searchTerm && !(minPrice > 0 || maxPrice > 0)) productsQuery = query(productsQuery, orderBy("updatedAt", "desc"));
                 break;
         }
 
@@ -244,7 +215,7 @@ async function fetchProducts(navigation = 'init') {
         }
 
         querySnapshot.forEach((doc) => {
-            htmlContent += renderProductCard(doc.data(), doc.id, favs);
+            htmlContent += renderProductCard(doc.data(), doc.id, favs, '../product/index.html');
         });
 
         productGrid.innerHTML = htmlContent;
@@ -260,33 +231,80 @@ async function fetchProducts(navigation = 'init') {
     }
 }
 
-// Tách logic gán sự kiện để gọi lại sau khi render sidebar
-function setupFilterEvents() {
-    document.querySelectorAll('#category-filters a').forEach(link => {
-        link.onclick = (e) => {
-            e.preventDefault();
-            document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            
-            // Bỏ chọn các filter sale/khác khi chọn danh mục cụ thể
-            document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
-            
+function setupCategoryEvents() {
+    document.querySelectorAll('.category-square-item').forEach(item => {
+        item.onclick = () => {
+            document.querySelectorAll('.category-square-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            activeSubCategory = null; // Xóa ghi đè danh mục con khi người dùng chọn nhóm lớn tay
+            window.history.replaceState({}, '', window.location.pathname);
             fetchProducts('init');
         };
     });
 }
 
+// Logic xử lý Popup Bộ lọc Mobile
+function initMobileFilter() {
+    const modal = document.getElementById('mobile-filter-modal');
+    const openBtn = document.getElementById('mobile-filter-btn');
+    const closeBtn = document.querySelector('.close-filter-modal');
+    const applyBtn = document.getElementById('apply-filter-btn');
+    const resetBtn = document.getElementById('reset-filter-btn');
+
+    if (!modal || !openBtn) return;
+
+    openBtn.onclick = () => modal.classList.add('active');
+    closeBtn.onclick = () => modal.classList.remove('active');
+    
+    // Đóng khi click ra ngoài vùng content
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+    };
+
+    applyBtn.onclick = () => {
+        fetchProducts('init');
+        modal.classList.remove('active');
+    };
+
+    resetBtn.onclick = () => {
+        const minInput = document.getElementById('price-min');
+        const maxInput = document.getElementById('price-max');
+        if (minInput) minInput.value = '';
+        if (maxInput) maxInput.value = '';
+        
+        document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(l => {
+            l.classList.toggle('active', l.dataset.filterSale === 'all');
+        });
+
+        fetchProducts('init');
+        modal.classList.remove('active');
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Render bộ lọc Sidebar NGAY LẬP TỨC để tránh UI bị trống
-    renderFilterSidebar();
+    renderCategoryGrid();
 
     // 2. Xử lý lọc theo danh mục từ URL (nếu khách click từ Header/Menu)
     const urlParams = new URLSearchParams(window.location.search);
     const catParam = urlParams.get('category');
+    let initialCategory = null;
+
     if (catParam) {
-        document.querySelectorAll('#category-filters a').forEach(l => l.classList.remove('active'));
-        const targetLink = document.querySelector(`#category-filters a[data-filter-category="${catParam}"]`);
-        if (targetLink) targetLink.classList.add('active');
+        document.querySelectorAll('.category-square-item').forEach(l => l.classList.remove('active'));
+        const targetLink = document.querySelector(`.category-square-item[data-filter-category="${catParam}"]`);
+        if (targetLink) {
+            targetLink.classList.add('active');
+        } else {
+            // Nếu là danh mục con, highlight nhóm cha nhưng lọc theo tên con
+            initialCategory = catParam;
+            for (const [group, subs] of Object.entries(PRODUCT_CATEGORIES)) {
+                if (subs.includes(catParam)) {
+                    const groupLink = document.querySelector(`.category-square-item[data-filter-category="${group}"]`);
+                    if (groupLink) groupLink.classList.add('active');
+                    break;
+                }
+            }
+        }
     }
 
     // 3. Xử lý từ khóa tìm kiếm từ Header
@@ -303,49 +321,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 5. Lần đầu tải sản phẩm
-    fetchProducts('init');
+    fetchProducts('init', initialCategory);
 
     // 6. Gán sự kiện cho bộ lọc sale
-    document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(link => {
+    document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            document.querySelectorAll('.filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
-            e.target.classList.add('active');
-            fetchProducts('init');
+            document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            // Chỉ toggle class, việc fetch sẽ đợi người dùng nhấn nút "Áp dụng"
         });
     });
 
-    // Gán sự kiện cho sắp xếp
+    // 7. Khởi tạo logic popup mobile
+    initMobileFilter();
+
+    // Gán sự kiện cho Sort select
     document.getElementById('sort-by')?.addEventListener('change', () => fetchProducts('init'));
-
-    // Gán sự kiện cho lọc giá (với debounce)
-    ['price-min', 'price-max'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                fetchProducts('init');
-            }, 800);
-        });
-    });
-
-    // Gán sự kiện cho ô tìm kiếm với kỹ thuật Debounce
-    const searchInput = document.getElementById('search-name');
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                fetchProducts('init');
-            }, 500);
-        });
-    }
-
-    // Gán sự kiện cho phân trang
-    document.getElementById('next-page')?.addEventListener('click', () => {
-        currentPage++;
-        fetchProducts('next');
-    });
-    document.getElementById('prev-page')?.addEventListener('click', () => {
-        currentPage--;
-        fetchProducts('prev');
-    });
 });
