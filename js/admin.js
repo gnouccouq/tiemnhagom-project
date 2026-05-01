@@ -7,6 +7,34 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+// --- Logic chuyển đổi Tab Admin ---
+function setupAdminTabs() {
+    const tabs = document.querySelectorAll('.admin-tab-btn');
+    const sections = document.querySelectorAll('.admin-section');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Xóa trạng thái active của tất cả các tab và section
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+
+            // Kích hoạt tab và section được chọn
+            tab.classList.add('active');
+            const targetId = tab.getAttribute('data-target');
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            // Nếu chuyển sang tab Thống kê, khởi tạo lại biểu đồ để tránh lỗi hiển thị
+            if (targetId === 'admin-stats-section') {
+                initStatistics();
+                initRevenueChart();
+            }
+        });
+    });
+}
+
 // Thiết lập Auth Listener để cập nhật UI Header và kiểm tra quyền Admin
 async function checkAdminRights(user) {
     if (!user) {
@@ -27,6 +55,48 @@ async function checkAdminRights(user) {
             document.body.style.display = "block";
         }
     } catch (e) { console.error(e); }
+}
+
+// --- Logic Thông báo Đơn hàng mới ---
+function setupNewOrderNotification() {
+    if (!("Notification" in window)) return;
+
+    // Khởi tạo đối tượng âm thanh
+    const notificationSound = new Audio('../Asset/sounds/new-order.mp3');
+
+    // Biến để bỏ qua lần đọc dữ liệu đầu tiên (Firestore trả về dữ liệu hiện có ngay khi gắn listener)
+    let isInitialLoad = true;
+
+    // Lắng nghe đơn hàng mới nhất
+    const q = query(collection(db, "orders"), orderBy("orderDate", "desc"), limit(1));
+
+    onSnapshot(q, (snapshot) => {
+        if (isInitialLoad) {
+            isInitialLoad = false;
+            return;
+        }
+
+        snapshot.docChanges().forEach((change) => {
+            // Chỉ xử lý khi có tài liệu mới được thêm vào
+            if (change.type === "added") {
+                const order = change.doc.data();
+                const customerName = order.shippingAddress?.fullName || "Khách hàng";
+                const total = new Intl.NumberFormat('vi-VN').format(order.totalAmount) + 'đ';
+
+                // Phát âm thanh thông báo
+                notificationSound.play().catch(e => console.warn("Trình duyệt chặn tự động phát âm thanh:", e));
+
+                showToast(`🔔 Đơn hàng mới từ ${customerName}: ${total}`, "success");
+
+                if (Notification.permission === "granted") {
+                    new Notification("Tiệm Nhà Gốm: Đơn hàng mới!", {
+                        body: `Khách hàng: ${customerName}\nTổng cộng: ${total}`,
+                        icon: "../Asset/icons/favicon.png"
+                    });
+                }
+            }
+        });
+    });
 }
 
 // Hàm hỗ trợ chuyển đổi file ảnh sang WebP để tối ưu dung lượng
@@ -1084,6 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Notification.requestPermission();
     }
 
+    setupAdminTabs();
     initHeader('../', async (user) => {
         await checkAdminRights(user);
         // Chỉ khởi tạo các listener dữ liệu sau khi đã xác thực quyền Admin thành công
@@ -1093,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initOrderListener();
             initUserListener();
             initCouponListener();
+            setupNewOrderNotification();
             populateCategorySelect(); // Nạp danh mục vào form ngay khi xác thực thành công
         }
     });
