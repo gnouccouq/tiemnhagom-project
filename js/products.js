@@ -41,17 +41,17 @@ function renderCategoryGrid() {
 
     // Map ảnh cho các danh mục (Bạn có thể thay link ảnh thật ở đây)
     const categoryImages = {
-        "Dining Decor": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
-        "Teatime & Drinks": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=400",
-        "Home Decor": "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=400",
-        "Kitchenware": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400",
-        "Lifestyle": "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?q=80&w=400"
+        "Dining Decor": "../Asset/images/dining.jpg",
+        "Teatime & Drinks": "../Asset/images/teatime.jpg",
+        "Home Decor": "../Asset/images/homedecor.jpg",
+        "Kitchenware": "../Asset/images/kitchenware.jpg",
+        "Lifestyle": "../Asset/images/lifestyle.jpg"
     };
 
     let html = `
         <div class="category-square-item active" data-filter-category="all">
             <div class="category-square-content">
-                <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=400" alt="Tất cả">
+                <img src="../Asset/images/481662171_945340464390670_9004286649668063676_n.jpg" alt="Tất cả">
                 <span>Tất cả</span>
             </div>
         </div>
