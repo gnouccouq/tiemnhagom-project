@@ -46,7 +46,7 @@ async function renderCart() {
                     <p class="summary-item-variant">${item.variant || 'Mặc định'}</p>
                     <div class="quantity-controls">
                         <button class="q-btn" onclick="changeQty(${index}, -1)">-</button>
-                        <span>${item.quantity}</span>
+                        <span class="qty-value">${item.quantity}</span>
                         <button class="q-btn" onclick="changeQty(${index}, 1)">+</button>
                     </div>
                 </div>
@@ -446,6 +446,15 @@ window.placeOrder = async () => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Bảo mật: Ngăn chặn index trang giỏ hàng và thanh toán
+    let robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+        robotsTag = document.createElement('meta');
+        robotsTag.setAttribute('name', 'robots');
+        document.head.appendChild(robotsTag);
+    }
+    robotsTag.setAttribute('content', 'noindex, nofollow');
+
     initHeader('../', (user) => {
         renderCart();
 

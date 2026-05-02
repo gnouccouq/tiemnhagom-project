@@ -1149,6 +1149,15 @@ async function initRevenueChart() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Bảo mật & SEO: Ngăn chặn các công cụ tìm kiếm lập chỉ mục trang quản trị
+    let robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+        robotsTag = document.createElement('meta');
+        robotsTag.setAttribute('name', 'robots');
+        document.head.appendChild(robotsTag);
+    }
+    robotsTag.setAttribute('content', 'noindex, nofollow');
+
     // Xin quyền gửi thông báo trình duyệt ngay khi Admin truy cập trang
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();

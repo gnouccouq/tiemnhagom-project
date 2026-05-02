@@ -114,6 +114,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         
         document.title = seoTitle;
         updateMetaTag('name', 'description', seoDesc);
+        updateMetaTag('name', 'robots', 'index, follow');
         updateMetaTag('property', 'og:title', seoTitle);
         updateMetaTag('property', 'og:description', seoDesc);
 

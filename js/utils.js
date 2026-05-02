@@ -601,6 +601,7 @@ async function syncLocalToCloud(userId) {
 export function updateSEO(title, description, imageUrl, url = window.location.href) {
     document.title = title;
     const metaMap = [
+        { attr: 'name', key: 'robots', content: 'index, follow' },
         { attr: 'name', key: 'description', content: description },
         { attr: 'property', key: 'og:title', content: title },
         { attr: 'property', key: 'og:description', content: description },

@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, updateSEO 
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
@@ -39,6 +39,13 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         </div>
     `).join('');
     noProductsMsg.style.display = 'none';
+
+    // Cập nhật SEO cho trang Flash Sale
+    const seoTitle = "Flash Sale - Ưu đãi gốm sứ cực sốc | Tiệm Nhà Gốm";
+    const seoDesc = "Khám phá các sản phẩm gốm sứ thủ công đang được giảm giá cực sốc tại Tiệm Nhà Gốm. Đừng bỏ lỡ cơ hội sở hữu đồ decor tinh tế với giá tốt nhất.";
+    const baseUrl = window.location.origin + window.location.pathname.split('/flash-sale/')[0];
+    const seoImg = `${baseUrl}/Asset/images/hero-bg.jpg`;
+    updateSEO(seoTitle, seoDesc, seoImg);
 
     try {
         let productsQuery = collection(db, "products");
@@ -112,11 +119,53 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        querySnapshot.forEach((doc) => {
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, '../product/index.html');
+        const schemaItems = [];
+        // baseUrl đã được khai báo ở đầu hàm fetchFlashSaleProducts
+
+        querySnapshot.docs.forEach((doc, index) => {
+            const p = doc.data();
+            const id = doc.id;
+            htmlContent += renderProductCard(p, id, favs, '../product/index.html');
+
+            // Chuẩn bị dữ liệu cho Schema
+            const hasSale = p.sale > 0;
+            const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
+
+            schemaItems.push({
+                "@type": "ListItem",
+                "position": (currentPage - 1) * PAGE_SIZE + index + 1,
+                "item": {
+                    "@type": "Product",
+                    "name": p.name,
+                    "image": p.imageUrl,
+                    "url": `${baseUrl}/product/index.html?id=${id}`,
+                    "offers": {
+                        "@type": "Offer",
+                        "priceCurrency": "VND",
+                        "price": currentPrice,
+                        "availability": (p.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+                    }
+                }
+            });
         });
 
         productGrid.innerHTML = htmlContent;
+
+        // Cập nhật Structured Data (Schema.org) cho Product Collection
+        let scriptTag = document.getElementById('flash-sale-schema');
+        if (!scriptTag) {
+            scriptTag = document.createElement('script');
+            scriptTag.id = 'flash-sale-schema';
+            scriptTag.type = 'application/ld+json';
+            document.head.appendChild(scriptTag);
+        }
+        scriptTag.textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Danh sách sản phẩm Flash Sale - Tiệm Nhà Gốm",
+            "numberOfItems": querySnapshot.size,
+            "itemListElement": schemaItems
+        });
         
         // Cập nhật trạng thái nút phân trang
         if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;

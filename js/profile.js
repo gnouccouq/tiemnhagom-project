@@ -393,6 +393,15 @@ async function fetchOrderHistory(userId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Bảo mật: Ngăn chặn index trang cá nhân của người dùng
+    let robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+        robotsTag = document.createElement('meta');
+        robotsTag.setAttribute('name', 'robots');
+        document.head.appendChild(robotsTag);
+    }
+    robotsTag.setAttribute('content', 'noindex, nofollow');
+
     initHeader('../', handleProfileAuth);
     setupTabs();
 });

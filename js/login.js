@@ -6,6 +6,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Bảo mật: Ngăn chặn index các trang đăng nhập/xác thực
+    let robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+        robotsTag = document.createElement('meta');
+        robotsTag.setAttribute('name', 'robots');
+        document.head.appendChild(robotsTag);
+    }
+    robotsTag.setAttribute('content', 'noindex, nofollow');
+
     initHeader('../');
 
     // Chuyển đổi Tabs (Email / Phone)

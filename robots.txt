@@ -1,3 +1,13 @@
 User-agent: *
+
+# Cho phép bot crawl toàn bộ các trang nội dung chính
 Allow: /
+
+# Chặn các trang quản trị, giỏ hàng và thông tin cá nhân để tối ưu SEO
+Disallow: /admin/
+Disallow: /cart/
+Disallow: /login/
+Disallow: /profile/
+
+# Chỉ định đường dẫn tới sơ đồ trang web để bot lập chỉ mục nhanh hơn
 Sitemap: https://gnouccouq.github.io/tiemnhagom-project/sitemap.xml
