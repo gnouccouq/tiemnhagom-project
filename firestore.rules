@@ -19,7 +19,8 @@ service cloud.firestore {
     
     // 2. Danh sách Admin
     match /admins/{adminId} {
-      allow read, list: if isAdmin(); // Admin có thể đọc và liệt kê tất cả tài liệu admin
+      allow read: if request.auth != null && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin(); 
       allow write: if isAdmin(); // Cho phép Admin quản lý danh sách Admin
     }
 
