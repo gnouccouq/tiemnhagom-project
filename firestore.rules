@@ -19,8 +19,8 @@ service cloud.firestore {
     
     // 2. Danh sách Admin
     match /admins/{adminId} {
-      allow read: if request.auth != null && request.auth.uid == adminId;
-      allow write: if false; // Chỉ chỉnh sửa tay trên Firebase Console
+      allow read, list: if isAdmin(); // Admin có thể đọc và liệt kê tất cả tài liệu admin
+      allow write: if isAdmin(); // Cho phép Admin quản lý danh sách Admin
     }
 
     // 3. Giỏ hàng & Yêu thích
@@ -35,9 +35,10 @@ service cloud.firestore {
     match /users/{userId} {
       // Cho phép đọc nếu là chính chủ, admin, hoặc là tài khoản ghost (để tìm kiếm khi login)
       allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
-      // Cho phép ghi/xóa nếu là chính chủ, admin, hoặc thao tác trên tài khoản ghost
-      allow write, delete: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
-      allow create: if true; // Cho phép tạo ghost account khi đặt hàng
+      // Cho phép tạo ghost account khi đặt hàng hoặc cập nhật thông tin chính chủ
+      allow create: if true;
+      allow update: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow delete: if isAdmin() || (request.auth != null && resource.data.isGhost == true);
     }
 
     // 5. Đơn hàng (orders)
@@ -47,7 +48,8 @@ service cloud.firestore {
       // Admin sửa mọi thứ, User chỉ được Hủy khi đang xử lý
       allow update: if isAdmin() || 
         (request.auth != null && request.auth.uid == resource.data.userId && 
-         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy");
+         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']));
     }
 
     // 6. Mã giảm giá (coupons)

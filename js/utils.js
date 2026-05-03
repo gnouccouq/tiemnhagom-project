@@ -485,13 +485,24 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
             authSection.innerHTML = `
                 <div class="user-dropdown">
-                    <a href="${profilePath}" class="user-icon-link" title="Tài khoản">
+                    <a href="${profilePath}" class="user-icon-link" title="${isAdmin ? 'Tài khoản Quản trị' : 'Tài khoản'}">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
+                        ${isAdmin ? `
+                        <span class="admin-badge" title="Quản trị viên">
+                            <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                            </svg>
+                        </span>` : ''}
                     </a>
                     <ul class="user-dropdown-menu">
+                        <li class="dropdown-user-info">
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
+                                ${user.displayName || user.email.split('@')[0]} ${isAdmin ? `<span class="admin-text-badge">Admin</span>` : ''}
+                            </div>
+                        </li>
                         <li><a href="${profilePath}" class="${isProfilePage && !isOrdersTab && !isFavsTab ? 'active' : ''}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             Trang cá nhân

@@ -729,24 +729,35 @@ function initUserListener() {
     const userListTable = document.getElementById('admin-user-list');
     if (!userListTable) return;
 
-    onSnapshot(collection(db, "users"), (snapshot) => {
+    // Lấy danh sách admin để so khớp badge
+    getDocs(collection(db, "admins")).then(adminsSnap => {
+        const adminIds = new Set(adminsSnap.docs.map(d => d.id));
+
+        onSnapshot(collection(db, "users"), (snapshot) => {
         let htmlContent = '';
         snapshot.forEach((doc) => {
             const u = doc.data();
             const updatedAt = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('vi-VN') : 'N/A';
             const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'N/A';
+            const isAdminUser = adminIds.has(doc.id);
+            const adminBadge = isAdminUser ? `<span class="admin-text-badge" style="font-size: 0.55rem;"><svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Admin</span>` : '';
+
+            const adminActionBtn = isAdminUser 
+                ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${doc.id}', false)">Gỡ Admin</button>`
+                : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${doc.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
 
             htmlContent += `
                 <tr>
                     <td data-label="Người dùng">
-                        <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'}</strong><br>
+                        <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
                         <small style="color: #888;">ID: ${doc.id}</small>
                     </td>
                     <td data-label="SĐT">${u.phoneNumber || u.phone || '---'}</td>
                     <td data-label="Giới tính">${u.gender || '---'}</td>
                     <td data-label="Ngày sinh">${birthday}</td>
                     <td data-label="Cập nhật">${updatedAt}</td>
-                    <td data-label="Thao tác">
+                    <td data-label="Thao tác" style="display: flex; gap: 5px; justify-content: flex-end;">
+                        ${adminActionBtn}
                         <button class="btn-minimal" onclick="window.viewUserOrders('${doc.id}')">Xem đơn hàng</button>
                     </td>
                 </tr>
@@ -754,7 +765,36 @@ function initUserListener() {
         });
         userListTable.innerHTML = htmlContent || '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu khách hàng.</td></tr>';
     });
+    });
 }
+
+// Hàm thêm/gỡ quyền Admin trực tiếp từ danh sách người dùng
+window.toggleAdminPrivilege = async (uid, shouldBeAdmin, identifier = '') => {
+    const actionText = shouldBeAdmin ? 'GÁN' : 'GỠ';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionText} quyền Quản trị viên cho tài khoản này?`)) return;
+    
+    try {
+        const adminRef = doc(db, "admins", uid);
+        if (shouldBeAdmin) {
+            // Thêm vào danh sách Admin
+            await setDoc(adminRef, { 
+                email: identifier, 
+                assignedAt: serverTimestamp(),
+                assignedBy: auth.currentUser.uid 
+            });
+            showToast("Đã cấp quyền Quản trị viên thành công!");
+        } else {
+            // Ngăn chặn việc tự gỡ quyền của chính mình để tránh bị lock out
+            if (uid === auth.currentUser.uid) {
+                return showToast("Bạn không thể tự gỡ quyền Quản trị viên của chính mình!", "error");
+            }
+            await deleteDoc(adminRef);
+            showToast("Đã gỡ quyền Quản trị viên.");
+        }
+    } catch (e) {
+        showToast("Lỗi phân quyền: " + e.message, "error");
+    }
+};
 
 function initCouponListener() {
     const list = document.getElementById('admin-coupon-list');

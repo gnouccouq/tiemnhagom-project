@@ -194,12 +194,18 @@ async function handleProfileAuth(user) {
             ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') 
             : 'N/A';
 
+        // Kiểm tra quyền Admin
+        const adminRef = doc(db, "admins", user.uid);
+        const adminSnap = await getDoc(adminRef);
+        const isAdmin = adminSnap.exists();
+        const adminBadge = isAdmin ? `<span class="admin-text-badge" title="Quản trị viên"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Admin</span>` : '';
+
         // Cấu trúc lại giao diện trang cá nhân
         profileInfo.innerHTML = `
             <div class="profile-card">
                 <h3>Thông tin cá nhân</h3>
                 <div id="profile-display">
-                    <p><strong>Tên hiển thị:</strong> <span id="disp-name">${user.displayName || 'Chưa cập nhật'}</span></p>
+                    <p><strong>Tên hiển thị:</strong> <span id="disp-name">${user.displayName || 'Chưa cập nhật'} ${adminBadge}</span></p>
                     <p><strong>Email:</strong> ${user.email}</p>
                     <p><strong>Số điện thoại:</strong> <span>${userData.phone || 'Chưa cập nhật'}</span></p>
                     <p><strong>Giới tính:</strong> <span>${userData.gender || 'Chưa cập nhật'}</span></p>
@@ -296,10 +302,8 @@ async function handleProfileAuth(user) {
 
         document.getElementById('btn-logout-profile').onclick = logout;
 
-        // Kiểm tra quyền Admin và thêm link Admin nếu có
-        const adminRef = doc(db, "admins", user.uid);
-        const adminSnap = await getDoc(adminRef);
-        if (adminSnap.exists()) {
+        // Hiển thị link Admin nếu có quyền
+        if (isAdmin) {
             const adminContainer = document.getElementById('admin-action-container');
             if (adminContainer) {
                 adminContainer.innerHTML = `
