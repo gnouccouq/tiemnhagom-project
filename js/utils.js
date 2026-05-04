@@ -418,6 +418,43 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         const authSection = document.getElementById('auth-section');
         if (!authSection) return;
 
+        // 1. Kiểm tra quyền Admin (nếu có user)
+        let isAdmin = false;
+        if (user) {
+            try {
+                const adminSnap = await getDoc(doc(db, "admins", user.uid));
+                isAdmin = adminSnap.exists();
+            } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
+        }
+
+        // 2. KIỂM TRA CHẾ ĐỘ BẢO TRÌ (Chạy cho cả khách vãng lai và thành viên)
+        try {
+            const systemSnap = await getDoc(doc(db, "settings", "system"));
+            if (systemSnap.exists()) {
+                const settings = systemSnap.data();
+                const now = new Date();
+                const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
+
+                // Xác định xem chế độ bảo trì có thực sự đang kích hoạt không (chưa quá hạn đếm ngược)
+                const isMaintenanceActive = settings.maintenanceMode && (!countdownDate || now < countdownDate);
+
+                if (isMaintenanceActive) {
+                    const isAtMaintenancePage = window.location.pathname.includes('/maintenance/');
+                    const isAtAdminPanel = window.location.pathname.includes('/admin/');
+                    const isAtLoginPage = window.location.pathname.includes('/login/');
+
+                    // Nếu đang bảo trì mà người dùng KHÔNG phải Admin, KHÔNG ở trang bảo trì/admin/login -> Redirect
+                    if (!isAdmin && !isAtMaintenancePage && !isAtAdminPanel && !isAtLoginPage) {
+                        window.location.href = pathPrefix + "maintenance/index.html";
+                        return;
+                    }
+                }
+            }
+        } catch (err) { 
+            console.error("Lỗi kiểm tra trạng thái hệ thống:", err); 
+        }
+
+        // 3. Cập nhật giao diện Header dựa trên trạng thái đăng nhập
         if (user) {
             // Bọc logic xử lý dữ liệu trong try-catch để không làm treo UI Header
             try {
@@ -469,42 +506,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
             const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
 
-            // Xác định trạng thái active ban đầu dựa trên URL và Hash
             const isProfilePage = window.location.pathname.includes('profile');
             const isOrdersTab = window.location.hash === '#orders';
             const isFavsTab = window.location.hash === '#favs';
-
-            // Kiểm tra quyền Admin để hiển thị menu quản trị
-            let isAdmin = false;
-            try {
-                const adminSnap = await getDoc(doc(db, "admins", user.uid));
-                isAdmin = adminSnap.exists();
-            } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
-
-            // KIỂM TRA CHẾ ĐỘ BẢO TRÌ
-            try {
-                const systemSnap = await getDoc(doc(db, "settings", "system"));
-                if (systemSnap.exists()) {
-                    const settings = systemSnap.data();
-                    const now = new Date();
-                    const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
-
-                    // Nếu đang bật bảo trì nhưng ĐÃ QUÁ GIỜ đếm ngược -> Cho phép truy cập luôn
-                    if (settings.maintenanceMode && countdownDate && now >= countdownDate) return;
-
-                    if (settings.maintenanceMode) {
-                        const isAtMaintenancePage = window.location.pathname.includes('/maintenance/');
-                        const isAtAdminPanel = window.location.pathname.includes('/admin/');
-                        const isAtLoginPage = window.location.pathname.includes('/login/');
-
-                        // Nếu đang bật bảo trì và người dùng KHÔNG phải Admin, KHÔNG ở trang bảo trì/login -> Redirect
-                        if (!isAdmin && !isAtMaintenancePage && !isAtAdminPanel && !isAtLoginPage) {
-                            window.location.href = pathPrefix + "maintenance/index.html";
-                            return;
-                        }
-                    }
-                }
-            } catch (err) { console.error("Lỗi kiểm tra trạng thái hệ thống:", err); }
 
             authSection.innerHTML = `
                 <div class="user-dropdown">
