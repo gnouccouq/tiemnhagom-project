@@ -28,7 +28,7 @@ exports.deleteProductImages = functions.firestore
         const data = snap.data();
         const images = [];
         
-        if (data.imageUrl && !data.imageUrl.includes('via.placeholder.com')) {
+        if (data.imageUrl && !data.imageUrl.includes('placehold.co') && !data.imageUrl.includes('via.placeholder.com')) {
             images.push(data.imageUrl);
         }
         if (Array.isArray(data.additionalImages)) {
@@ -51,7 +51,7 @@ exports.updateProductImages = functions.firestore
         // 1. Kiểm tra ảnh chính
         if (beforeData.imageUrl && afterData.imageUrl !== beforeData.imageUrl) {
             // Nếu ảnh cũ không phải là placeholder thì mới xóa
-            if (!beforeData.imageUrl.includes('via.placeholder.com')) {
+            if (!beforeData.imageUrl.includes('placehold.co') && !beforeData.imageUrl.includes('via.placeholder.com')) {
                 imagesToDelete.push(beforeData.imageUrl);
             }
         }
@@ -110,6 +110,39 @@ async function deleteFilesFromStorage(urls, contextName) {
 
     return Promise.all(deletePromises);
 }
+
+/**
+ * Tự động dọn dẹp nhật ký kho cũ hơn 1 năm (chạy mỗi ngày lúc 0h sáng)
+ * Lưu ý: Tính năng này yêu cầu dự án Firebase ở gói Blaze (Pay-as-you-go)
+ */
+exports.cleanupOldInventoryLogs = functions.pubsub
+    .schedule('0 0 * * *')
+    .timeZone('Asia/Ho_Chi_Minh')
+    .onRun(async (context) => {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const cutoff = admin.firestore.Timestamp.fromDate(oneYearAgo);
+
+        const logsRef = admin.firestore().collection('inventory_logs');
+        // Giới hạn 500 bản ghi mỗi lần chạy để đảm bảo an toàn cho Batch write của Firestore
+        const oldLogsQuery = logsRef.where('timestamp', '<', cutoff).limit(500);
+
+        const snapshot = await oldLogsQuery.get();
+
+        if (snapshot.empty) {
+            functions.logger.info("Không có nhật ký kho cũ cần dọn dẹp.");
+            return null;
+        }
+
+        const batch = admin.firestore().batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        functions.logger.info(`Hệ thống đã tự động dọn dẹp ${snapshot.size} bản ghi nhật ký kho cũ hơn 1 năm.`);
+        return null;
+    });
 
 // exports.helloWorld = onRequest((request, response) => {
 //   logger.info("Hello logs!", {structuredData: true});

@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, limit, getDocs 
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, 
+    collection, query, where, limit, getDocs, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
@@ -38,25 +39,22 @@ export const auth = app ? getAuth(app) : null;
 export const storage = app ? getStorage(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
-// Cấu trúc danh mục sản phẩm đầy đủ theo nhóm
-export const PRODUCT_CATEGORIES = {
-    "Dining Decor": [
-        "Bát & Chén", "Dĩa & Khay", "Thìa Muỗng & Đũa",
-        "Gia Vị & Nước Chấm", "Gác Đũa & Phụ Kiện"
-    ],
-    "Teatime & Drinks": [
-        "Ấm Trà", "Ly & Tách", "Lót Ly & Đế Lót"
-    ],
-    "Home Decor": [
-        "Lọ Hoa Nghệ Thuật", "Đèn & Tượng Decor", "Khay Bánh Mứt"
-    ],
-    "Kitchenware": [
-        "Nồi & Chảo", "Dao & Kéo", "Thớt", "Dụng Cụ Sơ Chế"
-    ],
-    "Lifestyle": [
-        "Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"
-    ]
-};
+// Default/initial category structure (used if Firestore document doesn't exist)
+export const DEFAULT_PRODUCT_CATEGORIES = [
+    { name: "Dining Decor", order: 1, subs: ["Bát & Chén", "Dĩa & Khay", "Thìa Muỗng & Đũa", "Gia Vị & Nước Chấm", "Gác Đũa & Phụ Kiện"] },
+    { name: "Teatime & Drinks", order: 2, subs: ["Ấm Trà", "Ly & Tách", "Lót Ly & Đế Lót"] },
+    { name: "Home Decor", order: 3, subs: ["Lọ Hoa Nghệ Thuật", "Đèn & Tượng Decor", "Khay Bánh Mứt"] },
+    { name: "Kitchenware", order: 4, subs: ["Nồi & Chảo", "Dao & Kéo", "Thớt", "Dụng Cụ Sơ Chế"] },
+    { name: "Lifestyle", order: 5, subs: ["Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"] }
+];
+
+// Biến toàn cục để lưu trữ danh mục động, được cập nhật từ Firestore
+export let dynamicCategories = [];
+
+// Hàm để lấy danh mục hiện tại (có thể dùng trong các module khác)
+export function getDynamicCategories() {
+    return dynamicCategories;
+}
 
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
@@ -352,7 +350,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     <div class="product-card ${sparkleClass} ${outOfStockClass}">
         <div class="product-card-image">
             <a href="${linkBase}?id=${id}">
-                <img src="${product.thumbUrl || product.imageUrl || 'https://via.placeholder.com/300'}" 
+                <img src="${product.thumbUrl || product.imageUrl || 'https://placehold.co/300x300?text=No+Image'}" 
                      alt="${product.name}" loading="lazy" width="300" height="300">
             </a>
             ${isOutOfStock ? stockBadge : saleBadge}
@@ -708,6 +706,55 @@ export async function loadSharedComponents(pathPrefix = './') {
                 });
             }
         }
+
+        // Bước 3: Lắng nghe và render danh mục động từ Firestore
+        onSnapshot(doc(db, "settings", "product_categories"), async (snapshot) => {
+            const data = snapshot.data();
+            if (snapshot.exists() && data && data.groups) {
+                // Sắp xếp các nhóm theo trường 'order'
+                dynamicCategories = data.groups.sort((a, b) => a.order - b.order);
+            } else {
+                // Nếu chưa có trên cloud, dùng mặc định làm khởi đầu và tạo document
+                dynamicCategories = DEFAULT_PRODUCT_CATEGORIES;
+                // Lưu lại cấu trúc mặc định vào Firestore
+                await setDoc(doc(db, "settings", "product_categories"), { groups: dynamicCategories });
+            }
+
+            // Render Footer Categories
+            const footerList = document.getElementById('footer-categories');
+            if (footerList) {
+                let footerHtml = `
+                    <li><a href="${pathPrefix}products/">Tất cả sản phẩm</a></li>
+                    <li><a href="${pathPrefix}flash-sale/">Flash Sale</a></li>
+                `;
+                dynamicCategories.forEach(group => { // Iterate over array
+                    footerHtml += `<li><a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}">${group.name}</a></li>`;
+                });
+                footerList.innerHTML = footerHtml;
+            }
+            
+            // Render Header Mega Menu Categories (assuming header.html has a mega-menu-categories div)
+            const megaMenuContainer = document.getElementById('mega-menu-categories');
+            if (megaMenuContainer) {
+                let megaMenuHtml = ''; // Reset HTML
+                dynamicCategories.forEach(group => { // Iterate over array
+                    megaMenuHtml += `
+                        <div class="mega-col">
+                            <h4>${group.name}</h4>
+                            ${group.subs.map(sub => `<a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>`).join('')}
+                        </div>
+                    `;
+                });
+                megaMenuContainer.innerHTML = megaMenuHtml;
+            }
+
+            // Cập nhật lại các thành phần UI khác có thể phụ thuộc vào danh mục
+            // Ví dụ: Nếu có hàm renderCategoryGrid() ở trang products, nó sẽ được gọi lại
+            // hoặc các hàm populateCategorySelect() ở admin.js
+            // (Các module khác sẽ tự động nhận dynamicCategories mới nhất qua getDynamicCategories() hoặc onSnapshot riêng của chúng)
+        });
+
+
 
         if (f.ok) {
             const footerHTML = fixPaths(await f.text());

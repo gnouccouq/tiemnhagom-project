@@ -12,9 +12,9 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true;
       allow create, delete: if isAdmin();
-      // Cho phép Admin update hoặc khách update stock/sold
+      // Cho phép Admin update hoặc khách (kể cả vãng lai) update stock/sold khi mua hàng
       allow update: if isAdmin() || 
-        (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']));
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']);
     }
     
     // 2. Danh sách Admin
@@ -53,13 +53,20 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']));
     }
 
-    // 6. Mã giảm giá (coupons)
-    match /coupons/{couponId} {
+    // 6. Cấu hình hệ thống (Danh mục động)
+    match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 7. Đánh giá (reviews)
+    // 7. Mã giảm giá (coupons)
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']);
+    }
+
+    // 8. Đánh giá (reviews)
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null;
@@ -83,6 +90,12 @@ service firebase.storage {
     match /products/{productId}/{allPaths=**} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // 4. Ảnh Danh mục (categories) - Cần thiết cho tính năng mới
+    match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /avatars/{userId}/{allPaths=**} {

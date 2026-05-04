@@ -12,28 +12,185 @@
     <!-- Library to handle HEIC images from iPhone -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
-<body class="admin-page" style="display: none;"> <!-- Ẩn trang mặc định -->
-    <div id="header-placeholder"></div>
+<body class="admin-dashboard-layout" style="display: none;">
     <div id="toast-container" class="toast-container"></div>
 
-    <main class="admin-container">
-        <div class="admin-header">
-            <h1>Bảng điều khiển quản trị</h1>
-            <p>Thêm mới và quản lý danh mục sản phẩm của Tiệm.</p>
-            <a href="../index.html" class="btn-minimal" style="margin-top: 1rem; display: inline-block; text-decoration: none;">← Về trang chủ</a>
+    <div class="admin-wrapper">
+        <!-- Sidebar bên trái -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-brand">
+                <span>TNG Dash</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="admin-tab-btn active" data-target="overview-section">📊 Tổng quan</button>
+                <button class="admin-tab-btn" data-target="product-section">📦 Sản phẩm</button>
+                <button class="admin-tab-btn" data-target="pos-section">🛒 Bán tại shop (POS)</button>
+                <button class="admin-tab-btn" data-target="order-section">📋 Đơn hàng <span id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
+                <button class="admin-tab-btn" data-target="coupon-section">🎟️ Mã giảm giá</button>
+                <button class="admin-tab-btn" data-target="category-section">📁 Danh mục</button>
+                <button class="admin-tab-btn" data-target="user-section">👥 Người dùng</button>
+                <button class="admin-tab-btn" data-target="stats-section">📈 Thống kê</button>
+                <button class="admin-tab-btn" data-target="inventory-log-section">📜 Nhật ký kho</button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div id="admin-user-info" class="admin-profile-snippet">
+                    <!-- JS render thông tin admin -->
+                </div>
+                <a href="../index.html" class="sidebar-link">🏠 Về trang chủ</a>
+                <button id="btn-logout-admin" class="sidebar-link logout">🚪 Đăng xuất</button>
+            </div>
+        </aside>
+
+        <!-- Nội dung bên phải -->
+        <main class="admin-main-content">
+            <header class="content-header">
+                <h1 id="current-tab-title">Tổng quan</h1>
+                <div class="header-actions">
+                    <span id="admin-clock"></span>
+                </div>
+            </header>
+
+        <!-- Section Tổng quan -->
+        <div id="overview-section" class="admin-section active">
+            <div class="overview-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;">💰</div>
+                    <div class="stat-info">
+                        <h3>Tổng doanh thu</h3>
+                        <p id="stat-total-revenue">0đ</p>
+                        <small>Từ các đơn hoàn thành</small>
+                    </div>
+                    <div class="stat-chart"><canvas id="sparkline-revenue"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #f1f8e9; color: #388e3c;">🛍️</div>
+                    <div class="stat-info">
+                        <h3>Tổng đơn hàng</h3>
+                        <p id="stat-total-orders">0</p>
+                        <small>Tất cả trạng thái</small>
+                    </div>
+                    <div class="stat-chart"><canvas id="sparkline-orders"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #fff3e0; color: #f57c00;">📦</div>
+                    <div class="stat-info">
+                        <h3>Sản phẩm</h3>
+                        <p id="stat-total-products">0</p>
+                        <small>Trong danh mục</small>
+                    </div>
+                    <div class="stat-chart"><canvas id="sparkline-products"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #f3e5f5; color: #7b1fa2;">👥</div>
+                    <div class="stat-info">
+                        <h3>Khách hàng</h3>
+                        <p id="stat-total-users">0</p>
+                        <small>Đã đăng ký</small>
+                    </div>
+                    <div class="stat-chart"><canvas id="sparkline-users"></canvas></div>
+                </div>
+            </div>
+
+            <div class="admin-grid" style="grid-template-columns: 1.5fr 1fr; margin-top: 30px;">
+                <!-- Đơn hàng mới nhất -->
+                <div class="admin-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">Đơn hàng mới nhất</h3>
+                        <button class="btn-minimal" onclick="document.querySelector('[data-target=\'order-section\']').click()" style="font-size: 0.8rem;">Xem tất cả</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overview-recent-orders">
+                                <!-- JS render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sản phẩm sắp hết hàng -->
+                <div class="admin-card">
+                    <h3 style="margin-bottom: 20px;">Sản phẩm sắp hết hàng ⚠️</h3>
+                    <div id="overview-low-stock-list" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- JS render -->
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="admin-tabs">
-            <button class="admin-tab-btn active" data-target="product-section">Quản lý Sản phẩm</button>
-            <button class="admin-tab-btn" data-target="pos-section">Bán tại shop (POS)</button>
-            <button class="admin-tab-btn" data-target="order-section">Quản lý Đơn hàng</button>
-            <button class="admin-tab-btn" data-target="coupon-section">Quản lý Mã giảm giá</button>
-            <button class="admin-tab-btn" data-target="user-section">Quản lý Người dùng</button>
-            <button class="admin-tab-btn" data-target="stats-section">Thống kê</button>
+        <!-- Section Nhật ký kho -->
+        <div id="inventory-log-section" class="admin-section">
+            <div class="admin-card">
+                <h3>Lịch sử biến động tồn kho (Admin)</h3>
+
+                <!-- Bộ lọc Nhật ký kho -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; margin-top: 15px;">
+                    <input type="text" id="log-filter-product-id" placeholder="Lọc theo mã hoặc tên sản phẩm..." style="flex: 2; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="date" id="log-filter-date" style="flex: 1; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
+                    <button id="btn-clear-log-filter" class="btn-minimal" style="padding: 0 15px; height: 40px; white-space: nowrap;">🧹 Xóa lọc</button>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 20px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Sản phẩm</th>
+                                <th>Thay đổi</th>
+                                <th>Tồn cũ → Mới</th>
+                                <th>Người thực hiện</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-inventory-log-list">
+                            <!-- Dữ liệu load từ collection inventory_logs -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Quản lý Danh mục -->
+        <div id="category-section" class="admin-section">
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3>Thêm Danh mục/Phân loại</h3>
+                    <form id="category-management-form" class="admin-form">
+                        <div class="form-group">
+                            <label>Tên Nhóm (VD: Dining Decor)</label>
+                            <input type="text" id="cat-group-name" required list="existing-groups" placeholder="Chọn nhóm cũ hoặc nhập nhóm mới">
+                            <datalist id="existing-groups"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Tên Phân loại con (VD: Bát & Chén)</label>
+                            <input type="text" id="cat-sub-name" required placeholder="Nhập tên phân loại...">
+                        </div>
+                        <button type="submit" class="btn-dark" style="width: 100%;">Thêm vào hệ thống</button>
+                    </form>
+                    <div style="margin-top: 2rem; padding: 15px; background: #fffcf5; border-radius: 8px; font-size: 0.85rem;">
+                        <p>💡 <strong>Lưu ý:</strong> Khi bạn xóa một danh mục, các sản phẩm thuộc danh mục đó sẽ không bị mất nhưng bạn cần cập nhật lại danh mục cho chúng để hiển thị đúng trên website.</p>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h3>Cấu trúc danh mục hiện tại</h3>
+                    <div id="admin-category-tree" class="category-tree">
+                        <!-- JS render cấu trúc cây -->
+                        <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Section Quản lý Sản phẩm -->
-        <div id="product-section" class="admin-section active">
+        <div id="product-section" class="admin-section">
             <section class="admin-grid">
                 <!-- Form thêm sản phẩm -->
                 <div class="admin-card">
@@ -50,10 +207,8 @@
                         <div class="form-group">
                             <label>Phân loại</label>
                             <select id="category" required>
-                                <option value="">-- Chọn danh mục --</option>
-                                <!-- Các nhóm Dining Decor, Teatime & Drinks, Home Decor, Kitchenware, Lifestyle 
-                                     sẽ được tự động nạp từ utils.js qua hàm populateCategorySelect() 
-                                     nhưng mình để placeholder ở đây cho sạch code -->
+                                <option value="">-- Chọn danh mục --</option> 
+                                <!-- Danh mục sẽ được nạp động từ Firestore -->
                             </select>
                         </div>
                         <div class="form-group">
@@ -62,11 +217,12 @@
                         </div>
                         <div class="form-group">
                             <label>Tồn kho</label>
-                            <input type="number" id="stock" required placeholder="10">
-                        </div>
-                        <div class="form-group">
-                            <label>Đánh giá (1-5 sao)</label>
-                            <input type="number" id="rating" min="1" max="5" step="0.1" value="5">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="stock" required placeholder="10" style="flex: 1;">
+                                <label style="margin-bottom: 0; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; white-space: nowrap; cursor: pointer;">
+                                    <input type="checkbox" id="stock-additive" style="width: auto;"> Nhập thêm
+                                </label>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Giảm giá (%)</label>
@@ -108,9 +264,20 @@
                 <div class="admin-card">
                     <h3>Danh sách sản phẩm hiện có</h3>
                     
-                    <!-- Ô tìm kiếm sản phẩm trong quản trị -->
-                    <div class="form-group" style="margin-bottom: 1.5rem;">
-                        <input type="text" id="admin-product-search" placeholder="Tìm nhanh theo tên hoặc mã sản phẩm...">
+                    <!-- Ô tìm kiếm & Lọc sản phẩm trong quản trị -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <input type="text" id="admin-product-search" placeholder="Tìm nhanh theo tên hoặc mã sản phẩm..." style="flex: 2; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
+                        <select id="admin-product-category-filter" style="flex: 1; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="all">Tất cả danh mục</option>
+                        </select>
+                        <select id="admin-product-stock-filter" style="flex: 1; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="all">Trạng thái kho</option>
+                            <option value="in-stock">Còn hàng</option>
+                            <option value="out-of-stock">Hết hàng</option>
+                        </select>
+                        <button id="btn-export-excel" class="btn-minimal" style="padding: 0 15px; height: 40px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                            📊 Xuất Excel
+                        </button>
                     </div>
 
                     <div class="table-responsive">
@@ -324,31 +491,103 @@
 
         <!-- Section Thống kê -->
         <div id="stats-section" class="admin-section">
-            <div class="admin-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 0;">Top 5 sản phẩm bán chạy nhất</h3>
-                    <select id="chartTypeToggle" class="status-select">
-                        <option value="bar">Biểu đồ cột</option>
-                        <option value="pie">Biểu đồ tròn</option>
-                    </select>
-                </div>
-                <div style="height: 400px; position: relative;">
-                    <canvas id="topSoldChart"></canvas>
+            <!-- Bộ lọc báo cáo -->
+            <div class="admin-card" style="margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Năm báo cáo</label>
+                        <select id="stats-year-filter" style="width: 120px;"></select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Xem theo</label>
+                        <select id="stats-period-type" style="width: 180px;">
+                            <option value="monthly" selected>Từng tháng trong năm</option>
+                            <option value="quarterly">Từng quý trong năm</option>
+                            <option value="daily">Từng ngày (Tháng hiện tại)</option>
+                        </select>
+                    </div>
+                    <button id="btn-refresh-stats" class="btn-dark" style="height: 40px; margin-top: 0; padding: 0 20px;">📊 Xem báo cáo</button>
                 </div>
             </div>
+
+            <!-- Thẻ tóm tắt trong kỳ -->
+            <div class="overview-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">💰</div>
+                    <div class="stat-info">
+                        <h3>Doanh thu kỳ này</h3>
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <p id="period-revenue" style="margin: 0;">0đ</p>
+                            <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">🛒</div>
+                    <div class="stat-info">
+                        <h3>Đơn hàng hoàn thành</h3>
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <p id="period-orders" style="margin: 0;">0</p>
+                            <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">✨</div>
+                    <div class="stat-info">
+                        <h3>TB đơn hàng</h3>
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <p id="period-avg-order" style="margin: 0;">0đ</p>
+                            <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-grid" style="grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+                <div class="admin-card">
+                    <h3>Biểu đồ doanh thu</h3>
+                    <div style="height: 400px;"><canvas id="revenueMainChart"></canvas></div>
+                </div>
+                <div class="admin-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin:0">Bán chạy trong kỳ</h3>
+                        <select id="topSoldType" class="status-select" style="font-size: 0.7rem;">
+                            <option value="bar">Cột</option>
+                            <option value="pie">Tròn</option>
+                        </select>
+                    </div>
+                    <div style="height: 400px;"><canvas id="topSoldPeriodChart"></canvas></div>
+                </div>
+            </div>
+
             <div class="admin-card" style="margin-top: 2rem;">
-                <h3>Doanh thu theo tháng (Đơn hoàn thành)</h3>
-                <div style="height: 400px; position: relative; margin-top: 2rem;">
-                    <canvas id="revenueMonthChart"></canvas>
+                <h3>So sánh doanh thu với năm trước (cùng kỳ 12 tháng)</h3>
+                <div style="height: 400px;"><canvas id="revenueComparisonChart"></canvas></div>
+            </div>
+
+            <div class="admin-card" style="margin-top: 2rem;">
+                <h3>Bảng kê chi tiết theo kỳ</h3>
+                <div class="table-responsive">
+                    <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span class="spinner"></span> Đang tải dữ liệu...</div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Số đơn</th>
+                                <th>Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-detail-table"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </main>
+        </main>
+    </div>
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-
-    <div id="footer-placeholder"></div>
     <script type="module" src="../js/admin.js"></script>
 </body>
 </html>

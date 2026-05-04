@@ -157,6 +157,26 @@ body {
 }
 .dropdown:hover .mega-menu { transform: translateY(0) !important; }
 
+#mega-menu-categories {
+    display: flex;
+    width: 100%;
+    gap: inherit;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Tối ưu khoảng cách cho màn hình laptop nhỏ (1024px - 1366px) */
+@media (min-width: 993px) and (max-width: 1366px) {
+    .mega-menu {
+        gap: 40px !important; /* Giảm từ 80px xuống 40px */
+        padding: 40px 5% !important; /* Thu hẹp padding hai bên */
+    }
+    .mega-col {
+        width: 160px; /* Thu nhỏ độ rộng cột một chút */
+        min-width: 140px;
+    }
+}
+
 .mega-col { 
     flex: 0 0 auto; /* Không cho cột co giãn tùy tiện */
     width: 180px; /* Cố định độ rộng cột để căn lề thẳng hàng */
@@ -280,6 +300,11 @@ body {
         flex-direction: column;
         gap: 0.5rem !important; /* Giảm khoảng cách giữa các cột trong mega-menu */
         border: none !important;
+    }
+
+    #mega-menu-categories {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     /* Hiện menu con khi cha có class mobile-expanded */
@@ -606,7 +631,7 @@ section {
 .special-offers h2 {
     margin-bottom: 3.5rem;
     color: #c0392b;
-    font-size: 2.5rem;
+    font-size: 2rem;
     text-transform: uppercase;
     letter-spacing: 3px;
     animation: sale-glow 2s ease-in-out infinite alternate;
@@ -1599,6 +1624,249 @@ footer {
     width: 50px; /* Kích thước phù hợp với nút 50x50px */
     height: 50px;
 }
+
+/* --- Zalo Group Expansion --- */
+.zalo-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.zalo-sub-menu {
+    position: absolute;
+    bottom: 60px; /* Hiển thị phía trên nút chính */
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    width: max-content;
+    z-index: 10000;
+}
+
+/* Tạo mũi tên trỏ xuống cho menu Zalo */
+.zalo-sub-menu::after {
+    content: '';
+    position: absolute;
+    bottom: -6px; /* Nằm sát cạnh dưới của menu */
+    right: 19px;  /* Căn giữa theo nút Zalo tròn 50px */
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--text-black); /* Màu trùng với background menu item */
+}
+
+/* Hiện menu khi hover hoặc khi nút được click (focus) */
+.zalo-group:hover .zalo-sub-menu,
+.zalo-group:focus-within .zalo-sub-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.zalo-sub-item {
+    background-color: var(--text-black);
+    color: var(--bg-cream);
+    padding: 10px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(247, 246, 242, 0.1);
+    transition: all 0.2s ease;
+}
+
+.zalo-sub-item:hover {
+    transform: translateX(-5px);
+    background-color: #222;
+}
+
+/* ==========================================================================
+   NEW ADMIN DASHBOARD UI (SIDEBAR LEFT)
+   ========================================================================== */
+.admin-dashboard-layout {
+    padding-top: 0 !important;
+    background-color: #f8f9fa;
+}
+
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 260px;
+    background-color: #1a1a1a;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    padding: 25px 0;
+}
+
+.sidebar-brand {
+    padding: 0 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-brand img { height: 40px; }
+.sidebar-brand span { font-weight: 700; font-family: var(--font-serif); font-size: 1.2rem; }
+
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-sidebar .admin-tab-btn {
+    text-align: left;
+    padding: 14px 25px;
+    border: none;
+    border-left: 4px solid transparent;
+    background: none;
+    color: #999;
+    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    transition: all 0.3s;
+    margin-bottom: 5px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-badge {
+    background-color: #e74c3c;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+.admin-sidebar .admin-tab-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+.admin-sidebar .admin-tab-btn.active {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-left-color: #fff;
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sidebar-link {
+    color: #999;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.sidebar-link:hover { color: #fff; }
+.sidebar-link.logout { background: none; border: none; cursor: pointer; text-align: left; padding: 0; color: #e74c3c; }
+
+.admin-main-content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 40px;
+    max-width: calc(100% - 260px);
+}
+
+/* Overview Dashboard Styles */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-chart {
+    width: 80px;
+    height: 40px;
+    margin-left: auto;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.stat-info h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.stat-info p { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; margin: 0; }
+.stat-info small { font-size: 0.7rem; color: #bbb; }
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
+.content-header h1 {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+/* Responsive Sidebar */
+@media (max-width: 992px) {
+    .admin-sidebar { width: 70px; padding: 20px 0; }
+    .sidebar-brand span, .admin-tab-btn span, .sidebar-footer { display: none; }
+    .admin-main-content { margin-left: 70px; max-width: calc(100% - 70px); padding: 25px; }
+    .admin-tab-btn { text-align: center; padding: 15px 0; }
+}
+
 /* Admin Styles */
 .admin-container {
     padding: 2rem 5%;
@@ -1973,9 +2241,9 @@ footer {
 
 /* Reviews Section Modern Styling */
 .reviews-section {
-    margin-top: 5rem;
-    border-top: 1px solid #eee;
-    padding-top: 5rem;
+    margin-top: 6rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 4rem;
     width: 100%;
     clear: both;
     display: block;
@@ -1985,68 +2253,76 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
 }
 
 .reviews-header h3 {
     font-family: var(--font-serif);
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     color: var(--text-black);
 }
 
 #review-form-container {
     background: #fff;
-    padding: 2.5rem;
-    border-radius: 8px;
+    padding: 2rem;
+    border-radius: 12px;
     margin-bottom: 3rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+    border: 1px solid #eee;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
 }
 
 #product-review-form textarea {
     width: 100%;
-    height: 120px;
+    height: 100px;
     padding: 1rem;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    margin: 1.5rem 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 1rem 0;
     font-family: inherit;
     resize: none;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+}
+#product-review-form textarea:focus {
+    border-color: var(--text-black);
+    outline: none;
 }
 
 .review-item {
-    padding: 2.5rem 0;
+    padding: 2rem 0;
     border-bottom: 1px solid #f5f5f5;
 }
 
 .review-user-info h5 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
+    margin-bottom: 2px;
 }
 
 /* Rating Summary Dashboard */
 .rating-summary {
     display: flex;
     align-items: center;
-    gap: 4rem;
-    background: #fff;
-    padding: 2.5rem;
-    border-radius: 8px;
+    gap: 3rem;
+    background: #fcfbf8;
+    padding: 2rem;
+    border-radius: 12px;
     margin-bottom: 4rem;
-    border: 1px solid #f0f0f0;
+    border: 1px solid #f3f1eb;
 }
 
 .rating-avg-box {
     text-align: center;
-    min-width: 150px;
-    border-right: 1px solid #eee;
-    padding-right: 4rem;
+    min-width: 140px;
+    border-right: 1px solid #e8e6e0;
+    padding-right: 3rem;
 }
 
 .avg-score {
-    font-size: 4rem;
+    font-size: 3.5rem;
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
     font-family: var(--font-serif);
 }
 
@@ -2060,11 +2336,11 @@ footer {
 .rating-bar-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 8px;
+    gap: 12px;
+    margin-bottom: 6px;
 }
-.star-label { font-size: 0.85rem; font-weight: 600; width: 35px; }
-.percent-label { font-size: 0.8rem; color: #888; width: 40px; text-align: right; }
+.star-label { font-size: 0.8rem; font-weight: 600; width: 30px; color: #666; }
+.percent-label { font-size: 0.75rem; color: #999; width: 35px; text-align: right; }
 .bar-bg { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
 .bar-fill { height: 100%; background: #f1c40f; border-radius: 4px; }
 
@@ -2076,21 +2352,48 @@ footer {
 
 /* Admin Reply Styles */
 .admin-reply {
-    margin-top: 1.5rem;
-    margin-left: 1.5rem;
-    padding: 1.2rem;
-    background: #fdfdfd;
-    border-left: 3px solid var(--text-black);
-    border-radius: 4px;
+    margin-top: 1.2rem;
+    margin-left: 1rem;
+    padding: 1rem 1.2rem;
+    background: #f8f8f8;
+    border-radius: 12px;
     position: relative;
+}
+.admin-reply::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 20px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #f8f8f8;
 }
 .admin-reply h6 {
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--text-black);
+}
+.admin-reply p {
+    font-size: 0.9rem !important;
+    margin-bottom: 0 !important;
+    line-height: 1.5;
+}
+
+/* Owner Action Buttons */
+.review-actions button {
+    border-radius: 20px !important;
+    padding: 3px 12px !important;
+    font-weight: 600;
+    background: #fff !important;
+    transition: all 0.2s;
+}
+.review-actions button:hover {
+    background: #f8f8f8 !important;
+    transform: translateY(-1px);
 }
 
 /* Global Quantity Controls Update */
@@ -2439,13 +2742,7 @@ footer {
 }
 .filter-list li a.active {
     font-weight: 700;
-    padding-left: 15px;
-}
-.filter-list li a.active::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    color: var(--text-black);
+    padding-left: 0;
 }
 
 /* Sort Options */
@@ -3473,11 +3770,35 @@ footer {
 .star-rating-input span { cursor: pointer; color: #ddd; transition: color 0.2s; }
 .star-rating-input span.active { color: #f1c40f; }
 
-/* Định dạng modal phóng to ảnh review */
-.review-modal-img {
-    max-width: 90vw;
-    max-height: 80vh;
-    object-fit: contain;
+/* Chip 0 sao đặc biệt */
+.star-zero {
+    font-family: var(--font-sans);
+    font-size: 0.7rem !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Review Image Gallery */
+.review-images-gallery {
+    margin-top: 1rem;
+    gap: 12px;
+}
+
+.review-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #eee;
+    transition: all 0.3s;
+}
+.review-img:hover {
+    border-color: var(--text-black);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 /* Điều chỉnh nút Search trong thanh bar */

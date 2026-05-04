@@ -17,12 +17,8 @@
         <!-- Cột 2: Cửa hàng -->
         <div class="footer-section">
             <h4>Cửa hàng</h4>
-            <ul class="footer-list">
-                <li><a href="products/">Tất cả sản phẩm</a></li>
-                <li><a href="products/?category=Dining Decor">Nghệ thuật Bàn ăn</a></li>
-                <li><a href="products/?category=Teatime & Drinks">Ấm Trà & Ly Tách</a></li>
-                <li><a href="products/?category=Home Decor">Trang trí Nhà cửa</a></li>
-                <li><a href="products/?sale=true">Flash Sale</a></li>
+            <ul class="footer-list" id="footer-categories">
+                <!-- Dynamic categories will be loaded here by JavaScript -->
             </ul>
         </div>
 
@@ -63,14 +59,16 @@
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.28-2.28a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
             </svg>
         </a>
-        <!-- Nút Zalo 1 -->
-        <a href="https://zalo.me/0337696231" target="_blank" class="float-btn vibrate-btn" title="Zalo 033" aria-label="Chat qua Zalo 033" style="background-color: #000000;">
-            <img src="Asset/icons/zalo-icon.png" alt="Zalo" class="zalo-icon">
-        </a>
-        <!-- Nút Zalo 2 -->
-        <a href="https://zalo.me/0909380652" target="_blank" class="float-btn vibrate-btn" title="Zalo 090" aria-label="Chat qua Zalo 090" style="background-color: #000000;">
-            <img src="Asset/icons/zalo-icon.png" alt="Zalo" class="zalo-icon">
-        </a>
+        <!-- Nút Zalo Gộp -->
+        <div class="zalo-group">
+            <div class="zalo-sub-menu">
+                <a href="https://zalo.me/0337696231" target="_blank" class="zalo-sub-item">Zalo: 033 769 6231</a>
+                <a href="https://zalo.me/0909380652" target="_blank" class="zalo-sub-item">Zalo: 090 938 0652</a>
+            </div>
+            <button class="float-btn vibrate-btn" title="Liên hệ Zalo" aria-label="Mở danh sách Zalo" style="background-color: #000; border: none;">
+                <img src="Asset/icons/zalo-icon.png" alt="Zalo" class="zalo-icon">
+            </button>
+        </div>
         <!-- Nút Facebook Messenger -->
         <a href="https://m.me/tiemnhagom.sg" target="_blank" class="float-btn" title="Messenger" aria-label="Chat với Tiệm qua Messenger">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">

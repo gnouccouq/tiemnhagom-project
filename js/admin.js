@@ -1,16 +1,22 @@
 import { 
-    db, auth, storage, showToast, initHeader, updateCartCount, PRODUCT_CATEGORIES
+    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES // Import DEFAULT_PRODUCT_CATEGORIES
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
     limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// Biến cục bộ để lưu trữ danh mục động
+let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
+let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
 
 // --- Logic chuyển đổi Tab Admin ---
 function setupAdminTabs() {
     const tabs = document.querySelectorAll('.admin-tab-btn');
     const sections = document.querySelectorAll('.admin-section');
+    const titleEl = document.getElementById('current-tab-title');
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -24,12 +30,21 @@ function setupAdminTabs() {
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
                 targetSection.classList.add('active');
+                // Cập nhật tiêu đề trang tương ứng với Tab
+                titleEl.innerText = tab.innerText.replace(/[^\w\sÀ-ỹ]/g, '').trim();
             }
 
-            // Nếu chuyển sang tab Thống kê, khởi tạo lại biểu đồ để tránh lỗi hiển thị
-            if (targetId === 'admin-stats-section') {
-                initStatistics();
-                initRevenueChart();
+            if (targetId === 'overview-section') {
+                initOverview();
+            }
+
+            if (targetId === 'category-section') {
+                initCategoryManagement();
+            }
+
+            // Nếu chuyển sang tab Thống kê, khởi tạo lại biểu đồ để tránh lỗi hiển thị (ID tab là stats-section)
+            if (targetId === 'stats-section') {
+                initFullReport();
             }
         });
     });
@@ -37,29 +52,39 @@ function setupAdminTabs() {
 
 // Thiết lập Auth Listener để cập nhật UI Header và kiểm tra quyền Admin
 async function checkAdminRights(user) {
+    // 1. Chuyển hướng ngay lập tức nếu chưa đăng nhập
     if (!user) {
-        alert("Vui lòng đăng nhập.");
         window.location.href = "../index.html";
         return;
     }
+
     try {
         // Kiểm tra xem UID của user có trong collection 'admins' không
         const adminRef = doc(db, "admins", user.uid);
         const adminSnap = await getDoc(adminRef);
 
         if (!adminSnap.exists()) {
-            alert("Tài khoản của bạn không có quyền quản trị.");
             window.location.href = "../index.html";
         } else {
             // Nếu đúng là admin thì mới hiển thị nội dung trang
             document.body.style.display = "block";
+            updateAdminSidebarProfile(user);
         }
     } catch (e) { console.error(e); }
 }
 
+function updateAdminSidebarProfile(user) {
+    const container = document.getElementById('admin-user-info');
+    if (!container) return;
+    container.innerHTML = `
+        <p style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">${user.displayName || user.email}</p>
+        <p style="font-size:0.7rem; color:#888;">Quản trị viên</p>
+    `;
+}
+
 // --- Logic Thông báo Đơn hàng mới ---
 function setupNewOrderNotification() {
-    if (!("Notification" in window)) return;
+    if (!("Notification" in window) || !db) return;
 
     // Khởi tạo đối tượng âm thanh
     const notificationSound = new Audio('../Asset/sounds/new-order.mp3');
@@ -96,11 +121,174 @@ function setupNewOrderNotification() {
                 }
             }
         });
+    }, (error) => {
+        console.error("New order notification listener error:", error);
+    });
+}
+
+// Lắng nghe số lượng đơn hàng "Đang xử lý" để cập nhật badge sidebar
+function initUnprocessedOrderBadge() {
+    const badge = document.getElementById('order-count-badge');
+    if (!badge || !db) return;
+
+    const q = query(collection(db, "orders"), where("status", "==", "Đang xử lý"));
+    onSnapshot(q, (snapshot) => {
+        const count = snapshot.size;
+        badge.innerText = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }, (error) => {
+        console.error("Order badge listener error:", error);
+    });
+}
+
+// Hàm hiệu ứng số nhảy từ 0 đến giá trị đích
+function animateNumber(id, target, isCurrency = false, duration = 1000) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const current = Math.floor(progress * target);
+        
+        if (isCurrency) {
+            el.innerText = new Intl.NumberFormat('vi-VN').format(current) + 'đ';
+        } else {
+            el.innerText = new Intl.NumberFormat('vi-VN').format(current);
+        }
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+async function initOverview() {
+    const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d.toLocaleDateString('en-GB'); // Format DD/MM/YYYY
+    }).reverse();
+
+    try {
+        // 1. Doanh thu & Đơn hàng
+        const orderSnap = await getDocs(collection(db, "orders"));
+        let totalRevenue = 0;
+        let orderCount = orderSnap.size;
+        
+        const revenueHistory = new Array(7).fill(0);
+        const ordersHistory = new Array(7).fill(0);
+
+        orderSnap.forEach(doc => {
+            const data = doc.data();
+            const date = data.orderDate ? data.orderDate.toDate().toLocaleDateString('en-GB') : null;
+            const dayIndex = last7Days.indexOf(date);
+
+            if (data.status === "Đã hoàn thành") {
+                const amount = (data.totalAmount || 0);
+                totalRevenue += amount;
+                if (dayIndex !== -1) revenueHistory[dayIndex] += amount;
+            }
+            if (dayIndex !== -1) ordersHistory[dayIndex]++;
+        });
+
+        // 2. Sản phẩm (Lấy từ cache posProductsLocal nếu đã có)
+        const productSnap = await getDocs(collection(db, "products"));
+        let productCount = productSnap.size;
+
+        // 3. Khách hàng
+        const userSnap = await getDocs(collection(db, "users"));
+        let userCount = userSnap.size;
+
+        // 4. Render 5 Đơn hàng mới nhất cho Overview
+        const recentOrdersContainer = document.getElementById('overview-recent-orders');
+        if (recentOrdersContainer) {
+            const recentOrders = orderSnap.docs
+                .map(d => ({id: d.id, ...d.data()}))
+                .sort((a, b) => b.orderDate?.toDate() - a.orderDate?.toDate())
+                .slice(0, 5);
+            
+            recentOrdersContainer.innerHTML = recentOrders.map(o => `
+                <tr>
+                    <td><strong>${o.shippingAddress?.fullName || 'Khách vãng lai'}</strong></td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ</td>
+                    <td><span class="order-status-${o.status.toLowerCase().replace(/\s/g, '-')}">${o.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // 5. Render Sản phẩm sắp hết hàng (Tồn kho < 5)
+        const lowStockContainer = document.getElementById('overview-low-stock-list');
+        if (lowStockContainer) {
+            const lowStockProducts = productSnap.docs
+                .map(d => ({id: d.id, ...d.data()}))
+                .filter(p => (p.stock || 0) < 5)
+                .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+                .slice(0, 5);
+
+            lowStockContainer.innerHTML = lowStockProducts.length > 0 ? lowStockProducts.map(p => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #fffcf5; border-radius: 8px; border-left: 4px solid #f1c40f;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${p.imageUrl}" style="width: 35px; height: 35px; border-radius: 4px; object-fit: cover;">
+                        <div style="font-size: 0.85rem; font-weight: 600;">${p.name}</div>
+                    </div>
+                    <div style="color: #e74c3c; font-weight: 700; font-size: 0.85rem;">Còn ${p.stock || 0}</div>
+                </div>
+            `).join('') : '<p style="color: #27ae60; font-size: 0.85rem; text-align: center;">Tồn kho đang rất ổn định ✨</p>';
+        }
+
+        // Cập nhật UI với hiệu ứng số nhảy
+        animateNumber('stat-total-revenue', totalRevenue, true);
+        animateNumber('stat-total-orders', orderCount);
+        animateNumber('stat-total-products', productCount);
+        animateNumber('stat-total-users', userCount);
+
+        // Vẽ Sparklines
+        renderSparkline('sparkline-revenue', revenueHistory, '#1976d2');
+        renderSparkline('sparkline-orders', ordersHistory, '#388e3c');
+        // Với Sản phẩm và Người dùng, ta có thể dùng dữ liệu mẫu hoặc trend đăng ký mới
+        renderSparkline('sparkline-products', [productCount-2, productCount-1, productCount-1, productCount, productCount, productCount, productCount], '#f57c00');
+        renderSparkline('sparkline-users', [userCount-3, userCount-3, userCount-2, userCount-2, userCount-1, userCount, userCount], '#7b1fa2');
+
+    } catch (e) { console.error("Lỗi khởi tạo Overview:", e); }
+}
+
+let sparklines = {};
+function renderSparkline(canvasId, data, color) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    if (sparklines[canvasId]) sparklines[canvasId].destroy();
+
+    sparklines[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data,
+            datasets: [{
+                data: data,
+                borderColor: color,
+                borderWidth: 2,
+                fill: false,
+                pointRadius: 0,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            }
+        }
     });
 }
 
 // Hàm hỗ trợ chuyển đổi file ảnh sang WebP để tối ưu dung lượng
-async function convertToWebP(file) {
+async function convertToWebP(file, targetSize = 1000) {
     let currentFile = file;
 
     // 1. Xử lý định dạng HEIC/HEIF từ iPhone
@@ -127,8 +315,6 @@ async function convertToWebP(file) {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                // Cho phép truyền size động để tạo thumbnail
-                const TARGET_SIZE = window._processingSize || 1000;
                 let sWidth = img.width;
                 let sHeight = img.height;
                 let sx = 0, sy = 0;
@@ -142,7 +328,7 @@ async function convertToWebP(file) {
                     sHeight = sWidth;
                 }
 
-                let finalSize = Math.min(sWidth, TARGET_SIZE);
+                let finalSize = Math.min(sWidth, targetSize);
                 canvas.width = finalSize;
                 canvas.height = finalSize;
                 
@@ -218,20 +404,423 @@ function renderImagePreviews() {
     });
 }
 
-// Hàm tự động đổ danh mục vào Select của Admin Form
-function populateCategorySelect() {
-    const categorySelect = document.getElementById('category');
-    if (!categorySelect) return;
+// --- Logic Quản lý Danh mục Động ---
+let categoryUnsubscribe = null;
 
+function initCategoryManagement() {
+    const treeContainer = document.getElementById('admin-category-tree');
+    const datalist = document.getElementById('existing-groups');
+    const form = document.getElementById('category-management-form');
+
+    if (!treeContainer || !form || !db) return;
+
+    // Thiết lập lắng nghe thời gian thực cho danh mục (Nếu chưa có)
+    if (!categoryUnsubscribe) {
+        categoryUnsubscribe = onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
+            if (snapshot.exists() && snapshot.data().groups) {
+                // Sắp xếp các nhóm theo trường 'order'
+                adminDynamicCategories = snapshot.data().groups.sort((a, b) => a.order - b.order);
+            } else {
+                // Fallback nếu chưa có data trên cloud
+                adminDynamicCategories = DEFAULT_PRODUCT_CATEGORIES;
+                // Cố gắng lưu lại cấu trúc mặc định nếu chưa có
+                setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories }).catch(console.error);
+            }
+
+            // Cập nhật datalist cho ô nhập nhóm
+            if (datalist) {
+                datalist.innerHTML = adminDynamicCategories.map(g => `<option value="${g.name}">`).join('');
+            }
+
+            // Tự động render lại cây danh mục khi dữ liệu thay đổi
+            renderCategoryTree(treeContainer);
+            
+            // Cập nhật datalist cho ô nhập nhóm
+            if (datalist) {
+                datalist.innerHTML = adminDynamicCategories.map(g => `<option value="${g.name}">`).join('');
+            }
+
+            // Cập nhật dropdown chọn danh mục trong form sản phẩm
+            populateCategorySelect();
+        }, (error) => {
+            console.error("Category management listener error:", error);
+        });
+    }
+    
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const group = document.getElementById('cat-group-name').value.trim();
+        const sub = document.getElementById('cat-sub-name').value.trim();
+
+        if (!group || !sub) {
+            showToast("Vui lòng nhập cả tên nhóm và phân loại con", "error");
+            return;
+        }
+
+        let groupIndex = adminDynamicCategories.findIndex(g => g.name === group);
+
+        if (groupIndex === -1) {
+            // Nhóm mới, thêm vào cuối danh sách với order mới
+            adminDynamicCategories.push({
+                name: group,
+                order: adminDynamicCategories.length > 0 ? Math.max(...adminDynamicCategories.map(g => g.order)) + 1 : 1,
+                subs: [sub]
+            });
+            showToast(`Đã thêm nhóm "${group}" và phân loại "${sub}"`);
+        } else {
+            // Nhóm đã tồn tại
+            if (!adminDynamicCategories[groupIndex].subs.includes(sub)) {
+                adminDynamicCategories[groupIndex].subs.push(sub);
+                showToast(`Đã thêm "${sub}" vào nhóm "${group}"`);
+            } else {
+                showToast("Phân loại này đã tồn tại trong nhóm", "error");
+                return; // Không cần lưu nếu không có thay đổi
+            }
+        }
+
+        try {
+            // Lưu toàn bộ mảng groups đã cập nhật vào Firestore
+            await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+            form.reset();
+        } catch (err) { showToast("Lỗi lưu danh mục: " + err.message, "error"); }
+    }; // End of form.onsubmit
+}
+
+// Hàm chọn nhóm nhanh khi click vào cây danh mục
+window.quickSelectGroup = (groupName) => {
+    const groupInput = document.getElementById('cat-group-name');
+    const subInput = document.getElementById('cat-sub-name');
+    if (groupInput && subInput) {
+        groupInput.value = groupName;
+        subInput.focus();
+        showToast(`Đã chọn nhóm: ${groupName}. Hãy nhập phân loại con.`);
+    }
+};
+
+// --- Drag & Drop Category Logic ---
+window.handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+};
+
+window.handleGroupDragStart = (e, index) => {
+    // Nếu đang kéo tag con thì không kích hoạt kéo nhóm cha
+    if (e.target.closest('.category-tag-admin') || e.target.closest('button')) return;
+    e.dataTransfer.setData('groupIndex', index);
+    e.target.style.opacity = '0.4';
+};
+
+window.handleGroupDrop = async (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = e.dataTransfer.getData('groupIndex');
+    if (sourceIndex === "" || sourceIndex == targetIndex) return;
+
+    const [movedItem] = adminDynamicCategories.splice(sourceIndex, 1);
+    adminDynamicCategories.splice(targetIndex, 0, movedItem);
+
+    // Cập nhật lại thuộc tính order
+    adminDynamicCategories.forEach((group, idx) => { group.order = idx + 1; });
+
+    try {
+        await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+        showToast("Đã cập nhật thứ tự nhóm");
+    } catch (err) { showToast("Lỗi: " + err.message, "error"); }
+};
+
+window.handleSubDragStart = (e, groupName, subIndex) => {
+    e.stopPropagation(); // Ngăn sự kiện drag lan lên nhóm cha
+    e.dataTransfer.setData('sourceGroupName', groupName);
+    e.dataTransfer.setData('subIndex', subIndex);
+    e.target.style.opacity = '0.4';
+};
+
+window.handleSubDrop = async (e, targetGroupName, targetSubIndex = null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceGroupName = e.dataTransfer.getData('sourceGroupName');
+    const subIndexStr = e.dataTransfer.getData('subIndex');
+
+    if (sourceGroupName === "" || subIndexStr === "") return;
+    const subIndex = parseInt(subIndexStr);
+
+    const sourceGroup = adminDynamicCategories.find(g => g.name === sourceGroupName);
+    const targetGroup = adminDynamicCategories.find(g => g.name === targetGroupName);
+
+    if (!sourceGroup || !targetGroup) return;
+
+    const [subToMove] = sourceGroup.subs.splice(subIndex, 1);
+    
+    // Kiểm tra trùng lặp nếu chuyển nhóm
+    if (sourceGroupName !== targetGroupName && targetGroup.subs.includes(subToMove)) {
+        showToast(`"${subToMove}" đã có trong nhóm "${targetGroupName}"`, "error");
+        sourceGroup.subs.splice(subIndex, 0, subToMove); // Trả lại chỗ cũ
+        renderCategoryTree(document.getElementById('admin-category-tree'));
+        return;
+    }
+
+    if (targetSubIndex === null) {
+        targetGroup.subs.push(subToMove);
+    } else {
+        targetGroup.subs.splice(targetSubIndex, 0, subToMove);
+    }
+
+    try {
+        await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+    } catch (err) { showToast("Lỗi: " + err.message, "error"); }
+};
+
+window.editGroupName = (event, oldName, index) => {
+    event.stopPropagation();
+    const target = event.currentTarget;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.className = 'edit-group-input';
+    input.style.cssText = 'font-family: inherit; font-weight: bold; font-size: 1rem; padding: 4px 8px; border: 1px solid var(--text-black); border-radius: 4px; width: 200px;';
+    
+    const originalContent = target.innerHTML;
+    target.innerHTML = '';
+    target.appendChild(input);
+    input.focus();
+    input.select();
+
+    let finished = false;
+
+    const finishEdit = async (save) => {
+        if (finished) return;
+        finished = true;
+        
+        const newName = input.value.trim();
+        if (save && newName && newName !== oldName) {
+            // Kiểm tra trùng tên
+            if (adminDynamicCategories.some((g, i) => i !== index && g.name === newName)) {
+                showToast("Tên nhóm này đã tồn tại", "error");
+                target.innerHTML = originalContent;
+            } else {
+                adminDynamicCategories[index].name = newName;
+                try {
+                    await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+                    showToast(`Đã đổi tên nhóm thành "${newName}"`);
+                } catch (err) {
+                    showToast("Lỗi: " + err.message, "error");
+                    target.innerHTML = originalContent;
+                }
+            }
+        } else {
+            target.innerHTML = originalContent;
+        }
+    };
+
+    input.onkeydown = (e) => {
+        if (e.key === 'Enter') finishEdit(true);
+        if (e.key === 'Escape') finishEdit(false);
+    };
+    input.onblur = () => finishEdit(true);
+};
+
+window.editSubCategoryName = (event, groupName, oldSubName, subIdx) => {
+    event.stopPropagation();
+    const target = event.currentTarget;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldSubName;
+    input.style.cssText = 'font-size: 0.85rem; padding: 2px 4px; border: 1px solid var(--text-black); border-radius: 4px; width: 120px; font-family: inherit;';
+    
+    const originalContent = target.innerHTML;
+    target.innerHTML = '';
+    target.appendChild(input);
+    input.focus();
+    input.select();
+
+    let finished = false;
+
+    const finishEdit = async (save) => {
+        if (finished) return;
+        finished = true;
+        
+        const newSubName = input.value.trim();
+        if (save && newSubName && newSubName !== oldSubName) {
+            const group = adminDynamicCategories.find(g => g.name === groupName);
+            if (!group) { target.innerHTML = originalContent; return; }
+
+            if (group.subs.includes(newSubName)) {
+                showToast("Tên phân loại này đã tồn tại trong nhóm", "error");
+                target.innerHTML = originalContent;
+                return;
+            }
+
+            try {
+                // 1. Tìm sản phẩm bị ảnh hưởng trước để xác nhận
+                const q = query(collection(db, "products"), where("category", "==", oldSubName));
+                const snap = await getDocs(q);
+                const affectedCount = snap.size;
+
+                if (affectedCount > 0) {
+                    const ok = confirm(`Phân loại này đang có ${affectedCount} sản phẩm. Bạn có chắc chắn muốn đổi tên thành "${newSubName}" và cập nhật toàn bộ sản phẩm này?`);
+                    if (!ok) { target.innerHTML = originalContent; return; }
+                }
+
+                showToast("Đang đồng bộ dữ liệu...", "info");
+                
+                // Cập nhật cấu trúc danh mục
+                group.subs[subIdx] = newSubName;
+                await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+
+                if (affectedCount > 0) {
+                    const updatePromises = snap.docs.map(d => updateDoc(doc(db, "products", d.id), { category: newSubName }));
+                    await Promise.all(updatePromises);
+                    showToast(`Đã đổi tên thành "${newSubName}" và cập nhật ${affectedCount} sản phẩm.`);
+                } else {
+                    showToast(`Đã đổi tên thành "${newSubName}".`);
+                }
+            } catch (err) {
+                showToast("Lỗi: " + err.message, "error");
+                target.innerHTML = originalContent;
+            }
+        } else {
+            target.innerHTML = originalContent;
+        }
+    };
+
+    input.onkeydown = (e) => {
+        if (e.key === 'Enter') finishEdit(true);
+        if (e.key === 'Escape') finishEdit(false);
+    };
+    input.onblur = () => finishEdit(true);
+};
+
+// --- Logic Upload Ảnh Danh mục ---
+window.triggerCatImageUpload = (groupName, index) => {
+    let fileInput = document.getElementById('cat-image-hidden-input');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'cat-image-hidden-input';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+    }
+    
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            showToast(`Đang nén và tải ảnh cho "${groupName}"...`, "info");
+            const webpFile = await convertToWebP(file, 600); // Ảnh danh mục không cần quá to
+            const storageRef = ref(storage, `categories/${groupName.replace(/\s+/g, '_')}_${Date.now()}.webp`);
+            const snapshot = await uploadBytes(storageRef, webpFile);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
+            // Cập nhật mảng local và lưu Firestore
+            adminDynamicCategories[index].imageUrl = downloadURL;
+            await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+            showToast(`Đã cập nhật ảnh cho nhóm "${groupName}"!`);
+        } catch (err) { showToast("Lỗi upload: " + err.message, "error"); }
+    };
+    fileInput.click();
+};
+
+function renderCategoryTree(container) {
+    let html = '';
+    if (adminDynamicCategories.length === 0) {
+        html = '<p style="text-align:center; color:#999; padding: 2rem;">Chưa có danh mục nào.</p>';
+    } else {
+        adminDynamicCategories.forEach((group, index) => {
+            html += `
+                <div class="category-group-card" draggable="true" ondragstart="window.handleGroupDragStart(event, ${index})" ondragover="window.handleDragOver(event)" ondrop="window.handleGroupDrop(event, ${index})" ondragend="this.style.opacity='1'" style="margin-bottom: 1.5rem; border: 1px solid #eee; border-radius: 8px; overflow: hidden; cursor: grab;">
+                    <div style="background: #f8f9fa; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div onclick="window.triggerCatImageUpload('${group.name}', ${index})" title="Click để tải ảnh đại diện" style="width: 45px; height: 45px; border-radius: 6px; overflow: hidden; background: #e0e0e0; cursor: pointer; border: 1px solid #ddd; flex-shrink: 0; position: relative;">
+                                <img src="${group.imageUrl || 'https://placehold.co/100x100?text=No+Image'}" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.5); color: #fff; font-size: 8px; text-align: center; padding: 2px 0;">Sửa</div>
+                            </div>
+                            <button type="button" class="btn-minimal" style="font-family: var(--font-serif); font-weight: bold; margin: 0; padding: 5px 12px; font-size: 1rem;" onclick="window.quickSelectGroup('${group.name}')" ondblclick="window.editGroupName(event, '${group.name}', ${index})" title="Double-click để đổi tên">${group.name} +</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; pointer-events: auto;">
+                            <button class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px;" ${index === 0 ? 'disabled' : ''} onclick="window.moveCategoryGroup('${group.name}', -1)">▲ Lên</button>
+                            <button class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px;" ${index === adminDynamicCategories.length - 1 ? 'disabled' : ''} onclick="window.moveCategoryGroup('${group.name}', 1)">▼ Xuống</button>
+                            <button class="btn-delete" style="font-size: 0.7rem;" onclick="window.deleteCategoryGroup('${group.name}')">Xóa nhóm</button>
+                        </div>
+                    </div>
+                    <div class="subs-container" ondragover="window.handleDragOver(event)" ondrop="window.handleSubDrop(event, '${group.name}')" style="padding: 10px 15px; display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px;">
+                        ${group.subs.map((sub, subIdx) => `
+                            <span class="category-tag-admin" draggable="true" ondragstart="window.handleSubDragStart(event, '${group.name}', ${subIdx})" ondragover="window.handleDragOver(event)" ondrop="window.handleSubDrop(event, '${group.name}', ${subIdx})" ondragend="this.style.opacity='1'" ondblclick="window.editSubCategoryName(event, '${group.name}', '${sub}', ${subIdx})" title="Double-click để đổi tên" style="display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #ddd; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; cursor: move;">
+                                ${sub}
+                                <span style="cursor: pointer; color: #e74c3c; font-weight: bold;" onclick="window.deleteSubCategory('${group.name}', '${sub}')">&times;</span>
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    container.innerHTML = html;
+}
+
+window.moveCategoryGroup = async (groupName, direction) => {
+    const index = adminDynamicCategories.findIndex(g => g.name === groupName);
+    if (index === -1) return;
+
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < adminDynamicCategories.length) {
+        // Hoán đổi vị trí và cập nhật order
+        const [movedItem] = adminDynamicCategories.splice(index, 1);
+        adminDynamicCategories.splice(newIndex, 0, movedItem);
+
+        // Cập nhật lại trường 'order' cho tất cả các nhóm
+        adminDynamicCategories.forEach((group, idx) => {
+            group.order = idx + 1;
+        });
+
+        try {
+            await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+            showToast(`Đã di chuyển nhóm "${groupName}"`);
+        } catch (err) { showToast("Lỗi di chuyển danh mục: " + err.message, "error"); }
+    }
+};
+
+window.deleteSubCategory = async (groupName, subName) => {
+    if (!confirm(`Xóa phân loại "${subName}" khỏi nhóm "${groupName}"?`)) return;
+    const groupIndex = adminDynamicCategories.findIndex(g => g.name === groupName);
+    if (groupIndex === -1) return;
+
+    adminDynamicCategories[groupIndex].subs = adminDynamicCategories[groupIndex].subs.filter(s => s !== subName);
+    try {
+        await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+        showToast("Đã xóa phân loại");
+    } catch (err) { showToast("Lỗi xóa phân loại: " + err.message, "error"); }
+};
+
+window.deleteCategoryGroup = async (groupName) => {
+    if (!confirm(`CẢNH BÁO: Bạn đang xóa toàn bộ nhóm "${groupName}" bao gồm tất cả phân loại bên trong. Tiếp tục?`)) return;
+    adminDynamicCategories = adminDynamicCategories.filter(g => g.name !== groupName);
+    try {
+        await setDoc(doc(db, "settings", "product_categories"), { groups: adminDynamicCategories });
+        showToast("Đã xóa nhóm danh mục");
+    } catch (err) { showToast("Lỗi xóa nhóm danh mục: " + err.message, "error"); }
+};
+
+async function populateCategorySelect() {
+    const categorySelect = document.getElementById('category');
+    const filterSelect = document.getElementById('admin-product-category-filter');
+    
     let html = '<option value="">-- Chọn danh mục --</option>';
-    for (const [group, subs] of Object.entries(PRODUCT_CATEGORIES)) {
-        html += `<optgroup label="${group}">`;
-        subs.forEach(sub => {
+    let filterHtml = '<option value="all">Tất cả danh mục</option>';
+    
+    adminDynamicCategories.forEach(group => { // Iterate over array
+        html += `<optgroup label="${group.name}">`;
+        group.subs.forEach(sub => {
             html += `<option value="${sub}">${sub}</option>`;
+            filterHtml += `<option value="${sub}">${sub}</option>`;
         });
         html += `</optgroup>`;
-    }
-    categorySelect.innerHTML = html;
+    });
+
+    if (categorySelect) categorySelect.innerHTML = html;
+    if (filterSelect) filterSelect.innerHTML = filterHtml;
 }
 
 // Hàm Migration: Cập nhật toàn bộ sản phẩm cũ sang danh mục mới (Chạy 1 lần duy nhất)
@@ -269,8 +858,22 @@ window.migrateProductCategories = async () => {
 
         for (const productDoc of snap.docs) {
             const data = productDoc.data();
-            if (mapping[data.category]) {
+            // Find the correct sub-category name from the new structure
+            let newCategory = null;
+            for (const group of adminDynamicCategories) { // Iterate over the array
+                if (group.subs.includes(mapping[data.category] || data.category)) {
+                    newCategory = mapping[data.category] || data.category;
+                    break;
+                }
+            }
+
+            if (newCategory) {
                 await updateDoc(doc(db, "products", productDoc.id), {
+                    category: newCategory
+                });
+                count++;
+            } else if (mapping[data.category]) { // Fallback if old category maps to a new sub-category
+                 await updateDoc(doc(db, "products", productDoc.id), {
                     category: mapping[data.category]
                 });
                 count++;
@@ -292,7 +895,6 @@ productForm.addEventListener('submit', async (e) => {
     const imageFiles = document.getElementById('imageFile').files;
     const submitBtn = productForm.querySelector('button[type="submit"]');
     
-    // Validation cơ bản
     if (!productId) {
         showToast("Vui lòng nhập Mã sản phẩm (SKU)", "error");
         return;
@@ -325,6 +927,19 @@ productForm.addEventListener('submit', async (e) => {
     submitBtn.innerHTML = '<span class="spinner-small"></span> Đang nén ảnh...';
 
     try {
+        const productRef = doc(db, "products", productId);
+        const existingSnap = await getDoc(productRef);
+        const isEdit = existingSnap.exists();
+        
+        const stockInput = document.getElementById('stock');
+        const isAdditive = document.getElementById('stock-additive')?.checked;
+        let finalStock = Number(stockInput.value);
+
+        // Nếu đang sửa và chọn chế độ "Nhập thêm", thực hiện phép cộng
+        if (isEdit && isAdditive) {
+            finalStock = (existingSnap.data().stock || 0) + finalStock;
+        }
+
         // Lấy danh sách ảnh cũ còn sót lại sau khi xóa
         let currentMain = document.getElementById('productId').dataset.currentImageUrl || '';
         let currentAdditionals = JSON.parse(document.getElementById('productId').dataset.currentAdditionalImages || '[]');
@@ -340,7 +955,7 @@ productForm.addEventListener('submit', async (e) => {
                 const previewUrl = URL.createObjectURL(file);
 
                 // Tạo UI cho từng file riêng lẻ
-                const fileProgressDiv = document.createElement('div');
+                const fileProgressDiv = document.createElement('div'); // This line was missing in the previous diff, causing the code to be incorrect.
                 fileProgressDiv.style = "margin-bottom: 10px; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee;";
                 fileProgressDiv.innerHTML = `
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -359,10 +974,8 @@ productForm.addEventListener('submit', async (e) => {
                 progressContainer.appendChild(fileProgressDiv);
 
                 // Tạo 2 phiên bản: Ảnh lớn và Thumbnail
-                window._processingSize = 1000;
-                const webpFile = await convertToWebP(file);
-                window._processingSize = 400; // Size cho thumbnail
-                const thumbWebp = await convertToWebP(file);
+                const webpFile = await convertToWebP(file, 1000); // Main image size // This line was also missing in the previous diff.
+                const thumbWebp = await convertToWebP(file, 400); // Thumbnail size
 
                 const storageRef = ref(storage, `products/${productId}/${Date.now()}_${webpFile.name}`);
                 const thumbRef = ref(storage, `products/${productId}/thumb_${Date.now()}_${webpFile.name}`);
@@ -407,27 +1020,28 @@ productForm.addEventListener('submit', async (e) => {
             });
             
             const results = await Promise.all(uploadPromises);
-            
+            let currentThumb = document.getElementById('productId').dataset.currentThumbUrl || ''; // Initialize currentThumb
+
             if (!currentMain) {
                 currentMain = results[0].fullUrl;
-                currentThumb = results[0].thumbUrl; // Cần thêm trường thumbUrl vào Firestore
-                currentAdditionals = [...currentAdditionals, ...results.slice(1).map(r => r.fullUrl)];
+                currentThumb = results[0].thumbUrl;
+                currentAdditionals = [...currentAdditionals, ...results.slice(1).map(r => r?.fullUrl)];
             } else {
-                currentAdditionals = [...currentAdditionals, ...results.map(r => r.fullUrl)];
-            }
+                currentAdditionals = [...currentAdditionals, ...results.map(r => r?.fullUrl)];
+            }            
         }
 
-        const finalImageUrl = currentMain || 'https://via.placeholder.com/300';
+        const finalImageUrl = currentMain || 'https://placehold.co/300x300?text=No+Image';
 
         // 2. Lưu thông tin vào Firestore
     const productData = {
         name: document.getElementById('name').value,
         category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
-        stock: Number(document.getElementById('stock').value),
-        rating: Number(document.getElementById('rating').value || 5),
+        stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
         imageUrl: finalImageUrl,
+        thumbUrl: currentThumb, // Add thumbUrl to productData
         additionalImages: currentAdditionals,
         description: document.getElementById('description').value,
         seoTitle: document.getElementById('seoTitle').value.trim(),
@@ -436,13 +1050,34 @@ productForm.addEventListener('submit', async (e) => {
         updatedAt: new Date().toISOString()
     };
 
-        await setDoc(doc(db, "products", productId), productData);
+        // Nếu là sản phẩm mới, khởi tạo rating mặc định. Nếu là sửa, giữ nguyên rating hiện tại.
+        if (!isEdit) {
+            productData.rating = 5;
+            productData.reviewCount = 0;
+            productData.sold = 0;
+        } else {
+            const oldData = existingSnap.data();
+            productData.rating = oldData.rating || 5;
+            productData.reviewCount = oldData.reviewCount || 0;
+            productData.sold = oldData.sold || 0;
+        }
+
+        await setDoc(productRef, productData);
         showToast(`Đã lưu sản phẩm ${productId} thành công!`);
         productForm.reset();
+        
+        // Reset trạng thái checkbox và placeholder
+        const additiveCheckbox = document.getElementById('stock-additive');
+        if (additiveCheckbox) additiveCheckbox.checked = false;
+        if (stockInput) stockInput.placeholder = "10";
+
         progressContainer.style.display = 'none';
         document.getElementById('image-preview-container').innerHTML = '';
+        // Clear stored image URLs from dataset
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
+        // Reset form và clear các state khác
+        document.getElementById('productId').readOnly = false;
     } catch (error) {
         console.error("Lỗi khi lưu:", error);
         showToast("Lỗi lưu dữ liệu: " + error.message, "error");
@@ -481,6 +1116,8 @@ function initProductListener() {
         });
 
         renderAdminProductTable(); // Gọi hàm hiển thị bảng
+    }, (error) => {
+        console.error("Product listener error:", error);
     });
 }
 
@@ -488,13 +1125,23 @@ function initProductListener() {
 function renderAdminProductTable() {
     const listTable = document.getElementById('admin-product-list');
     const searchInput = document.getElementById('admin-product-search');
+    const categoryFilter = document.getElementById('admin-product-category-filter');
+    const stockFilter = document.getElementById('admin-product-stock-filter');
     if (!listTable) return;
 
     const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const catValue = categoryFilter ? categoryFilter.value : 'all';
+    const stockValue = stockFilter ? stockFilter.value : 'all';
+
     // Lọc sản phẩm dựa trên từ khóa tìm kiếm từ mảng local đã cache
-    const filtered = posProductsLocal.filter(p => 
-        (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term)
-    );
+    const filtered = posProductsLocal.filter(p => {
+        const matchesSearch = (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
+        const matchesCategory = catValue === 'all' || p.category === catValue;
+        const matchesStock = stockValue === 'all' || 
+                           (stockValue === 'in-stock' && p.stock > 0) || 
+                           (stockValue === 'out-of-stock' && p.stock <= 0);
+        return matchesSearch && matchesCategory && matchesStock;
+    });
 
     let htmlContent = '';
     filtered.forEach((p) => {
@@ -524,6 +1171,59 @@ function renderAdminProductTable() {
     document.querySelectorAll('.edit-link').forEach(link => link.onclick = () => editProduct(link.getAttribute('data-id')));
 }
 
+// Hàm xuất danh sách sản phẩm hiện tại ra file Excel (CSV)
+async function exportProductToExcel() {
+    if (posProductsLocal.length === 0) {
+        showToast("Không có dữ liệu để xuất", "error");
+        return;
+    }
+
+    // Lấy các giá trị lọc hiện tại để xuất đúng những gì đang hiển thị trên bảng
+    const term = document.getElementById('admin-product-search')?.value.trim().toLowerCase() || '';
+    const catValue = document.getElementById('admin-product-category-filter')?.value || 'all';
+    const stockValue = document.getElementById('admin-product-stock-filter')?.value || 'all';
+
+    const dataToExport = posProductsLocal.filter(p => {
+        const matchesSearch = (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
+        const matchesCategory = catValue === 'all' || p.category === catValue;
+        const matchesStock = stockValue === 'all' || 
+                           (stockValue === 'in-stock' && p.stock > 0) || 
+                           (stockValue === 'out-of-stock' && p.stock <= 0);
+        return matchesSearch && matchesCategory && matchesStock;
+    });
+
+    // 1. Định nghĩa tiêu đề cột
+    const headers = ["Mã SP (ID)", "Tên sản phẩm", "Danh mục", "Giá bán", "Tồn kho", "Giảm giá (%)", "Đánh giá", "Ngày cập nhật"];
+    
+    // 2. Chuyển đổi dữ liệu thành hàng CSV
+    const rows = dataToExport.map(p => [
+        p.id,
+        `"${p.name.replace(/"/g, '""')}"`, // Xử lý dấu ngoặc kép trong tên
+        p.category,
+        p.price,
+        p.stock,
+        p.sale || 0,
+        p.rating || 5,
+        p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : ''
+    ]);
+
+    // 3. Ghép thành nội dung CSV
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+    // 4. Tạo Blob với BOM (Byte Order Mark) để Excel nhận diện được UTF-8 (tiếng Việt)
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Danh_sach_san_pham_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast("Đã xuất file thành công!");
+}
+
 async function editProduct(id) {
     try {
         const docRef = doc(db, "products", id);
@@ -537,9 +1237,14 @@ async function editProduct(id) {
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = p.price;
             document.getElementById('stock').value = p.stock;
-            document.getElementById('rating').value = p.rating || 5;
             document.getElementById('sale').value = p.sale || 0;
+
+            // Reset checkbox nhập thêm khi load dữ liệu sửa sản phẩm khác
+            const additiveCheckbox = document.getElementById('stock-additive');
+            if (additiveCheckbox) additiveCheckbox.checked = false;
+
             document.getElementById('description').value = p.description || '';
+            document.getElementById('productId').dataset.currentThumbUrl = p.thumbUrl || ''; // Store thumbUrl for editing
             document.getElementById('seoTitle').value = p.seoTitle || '';
             document.getElementById('seoDescription').value = p.seoDescription || '';
             document.getElementById('slug').value = p.slug || '';
@@ -583,7 +1288,7 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
     const nextBtn = document.getElementById('next-order-page');
     const pageInfo = document.getElementById('order-page-info');
 
-    if (!orderListTable) return;
+    if (!orderListTable || !db) return;
 
     // Hủy đăng ký lắng nghe cũ nếu có
     if (unsubscribeOrders) unsubscribeOrders();
@@ -672,6 +1377,8 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
         if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage}`;
         if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
         if (nextBtn) nextBtn.disabled = snapshot.docs.length < ORDER_PAGE_SIZE;
+    }, (error) => {
+        console.error("Order list listener error:", error);
     });
 }
 
@@ -727,7 +1434,7 @@ window.viewAdminOrderDetail = async (orderId) => {
 // --- Quản lý Người dùng ---
 function initUserListener() {
     const userListTable = document.getElementById('admin-user-list');
-    if (!userListTable) return;
+    if (!userListTable || !db) return;
 
     // Lấy danh sách admin để so khớp badge
     getDocs(collection(db, "admins")).then(adminsSnap => {
@@ -764,6 +1471,8 @@ function initUserListener() {
             `;
         });
         userListTable.innerHTML = htmlContent || '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu khách hàng.</td></tr>';
+    }, (error) => {
+        console.error("User list listener error:", error);
     });
     });
 }
@@ -798,7 +1507,7 @@ window.toggleAdminPrivilege = async (uid, shouldBeAdmin, identifier = '') => {
 
 function initCouponListener() {
     const list = document.getElementById('admin-coupon-list');
-    if (!list) return;
+    if (!list || !db) return;
 
     onSnapshot(collection(db, "coupons"), (snapshot) => {
         list.innerHTML = snapshot.docs.map(doc => {
@@ -817,6 +1526,8 @@ function initCouponListener() {
                 </tr>
             `;
         }).join('') || '<tr><td colspan="7" style="text-align:center;">Chưa có mã giảm giá nào.</td></tr>';
+    }, (error) => {
+        console.error("Coupon listener error:", error);
     });
 }
 
@@ -1062,130 +1773,278 @@ window.createPOSOrder = async () => {
     finally { if (btn) { btn.disabled = false; btn.innerHTML = "Hoàn tất & Lưu doanh thu"; } }
 };
 
-// --- Logic Thống kê & Biểu đồ ---
-let topSoldChart = null;
+// --- Quản lý Thống kê Nâng cao ---
+let mainRevChart = null;
+let periodSoldChart = null;
+let comparisonChart = null;
 
-async function initStatistics(type = 'bar') {
-    const ctx = document.getElementById('topSoldChart');
-    if (!ctx) return;
+async function initFullReport() {
+    const yearSelect = document.getElementById('stats-year-filter');
+    const periodSelect = document.getElementById('stats-period-type');
+    const btnRefresh = document.getElementById('btn-refresh-stats');
+    if (!yearSelect || !periodSelect) return;
 
-    try {
-        // Truy vấn Top 5 sản phẩm có 'sold' cao nhất
-        const q = query(collection(db, "products"), orderBy("sold", "desc"), limit(5));
-        const snap = await getDocs(q);
-        
-        const labels = [];
-        const soldData = [];
-
-        snap.forEach(doc => {
-            const p = doc.data();
-            labels.push(p.name);
-            soldData.push(p.sold || 0);
-        });
-
-        // Nếu biểu đồ đã tồn tại thì hủy để vẽ lại (tránh lỗi render chồng lấp)
-        if (topSoldChart) topSoldChart.destroy();
-
-        const colors = [
-            'rgba(0, 0, 0, 0.8)',
-            'rgba(192, 57, 43, 0.8)',
-            'rgba(39, 174, 96, 0.8)',
-            'rgba(52, 152, 219, 0.8)',
-            'rgba(241, 196, 15, 0.8)'
-        ];
-
-        const config = {
-            type: type,
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Số lượng đã bán',
-                    data: soldData,
-                    backgroundColor: type === 'bar' ? 'rgba(0, 0, 0, 0.7)' : colors,
-                    borderColor: type === 'bar' ? 'rgba(0, 0, 0, 1)' : '#fff',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: type === 'pie', position: 'bottom' }
-                }
-            }
-        };
-
-        // Biểu đồ cột cần trục tọa độ, biểu đồ tròn thì không
-        if (type === 'bar') {
-            config.options.scales = { y: { beginAtZero: true, ticks: { stepSize: 1 } } };
+    // 1. Nạp danh sách năm (3 năm gần đây)
+    const currentYear = new Date().getFullYear();
+    if (yearSelect.options.length === 0) {
+        for (let y = currentYear; y >= currentYear - 2; y--) {
+            yearSelect.options.add(new Option(y, y));
         }
+    }
 
-        topSoldChart = new Chart(ctx, config);
-    } catch (e) { console.error("Lỗi vẽ biểu đồ:", e); }
+    const updateReport = async () => {
+        const selectedYear = parseInt(yearSelect.value);
+        const periodType = periodSelect.value;
+
+        try {
+            const loadingEl = document.getElementById('stats-detail-loading');
+            if (loadingEl) loadingEl.style.display = 'block';
+            document.getElementById('stats-detail-table').innerHTML = ''; // Clear previous data
+            showToast("Đang tổng hợp dữ liệu báo cáo...", "info");
+            const q = query(collection(db, "orders"), where("status", "==", "Đã hoàn thành"));
+            const snap = await getDocs(q);
+            
+            const prevYear = selectedYear - 1;
+            const orders = snap.docs.map(d => d.data()).filter(o => {
+                if (!o.orderDate) return false;
+                const y = o.orderDate.toDate().getFullYear();
+                return y === selectedYear || y === prevYear;
+            });
+
+            // 2. Xử lý gom nhóm dữ liệu (Revenue & Count)
+            const statsMap = {}; // Key: "Tháng 01", "Quý 1", hoặc "Ngày 01/01"
+            const productMap = {}; // Thống kê sản phẩm bán chạy trong KỲ NÀY
+            const compCurrentYear = new Array(12).fill(0); // [Jan, Feb, ..., Dec] cho năm chọn
+            const compPrevYear = new Array(12).fill(0);    // [Jan, Feb, ..., Dec] cho năm trước
+            let totalRev = 0;
+            let totalOrders = 0;
+            let prevTotalRev = 0;
+            let prevTotalOrders = 0;
+
+            orders.forEach(o => {
+                const date = o.orderDate.toDate();
+                const orderYear = date.getFullYear();
+                const monthIdx = date.getMonth();
+                let key = '';
+
+                if (orderYear === selectedYear) {
+                    totalOrders++;
+                    if (periodType === 'monthly') {
+                        key = `Tháng ${(monthIdx + 1).toString().padStart(2, '0')}`;
+                    } else if (periodType === 'quarterly') {
+                        key = `Quý ${Math.floor(monthIdx / 3) + 1}`;
+                    } else if (periodType === 'daily') {
+                        if (monthIdx !== new Date().getMonth()) return; 
+                        key = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                    }
+
+                    if (key) {
+                        if (!statsMap[key]) statsMap[key] = { rev: 0, count: 0 };
+                        statsMap[key].rev += (o.totalAmount || 0);
+                        statsMap[key].count++;
+                        totalRev += (o.totalAmount || 0);
+
+                        // Gom sản phẩm bán chạy cho năm hiện tại
+                        o.items.forEach(item => {
+                            productMap[item.name] = (productMap[item.name] || 0) + (item.quantity || 1);
+                        });
+                    }
+                    // Lưu dữ liệu so sánh 12 tháng
+                    compCurrentYear[monthIdx] += (o.totalAmount || 0);
+                } else if (orderYear === prevYear) {
+                    // Lưu dữ liệu năm trước
+                    compPrevYear[monthIdx] += (o.totalAmount || 0);
+                    prevTotalRev += (o.totalAmount || 0);
+                    prevTotalOrders++;
+                }
+            });
+
+            // Hàm hỗ trợ tính growth HTML
+            const getGrowthHtml = (current, previous) => {
+                if (!previous || previous === 0) return `<span style="color: #888;">--%</span>`;
+                const growth = ((current - previous) / previous) * 100;
+                const color = growth >= 0 ? '#27ae60' : '#e74c3c';
+                const arrow = growth >= 0 ? '↑' : '↓';
+                return `<span style="color: ${color}; font-weight: 600;">${arrow}${Math.abs(growth).toFixed(1)}%</span>`;
+            };
+
+            // 3. Cập nhật thẻ Summary
+            animateNumber('period-revenue', totalRev, true);
+            animateNumber('period-orders', totalOrders);
+            animateNumber('period-avg-order', totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0, true);
+
+            // Hiển thị % tăng trưởng
+            document.getElementById('period-revenue-growth').innerHTML = getGrowthHtml(totalRev, prevTotalRev);
+            document.getElementById('period-orders-growth').innerHTML = getGrowthHtml(totalOrders, prevTotalOrders);
+            
+            const currentAvg = totalOrders > 0 ? totalRev / totalOrders : 0;
+            const prevAvg = prevTotalOrders > 0 ? prevTotalRev / prevTotalOrders : 0;
+            document.getElementById('period-avg-growth').innerHTML = getGrowthHtml(currentAvg, prevAvg);
+
+            // 4. Vẽ biểu đồ doanh thu
+            const labels = Object.keys(statsMap).sort();
+            const revData = labels.map(l => statsMap[l].rev);
+            
+            if (mainRevChart) mainRevChart.destroy();
+            mainRevChart = new Chart(document.getElementById('revenueMainChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: revData,
+                        borderColor: '#2c3e50',
+                        backgroundColor: 'rgba(44, 62, 80, 0.05)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 4.1 Vẽ biểu đồ so sánh 2 năm
+            const monthLabels = ["Tháng 1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+            if (comparisonChart) comparisonChart.destroy();
+            comparisonChart = new Chart(document.getElementById('revenueComparisonChart'), {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [
+                        {
+                            label: `Năm ${selectedYear}`,
+                            data: compCurrentYear,
+                            borderColor: '#1a1a1a',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: `Năm ${prevYear}`,
+                            data: compPrevYear,
+                            borderColor: '#ccc',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+
+            // 5. Vẽ biểu đồ sản phẩm bán chạy (Top 5)
+            const topProducts = Object.entries(productMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            if (periodSoldChart) periodSoldChart.destroy();
+            const chartType = document.getElementById('topSoldType').value;
+            periodSoldChart = new Chart(document.getElementById('topSoldPeriodChart'), {
+                type: chartType,
+                data: {
+                    labels: topProducts.map(p => p[0]),
+                    datasets: [{
+                        data: topProducts.map(p => p[1]),
+                        backgroundColor: ['#1a1a1a', '#c0392b', '#27ae60', '#2980b9', '#f1c40f']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: chartType === 'pie' } } }
+            });
+
+            // 6. Cập nhật bảng kê chi tiết
+            const tableBody = document.getElementById('stats-detail-table');
+            tableBody.innerHTML = labels.map(l => `
+                <tr>
+                    <td><strong>${l}</strong></td>
+                    <td>${statsMap[l].count} đơn</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)}đ</td>
+                </tr>
+            `).join('');
+
+        } catch (err) { 
+            console.error(err); 
+            showToast("Lỗi tải báo cáo", "error"); 
+        } finally {
+            if (loadingEl) loadingEl.style.display = 'none';
+        }
+    };
+
+    btnRefresh.onclick = updateReport;
+    document.getElementById('topSoldType').onchange = updateReport;
+    updateReport(); // Lần đầu load
 }
 
-// --- Biểu đồ doanh thu theo tháng ---
-let revenueChart = null;
+// --- Quản lý Nhật ký kho ---
+function initInventoryLogListener() {
+    if (!db) return;
 
-async function initRevenueChart() {
-    const ctx = document.getElementById('revenueMonthChart');
-    if (!ctx) return;
+    // Lấy 200 bản ghi nhật ký mới nhất để phục vụ việc lọc local
+    const q = query(collection(db, "inventory_logs"), orderBy("timestamp", "desc"), limit(200));
+    
+    onSnapshot(q, (snapshot) => {
+        inventoryLogsLocal = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderInventoryLogTable();
+    }, (error) => console.error("Log listener error:", error));
+}
 
-    try {
-        // Chỉ lấy các đơn hàng đã hoàn thành để tính doanh thu thực tế
-        const q = query(collection(db, "orders"), where("status", "==", "Đã hoàn thành"));
-        const snap = await getDocs(q);
+function renderInventoryLogTable() {
+    const list = document.getElementById('admin-inventory-log-list');
+    const idFilter = document.getElementById('log-filter-product-id')?.value.trim().toLowerCase() || '';
+    const dateFilter = document.getElementById('log-filter-date')?.value || ''; // Định dạng YYYY-MM-DD
+
+    if (!list) return;
+
+    const filtered = inventoryLogsLocal.filter(l => {
+        const matchesSearch = !idFilter || 
+                             (l.productId || "").toLowerCase().includes(idFilter) || 
+                             (l.productName || "").toLowerCase().includes(idFilter);
         
-        const revenueMap = {}; // Lưu trữ { "01/2024": total, ... }
+        let matchesDate = true;
+        if (dateFilter && l.timestamp) {
+            const logDate = l.timestamp.toDate().toISOString().split('T')[0]; // Chuyển timestamp sang YYYY-MM-DD
+            matchesDate = logDate === dateFilter;
+        }
 
-        snap.forEach(doc => {
-            const order = doc.data();
-            if (!order.orderDate) return;
-            
-            const date = order.orderDate.toDate();
-            const monthYear = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-            
-            revenueMap[monthYear] = (revenueMap[monthYear] || 0) + (order.totalAmount || 0);
-        });
+        return matchesSearch && matchesDate;
+    });
 
-        // Sắp xếp các tháng theo thứ tự thời gian
-        const sortedMonths = Object.keys(revenueMap).sort((a, b) => {
-            const [mA, yA] = a.split('/').map(Number);
-            const [mB, yB] = b.split('/').map(Number);
-            return yA !== yB ? yA - yB : mA - mB;
-        });
+    list.innerHTML = filtered.map(l => {
+        const time = l.timestamp ? new Date(l.timestamp.toDate()).toLocaleString('vi-VN') : '...';
+        const changeStyle = l.addedQuantity > 0 ? 'color: #27ae60; font-weight: bold;' : 'color: #e74c3c; font-weight: bold;';
+        const sign = l.addedQuantity > 0 ? '+' : '';
+        return `
+                <tr>
+                    <td><small>${time}</small></td>
+                    <td><strong>${l.productName}</strong><br><small>${l.productId}</small></td>
+                    <td style="${changeStyle}">${sign}${l.addedQuantity}</td>
+                    <td>${l.previousStock} → ${l.newStock}</td>
+                    <td><small>${l.adminEmail}</small></td>
+                </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;">Không tìm thấy lịch sử phù hợp.</td></tr>';
+}
 
-        const labels = sortedMonths;
-        const data = sortedMonths.map(m => revenueMap[m]);
+// Thiết lập listener cho chức năng cộng dồn tồn kho (UI interaction)
+function initStockAdditiveLogic() {
+    const checkbox = document.getElementById('stock-additive');
+    const input = document.getElementById('stock');
+    if (!checkbox || !input) return;
 
-        if (revenueChart) revenueChart.destroy();
-
-        revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: data,
-                    borderColor: '#27ae60', // Màu xanh lá biểu trưng cho sự tăng trưởng
-                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                    fill: true,
-                    tension: 0.3 // Làm đường kẻ cong mềm mại hơn
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => new Intl.NumberFormat('vi-VN').format(context.raw) + 'đ'
-                        }
-                    }
-                }
-            }
-        });
-    } catch (e) { console.error("Lỗi vẽ biểu đồ doanh thu:", e); }
+    checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+            input.dataset.prevVal = input.value; // Lưu lại số cũ phòng trường hợp user bỏ tích
+            input.value = '';
+            input.placeholder = "Nhập số lượng cộng thêm...";
+        } else {
+            input.value = input.dataset.prevVal || '';
+            input.placeholder = "10";
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1204,19 +2063,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupAdminTabs();
-    initHeader('../', async (user) => {
+    initStockAdditiveLogic();
+
+    // Gán sự kiện tìm kiếm cho bảng sản phẩm Admin
+    document.getElementById('admin-product-search')?.addEventListener('input', renderAdminProductTable);
+    document.getElementById('admin-product-category-filter')?.addEventListener('change', renderAdminProductTable);
+    document.getElementById('admin-product-stock-filter')?.addEventListener('change', renderAdminProductTable);
+    document.getElementById('btn-export-excel')?.addEventListener('click', exportProductToExcel);
+
+    // Gán sự kiện cho bộ lọc Nhật ký kho
+    document.getElementById('log-filter-product-id')?.addEventListener('input', renderInventoryLogTable);
+    document.getElementById('log-filter-date')?.addEventListener('change', renderInventoryLogTable);
+    document.getElementById('btn-clear-log-filter')?.addEventListener('click', () => {
+        document.getElementById('log-filter-product-id').value = '';
+        document.getElementById('log-filter-date').value = '';
+        renderInventoryLogTable();
+    });
+
+    // Thay thế initHeader bằng logic Auth riêng cho Admin Dashboard
+    onAuthStateChanged(auth, async (user) => {
         await checkAdminRights(user);
-        // Chỉ khởi tạo các listener dữ liệu sau khi đã xác thực quyền Admin thành công
-        // Điều này đảm bảo Firebase Security Rules nhận diện đúng request.auth
         if (document.body.style.display === "block") {
             initProductListener();
             initOrderListener();
             initUserListener();
             initCouponListener();
+            initOverview();
+            initCategoryManagement(); // Call initCategoryManagement here to ensure initial render
             setupNewOrderNotification();
-            populateCategorySelect(); // Nạp danh mục vào form ngay khi xác thực thành công
+            initUnprocessedOrderBadge();
+            populateCategorySelect();
         }
     });
+
+    document.getElementById('btn-logout-admin')?.addEventListener('click', () => {
+        logout().then(() => window.location.href = "../index.html");
+    });
+
+    // Cập nhật đồng hồ trên Header Content
+    setInterval(() => {
+        const clock = document.getElementById('admin-clock');
+        if (clock) clock.innerText = new Date().toLocaleString('vi-VN');
+    }, 1000);
 
     // Logic tìm kiếm sản phẩm trong POS
     const posSearchInput = document.getElementById('pos-product-search');
@@ -1254,7 +2142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 items[posHighlightedIndex].click();
             } else if (e.key === 'Escape') {
                 posSuggestions.style.display = 'none';
-            }
+            }            
         });
     }
 });
