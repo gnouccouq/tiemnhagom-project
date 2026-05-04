@@ -3801,6 +3801,14 @@ footer {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
+/* Toggle Switch UI */
+.slider.round:before {
+    position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+    background-color: white; transition: .4s; border-radius: 50%;
+}
+#system-maintenance-toggle:checked + .slider { background-color: #e74c3c; }
+#system-maintenance-toggle:checked + .slider:before { transform: translateX(26px); }
+
 /* Điều chỉnh nút Search trong thanh bar */
 #header-search-btn {
     background: none;

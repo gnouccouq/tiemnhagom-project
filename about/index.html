@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Về Tiệm Nhà Gốm | Câu chuyện của Đất và Lửa</title>
+    <meta name="description" content="Khám phá câu chuyện hình thành và sứ mệnh mang nét đẹp gốm thủ công vào không gian sống hiện đại của Tiệm Nhà Gốm.">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Mở rộng container cho trang About trên PC */
+        .about-content.profile-container {
+            max-width: 1400px;
+            padding: 4rem 4%;
+        }
+
+        .about-hero {
+            height: 600px;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg') no-repeat center center/cover;
+            background-attachment: fixed;
+            display: flex; align-items: center; justify-content: center; color: #fff; text-align: center; margin-bottom: 4rem;
+        }
+        .about-hero .banner-content { max-width: 1000px; padding: 0 20px; }
+        
+        .about-content h2 { 
+            margin-top: 1rem; margin-bottom: 2rem; text-align: center; 
+            font-family: var(--font-serif); font-size: 2.2rem;
+        }
+        .about-content h2::after { content: ''; display: block; width: 60px; height: 2px; background: var(--text-black); margin: 15px auto 0; opacity: 0.3; }
+        
+        .about-section { margin-bottom: 8rem; }
+        .intro-text { font-size: 1.2rem; line-height: 1.8; color: #444; max-width: 1000px; margin: 0 auto 4rem; text-align: center; }
+
+        /* Services Styling */
+        .services-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Điều chỉnh để 2 cột rộng hơn */
+            gap: 30px;
+            margin-top: 3rem;
+        }
+        .service-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .service-card:hover { transform: translateY(-15px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+        .service-img { height: 250px; overflow: hidden; }
+        .service-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+        .service-card:hover .service-img img { transform: scale(1.1); }
+        .service-info { padding: 2rem; flex: 1; display: flex; flex-direction: column; }
+        .service-info h3 { font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 1rem; }
+        .service-info p { color: #666; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .service-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+        .service-tags span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; background: #f8f8f8; padding: 4px 12px; border-radius: 20px; }
+
+        /* Values Styling */
+        .value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; margin-top: 2rem; }
+        .value-card { 
+            background: #fff; padding: 3rem 2rem; border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02); text-align: center; 
+            border: 1px solid #f0f0f0;
+        }
+        .value-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .value-card h4 { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: 1rem; }
+
+        /* Story Styling Overrides */
+        .about-story-row {
+            display: grid;
+            grid-template-columns: 1fr 0.8fr;
+            gap: 6rem;
+            align-items: center;
+        }
+        .about-story-img img { width: 100%; border-radius: 12px; box-shadow: 30px 30px 0 #f0f0f0; }
+        .about-story-text h2 { text-align: left; }
+        .about-story-text h2::after { margin-left: 0; }
+
+        /* Horizontal Image Marquee */
+        .about-gallery-marquee {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            overflow: hidden;
+            padding: 2rem 0;
+            background: #fff;
+        }
+        .marquee-track {
+            display: flex;
+            gap: 20px;
+            width: max-content;
+            animation: scroll-marquee 40s linear infinite;
+        }
+        .marquee-track img {
+            width: 450px;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        @keyframes scroll-marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Final CTA */
+        .about-cta {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 5rem 2rem;
+            border-radius: 12px;
+            margin-top: 4rem;
+        }
+        .about-cta h2 { color: #fff; }
+        .about-cta h2::after { background: #fff; }
+        .about-cta p { opacity: 0.8; margin-bottom: 2rem; font-size: 1.1rem; }
+        
+        @media (max-width: 768px) {
+            .about-content.profile-container { padding: 3rem 20px; }
+            .about-hero { height: 350px; }
+            .about-hero h1 { font-size: 2.5rem; }
+            .about-story-row { grid-template-columns: 1fr; gap: 2rem; }
+            .about-story-text { order: 2; text-align: center; }
+            .marquee-track img {
+                width: 300px;
+                height: 220px;
+            }
+            .about-story-text h2 { text-align: center; }
+            .about-story-text h2::after { margin: 15px auto; }
+            .about-story-img { order: 1; }
+            .services-showcase, .value-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main>
+        <section class="about-hero">
+            <div class="banner-content">
+                <h1 class="page-title" style="color: #fff; border: none; margin-bottom: 10px;">Tiệm Nhà Gốm</h1>
+                <p style="font-size: 1.2rem; opacity: 0.9;">Nơi lưu giữ hồn cốt của làng nghề qua bàn tay nghệ nhân</p>
+            </div>
+        </section>
+
+        <div class="profile-container about-content">
+            <section class="about-section reveal-on-scroll">
+                <div class="about-story-row">
+                    <div class="about-story-text">
+                        <h2>Câu chuyện thương hiệu</h2>
+                        <p>Tiệm Nhà Gốm ra đời từ niềm đam mê mãnh liệt với vẻ đẹp mộc mạc, nguyên sơ của đất và sức mạnh biến hóa của lửa. Chúng tôi tin rằng mỗi món đồ gốm không chỉ là một vật dụng vô tri, mà là một tác phẩm nghệ thuật mang trong mình tâm huyết của người nghệ nhân và câu chuyện của thời gian.</p>
+                        <p>Khởi đầu từ một góc nhỏ trưng bày những chiếc tách thủ công, Tiệm đã dần lớn mạnh và trở thành điểm đến cho những tâm hồn đồng điệu, yêu thích phong cách sống tối giản nhưng tinh tế.</p>
+                    </div>
+                    <div class="about-story-img">
+                        <img src="../Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Xưởng gốm">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Gallery Chạy Ngang (Full Width) -->
+            <section class="about-gallery-marquee reveal-on-scroll">
+                <div class="marquee-container">
+                    <div class="marquee-track">
+                        <!-- Nhóm ảnh 1 -->
+                        <img src="../Asset/images/hero-bg.jpg" alt="Tiệm Nhà Gốm 1">
+                        <img src="../Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Tiệm Nhà Gốm 2">
+                        <img src="../Asset/images/484397934_1826427484824769_5324677749728797257_n_11zon.webp" alt="Tiệm Nhà Gốm 3">
+                        <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=800" alt="Tiệm Nhà Gốm 4">
+                        
+                        <!-- Nhân đôi nhóm ảnh để tạo hiệu ứng chạy vô tận -->
+                        <img src="../Asset/images/hero-bg.jpg" alt="Tiệm Nhà Gốm 1">
+                        <img src="../Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Tiệm Nhà Gốm 2">
+                        <img src="../Asset/images/484397934_1826427484824769_5324677749728797257_n_11zon.webp" alt="Tiệm Nhà Gốm 3">
+                        <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=800" alt="Tiệm Nhà Gốm 4">
+                    </div>
+                </div>
+            </section>
+            
+            <section class="about-section reveal-on-scroll">
+                <h2>Dịch vụ của chúng tôi</h2>
+                <p class="intro-text">Không chỉ dừng lại ở những sản phẩm gốm sứ, Tiệm Nhà Gốm mang đến những giải pháp làm đẹp không gian sống và những trải nghiệm nghệ thuật đầy cảm hứng.</p>
+                
+                <div class="services-showcase">
+                    <div class="service-card">
+                        <div class="service-img"><img src="../Asset/images/484397934_1826427484824769_5324677749728797257_n_11zon.webp" alt="Hoa Nhà Gốm"></div>
+                        <div class="service-info">
+                            <h3>Hoa Nhà Gốm</h3>
+                            <p>Sự kết hợp hoàn hảo giữa hoa tươi nghệ thuật và bình gốm thủ công. Chúng tôi thiết kế những mẫu hoa mang phong cách tự nhiên, bay bổng phù hợp để tặng hoặc trang trí nhà cửa.</p>
+                            <div class="service-tags">
+                                <span>Hoa cưới</span><span>Bó hoa tặng</span><span>Thiết kế theo yêu cầu</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-img"><img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=800" alt="Trang trí Sự kiện"></div>
+                        <div class="service-info">
+                            <h3>Trang trí Sự kiện</h3>
+                            <p>Tiệm nhận thiết kế và setup không gian cho các buổi tiệc thân mật, sinh nhật, workshop hay những góc check-in đậm chất nghệ thuật, mang dấu ấn riêng của bạn.</p>
+                            <div class="service-tags">
+                                <span>Setup tiệc</span><span>Kỷ niệm</span><span>Check-in corner</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            
+
+            <section class="about-section reveal-on-scroll">
+                <h2>Giá trị cốt lõi</h2>
+                <div class="value-grid">
+                    <div class="value-card">
+                        <span class="value-icon">🏺</span>
+                        <h4>Tinh hoa nghệ nhân</h4>
+                        <p>100% sản phẩm được tạo tác bởi bàn tay nghệ nhân, giữ trọn nét riêng biệt, không món nào giống hệt món nào.</p>
+                    </div>
+                    <div class="value-card">
+                        <span class="value-icon">🌿</span>
+                        <h4>Thân thiện môi trường</h4>
+                        <p>Sử dụng nguyên liệu từ đất tự nhiên, men gốm an toàn và quy trình đóng gói hạn chế tối đa rác thải nhựa.</p>
+                    </div>
+                    <div class="value-card">
+                        <span class="value-icon">🤝</span>
+                        <h4>Chân thành & Tận tâm</h4>
+                        <p>Hỗ trợ khách hàng từ khâu chọn lựa đến bảo hành bể vỡ, đảm bảo trải nghiệm mua sắm an tâm nhất.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="about-cta reveal-on-scroll" style="text-align: center;">
+                <h2>Đồng hành cùng Tiệm</h2>
+                <p>Hãy để chúng tôi mang hơi ấm và vẻ đẹp của gốm thủ công vào không gian sống của bạn.</p>
+                <a href="../products/" class="btn-dark" style="background: #fff; color: #000; margin-top: 1rem;">Khám phá bộ sưu tập ngay</a>
+            </section>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Firebase SDK & Global Utils -->
+    <script type="module">
+        import { initHeader } from "../js/utils.js";
+        document.addEventListener('DOMContentLoaded', () => {
+            // Khởi tạo Header/Footer với pathPrefix giật cấp (../)
+            initHeader('../');
+        });
+    </script>
+</body>
+</html>

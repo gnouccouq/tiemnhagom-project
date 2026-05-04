@@ -481,6 +481,31 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                 isAdmin = adminSnap.exists();
             } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
 
+            // KIỂM TRA CHẾ ĐỘ BẢO TRÌ
+            try {
+                const systemSnap = await getDoc(doc(db, "settings", "system"));
+                if (systemSnap.exists()) {
+                    const settings = systemSnap.data();
+                    const now = new Date();
+                    const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
+
+                    // Nếu đang bật bảo trì nhưng ĐÃ QUÁ GIỜ đếm ngược -> Cho phép truy cập luôn
+                    if (settings.maintenanceMode && countdownDate && now >= countdownDate) return;
+
+                    if (settings.maintenanceMode) {
+                        const isAtMaintenancePage = window.location.pathname.includes('/maintenance/');
+                        const isAtAdminPanel = window.location.pathname.includes('/admin/');
+                        const isAtLoginPage = window.location.pathname.includes('/login/');
+
+                        // Nếu đang bật bảo trì và người dùng KHÔNG phải Admin, KHÔNG ở trang bảo trì/login -> Redirect
+                        if (!isAdmin && !isAtMaintenancePage && !isAtAdminPanel && !isAtLoginPage) {
+                            window.location.href = pathPrefix + "maintenance/index.html";
+                            return;
+                        }
+                    }
+                }
+            } catch (err) { console.error("Lỗi kiểm tra trạng thái hệ thống:", err); }
+
             authSection.innerHTML = `
                 <div class="user-dropdown">
                     <a href="${profilePath}" class="user-icon-link" title="${isAdmin ? 'Tài khoản Quản trị' : 'Tài khoản'}">
@@ -546,6 +571,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             authSection.innerHTML = `<a href="${loginPath}" class="btn-minimal" style="text-decoration:none">Đăng nhập</a>`;
         }
 
+
         // Luôn cập nhật con số trên icon giỏ hàng/yêu thích
         updateCartCount(user);
         updateFavoriteCount(user);
@@ -574,6 +600,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         if (onAuthChangeCallback) onAuthChangeCallback(user);
     });
 }
+
 
 // Hàm phụ: Đồng bộ dữ liệu LocalStorage lên Firestore
 async function syncLocalToCloud(userId) {
@@ -656,7 +683,9 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/src="Asset\//g, `src="${pathPrefix}Asset/`)
                 .replace(/href="\.\/"/g, `href="${pathPrefix}"`)
                 .replace(/href="products\//g, `href="${pathPrefix}products/`)
+                .replace(/href="about\//g, `href="${pathPrefix}about/`)
                 .replace(/href="flash-sale\//g, `href="${pathPrefix}flash-sale/`)
+                .replace(/href="maintenance\//g, `href="${pathPrefix}maintenance/`)
                 .replace(/href="cart\//g, `href="${pathPrefix}cart/`)
                 .replace(/href="profile\//g, `href="${pathPrefix}profile/`)
                 .replace(/href="hoa-nha-gom\//g, `href="${pathPrefix}hoa-nha-gom/`)

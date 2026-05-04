@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiệm Nhà Gốm | Sắp ra mắt!</title>
+    <meta name="description" content="Tiệm Nhà Gốm đang chuẩn bị ra mắt với nhiều sản phẩm gốm thủ công độc đáo. Hãy quay lại sớm để khám phá bộ sưu tập mới nhất!">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-top: 0; /* Bỏ padding-top của body để hero chiếm toàn màn hình */
+        }
+        main {
+            flex: 1; /* Đảm bảo main chiếm hết không gian còn lại */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; /* Bỏ padding mặc định của main */
+        }
+        .countdown-hero {
+            width: 100%;
+            height: 100%; /* Chiếm toàn bộ không gian của main */
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg') no-repeat center center/cover;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-align: center;
+            padding: 2rem 5%;
+        }
+        .coming-soon-label {
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+        .countdown-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            border: none;
+            letter-spacing: -1px;
+        }
+        .countdown-hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin-bottom: 3rem;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+        .countdown-timer {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 3rem;
+        }
+        .countdown-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            min-width: 130px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .countdown-item:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .countdown-item span {
+            display: block;
+            font-size: 3.5rem;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-serif);
+        }
+        .countdown-item small {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        .countdown-hero .btn-outline {
+            border-radius: 30px;
+            padding: 1rem 3rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .countdown-hero h1 { font-size: 2.5rem; }
+            .countdown-hero p { font-size: 1rem; }
+            .countdown-timer { flex-wrap: wrap; justify-content: center; gap: 15px; }
+            .countdown-item { min-width: 80px; padding: 1rem 0.5rem; }
+            .countdown-item span { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main>
+        <section class="countdown-hero">
+            <div class="coming-soon-label" id="maintenance-label">Coming Soon</div>
+            <h1 id="maintenance-h1">Tiệm Nhà Gốm Sắp Ra Mắt!</h1>
+            <p id="maintenance-p">Chúng tôi đang gấp rút hoàn thiện những khâu cuối cùng để mang đến cho bạn một trải nghiệm mua sắm tuyệt vời nhất với các sản phẩm gốm thủ công độc đáo. Hãy cùng đếm ngược và chờ đón nhé!</p>
+            
+            <div class="countdown-timer">
+                <div class="countdown-item"><span id="days">00</span><small>Ngày</small></div>
+                <div class="countdown-item"><span id="hours">00</span><small>Giờ</small></div>
+                <div class="countdown-item"><span id="minutes">00</span><small>Phút</small></div>
+                <div class="countdown-item"><span id="seconds">00</span><small>Giây</small></div>
+            </div>
+
+            <a href="../" class="btn-outline" style="color: #fff; border-color: #fff;">Quay về trang chủ</a>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module" src="../js/maintenance.js"></script>
+    <script type="module">
+        import { initHeader } from "../js/utils.js";
+        document.addEventListener('DOMContentLoaded', () => {
+            initHeader('../'); // Path prefix cho trang con
+        });
+    </script>
+</body>
+</html>
