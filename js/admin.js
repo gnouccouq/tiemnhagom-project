@@ -46,6 +46,10 @@ function setupAdminTabs() {
             if (targetId === 'stats-section') {
                 initFullReport();
             }
+
+            if (targetId === 'maintenance-section') {
+                initMaintenanceSettings();
+            }
         });
     });
 }
@@ -1795,9 +1799,9 @@ async function initFullReport() {
     const updateReport = async () => {
         const selectedYear = parseInt(yearSelect.value);
         const periodType = periodSelect.value;
+        const loadingEl = document.getElementById('stats-detail-loading');
 
         try {
-            const loadingEl = document.getElementById('stats-detail-loading');
             if (loadingEl) loadingEl.style.display = 'block';
             document.getElementById('stats-detail-table').innerHTML = ''; // Clear previous data
             showToast("Đang tổng hợp dữ liệu báo cáo...", "info");
@@ -2027,6 +2031,64 @@ function renderInventoryLogTable() {
                     <td><small>${l.adminEmail}</small></td>
                 </tr>`;
     }).join('') || '<tr><td colspan="5" style="text-align:center;">Không tìm thấy lịch sử phù hợp.</td></tr>';
+}
+
+// --- Quản lý Cài đặt Bảo trì ---
+async function initMaintenanceSettings() {
+    const toggle = document.getElementById('maintenance-mode-toggle');
+    const statusText = document.getElementById('maintenance-status-text');
+    const titleInput = document.getElementById('maintenance-title');
+    const messageInput = document.getElementById('maintenance-message');
+    const dateInput = document.getElementById('maintenance-countdown-date');
+    const form = document.getElementById('maintenance-settings-form');
+
+    if (!toggle || !form || !db) return;
+
+    const systemRef = doc(db, "settings", "system");
+
+    // 1. Load cài đặt hiện tại
+    const loadSettings = async () => {
+        const snap = await getDoc(systemRef);
+        if (snap.exists()) {
+            const settings = snap.data();
+            toggle.checked = settings.maintenanceMode || false;
+            statusText.innerText = settings.maintenanceMode ? 'ĐANG BẬT' : 'ĐANG TẮT';
+            statusText.style.color = settings.maintenanceMode ? '#e74c3c' : '#27ae60';
+            titleInput.value = settings.maintenanceTitle || '';
+            messageInput.value = settings.maintenanceMessage || '';
+            // Chuyển Firestore Timestamp sang định dạng datetime-local
+            if (settings.countdownDate && settings.countdownDate.toDate) {
+                const date = settings.countdownDate.toDate();
+                dateInput.value = date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+            } else {
+                dateInput.value = '';
+            }
+        }
+    };
+
+    // Lắng nghe sự kiện thay đổi của toggle để cập nhật trạng thái text
+    toggle.addEventListener('change', () => {
+        statusText.innerText = toggle.checked ? 'ĐANG BẬT' : 'ĐANG TẮT';
+        statusText.style.color = toggle.checked ? '#e74c3c' : '#27ae60';
+    });
+
+    // 2. Lưu cài đặt khi submit form
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await setDoc(systemRef, {
+                maintenanceMode: toggle.checked,
+                maintenanceTitle: titleInput.value.trim(),
+                maintenanceMessage: messageInput.value.trim(),
+                countdownDate: dateInput.value ? new Date(dateInput.value) : null,
+                lastUpdatedBy: auth.currentUser.email,
+                lastUpdatedAt: serverTimestamp()
+            }, { merge: true });
+            showToast("Đã lưu cài đặt bảo trì thành công!");
+        } catch (err) { showToast("Lỗi lưu cài đặt: " + err.message, "error"); }
+    };
+
+    loadSettings(); // Load cài đặt khi tab được mở
 }
 
 // Thiết lập listener cho chức năng cộng dồn tồn kho (UI interaction)
