@@ -24,7 +24,7 @@
         }
         .countdown-hero {
             width: 100%;
-            height: 100%; /* Chiếm toàn bộ không gian của main */
+            min-height: 70vh; /* Đảm bảo đủ cao nhưng không chiếm hết */
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg') no-repeat center center/cover;
             background-attachment: fixed;
             display: flex;
@@ -45,14 +45,16 @@
         }
         .countdown-hero h1 {
             font-family: var(--font-serif);
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
+            font-size: 4.5rem; /* Tăng kích thước chữ */
+            margin-bottom: 1.8rem; /* Tăng khoảng cách */
             color: #fff;
             border: none;
             letter-spacing: -1px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.4); /* Thêm đổ bóng cho chữ */
         }
         .countdown-hero p {
             font-size: 1.1rem;
+            max-width: 800px; /* Tăng chiều rộng tối đa cho đoạn văn */
             opacity: 0.9;
             max-width: 700px;
             margin-bottom: 3rem;
@@ -62,7 +64,7 @@
         .countdown-timer {
             display: flex;
             gap: 30px;
-            margin-bottom: 3rem;
+            margin-bottom: 4rem; /* Tăng khoảng cách */
         }
         .countdown-item {
             background: rgba(255, 255, 255, 0.05);
@@ -70,7 +72,7 @@
             -webkit-backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: 15px;
-            min-width: 130px;
+            min-width: 140px; /* Tăng nhẹ chiều rộng */
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
@@ -81,7 +83,7 @@
         }
         .countdown-item span {
             display: block;
-            font-size: 3.5rem;
+            font-size: 4rem; /* Tăng kích thước số */
             font-weight: 300;
             line-height: 1;
             margin-bottom: 0.5rem;
@@ -95,14 +97,14 @@
         }
         .countdown-hero .btn-outline {
             border-radius: 30px;
-            padding: 1rem 3rem;
+            padding: 1.2rem 3.5rem; /* Tăng kích thước nút */
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-size: 0.8rem;
         }
         @media (max-width: 768px) {
-            .countdown-hero h1 { font-size: 2.5rem; }
+            .countdown-hero h1 { font-size: 3rem; } /* Điều chỉnh responsive */
             .countdown-hero p { font-size: 1rem; }
             .countdown-timer { flex-wrap: wrap; justify-content: center; gap: 15px; }
             .countdown-item { min-width: 80px; padding: 1rem 0.5rem; }
@@ -111,11 +113,11 @@
     </style>
 </head>
 <body>
-    <div id="header-placeholder"></div>
+
 
     <main>
         <section class="countdown-hero">
-            <div class="coming-soon-label" id="maintenance-label">Coming Soon</div>
+            <div class="coming-soon-label" id="maintenance-label">SẮP RA MẮT</div>
             <h1 id="maintenance-h1">Tiệm Nhà Gốm Sắp Ra Mắt!</h1>
             <p id="maintenance-p">Chúng tôi đang gấp rút hoàn thiện những khâu cuối cùng để mang đến cho bạn một trải nghiệm mua sắm tuyệt vời nhất với các sản phẩm gốm thủ công độc đáo. Hãy cùng đếm ngược và chờ đón nhé!</p>
             
@@ -125,19 +127,10 @@
                 <div class="countdown-item"><span id="minutes">00</span><small>Phút</small></div>
                 <div class="countdown-item"><span id="seconds">00</span><small>Giây</small></div>
             </div>
-
-            <a href="../" class="btn-outline" style="color: #fff; border-color: #fff;">Quay về trang chủ</a>
         </section>
     </main>
 
-    <div id="footer-placeholder"></div>
 
     <script type="module" src="../js/maintenance.js"></script>
-    <script type="module">
-        import { initHeader } from "../js/utils.js";
-        document.addEventListener('DOMContentLoaded', () => {
-            initHeader('../'); // Path prefix cho trang con
-        });
-    </script>
 </body>
 </html>

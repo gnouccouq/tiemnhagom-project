@@ -3,7 +3,7 @@
     <!-- Trang chủ -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
@@ -11,13 +11,13 @@
     <!-- Cửa hàng & Khuyến mãi -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/products/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/flash-sale/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
@@ -25,13 +25,13 @@
     <!-- Dịch vụ chuyên biệt -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/hoa-nha-gom/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/trang-tri-su-kien/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -39,21 +39,47 @@
     <!-- Liên hệ & Hỗ trợ -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/contact/</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
+    </url>
+
+    <!-- Các chính sách mới -->
+    <url>
+        <loc>https://gnouccouq.github.io/tiemnhagom-project/buying-guide.html</loc>
+        <lastmod>2024-05-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gnouccouq.github.io/tiemnhagom-project/payment-policy.html</loc>
+        <lastmod>2024-05-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gnouccouq.github.io/tiemnhagom-project/shipping-policy.html</loc>
+        <lastmod>2024-05-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://gnouccouq.github.io/tiemnhagom-project/return-refund-policy.html</loc>
+        <lastmod>2024-05-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
     </url>
 
     <!-- Thông tin pháp lý -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/privacy-policy.html</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/terms-of-service.html</loc>
-        <lastmod>2024-03-21</lastmod>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
@@ -61,11 +87,13 @@
     <!-- Tiện ích (Priority thấp hơn) -->
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/cart/</loc>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
         <loc>https://gnouccouq.github.io/tiemnhagom-project/login/</loc>
+        <lastmod>2024-05-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>

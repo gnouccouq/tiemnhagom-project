@@ -693,7 +693,11 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="contact\//g, `href="${pathPrefix}contact/`)
                 .replace(/href="index\.html"/g, `href="${pathPrefix}index.html"`)
                 .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}privacy-policy.html"`)
-                .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`);
+                .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`)
+                .replace(/href="buying-guide\.html"/g, `href="${pathPrefix}buying-guide.html"`)
+                .replace(/href="payment-policy\.html"/g, `href="${pathPrefix}payment-policy.html"`)
+                .replace(/href="shipping-policy\.html"/g, `href="${pathPrefix}shipping-policy.html"`)
+                .replace(/href="return-refund-policy\.html"/g, `href="${pathPrefix}return-refund-policy.html"`);
         };
 
         if (h.ok) {

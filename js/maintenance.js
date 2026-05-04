@@ -12,6 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const systemRef = doc(db, "settings", "system");
     let countdownFunction;
 
+    const updateTimerElement = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = String(value).padStart(2, '0');
+        return !!el;
+    };
+
     const initMaintenancePage = async () => {
         const snap = await getDoc(systemRef);
         if (!snap.exists() || !snap.data().maintenanceMode) {
@@ -23,9 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const settings = snap.data();
         const launchDate = settings.countdownDate ? settings.countdownDate.toDate().getTime() : null;
 
-        if (maintenanceH1) maintenanceH1.innerText = settings.maintenanceTitle || "Tiệm Nhà Gốm Sắp Ra Mắt!";
-        if (maintenanceP) maintenanceP.innerText = settings.maintenanceMessage || "Chúng tôi đang gấp rút hoàn thiện những khâu cuối cùng để mang đến cho bạn một trải nghiệm mua sắm tuyệt vời nhất.";
-        if (maintenanceLabel) maintenanceLabel.innerText = "Coming Soon"; // Hoặc tùy chỉnh thêm
+        if (maintenanceH1) maintenanceH1.innerText = settings.maintenanceTitle || "Sắp Ra Mắt!";
+        if (maintenanceP) maintenanceP.innerText = settings.maintenanceMessage || "Chúng tôi đang hoàn thiện những khâu cuối cùng.";
+        if (maintenanceLabel) maintenanceLabel.innerText = "SẮP RA MẮT";
 
         if (!launchDate) {
             // Nếu không có ngày đếm ngược, ẩn timer
@@ -42,10 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            document.getElementById('days').innerText = String(days).padStart(2, '0');
-            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
-            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+            updateTimerElement('days', days);
+            updateTimerElement('hours', hours);
+            updateTimerElement('minutes', minutes);
+            updateTimerElement('seconds', seconds);
 
             if (distance <= 0) {
                 clearInterval(countdownFunction);
