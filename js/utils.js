@@ -554,7 +554,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     </ul>
                 </div>
             `;
-            document.getElementById('btn-logout-header').onclick = logout;
+            document.getElementById('btn-logout-header').onclick = () => logout().then(() => window.location.href = `${pathPrefix}index.html`);
 
             // Lắng nghe thay đổi hash để cập nhật trạng thái active tức thì khi đang ở trang profile
             window.addEventListener('hashchange', () => {
