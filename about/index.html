@@ -15,14 +15,6 @@
             padding: 4rem 4%;
         }
 
-        .about-hero {
-            height: 600px;
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg') no-repeat center center/cover;
-            background-attachment: fixed;
-            display: flex; align-items: center; justify-content: center; color: #fff; text-align: center; margin-bottom: 4rem;
-        }
-        .about-hero .banner-content { max-width: 1000px; padding: 0 20px; }
-        
         .about-content h2 { 
             margin-top: 1rem; margin-bottom: 2rem; text-align: center; 
             font-family: var(--font-serif); font-size: 2.2rem;
@@ -123,7 +115,6 @@
         
         @media (max-width: 768px) {
             .about-content.profile-container { padding: 3rem 20px; }
-            .about-hero { height: 350px; }
             .about-hero h1 { font-size: 2.5rem; }
             .about-story-row { grid-template-columns: 1fr; gap: 2rem; }
             .about-story-text { order: 2; text-align: center; }
@@ -142,14 +133,14 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="about-hero">
+        <section class="product-banner" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg');">
             <div class="banner-content">
-                <h1 class="page-title" style="color: #fff; border: none; margin-bottom: 10px;">Tiệm Nhà Gốm</h1>
-                <p style="font-size: 1.2rem; opacity: 0.9;">Nơi lưu giữ hồn cốt của làng nghề qua bàn tay nghệ nhân</p>
+                <h1>Về Tiệm Nhà Gốm</h1>
+                <p>Nơi kể chuyện bằng đất sét và đôi bàn tay</p>
             </div>
         </section>
 
-        <div class="profile-container about-content">
+        <div class="profile-container about-content" style="padding-top: 0;">
             <section class="about-section reveal-on-scroll">
                 <div class="about-story-row">
                     <div class="about-story-text">

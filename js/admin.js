@@ -50,6 +50,10 @@ function setupAdminTabs() {
             if (targetId === 'maintenance-section') {
                 initMaintenanceSettings();
             }
+
+            if (targetId === 'news-section') {
+                initNewsManagement();
+            }
         });
     });
 }
@@ -1042,6 +1046,7 @@ productForm.addEventListener('submit', async (e) => {
         name: document.getElementById('name').value,
         category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
+        cost: Number(document.getElementById('cost').value || 0),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
         imageUrl: finalImageUrl,
@@ -2090,6 +2095,121 @@ async function initMaintenanceSettings() {
 
     loadSettings(); // Load cài đặt khi tab được mở
 }
+
+// --- Quản lý Tin tức ---
+function initNewsManagement() {
+    const form = document.getElementById('news-form');
+    const listContainer = document.getElementById('admin-news-list');
+    if (!form || !db) return;
+
+    // Lắng nghe danh sách tin tức
+    onSnapshot(query(collection(db, "news"), orderBy("createdAt", "desc")), (snapshot) => {
+        listContainer.innerHTML = snapshot.docs.map(doc => {
+            const n = doc.data();
+            const date = n.createdAt ? new Date(n.createdAt.toDate()).toLocaleDateString('vi-VN') : '...';
+            return `
+                <tr>
+                    <td><img src="${n.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
+                    <td><strong>${n.title}</strong><br><small>${n.status === 'draft' ? '[NHÁP]' : ''}</small></td>
+                    <td>${date}</td>
+                    <td>
+                        <button class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px;" onclick="window.editNews('${doc.id}')">Sửa</button>
+                        <button class="btn-delete" style="font-size: 0.7rem;" onclick="window.deleteNews('${doc.id}')">Xóa</button>
+                    </td>
+                </tr>`;
+        }).join('');
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('news-id').value;
+        const title = document.getElementById('news-title').value.trim();
+        const excerpt = document.getElementById('news-excerpt').value.trim();
+        const content = document.getElementById('news-content').value.trim();
+        const author = document.getElementById('news-author').value.trim() || "Tiệm Nhà Gốm";
+        const status = document.getElementById('news-status').value;
+        const file = document.getElementById('news-image').files[0];
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+
+            let imageUrl = form.dataset.currentImageUrl || '';
+
+            if (file) {
+                const webpFile = await convertToWebP(file, 1200);
+                const storageRef = ref(storage, `news/${Date.now()}_${webpFile.name}`);
+                const snapshot = await uploadBytes(storageRef, webpFile);
+                imageUrl = await getDownloadURL(snapshot.ref);
+            }
+
+            if (!imageUrl) {
+                showToast("Vui lòng chọn ảnh bìa bài viết", "error");
+                submitBtn.disabled = false;
+                return;
+            }
+
+            const newsData = {
+                title,
+                excerpt,
+                content,
+                author,
+                status,
+                imageUrl,
+                slug: title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
+                updatedAt: serverTimestamp()
+            };
+
+            if (id) {
+                await updateDoc(doc(db, "news", id), newsData);
+                showToast("Đã cập nhật bài viết!");
+            } else {
+                newsData.createdAt = serverTimestamp();
+                await addDoc(collection(db, "news"), newsData);
+                showToast("Đã đăng bài viết mới!");
+            }
+
+            form.reset();
+            document.getElementById('news-id').value = '';
+            document.getElementById('news-image-preview').innerHTML = '';
+            delete form.dataset.currentImageUrl;
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Lưu bài viết";
+        }
+    };
+}
+
+window.editNews = async (id) => {
+    const docSnap = await getDoc(doc(db, "news", id));
+    if (docSnap.exists()) {
+        const n = docSnap.data();
+        document.getElementById('news-id').value = id;
+        document.getElementById('news-title').value = n.title;
+        document.getElementById('news-excerpt').value = n.excerpt;
+        document.getElementById('news-content').value = n.content;
+        document.getElementById('news-author').value = n.author;
+        document.getElementById('news-status').value = n.status;
+        
+        const preview = document.getElementById('news-image-preview');
+        preview.innerHTML = `<img src="${n.imageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">`;
+        
+        const form = document.getElementById('news-form');
+        form.dataset.currentImageUrl = n.imageUrl;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
+
+window.deleteNews = async (id) => {
+    if (confirm("Xóa bài viết này?")) {
+        await deleteDoc(doc(db, "news", id));
+        showToast("Đã xóa bài viết.");
+    }
+};
 
 // Thiết lập listener cho chức năng cộng dồn tồn kho (UI interaction)
 function initStockAdditiveLogic() {

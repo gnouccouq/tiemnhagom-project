@@ -73,6 +73,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
     }
 
+    // 9. Tin tức (news)
+    match /news/{articleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -94,6 +100,12 @@ service firebase.storage {
 
     // 4. Ảnh Danh mục (categories) - Cần thiết cho tính năng mới
     match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 5. Ảnh Tin tức (news)
+    match /news/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin();
     }

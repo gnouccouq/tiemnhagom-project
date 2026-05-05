@@ -2486,11 +2486,12 @@ footer {
     margin-bottom: 3rem;
 }
 .product-banner .banner-content { padding: 0 15px; }
-.banner-content h1 { font-family: var(--font-serif); font-size: 3.5rem; margin-bottom: 10px; }
+.banner-content h1 { font-family: var(--font-serif); font-size: 3.5rem; margin-bottom: 10px; color: #fff; }
 .banner-content p { font-size: 1.1rem; opacity: 0.9; letter-spacing: 1px; }
 
 @media (max-width: 768px) {
     .product-banner { height: 200px; margin-bottom: 2rem; }
+    .product-banner .banner-content h1 { font-size: 2.2rem; }
     .banner-content h1 { font-size: 2.2rem; }
     .banner-content p { font-size: 0.9rem; }
 }

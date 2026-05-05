@@ -32,6 +32,7 @@
                 <button class="admin-tab-btn" data-target="user-section">👥 Người dùng</button>
                 <button class="admin-tab-btn" data-target="stats-section">📈 Thống kê</button>
                 <button class="admin-tab-btn" data-target="inventory-log-section">📜 Nhật ký kho</button>
+                <button class="admin-tab-btn" data-target="news-section">📰 Tin tức</button>
                 <button class="admin-tab-btn" data-target="maintenance-section">🛠️ Bảo trì</button>
             </nav>
 
@@ -202,6 +203,65 @@
             </div>
         </div>
 
+        <!-- Section Quản lý Tin tức -->
+        <div id="news-section" class="admin-section">
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3>Đăng / Sửa bài viết</h3>
+                    <form id="news-form" class="admin-form">
+                        <input type="hidden" id="news-id">
+                        <div class="form-group">
+                            <label>Tiêu đề bài viết</label>
+                            <input type="text" id="news-title" required placeholder="VD: Cách bảo quản gốm sứ thủ công">
+                        </div>
+                        <div class="form-group">
+                            <label>Ảnh bìa bài viết</label>
+                            <input type="file" id="news-image" accept="image/*">
+                            <div id="news-image-preview" style="margin-top: 10px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Mô tả ngắn (Excerpt)</label>
+                            <textarea id="news-excerpt" rows="2" placeholder="Tóm tắt bài viết hiện ở trang danh sách..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Nội dung bài viết</label>
+                            <textarea id="news-content" rows="10" placeholder="Nội dung chi tiết (Có thể dùng HTML cơ bản)..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Tác giả</label>
+                            <input type="text" id="news-author" placeholder="Tiệm Nhà Gốm">
+                        </div>
+                        <div class="form-group">
+                            <label>Trạng thái</label>
+                            <select id="news-status">
+                                <option value="published">Xuất bản ngay</option>
+                                <option value="draft">Bản nháp</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-dark" style="width: 100%;">Lưu bài viết</button>
+                    </form>
+                </div>
+                <div class="admin-card">
+                    <h3>Danh sách bài viết</h3>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ảnh</th>
+                                    <th>Tiêu đề</th>
+                                    <th>Ngày đăng</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-news-list">
+                                <!-- JS render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Section Quản lý Sản phẩm -->
         <div id="product-section" class="admin-section">
             <section class="admin-grid">
@@ -225,8 +285,16 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Giá tiền (VNĐ)</label>
-                            <input type="number" id="price" required placeholder="250000">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="flex: 1;">
+                                    <label>Giá bán (VNĐ)</label>
+                                    <input type="number" id="price" required placeholder="250000">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label>Giá vốn (VNĐ)</label>
+                                    <input type="number" id="cost" placeholder="150000">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Tồn kho</label>
