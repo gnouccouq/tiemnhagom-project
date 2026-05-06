@@ -25,11 +25,15 @@ function setupTabs() {
     const handleHash = () => {
         const hash = window.location.hash;
         if (hash === '#orders') {
-            // Tìm nút tab có chứa văn bản "Lịch sử"
-            const orderBtn = Array.from(btns).find(b => 
-                b.innerText.toLowerCase().includes('lịch sử')
-            );
-            if (orderBtn) orderBtn.click();
+            const btn = document.querySelector('.tab-btn[data-target="order-section"]');
+            if (btn) btn.click();
+        } else if (hash === '#favs') {
+            const btn = document.querySelector('.tab-btn[data-target="fav-section"]');
+            if (btn) btn.click();
+        } else {
+            // Mặc định hoặc khi click vào "Trang cá nhân" (không hash) thì về tab thông tin
+            const btn = document.querySelector('.tab-btn[data-target="info-section"]');
+            if (btn) btn.click();
         }
     };
 

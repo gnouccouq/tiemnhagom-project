@@ -269,11 +269,12 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 box.innerHTML = results.map(p => {
                     const hasSale = p.sale > 0;
                     const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
+                    const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Thoát các ký tự HTML
                     return `
                         <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
                             <img src="${p.imageUrl}" alt="${p.name}">
                             <div class="suggestion-info">
-                                <h5>${p.name}</h5>
+                                <h5>${safeName}</h5>
                                 <div class="suggestion-price-container">
                                     ${hasSale ? `<span class="suggestion-old-price">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
                                     <span class="suggestion-current-price ${hasSale ? 'sale' : ''}">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
