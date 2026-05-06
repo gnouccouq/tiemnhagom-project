@@ -1022,6 +1022,7 @@ productForm.addEventListener('submit', async (e) => {
 
         // Lấy danh sách ảnh cũ còn sót lại sau khi xóa
         let currentMain = document.getElementById('productId').dataset.currentImageUrl || '';
+        let currentThumb = document.getElementById('productId').dataset.currentThumbUrl || '';
         let currentAdditionals = JSON.parse(document.getElementById('productId').dataset.currentAdditionalImages || '[]');
 
         // 2. Xử lý upload thêm ảnh mới với Progress Bar CHI TIẾT
@@ -1100,7 +1101,7 @@ productForm.addEventListener('submit', async (e) => {
             });
             
             const results = await Promise.all(uploadPromises);
-            let currentThumb = document.getElementById('productId').dataset.currentThumbUrl || ''; // Initialize currentThumb
+            // currentThumb đã được khai báo ở trên, giờ chỉ gán lại giá trị
 
             if (!currentMain) {
                 currentMain = results[0].fullUrl;
@@ -1158,6 +1159,7 @@ productForm.addEventListener('submit', async (e) => {
         // Clear stored image URLs from dataset
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
+        delete document.getElementById('productId').dataset.currentThumbUrl;
         // Reset form và clear các state khác
         document.getElementById('productId').readOnly = false;
     } catch (error) {
