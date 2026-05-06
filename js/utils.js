@@ -233,7 +233,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
 
     input.addEventListener('input', () => {
         clearTimeout(timer);
-        const val = input.value.trim();
+        const val = input.value.trim().toLowerCase(); // Chuyển sang chữ thường để tìm kiếm
         // Chỉ tìm kiếm khi người dùng nhập từ 2 ký tự trở lên để tránh query quá rộng
         if (val.length < 2) { box.style.display = 'none'; return; }
 
@@ -242,18 +242,23 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
             box.style.display = 'block';
 
             try {
-                // TỐI ƯU: Truy vấn Firestore trực tiếp (Server-side Search) 
-                // Prefix Search sử dụng range query: >= [từ khóa] và <= [từ khóa] + ký tự Unicode cuối cùng (\uf8ff)
+                // TỐI ƯU: Truy vấn Firestore trực tiếp (Server-side Search)
+                // Sử dụng name_lowercase để tìm kiếm không phân biệt chữ hoa/thường
+                // Lấy một số lượng lớn hơn (ví dụ 20) để lọc client-side cho "any substring"
                 const q = query(
                     collection(db, "products"),
-                    orderBy("name"),
-                    where("name", ">=", val),
-                    where("name", "<=", val + "\uf8ff"),
-                    limit(6)
+                    orderBy("name_lowercase"),
+                    where("name_lowercase", ">=", val),
+                    where("name_lowercase", "<=", val + "\uf8ff"),
+                    limit(20) // Lấy nhiều hơn để có thể lọc client-side
                 );
 
                 const snap = await getDocs(q);
-                const results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Lọc client-side để tìm kiếm "chữ cái bất kỳ" (substring search)
+                const results = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(val)) // Sử dụng includes()
+                    .slice(0, 6); // Chỉ hiển thị 6 gợi ý hàng đầu
 
                 if (results.length === 0) {
                     box.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy sản phẩm phù hợp</div>`;
@@ -399,6 +404,27 @@ export async function addToCart(productData) {
     showToast(`Đã thêm ${productData.quantity} ${productData.name} vào giỏ hàng!`);
 }
 
+// Logic cho Popup Tìm kiếm từ nút nổi (Di chuyển từ main.js)
+export function setupSearchFloat() {
+    const btnOpen = document.getElementById('btn-open-search-float');
+    const overlay = document.getElementById('home-search-overlay');
+    const btnClose = document.getElementById('btn-close-home-search');
+    const input = document.getElementById('home-popup-search-input');
+
+    if (!btnOpen || !overlay) return;
+
+    btnOpen.onclick = () => {
+        overlay.classList.add('active');
+        input.focus();
+    };
+
+    btnClose.onclick = () => overlay.classList.remove('active');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('active'); };
+
+    // Khởi tạo autocomplete trên input mới của popup
+    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', '');
+}
+
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
     // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
@@ -538,6 +564,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Khởi tạo tính năng xem ảnh full screen
         setupFullScreenImages();
+
+        // Khởi tạo nút tìm kiếm nổi và popup tìm kiếm
+        setupSearchFloat();
 
         // Khởi tạo hiệu ứng Scroll Reveal nếu có class reveal-on-scroll
         const reveals = document.querySelectorAll('.reveal-on-scroll');

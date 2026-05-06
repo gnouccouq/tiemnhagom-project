@@ -236,27 +236,6 @@ function initHeroCarousel() {
     startAutoSlide();
 }
 
-// Logic cho Popup Tìm kiếm từ nút nổi
-function setupSearchFloat() {
-    const btnOpen = document.getElementById('btn-open-search-float');
-    const overlay = document.getElementById('home-search-overlay');
-    const btnClose = document.getElementById('btn-close-home-search');
-    const input = document.getElementById('home-popup-search-input');
-
-    if (!btnOpen || !overlay) return;
-
-    btnOpen.onclick = () => {
-        overlay.classList.add('active');
-        input.focus();
-    };
-
-    btnClose.onclick = () => overlay.classList.remove('active');
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('active'); };
-
-    // Khởi tạo autocomplete trên input mới của popup
-    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', '');
-}
-
 // Chạy các hàm khi DOM đã tải xong
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('./', (user) => {
@@ -265,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
         initHeroCarousel();
-        setupSearchFloat();
 
         // Hiệu ứng Header trong suốt mượt mà khi cuộn trang (chỉ áp dụng cho Trang chủ)
         const navbar = document.querySelector('.navbar');

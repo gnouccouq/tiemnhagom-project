@@ -190,24 +190,35 @@ body {
 }
 
 .nav-icon-btn { 
-    background: none; border: none; color: var(--text-black); cursor: pointer; 
-    position: relative; padding: 5px; transition: transform 0.2s;
+    background: none; border: none; color: var(--text-black); cursor: pointer;
+    position: relative;
+    padding: 0; /* Loại bỏ padding mặc định */
+    width: 32px; /* Kích thước cố định */
+    height: 32px; /* Kích thước cố định */
+    display: flex; /* Sử dụng flexbox để căn giữa nội dung */
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
 }
 .nav-icon-btn:hover { transform: translateY(-2px); }
 
 /* Search Overlay Design */
 .search-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(247, 246, 242, 0.98); z-index: 2000;
+    background: rgba(247, 246, 242, 0.95); /* Nền hơi trong suốt */
+    z-index: 9990; /* Đảm bảo nằm trên hầu hết các lớp khác */
     display: none; align-items: flex-start; justify-content: center;
-    padding-top: 10vh; backdrop-filter: blur(10px);
+    padding-top: 10vh; backdrop-filter: blur(15px); /* Tăng độ mờ */
+    -webkit-backdrop-filter: blur(15px);
 }
 .search-overlay.active { display: flex; }
 
 .search-overlay-content { width: 100%; max-width: 800px; padding: 0 20px; }
 .search-input-wrapper {
     display: flex; align-items: center; gap: 15px;
-    border-bottom: 2px solid var(--text-black); padding-bottom: 10px;
+    border-bottom: 2px solid var(--text-black); 
+    padding-bottom: 15px; /* Tăng khoảng cách dưới */
+    margin-bottom: 20px; /* Thêm khoảng cách với gợi ý */
 }
 .search-input-wrapper input {
     flex: 1; border: none; background: none; font-size: 2rem;
@@ -220,7 +231,7 @@ body {
     top: calc(100% + 10px);
     left: 0;
     right: 0;
-    background: #ffffff;
+    background: #fff;
     border-radius: 12px;
     box-shadow: 0 15px 45px rgba(0,0,0,0.1);
     z-index: 2500;
@@ -229,7 +240,7 @@ body {
     border: 1px solid rgba(0,0,0,0.05);
     animation: suggestionSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 450px;
-    overflow-y: auto;
+    overflow-y: auto; /* Cho phép cuộn nếu danh sách dài */
 }
 
 @keyframes suggestionSlideDown {
@@ -1666,6 +1677,7 @@ footer {
 /* Floating Search Button Left */
 .float-btn-left {
     position: fixed;
+    z-index: 9999; /* Đảm bảo nút luôn nằm trên cùng */
     bottom: 30px;
     left: 30px !important;
     right: auto !important;
@@ -3454,6 +3466,10 @@ footer {
     align-items: center;
     transition: opacity 0.3s ease;
     position: relative;
+    padding: 0; /* Loại bỏ padding mặc định */
+    width: 32px; /* Kích thước cố định */
+    height: 32px; /* Kích thước cố định */
+    justify-content: center; /* Căn giữa nội dung theo chiều ngang */
 }
 
 .user-icon-link:hover {

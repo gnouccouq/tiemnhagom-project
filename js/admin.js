@@ -1116,6 +1116,7 @@ productForm.addEventListener('submit', async (e) => {
         // 2. Lưu thông tin vào Firestore
     const productData = {
         name: document.getElementById('name').value,
+        name_lowercase: document.getElementById('name').value.toLowerCase(), // Thêm trường này cho tìm kiếm
         category: document.getElementById('category').value,
         price: Number(document.getElementById('price').value),
         cost: Number(document.getElementById('cost').value || 0),
