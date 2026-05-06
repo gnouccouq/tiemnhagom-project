@@ -544,7 +544,6 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     // Xử lý kết quả kiểm tra bảo trì cho user đã đăng nhập
                     const needsRedirect = await maintenancePromise;
                     if (needsRedirect && !adminSnap.exists()) {
-                        window.location.href = pathPrefix + "maintenance/index.html";
                         window.location.href = pathPrefix + "maintenance/";
                     }
 
@@ -582,7 +581,6 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             // Xử lý kết quả kiểm tra bảo trì cho khách (vãng lai)
             const needsRedirect = await maintenancePromise;
             if (needsRedirect) {
-                window.location.href = pathPrefix + "maintenance/index.html";
                 window.location.href = pathPrefix + "maintenance/";
             }
         }
