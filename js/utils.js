@@ -242,15 +242,16 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
             box.style.display = 'block';
 
             try {
-                // TỐI ƯU: Truy vấn Firestore trực tiếp (Server-side Search)
-                // Sử dụng name_lowercase để tìm kiếm không phân biệt chữ hoa/thường
-                // Lấy một số lượng lớn hơn (ví dụ 20) để lọc client-side cho "any substring"
+                // Để hỗ trợ tìm kiếm "chữ cái bất kỳ" (substring search) như "đũa" trong "gác đũa",
+                // chúng ta sẽ lấy một số lượng lớn sản phẩm (ví dụ 50) được sắp xếp theo tên,
+                // sau đó lọc client-side bằng includes().
+                // LƯU Ý: Cách này có giới hạn. Nếu sản phẩm chứa từ khóa nằm ngoài 50 sản phẩm đầu tiên
+                // theo thứ tự alphabet, nó sẽ không được tìm thấy. Để tìm kiếm chính xác hơn trên toàn bộ dữ liệu,
+                // cần sử dụng dịch vụ tìm kiếm chuyên biệt như Algolia hoặc triển khai N-grams.
                 const q = query(
                     collection(db, "products"),
                     orderBy("name_lowercase"),
-                    where("name_lowercase", ">=", val),
-                    where("name_lowercase", "<=", val + "\uf8ff"),
-                    limit(20) // Lấy nhiều hơn để có thể lọc client-side
+                    limit(50) // Lấy nhiều sản phẩm hơn để tăng khả năng tìm thấy substring
                 );
 
                 const snap = await getDocs(q);
@@ -433,6 +434,33 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
     // Chạy song song: Tải component và Lắng nghe Auth
     const componentsPromise = loadSharedComponents(pathPrefix);
 
+    // KIỂM TRA CHẾ ĐỘ BẢO TRÌ (Chạy độc lập để redirect nhanh nhất có thể cho cả khách và thành viên)
+    const maintenancePromise = (async () => {
+        try {
+            const systemSnap = await getDoc(doc(db, "settings", "system"));
+            if (systemSnap.exists()) {
+                const settings = systemSnap.data();
+                const now = new Date();
+                const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
+                // Bảo trì hoạt động khi: Mode bật VÀ (không có ngày hẹn HOẶC chưa tới ngày hẹn)
+                const isMaintenanceActive = settings.maintenanceMode && (!countdownDate || now < countdownDate);
+
+                if (isMaintenanceActive) {
+                    // Nếu đang ở trang bảo trì/admin/login thì không redirect nữa để tránh vòng lặp
+                    const isExcludedPage = window.location.pathname.includes('/maintenance/') || 
+                                         window.location.pathname.includes('/admin/') || 
+                                         window.location.pathname.includes('/login/');
+                    if (isExcludedPage) return false;
+
+                    return true; // Trả về true để báo hiệu cần kiểm tra quyền admin trước khi redirect
+                }
+            }
+        } catch (err) { 
+            console.error("Lỗi kiểm tra trạng thái hệ thống:", err); 
+        }
+        return false;
+    })();
+
     onAuthStateChanged(auth, async (user) => {
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
@@ -512,14 +540,10 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             </a>`;
                     }
 
-                    // Kiểm tra bảo trì
-                    const systemSnap = await getDoc(doc(db, "settings", "system"));
-                    if (systemSnap.exists()) {
-                        const settings = systemSnap.data();
-                        const isMaintenanceActive = settings.maintenanceMode && (!settings.countdownDate || new Date() < settings.countdownDate.toDate());
-                        if (isMaintenanceActive && !adminSnap.exists() && !window.location.pathname.includes('/maintenance/')) {
-                            window.location.href = pathPrefix + "maintenance/index.html";
-                        }
+                    // Xử lý kết quả kiểm tra bảo trì cho user đã đăng nhập
+                    const needsRedirect = await maintenancePromise;
+                    if (needsRedirect && !adminSnap.exists()) {
+                        window.location.href = pathPrefix + "maintenance/index.html";
                     }
 
                     // Đồng bộ dữ liệu & ghost records
@@ -552,6 +576,12 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         } else {
             const loginPath = pathPrefix === './' ? 'login/' : `${pathPrefix}login/`;
             authSection.innerHTML = `<a href="${loginPath}" class="btn-minimal" style="text-decoration:none">Đăng nhập</a>`;
+
+            // Xử lý kết quả kiểm tra bảo trì cho khách (vãng lai)
+            const needsRedirect = await maintenancePromise;
+            if (needsRedirect) {
+                window.location.href = pathPrefix + "maintenance/index.html";
+            }
         }
 
 
