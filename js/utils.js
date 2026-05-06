@@ -545,6 +545,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     const needsRedirect = await maintenancePromise;
                     if (needsRedirect && !adminSnap.exists()) {
                         window.location.href = pathPrefix + "maintenance/index.html";
+                        window.location.href = pathPrefix + "maintenance/";
                     }
 
                     // Đồng bộ dữ liệu & ghost records
@@ -582,6 +583,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             const needsRedirect = await maintenancePromise;
             if (needsRedirect) {
                 window.location.href = pathPrefix + "maintenance/index.html";
+                window.location.href = pathPrefix + "maintenance/";
             }
         }
 
