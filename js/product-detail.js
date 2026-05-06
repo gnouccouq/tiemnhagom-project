@@ -913,41 +913,5 @@ document.addEventListener('DOMContentLoaded', () => {
         const pid = urlParams.get('id');
         if (pid) initReviewForm(pid);
 
-        // Khởi tạo tìm kiếm thông minh bằng hàm dùng chung
-        initAutocomplete('detail-search-input', 'detail-search-suggestions', '../');
-
-        const searchInput = document.getElementById('detail-search-input');
-        const navigateToSearch = () => {
-            const val = searchInput.value.trim();
-            if (val) window.location.href = `../products/?search=${encodeURIComponent(val)}`;
-        };
-
-        document.getElementById('detail-search-btn')?.addEventListener('click', navigateToSearch);
-        searchInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') navigateToSearch();
-        });
-
-        // Tự động ẩn/hiện thanh tìm kiếm thông minh (Smart Header pattern)
-        let lastScrollY = window.scrollY;
-        const searchContainer = document.querySelector('.product-detail-container .search-container-home');
-        if (searchContainer) {
-            window.addEventListener('scroll', () => {
-                const currentScrollY = window.scrollY;
-                // Thêm một ngưỡng nhỏ (ví dụ 10px) để tránh việc ẩn/hiện quá nhạy gây giật trên mobile
-                const delta = 10;
-                if (Math.abs(currentScrollY - lastScrollY) < delta) return;
-                
-                // 1. Ẩn khi cuộn xuống và đã vượt qua 400px
-                if (currentScrollY > lastScrollY && currentScrollY > 400) {
-                    searchContainer.classList.add('hidden-scroll');
-                }
-                // 2. Hiện lại khi cuộn ngược lên HOẶC khi đang ở gần đầu trang (dưới 100px)
-                else if (currentScrollY < lastScrollY || currentScrollY < 100) {
-                    searchContainer.classList.remove('hidden-scroll');
-                }
-                
-                lastScrollY = currentScrollY;
-            }, { passive: true });
-        }
     });
 });
