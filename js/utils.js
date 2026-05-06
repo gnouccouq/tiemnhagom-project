@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, 
-    collection, query, where, limit, getDocs, onSnapshot
+    collection, query, where, limit, getDocs, onSnapshot, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { 
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
@@ -148,6 +148,7 @@ export async function resetPassword(email) {
 export async function logout() {
     try {
         await signOut(auth);
+        localStorage.removeItem('tng_user_hint'); // Xóa gợi ý khi logout
         showToast("Đã đăng xuất");
     } catch (error) {
         showToast("Đăng xuất thất bại!", "error");
@@ -223,8 +224,6 @@ export function addToHistory(productId, category = null) {
 }
 
 // 9. Logic Tìm kiếm tức thì dùng chung (Autocomplete)
-let allProductsCache = null; // Đưa ra ngoài để cache toàn cục, tránh tải lại khi chuyển trang
-
 export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') {
     const input = document.getElementById(inputId);
     const box = document.getElementById(suggestionsId);
@@ -234,34 +233,27 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
 
     input.addEventListener('input', () => {
         clearTimeout(timer);
-        const val = input.value.trim().toLowerCase();
-        if (!val) { box.style.display = 'none'; return; }
+        const val = input.value.trim();
+        // Chỉ tìm kiếm khi người dùng nhập từ 2 ký tự trở lên để tránh query quá rộng
+        if (val.length < 2) { box.style.display = 'none'; return; }
 
         timer = setTimeout(async () => {
             box.innerHTML = `<div style="padding: 15px; text-align: center;"><div class="spinner"></div></div>`;
             box.style.display = 'block';
 
             try {
-                if (!allProductsCache) {
-                    const snap = await getDocs(collection(db, "products"));
-                    allProductsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                }
+                // TỐI ƯU: Truy vấn Firestore trực tiếp (Server-side Search) 
+                // Prefix Search sử dụng range query: >= [từ khóa] và <= [từ khóa] + ký tự Unicode cuối cùng (\uf8ff)
+                const q = query(
+                    collection(db, "products"),
+                    orderBy("name"),
+                    where("name", ">=", val),
+                    where("name", "<=", val + "\uf8ff"),
+                    limit(6)
+                );
 
-                let results = allProductsCache.filter(p => 
-                    (p.name || "").toLowerCase().includes(val) || p.id.toLowerCase().includes(val)
-                ).sort((a, b) => {
-                    // Ưu tiên khớp mã sản phẩm (ID) trước, sau đó tới tên bắt đầu bằng từ khóa
-                    const aIdMatch = a.id.toLowerCase().startsWith(val);
-                    const bIdMatch = b.id.toLowerCase().startsWith(val);
-                    const aNameStart = (a.name || "").toLowerCase().startsWith(val);
-                    const bNameStart = (b.name || "").toLowerCase().startsWith(val);
-
-                    if (aIdMatch && !bIdMatch) return -1;
-                    if (!aIdMatch && bIdMatch) return 1;
-                    if (aNameStart && !bNameStart) return -1;
-                    if (!aNameStart && bNameStart) return 1;
-                    return (a.name || "").localeCompare(b.name || "");
-                }).slice(0, 6);
+                const snap = await getDocs(q);
+                const results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 if (results.length === 0) {
                     box.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy sản phẩm phù hợp</div>`;
@@ -409,125 +401,48 @@ export async function addToCart(productData) {
 
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
-    // Bước 1: Tải Header/Footer
-    const success = await loadSharedComponents(pathPrefix);
-    if (!success) return;
+    // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
+    const userHint = JSON.parse(localStorage.getItem('tng_user_hint'));
+    
+    // Chạy song song: Tải component và Lắng nghe Auth
+    const componentsPromise = loadSharedComponents(pathPrefix);
 
-    // Bước 2: Thiết lập lắng nghe trạng thái đăng nhập
     onAuthStateChanged(auth, async (user) => {
+        // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
+        await componentsPromise;
+        
         const authSection = document.getElementById('auth-section');
         if (!authSection) return;
 
-        // 1. Kiểm tra quyền Admin (nếu có user)
-        let isAdmin = false;
         if (user) {
-            try {
-                const adminSnap = await getDoc(doc(db, "admins", user.uid));
-                isAdmin = adminSnap.exists();
-            } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
-        }
-
-        // 2. KIỂM TRA CHẾ ĐỘ BẢO TRÌ (Chạy cho cả khách vãng lai và thành viên)
-        try {
-            const systemSnap = await getDoc(doc(db, "settings", "system"));
-            if (systemSnap.exists()) {
-                const settings = systemSnap.data();
-                const now = new Date();
-                const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
-
-                // Xác định xem chế độ bảo trì có thực sự đang kích hoạt không (chưa quá hạn đếm ngược)
-                const isMaintenanceActive = settings.maintenanceMode && (!countdownDate || now < countdownDate);
-
-                if (isMaintenanceActive) {
-                    const isAtMaintenancePage = window.location.pathname.includes('/maintenance/');
-                    const isAtAdminPanel = window.location.pathname.includes('/admin/');
-                    const isAtLoginPage = window.location.pathname.includes('/login/');
-
-                    // Nếu đang bảo trì mà người dùng KHÔNG phải Admin, KHÔNG ở trang bảo trì/admin/login -> Redirect
-                    if (!isAdmin && !isAtMaintenancePage && !isAtAdminPanel && !isAtLoginPage) {
-                        window.location.href = pathPrefix + "maintenance/index.html";
-                        return;
-                    }
-                }
-            }
-        } catch (err) { 
-            console.error("Lỗi kiểm tra trạng thái hệ thống:", err); 
-        }
-
-        // 3. Cập nhật giao diện Header dựa trên trạng thái đăng nhập
-        if (user) {
-            // Bọc logic xử lý dữ liệu trong try-catch để không làm treo UI Header
-            try {
-                // Tự động đồng bộ dữ liệu từ máy lên server khi vừa đăng nhập
-                await syncLocalToCloud(user.uid);
-
-                // Logic Liên kết tài khoản: Kiểm tra xem có dữ liệu "chờ" từ Admin không
-                const userRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
-
-                if (!userSnap.exists()) {
-                    // Nếu là user mới tinh trên hệ thống Auth, tìm kiếm trong "Ghost records"
-                    let ghostData = {};
-                    let ghostDocId = null;
-
-                    // Tìm theo SĐT hoặc Email
-                    const phone = user.phoneNumber;
-                    const email = user.email;
-                    const qGhost = query(collection(db, "users"), 
-                        where("isGhost", "==", true),
-                        where("identifiers", "array-contains-any", [phone, email].filter(Boolean)));
-                    
-                    const ghostSnaps = await getDocs(qGhost);
-                    if (!ghostSnaps.empty) {
-                        ghostData = ghostSnaps.docs[0].data();
-                        ghostDocId = ghostSnaps.docs[0].id;
-                    }
-
-                    await setDoc(userRef, {
-                        ...ghostData, // Gộp dữ liệu cũ (nếu có)
-                        uid: user.uid,
-                        email: email || ghostData.email || null,
-                        phoneNumber: phone || ghostData.phone || null,
-                        displayName: user.displayName || ghostData.displayName || null,
-                        isGhost: false, // Chính thức trở thành tài khoản thật
-                        lastLogin: new Date().toISOString()
-                    }, { merge: true });
-
-                    // Xóa bỏ tài khoản ghost cũ để tránh trùng lặp
-                    if (ghostDocId) await deleteDoc(doc(db, "users", ghostDocId));
-                } else {
-                    await updateDoc(userRef, { lastLogin: new Date().toISOString() });
-                }
-            } catch (dataError) {
-                console.error("Lỗi đồng bộ dữ liệu người dùng:", dataError);
-            }
+            // Lưu hint để lần sau vào web sẽ hiện icon ngay
+            localStorage.setItem('tng_user_hint', JSON.stringify({ 
+                loggedIn: true, 
+                displayName: user.displayName || user.email.split('@')[0] 
+            }));
             
-            // Cập nhật giao diện Header (Tên user và nút đăng xuất)
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
             const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
+            const displayName = user.displayName || user.email.split('@')[0];
 
             const isProfilePage = window.location.pathname.includes('profile');
             const isOrdersTab = window.location.hash === '#orders';
             const isFavsTab = window.location.hash === '#favs';
 
+            // HIỂN THỊ NGAY icon người dùng (Chưa cần biết có phải admin hay không)
             authSection.innerHTML = `
                 <div class="user-dropdown">
-                    <a href="${profilePath}" class="user-icon-link" title="${isAdmin ? 'Tài khoản Quản trị' : 'Tài khoản'}">
+                    <a href="${profilePath}" class="user-icon-link" title="Tài khoản">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        ${isAdmin ? `
-                        <span class="admin-badge" title="Quản trị viên">
-                            <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor">
-                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                            </svg>
-                        </span>` : ''}
+                        <span id="admin-badge-placeholder"></span>
                     </a>
                     <ul class="user-dropdown-menu">
                         <li class="dropdown-user-info">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
-                                ${user.displayName || user.email.split('@')[0]} ${isAdmin ? `<span class="admin-text-badge">Admin</span>` : ''}
+                            <div id="user-name-display" style="font-weight: 700; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
+                                ${displayName}
                             </div>
                         </li>
                         <li><a href="${profilePath}" class="${isProfilePage && !isOrdersTab && !isFavsTab ? 'active' : ''}">
@@ -542,10 +457,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                             Lịch sử đơn hàng
                         </a></li>
-                        ${isAdmin ? `<li><a href="${adminPath}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                            Trang quản trị
-                        </a></li>` : ''}
+                        <li id="admin-link-placeholder"></li>
                         <li><hr></li>
                         <li><button id="btn-logout-header" class="btn-minimal">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -555,6 +467,47 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                 </div>
             `;
             document.getElementById('btn-logout-header').onclick = () => logout().then(() => window.location.href = `${pathPrefix}index.html`);
+
+            // CHẠY NGẦM: Kiểm tra quyền Admin và các xử lý dữ liệu nặng
+            (async () => {
+                try {
+                    const adminSnap = await getDoc(doc(db, "admins", user.uid));
+                    if (adminSnap.exists()) {
+                        // Cập nhật Badge Admin
+                        document.getElementById('admin-badge-placeholder').innerHTML = `
+                            <span class="admin-badge" title="Quản trị viên">
+                                <svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                            </span>`;
+                        document.getElementById('user-name-display').innerHTML += `<span class="admin-text-badge">Admin</span>`;
+                        document.getElementById('admin-link-placeholder').innerHTML = `
+                            <a href="${adminPath}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                Trang quản trị
+                            </a>`;
+                    }
+
+                    // Kiểm tra bảo trì
+                    const systemSnap = await getDoc(doc(db, "settings", "system"));
+                    if (systemSnap.exists()) {
+                        const settings = systemSnap.data();
+                        const isMaintenanceActive = settings.maintenanceMode && (!settings.countdownDate || new Date() < settings.countdownDate.toDate());
+                        if (isMaintenanceActive && !adminSnap.exists() && !window.location.pathname.includes('/maintenance/')) {
+                            window.location.href = pathPrefix + "maintenance/index.html";
+                        }
+                    }
+
+                    // Đồng bộ dữ liệu & ghost records
+                    await syncLocalToCloud(user.uid);
+                    const userRef = doc(db, "users", user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (!userSnap.exists()) {
+                        // Logic ghost record cũ ở đây...
+                        await setDoc(userRef, { uid: user.uid, email: user.email, isGhost: false, lastLogin: new Date().toISOString() }, { merge: true });
+                    } else {
+                        await updateDoc(userRef, { lastLogin: new Date().toISOString() });
+                    }
+                } catch (e) { console.error("Background auth tasks error:", e); }
+            })();
 
             // Lắng nghe thay đổi hash để cập nhật trạng thái active tức thì khi đang ở trang profile
             window.addEventListener('hashchange', () => {

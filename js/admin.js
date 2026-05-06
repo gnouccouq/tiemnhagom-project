@@ -1,16 +1,41 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES // Import DEFAULT_PRODUCT_CATEGORIES
+    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES 
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
     limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
+let currentAdminRole = 'staff'; // Quyền mặc định
+let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
+
+// Danh sách tất cả các phân hệ có trong hệ thống
+const ALL_SECTIONS = [
+    { id: 'overview-section', label: 'Tổng quan' },
+    { id: 'product-section', label: 'Sản phẩm' },
+    { id: 'pos-section', label: 'Bán tại shop (POS)' },
+    { id: 'order-section', label: 'Đơn hàng' },
+    { id: 'coupon-section', label: 'Mã giảm giá' },
+    { id: 'category-section', label: 'Danh mục' },
+    { id: 'user-section', label: 'Người dùng' },
+    { id: 'admin-account-section', label: 'Quản trị viên' },
+    { id: 'stats-section', label: 'Thống kê' },
+    { id: 'inventory-log-section', label: 'Nhật ký kho' },
+    { id: 'news-section', label: 'Tin tức' },
+    { id: 'maintenance-section', label: 'Bảo trì' }
+];
+
+// Cấu hình phân quyền mặc định theo Role (Fallback)
+const ROLE_PERMISSIONS = {
+    super_admin: ALL_SECTIONS.map(s => s.id), // Tự động bao gồm tất cả các section cho super_admin
+    staff: ['overview-section', 'pos-section', 'order-section'] // Mặc định tối thiểu
+};
 
 // --- Logic chuyển đổi Tab Admin ---
 function setupAdminTabs() {
@@ -20,13 +45,20 @@ function setupAdminTabs() {
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-target');
+            
+            // Kiểm tra quyền truy cập tab
+            if (!currentAdminPermissions.includes(targetId)) {
+                showToast("Bạn không có quyền truy cập chức năng này", "error");
+                return;
+            }
+
             // Xóa trạng thái active của tất cả các tab và section
             tabs.forEach(t => t.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
 
             // Kích hoạt tab và section được chọn
             tab.classList.add('active');
-            const targetId = tab.getAttribute('data-target');
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
                 targetSection.classList.add('active');
@@ -49,6 +81,10 @@ function setupAdminTabs() {
 
             if (targetId === 'maintenance-section') {
                 initMaintenanceSettings();
+            }
+
+            if (targetId === 'admin-account-section') {
+                initAdminAccountListener();
             }
 
             if (targetId === 'news-section') {
@@ -74,20 +110,56 @@ async function checkAdminRights(user) {
         if (!adminSnap.exists()) {
             window.location.href = "../index.html";
         } else {
+            const adminData = adminSnap.data();
+            if (adminData.isLocked) {
+                alert("Tài khoản của bạn hiện đang bị khóa tạm thời. Vui lòng liên hệ quản trị viên tối cao.");
+                logout().then(() => window.location.href = "../index.html");
+                return;
+            }
+            currentAdminRole = adminData.role || 'staff'; // Lấy vai trò hiện tại
+
+            if (currentAdminRole === 'super_admin') {
+                const allSectionIds = ALL_SECTIONS.map(s => s.id);
+                // Đảm bảo super_admin luôn có tất cả các quyền
+                currentAdminPermissions = allSectionIds;
+                // Cập nhật Firestore nếu quyền của super_admin bị thiếu hoặc không đồng bộ
+                if (!adminData.permissions || adminData.permissions.length !== allSectionIds.length || !adminData.permissions.every(p => allSectionIds.includes(p))) {
+                    await updateDoc(adminRef, { permissions: allSectionIds });
+                }
+            } else {
+                // Với các vai trò khác, ưu tiên quyền chi tiết đã lưu, nếu không thì dùng quyền mặc định theo vai trò
+                currentAdminPermissions = adminData.permissions || ROLE_PERMISSIONS[currentAdminRole] || ROLE_PERMISSIONS['staff'];
+            }
+
             // Nếu đúng là admin thì mới hiển thị nội dung trang
             document.body.style.display = "block";
-            updateAdminSidebarProfile(user);
+            updateAdminSidebarProfile(user, adminData);
+            applyRoleToSidebar();
         }
     } catch (e) { console.error(e); }
 }
 
-function updateAdminSidebarProfile(user) {
+function updateAdminSidebarProfile(user, adminData) {
     const container = document.getElementById('admin-user-info');
     if (!container) return;
+    const roleNames = { super_admin: 'Quản trị tối cao', manager: 'Quản lý', staff: 'Nhân viên' };
     container.innerHTML = `
         <p style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">${user.displayName || user.email}</p>
-        <p style="font-size:0.7rem; color:#888;">Quản trị viên</p>
+        <p style="font-size:0.7rem; color:#f1c40f; font-weight:600;">${roleNames[currentAdminRole] || 'Nhân viên'}</p>
     `;
+}
+
+function applyRoleToSidebar() {
+    const tabs = document.querySelectorAll('.admin-tab-btn');
+    
+    tabs.forEach(tab => {
+        const target = tab.getAttribute('data-target');
+        if (!currentAdminPermissions.includes(target)) {
+            tab.style.display = 'none'; // Ẩn các tab không có quyền
+        } else {
+            tab.style.display = 'flex';
+        }
+    });
 }
 
 // --- Logic Thông báo Đơn hàng mới ---
@@ -1447,7 +1519,7 @@ function initUserListener() {
 
     // Lấy danh sách admin để so khớp badge
     getDocs(collection(db, "admins")).then(adminsSnap => {
-        const adminIds = new Set(adminsSnap.docs.map(d => d.id));
+        const adminDataMap = new Map(adminsSnap.docs.map(d => [d.id, d.data()]));
 
         onSnapshot(collection(db, "users"), (snapshot) => {
         let htmlContent = '';
@@ -1455,12 +1527,27 @@ function initUserListener() {
             const u = doc.data();
             const updatedAt = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('vi-VN') : 'N/A';
             const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'N/A';
-            const isAdminUser = adminIds.has(doc.id);
-            const adminBadge = isAdminUser ? `<span class="admin-text-badge" style="font-size: 0.55rem;"><svg viewBox="0 0 24 24" width="8" height="8" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Admin</span>` : '';
+            const adminData = adminDataMap.get(doc.id);
+            const isAdminUser = !!adminData;
+            
+            let adminBadge = '';
+            if (isAdminUser) adminBadge = `<span class="admin-text-badge" style="font-size: 0.55rem;">Admin</span>`;
 
-            const adminActionBtn = isAdminUser 
-                ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${doc.id}', false)">Gỡ Admin</button>`
-                : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${doc.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
+            let adminActionBtn = '';
+            if (currentAdminRole === 'super_admin') {
+                const isLocked = adminData?.isLocked || false;
+                const lockBtn = isAdminUser ? `
+                    <button class="btn-minimal" style="font-size: 0.7rem; border-color: ${isLocked ? '#27ae60' : '#f39c12'}; color: ${isLocked ? '#27ae60' : '#f39c12'}; margin-left: 5px;" 
+                        onclick="window.toggleAccountLock('${doc.id}', ${!isLocked})">
+                        ${isLocked ? 'Mở khóa' : 'Khóa'}
+                    </button>` : ''; // Note: Các nút này vẫn để ở user list để gán quyền nhanh
+
+                adminActionBtn = isAdminUser 
+                    ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${doc.id}', false)">Gỡ Admin</button>`
+                      + `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db; margin:0 5px;" onclick="window.editAdminPermissions('${doc.id}', '${u.email || u.displayName || ''}')">Quyền</button>`
+                      + lockBtn
+                    : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${doc.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
+            }
 
             htmlContent += `
                 <tr>
@@ -1494,9 +1581,16 @@ window.toggleAdminPrivilege = async (uid, shouldBeAdmin, identifier = '') => {
     try {
         const adminRef = doc(db, "admins", uid);
         if (shouldBeAdmin) {
-            // Thêm vào danh sách Admin
+            const role = prompt("Nhập vai trò (super_admin: Toàn quyền, staff: Nhân viên):", "staff");
+            if (!role || !['super_admin', 'staff'].includes(role)) {
+                showToast("Quyền hạn không hợp lệ", "error");
+                return;
+            }
+            // Thêm vào danh sách Admin với quyền mặc định của Role đó
             await setDoc(adminRef, { 
                 email: identifier, 
+                role: role,
+                permissions: role === 'super_admin' ? ALL_SECTIONS.map(s => s.id) : (ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['staff']),
                 assignedAt: serverTimestamp(),
                 assignedBy: auth.currentUser.uid 
             });
@@ -1512,6 +1606,220 @@ window.toggleAdminPrivilege = async (uid, shouldBeAdmin, identifier = '') => {
     } catch (e) {
         showToast("Lỗi phân quyền: " + e.message, "error");
     }
+};
+
+// --- Logic Quản lý Tài khoản Quản trị/Nhân sự (Internal) ---
+function initAdminAccountListener() {
+    const listTable = document.getElementById('admin-staff-list');
+    if (!listTable || !db) return;
+
+    // Thêm nút tạo nhân viên ở đầu bảng "Quản trị viên"
+    const headerActions = document.querySelector('#admin-account-section .header-actions');
+    if (headerActions && !document.getElementById('btn-open-create-staff-admin-tab')) {
+        const btn = document.createElement('button');
+        btn.id = 'btn-open-create-staff-admin-tab';
+        btn.className = 'btn-dark';
+        btn.style.marginTop = '0';
+        btn.innerHTML = '+ Tạo tài khoản nhân viên';
+        btn.onclick = window.showCreateStaffModal;
+        headerActions.appendChild(btn);
+    }
+
+    onSnapshot(collection(db, "admins"), async (snapshot) => {
+        const roleNames = { super_admin: 'Quản trị tối cao', staff: 'Nhân viên' };
+        let htmlContent = '';
+        
+        // Sử dụng Promise.all để lấy thông tin user đồng thời cho nhanh
+        const adminRows = await Promise.all(snapshot.docs.map(async (adminDoc) => {
+            const a = adminDoc.data();
+            const uid = adminDoc.id;
+            
+            // Lấy thêm tên hiển thị từ collection users
+            const userSnap = await getDoc(doc(db, "users", uid));
+            const u = userSnap.exists() ? userSnap.data() : {};
+            
+            const isLocked = a.isLocked || false;
+            const statusBadge = isLocked 
+                ? `<span class="stock-badge stock-out" style="text-transform:none; padding:4px 8px;">Đã khóa</span>`
+                : `<span class="stock-badge" style="background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; text-transform:none; padding:4px 8px;">Hoạt động</span>`;
+
+            const permsCount = a.permissions ? a.permissions.length : 0;
+
+            return `
+                <tr>
+                    <td data-label="Thông tin">
+                        <strong>${u.displayName || a.email || 'Thành viên mới'}</strong><br>
+                        <small style="color: #888;">${a.email || 'Không có email'}</small>
+                    </td>
+                    <td data-label="Vai trò">
+                        <span style="font-weight:600; color:var(--text-black);">${roleNames[a.role] || 'Nhân viên'}</span>
+                    </td>
+                    <td data-label="Quyền hạn">
+                        <small>${permsCount}/${ALL_SECTIONS.length} chức năng</small>
+                    </td>
+                    <td data-label="Trạng thái">${statusBadge}</td>
+                    <td data-label="Thao tác" style="display: flex; gap: 5px; justify-content: flex-end;">
+                        <button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db;" onclick="window.editAdminPermissions('${uid}', '${a.email}')">Quyền</button>
+                        <button class="btn-minimal" style="font-size: 0.7rem; border-color: ${isLocked ? '#27ae60' : '#f39c12'}; color: ${isLocked ? '#27ae60' : '#f39c12'};" 
+                            onclick="window.toggleAccountLock('${uid}', ${!isLocked})">
+                            ${isLocked ? 'Mở khóa' : 'Khóa'}
+                        </button>
+                        ${uid !== auth.currentUser.uid ? `<button class="btn-delete" style="font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${uid}', false)">Gỡ</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        }));
+
+        listTable.innerHTML = adminRows.join('') || '<tr><td colspan="5" style="text-align:center;">Chưa có tài khoản quản trị nào.</td></tr>';
+    }, (error) => {
+        console.error("Admin list listener error:", error);
+    });
+}
+
+// Hàm khóa/mở khóa tài khoản nhân viên
+window.toggleAccountLock = async (uid, shouldLock) => {
+    const action = shouldLock ? "KHÓA" : "MỞ KHÓA";
+    if (!confirm(`Bạn có chắc chắn muốn ${action} tài khoản này? Nhân viên sẽ không thể vào trang quản trị.`)) return;
+    
+    try {
+        await updateDoc(doc(db, "admins", uid), { isLocked: shouldLock });
+        showToast(`Đã ${action} tài khoản thành công`);
+        initUserListener(); // Refresh list
+    } catch (e) {
+        showToast("Lỗi: " + e.message, "error");
+    }
+};
+
+// Hàm hiển thị Modal tạo tài khoản nhân viên mới
+window.showCreateStaffModal = () => {
+    let modal = document.getElementById('create-staff-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'create-staff-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+            <h3>Tạo tài khoản nhân viên</h3>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1.5rem;">Cấp tài khoản nội bộ cho nhân viên Tiệm.</p>
+            <form id="create-staff-form">
+                <div class="form-group">
+                    <label>Họ tên nhân viên</label>
+                    <input type="text" id="staff-new-name" placeholder="VD: Nguyễn Văn A" required>
+                </div>
+                <div class="form-group">
+                    <label>Email đăng nhập</label>
+                    <input type="email" id="staff-new-email" placeholder="nhanvien@tiemnhagom.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu tạm thời</label>
+                    <input type="password" id="staff-new-password" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                </div>
+                <button type="submit" class="btn-dark" style="width: 100%; margin-top: 1rem;">Khởi tạo tài khoản</button>
+            </form>
+        </div>
+    `;
+    modal.classList.add('active');
+
+    document.getElementById('create-staff-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('staff-new-name').value.trim();
+        const email = document.getElementById('staff-new-email').value.trim();
+        const password = document.getElementById('staff-new-password').value;
+        const btn = e.target.querySelector('button');
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Đang tạo...';
+
+            // Sử dụng Firebase App phụ để tạo user mà không làm Admin hiện tại bị logout
+            const secondaryApp = initializeApp(auth.app.options, "Secondary");
+            const secondaryAuth = auth.app.options ? onAuthStateChanged(auth, () => {}) : null; // Dùng Auth của instance mới
+            // (Lưu ý: createUserWithEmailAndPassword yêu cầu auth instance)
+            const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+            const tempAuth = getAuth(secondaryApp);
+            
+            const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+            const newUid = userCredential.user.uid;
+
+            // Tạo bản ghi User và Admin đồng thời
+            await setDoc(doc(db, "users", newUid), {
+                displayName: name,
+                email: email,
+                createdAt: serverTimestamp(),
+                isGhost: false
+            });
+
+            await setDoc(doc(db, "admins", newUid), {
+                email: email,
+                role: 'staff',
+                permissions: ROLE_PERMISSIONS['staff'],
+                assignedAt: serverTimestamp(),
+                isLocked: false
+            });
+
+            showToast("Đã tạo tài khoản nhân viên thành công!");
+            modal.classList.remove('active');
+            // Xóa instance phụ để giải phóng bộ nhớ
+            const { deleteApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+            await deleteApp(secondaryApp);
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+            btn.disabled = false;
+            btn.innerText = "Khởi tạo tài khoản";
+        }
+    };
+};
+
+// Hàm mở Modal cấu hình quyền chi tiết cho từng nhân viên
+window.editAdminPermissions = async (uid, email) => {
+    try {
+        const adminSnap = await getDoc(doc(db, "admins", uid));
+        if (!adminSnap.exists()) return;
+        
+        const adminData = adminSnap.data();
+        const userPerms = adminData.permissions || [];
+
+        let modal = document.getElementById('permissions-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'permissions-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 450px;">
+                <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+                <h3>Cấu hình chức năng</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Tài khoản: <strong>${email}</strong></p>
+                <form id="perms-edit-form">
+                    <div style="display: grid; gap: 12px; margin-bottom: 2rem;">
+                        ${ALL_SECTIONS.map(s => `
+                            <label class="checkbox-container" style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 0;">
+                                <input type="checkbox" name="perm" value="${s.id}" ${userPerms.includes(s.id) ? 'checked' : ''}>
+                                <span class="checkmark" style="position: static; flex-shrink: 0;"></span>
+                                <span style="font-size: 0.95rem;">${s.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <button type="submit" class="btn-dark" style="width: 100%;">Cập nhật quyền hạn</button>
+                </form>
+            </div>
+        `;
+        modal.classList.add('active');
+
+        document.getElementById('perms-edit-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const selected = Array.from(e.target.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
+            await updateDoc(doc(db, "admins", uid), { permissions: selected });
+            showToast("Đã cập nhật quyền hạn nhân viên");
+            modal.classList.remove('active');
+        };
+    } catch (e) { console.error(e); }
 };
 
 function initCouponListener() {

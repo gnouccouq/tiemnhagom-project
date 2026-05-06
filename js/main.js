@@ -152,6 +152,111 @@ async function fetchRecommendations() {
     }
 }
 
+// Logic cho Hero Carousel
+function initHeroCarousel() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.dot');
+    const container = document.querySelector('.carousel-container');
+    if (slides.length === 0 || !container) return;
+
+    let currentIndex = 0;
+    let slideInterval;
+    const slideDuration = 4000;
+
+    const showSlide = (index) => {
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => {
+            d.classList.remove('active');
+            const fill = d.querySelector('.dot-fill');
+            if (fill) {
+                fill.style.transition = 'none'; // Reset animation ngay lập tức
+                fill.style.width = '0';
+            }
+        });
+
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+
+        // Kích hoạt thanh tiến trình cho dot hiện tại
+        const activeFill = dots[index].querySelector('.dot-fill');
+        if (activeFill) {
+            void activeFill.offsetWidth; // Force reflow để trình duyệt nhận diện reset width
+            activeFill.style.transition = `width ${slideDuration}ms linear`;
+            activeFill.style.width = '100%';
+        }
+
+        currentIndex = index;
+    };
+
+    const startAutoSlide = () => {
+        slideInterval = setInterval(() => {
+            showSlide((currentIndex + 1) % slides.length);
+        }, slideDuration);
+    };
+
+    // Logic kéo chuột/vuốt màn hình để đổi slide
+    let startX = 0;
+    const threshold = 50; // Khoảng cách tối thiểu (pixel) để nhận diện hành động kéo
+
+    const handleStart = (e) => {
+        startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+        clearInterval(slideInterval);
+    };
+
+    const handleEnd = (e) => {
+        const endX = e.type.includes('mouse') ? e.pageX : e.changedTouches[0].clientX;
+        const diff = startX - endX;
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0) {
+                showSlide((currentIndex + 1) % slides.length);
+            } else {
+                showSlide((currentIndex - 1 + slides.length) % slides.length);
+            }
+        }
+        startAutoSlide();
+    };
+
+    container.addEventListener('touchstart', handleStart, { passive: true });
+    container.addEventListener('touchend', handleEnd, { passive: true });
+    container.addEventListener('mousedown', handleStart);
+    container.addEventListener('mouseup', handleEnd);
+
+    // Khởi tạo slide đầu tiên và animation
+    showSlide(0);
+
+    dots.forEach((dot, idx) => {
+        dot.onclick = () => {
+            clearInterval(slideInterval);
+            showSlide(idx);
+            startAutoSlide();
+        };
+    });
+
+    startAutoSlide();
+}
+
+// Logic cho Popup Tìm kiếm từ nút nổi
+function setupSearchFloat() {
+    const btnOpen = document.getElementById('btn-open-search-float');
+    const overlay = document.getElementById('home-search-overlay');
+    const btnClose = document.getElementById('btn-close-home-search');
+    const input = document.getElementById('home-popup-search-input');
+
+    if (!btnOpen || !overlay) return;
+
+    btnOpen.onclick = () => {
+        overlay.classList.add('active');
+        input.focus();
+    };
+
+    btnClose.onclick = () => overlay.classList.remove('active');
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('active'); };
+
+    // Khởi tạo autocomplete trên input mới của popup
+    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', '');
+}
+
 // Chạy các hàm khi DOM đã tải xong
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('./', (user) => {
@@ -159,17 +264,28 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchSaleProducts();
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
+        initHeroCarousel();
+        setupSearchFloat();
 
-        // Khởi tạo tìm kiếm trang chủ
-        initAutocomplete('home-search-input', 'home-search-suggestions', '');
-
-        const searchInput = document.getElementById('home-search-input');
-        const navigateToSearch = () => {
-            const val = searchInput.value.trim();
-            if (val) window.location.href = `products/?search=${encodeURIComponent(val)}`;
-        };
-        document.getElementById('home-search-btn')?.addEventListener('click', navigateToSearch);
-        searchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigateToSearch(); });
+        // Hiệu ứng Header trong suốt mượt mà khi cuộn trang (chỉ áp dụng cho Trang chủ)
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            const handleHeaderScroll = () => {
+                // Nếu cuộn xuống quá 50px thì hiện màu trắng, ngược lại thì trong suốt
+                if (window.scrollY > 50) {
+                    navbar.classList.remove('transparent');
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.add('transparent');
+                    navbar.classList.remove('scrolled');
+                }
+            };
+            
+            // Kiểm tra trạng thái ngay khi vừa load xong component
+            handleHeaderScroll();
+            // Lắng nghe sự kiện scroll của trình duyệt
+            window.addEventListener('scroll', handleHeaderScroll, { passive: true });
+        }
 
         // Hiệu ứng Animation khi cuộn trang (Scroll Reveal)
         const observerOptions = {

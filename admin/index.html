@@ -30,6 +30,7 @@
                 <button class="admin-tab-btn" data-target="coupon-section">🎟️ Mã giảm giá</button>
                 <button class="admin-tab-btn" data-target="category-section">📁 Danh mục</button>
                 <button class="admin-tab-btn" data-target="user-section">👥 Người dùng</button>
+                <button class="admin-tab-btn" data-target="admin-account-section">🛡️ Quản trị viên</button>
                 <button class="admin-tab-btn" data-target="stats-section">📈 Thống kê</button>
                 <button class="admin-tab-btn" data-target="inventory-log-section">📜 Nhật ký kho</button>
                 <button class="admin-tab-btn" data-target="news-section">📰 Tin tức</button>
@@ -564,6 +565,36 @@
                         </thead>
                         <tbody id="admin-user-list">
                             <!-- Dữ liệu load từ Firebase users collection -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Quản lý Tài khoản Nội bộ -->
+        <div id="admin-account-section" class="admin-section">
+            <header class="content-header">
+                <h3>Đội ngũ Quản trị & Nhân viên</h3>
+                <div class="header-actions">
+                    <!-- Button '+ Tạo tài khoản nhân viên' will be rendered here by JS -->
+                </div>
+            </header>
+            <div class="admin-card">
+                <h3>Đội ngũ Quản trị & Nhân viên</h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Danh sách các tài khoản có quyền truy cập vào hệ thống quản trị.</p>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Thông tin</th>
+                                <th>Vai trò</th>
+                                <th>Quyền hạn</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-staff-list">
+                            <!-- JS render -->
                         </tbody>
                     </table>
                 </div>

@@ -58,25 +58,38 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Gốm & Decor</h1>
-                <p>Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.</p>
-                
-                <!-- Thanh tìm kiếm nổi bật trên trang chủ -->
-                <div class="search-container-home">
-                    <div class="search-bar-home">
-                        <input type="text" id="home-search-input" placeholder="Bạn đang tìm món gốm nào?">
-                        <button id="home-search-btn" title="Tìm kiếm">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
+        <!-- New: Hero Carousel Full Screen -->
+        <section class="hero-carousel">
+            <div class="carousel-container">
+                <div class="carousel-slide active">
+                    <img src="Asset/images/hero-bg.jpg" alt="Tiệm Nhà Gốm Banner 1" fetchpriority="high">
+                    <div class="hero-content">
+                        <h1>Gốm & Decor</h1>
+                        <p>Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.</p>
+                        <a href="products/" class="btn-dark btn-hero-cta">Xem toàn bộ sản phẩm</a>
                     </div>
-                    <div id="home-search-suggestions" class="search-suggestions"></div>
                 </div>
-
-                <a href="products/" class="btn-dark btn-hero-cta">Xem toàn bộ sản phẩm</a>
+                <div class="carousel-slide">
+                    <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1600&fm=webp&auto=format&fit=crop" alt="Tiệm Nhà Gốm Banner 2" loading="lazy">
+                    <div class="hero-content">
+                        <h1>Nghệ thuật của Đất</h1>
+                        <p>Mang hơi thở thiên nhiên vào ngôi nhà của bạn qua những món đồ gốm mộc mạc.</p>
+                        <a href="products/" class="btn-dark btn-hero-cta">Khám phá bộ sưu tập</a>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Tiệm Nhà Gốm Banner 3" loading="lazy">
+                    <div class="hero-content">
+                        <h1>Quà tặng Tinh tế</h1>
+                        <p>Trao gửi yêu thương qua những tác phẩm thủ công tỉ mỉ và tâm huyết.</p>
+                        <a href="products/" class="btn-dark btn-hero-cta">Chọn quà ngay</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-dots">
+                <span class="dot active" data-index="0"><span class="dot-fill"></span></span>
+                <span class="dot" data-index="1"><span class="dot-fill"></span></span>
+                <span class="dot" data-index="2"><span class="dot-fill"></span></span>
             </div>
         </section>
 

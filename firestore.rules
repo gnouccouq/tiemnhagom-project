@@ -7,6 +7,11 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
+    
+    // Kiểm tra xem user hiện tại có phải là Super Admin không
+    function isSuperAdmin() {
+      return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super_admin';
+    }
 
     // 1. Sản phẩm (products)
     match /products/{productId} {
@@ -14,14 +19,14 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       // Cho phép Admin update hoặc khách (kể cả vãng lai) update stock/sold khi mua hàng
       allow update: if isAdmin() || 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold']); // Bất kỳ ai cũng có thể update stock/sold
     }
     
     // 2. Danh sách Admin
     match /admins/{adminId} {
       allow read: if request.auth != null && (request.auth.uid == adminId || isAdmin());
-      allow list: if isAdmin(); 
-      allow write: if isAdmin(); // Cho phép Admin quản lý danh sách Admin
+      allow list: if isSuperAdmin(); // Chỉ Super Admin mới được xem danh sách admin
+      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý danh sách Admin
     }
 
     // 3. Giỏ hàng & Yêu thích
@@ -36,10 +41,10 @@ service cloud.firestore {
     match /users/{userId} {
       // Cho phép đọc nếu là chính chủ, admin, hoặc là tài khoản ghost (để tìm kiếm khi login)
       allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
-      // Cho phép tạo ghost account khi đặt hàng hoặc cập nhật thông tin chính chủ
+      // Cho phép tạo ghost account khi đặt hàng hoặc tạo tài khoản mới
       allow create: if true;
-      allow update: if isAdmin() || (request.auth != null && request.auth.uid == userId);
-      allow delete: if isAdmin() || (request.auth != null && resource.data.isGhost == true);
+      allow update: if isSuperAdmin() || (request.auth != null && request.auth.uid == userId); // Super Admin hoặc chính chủ
+      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true); // Super Admin hoặc user ghost tự xóa
     }
 
     // 5. Đơn hàng (orders)
@@ -49,28 +54,28 @@ service cloud.firestore {
       // Admin sửa mọi thứ, User chỉ được Hủy khi đang xử lý
       allow update: if isAdmin() || 
         (request.auth != null && request.auth.uid == resource.data.userId && 
-         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']));
+         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" && // Chỉ cho phép chuyển từ "Đang xử lý" sang "Đã hủy"
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt'])); // Chỉ được sửa các trường này
     }
 
     // 6. Cấu hình hệ thống (Danh mục động)
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được sửa cài đặt hệ thống
     }
 
     // 7. Mã giảm giá (coupons)
     match /coupons/{couponId} {
       allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']);
+      allow create, delete: if isSuperAdmin(); // Chỉ Super Admin mới được tạo/xóa coupon
+      allow update: if isSuperAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']); // Super Admin hoặc update usedCount
     }
 
     // 8. Đánh giá (reviews)
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow update, delete: if isSuperAdmin() || (request.auth != null && resource.data.userId == request.auth.uid); // Super Admin hoặc chính chủ
     }
 
     // 9. Tin tức (news)
@@ -89,25 +94,30 @@ service cloud.firestore {
 service firebase.storage {
   match /b/{bucket}/o {
     // Hàm kiểm tra admin bên Storage
-    function isAdmin() {
+    function isAdmin() { // Kiểm tra xem user có tồn tại trong collection admins không
       return request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
     
+    // Kiểm tra xem user hiện tại có phải là Super Admin không
+    function isSuperAdmin() {
+      return isAdmin() && firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.role == 'super_admin';
+    }
+
     match /products/{productId}/{allPaths=**} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh sản phẩm
     }
 
     // 4. Ảnh Danh mục (categories) - Cần thiết cho tính năng mới
     match /categories/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh danh mục
     }
 
     // 5. Ảnh Tin tức (news)
     match /news/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh tin tức
     }
 
     match /avatars/{userId}/{allPaths=**} {
@@ -118,7 +128,7 @@ service firebase.storage {
     match /reviews/{productId}/{allPaths=**} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow delete: if request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+      allow delete: if isSuperAdmin(); // Chỉ Super Admin mới được xóa ảnh review
     }
   }
 }
