@@ -598,6 +598,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Khởi tạo nút tìm kiếm nổi và popup tìm kiếm
         setupSearchFloat();
 
+        // Khởi tạo nút cuộn lên đầu trang
+        setupScrollToTop();
+
         // Khởi tạo hiệu ứng Scroll Reveal nếu có class reveal-on-scroll
         const reveals = document.querySelectorAll('.reveal-on-scroll');
         if (reveals.length > 0) {
