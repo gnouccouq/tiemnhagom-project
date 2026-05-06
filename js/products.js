@@ -138,18 +138,11 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             if (maxPrice > 0) productsQuery = query(productsQuery, where("price", "<=", maxPrice));
         }
 
-        // Tìm kiếm theo tên (Prefix search) - Phải là orderBy đầu tiên nếu có where trên name
-        if (hasSearchTerm) {
-            productsQuery = query(productsQuery, 
-                where("name", ">=", searchTerm), 
-                where("name", "<=", searchTerm + '\uf8ff'));
-        }
-
         // Apply sorting logic
         // Firestore yêu cầu orderBy phải khớp với where clause đầu tiên nếu có
         // Hoặc nếu có range filter (price), orderBy phải là price
         if (hasSearchTerm) {
-            productsQuery = query(productsQuery, orderBy("name", "asc")); // Bắt buộc phải order by name cho prefix search
+            productsQuery = query(productsQuery, orderBy("name_lowercase", "asc"), limit(100)); 
         } else if (minPrice > 0 || maxPrice > 0) { // Nếu có lọc giá
             const priceDirection = (currentSort === 'price-desc') ? 'desc' : 'asc';
             productsQuery = query(productsQuery, orderBy("price", priceDirection)); // Bắt buộc phải order by price
@@ -221,8 +214,14 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        querySnapshot.forEach((doc) => {
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, '../product/index.html');
+        // Lọc Substring client-side nếu có search term
+        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        const finalResults = hasSearchTerm 
+            ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
+            : allDocs;
+
+        finalResults.forEach((p) => {
+            htmlContent += renderProductCard(p, p.id, favs, '../product/index.html');
         });
 
         productGrid.innerHTML = htmlContent;

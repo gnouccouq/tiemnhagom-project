@@ -14,6 +14,7 @@
 
 html {
     scroll-behavior: smooth; /* Cho hiệu ứng cuộn mượt mà */
+    overflow-x: hidden; /* Ngăn chặn cuộn ngang do hiệu ứng slide-in trên toàn bộ trang */
 }
 
 body {
@@ -1345,11 +1346,11 @@ h2::after {
 }
 
 .reveal-on-scroll.reveal-left {
-    transform: translateX(-100px); /* Trượt từ trái qua */
+    transform: translateX(-50px); /* Giảm khoảng cách trượt để an toàn hơn trên mobile */
 }
 
 .reveal-on-scroll.reveal-right {
-    transform: translateX(100px); /* Trượt từ phải qua */
+    transform: translateX(50px); /* Giảm khoảng cách trượt để tránh tràn lề phải */
 }
 
 .reveal-on-scroll.is-visible {
