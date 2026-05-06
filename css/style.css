@@ -62,6 +62,8 @@ body {
     justify-content: center;
     text-align: center;
     visibility: hidden;
+    text-decoration: none; /* Bỏ gạch chân khi slide là thẻ <a> */
+    color: inherit; /* Giữ nguyên màu chữ của nội dung bên trong */
     z-index: 1;
 }
 

@@ -105,7 +105,13 @@ service firebase.storage {
 
     match /products/{productId}/{allPaths=**} {
       allow read: if true;
-      allow create, update, delete: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh sản phẩm
+      allow create, update, delete: if isAdmin(); 
+    }
+
+    // 4. Ảnh Banner (banners) - Cho phép quản trị viên thay đổi banner trang chủ
+    match /banners/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // 4. Ảnh Danh mục (categories) - Cần thiết cho tính năng mới
@@ -117,7 +123,7 @@ service firebase.storage {
     // 5. Ảnh Tin tức (news)
     match /news/{allPaths=**} {
       allow read: if true;
-      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh tin tức
+      allow write: if isAdmin();
     }
 
     match /avatars/{userId}/{allPaths=**} {

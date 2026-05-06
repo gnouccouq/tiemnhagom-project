@@ -19,6 +19,7 @@ let currentAdminPermissions = []; // Danh sách các ID section được phép t
 const ALL_SECTIONS = [
     { id: 'overview-section', label: 'Tổng quan' },
     { id: 'product-section', label: 'Sản phẩm' },
+    { id: 'banner-section', label: 'Banner' },
     { id: 'pos-section', label: 'Bán tại shop (POS)' },
     { id: 'order-section', label: 'Đơn hàng' },
     { id: 'coupon-section', label: 'Mã giảm giá' },
@@ -68,6 +69,10 @@ function setupAdminTabs() {
 
             if (targetId === 'overview-section') {
                 initOverview();
+            }
+
+            if (targetId === 'banner-section') {
+                initBannerManagement();
             }
 
             if (targetId === 'category-section') {
@@ -368,7 +373,7 @@ function renderSparkline(canvasId, data, color) {
 }
 
 // Hàm hỗ trợ chuyển đổi file ảnh sang WebP để tối ưu dung lượng
-async function convertToWebP(file, targetSize = 1000) {
+async function convertToWebP(file, targetSize = 1000, cropSquare = true) {
     let currentFile = file;
 
     // 1. Xử lý định dạng HEIC/HEIF từ iPhone
@@ -395,26 +400,33 @@ async function convertToWebP(file, targetSize = 1000) {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                let sWidth = img.width;
-                let sHeight = img.height;
-                let sx = 0, sy = 0;
-
-                // Tính toán để cắt lấy hình vuông ở giữa ảnh gốc
-                if (sWidth > sHeight) {
-                    sx = (sWidth - sHeight) / 2;
-                    sWidth = sHeight;
-                } else if (sHeight > sWidth) {
-                    sy = (sHeight - sWidth) / 2;
-                    sHeight = sWidth;
-                }
-
-                let finalSize = Math.min(sWidth, targetSize);
-                canvas.width = finalSize;
-                canvas.height = finalSize;
-                
                 const ctx = canvas.getContext('2d');
-                // Vẽ phần ảnh đã được cắt (sx, sy, sWidth, sHeight) vào canvas vuông (0, 0, finalSize, finalSize)
-                ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, finalSize, finalSize);
+
+                if (cropSquare) {
+                    // Tính toán để cắt lấy hình vuông ở giữa ảnh gốc (Dành cho sản phẩm)
+                    let sWidth = img.width;
+                    let sHeight = img.height;
+                    let sx = 0, sy = 0;
+
+                    if (sWidth > sHeight) {
+                        sx = (sWidth - sHeight) / 2;
+                        sWidth = sHeight;
+                    } else if (sHeight > sWidth) {
+                        sy = (sHeight - sWidth) / 2;
+                        sHeight = sWidth;
+                    }
+
+                    let finalSize = Math.min(sWidth, targetSize);
+                    canvas.width = finalSize;
+                    canvas.height = finalSize;
+                    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, finalSize, finalSize);
+                } else {
+                    // Giữ nguyên tỷ lệ ảnh và chỉ giới hạn chiều rộng (Dành cho Banner)
+                    const scale = Math.min(1, targetSize / img.width);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                }
                 canvas.toBlob((blob) => {
                     const newFile = new File([blob], currentFile.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
                     resolve(newFile);
@@ -482,6 +494,93 @@ function renderImagePreviews() {
         };
         container.appendChild(div);
     });
+}
+
+// --- Logic Quản lý Banner ---
+let currentBanners = [];
+async function initBannerManagement() {
+    const form = document.getElementById('banner-form');
+    const listContainer = document.getElementById('admin-banner-list');
+    if (!form || !listContainer) return;
+
+    const bannerRef = doc(db, "settings", "banners");
+
+    const renderBanners = () => {
+        listContainer.innerHTML = currentBanners.map((b, idx) => `
+            <div class="admin-card" style="margin-bottom: 10px; padding: 15px; display: flex; gap: 15px; align-items: center;">
+                <img src="${b.imageUrl}" style="width: 120px; height: 70px; object-fit: cover; border-radius: 4px;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0; font-size: 0.9rem;">${b.title || '<em style="color:#ccc">(Trống)</em>'}</h4>
+                    <p style="font-size: 0.75rem; color: #666; margin: 5px 0;">${b.subtitle || '<em style="color:#ccc">(Trống)</em>'}</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 8px;" onclick="window.editBanner(${idx})">Sửa</button>
+                    <button class="btn-delete" style="font-size: 0.7rem;" onclick="window.deleteBanner(${idx})">Xóa</button>
+                </div>
+            </div>
+        `).join('') || '<p style="text-align:center; color:#999;">Chưa có slide nào.</p>';
+    };
+
+    const snap = await getDoc(bannerRef);
+    if (snap.exists()) currentBanners = snap.data().slides || [];
+    renderBanners();
+
+    window.editBanner = (idx) => {
+        const b = currentBanners[idx];
+        document.getElementById('banner-index').value = idx;
+        document.getElementById('banner-title').value = b.title;
+        document.getElementById('banner-subtitle').value = b.subtitle;
+        document.getElementById('banner-link').value = b.link || '';
+        document.getElementById('banner-image-preview').innerHTML = `<img src="${b.imageUrl}" style="width: 150px; border-radius: 4px;">`;
+        form.dataset.currentImageUrl = b.imageUrl;
+        window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+    };
+
+    window.deleteBanner = async (idx) => {
+        if (!confirm("Xóa slide này?")) return;
+        currentBanners.splice(idx, 1);
+        await setDoc(bannerRef, { slides: currentBanners });
+        showToast("Đã xóa slide banner");
+        renderBanners();
+    };
+
+    document.getElementById('btn-reset-banner-form').onclick = () => {
+        form.reset();
+        document.getElementById('banner-index').value = "-1";
+        document.getElementById('banner-image-preview').innerHTML = "";
+        delete form.dataset.currentImageUrl;
+    };
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const idx = parseInt(document.getElementById('banner-index').value);
+        const title = document.getElementById('banner-title').value.trim();
+        const subtitle = document.getElementById('banner-subtitle').value.trim();
+        const link = document.getElementById('banner-link').value.trim();
+        const file = document.getElementById('banner-image').files[0];
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            let imageUrl = form.dataset.currentImageUrl || '';
+            if (file) {
+                const webpFile = await convertToWebP(file, 1920, false); // Banners không bị ép thành hình vuông
+                const storageRef = ref(storage, `banners/${Date.now()}_${webpFile.name}`);
+                const snapshot = await uploadBytes(storageRef, webpFile);
+                imageUrl = await getDownloadURL(snapshot.ref);
+            }
+            if (!imageUrl) throw new Error("Chưa có ảnh banner");
+            const slideData = { title, subtitle, link, imageUrl };
+            if (idx === -1) currentBanners.push(slideData);
+            else currentBanners[idx] = slideData;
+            await setDoc(bannerRef, { slides: currentBanners });
+            showToast("Đã lưu banner thành công!");
+            document.getElementById('btn-reset-banner-form').click();
+            renderBanners();
+        } catch (err) { showToast("Lỗi: " + err.message, "error"); }
+        finally { submitBtn.disabled = false; submitBtn.innerText = "Lưu Slide"; }
+    };
 }
 
 // --- Logic Quản lý Danh mục Động ---

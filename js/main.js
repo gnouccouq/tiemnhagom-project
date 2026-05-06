@@ -153,11 +153,49 @@ async function fetchRecommendations() {
 }
 
 // Logic cho Hero Carousel
-function initHeroCarousel() {
-    const slides = document.querySelectorAll('.carousel-slide');
-    const dots = document.querySelectorAll('.dot');
-    const container = document.querySelector('.carousel-container');
-    if (slides.length === 0 || !container) return;
+async function initHeroCarousel() {
+    const container = document.getElementById('hero-carousel-container');
+    const dotsContainer = document.getElementById('hero-carousel-dots');
+    if (!container || !dotsContainer) return;
+
+    let slidesData = [];
+    try {
+        const snap = await getDoc(doc(db, "settings", "banners"));
+        if (snap.exists()) slidesData = snap.data().slides || [];
+    } catch (e) { console.error("Load banner error:", e); }
+
+    // Fallback nếu không có data hoặc lỗi
+    if (slidesData.length === 0) {
+        slidesData = [
+            { imageUrl: 'Asset/images/hero-bg.jpg', title: 'Gốm & Decor', subtitle: 'Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.', link: 'products/' },
+            { imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1600', title: 'Nghệ thuật của Đất', subtitle: 'Mang hơi thở thiên nhiên vào ngôi nhà của bạn.', link: 'products/' }
+        ];
+    }
+
+    // Inject HTML
+    container.innerHTML = slidesData.map((s, idx) => {
+        const hasContent = s.title || s.subtitle || s.link;
+        const slideInner = `
+            <img src="${s.imageUrl}" alt="${s.title || 'Banner Tiệm Nhà Gốm'}" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
+            ${hasContent ? `
+                <div class="hero-content">
+                    ${s.title ? `<h1>${s.title}</h1>` : ''}
+                    ${s.subtitle ? `<p>${s.subtitle}</p>` : ''}
+                    ${s.link ? `<span class="btn-dark btn-hero-cta">Xem chi tiết</span>` : ''}
+                </div>
+            ` : ''}`;
+        
+        return s.link 
+            ? `<a href="${s.link}" class="carousel-slide ${idx === 0 ? 'active' : ''}">${slideInner}</a>`
+            : `<div class="carousel-slide ${idx === 0 ? 'active' : ''}">${slideInner}</div>`;
+    }).join('');
+
+    dotsContainer.innerHTML = slidesData.map((_, idx) => `
+        <span class="dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"><span class="dot-fill"></span></span>
+    `).join('');
+
+    const slides = container.querySelectorAll('.carousel-slide');
+    const dots = dotsContainer.querySelectorAll('.dot');
 
     let currentIndex = 0;
     let slideInterval;
@@ -196,16 +234,20 @@ function initHeroCarousel() {
 
     // Logic kéo chuột/vuốt màn hình để đổi slide
     let startX = 0;
+    let preventClick = false;
     const threshold = 50; // Khoảng cách tối thiểu (pixel) để nhận diện hành động kéo
 
     const handleStart = (e) => {
         startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+        preventClick = false;
         clearInterval(slideInterval);
     };
 
     const handleEnd = (e) => {
         const endX = e.type.includes('mouse') ? e.pageX : e.changedTouches[0].clientX;
         const diff = startX - endX;
+
+        if (Math.abs(diff) > 10) preventClick = true; // Nếu di chuyển hơn 10px thì coi như là đang kéo, chặn click
 
         if (Math.abs(diff) > threshold) {
             if (diff > 0) {
@@ -216,6 +258,15 @@ function initHeroCarousel() {
         }
         startAutoSlide();
     };
+
+    // Chặn chuyển trang nếu người dùng đang thực hiện thao tác kéo slide
+    slides.forEach(slide => {
+        slide.addEventListener('click', (e) => {
+            if (preventClick) {
+                e.preventDefault();
+            }
+        });
+    });
 
     container.addEventListener('touchstart', handleStart, { passive: true });
     container.addEventListener('touchend', handleEnd, { passive: true });

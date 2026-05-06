@@ -60,37 +60,13 @@
     <main>
         <!-- New: Hero Carousel Full Screen -->
         <section class="hero-carousel">
-            <div class="carousel-container">
-                <div class="carousel-slide active">
-                    <img src="Asset/images/hero-bg.jpg" alt="Tiệm Nhà Gốm Banner 1" fetchpriority="high">
-                    <div class="hero-content">
-                        <h1>Gốm & Decor</h1>
-                        <p>Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.</p>
-                        <a href="products/" class="btn-dark btn-hero-cta">Xem toàn bộ sản phẩm</a>
-                    </div>
-                </div>
-                <div class="carousel-slide">
-                    <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1600&fm=webp&auto=format&fit=crop" alt="Tiệm Nhà Gốm Banner 2" loading="lazy">
-                    <div class="hero-content">
-                        <h1>Nghệ thuật của Đất</h1>
-                        <p>Mang hơi thở thiên nhiên vào ngôi nhà của bạn qua những món đồ gốm mộc mạc.</p>
-                        <a href="products/" class="btn-dark btn-hero-cta">Khám phá bộ sưu tập</a>
-                    </div>
-                </div>
-                <div class="carousel-slide">
-                    <img src="Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Tiệm Nhà Gốm Banner 3" loading="lazy">
-                    <div class="hero-content">
-                        <h1>Quà tặng Tinh tế</h1>
-                        <p>Trao gửi yêu thương qua những tác phẩm thủ công tỉ mỉ và tâm huyết.</p>
-                        <a href="products/" class="btn-dark btn-hero-cta">Chọn quà ngay</a>
-                    </div>
+            <div class="carousel-container" id="hero-carousel-container">
+                <!-- Slides will be injected here by JS -->
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#000; color:#fff;">
+                    <span class="spinner"></span>
                 </div>
             </div>
-            <div class="carousel-dots">
-                <span class="dot active" data-index="0"><span class="dot-fill"></span></span>
-                <span class="dot" data-index="1"><span class="dot-fill"></span></span>
-                <span class="dot" data-index="2"><span class="dot-fill"></span></span>
-            </div>
+            <div class="carousel-dots" id="hero-carousel-dots"></div>
         </section>
 
         <section class="categories-section">
