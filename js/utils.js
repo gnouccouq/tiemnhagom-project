@@ -243,15 +243,15 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
 
             try {
                 // Để hỗ trợ tìm kiếm "chữ cái bất kỳ" (substring search) như "đũa" trong "gác đũa",
-                // chúng ta sẽ lấy một số lượng lớn sản phẩm (ví dụ 50) được sắp xếp theo tên,
+                // chúng ta sẽ lấy một số lượng lớn sản phẩm (ví dụ 100) được sắp xếp theo tên,
                 // sau đó lọc client-side bằng includes().
-                // LƯU Ý: Cách này có giới hạn. Nếu sản phẩm chứa từ khóa nằm ngoài 50 sản phẩm đầu tiên
+                // LƯU Ý: Cách này có giới hạn. Nếu sản phẩm chứa từ khóa nằm ngoài 100 sản phẩm đầu tiên
                 // theo thứ tự alphabet, nó sẽ không được tìm thấy. Để tìm kiếm chính xác hơn trên toàn bộ dữ liệu,
                 // cần sử dụng dịch vụ tìm kiếm chuyên biệt như Algolia hoặc triển khai N-grams.
                 const q = query(
                     collection(db, "products"),
                     orderBy("name_lowercase"),
-                    limit(50) // Lấy nhiều sản phẩm hơn để tăng khả năng tìm thấy substring
+                    limit(100) // Tăng giới hạn để tăng khả năng tìm thấy substring trong tập dữ liệu lớn hơn
                 );
 
                 const snap = await getDocs(q);

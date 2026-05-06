@@ -4003,17 +4003,18 @@ footer {
 .suggestion-item {
     display: flex;
     align-items: center;
-    padding: 12px 20px;
+    padding: 15px 25px;
     gap: 15px;
     text-decoration: none;
     color: var(--text-black);
     transition: all 0.2s ease;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f0f0f0;
 }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { 
-    background: #fcfbf8; 
-    padding-left: 25px;
+    background: #f5f3eb; 
+    padding-left: 35px;
+    transform: none;
 }
 .suggestion-item img {
     width: 50px;
@@ -4027,7 +4028,8 @@ footer {
     min-width: 0;
 }
 .suggestion-info h5 {
-    font-size: 0.95rem;
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
     margin: 0 0 2px 0;
     font-weight: 600;
     color: #333;
