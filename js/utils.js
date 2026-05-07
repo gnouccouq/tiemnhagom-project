@@ -395,7 +395,8 @@ export async function addToCart(productData) {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
 
-    const existingItem = cart.find(item => item.id === productData.id);
+    const variantStr = productData.variant || '';
+    const existingItem = cart.find(item => item.id === productData.id && (item.variant || '') === variantStr);
     if (existingItem) existingItem.quantity += productData.quantity;
     else cart.push(productData);
 
@@ -631,9 +632,13 @@ async function syncLocalToCloud(userId) {
         const cartSnap = await getDoc(cartRef);
         let firebaseCart = cartSnap.exists() ? cartSnap.data().items : [];
         localCart.forEach(localItem => {
-            const existing = firebaseCart.find(i => i.id === localItem.id);
-            if (existing) existing.quantity += localItem.quantity;
-            else firebaseCart.push(localItem);
+            const variantStr = localItem.variant || '';
+            const existing = firebaseCart.find(i => i.id === localItem.id && (i.variant || '') === variantStr);
+            if (existing) {
+                existing.quantity += localItem.quantity;
+            } else {
+                firebaseCart.push(localItem);
+            }
         });
         await setDoc(cartRef, { items: firebaseCart });
         localStorage.removeItem('cart');
@@ -794,7 +799,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                 dynamicCategories.forEach(group => { // Iterate over array
                     megaMenuHtml += `
                         <div class="mega-col">
-                            <h4>${group.name}</h4>
+                            <h4><a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}" style="color: inherit; text-decoration: none; border: none; padding: 0 !important; font-weight: inherit; opacity: 1;">${group.name}</a></h4>
                             ${group.subs.map(sub => `<a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>`).join('')}
                         </div>
                     `;

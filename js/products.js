@@ -287,49 +287,58 @@ function initMobileFilter() {
     };
 }
 
+// Hàm xử lý tham số URL và trạng thái ban đầu sau khi đã có danh mục
+function handleInitialFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('category');
+    
+    if (catParam) {
+        document.querySelectorAll('.category-square-item').forEach(l => l.classList.remove('active'));
+        const targetLink = document.querySelector(`.category-square-item[data-filter-category="${catParam}"]`);
+        
+        if (targetLink) {
+            targetLink.classList.add('active'); // Khớp nhóm chính (ví dụ từ Footer)
+        } else {
+            // Nếu là danh mục con (ví dụ từ Mega Menu), tìm nhóm cha để highlight icon nhóm
+            for (const group of dynamicCategories) {
+                if (group.subs && group.subs.includes(catParam)) {
+                    const groupLink = document.querySelector(`.category-square-item[data-filter-category="${group.name}"]`);
+                    if (groupLink) groupLink.classList.add('active');
+                    activeSubCategory = catParam; // Ghi đè để fetchProducts lọc đúng sub-category
+                    break;
+                }
+            }
+        }
+    }
+
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+        const sidebarSearch = document.getElementById('search-name');
+        if (sidebarSearch) sidebarSearch.value = searchParam;
+    }
+
+    fetchProducts('init');
+}
+
+let isFirstLoad = true;
+
 document.addEventListener('DOMContentLoaded', () => {
     // 4. Khởi tạo Header và lắng nghe Auth (để cập nhật icon tim)
     initHeader('../', (user) => {
         // Lắng nghe danh mục động để render Grid ô vuông
         onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
             if (snapshot.exists()) {
-                const data = snapshot.data();
                 // Cập nhật lại biến toàn cục (nếu cần) và render
                 // dynamicCategories đã được xử lý bởi utils.js, ở đây ta chỉ cần gọi render
                 renderCategoryGrid();
-            }
-        });
 
-        // Xử lý logic highlight danh mục từ URL sau khi dynamicCategories được tải
-        const urlParams = new URLSearchParams(window.location.search);
-        const catParam = urlParams.get('category');
-        if (catParam) {
-            document.querySelectorAll('.category-square-item').forEach(l => l.classList.remove('active'));
-            const targetLink = document.querySelector(`.category-square-item[data-filter-category="${catParam}"]`);
-            if (targetLink) {
-                targetLink.classList.add('active');
-            } else {
-                // Nếu là danh mục con, tìm nhóm cha trong dynamicCategories (array)
-                for (const group of dynamicCategories) { // Iterate over array
-                    if (group.subs && group.subs.includes(catParam)) {
-                        const groupLink = document.querySelector(`.category-square-item[data-filter-category="${group.name}"]`);
-                        if (groupLink) groupLink.classList.add('active');
-                        activeSubCategory = catParam;
-                        break;
-                    }
+                // CHỈ chạy xử lý URL trong lần tải đầu tiên khi data vừa về
+                if (isFirstLoad) {
+                    handleInitialFilters();
+                    isFirstLoad = false;
                 }
             }
-        }
-
-        // 3. Xử lý từ khóa tìm kiếm từ Header
-        const searchParam = urlParams.get('search');
-        if (searchParam) {
-            const sidebarSearch = document.getElementById('search-name');
-            if (sidebarSearch) sidebarSearch.value = searchParam;
-        }
-
-        // Fetch products after categories are rendered and initial category is set
-        fetchProducts('init');
+        });
     });
 
     // 5. Lần đầu tải sản phẩm

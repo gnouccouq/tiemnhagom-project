@@ -6,7 +6,7 @@ const db = admin.firestore();
 
 /**
  * Hàm Callable để tạo đơn hàng an toàn
- * Client truyền lên: { items: [{id, quantity}], couponCode, shippingAddress, paymentMethod, shippingMethod }
+ * Client truyền lên: { items: [{id, quantity, color}], couponCode, shippingAddress, paymentMethod, shippingMethod }
  */
 exports.createOrderSecure = onCall(async (request) => {
     // 1. Kiểm tra xác thực (Tùy chọn nếu bạn cho phép khách vãng lai)
@@ -51,7 +51,8 @@ exports.createOrderSecure = onCall(async (request) => {
                 name: product.name,
                 price: currentUnitPrice,
                 image: product.imageUrl,
-                quantity: item.quantity
+                quantity: item.quantity,
+                color: item.color || null
             });
         }
 
@@ -85,10 +86,26 @@ exports.createOrderSecure = onCall(async (request) => {
             // Cập nhật kho cho từng sản phẩm
             for (const item of orderItems) {
                 const pRef = db.collection("products").doc(item.id);
-                transaction.update(pRef, {
+                const pSnap = await transaction.get(pRef);
+                const pData = pSnap.data();
+
+                let updateData = {
                     stock: admin.firestore.FieldValue.increment(-item.quantity),
                     sold: admin.firestore.FieldValue.increment(item.quantity)
-                });
+                };
+
+                // Nếu khách hàng có chọn biến thể màu sắc, cập nhật kho riêng của biến thể đó
+                if (item.color && pData.colorVariants) {
+                    const updatedVariants = pData.colorVariants.map(v => {
+                        if (v.name === item.color) {
+                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                        }
+                        return v;
+                    });
+                    updateData.colorVariants = updatedVariants;
+                }
+
+                transaction.update(pRef, updateData);
             }
 
             // Lưu đơn hàng

@@ -2235,105 +2235,136 @@ footer {
 }
 
 /* ==========================================================================
-   ULTRA-WIDE PRODUCT DETAIL (REWORKED)
+   MODERN PRODUCT DETAIL OVERHAUL
    ========================================================================== */
-.product-detail-container { 
-    padding: 3rem 4%; 
-    max-width: 1800px; /* Tràn lề tối đa cho màn hình PC */
-    margin: 0 auto; 
+.product-detail-container {
+    max-width: 1900px; /* Thu hẹp lại để cân đối hơn trên màn hình PC siêu rộng */
+    margin: 0 auto;
+    padding: 4rem 5%;
+    display: block;
+    width: 100%;
 }
 
-.back-navigation {
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-}
+.back-navigation { margin-bottom: 2.5rem; }
 
 .btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: var(--text-black);
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    display: inline-flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #888; font-size: 0.85rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+    transition: 0.3s;
 }
-
-.btn-back:hover {
-    transform: translateX(-5px);
-}
+.btn-back:hover { color: var(--text-black); transform: translateX(-5px); }
 
 .product-detail-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.5fr); /* Cân bằng lại để cột thông tin đủ rộng cho hàng ngang */
+    grid-template-columns: 1.5fr 0.3fr; /* Cân bằng 50/50 cho cảm giác cao cấp */
     gap: 3rem;
     align-items: start;
+    width: 100%;
 }
 
-.product-info-sticky {
-    position: sticky;
-    top: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.product-main-meta {
-    border-bottom: 1px solid #e5e5e5;
-    padding-bottom: 1.5rem;
-}
-
-.product-main-meta .category-tag {
-    display: inline-block;
-    background: #222;
-    color: #fff;
-    padding: 5px 14px;
-    border-radius: 2px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+/* Left: Image Section */
+.product-detail-image { position: relative; width: 100%; }
+.main-img-container {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
     margin-bottom: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
 }
-
-.product-sku {
-    display: block;
-    font-size: 0.75rem;
-    color: #999;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.2rem;
+.product-image-gallery {
+    display: flex; gap: 12px; overflow-x: auto;
+    padding: 5px 0 15px; scrollbar-width: thin;
 }
+.thumbnail {
+    width: 80px; height: 80px; flex-shrink: 0;
+    object-fit: cover; border-radius: 4px;
+    border: 1px solid transparent; opacity: 0.6;
+    transition: 0.3s; cursor: pointer;
+}
+.thumbnail.active, .thumbnail:hover { opacity: 1; border-color: var(--text-black); }
 
+/* Right: Content Section */
+.product-info-sticky { position: sticky; top: 120px; }
+.product-main-meta { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 2rem; }
+.product-sku { font-size: 0.75rem; color: #aaa; letter-spacing: 2px; margin-bottom: 8px; display: block; }
 .product-main-meta h1 {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    line-height: 1.2;
-    margin-bottom: 1rem;
+    font-family: var(--font-serif); font-size: 2.8rem;
+    line-height: 1.1; margin-bottom: 1.5rem; color: var(--text-black);
+}
+.product-price-row { display: flex; align-items: baseline; gap: 15px; }
+.product-price-row .main-price { font-size: 2.2rem; font-weight: 700; }
+.product-price-row .old-price { font-size: 1.2rem; color: #aaa; text-decoration: line-through; }
+
+/* Variant Selectors (Colors/Patterns) */
+.variant-selection { margin-bottom: 2.5rem; }
+.variant-title {
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #444; margin-bottom: 12px;
+}
+.variant-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.variant-chip {
+    padding: 10px 20px; border: 1px solid #ddd; border-radius: 4px;
+    font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: #fff;
+    display: flex; align-items: center; justify-content: center;
+}
+.variant-chip:hover { border-color: #000; }
+.variant-chip.active { background: #000; color: #fff; border-color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+/* Specific styles for color chips */
+.color-chip {
+    width: 40px; /* Kích thước cố định cho swatch màu */
+    height: 40px;
+    border-radius: 50%; /* Hình tròn */
+    padding: 0; /* Bỏ padding để màu tràn ra */
+    border: 2px solid #ddd; /* Viền mặc định */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: relative;
+}
+.color-chip.active {
+    border-color: var(--text-black); /* Viền đậm khi active */
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2); /* Thêm bóng đổ nhẹ bên ngoài viền */
+    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ */
+}
+.color-chip.active::after {
+    content: '✓'; /* Dấu tích khi chọn */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff; /* Màu dấu tích */
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(0,0,0,0.5);
+}
+
+/* Đảm bảo dấu tích hiện rõ trên màu sáng */
+.color-chip[data-color-hex="#FFFFFF"].active::after,
+.color-chip[data-color-hex="#F5F5DC"].active::after, /* Beige */
+.color-chip[data-color-hex="#FFFDD0"].active::after /* Cream */
+{
     color: var(--text-black);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
 }
 
-.product-price-row {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+.product-description { color: #555; line-height: 1.8; font-size: 1.05rem; margin-bottom: 2.5rem; }
+
+.purchase-card {
+    display: flex; flex-direction: column; gap: 2rem;
+    padding: 2.5rem; background: #fff; border-radius: 12px;
+    border: 1px solid #f0f0f0; box-shadow: 0 15px 40px rgba(0,0,0,0.02);
 }
 
-.product-price-row .main-price {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-black); /* Đồng bộ với giao diện minimalist */
-}
+.action-group { display: flex; gap: 12px; width: 100%; }
+.action-group .btn-dark { flex: 2; margin: 0; height: 55px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.action-group .btn-outline { flex: 1; margin: 0; height: 55px; font-weight: 600; }
+.action-group .detail-fav-btn { flex: 0 0 55px; height: 55px; }
 
-.product-description {
-    color: #555;
-    line-height: 1.9;
-    font-size: 1.1rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+@media (max-width: 992px) {
+    .product-detail-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .product-info-sticky { position: static; }
+    .product-main-meta h1 { font-size: 2rem; }
+    .purchase-card { padding: 1.5rem; }
 }
 
 .product-description p {

@@ -1,7 +1,7 @@
 import { 
     db, auth, initHeader, updateCartCount, showToast
 } from "./utils.js";
-import { 
+import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment,
     query, where, getDocs, limit, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -45,14 +45,14 @@ async function renderCart() {
                     <h4>${item.name}</h4>
                     <p class="summary-item-variant">${item.variant || 'Mặc định'}</p>
                     <div class="quantity-controls">
-                        <button class="q-btn" onclick="changeQty(${index}, -1)">-</button>
+                        <button class="q-btn" onclick="window.changeQty(${index}, -1)">-</button>
                         <span class="qty-value">${item.quantity}</span>
-                        <button class="q-btn" onclick="changeQty(${index}, 1)">+</button>
+                        <button class="q-btn" onclick="window.changeQty(${index}, 1)">+</button>
                     </div>
                 </div>
                 <div class="summary-item-price">
                     <p>${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</p>
-                    <button class="btn-remove-small" onclick="removeItem(${index})">Xóa</button>
+                    <button class="btn-remove-small" onclick="window.removeItem(${index})">Xóa</button>
                 </div>
             </div>
         `;
@@ -281,7 +281,7 @@ window.changeQty = async (index, delta) => {
     let cart = [];
     if (auth.currentUser) {
         const snap = await getDoc(doc(db, "carts", auth.currentUser.uid));
-        cart = snap.data().items;
+        cart = snap.exists() ? (snap.data().items || []) : [];
     } else {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
@@ -303,7 +303,7 @@ window.removeItem = async (index) => {
         let cart = [];
         if (auth.currentUser) {
             const snap = await getDoc(doc(db, "carts", auth.currentUser.uid));
-            cart = snap.data().items;
+            cart = snap.exists() ? (snap.data().items || []) : [];
         } else {
             cart = JSON.parse(localStorage.getItem('cart')) || [];
         }
@@ -384,7 +384,7 @@ window.placeOrder = async () => {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-small"></span> Đang xử lý...';
 
-        // 0. Kiểm tra cuối cùng: Mã giảm giá 1 lần sử dụng (Đặc biệt cho khách vãng lai check qua SĐT)
+        // 0. Kiểm tra cuối cùng: Mã giảm giá 1 lần sử dụng (Đặc biệt cho khách vãng lai check qua SĐT) - Client-side check
         if (appliedCoupon) {
             const checkField = auth.currentUser ? "userId" : "shippingAddress.phone";
             const checkVal = auth.currentUser ? auth.currentUser.uid : phone;
@@ -404,40 +404,28 @@ window.placeOrder = async () => {
             }
         }
 
-        // 1. Lưu đơn hàng vào Firestore (Dành cho Admin quản lý)
-        const docRef = await addDoc(collection(db, "orders"), orderData);
-        
-        // 2. Cập nhật tồn kho và số lượng đã bán của sản phẩm
-        const updatePromises = cart.map(item => {
-            const productRef = doc(db, "products", item.id);
-            return updateDoc(productRef, {
-                stock: increment(-item.quantity), // Giảm tồn kho
-                sold: increment(item.quantity)    // Tăng số lượng đã bán
-            });
-        });
-        await Promise.all(updatePromises);
+        // 1. Gọi Cloud Function để tạo đơn hàng an toàn và cập nhật tồn kho
+        // Sử dụng `firebase.functions().httpsCallable` nếu bạn đã import functions SDK
+        // Nếu không, bạn cần import `getFunctions` và `httpsCallable` từ Firebase Functions SDK
+        const createOrder = firebase.functions().httpsCallable('createOrderSecure');
+        const result = await createOrder(orderData);
 
-        // 3. Cập nhật lượt dùng mã giảm giá (nếu có áp dụng)
-        if (appliedCoupon) {
-            const couponRef = doc(db, "coupons", appliedCoupon.code);
-            await updateDoc(couponRef, {
-                usedCount: increment(1)
-            });
-        }
-
-        // 2. Xóa giỏ hàng sau khi đặt thành công
-        if (auth.currentUser) {
-            await setDoc(doc(db, "carts", auth.currentUser.uid), { items: [] });
+        if (result.data.success) {
+            const orderId = result.data.orderId;
+            // 2. Xóa giỏ hàng sau khi đặt thành công
+            if (auth.currentUser) {
+                await setDoc(doc(db, "carts", auth.currentUser.uid), { items: [] });
+            } else {
+                localStorage.removeItem('cart');
+            }
+            showToast("Đặt hàng thành công!");
+            updateCartCount();
+            setTimeout(() => {
+                window.location.href = `thank-you.html?id=${orderId}`;
+            }, 1500);
         } else {
-            localStorage.removeItem('cart');
+            throw new Error(result.data.message || "Lỗi không xác định khi tạo đơn hàng.");
         }
-
-        showToast("Đặt hàng thành công!");
-        updateCartCount();
-
-        setTimeout(() => {
-            window.location.href = `thank-you.html?id=${docRef.id}`;
-        }, 1500);
     } catch (error) {
         showToast("Lỗi đặt hàng: " + error.message, "error");
         console.error(error);

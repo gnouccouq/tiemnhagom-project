@@ -9,7 +9,27 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 let allImages = [];
 let currentIndex = 0;
 let autoSlideInterval;
+let selectedColor = null; // Biến lưu màu sắc đang chọn
+let currentProductData = null; // Lưu trữ dữ liệu sản phẩm để truy xuất kho biến thể
+let selectedPattern = null; // Biến lưu họa tiết đang chọn
 let isAdmin = false;
+
+// Ánh xạ màu sắc sang mã hex để hiển thị swatch
+const COLOR_MAP = {
+    "Trắng": "#FFFFFF",
+    "Đen": "#000000",
+    "Xám": "#808080",
+    "Xanh": "#0000FF",
+    "Đỏ": "#FF0000",
+    "Vàng": "#FFFF00",
+    "Hồng": "#FFC0CB",
+    "Tím": "#800080",
+    "Nâu": "#A52A2A",
+    "Kem": "#FFFDD0",
+    "Beige": "#F5F5DC",
+    "Xanh lá": "#008000"
+    // Thêm các màu khác nếu cần
+};
 
 // Hàm khởi tạo/đặt lại bộ đếm tự động chuyển ảnh
 function startAutoSlide() {
@@ -137,8 +157,11 @@ async function fetchProductDetail() {
 
         if (docSnap.exists()) {
             const p = docSnap.data();
+            currentProductData = p;
             
-            const isOutOfStock = (p.stock || 0) <= 0;
+            let isOutOfStock = (p.stock || 0) <= 0; // Default to main product stock
+            const colorVariants = p.colorVariants || [];
+            const availablePatterns = p.patterns || [];
             // Lưu vào lịch sử kèm danh mục để tối ưu gợi ý ở trang chủ
             addToHistory(productId, p.category);
 
@@ -149,6 +172,27 @@ async function fetchProductDetail() {
             let starsHtml = '';
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
             for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '★' : '☆';
+
+            // Thiết lập màu/họa tiết mặc định nếu có
+            if (colorVariants.length > 0) {
+                selectedColor = colorVariants[0].name;
+                // Cập nhật isOutOfStock dựa trên biến thể mặc định
+                if ((colorVariants[0].stock || 0) <= 0) isOutOfStock = true;
+            }
+            
+            // Ưu tiên lấy pattern từ patternVariants mới, nếu không có thì fallback sang patterns cũ
+            const patternsToUse = (p.patternVariants && p.patternVariants.length > 0) ? p.patternVariants : (p.patterns || []);
+            if (patternsToUse.length > 0) {
+                const firstPattern = patternsToUse[0];
+                selectedPattern = typeof firstPattern === 'string' ? firstPattern : firstPattern.name;
+                // Cập nhật isOutOfStock dựa trên biến thể mặc định
+                if (typeof firstPattern !== 'string' && (firstPattern.stock || 0) <= 0) isOutOfStock = true;
+            }
+
+            // Nếu có biến thể và biến thể mặc định hết hàng, thì sản phẩm coi như hết hàng
+            if ((colorVariants.length > 0 || patternsToUse.length > 0) && isOutOfStock) {
+                isOutOfStock = true;
+            }
 
             const additionalImages = p.additionalImages || [];
             allImages = [p.imageUrl, ...additionalImages];
@@ -209,6 +253,11 @@ async function fetchProductDetail() {
                                 ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${p.sale}%</span>` : ''}
                             </div>
                         </div>
+                        
+                        <!-- Variant Selectors (Colors/Patterns) -->
+                        <div id="variant-selectors">
+                            <!-- Rendered by JS -->
+                        </div>
 
                         <div class="product-description">
                             <h4>Câu chuyện sản phẩm</h4>
@@ -224,8 +273,8 @@ async function fetchProductDetail() {
                                 <div class="quantity-controls">
                                     <button type="button" class="q-btn" onclick="const input = document.getElementById('product-quantity'); if(parseInt(input.value) > 1) input.stepDown()" ${isOutOfStock ? 'disabled' : ''}>&minus;</button>
                                     <input type="number" id="product-quantity" value="1" min="1" max="${p.stock}" readonly>
-                                    <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" ${isOutOfStock ? 'disabled' : ''}>&plus;</button>
-                                </div>
+                                    <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" ${isOutOfStock ? 'disabled' : ''} id="qty-plus-btn">&plus;</button>
+                                </div>                                
                             </div>
 
                             <div class="action-group">
@@ -276,12 +325,14 @@ async function fetchProductDetail() {
             updateSEO(seoTitle, seoDesc, p.imageUrl);
 
             // Tối ưu SEO: Dữ liệu có cấu trúc Schema.org (JSON-LD)
+            const productUrl = window.location.href;
             const productSchema = {
                 "@context": "https://schema.org/",
                 "@type": "Product",
                 "name": p.name,
                 "image": allImages,
                 "description": seoDesc,
+                "url": productUrl, // Thêm URL sản phẩm vào schema
                 "sku": productId,
                 "brand": {
                     "@type": "Brand",
@@ -289,7 +340,7 @@ async function fetchProductDetail() {
                 },
                 "offers": {
                     "@type": "Offer",
-                    "url": window.location.href,
+                    "url": productUrl,
                     "priceCurrency": "VND",
                     "price": currentPrice,
                     "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -341,14 +392,28 @@ async function fetchProductDetail() {
             scriptTag.textContent = JSON.stringify([productSchema, breadcrumbSchema]);
 
             // Gán sự kiện cho nút thêm vào giỏ hàng
-            document.getElementById('btn-add-to-cart').onclick = () => {
+            document.getElementById('btn-add-to-cart').onclick = async () => {
                 const qty = parseInt(document.getElementById('product-quantity').value);
-                addToCart({
+                
+                let variantImage = p.imageUrl;
+                if (selectedColor && p.colorVariants) {
+                    const c = p.colorVariants.find(v => v.name === selectedColor);
+                    if (c && c.imageUrl) variantImage = c.imageUrl;
+                }
+                if (selectedPattern && p.patternVariants) {
+                    const pattern = p.patternVariants.find(v => v.name === selectedPattern);
+                    if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
+                }
+
+                await addToCart({
                     id: productId,
                     name: p.name,
                     price: currentPrice,
-                    image: p.imageUrl,
-                    quantity: qty
+                    image: variantImage,
+                    quantity: qty,
+                    color: selectedColor,
+                    pattern: selectedPattern,
+                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / ')
                 });
             };
 
@@ -357,16 +422,29 @@ async function fetchProductDetail() {
                 const btn = e.currentTarget;
                 const qty = parseInt(document.getElementById('product-quantity').value);
                 
+                let variantImage = p.imageUrl;
+                if (selectedColor && p.colorVariants) {
+                    const c = p.colorVariants.find(v => v.name === selectedColor);
+                    if (c && c.imageUrl) variantImage = c.imageUrl;
+                }
+                if (selectedPattern && p.patternVariants) {
+                    const pattern = p.patternVariants.find(v => v.name === selectedPattern);
+                    if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
+                }
+
                 // Hiển thị trạng thái loading
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-small"></span> Đang xử lý...';
 
-                await addToCart({
+                await addToCart({ // Thêm vào giỏ hàng trước khi chuyển trang
                     id: productId,
                     name: p.name,
                     price: currentPrice,
-                    image: p.imageUrl,
-                    quantity: qty
+                    image: variantImage,
+                    quantity: qty,
+                    color: selectedColor,
+                    pattern: selectedPattern,
+                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / ')
                 });
                 window.location.href = '../cart/'; // Chuyển hướng thẳng tới giỏ hàng
             };
@@ -374,6 +452,7 @@ async function fetchProductDetail() {
             fetchRelatedProducts(productId, p.category); // Gọi hàm lấy sản phẩm liên quan
             fetchRecentlyViewed(productId); // Gọi hàm lấy sản phẩm đã xem gần đây
             fetchReviews(productId); // Tải đánh giá của khách hàng
+            renderVariantSelectors(p); // Render bộ chọn biến thể
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";
         }
@@ -446,6 +525,153 @@ async function fetchRecentlyViewed(currentProductId) {
         console.error("Lỗi lấy lịch sử xem:", error);
     }
 }
+
+// Hàm render bộ chọn màu sắc và họa tiết
+function renderVariantSelectors(product) {
+    const container = document.getElementById('variant-selectors');
+    if (!container) return;
+
+    let html = '';
+
+    // Render Color Selectors
+    if (product.colorVariants && product.colorVariants.length > 0) {
+        html += `
+            <div class="variant-selection">
+                <div class="variant-title">Màu sắc: <span id="selected-color-display" style="font-weight: 500; color: var(--text-black);">${selectedColor || product.colorVariants[0].name}</span></div>
+                <div class="variant-options">
+                    ${product.colorVariants.map(variant => {
+                        const colorHex = COLOR_MAP[variant.name] || '#ccc'; 
+                        const isLightColor = ["#FFFFFF", "#FFFDD0", "#F5F5DC"].includes(colorHex.toUpperCase()); // Kiểm tra màu sáng để đổi màu dấu tích
+                        return `
+                            <div class="color-chip ${variant.name === selectedColor ? 'active' : ''} ${ (variant.stock || 0) <= 0 ? 'disabled-variant' : ''}"
+                                 style="background-color: ${colorHex}; ${isLightColor ? 'border-color: #ccc;' : ''}"
+                                 data-color-name="${variant.name}"
+                                 data-color-hex="${colorHex}"
+                                 data-variant-image="${variant.imageUrl || ''}"
+                                 data-stock="${variant.stock || 0}"
+                                 ${ (variant.stock || 0) <= 0 ? 'disabled' : ''}
+                                 onclick="window.selectColor('${variant.name}', '${variant.imageUrl || ''}')"
+                                 title="${variant.name}">
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Render Pattern Selectors
+    const patternsToUse = (product.patternVariants && product.patternVariants.length > 0) ? product.patternVariants : (product.patterns || []);
+    if (patternsToUse.length > 0) {
+        html += `
+            <div class="variant-selection">
+                <div class="variant-title">Họa tiết: <span id="selected-pattern-display" style="font-weight: 500; color: var(--text-black);">${selectedPattern || (typeof patternsToUse[0] === 'string' ? patternsToUse[0] : patternsToUse[0].name)}</span></div>
+                <div class="variant-options">
+                    ${patternsToUse.map(item => {
+                        const isString = typeof item === 'string';
+                        const name = isString ? item : item.name;
+                        const imageUrl = isString ? '' : (item.imageUrl || '');
+                        const stock = isString ? 0 : (item.stock || 0); // Lấy stock từ variant object
+                        return `
+                            <div class="variant-chip pattern-chip ${name === selectedPattern ? 'active' : ''} ${stock <= 0 ? 'disabled-variant' : ''}"
+                                 data-stock="${stock}"
+                                 onclick="window.selectPattern('${name}', '${imageUrl}')"
+                                 title="${name}">
+                                ${name}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+// Hàm chọn màu sắc
+window.selectColor = (colorName, imageUrl) => {
+    selectedColor = colorName;
+    document.getElementById('selected-color-display').innerText = colorName;
+    
+    document.querySelectorAll('.color-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.colorName === colorName);
+    });
+    
+    // Cập nhật thông tin kho hàng dựa trên biến thể được chọn
+    const variant = currentProductData.colorVariants.find(v => v.name === colorName);
+    const stock = variant ? (variant.stock || 0) : (currentProductData.stock || 0); // Fallback to main stock if variant not found
+    const stockSpan = document.querySelector('.stock-info span');
+    const stockDiv = document.querySelector('.stock-info');
+    const qtyInput = document.getElementById('product-quantity');
+    const addToCartBtn = document.getElementById('btn-add-to-cart');
+    const buyNowBtn = document.getElementById('btn-buy-now');
+    const qtyPlusBtn = document.getElementById('qty-plus-btn');
+
+    if (stockSpan) stockSpan.innerText = stock <= 0 ? 'Rất tiếc, màu này đã hết hàng' : `Trong kho: ${stock} sản phẩm (màu ${colorName})`;
+    if (stockDiv) stockDiv.classList.toggle('out', stock <= 0);
+
+    // Cập nhật trạng thái nút và input số lượng
+    const isDisabled = stock <= 0;
+    if (qtyInput) {
+        qtyInput.value = 1; // Reset quantity to 1
+        qtyInput.max = stock;
+        qtyInput.disabled = isDisabled;
+    }
+    if (addToCartBtn) addToCartBtn.disabled = isDisabled;
+    if (buyNowBtn) buyNowBtn.disabled = isDisabled;
+    if (qtyPlusBtn) qtyPlusBtn.disabled = isDisabled;
+
+    // Đổi ảnh chính nếu biến thể có ảnh đi kèm
+    if (imageUrl) {
+        const mainImg = document.getElementById('main-product-img');
+        if (mainImg) mainImg.src = imageUrl;
+    }
+    showToast(`Đã chọn màu: ${colorName}`);
+};
+
+// Hàm chọn họa tiết
+window.selectPattern = (patternName, imageUrl) => {
+    selectedPattern = patternName;
+    document.getElementById('selected-pattern-display').innerText = patternName;
+    document.querySelectorAll('.pattern-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.innerText.trim() === patternName);
+    });
+    
+    // Cập nhật thông tin kho hàng dựa trên biến thể được chọn
+    let stock = currentProductData.stock || 0; // Default to main product stock
+    if (currentProductData.patternVariants) {
+        const variant = currentProductData.patternVariants.find(v => v.name === patternName);
+        if (variant) stock = variant.stock || 0;
+    }
+
+    const stockSpan = document.querySelector('.stock-info span');
+    const stockDiv = document.querySelector('.stock-info');
+    const qtyInput = document.getElementById('product-quantity');
+    const addToCartBtn = document.getElementById('btn-add-to-cart');
+    const buyNowBtn = document.getElementById('btn-buy-now');
+    const qtyPlusBtn = document.getElementById('qty-plus-btn');
+
+    if (stockSpan) stockSpan.innerText = stock <= 0 ? 'Rất tiếc, họa tiết này đã hết hàng' : `Trong kho: ${stock} sản phẩm (họa tiết ${patternName})`;
+    if (stockDiv) stockDiv.classList.toggle('out', stock <= 0);
+
+    // Cập nhật trạng thái nút và input số lượng
+    const isDisabled = stock <= 0;
+    if (qtyInput) {
+        qtyInput.value = 1; // Reset quantity to 1
+        qtyInput.max = stock;
+        qtyInput.disabled = isDisabled;
+    }
+    if (addToCartBtn) addToCartBtn.disabled = isDisabled;
+    if (buyNowBtn) buyNowBtn.disabled = isDisabled;
+    if (qtyPlusBtn) qtyPlusBtn.disabled = isDisabled;
+    // Đổi ảnh chính nếu biến thể có ảnh đi kèm
+    if (imageUrl) {
+        const mainImg = document.getElementById('main-product-img');
+        if (mainImg) mainImg.src = imageUrl;
+    }
+    showToast(`Đã chọn họa tiết: ${patternName}`);
+};
 
 // --- Logic Sửa/Xóa Đánh giá ---
 window.deleteReview = async (reviewId, starRating) => {
