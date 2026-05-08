@@ -1650,7 +1650,7 @@ let lastOrderVisible = null;
 let firstOrderVisible = null;
 let currentOrderPage = 1;
 
-function initOrderListener(productNameFilter = '', statusFilter = 'all', navigation = 'init') {
+function initOrderListener(productNameFilter = '', statusFilter = 'all', navigation = 'init', userIdFilter = '') {
     const orderListTable = document.getElementById('admin-order-list');
     const prevBtn = document.getElementById('prev-order-page');
     const nextBtn = document.getElementById('next-order-page');
@@ -1674,6 +1674,9 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
     }
     if (statusFilter !== 'all') {
         ordersQuery = query(ordersQuery, where("status", "==", statusFilter));
+    }
+    if (userIdFilter) {
+        ordersQuery = query(ordersQuery, where("userId", "==", userIdFilter));
     }
 
     // Xây dựng query với phân trang
@@ -2168,8 +2171,22 @@ if (couponForm) {
 }
 
 window.viewUserOrders = (userId) => {
-    // Chuyển sang tab đơn hàng và lọc theo mã người dùng (hoặc thực hiện query riêng)
-    showToast("Tính năng lọc đơn hàng theo User đang được phát triển", "info");
+    // Chuyển sang tab đơn hàng
+    const orderTabBtn = document.querySelector('.admin-tab-btn[data-target="order-section"]');
+    if (orderTabBtn) {
+        orderTabBtn.click();
+        
+        // Đợi một chút để UI chuyển tab rồi thực hiện lọc
+        setTimeout(async () => {
+            const orderListTable = document.getElementById('admin-order-list');
+            if (!orderListTable) return;
+            
+            showToast(`Đang lọc đơn hàng của User: ${userId}`, "info");
+            // Ở đây ta gọi lại listener của order nhưng thêm filter userId
+            // Lưu ý: Cần cập nhật hàm initOrderListener để nhận thêm filter userId
+            initOrderListener('', 'all', 'init', userId);
+        }, 100);
+    }
 };
 
 // --- Logic POS (Bán tại shop) ---

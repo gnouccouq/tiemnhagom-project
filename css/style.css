@@ -511,7 +511,7 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: linear-gradient(rgba(235, 234, 230, 0.8), rgba(235, 234, 230, 0.8)), url('../Asset/images/hero-bg.jpg') no-repeat center center/cover; /* Đã đổi sang .webp */
+    background: linear-gradient(rgba(235, 234, 230, 0.8), rgba(235, 234, 230, 0.8)), url('../Asset/images/hero-bg.webp') no-repeat center center/cover; /* Đã đổi sang .webp */
     background-attachment: fixed; /* Hiệu ứng parallax */
     color: var(--text-black); /* Đảm bảo chữ rõ ràng trên nền ảnh */
     position: relative; /* Để dùng cho hiệu ứng */

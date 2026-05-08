@@ -713,6 +713,8 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="blog\//g, `href="${pathPrefix}blog/`)
                 .replace(/href="maintenance\//g, `href="${pathPrefix}maintenance/`)
                 .replace(/href="cart\//g, `href="${pathPrefix}cart/`)
+                .replace(/href="checkout\//g, `href="${pathPrefix}checkout/`)
+                .replace(/href="search\//g, `href="${pathPrefix}search/`)
                 .replace(/href="profile\//g, `href="${pathPrefix}profile/`)
                 .replace(/href="hoa-nha-gom\//g, `href="${pathPrefix}hoa-nha-gom/`)
                 .replace(/href="trang-tri-su-kien\//g, `href="${pathPrefix}trang-tri-su-kien/`)

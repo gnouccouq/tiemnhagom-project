@@ -2,13 +2,43 @@ import {
     db, auth, initHeader, updateCartCount, showToast
 } from "./utils.js";
 import {
-    doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment,
+    doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
     query, where, getDocs, limit, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- Logic xử lý giỏ hàng ---
 
+// Danh sách các tỉnh thành Việt Nam (Rút gọn các tỉnh lớn, có thể bổ sung thêm)
+const VIETNAM_PROVINCES = [
+    "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Cần Thơ", "Đà Nẵng", "Đắk Lắk", "Điện Biên", "Đồng Nai", "Đồng Tháp",
+    "Gia Lai", "Hà Nội", "Hà Tĩnh", "Hải Phòng", "Hồ Chí Minh", "Huế", "Hưng Yên", "Khánh Hoà", "Lai Châu", "Lạng Sơn",
+    "Lào Cai", "Lâm Đồng", "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+    "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long"
+];
+
+// Dữ liệu mẫu Quận/Huyện và Phường/Xã (Bạn có thể mở rộng thêm hoặc gọi API)
+// Đã cập nhật để bỏ cấp Quận/Huyện, Tỉnh/Thành phố trực tiếp chứa Phường/Xã
+const LOCATION_DATA = {
+    "Hồ Chí Minh": [
+        "Phường Bến Nghé", "Phường Bến Thành", "Phường Đa Kao", "Phường Tân Định", "Phường Tân Phong", "Phường Tân Kiểng", "Phường Tân Quy"
+    ],
+    "Hà Nội": [
+        "Phường Cửa Đông", "Phường Đồng Xuân", "Phường Hàng Bạc", "Phường Phúc Xá", "Phường Quán Thánh", "Phường Thành Công"
+    ]
+    // Thêm các tỉnh/thành phố khác và danh sách phường/xã tương ứng
+};
+
 let appliedCoupon = null; // { code: '...', type: 'percent'|'fixed', value: 10 }
+
+// Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
+function calculateShippingFee(method, province) {
+    if (method === 'pickup') return 0;
+    if (!province) return 30000; // Phí mặc định khi chưa chọn tỉnh
+    
+    const innerCities = ["Hồ Chí Minh"];
+    if (innerCities.includes(province)) return 30000; // Phí nội thành
+    return 40000; // Phí đi tỉnh
+}
 
 async function renderCart() {
     let cart = [];
@@ -63,9 +93,10 @@ async function renderCart() {
         discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
     }
     
-    // Phí ship: 30k nếu giao tận nơi, 0đ nếu nhận tại tiệm
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
-    const shippingFee = shippingMethod === 'pickup' ? 0 : 30000;
+    const selectedProvince = document.getElementById('shipping-province')?.value;
+    
+    const shippingFee = calculateShippingFee(shippingMethod, selectedProvince);
     
     const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
@@ -82,18 +113,47 @@ async function renderCart() {
     }
 }
 
-function renderCheckoutForm(container) {
+async function renderCheckoutForm(container) {
     // Kiểm tra xem một phần tử đặc trưng của form đã tồn tại chưa thay vì kiểm tra innerHTML
     if (document.getElementById('shipping-name')) return; 
     
+    // Lấy thông tin user hiện tại nếu có login để auto-fill
+    let userData = { displayName: '', email: '', phone: '' };
+    if (auth.currentUser) {
+        const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        if (userSnap.exists()) {
+            const d = userSnap.data();
+            userData = {
+                displayName: auth.currentUser.displayName || d.displayName || '',
+                email: auth.currentUser.email || d.email || '',
+                phone: d.phone || auth.currentUser.phoneNumber || ''
+            };
+        }
+    }
+
     container.innerHTML = `
         <div class="checkout-section">
             <h3 class="checkout-title">Billing information | Thông tin thanh toán</h3>
             <div class="form-row">
-                <div class="form-group"><label>Full Name *</label><input type="text" id="shipping-name" required></div>
-                <div class="form-group"><label>Email Address</label><input type="email" id="shipping-email"></div>
+                <div class="form-group"><label>Full Name *</label><input type="text" id="shipping-name" value="${userData.displayName}" required></div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="shipping-email" value="${userData.email}"></div>
             </div>
-            <div class="form-group"><label>Phone Number *</label><input type="tel" id="shipping-phone" required></div>
+            <div class="form-group"><label>Phone Number *</label><input type="tel" id="shipping-phone" value="${userData.phone}" required></div>
+            <div class="form-group">
+                <label>Province / City | Tỉnh thành *</label>
+                <select id="shipping-province" required>
+                    <option value="">-- Chọn tỉnh thành --</option>
+                    ${VIETNAM_PROVINCES.map(p => `<option value="${p}">${p}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ward | Phường / Xã *</label>
+                    <select id="shipping-ward" required disabled>
+                        <option value="">-- Chọn Phường/Xã --</option>
+                    </select>
+                </div>
+            </div>
             <div class="form-group"><label>Shipping Address | Địa chỉ nhận hàng *</label><input type="text" id="shipping-address" required></div>
             <div class="form-group"><label>Order Note</label><textarea id="order-note" rows="3"></textarea></div>
             
@@ -124,12 +184,45 @@ function renderCheckoutForm(container) {
                     <span class="radio-checkmark"></span>
                 </label>
             </div>
+            <div id="bank-transfer-info" style="display: none; margin-top: 15px; padding: 15px; background: #fcfbf8; border: 1px dashed #ccc; border-radius: 4px; font-size: 0.85rem;">
+                <p><strong>💡 Lưu ý:</strong> Mã QR thanh toán kèm <strong>đúng số tiền</strong> và <strong>nội dung chuyển khoản</strong> sẽ hiển thị sau khi bạn nhấn nút "Đặt hàng".</p>
+            </div>
         </div>
     `;
 
     // Lắng nghe thay đổi để cập nhật phí vận chuyển ngay lập tức
     container.querySelectorAll('input[name="shipping-method"]').forEach(radio => {
         radio.addEventListener('change', renderCart);
+    });
+
+    const provinceSelect = document.getElementById('shipping-province');
+    const wardSelect = document.getElementById('shipping-ward');
+
+    // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã
+    provinceSelect?.addEventListener('change', (e) => {
+        const province = e.target.value;
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+
+        if (LOCATION_DATA[province] && Array.isArray(LOCATION_DATA[province])) {
+            LOCATION_DATA[province].forEach(w => {
+                wardSelect.innerHTML += `<option value="${w}">${w}</option>`;
+            });
+            wardSelect.disabled = false;
+        } else {
+            wardSelect.disabled = true;
+        }
+        renderCart(); // Cập nhật phí ship
+    });
+
+    // Không cần lắng nghe sự kiện cho districtSelect nữa vì đã bỏ
+    // wardSelect sẽ được cập nhật trực tiếp từ provinceSelect
+
+    // Lắng nghe thay đổi phương thức thanh toán để hiện thông báo bank transfer
+    container.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const infoBox = document.getElementById('bank-transfer-info');
+            if (infoBox) infoBox.style.display = e.target.value === 'bank_transfer' ? 'block' : 'none';
+        });
     });
 }
 
@@ -321,6 +414,8 @@ window.placeOrder = async () => {
     const name = document.getElementById('shipping-name')?.value.trim();
     const phone = document.getElementById('shipping-phone')?.value.trim();
     const email = document.getElementById('shipping-email')?.value.trim();
+    const province = document.getElementById('shipping-province')?.value;
+    const ward = document.getElementById('shipping-ward')?.value;
     const address = document.getElementById('shipping-address')?.value.trim();
     const note = document.getElementById('order-note')?.value.trim();
     const termsAccepted = document.getElementById('terms-agreement')?.checked;
@@ -328,8 +423,8 @@ window.placeOrder = async () => {
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
 
-    if (!name || !phone || !address) {
-        showToast("Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ", "error");
+    if (!name || !phone || !address || !province || !ward) {
+        showToast("Vui lòng nhập đầy đủ thông tin giao hàng", "error");
         return;
     }
 
@@ -357,7 +452,7 @@ window.placeOrder = async () => {
         discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
     }
 
-    const shippingFee = shippingMethod === 'pickup' ? 0 : 30000;
+    const shippingFee = calculateShippingFee(shippingMethod, province);
     const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
     const orderData = {
@@ -373,7 +468,10 @@ window.placeOrder = async () => {
         shippingAddress: {
             fullName: name,
             phone: phone,
-            address: address
+            province: province,
+            ward: ward,
+            // Cập nhật chuỗi địa chỉ để bỏ Quận/Huyện
+            address: `${address}, ${ward}, ${province}`
         },
         shippingMethod: shippingMethod,
         paymentMethod: paymentMethod || "COD"
@@ -384,7 +482,7 @@ window.placeOrder = async () => {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-small"></span> Đang xử lý...';
 
-        // 0. Kiểm tra cuối cùng: Mã giảm giá 1 lần sử dụng (Đặc biệt cho khách vãng lai check qua SĐT) - Client-side check
+        // 0. Kiểm tra cuối cùng: Mã giảm giá 1 lần sử dụng (Đặc biệt cho khách vãng lai check qua SĐT)
         if (appliedCoupon) {
             const checkField = auth.currentUser ? "userId" : "shippingAddress.phone";
             const checkVal = auth.currentUser ? auth.currentUser.uid : phone;
@@ -397,41 +495,121 @@ window.placeOrder = async () => {
             );
             const reCheckSnap = await getDocs(qReCheck);
             if (!reCheckSnap.empty) {
-                showToast("Mã giảm giá này chỉ được sử dụng một lần duy nhất cho mỗi khách hàng", "error");
+                showToast("Mã giảm giá này chỉ được sử dụng một lần duy nhất cho mỗi khách hàng.", "error");
                 btn.disabled = false;
-                btn.innerHTML = "Xác nhận đặt hàng";
+                btn.innerHTML = "Đặt hàng ngay";
                 return;
             }
         }
 
-        // 1. Gọi Cloud Function để tạo đơn hàng an toàn và cập nhật tồn kho
-        // Sử dụng `firebase.functions().httpsCallable` nếu bạn đã import functions SDK
-        // Nếu không, bạn cần import `getFunctions` và `httpsCallable` từ Firebase Functions SDK
-        const createOrder = firebase.functions().httpsCallable('createOrderSecure');
-        const result = await createOrder(orderData);
+        // 1. Thực hiện Transaction để đảm bảo trừ kho và tạo đơn đồng thời
+        const orderId = await runTransaction(db, async (transaction) => {
+            const newOrderRef = doc(collection(db, "orders")); // Tạo reference mới cho đơn hàng
 
-        if (result.data.success) {
-            const orderId = result.data.orderId;
+            let finalSubtotal = 0;
+            const processedOrderItems = [];
+            const productNames = [];
+
+            // Duyệt qua từng item trong giỏ hàng để lấy giá THẬT và kiểm tra tồn kho
+            for (const item of cart) {
+                const productRef = doc(db, "products", item.id);
+                const productSnap = await transaction.get(productRef);
+
+                if (!productSnap.exists()) {
+                    throw new Error(`Sản phẩm ID ${item.id} không tồn tại.`);
+                }
+
+                const product = productSnap.data();
+                let currentStock = product.stock || 0;
+                let variantImage = product.imageUrl;
+
+                // Kiểm tra tồn kho biến thể màu sắc
+                if (item.color && Array.isArray(product.colorVariants)) {
+                    const variant = product.colorVariants.find(v => v.name === item.color);
+                    if (!variant) throw new Error(`Biến thể màu "${item.color}" của sản phẩm ${product.name} không tồn tại.`);
+                    currentStock = variant.stock || 0;
+                    if (variant.imageUrl) variantImage = variant.imageUrl;
+                }
+                // Kiểm tra tồn kho biến thể họa tiết
+                if (item.pattern && Array.isArray(product.patternVariants)) {
+                    const variant = product.patternVariants.find(v => v.name === item.pattern);
+                    if (!variant) throw new Error(`Biến thể họa tiết "${item.pattern}" của sản phẩm ${product.name} không tồn tại.`);
+                    currentStock = variant.stock || 0;
+                    if (variant.imageUrl) variantImage = variant.imageUrl;
+                }
+
+                if (currentStock < item.quantity) {
+                    throw new Error(`Sản phẩm "${product.name}" (biến thể ${item.color || item.pattern || 'mặc định'}) đã hết hàng hoặc không đủ số lượng. Chỉ còn ${currentStock} sản phẩm.`);
+                }
+
+                const hasSale = product.sale > 0;
+                const currentUnitPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
+                finalSubtotal += currentUnitPrice * item.quantity;
+
+                processedOrderItems.push({
+                    id: item.id,
+                    name: product.name,
+                    price: currentUnitPrice,
+                    image: variantImage,
+                    quantity: item.quantity,
+                    color: item.color || null,
+                    pattern: item.pattern || null,
+                    variant: [item.color, item.pattern].filter(Boolean).join(' / ') || null
+                });
+                productNames.push(product.name);
+
+                // Cập nhật tồn kho sản phẩm/biến thể
+                let updateProductData = {
+                    stock: increment(-item.quantity),
+                    sold: increment(item.quantity)
+                };
+
+                if (item.color && Array.isArray(product.colorVariants)) {
+                    const updatedColorVariants = product.colorVariants.map(v => {
+                        if (v.name === item.color) return { ...v, stock: (v.stock || 0) - item.quantity };
+                        return v;
+                    });
+                    updateProductData.colorVariants = updatedColorVariants;
+                }
+                if (item.pattern && Array.isArray(product.patternVariants)) {
+                    const updatedPatternVariants = product.patternVariants.map(v => {
+                        if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) - item.quantity };
+                        return v;
+                    });
+                    updateProductData.patternVariants = updatedPatternVariants;
+                }
+                transaction.update(productRef, updateProductData);
+            }
+
+            // Cập nhật lượt dùng mã giảm giá
+            if (appliedCoupon) {
+                const couponRef = doc(db, "coupons", appliedCoupon.code);
+                transaction.update(couponRef, { usedCount: increment(1) });
+            }
+
+            // Lưu đơn hàng
+            transaction.set(newOrderRef, { ...orderData, items: processedOrderItems, productNames, totalAmount: finalTotal });
+            return newOrderRef.id;
+        });
+
+        if (orderId) {
             // 2. Xóa giỏ hàng sau khi đặt thành công
             if (auth.currentUser) {
                 await setDoc(doc(db, "carts", auth.currentUser.uid), { items: [] });
             } else {
                 localStorage.removeItem('cart');
             }
-            showToast("Đặt hàng thành công!");
+            showToast("Đặt hàng thành công! Đang chuyển hướng...", "success");
             updateCartCount();
             setTimeout(() => {
                 window.location.href = `thank-you.html?id=${orderId}`;
             }, 1500);
-        } else {
-            throw new Error(result.data.message || "Lỗi không xác định khi tạo đơn hàng.");
         }
     } catch (error) {
         showToast("Lỗi đặt hàng: " + error.message, "error");
         console.error(error);
     }
 };
-
 
 document.addEventListener('DOMContentLoaded', () => {
     // Bảo mật: Ngăn chặn index trang giỏ hàng và thanh toán
