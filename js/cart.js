@@ -8,36 +8,63 @@ import {
 
 // --- Logic xử lý giỏ hàng ---
 
-// Danh sách các tỉnh thành Việt Nam (Rút gọn các tỉnh lớn, có thể bổ sung thêm)
-const VIETNAM_PROVINCES = [
-    "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Cần Thơ", "Đà Nẵng", "Đắk Lắk", "Điện Biên", "Đồng Nai", "Đồng Tháp",
-    "Gia Lai", "Hà Nội", "Hà Tĩnh", "Hải Phòng", "Hồ Chí Minh", "Huế", "Hưng Yên", "Khánh Hoà", "Lai Châu", "Lạng Sơn",
-    "Lào Cai", "Lâm Đồng", "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
-    "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long"
-];
-
-// Dữ liệu mẫu Quận/Huyện và Phường/Xã (Bạn có thể mở rộng thêm hoặc gọi API)
-// Đã cập nhật để bỏ cấp Quận/Huyện, Tỉnh/Thành phố trực tiếp chứa Phường/Xã
-const LOCATION_DATA = {
-    "Hồ Chí Minh": [
-        "Phường Bến Nghé", "Phường Bến Thành", "Phường Đa Kao", "Phường Tân Định", "Phường Tân Phong", "Phường Tân Kiểng", "Phường Tân Quy"
-    ],
-    "Hà Nội": [
-        "Phường Cửa Đông", "Phường Đồng Xuân", "Phường Hàng Bạc", "Phường Phúc Xá", "Phường Quán Thánh", "Phường Thành Công"
-    ]
-    // Thêm các tỉnh/thành phố khác và danh sách phường/xã tương ứng
-};
+// API Endpoints
+const PROVINCES_API_URL = "https://production.cas.so/address-kit/2025-07-01/provinces";
+const COMMUNES_API_URL = "https://production.cas.so/address-kit/2025-07-01/communes";
 
 let appliedCoupon = null; // { code: '...', type: 'percent'|'fixed', value: 10 }
 
+// Cache for location data to avoid repeated API calls
+let cachedProvinces = [];
+let cachedCommunes = {}; // { provinceId: [commune1, commune2, ...] }
+
 // Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
-function calculateShippingFee(method, province) {
+function calculateShippingFee(method, provinceName) { // Changed parameter name to provinceName
     if (method === 'pickup') return 0;
-    if (!province) return 30000; // Phí mặc định khi chưa chọn tỉnh
+    if (!provinceName) return 30000; // Phí mặc định khi chưa chọn tỉnh
     
-    const innerCities = ["Hồ Chí Minh"];
-    if (innerCities.includes(province)) return 30000; // Phí nội thành
+    const innerCities = ["Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Hải Phòng"]; // Expanded inner cities
+    if (innerCities.includes(provinceName)) return 30000; // Phí nội thành
     return 40000; // Phí đi tỉnh
+}
+
+// Function to fetch provinces from API
+async function fetchProvinces() {
+    if (cachedProvinces.length > 0) {
+        return cachedProvinces;
+    }
+    try {
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
+        const response = await fetch(proxyUrl + encodeURIComponent(PROVINCES_API_URL));
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        cachedProvinces = data;
+        return data;
+    } catch (error) {
+        console.error("Error fetching provinces:", error);
+        showToast("Không thể tải danh sách tỉnh thành. Vui lòng thử lại.", "error");
+        return [];
+    }
+}
+
+// Function to fetch communes by province ID from API
+async function fetchCommunesByProvinceId(provinceId) {
+    if (cachedCommunes[provinceId]) {
+        return cachedCommunes[provinceId];
+    }
+    try {
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
+        const targetUrl = `${COMMUNES_API_URL}?provinceId=${provinceId}`;
+        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        cachedCommunes[provinceId] = data;
+        return data;
+    } catch (error) {
+        console.error(`Error fetching communes for province ${provinceId}:`, error);
+        showToast("Không thể tải danh sách phường/xã. Vui lòng thử lại.", "error");
+        return [];
+    }
 }
 
 async function renderCart() {
@@ -94,9 +121,10 @@ async function renderCart() {
     }
     
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
-    const selectedProvince = document.getElementById('shipping-province')?.value;
+    const selectedProvinceOption = document.getElementById('shipping-province')?.options[document.getElementById('shipping-province').selectedIndex];
+    const selectedProvinceName = selectedProvinceOption ? selectedProvinceOption.textContent : null; // Get name for shipping fee calculation
     
-    const shippingFee = calculateShippingFee(shippingMethod, selectedProvince);
+    const shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName); // Pass name
     
     const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
@@ -143,7 +171,6 @@ async function renderCheckoutForm(container) {
                 <label>Province / City | Tỉnh thành *</label>
                 <select id="shipping-province" required>
                     <option value="">-- Chọn tỉnh thành --</option>
-                    ${VIETNAM_PROVINCES.map(p => `<option value="${p}">${p}</option>`).join('')}
                 </select>
             </div>
             <div class="form-row">
@@ -198,24 +225,32 @@ async function renderCheckoutForm(container) {
     const provinceSelect = document.getElementById('shipping-province');
     const wardSelect = document.getElementById('shipping-ward');
 
-    // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã
-    provinceSelect?.addEventListener('change', (e) => {
-        const province = e.target.value;
-        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+    // Populate provinces
+    provinceSelect.innerHTML = '<option value="">-- Đang tải tỉnh thành --</option>';
+    const provinces = await fetchProvinces();
+    provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh thành --</option>';
+    provinces.forEach(p => {
+        provinceSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+    });
 
-        if (LOCATION_DATA[province] && Array.isArray(LOCATION_DATA[province])) {
-            LOCATION_DATA[province].forEach(w => {
-                wardSelect.innerHTML += `<option value="${w}">${w}</option>`;
+    // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã
+    provinceSelect?.addEventListener('change', async (e) => {
+        const provinceId = e.target.value;
+        wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã --</option>';
+        wardSelect.disabled = true;
+
+        if (provinceId) {
+            const communes = await fetchCommunesByProvinceId(provinceId);
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            communes.forEach(c => {
+                wardSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             });
             wardSelect.disabled = false;
         } else {
-            wardSelect.disabled = true;
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
         }
         renderCart(); // Cập nhật phí ship
     });
-
-    // Không cần lắng nghe sự kiện cho districtSelect nữa vì đã bỏ
-    // wardSelect sẽ được cập nhật trực tiếp từ provinceSelect
 
     // Lắng nghe thay đổi phương thức thanh toán để hiện thông báo bank transfer
     container.querySelectorAll('input[name="payment-method"]').forEach(radio => {
@@ -414,8 +449,15 @@ window.placeOrder = async () => {
     const name = document.getElementById('shipping-name')?.value.trim();
     const phone = document.getElementById('shipping-phone')?.value.trim();
     const email = document.getElementById('shipping-email')?.value.trim();
-    const province = document.getElementById('shipping-province')?.value;
-    const ward = document.getElementById('shipping-ward')?.value;
+    
+    const provinceSelect = document.getElementById('shipping-province');
+    const provinceId = provinceSelect?.value;
+    const provinceName = provinceSelect?.options[provinceSelect.selectedIndex]?.textContent;
+
+    const wardSelect = document.getElementById('shipping-ward');
+    const wardId = wardSelect?.value;
+    const wardName = wardSelect?.options[wardSelect.selectedIndex]?.textContent;
+
     const address = document.getElementById('shipping-address')?.value.trim();
     const note = document.getElementById('order-note')?.value.trim();
     const termsAccepted = document.getElementById('terms-agreement')?.checked;
@@ -423,7 +465,7 @@ window.placeOrder = async () => {
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
 
-    if (!name || !phone || !address || !province || !ward) {
+    if (!name || !phone || !address || !provinceId || !wardId) { // Check for IDs now
         showToast("Vui lòng nhập đầy đủ thông tin giao hàng", "error");
         return;
     }
@@ -452,7 +494,7 @@ window.placeOrder = async () => {
         discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
     }
 
-    const shippingFee = calculateShippingFee(shippingMethod, province);
+    const shippingFee = calculateShippingFee(shippingMethod, provinceName); // Pass name
     const finalTotal = Math.max(0, total + shippingFee - discountAmount);
 
     const orderData = {
@@ -468,10 +510,12 @@ window.placeOrder = async () => {
         shippingAddress: {
             fullName: name,
             phone: phone,
-            province: province,
-            ward: ward,
-            // Cập nhật chuỗi địa chỉ để bỏ Quận/Huyện
-            address: `${address}, ${ward}, ${province}`
+            email: email, // Added email to shipping address
+            provinceId: provinceId, // Store ID
+            province: provinceName, // Store Name
+            wardId: wardId, // Store ID
+            ward: wardName, // Store Name
+            address: `${address}, ${wardName}, ${provinceName}` // Full address string
         },
         shippingMethod: shippingMethod,
         paymentMethod: paymentMethod || "COD"
