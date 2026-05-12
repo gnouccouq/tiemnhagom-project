@@ -10,4 +10,4 @@ Disallow: /login/
 Disallow: /profile/
 
 # Chỉ định đường dẫn tới sơ đồ trang web để bot lập chỉ mục nhanh hơn
-Sitemap: https://gnouccouq.github.io/tiemnhagom-project/sitemap.xml
+Sitemap: https://tiemnhagom.vn/sitemap.xml
