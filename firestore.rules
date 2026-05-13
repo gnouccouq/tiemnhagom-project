@@ -13,6 +13,12 @@ service cloud.firestore {
       return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super_admin';
     }
 
+    // Kiểm tra xem dữ liệu không bị thay đổi các trường cấm
+    function isUnchanged(key) {
+      return (key in resource.data) && (key in request.resource.data) 
+        && (resource.data[key] == request.resource.data[key]);
+    }
+
     // 1. Sản phẩm (products)
     match /products/{productId} {
       allow read: if true;
@@ -34,9 +40,9 @@ service cloud.firestore {
     
     // 2. Danh sách Admin
     match /admins/{adminId} {
-      allow read: if request.auth != null && (request.auth.uid == adminId || isAdmin());
-      allow list: if isSuperAdmin(); // Chỉ Super Admin mới được xem danh sách admin
-      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý danh sách Admin
+      allow get: if request.auth != null && (request.auth.uid == adminId || isAdmin());
+      allow list: if isSuperAdmin(); 
+      allow create, update, delete: if isSuperAdmin(); 
     }
 
     // 3. Giỏ hàng & Yêu thích
@@ -66,13 +72,19 @@ service cloud.firestore {
         request.resource.data.items.size() > 0 &&
         // Chống giả mạo ID người dùng
         (request.auth != null ? request.resource.data.userId == request.auth.uid : request.resource.data.userId == 'guest') &&
-        request.resource.data.orderDate == request.time; // Ép dùng thời gian server
+        request.resource.data.orderDate == request.time; 
+
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-      // Admin sửa mọi thứ, User chỉ được Hủy khi đang xử lý
+
+      // Cấu trúc update chặt chẽ:
       allow update: if isAdmin() || 
         (request.auth != null && request.auth.uid == resource.data.userId && 
          resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" && // Chỉ cho phép chuyển từ "Đang xử lý" sang "Đã hủy"
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt'])); // Chỉ được sửa các trường này
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']) &&
+         isUnchanged('totalAmount') && isUnchanged('userId'));
+
+      // Chỉ Super Admin mới được xóa đơn hàng (thường là để dọn dẹp data lỗi)
+      allow delete: if isSuperAdmin();
     }
 
     // 6. Cấu hình hệ thống (Danh mục động)

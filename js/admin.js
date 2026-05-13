@@ -117,7 +117,7 @@ async function checkAdminRights(user) {
         } else {
             const adminData = adminSnap.data();
             if (adminData.isLocked) {
-                alert("Tài khoản của bạn hiện đang bị khóa tạm thời. Vui lòng liên hệ quản trị viên tối cao.");
+                showToast("Tài khoản của bạn hiện đang bị khóa tạm thời.", "error");
                 logout().then(() => window.location.href = "../index.html");
                 return;
             }
@@ -127,17 +127,17 @@ async function checkAdminRights(user) {
                 const allSectionIds = ALL_SECTIONS.map(s => s.id);
                 // Đảm bảo super_admin luôn có tất cả các quyền
                 currentAdminPermissions = allSectionIds;
-                // Cập nhật Firestore nếu quyền của super_admin bị thiếu hoặc không đồng bộ
-                if (!adminData.permissions || adminData.permissions.length !== allSectionIds.length || !adminData.permissions.every(p => allSectionIds.includes(p))) {
-                    await updateDoc(adminRef, { permissions: allSectionIds });
-                }
             } else {
                 // Với các vai trò khác, ưu tiên quyền chi tiết đã lưu, nếu không thì dùng quyền mặc định theo vai trò
                 currentAdminPermissions = adminData.permissions || ROLE_PERMISSIONS[currentAdminRole] || ROLE_PERMISSIONS['staff'];
             }
 
             // Nếu đúng là admin thì mới hiển thị nội dung trang
-            document.body.style.display = "block";
+            const adminBody = document.querySelector('.admin-dashboard-layout');
+            if (adminBody) {
+                adminBody.style.display = "block";
+                adminBody.classList.add('fade-in-content');
+            }
             updateAdminSidebarProfile(user, adminData);
             applyRoleToSidebar();
         }
