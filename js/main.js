@@ -167,7 +167,7 @@ async function initHeroCarousel() {
     // Fallback nếu không có data hoặc lỗi
     if (slidesData.length === 0) {
         slidesData = [
-            { imageUrl: 'Asset/images/hero-bg.jpg', title: 'Gốm & Decor', subtitle: 'Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.', link: 'products/' },
+            { imageUrl: 'Asset/images/hero-bg.webp', title: 'Gốm & Decor', subtitle: 'Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.', link: 'products/' },
             { imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=1600', title: 'Nghệ thuật của Đất', subtitle: 'Mang hơi thở thiên nhiên vào ngôi nhà của bạn.', link: 'products/' }
         ];
     }

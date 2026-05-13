@@ -71,19 +71,27 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
 
-    if (navigation === 'init') productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
-        <div class="skeleton-card">
-            <div class="skeleton skeleton-img"></div>
-            <div class="skeleton skeleton-text skeleton-title"></div>
-            <div class="skeleton skeleton-text skeleton-small"></div>
-            <div class="skeleton skeleton-text skeleton-price"></div>
-        </div>
-    `).join('');
+    // Luôn áp dụng hiệu ứng mờ khi bắt đầu tải dữ liệu mới
+    productGrid.classList.add('loading-fade');
+
+    if (navigation === 'init') {
+        productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-img"></div>
+                <div class="skeleton skeleton-text skeleton-title"></div>
+                <div class="skeleton skeleton-text skeleton-small"></div>
+                <div class="skeleton skeleton-text skeleton-price"></div>
+            </div>
+        `).join('');
+        // Cuộn mượt về khu vực danh sách sản phẩm để người dùng thấy rõ kết quả lọc
+        window.scrollTo({ top: productGrid.offsetTop - 150, behavior: 'smooth' });
+    }
     noProductsMsg.style.display = 'none';
 
     try {
         let productsQuery = collection(db, "products");
-        if (navigation === 'init') activeSubCategory = categoryOverride;
+        // Chỉ ghi đè activeSubCategory nếu categoryOverride được truyền vào cụ thể (không phải null)
+        if (navigation === 'init' && categoryOverride !== null) activeSubCategory = categoryOverride;
         
         let currentCategory = activeSubCategory || document.querySelector('.category-square-item.active')?.dataset.filterCategory || 'all';
         let currentSort = document.getElementById('sort-by')?.value || 'newest';
@@ -220,11 +228,18 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;
 
-        finalResults.forEach((p) => {
-            htmlContent += renderProductCard(p, p.id, favs, '../product/index.html');
-        });
+        htmlContent = finalResults.map((p) => {
+            return renderProductCard(p, p.id, favs, '../product/index.html');
+        }).join('');
 
+        // Hiển thị nội dung và kích hoạt animation fade-in
+        productGrid.classList.remove('loading-fade');
         productGrid.innerHTML = htmlContent;
+        
+        // Reset animation fade-in cho grid
+        productGrid.classList.remove('fade-in-content');
+        void productGrid.offsetWidth; // Kỹ thuật Force reflow để trình duyệt nhận diện lại animation
+        productGrid.classList.add('fade-in-content');
         
         // Cập nhật trạng thái nút
         if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;
@@ -233,6 +248,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
     } catch (error) {
         console.error("Lỗi lấy dữ liệu sản phẩm:", error);
+        productGrid.classList.remove('loading-fade');
         productGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 5rem; color: red;">Không thể tải sản phẩm. Vui lòng thử lại sau.</p>';
     }
 }
