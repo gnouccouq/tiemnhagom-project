@@ -1682,6 +1682,74 @@ footer {
     transition: opacity 0.2s ease;
 }
 
+/* Cookie Consent Popup */
+.cookie-consent {
+    position: fixed;
+    bottom: -150px; /* Ban đầu ẩn dưới màn hình */
+    left: 15px;
+    right: 15px;
+    background: #ffffff;
+    z-index: 9999;
+    border-radius: 12px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
+    visibility: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.cookie-consent.show {
+    bottom: 20px; /* Trượt lên khi hiển thị */
+    opacity: 1;
+    visibility: visible;
+}
+
+.cookie-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.cookie-text p {
+    font-size: 0.85rem;
+    margin: 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.cookie-text a {
+    color: var(--text-black);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.cookie-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.cookie-actions button {
+    margin: 0 !important;
+    padding: 0.7rem 1.5rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 30px !important;
+    white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+    .cookie-consent {
+        left: 30px;
+        right: auto;
+        max-width: 600px;
+    }
+    .cookie-content {
+        flex-direction: row;
+        align-items: center;
+        gap: 25px;
+    }
+}
+
 /* Floating Widgets */
 .floating-widgets {
     position: fixed;

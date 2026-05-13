@@ -313,15 +313,17 @@ function setupCookieConsent(pathPrefix) {
     const consentDiv = document.createElement('div');
     consentDiv.className = 'cookie-consent';
     consentDiv.innerHTML = `
-        <div class="cookie-text">
-            <p style="font-size: 0.85rem; margin: 0; color: #555;">
-                <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
-                <a href="${pathPrefix}privacy-policy.html" style="color: var(--text-black); font-weight: 600; text-decoration: underline;">Chính sách bảo mật</a> của chúng tôi.
-            </p>
-        </div>
-        <div class="cookie-actions" style="display: flex; gap: 10px;">
-            <button id="btn-decline-cookie" class="btn-outline" style="margin: 0; padding: 0.6rem 1.5rem; font-size: 0.8rem; border-radius: 30px; white-space: nowrap;">Từ chối</button>
-            <button id="btn-accept-cookie" class="btn-dark" style="margin: 0; padding: 0.6rem 2rem; font-size: 0.8rem; border-radius: 30px; white-space: nowrap;">Chấp nhận</button>
+        <div class="cookie-content">
+            <div class="cookie-text">
+                <p>
+                    <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
+                    <a href="${pathPrefix}privacy-policy.html">Chính sách bảo mật</a> của chúng tôi.
+                </p>
+            </div>
+            <div class="cookie-actions">
+                <button id="btn-decline-cookie" class="btn-outline">Từ chối</button>
+                <button id="btn-accept-cookie" class="btn-dark">Chấp nhận</button>
+            </div>
         </div>
     `;
     document.body.appendChild(consentDiv);
