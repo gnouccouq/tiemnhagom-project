@@ -1,6 +1,6 @@
 import { 
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
-    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO
+    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -911,12 +911,12 @@ async function fetchReviews(productId) {
                     <div class="review-header">
                         <img src="${r.userAvatar || '../Asset/images/logo.png'}" class="review-avatar" alt="User">
                         <div class="review-user-info">
-                            <h5>${r.userName || 'Khách hàng'}</h5>
+                            <h5>${escapeHTML(r.userName || 'Khách hàng')}</h5>
                             <div style="color: #f1c40f; font-size: 0.8rem;">${stars} <span class="review-date">${date}</span></div>
                         </div>
                     </div>
                     <div class="review-content">
-                        <p>${r.comment}</p>
+                        <p>${escapeHTML(r.comment)}</p>
                         <div class="review-images-gallery">${imagesHtml}</div>
                         ${actionButtons}
                         ${adminReplyHtml}

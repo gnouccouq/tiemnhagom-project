@@ -56,6 +56,20 @@ export function getDynamicCategories() {
     return dynamicCategories;
 }
 
+// Hàm hỗ trợ bảo mật: Chống tấn công XSS bằng cách mã hóa các ký tự đặc biệt
+export function escapeHTML(str) {
+    if (!str) return "";
+    return str.toString().replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[m];
+    });
+}
+
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -269,7 +283,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 box.innerHTML = results.map(p => {
                     const hasSale = p.sale > 0;
                     const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
-                    const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Thoát các ký tự HTML
+                    const safeName = escapeHTML(p.name);
                     return `
                         <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
                             <img src="${p.imageUrl}" alt="${p.name}">
