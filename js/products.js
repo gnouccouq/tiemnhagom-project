@@ -336,25 +336,26 @@ function handleInitialFilters() {
     fetchProducts('init');
 }
 
-let isFirstLoad = true;
+let categoriesInitialized = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // 4. Khởi tạo Header và lắng nghe Auth (để cập nhật icon tim)
     initHeader('../', (user) => {
-        // Lắng nghe danh mục động để render Grid ô vuông
-        onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
-            if (snapshot.exists()) {
-                // Cập nhật lại biến toàn cục (nếu cần) và render
-                // dynamicCategories đã được xử lý bởi utils.js, ở đây ta chỉ cần gọi render
-                renderCategoryGrid();
+        // Khi Auth thay đổi, ta cần fetch lại để cập nhật trạng thái Yêu thích
+        if (categoriesInitialized) {
+            fetchProducts('init');
+        }
+    });
 
-                // CHỈ chạy xử lý URL trong lần tải đầu tiên khi data vừa về
-                if (isFirstLoad) {
-                    handleInitialFilters();
-                    isFirstLoad = false;
-                }
+    // 5. Lắng nghe danh mục động (Duy nhất 1 listener độc lập)
+    onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
+        if (snapshot.exists()) {
+            renderCategoryGrid();
+            if (!categoriesInitialized) {
+                handleInitialFilters(); // handleInitialFilters sẽ gọi fetchProducts('init')
+                categoriesInitialized = true;
             }
-        });
+        }
     });
 
     // 5. Lần đầu tải sản phẩm

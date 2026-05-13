@@ -483,11 +483,15 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
         
+        // LUÔN chạy callback sớm nhất có thể để trang web load dữ liệu chính (Sản phẩm,...)
+        // Không để các tác vụ Admin/Sync bên dưới làm chậm việc hiển thị dữ liệu
+        if (onAuthChangeCallback) onAuthChangeCallback(user);
+
         const authSection = document.getElementById('auth-section');
         if (!authSection) return;
 
         if (user) {
-            // Lưu hint để lần sau vào web sẽ hiện icon ngay
+            // Lưu hint để lần sau vào web sẽ hiện icon đăng nhập nhanh
             localStorage.setItem('tng_user_hint', JSON.stringify({ 
                 loggedIn: true, 
                 displayName: user.displayName || user.email.split('@')[0] 
@@ -632,9 +636,6 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             }, { threshold: 0.15 });
             reveals.forEach(r => observer.observe(r));
         }
-
-        // Chạy logic riêng của từng trang (nếu có)
-        if (onAuthChangeCallback) onAuthChangeCallback(user);
     });
 }
 

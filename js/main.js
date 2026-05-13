@@ -33,18 +33,20 @@ async function fetchFeaturedProducts() {
 
         // TỐI ƯU: Chỉ lấy 10 sản phẩm mới nhất thay vì toàn bộ collection
         const q = query(collection(db, "products"), orderBy("updatedAt", "desc"), limit(10));
-        const querySnapshot = await getDocs(q);
+        
+        // Lấy yêu thích song song để tránh blocking
+        let favsPromise = Promise.resolve([]);
+        if (auth.currentUser) {
+            favsPromise = getDoc(doc(db, "favorites", auth.currentUser.uid))
+                .then(snap => snap.exists() ? snap.data().productIds || [] : [])
+                .catch(() => []); // Fallback nếu lỗi auth tạm thời
+        } else {
+            favsPromise = Promise.resolve(JSON.parse(localStorage.getItem('favorites')) || []);
+        }
+
+        const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
         
         let htmlContent = ''; // Sử dụng biến tạm để tối ưu hiệu suất
-
-        // Lấy danh sách yêu thích để hiển thị icon đúng
-        let favs = [];
-        if (auth.currentUser) {
-            const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
-            if (favSnap.exists()) favs = favSnap.data().productIds || [];
-        } else {
-            favs = JSON.parse(localStorage.getItem('favorites')) || [];
-        }
 
         querySnapshot.forEach((doc) => {
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
