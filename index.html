@@ -38,21 +38,74 @@
 
     <!-- Dữ liệu có cấu trúc: Giúp Google hiểu về Sitelinks và Searchbox -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Tiệm Nhà Gốm",
-      "url": "https://tiemnhagom.vn/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://tiemnhagom.vn/products/?search={search_term_string}",
-        "query-input": "required name=search_term_string"
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Tiệm Nhà Gốm",
+        "url": "https://tiemnhagom.vn/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://tiemnhagom.vn/products/?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Sản phẩm",
+            "item": "https://tiemnhagom.vn/products/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Dining Decor",
+            "item": "https://tiemnhagom.vn/products/?category=Dining%20Decor"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Home Decor",
+            "item": "https://tiemnhagom.vn/products/?category=Home%20Decor"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Flash Sale",
+            "item": "https://tiemnhagom.vn/flash-sale/"
+          }
+        ]
       }
-    }
+    ]
     </script>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+
+    <!-- Speculation Rules API: Tăng tốc độ chuyển trang tức thì -->
+    <script type="speculationrules">
+    {
+      "prerender": [{
+        "source": "document",
+        "where": {
+          "and": [
+            { "href_matches": "/*" },
+            { "not": { "href_matches": [
+              "/admin/*",
+              "/cart/*",
+              "/login/*",
+              "/profile/*"
+            ]}}
+          ]
+        },
+        "eagerness": "moderate"
+      }]
+    }
+    </script>
 </head>
 <body>
     <div id="header-placeholder"></div>
