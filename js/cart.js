@@ -1,5 +1,5 @@
 import { 
-    db, auth, initHeader, updateCartCount, showToast
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -449,6 +449,7 @@ window.placeOrder = async () => {
     const name = document.getElementById('shipping-name')?.value.trim();
     const phone = document.getElementById('shipping-phone')?.value.trim();
     const email = document.getElementById('shipping-email')?.value.trim();
+    const formattedPhone = formatPhoneNumber(phone);
     
     const provinceSelect = document.getElementById('shipping-province');
     const provinceId = provinceSelect?.value;
@@ -465,7 +466,7 @@ window.placeOrder = async () => {
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
 
-    if (!name || !phone || !address || !provinceId || !wardId) { // Check for IDs now
+    if (!name || !formattedPhone || !address || !provinceId || !wardId) { // Kiểm tra SĐT đã chuẩn hóa
         showToast("Vui lòng nhập đầy đủ thông tin giao hàng", "error");
         return;
     }
@@ -501,7 +502,7 @@ window.placeOrder = async () => {
         userId: auth.currentUser ? auth.currentUser.uid : 'guest',
         productNames: cart.map(item => item.name),
         items: cart,
-        totalAmount: finalTotal,
+        totalAmount: finalTotal, // Sử dụng finalTotal sau khi tính toán giảm giá và phí ship
         shippingFee: shippingFee,
         discountAmount: discountAmount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
@@ -509,7 +510,7 @@ window.placeOrder = async () => {
         orderDate: serverTimestamp(),
         shippingAddress: {
             fullName: name,
-            phone: phone,
+            phone: formattedPhone, // Lưu SĐT đã chuẩn hóa
             email: email, // Added email to shipping address
             provinceId: provinceId, // Store ID
             province: provinceName, // Store Name
@@ -529,7 +530,7 @@ window.placeOrder = async () => {
         // 0. Kiểm tra cuối cùng: Mã giảm giá 1 lần sử dụng (Đặc biệt cho khách vãng lai check qua SĐT)
         if (appliedCoupon) {
             const checkField = auth.currentUser ? "userId" : "shippingAddress.phone";
-            const checkVal = auth.currentUser ? auth.currentUser.uid : phone;
+            const checkVal = auth.currentUser ? auth.currentUser.uid : formattedPhone; // Sử dụng SĐT đã chuẩn hóa
             
             const qReCheck = query(
                 collection(db, "orders"),

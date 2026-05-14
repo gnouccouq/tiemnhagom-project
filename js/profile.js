@@ -1,6 +1,6 @@
 import { 
-    db, auth, logout, loginWithGoogle, updateCartCount, 
-    showToast, initHeader, renderProductCard 
+    db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
+    showToast, initHeader, renderProductCard
 } from "./utils.js";
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
@@ -273,7 +273,7 @@ async function handleProfileAuth(user) {
         editForm.onsubmit = async (e) => {
             e.preventDefault();
             const newName = document.getElementById('edit-name').value;
-            const newPhone = document.getElementById('edit-phone').value;
+            const newPhone = formatPhoneNumber(document.getElementById('edit-phone').value); // Chuẩn hóa SĐT
             const newGender = document.getElementById('edit-gender').value;
             const newBirthday = document.getElementById('edit-birthday').value;
             

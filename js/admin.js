@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES 
+    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -1738,6 +1738,7 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
                     </td>
                     <td data-label="Thao tác">
                         <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${doc.id}')">Chi tiết</button>
+                        <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${doc.id}')">In Bill</button>
                     </td>
                 </tr>
             `;
@@ -1762,6 +1763,25 @@ window.updateOrderStatus = async (orderId, newStatus) => {
     }
 };
 
+window.printOrderBill = async (orderId) => {
+    try {
+        const docSnap = await getDoc(doc(db, "orders", orderId));
+        if (!docSnap.exists()) {
+            showToast("Không tìm thấy dữ liệu đơn hàng", "error");
+            return;
+        }
+        const o = docSnap.data();
+        // Chuẩn hóa thông tin khách hàng để khớp với hàm in POS
+        const customer = {
+            name: o.shippingAddress?.fullName || "Khách vãng lai",
+            phone: o.shippingAddress?.phone || "N/A"
+        };
+        printPOSReceipt(orderId, customer, o.items, o.totalAmount);
+    } catch (e) {
+        showToast("Lỗi khi chuẩn bị in hóa đơn", "error");
+    }
+};
+
 window.viewAdminOrderDetail = async (orderId) => {
     try {
         const docSnap = await getDoc(doc(db, "orders", orderId));
@@ -1780,6 +1800,9 @@ window.viewAdminOrderDetail = async (orderId) => {
             <div class="modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
                 <h3>Chi tiết đơn hàng #${orderId}</h3>
+                <button class="btn-dark" style="margin: 15px 0; width: 100%; height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="window.printOrderBill('${orderId}')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg> In hóa đơn (Bill)
+                </button>
                 <hr style="margin: 1rem 0;">
                 <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName}</p>
                 <p><strong>SĐT:</strong> ${order.shippingAddress?.phone}</p>
@@ -2286,34 +2309,47 @@ window.addProductToPOS = (id, name, price, image) => {
 };
 
 window.searchCustomerPOS = async () => {
-    const term = document.getElementById('pos-customer-search').value.trim();
-    if (!term) return;
-    const q = query(collection(db, "users"), where("identifiers", "array-contains", term));
-    const snap = await getDocs(q);
+    const inputVal = document.getElementById('pos-customer-search').value.trim();
+    if (!inputVal) return;
+    
+    // Chuẩn hóa đầu số 0 thành +84 trước khi tìm kiếm để đồng bộ với phương thức login
+    const formattedPhone = formatPhoneNumber(inputVal);
     const statusEl = document.getElementById('pos-cust-status');
+    statusEl.innerText = "🔍 Đang tìm kiếm...";
+
+    const q = query(collection(db, "users"), where("identifiers", "array-contains", formattedPhone));
+    const snap = await getDocs(q);
+    
     if (!snap.empty) {
         const u = snap.docs[0].data();
         document.getElementById('pos-cust-name').value = u.displayName || u.name || '';
-        document.getElementById('pos-cust-phone').value = u.phoneNumber || u.phone || '';
+        document.getElementById('pos-cust-phone').value = u.phone || u.phoneNumber || inputVal;
         document.getElementById('pos-cust-email').value = u.email || '';
         statusEl.innerText = "✓ Đã tìm thấy khách hàng cũ";
         window.currentPOSCustomerId = snap.docs[0].id;
     } else {
-        statusEl.innerText = "! Khách hàng mới (Sẽ tạo tài khoản chờ)";
+        statusEl.innerText = "! Khách hàng mới (Sẽ tạo tài khoản)";
+        document.getElementById('pos-cust-phone').value = inputVal;
         window.currentPOSCustomerId = null;
     }
 };
 
 function printPOSReceipt(orderId, customer, items, total) {
-    const printArea = document.getElementById('receipt-print-area');
-    if (!printArea) return;
+    let printArea = document.getElementById('receipt-print-area');
+    if (!printArea) {
+        printArea = document.createElement('div');
+        printArea.id = 'receipt-print-area';
+        document.body.appendChild(printArea);
+    }
 
     const now = new Date().toLocaleString('vi-VN');
     
     printArea.innerHTML = `
         <div class="receipt-header">
+            <img src="../Asset/images/logo.webp" class="receipt-logo" alt="Logo Tiệm Nhà Gốm">
             <h2>TIỆM NHÀ GỐM</h2>
-            <p>Gốm & Decor thủ công</p>
+            <p>Gốm & Decor</p>
+            <p>37 Nguyễn Duy, Phường Gia Định, TP.HCM
             <p>SĐT: 033 769 6231 - 090 938 0652</p>
         </div>
         <div class="receipt-info">
@@ -2341,6 +2377,11 @@ function printPOSReceipt(orderId, customer, items, total) {
             </tbody>
         </table>
         <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)}đ</div>
+        <div class="receipt-qr-section">
+            <p style="margin-bottom: 5px; font-weight: bold;">Quét mã theo dõi Tiệm:</p>
+            <img src="../Asset/images/fb-qr.webp" class="receipt-qr" alt="Facebook QR">
+            <p style="margin-top: 5px; font-size: 14px; font-weight: bold;">www.tiemnhagom.vn</p>
+        </div>
         <div class="receipt-footer">Cảm ơn Quý khách. Hẹn gặp lại!</div>
     `;
 
@@ -2348,11 +2389,12 @@ function printPOSReceipt(orderId, customer, items, total) {
 }
 
 window.createPOSOrder = async () => {
-    const name = document.getElementById('pos-cust-name').value;
-    const phone = document.getElementById('pos-cust-phone').value;
-    const email = document.getElementById('pos-cust-email').value;
+    const name = document.getElementById('pos-cust-name').value.trim();
+    const rawPhone = document.getElementById('pos-cust-phone').value.trim();
+    const email = document.getElementById('pos-cust-email').value.trim();
     const totalText = document.getElementById('pos-total-amount').value;
-    const total = Number(totalText.replace(/\./g, ''));
+    const total = Number(totalText.replace(/[^\d]/g, ''));
+    const phone = formatPhoneNumber(rawPhone); // Lưu vào DB theo định dạng +84 đồng bộ
 
     if (!name || !phone || total <= 0 || posCart.length === 0) {
         showToast("Vui lòng điền đủ thông tin khách, chọn sản phẩm và đảm bảo số tiền > 0", "error");
@@ -2367,18 +2409,17 @@ window.createPOSOrder = async () => {
         if (!customerId) {
             const newCustRef = doc(collection(db, "users"));
             customerId = newCustRef.id;
-            // Tạo một mảng `identifiers` để dễ dàng tìm kiếm khách hàng sau này
-            const identifiers = [];
-            if (phone) identifiers.push(phone);
+            
+            const identifiers = [phone];
             if (email) identifiers.push(email);
 
-            // Lưu thông tin khách hàng mới
-            // isGhost: true để đánh dấu đây là tài khoản được tạo tự động từ POS
-            // và có thể được merge với tài khoản chính thức sau này nếu user đăng ký
-
             await setDoc(newCustRef, {
-                displayName: name, phone: phone, email: email,
-                identifiers: [phone, email].filter(Boolean), isGhost: true, createdAt: new Date().toISOString()
+                displayName: name, 
+                phone: phone, 
+                email: email,
+                identifiers: identifiers, 
+                isGhost: true, 
+                createdAt: new Date().toISOString()
             });
         }
         const docRef = await addDoc(collection(db, "orders"), {
@@ -2964,6 +3005,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     posSearchInput.focus();
                 }
             }
+        });
+
+        // Nâng cấp tìm kiếm sản phẩm POS: Tìm theo Tên hoặc SKU
+        posSearchInput.addEventListener('input', () => {
+            clearTimeout(posSearchTimer);
+            const val = posSearchInput.value.trim().toLowerCase();
+            if (val.length < 1) { 
+                posSuggestions.style.display = 'none'; 
+                return; 
+            }
+
+            posSearchTimer = setTimeout(() => {
+                const results = posProductsLocal.filter(p => 
+                    (p.name || "").toLowerCase().includes(val) || 
+                    (p.id || "").toLowerCase().includes(val)
+                ).slice(0, 10);
+
+                if (results.length > 0) {
+                    posSuggestions.innerHTML = results.map((p, idx) => `
+                        <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" 
+                             onclick="window.addProductToPOS('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, '${p.imageUrl}')">
+                            <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                                <div style="font-size: 0.7rem; color: #888;">
+                                    SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    posSuggestions.style.display = 'block';
+                    posHighlightedIndex = -1;
+                } else {
+                    posSuggestions.innerHTML = '<div style="padding: 15px; text-align: center; color: #999; font-size: 0.8rem;">Không tìm thấy sản phẩm</div>';
+                    posSuggestions.style.display = 'block';
+                }
+            }, 200);
         });
 
         // Điều hướng bằng bàn phím (Lên/Xuống/Enter/Esc) trong ô tìm kiếm

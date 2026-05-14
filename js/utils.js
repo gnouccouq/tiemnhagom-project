@@ -51,13 +51,31 @@ export const DEFAULT_PRODUCT_CATEGORIES = [
 // Biến toàn cục để lưu trữ danh mục động, được cập nhật từ Firestore
 export let dynamicCategories = [];
 
+// Ánh xạ màu sắc sang mã hex để hiển thị swatch (Dùng chung)
+export const COLOR_MAP = {
+    "Trắng": "#FFFFFF",
+    "Đen": "#000000",
+    "Xám": "#808080",
+    "Xanh": "#0000FF",
+    "Đỏ": "#FF0000",
+    "Vàng": "#FFFF00",
+    "Hồng": "#FFC0CB",
+    "Tím": "#800080",
+    "Nâu": "#A52A2A",
+    "Kem": "#FFFDD0",
+    "Beige": "#F5F5DC",
+    "Xanh lá": "#008000"
+    // Thêm các màu khác nếu cần
+};
+
+
 // Hàm để lấy danh mục hiện tại (có thể dùng trong các module khác)
 export function getDynamicCategories() {
     return dynamicCategories;
 }
 
 // Hàm hỗ trợ bảo mật: Chống tấn công XSS bằng cách mã hóa các ký tự đặc biệt
-export function escapeHTML(str) {
+export function escapeHTML(str) { // Đảm bảo hàm này được export
     if (!str) return "";
     return str.toString().replace(/[&<>"']/g, function(m) {
         return {
@@ -70,6 +88,18 @@ export function escapeHTML(str) {
     });
 }
 
+// Hàm hỗ trợ định dạng số điện thoại về chuẩn +84
+export function formatPhoneNumber(phone) { // Đảm bảo hàm này được export
+    if (!phone) return '';
+    phone = phone.replace(/\s/g, ''); // Xóa khoảng trắng
+    if (phone.startsWith('0')) {
+        return '+84' + phone.substring(1);
+    }
+    if (!phone.startsWith('+')) {
+        return '+' + phone; // Giả định là định dạng quốc tế nếu không bắt đầu bằng +
+    }
+    return phone;
+}
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -517,7 +547,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     </a>
                     <ul class="user-dropdown-menu">
                         <li class="dropdown-user-info">
-                            <div id="user-name-display" style="font-weight: 700; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
+                            <div id="user-name-display" style="font-weight: 300; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
                                 ${displayName}
                             </div>
                         </li>

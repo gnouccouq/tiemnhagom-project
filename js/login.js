@@ -1,5 +1,5 @@
 import { 
-    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast 
+    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber
 } from "./utils.js";
 import { 
     RecaptchaVerifier, signInWithPhoneNumber 
@@ -116,13 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Chuyển đổi định dạng số VN: 090... -> +8490...
-        let formattedPhone = phoneInput;
-        if (phoneInput.startsWith('0')) {
-            formattedPhone = '+84' + phoneInput.substring(1);
-        } else if (!phoneInput.startsWith('+')) {
-            showToast("Số điện thoại không hợp lệ (VD: 090...)", "error");
-            return;
-        }
+        const formattedPhone = formatPhoneNumber(phoneInput);
 
         const btn = e.currentTarget;
         try {
