@@ -9,6 +9,7 @@ import {
     RecaptchaVerifier, signInWithPhoneNumber
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
 // 1. Cấu hình & Khởi tạo Firebase (Duy nhất một nơi)
 const firebaseConfig = {
@@ -36,6 +37,7 @@ export const db = app ? initializeFirestore(app, {
 }) : null;
 
 export const auth = app ? getAuth(app) : null;
+export const analytics = app ? getAnalytics(app) : null;
 export const storage = app ? getStorage(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
