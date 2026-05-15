@@ -456,7 +456,7 @@ export async function addToCart(productData) {
 }
 
 // Logic cho Popup Tìm kiếm từ nút nổi (Di chuyển từ main.js)
-export function setupSearchFloat() {
+export function setupSearchFloat(pathPrefix = '') {
     const btnOpen = document.getElementById('btn-open-search-float');
     const overlay = document.getElementById('home-search-overlay');
     const btnClose = document.getElementById('btn-close-home-search');
@@ -473,7 +473,7 @@ export function setupSearchFloat() {
     overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('active'); };
 
     // Khởi tạo autocomplete trên input mới của popup
-    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', '');
+    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);
 }
 
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
@@ -649,8 +649,11 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Khởi tạo tính năng xem ảnh full screen
         setupFullScreenImages();
 
+        // Khởi tạo thanh tìm kiếm chính trong Header Overlay
+        initAutocomplete('header-search-input', 'search-suggestions', pathPrefix);
+
         // Khởi tạo nút tìm kiếm nổi và popup tìm kiếm
-        setupSearchFloat();
+        setupSearchFloat(pathPrefix);
 
         // Khởi tạo nút cuộn lên đầu trang
         setupScrollToTop();
