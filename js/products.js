@@ -244,7 +244,10 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Cập nhật trạng thái nút
         if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;
         if (prevBtn) prevBtn.disabled = currentPage === 1;
-        if (nextBtn) nextBtn.disabled = querySnapshot.docs.length < PAGE_SIZE;
+        // Kiểm tra xem có trang tiếp theo không (Lookahead logic tương tự trang Flash Sale)
+        const nextQueryCheck = query(productsQuery, startAfter(lastVisible), limit(1));
+        const nextSnap = await getDocs(nextQueryCheck);
+        if (nextBtn) nextBtn.disabled = nextSnap.empty;
 
     } catch (error) {
         console.error("Lỗi lấy dữ liệu sản phẩm:", error);
@@ -350,6 +353,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Lắng nghe danh mục động (Duy nhất 1 listener độc lập)
     onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
         if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && data.groups) {
+                // Cập nhật mảng dùng chung ngay lập tức để các hàm lọc phía dưới có dữ liệu
+                dynamicCategories.length = 0;
+                dynamicCategories.push(...data.groups.sort((a, b) => a.order - b.order));
+            }
             renderCategoryGrid();
             if (!categoriesInitialized) {
                 handleInitialFilters(); // handleInitialFilters sẽ gọi fetchProducts('init')
@@ -375,4 +384,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Gán sự kiện cho Sort select
     document.getElementById('sort-by')?.addEventListener('change', () => fetchProducts('init'));
+
+    // 8. Gán sự kiện cho các nút phân trang
+    document.getElementById('next-page')?.addEventListener('click', () => {
+        currentPage++;
+        fetchProducts('next');
+    });
+    document.getElementById('prev-page')?.addEventListener('click', () => {
+        currentPage--;
+        fetchProducts('prev');
+    });
 });

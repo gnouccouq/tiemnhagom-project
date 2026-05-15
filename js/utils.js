@@ -821,11 +821,14 @@ export async function loadSharedComponents(pathPrefix = './') {
         onSnapshot(doc(db, "settings", "product_categories"), async (snapshot) => {
             const data = snapshot.data();
             if (snapshot.exists() && data && data.groups) {
-                // Sắp xếp các nhóm theo trường 'order'
-                dynamicCategories = data.groups.sort((a, b) => a.order - b.order);
+                const sorted = data.groups.sort((a, b) => a.order - b.order);
+                // Cập nhật mảng tại chỗ (in-place) để giữ nguyên tham chiếu cho các module khác
+                dynamicCategories.length = 0;
+                dynamicCategories.push(...sorted);
             } else {
-                // Nếu chưa có trên cloud, dùng mặc định làm khởi đầu và tạo document
-                dynamicCategories = DEFAULT_PRODUCT_CATEGORIES;
+                // Fallback về mặc định nếu không có dữ liệu
+                dynamicCategories.length = 0;
+                dynamicCategories.push(...DEFAULT_PRODUCT_CATEGORIES);
                 // Lưu lại cấu trúc mặc định vào Firestore
                 await setDoc(doc(db, "settings", "product_categories"), { groups: dynamicCategories });
             }
