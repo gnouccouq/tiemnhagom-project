@@ -243,9 +243,8 @@ async function fetchProductDetail() {
                             <span class="category-tag">${p.category}</span>
                             <span class="product-sku">Mã: ${productId}</span>
                             <h1>${p.name}</h1>
-                            <div class="rating" style="color: #f1c40f;">
-                                ${starsHtml} 
-                                <span style="color: #888; font-size: 0.85rem; font-weight:400; margin-left:8px;">(${displayRating}/5) &bull; Đã bán ${soldCount}</span>
+                            <div class="rating">
+                                <span style="color: #888; font-size: 0.85rem; font-weight:400;">Đã bán ${soldCount}</span>
                             </div>
                             <div class="product-price-row">
                                 <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>

@@ -419,7 +419,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                 <h3>${product.name}</h3>
             </a>
             <div class="product-rating-row">
-                <div class="rating-mini">${starsHtml}</div>
+                <div class="rating-mini" style="display: none;">${starsHtml}</div>
                 <span class="sold-count">Đã bán ${soldCount}</span>
             </div>
             <div class="product-price-block">

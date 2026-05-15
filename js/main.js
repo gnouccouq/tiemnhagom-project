@@ -154,6 +154,37 @@ async function fetchRecommendations() {
     }
 }
 
+// Hàm bộ đếm ngược 7 ngày (Reset vào mỗi thứ Hai 00:00:00)
+function initWeeklyCountdown() {
+    const updateTimer = () => {
+        const now = new Date();
+        // Tính toán ngày Thứ Hai tới lúc 0h00
+        // getDay(): 0 là CN, 1 là T2...
+        const daysUntilMonday = (8 - (now.getDay() === 0 ? 7 : now.getDay())) % 8 || 7;
+        
+        const target = new Date(now);
+        target.setDate(now.getDate() + (now.getDay() === 0 ? 1 : 8 - now.getDay()));
+        target.setHours(0, 0, 0, 0);
+
+        const diff = target - now;
+        if (diff <= 0) return;
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if(document.getElementById('days')) {
+            document.getElementById('days').innerText = d.toString().padStart(2, '0');
+            document.getElementById('hours').innerText = h.toString().padStart(2, '0');
+            document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
+            document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
+        }
+    };
+    setInterval(updateTimer, 1000);
+    updateTimer();
+}
+
 // Logic cho Hero Carousel
 async function initHeroCarousel() {
     const container = document.getElementById('hero-carousel-container');
@@ -297,6 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
         initHeroCarousel();
+        initWeeklyCountdown();
 
         // Hiệu ứng Header trong suốt mượt mà khi cuộn trang (chỉ áp dụng cho Trang chủ)
         const navbar = document.querySelector('.navbar');
