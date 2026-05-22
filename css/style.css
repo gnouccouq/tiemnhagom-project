@@ -2084,9 +2084,17 @@ footer {
     display: flex;
     flex-direction: column;
     position: fixed;
+    top: 0;
+    left: 0;
     height: 100vh;
     z-index: 1000;
     padding: 25px 0;
+    animation: adminSidebarFade 0.5s ease-out;
+}
+
+@keyframes adminSidebarFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .sidebar-brand {

@@ -9,14 +9,25 @@ import {
 // --- Logic xử lý giỏ hàng ---
 
 // API Endpoints
-const PROVINCES_API_URL = "https://production.cas.so/address-kit/2025-07-01/provinces";
-const COMMUNES_API_URL = "https://production.cas.so/address-kit/2025-07-01/communes";
+const LOCAL_PROVINCES_URL = "../provinces.json";
 
 let appliedCoupon = null; // { code: '...', type: 'percent'|'fixed', value: 10 }
 
 // Cache for location data to avoid repeated API calls
-let cachedProvinces = [];
-let cachedCommunes = {}; // { provinceId: [commune1, commune2, ...] }
+let fullLocationData = null;
+
+async function loadLocationData() {
+    if (fullLocationData) return fullLocationData;
+    try {
+        const response = await fetch(LOCAL_PROVINCES_URL);
+        if (!response.ok) throw new Error("Failed to load provinces.json");
+        fullLocationData = await response.json();
+        return fullLocationData;
+    } catch (e) {
+        console.error("Lỗi tải dữ liệu tỉnh thành:", e);
+        return [];
+    }
+}
 
 // Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
 function calculateShippingFee(method, provinceName) { // Changed parameter name to provinceName
@@ -24,47 +35,25 @@ function calculateShippingFee(method, provinceName) { // Changed parameter name 
     if (!provinceName) return 30000; // Phí mặc định khi chưa chọn tỉnh
     
     const innerCities = ["Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Hải Phòng"]; // Expanded inner cities
-    if (innerCities.includes(provinceName)) return 30000; // Phí nội thành
+    const isInnerCity = innerCities.some(city => provinceName.includes(city));
+    if (isInnerCity) return 30000; // Phí nội thành
     return 40000; // Phí đi tỉnh
 }
 
 // Function to fetch provinces from API
 async function fetchProvinces() {
-    if (cachedProvinces.length > 0) {
-        return cachedProvinces;
-    }
-    try {
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const response = await fetch(proxyUrl + encodeURIComponent(PROVINCES_API_URL));
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        cachedProvinces = data;
-        return data;
-    } catch (error) {
-        console.error("Error fetching provinces:", error);
-        showToast("Không thể tải danh sách tỉnh thành. Vui lòng thử lại.", "error");
-        return [];
-    }
+    const data = await loadLocationData();
+    return data.map(p => ({ id: p.code, name: p.name }));
 }
 
 // Function to fetch communes by province ID from API
 async function fetchCommunesByProvinceId(provinceId) {
-    if (cachedCommunes[provinceId]) {
-        return cachedCommunes[provinceId];
-    }
-    try {
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const targetUrl = `${COMMUNES_API_URL}?provinceId=${provinceId}`;
-        const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        cachedCommunes[provinceId] = data;
-        return data;
-    } catch (error) {
-        console.error(`Error fetching communes for province ${provinceId}:`, error);
-        showToast("Không thể tải danh sách phường/xã. Vui lòng thử lại.", "error");
-        return [];
-    }
+    const data = await loadLocationData();
+    const province = data.find(p => p.code == provinceId);
+
+    if (!province.wards) return [];
+    return province.wards.map(w => ({ id: w.ward_code, name: w.name }));
+
 }
 
 async function renderCart() {

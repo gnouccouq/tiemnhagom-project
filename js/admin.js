@@ -136,7 +136,10 @@ async function checkAdminRights(user) {
             const adminBody = document.querySelector('.admin-dashboard-layout');
             if (adminBody) {
                 adminBody.style.display = "block";
-                adminBody.classList.add('fade-in-content');
+                // Không áp dụng hiệu ứng có transform lên body vì sẽ làm hỏng position: fixed của sidebar.
+                // Thay vào đó, áp dụng hiệu ứng cho phần nội dung chính.
+                const mainContent = document.querySelector('.admin-main-content');
+                if (mainContent) mainContent.classList.add('fade-in-content');
             }
             updateAdminSidebarProfile(user, adminData);
             applyRoleToSidebar();
