@@ -32,9 +32,9 @@ async function loadLocationData() {
 // Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
 function calculateShippingFee(method, provinceName) { // Changed parameter name to provinceName
     if (method === 'pickup') return 0;
-    if (!provinceName) return 30000; // Phí mặc định khi chưa chọn tỉnh
+    if (!provinceName) return 0; // Phí mặc định khi chưa chọn tỉnh
     
-    const innerCities = ["Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Hải Phòng"]; // Expanded inner cities
+    const innerCities = ["Hồ Chí Minh"]; // Expanded inner cities
     const isInnerCity = innerCities.some(city => provinceName.includes(city));
     if (isInnerCity) return 30000; // Phí nội thành
     return 40000; // Phí đi tỉnh
