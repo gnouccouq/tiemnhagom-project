@@ -300,9 +300,9 @@ async function initOverview() {
             
             recentOrdersContainer.innerHTML = recentOrders.map(o => `
                 <tr>
-                    <td><strong>${o.shippingAddress?.fullName || 'Khách vãng lai'}</strong></td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ</td>
-                    <td><span class="order-status-${o.status.toLowerCase().replace(/\s/g, '-')}">${o.status}</span></td>
+                    <td data-label="Khách hàng"><strong>${o.shippingAddress?.fullName || 'Khách vãng lai'}</strong></td>
+                    <td data-label="Tổng tiền">${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ</td>
+                    <td data-label="Trạng thái"><span class="order-status-${o.status.toLowerCase().replace(/\s/g, '-')}">${o.status}</span></td>
                 </tr>
             `).join('');
         }
@@ -3048,6 +3048,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Điều hướng bằng bàn phím (Lên/Xuống/Enter/Esc) trong ô tìm kiếm
+        // Admin Sidebar Toggle for Mobile
+        const adminSidebarToggle = document.getElementById('admin-sidebar-toggle');
+        const adminSidebar = document.querySelector('.admin-sidebar');
+        const adminBody = document.querySelector('.admin-dashboard-layout');
+
+        if (adminSidebarToggle && adminSidebar && adminBody) {
+            adminSidebarToggle.addEventListener('click', () => {
+                adminSidebar.classList.toggle('active'); // Toggles the sidebar visibility
+                adminBody.classList.toggle('admin-sidebar-open'); // Adds overlay and prevents scroll
+            });
+
+            // Close sidebar when clicking outside (on the overlay)
+            adminBody.addEventListener('click', (e) => {
+                if (adminBody.classList.contains('admin-sidebar-open') &&
+                    !adminSidebar.contains(e.target) &&
+                    !adminSidebarToggle.contains(e.target)) {
+                    adminSidebar.classList.remove('active');
+                    adminBody.classList.remove('admin-sidebar-open');
+                }
+            });
+        }
+
         posSearchInput.addEventListener('keydown', (e) => {
             const items = posSuggestions.querySelectorAll('.suggestion-item');
             if (posSuggestions.style.display === 'none' || items.length === 0) return;

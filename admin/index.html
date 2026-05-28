@@ -25,19 +25,19 @@
             </div>
             
             <nav class="sidebar-nav">
-                <button class="admin-tab-btn active" data-target="overview-section">📊 Tổng quan</button>
-                <button class="admin-tab-btn" data-target="product-section">📦 Sản phẩm</button>
-                <button class="admin-tab-btn" data-target="banner-section">🖼️ Banner</button>
-                <button class="admin-tab-btn" data-target="pos-section">🛒 Bán tại shop (POS)</button>
-                <button class="admin-tab-btn" data-target="order-section">📋 Đơn hàng <span id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
-                <button class="admin-tab-btn" data-target="coupon-section">🎟️ Mã giảm giá</button>
-                <button class="admin-tab-btn" data-target="category-section">📁 Danh mục</button>
-                <button class="admin-tab-btn" data-target="user-section">👥 Người dùng</button>
-                <button class="admin-tab-btn" data-target="admin-account-section">🛡️ Quản trị viên</button>
-                <button class="admin-tab-btn" data-target="stats-section">📈 Thống kê</button>
-                <button class="admin-tab-btn" data-target="inventory-log-section">📜 Nhật ký kho</button>
-                <button class="admin-tab-btn" data-target="news-section">📰 Tin tức</button>
-                <button class="admin-tab-btn" data-target="maintenance-section">🛠️ Bảo trì</button>
+                <button class="admin-tab-btn active" data-target="overview-section">📊 <span>Tổng quan</span></button>
+                <button class="admin-tab-btn" data-target="product-section">📦 <span>Sản phẩm</span></button>
+                <button class="admin-tab-btn" data-target="banner-section">🖼️ <span>Banner</span></button>
+                <button class="admin-tab-btn" data-target="pos-section">🛒 <span>Bán tại shop (POS)</span></button>
+                <button class="admin-tab-btn" data-target="order-section">📋 <span>Đơn hàng</span> <span id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
+                <button class="admin-tab-btn" data-target="coupon-section">🎟️ <span>Mã giảm giá</span></button>
+                <button class="admin-tab-btn" data-target="category-section">📁 <span>Danh mục</span></button>
+                <button class="admin-tab-btn" data-target="user-section">👥 <span>Người dùng</span></button>
+                <button class="admin-tab-btn" data-target="admin-account-section">🛡️ <span>Quản trị viên</span></button>
+                <button class="admin-tab-btn" data-target="stats-section">📈 <span>Thống kê</span></button>
+                <button class="admin-tab-btn" data-target="inventory-log-section">📜 <span>Nhật ký kho</span></button>
+                <button class="admin-tab-btn" data-target="news-section">📰 <span>Tin tức</span></button>
+                <button class="admin-tab-btn" data-target="maintenance-section">🛠️ <span>Bảo trì</span></button>
             </nav>
 
             <div class="sidebar-footer">
@@ -54,6 +54,10 @@
             <header class="content-header">
                 <h1 id="current-tab-title">Tổng quan</h1>
                 <div class="header-actions">
+                    <!-- New toggle button for mobile sidebar -->
+                    <button id="admin-sidebar-toggle" class="btn-minimal admin-sidebar-toggle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
                     <span id="admin-clock"></span>
                 </div>
             </header>
