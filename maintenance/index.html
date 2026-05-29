@@ -14,8 +14,11 @@
         body {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            padding-top: 0; /* Bỏ padding-top của body để hero chiếm toàn màn hình */
+            height: 100vh;
+            height: 100dvh; /* Chiều cao hiển thị thực tế trên di động */
+            overflow: hidden; /* Khóa hoàn toàn thanh cuộn */
+            padding: 0 !important; /* Xóa bỏ padding mặc định từ style.css */
+            margin: 0 !important;
         }
         main {
             flex: 1; /* Đảm bảo main chiếm hết không gian còn lại */
@@ -23,19 +26,44 @@
             align-items: center;
             justify-content: center;
             padding: 0; /* Bỏ padding mặc định của main */
+            height: 100%;
         }
         .countdown-hero {
             width: 100%;
-            min-height: 70vh; /* Đảm bảo đủ cao nhưng không chiếm hết */
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.webp') no-repeat center center/cover;
-            background-attachment: fixed;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            margin-top: 0 !important; /* Ghi đè margin-top: 2rem từ style.css */
+            background: #000; /* Nền đen dự phòng */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #fff;
             text-align: center;
-            padding: 2rem 5%;
+            padding: 1rem 5% !important; /* Ghi đè padding: 4rem từ style.css */
+        }
+        .bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+        /* Lớp phủ gradient đè lên video */
+        .countdown-hero::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+            z-index: 2;
+        }
+        /* Đẩy nội dung lên trên cùng */
+        .countdown-hero > *:not(video) {
+            position: relative;
+            z-index: 3;
         }
         .coming-soon-label {
             text-transform: uppercase;
@@ -53,6 +81,7 @@
             border: none;
             letter-spacing: -1px;
             text-shadow: 0 5px 15px rgba(0,0,0,0.4); /* Thêm đổ bóng cho chữ */
+            animation: artisticBlur 6s infinite ease-in-out;
         }
         .countdown-hero p {
             font-size: 1.1rem;
@@ -78,6 +107,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
+            animation: itemGlow 10s infinite alternate ease-in-out;
         }
         .countdown-item:hover {
             transform: translateY(-10px);
@@ -105,6 +135,15 @@
             letter-spacing: 2px;
             font-size: 0.8rem;
         }
+        @keyframes artisticBlur {
+            0%, 100% { filter: blur(0px); opacity: 1; }
+            50% { filter: blur(1.5px); opacity: 0.85; }
+        }
+        @keyframes itemGlow {
+            0%, 100% { border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+            50% { border-color: rgba(142, 198, 173, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 0 20px rgba(142, 198, 173, 0.2); }
+            85% { border-color: rgba(241, 196, 15, 0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 0 20px rgba(241, 196, 15, 0.15); }
+        }
         @media (max-width: 768px) {
             .countdown-hero h1 { font-size: 3rem; } /* Điều chỉnh responsive */
             .countdown-hero p { font-size: 1rem; }
@@ -119,6 +158,11 @@
 
     <main>
         <section class="countdown-hero">
+            <video autoplay muted loop playsinline poster="../Asset/images/hero-bg.webp" class="bg-video">
+                <source src="../Asset/videos/maintenance-bg.mp4" type="video/mp4">
+                Trình duyệt của bạn không hỗ trợ video nền.
+            </video>
+
             <div class="coming-soon-label" id="maintenance-label">SẮP RA MẮT</div>
             <h1 id="maintenance-h1">Tiệm Nhà Gốm Sắp Ra Mắt!</h1>
             <p id="maintenance-p">Chúng tôi đang gấp rút hoàn thiện những khâu cuối cùng để mang đến cho bạn một trải nghiệm mua sắm tuyệt vời nhất với các sản phẩm gốm thủ công độc đáo. Hãy cùng đếm ngược và chờ đón nhé!</p>
