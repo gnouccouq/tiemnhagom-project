@@ -3040,6 +3040,27 @@ footer {
     .banner-content p { font-size: 0.9rem; }
 }
 
+/* Banner Breadcrumb Styles */
+.product-banner .breadcrumb {
+    margin-top: 15px;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+}
+.product-banner .breadcrumb a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.product-banner .breadcrumb a:hover {
+    color: #fff;
+}
+.product-banner .breadcrumb span {
+    margin: 0 10px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
 /* Category Square Grid */
 .category-grid-section { margin-bottom: 4rem; }
 .category-square-grid {
