@@ -598,7 +598,8 @@ async function initBannerManagement() {
     const renderBanners = () => {
         listContainer.innerHTML = currentBanners.map((b, idx) => `
             <div class="admin-card" style="margin-bottom: 10px; padding: 15px; display: flex; gap: 15px; align-items: center;">
-                <img src="${b.imageUrl}" style="width: 120px; height: 70px; object-fit: cover; border-radius: 4px;">
+                <img src="${b.imageUrl}" title="Desktop" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;">
+                <img src="${b.mobileImageUrl || b.imageUrl}" title="Mobile" style="width: 35px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
                 <div style="flex: 1;">
                     <h4 style="margin: 0; font-size: 0.9rem;">${b.title || '<em style="color:#ccc">(Trống)</em>'}</h4>
                     <p style="font-size: 0.75rem; color: #666; margin: 5px 0;">${b.subtitle || '<em style="color:#ccc">(Trống)</em>'}</p>
@@ -622,7 +623,9 @@ async function initBannerManagement() {
         document.getElementById('banner-subtitle').value = b.subtitle;
         document.getElementById('banner-link').value = b.link || '';
         document.getElementById('banner-image-preview').innerHTML = `<img src="${b.imageUrl}" style="width: 150px; border-radius: 4px;">`;
+        document.getElementById('banner-image-mobile-preview').innerHTML = b.mobileImageUrl ? `<img src="${b.mobileImageUrl}" style="width: 60px; border-radius: 4px;">` : "";
         form.dataset.currentImageUrl = b.imageUrl;
+        form.dataset.currentMobileImageUrl = b.mobileImageUrl || '';
         window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
     };
 
@@ -638,7 +641,9 @@ async function initBannerManagement() {
         form.reset();
         document.getElementById('banner-index').value = "-1";
         document.getElementById('banner-image-preview').innerHTML = "";
+        document.getElementById('banner-image-mobile-preview').innerHTML = "";
         delete form.dataset.currentImageUrl;
+        delete form.dataset.currentMobileImageUrl;
     };
 
     form.onsubmit = async (e) => {
@@ -647,21 +652,32 @@ async function initBannerManagement() {
         const title = document.getElementById('banner-title').value.trim();
         const subtitle = document.getElementById('banner-subtitle').value.trim();
         const link = document.getElementById('banner-link').value.trim();
-        const file = document.getElementById('banner-image').files[0];
+        const pcFile = document.getElementById('banner-image').files[0];
+        const mbFile = document.getElementById('banner-image-mobile').files[0];
         const submitBtn = form.querySelector('button[type="submit"]');
 
         try {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
             let imageUrl = form.dataset.currentImageUrl || '';
-            if (file) {
-                const webpFile = await convertToWebP(file, 1920, false); // Banners không bị ép thành hình vuông
-                const storageRef = ref(storage, `banners/${Date.now()}_${webpFile.name}`);
+            let mobileImageUrl = form.dataset.currentMobileImageUrl || '';
+
+            if (pcFile) {
+                const webpFile = await convertToWebP(pcFile, 1920, false);
+                const storageRef = ref(storage, `banners/pc_${Date.now()}_${webpFile.name}`);
                 const snapshot = await uploadBytes(storageRef, webpFile);
                 imageUrl = await getDownloadURL(snapshot.ref);
             }
+
+            if (mbFile) {
+                const webpFile = await convertToWebP(mbFile, 1080, false);
+                const storageRef = ref(storage, `banners/mb_${Date.now()}_${webpFile.name}`);
+                const snapshot = await uploadBytes(storageRef, webpFile);
+                mobileImageUrl = await getDownloadURL(snapshot.ref);
+            }
+
             if (!imageUrl) throw new Error("Chưa có ảnh banner");
-            const slideData = { title, subtitle, link, imageUrl };
+            const slideData = { title, subtitle, link, imageUrl, mobileImageUrl };
             if (idx === -1) currentBanners.push(slideData);
             else currentBanners[idx] = slideData;
             await setDoc(bannerRef, { slides: currentBanners });

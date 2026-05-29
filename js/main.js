@@ -243,7 +243,10 @@ async function initHeroCarousel() {
     container.innerHTML = slidesData.map((s, idx) => {
         const hasContent = s.title || s.subtitle || s.link;
         const slideInner = `
-            <img src="${s.imageUrl}" alt="${s.title || 'Banner Tiệm Nhà Gốm'}" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
+            <picture>
+                <source media="(max-width: 768px)" srcset="${s.mobileImageUrl || s.imageUrl}">
+                <img src="${s.imageUrl}" alt="${s.title || 'Banner Tiệm Nhà Gốm'}" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} style="width:100%; height:100%; object-fit:cover;">
+            </picture>
             ${hasContent ? `
                 <div class="hero-content">
                     ${s.title ? `<h1>${s.title}</h1>` : ''}
