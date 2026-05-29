@@ -37,6 +37,7 @@
                 <button class="admin-tab-btn" data-target="stats-section">📈 <span>Thống kê</span></button>
                 <button class="admin-tab-btn" data-target="inventory-log-section">📜 <span>Nhật ký kho</span></button>
                 <button class="admin-tab-btn" data-target="news-section">📰 <span>Tin tức</span></button>
+                <button class="admin-tab-btn" data-target="collections-section">🎨 <span>Bộ sưu tập</span></button>
                 <button class="admin-tab-btn" data-target="maintenance-section">🛠️ <span>Bảo trì</span></button>
             </nav>
 
@@ -307,6 +308,43 @@
             </div>
         </div>
 
+        <!-- Section Quản lý Bộ sưu tập -->
+        <div id="collections-section" class="admin-section">
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <h3>Thêm/Sửa Bộ sưu tập</h3>
+                    <form id="collection-form" class="admin-form">
+                        <input type="hidden" id="collection-edit-index" value="-1">
+                        <div class="form-group">
+                            <label>Tên bộ sưu tập</label>
+                            <input type="text" id="collection-name" required placeholder="VD: Gốm Tối Giản">
+                        </div>
+                        <div class="form-group">
+                            <label>Ảnh Banner (1200x400)</label>
+                            <input type="file" id="collection-image" accept="image/*">
+                            <div id="collection-image-preview" style="margin-top: 10px;"></div>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+                            <input type="checkbox" id="collection-show-home" style="width: auto; cursor: pointer;">
+                            <label for="collection-show-home" style="margin-bottom: 0; cursor: pointer;">Hiển thị ở trang chủ (Tối đa 3)</label>
+                        </div>
+                        <button type="submit" class="btn-dark" style="width: 100%;">Lưu bộ sưu tập</button>
+                    </form>
+                    <div style="margin-top: 2rem; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem;">
+                        <p>💡 <strong>Gợi ý:</strong> Bộ sưu tập giúp bạn gom nhóm các sản phẩm theo chủ đề (Tết, Quà tặng, Minimalist...) để hiển thị nổi bật trên trang chủ.</p>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h3>Danh sách Bộ sưu tập hiện có</h3>
+                    <div id="admin-collection-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- JS render -->
+                        <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Section Quản lý Sản phẩm -->
         <div id="product-section" class="admin-section">
             <section class="admin-grid">
@@ -328,6 +366,12 @@
                                 <option value="">-- Chọn danh mục --</option> 
                                 <!-- Danh mục sẽ được nạp động từ Firestore -->
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bộ sưu tập (Chọn nhiều)</label>
+                            <div id="product-collections-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+                                <!-- JS render checkboxes -->
+                            </div>
                         </div>
                         <div class="form-group">
                             <div style="display: flex; gap: 10px;">

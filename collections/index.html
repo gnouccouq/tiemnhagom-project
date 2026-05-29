@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tất cả Bộ sưu tập | Tiệm Nhà Gốm</title>
+    <meta name="description" content="Khám phá trọn bộ các bộ sưu tập gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm.">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main>
+        <section class="product-banner" style="height: 300px; background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=1600');">
+            <div class="banner-content">
+                <h1>Bộ sưu tập</h1>
+                <p>Nơi lưu giữ những câu chuyện của đất và lửa</p>
+            </div>
+        </section>
+
+        <section class="collections-section" style="padding-top: 2rem; margin-bottom: 5rem;">
+            <div id="all-collections-grid" class="collection-grid">
+                <!-- Dữ liệu được nạp tự động bởi script bên dưới -->
+                <div style="text-align:center; padding: 5rem; grid-column: 1/-1;"><span class="spinner"></span></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { db, initHeader } from "../js/utils.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initHeader('../');
+
+            async function fetchAllCollections() {
+                const container = document.getElementById('all-collections-grid');
+                try {
+                    const snap = await getDoc(doc(db, "settings", "collections"));
+                    const collections = (snap.exists() && snap.data().items) ? snap.data().items : [];
+
+                    if (collections.length > 0) {
+                        // Hiển thị toàn bộ, sắp xếp theo thứ tự (order) đã đặt trong Admin
+                        container.innerHTML = collections.sort((a,b) => (a.order || 0) - (b.order || 0)).map(c => `
+                            <a href="../products/?collection=${encodeURIComponent(c.name)}" class="collection-banner is-visible">
+                                <img src="${c.imageUrl}" alt="${c.name}" loading="lazy">
+                                <div class="collection-overlay">
+                                    <h3>${c.name}</h3>
+                                    <span class="btn-minimal" style="color:#fff; border-color:#fff;">Khám phá bộ sưu tập</span>
+                                </div>
+                            </a>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #999; padding: 5rem;">Hiện chưa có bộ sưu tập nào được tạo.</p>';
+                    }
+                } catch (e) {
+                    console.error("Lỗi tải bộ sưu tập:", e);
+                    container.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #e74c3c; padding: 5rem;">Không thể kết nối đến máy chủ.</p>';
+                }
+            }
+            fetchAllCollections();
+        });
+    </script>
+</body>
+</html>

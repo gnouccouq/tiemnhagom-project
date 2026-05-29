@@ -11,6 +11,7 @@ import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.
 
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
+let adminCollections = []; // Mảng chứa danh sách bộ sưu tập
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
 let currentAdminRole = 'staff'; // Quyền mặc định
 let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
@@ -29,6 +30,7 @@ const ALL_SECTIONS = [
     { id: 'stats-section', label: 'Thống kê' },
     { id: 'inventory-log-section', label: 'Nhật ký kho' },
     { id: 'news-section', label: 'Tin tức' },
+    { id: 'collections-section', label: 'Bộ sưu tập' },
     { id: 'maintenance-section', label: 'Bảo trì' }
 ];
 
@@ -94,6 +96,10 @@ function setupAdminTabs() {
 
             if (targetId === 'news-section') {
                 initNewsManagement();
+            }
+
+            if (targetId === 'collections-section') {
+                initCollectionManagement();
             }
         });
     });
@@ -667,6 +673,105 @@ async function initBannerManagement() {
     };
 }
 
+// --- Logic Quản lý Bộ sưu tập ---
+async function initCollectionManagement() {
+    const listContainer = document.getElementById('admin-collection-list');
+    const form = document.getElementById('collection-form');
+    if (!listContainer || !form) return;
+
+    onSnapshot(doc(db, "settings", "collections"), (snapshot) => {
+        if (snapshot.exists()) {
+            adminCollections = snapshot.data().items || [];
+        } else {
+            adminCollections = [];
+        }
+        renderCollectionList(listContainer);
+        populateCollectionCheckboxes();
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('collection-name').value.trim();
+        const file = document.getElementById('collection-image').files[0];
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const showHome = document.getElementById('collection-show-home').checked;
+        const editIndex = parseInt(document.getElementById('collection-edit-index').value);
+
+        if (!name) return;
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            let imageUrl = form.dataset.currentImageUrl || '';
+
+            if (file) {
+                const webpFile = await convertToWebP(file, 1200, false);
+                const storageRef = ref(storage, `collections/${Date.now()}_${webpFile.name}`);
+                const snap = await uploadBytes(storageRef, webpFile);
+                imageUrl = await getDownloadURL(snap.ref);
+            }
+
+            if (!imageUrl) throw new Error("Vui lòng chọn ảnh cho bộ sưu tập");
+
+            const collectionData = { 
+                name, 
+                imageUrl, 
+                showOnHome: showHome,
+                order: editIndex > -1 ? adminCollections[editIndex].order : (adminCollections.length + 1) 
+            };
+            
+            if (editIndex > -1) adminCollections[editIndex] = collectionData;
+            else adminCollections.push(collectionData);
+
+            await setDoc(doc(db, "settings", "collections"), { items: adminCollections });
+            showToast("Đã lưu bộ sưu tập thành công!");
+            form.reset();
+            document.getElementById('collection-edit-index').value = "-1";
+            document.getElementById('collection-show-home').checked = false;
+            document.getElementById('collection-image-preview').innerHTML = "";
+            delete form.dataset.currentImageUrl;
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Lưu bộ sưu tập";
+        }
+    };
+}
+
+function renderCollectionList(container) {
+    container.innerHTML = adminCollections.map((c, idx) => `
+        <div class="admin-card" style="margin-bottom: 10px; padding: 15px; display: flex; gap: 15px; align-items: center;">
+            <img src="${c.imageUrl}" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px;">
+            <div style="flex: 1;">
+                <h4 style="margin: 0;">${c.name} ${c.showOnHome ? '<span class="stock-badge" style="background:#e8f5e9; color:#2e7d32; margin-left:10px; font-size:10px;">Trang chủ</span>' : ''}</h4>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-minimal" onclick="window.editCollection(${idx})">Sửa</button>
+                <button class="btn-delete" onclick="window.deleteCollection(${idx})">Xóa</button>
+            </div>
+        </div>
+    `).join('') || '<p style="text-align:center; color:#999;">Chưa có bộ sưu tập nào.</p>';
+}
+
+window.editCollection = (idx) => {
+    const c = adminCollections[idx];
+    document.getElementById('collection-edit-index').value = idx;
+    document.getElementById('collection-name').value = c.name;
+    document.getElementById('collection-show-home').checked = c.showOnHome || false;
+    document.getElementById('collection-image-preview').innerHTML = `<img src="${c.imageUrl}" style="width: 150px; border-radius: 4px;">`;
+    const form = document.getElementById('collection-form');
+    form.dataset.currentImageUrl = c.imageUrl;
+    window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+};
+
+window.deleteCollection = async (idx) => {
+    if (!confirm("Xóa bộ sưu tập này?")) return;
+    adminCollections.splice(idx, 1);
+    await setDoc(doc(db, "settings", "collections"), { items: adminCollections });
+    showToast("Đã xóa bộ sưu tập");
+};
+
 // --- Logic Quản lý Danh mục Động ---
 let categoryUnsubscribe = null;
 
@@ -677,7 +782,9 @@ function initCategoryManagement() {
 
     if (!treeContainer || !form || !db) return;
 
-    // Thiết lập lắng nghe thời gian thực cho danh mục (Nếu chưa có)
+    // Thiết lập lắng nghe bộ sưu tập để hiện checkbox trong form sản phẩm
+    initCollectionManagement();
+
     if (!categoryUnsubscribe) {
         categoryUnsubscribe = onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
             if (snapshot.exists() && snapshot.data().groups) {
@@ -1086,6 +1193,18 @@ async function populateCategorySelect() {
     if (filterSelect) filterSelect.innerHTML = filterHtml;
 }
 
+function populateCollectionCheckboxes() {
+    const container = document.getElementById('product-collections-list');
+    if (!container) return;
+    
+    container.innerHTML = adminCollections.map(c => `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; background: #f5f5f5; padding: 5px 10px; border-radius: 20px;">
+            <input type="checkbox" class="collection-checkbox" value="${c.name}">
+            ${c.name}
+        </label>
+    `).join('');
+}
+
 // Hàm Migration: Cập nhật toàn bộ sản phẩm cũ sang danh mục mới (Chạy 1 lần duy nhất)
 window.migrateProductCategories = async () => {
     if (!confirm("Hành động này sẽ cập nhật lại toàn bộ danh mục của sản phẩm trong Database để khớp với UI mới. Bạn có chắc chắn?")) return;
@@ -1349,6 +1468,9 @@ productForm.addEventListener('submit', async (e) => {
             }            
         }
 
+        // Lấy danh sách bộ sưu tập đã chọn
+        const collectionsList = Array.from(document.querySelectorAll('.collection-checkbox:checked')).map(cb => cb.value);
+
         const finalImageUrl = currentMain || 'https://placehold.co/300x300?text=No+Image';
 
         // 2. Lưu thông tin vào Firestore
@@ -1356,6 +1478,7 @@ productForm.addEventListener('submit', async (e) => {
         name: document.getElementById('name').value,
         name_lowercase: document.getElementById('name').value.toLowerCase(), // Thêm trường này cho tìm kiếm
         category: document.getElementById('category').value,
+        collections: collectionsList,
         price: Number(document.getElementById('price').value), // Base price
         cost: Number(document.getElementById('cost').value || 0),
         stock: finalStock,
@@ -1576,6 +1699,12 @@ async function editProduct(id) {
             document.getElementById('price').value = p.price;
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
+
+            // Load collections checkbox
+            const colCheckboxes = document.querySelectorAll('.collection-checkbox');
+            colCheckboxes.forEach(cb => {
+                cb.checked = (p.collections || []).includes(cb.value);
+            });
 
             // Vô hiệu hóa trường tồn kho và checkbox "Nhập thêm" nếu có biến thể
             const hasVariants = (p.colorVariants && p.colorVariants.length > 0) || (p.patternVariants && p.patternVariants.length > 0);

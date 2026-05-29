@@ -99,6 +99,40 @@ async function fetchSaleProducts() {
     }
 }
 
+// Hàm lấy danh sách Bộ sưu tập (Banner trang chủ)
+async function fetchCollections() {
+    const container = document.getElementById('collection-grid');
+    if (!container) return;
+
+    try {
+        const snap = await getDoc(doc(db, "settings", "collections"));
+        const collections = (snap.exists() && snap.data().items) ? snap.data().items.filter(c => c.showOnHome).slice(0, 3) : [];
+
+        if (collections.length > 0) {
+            container.innerHTML = collections.map(c => `
+                <a href="products/?collection=${encodeURIComponent(c.name)}" class="collection-banner reveal-on-scroll">
+                    <img src="${c.imageUrl}" alt="${c.name}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
+                    <div class="collection-overlay">
+                        <h3>${c.name}</h3>
+                        <span class="btn-minimal">Khám phá ngay</span>
+                    </div>
+                </a>
+            `).join('');
+
+            // Kích hoạt lại Observer cho các phần tử mới nạp động
+            const newItems = container.querySelectorAll('.reveal-on-scroll');
+            if (window.revealObserver) {
+                newItems.forEach(item => window.revealObserver.observe(item));
+            }
+        } else {
+            container.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #999; padding: 2rem;">Bộ sưu tập đang được cập nhật...</p>';
+        }
+    } catch (e) { 
+        console.error("Lỗi lấy bộ sưu tập:", e); 
+        container.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color: #e74c3c;">Không thể kết nối đến máy chủ.</p>';
+    }
+}
+
 // Hàm gợi ý sản phẩm dựa trên lịch sử xem (Categories đã xem)
 async function fetchRecommendations() {
     const recSection = document.getElementById('recommendation-section');
@@ -327,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchSaleProducts();
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
+        fetchCollections(); // Thêm dòng này
         initHeroCarousel();
         initWeeklyCountdown();
 
@@ -355,18 +390,18 @@ document.addEventListener('DOMContentLoaded', () => {
             threshold: 0.15 // Section hiện ra 15% thì mới bắt đầu chạy hiệu ứng
         };
 
-        const revealObserver = new IntersectionObserver((entries) => {
+        window.revealObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('is-visible');
                     // Sau khi đã hiện rồi thì ngừng quan sát để tối ưu hiệu suất
-                    revealObserver.unobserve(entry.target);
+                    window.revealObserver.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
         document.querySelectorAll('.reveal-on-scroll').forEach(section => {
-            revealObserver.observe(section);
+            window.revealObserver.observe(section);
         });
     });
 });

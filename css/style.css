@@ -1543,6 +1543,79 @@ footer {
     .event-services-tags { justify-content: center; }
 }
 
+/* Collections Section (Homepage) */
+.collections-section {
+    padding: 5rem 5% 0;
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 2rem;
+}
+
+.collection-banner {
+    position: relative;
+    height: 450px;
+    border-radius: 4px;
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    background-color: #eee;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.collection-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.collection-banner:hover img {
+    transform: scale(1.1);
+}
+
+.collection-overlay {
+    position: absolute;
+    inset: 0;
+    /* Tăng độ đậm của gradient để chữ nổi bật hơn */
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 30px;
+    transition: background 0.3s;
+}
+
+.collection-overlay h3 {
+    color: #fff;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Tăng đổ bóng cho chữ */
+}
+
+.collection-overlay .btn-minimal {
+    color: #fff;
+    border-color: #fff;
+    align-self: flex-start;
+}
+
+/* Responsive cho Bộ sưu tập trên Mobile */
+@media (max-width: 768px) {
+    .collections-section {
+        padding-top: 3rem;
+    }
+    .collection-grid {
+        grid-template-columns: 1fr; /* Chuyển về 1 cột trên mobile */
+        gap: 15px;
+    }
+    .collection-banner {
+        height: 300px; /* Giảm chiều cao trên mobile để cân đối */
+    }
+}
+
 /* Skeleton Loading UI */
 .skeleton {
     background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 50%, #f0f0f0 75%);

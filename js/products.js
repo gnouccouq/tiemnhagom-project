@@ -100,6 +100,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         let hasSearchTerm = !!searchTerm;
         let minPrice = Number(document.getElementById('price-min')?.value) || 0;
         let maxPrice = Number(document.getElementById('price-max')?.value) || 0;
+        let collectionParam = new URLSearchParams(window.location.search).get('collection');
 
         // Reset khi đổi bộ lọc hoặc khởi tạo
         if (navigation === 'init') {
@@ -109,8 +110,11 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         }
 
         // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục đang xem
-        const categoryDisplay = currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm';
+        const categoryDisplay = collectionParam ? `Bộ sưu tập: ${collectionParam}` : (currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm');
         const seoTitle = `${categoryDisplay} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
+        const sectionTitleH2 = document.querySelector('.section-title h2');
+        if (sectionTitleH2) sectionTitleH2.innerText = categoryDisplay;
+
         const seoDesc = `Khám phá bộ sưu tập ${categoryDisplay.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm thủ công chất lượng cao, thiết kế mộc mạc cho không gian sống.`;
         
         document.title = seoTitle;
@@ -120,8 +124,11 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         updateMetaTag('property', 'og:description', seoDesc);
 
         // Apply filters
-        // Lọc theo Category (Hỗ trợ cả Group hoặc Sub-category)
-        if (currentCategory !== 'all') {
+        // Ưu tiên lọc theo Bộ sưu tập nếu có trên URL
+        if (collectionParam) {
+            productsQuery = query(productsQuery, where("collections", "array-contains", collectionParam));
+        } else if (currentCategory !== 'all') {
+            // Lọc theo Category (Hỗ trợ cả Group hoặc Sub-category)
             // Nếu currentCategory là group (VD: Dụng cụ Bếp), ta cần lấy các sub-categories của nó
             const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
             if (selectedGroup) {
@@ -310,8 +317,9 @@ function initMobileFilter() {
 function handleInitialFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     const catParam = urlParams.get('category');
+    const collParam = urlParams.get('collection');
     
-    if (catParam) {
+    if (catParam && !collParam) {
         document.querySelectorAll('.category-square-item').forEach(l => l.classList.remove('active'));
         const targetLink = document.querySelector(`.category-square-item[data-filter-category="${catParam}"]`);
         

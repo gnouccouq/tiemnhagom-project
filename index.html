@@ -148,25 +148,6 @@
             <div class="carousel-dots" id="hero-carousel-dots"></div>
         </section>
 
-        <section class="categories-section">
-            <div class="category-grid">
-                <a href="products/?category=Ly & Chén" class="category-banner">
-                    <img src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=600&fm=webp&auto=format&fit=crop" alt="Ly và Chén" loading="lazy">
-                    <div class="category-overlay">
-                        <h3>Ly & Chén</h3>
-                        <span>Khám phá ngay</span>
-                    </div>
-                </a>
-                <a href="products/?category=Bình hoa" class="category-banner">
-                    <img src="Asset/images/483488913_952567577001292_8906787465398018074_n_11zon.webp" alt="Bình hoa" loading="lazy">
-                    <div class="category-overlay">
-                        <h3>Bình Hoa</h3>
-                        <span>Khám phá ngay</span>
-                    </div>
-                </a>
-            </div>
-        </section>
-
         <!-- New: Benefits Bar -->
         <section class="benefits-bar">
             <div class="benefits-grid">
@@ -185,16 +166,17 @@
             </div>
         </section>
 
-        <section id="recommendation-section" style="display: none; background-color: #fff; padding: 4rem 5%;">
+        <section class="collections-section reveal-on-scroll">
             <div class="section-header">
-                <h2>Dành riêng cho bạn</h2>
-                <p class="section-subtitle">Dựa trên những món gốm bạn đã quan tâm gần đây</p>
+                <h2>Bộ sưu tập tâm đắc</h2>
+                <p class="section-subtitle">Khám phá các dòng gốm được Tiệm tuyển chọn theo chủ đề</p>
             </div>
-            <div id="recommendation-grid" class="grid">
-                <!-- Gợi ý dựa trên lịch sử xem -->
+            <div id="collection-grid" class="collection-grid">
+                <!-- Dữ liệu được nạp tự động bởi fetchCollections() trong main.js -->
+                <div style="text-align:center; padding: 2rem; grid-column: 1/-1;"><span class="spinner"></span></div>
             </div>
             <div style="text-align: center; margin-top: 3rem;">
-                <a href="products/" class="btn-outline">Khám phá thêm cho bạn</a>
+                <a href="collections/" class="btn-outline">Khám phá tất cả bộ sưu tập</a>
             </div>
         </section>
 
@@ -219,6 +201,21 @@
                 <a href="flash-sale/" class="btn-dark">Xem tất cả ưu đãi</a>
             </div>
         </section>
+        
+        <section id="recommendation-section" style="display: none; background-color: #fff; padding: 4rem 5%;">
+            <div class="section-header">
+                <h2>Dành riêng cho bạn</h2>
+                <p class="section-subtitle">Dựa trên những món gốm bạn đã quan tâm gần đây</p>
+            </div>
+            <div id="recommendation-grid" class="grid">
+                <!-- Gợi ý dựa trên lịch sử xem -->
+            </div>
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="products/" class="btn-outline">Khám phá thêm cho bạn</a>
+            </div>
+        </section>
+
+        
 
         <section class="featured-products">
             <div class="section-header">

@@ -153,6 +153,12 @@ service firebase.storage {
       allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh danh mục
     }
 
+    // 4.1 Ảnh Bộ sưu tập (collections)
+    match /collections/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // 5. Ảnh Tin tức (news)
     match /news/{allPaths=**} {
       allow read: if true;
