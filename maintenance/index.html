@@ -81,7 +81,6 @@
             border: none;
             letter-spacing: -1px;
             text-shadow: 0 5px 15px rgba(0,0,0,0.4); /* Thêm đổ bóng cho chữ */
-            animation: artisticBlur 6s infinite ease-in-out;
         }
         .countdown-hero p {
             font-size: 1.1rem;
@@ -135,9 +134,30 @@
             letter-spacing: 2px;
             font-size: 0.8rem;
         }
-        @keyframes artisticBlur {
-            0%, 100% { filter: blur(0px); opacity: 1; }
-            50% { filter: blur(1.5px); opacity: 0.85; }
+        .social-links-maintenance {
+            display: flex;
+            gap: 20px;
+            margin-top: 1rem;
+        }
+        .social-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .social-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         @keyframes itemGlow {
             0%, 100% { border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -182,6 +202,15 @@
                 <div class="countdown-item"><span id="hours">00</span><small>Giờ</small></div>
                 <div class="countdown-item"><span id="minutes">00</span><small>Phút</small></div>
                 <div class="countdown-item"><span id="seconds">00</span><small>Giây</small></div>
+            </div>
+
+            <div class="social-links-maintenance">
+                <a href="https://www.facebook.com/tiemnhagom.sg" target="_blank" class="social-btn" title="Facebook">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </a>
+                <a href="https://www.instagram.com/tiemnhagom.vn" target="_blank" class="social-btn" title="Instagram">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
             </div>
         </section>
     </main>
