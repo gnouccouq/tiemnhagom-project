@@ -112,8 +112,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục đang xem
         const categoryDisplay = collectionParam ? `Bộ sưu tập: ${collectionParam}` : (currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm');
         const seoTitle = `${categoryDisplay} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
-        const sectionTitleH2 = document.querySelector('.section-title h2');
-        if (sectionTitleH2) sectionTitleH2.innerText = categoryDisplay;
+
+        const bannerTitleH1 = document.querySelector('.product-banner .banner-content h1');
+        if (bannerTitleH1) bannerTitleH1.innerText = categoryDisplay;
 
         const seoDesc = `Khám phá bộ sưu tập ${categoryDisplay.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm thủ công chất lượng cao, thiết kế mộc mạc cho không gian sống.`;
         
