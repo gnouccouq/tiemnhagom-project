@@ -14,7 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateTimerElement = (id, value) => {
         const el = document.getElementById(id);
-        if (el) el.innerText = String(value).padStart(2, '0');
+        const formattedValue = String(value).padStart(2, '0');
+        if (el && el.innerText !== formattedValue) {
+            el.innerText = formattedValue;
+            // Kích hoạt lại animation bằng cách xóa và thêm lại class
+            el.classList.remove('number-change-animation');
+            void el.offsetWidth; // Buộc trình duyệt reflow
+            el.classList.add('number-change-animation');
+        }
         return !!el;
     };
 

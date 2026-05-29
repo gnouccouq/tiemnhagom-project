@@ -144,6 +144,16 @@
             50% { border-color: rgba(142, 198, 173, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 0 20px rgba(142, 198, 173, 0.2); }
             85% { border-color: rgba(241, 196, 15, 0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 0 20px rgba(241, 196, 15, 0.15); }
         }
+        /* Class áp dụng hiệu ứng khi số thay đổi */
+        .countdown-item span.number-change-animation {
+            animation: numberPop 0.4s ease-out;
+        }
+        /* Keyframes cho hiệu ứng số nhảy */
+        @keyframes numberPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
         @media (max-width: 768px) {
             .countdown-hero h1 { font-size: 3rem; } /* Điều chỉnh responsive */
             .countdown-hero p { font-size: 1rem; }
