@@ -13,7 +13,13 @@ import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
 let adminCollections = []; // Mảng chứa danh sách bộ sưu tập
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
+let posUsersLocal = []; // Danh sách khách hàng để tìm kiếm nhanh trong POS
+let userOrderCounts = {}; // Lưu trữ số lượng đơn hàng theo userId: { uid: count }
 let currentAdminRole = 'staff'; // Quyền mặc định
+let bluetoothDevice = null;
+let btCharacteristic = null;
+let lastCreatedOrderId = null; // Lưu ID đơn vừa tạo để in lại nhanh
+
 let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
 
 // Danh sách tất cả các phân hệ có trong hệ thống
@@ -1632,6 +1638,7 @@ function renderAdminProductTable() {
                 <td data-label="Ảnh"><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Tên"><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
                 <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td data-label="Vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}đ</td>
                 <td data-label="Kho">${stockDisplay}</td>
                 <td data-label="Đánh giá">${p.rating || 5}★</td>
                 <td data-label="Giảm giá">${p.sale || 0}%</td>
@@ -1670,30 +1677,54 @@ async function exportProductToExcel() {
     });
 
     // 1. Định nghĩa tiêu đề cột
-    const headers = ["Mã SP (ID)", "Tên sản phẩm", "Danh mục", "Giá bán", "Tồn kho", "Giảm giá (%)", "Đánh giá", "Ngày cập nhật"];
+    const headers = ["Mã SP (ID)", "Tên sản phẩm", "Danh mục", "Giá bán", "Giá vốn", "Tồn kho", "Sale (%)", "Đánh giá", "Ngày cập nhật"];
     
-    // 2. Chuyển đổi dữ liệu thành hàng CSV
-    const rows = dataToExport.map(p => [
-        p.id,
-        `"${p.name.replace(/"/g, '""')}"`, // Xử lý dấu ngoặc kép trong tên
-        p.category,
-        p.price,
-        p.stock,
-        p.sale || 0,
-        p.rating || 5,
-        p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : ''
-    ]);
+    // 2. Tạo nội dung HTML với CSS đặc thù cho Excel
+    let excelHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="utf-8"/>
+            <style>
+                table { border-collapse: collapse; width: 100%; }
+                th { background-color: #2c3e50; color: #ffffff; border: 0.5pt solid #000000; padding: 5px; font-weight: bold; }
+                td { border: 0.5pt solid #000000; padding: 5px; vertical-align: middle; }
+                .text { mso-number-format:"\\@"; } /* Định dạng văn bản để không mất số 0 đầu */
+                .number { mso-number-format:"\\#\\,\\#\\#0"; text-align: right; } /* Định dạng số có dấu phẩy */
+                .date { text-align: center; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${dataToExport.map(p => `
+                        <tr>
+                            <td class="text">${p.id}</td>
+                            <td class="text">${p.name}</td>
+                            <td class="text">${p.category}</td>
+                            <td class="number">${p.price}</td>
+                            <td class="number">${p.cost || 0}</td>
+                            <td class="number">${p.stock}</td>
+                            <td class="number">${p.sale || 0}</td>
+                            <td class="number">${p.rating || 5}</td>
+                            <td class="date">${p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : ''}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
 
-    // 3. Ghép thành nội dung CSV
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-
-    // 4. Tạo Blob với BOM (Byte Order Mark) để Excel nhận diện được UTF-8 (tiếng Việt)
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    // 3. Tạo Blob với định dạng .xls (Excel 97-2003)
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Danh_sach_san_pham_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.csv`);
+    link.href = url;
+    link.download = `Danh_sach_san_pham_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xls`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1713,6 +1744,7 @@ async function editProduct(id) {
             document.getElementById('name').value = p.name;
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = p.price;
+            document.getElementById('cost').value = p.cost || 0;
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
 
@@ -1922,9 +1954,13 @@ window.printOrderBill = async (orderId) => {
         // Chuẩn hóa thông tin khách hàng để khớp với hàm in POS
         const customer = {
             name: o.shippingAddress?.fullName || "Khách vãng lai",
-            phone: o.shippingAddress?.phone || "N/A"
+            phone: o.shippingAddress?.phone || "N/A",
+            paymentMethod: o.paymentMethod || 'Tiền mặt'
         };
-        printPOSReceipt(orderId, customer, o.items, o.totalAmount);
+        // Tính toán lại chiết khấu nếu có để in bill đầy đủ thông tin
+        const subtotal = o.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        const discountVal = subtotal - o.totalAmount;
+        printPOSReceipt(orderId, customer, o.items, o.totalAmount, subtotal, discountVal);
     } catch (e) {
         showToast("Lỗi khi chuẩn bị in hóa đơn", "error");
     }
@@ -1983,6 +2019,7 @@ function initUserListener() {
         const adminDataMap = new Map(adminsSnap.docs.map(d => [d.id, d.data()]));
 
         onSnapshot(collection(db, "users"), (snapshot) => {
+        posUsersLocal = [];
         let htmlContent = '';
         snapshot.forEach((doc) => {
             const u = doc.data();
@@ -1993,6 +2030,8 @@ function initUserListener() {
             
             let adminBadge = '';
             if (isAdminUser) adminBadge = `<span class="admin-text-badge" style="font-size: 0.55rem;">Admin</span>`;
+
+            posUsersLocal.push({ id: doc.id, ...u });
 
             let adminActionBtn = '';
             if (currentAdminRole === 'super_admin') {
@@ -2016,7 +2055,7 @@ function initUserListener() {
                         <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
                         <small style="color: #888;">ID: ${doc.id}</small>
                     </td>
-                    <td data-label="SĐT">${u.phoneNumber || u.phone || '---'}</td>
+                    <td data-label="SĐT">${formatPhoneNumber(u.phoneNumber || u.phone) || '---'}</td>
                     <td data-label="Giới tính">${u.gender || '---'}</td>
                     <td data-label="Ngày sinh">${birthday}</td>
                     <td data-label="Cập nhật">${updatedAt}</td>
@@ -2031,6 +2070,23 @@ function initUserListener() {
     }, (error) => {
         console.error("User list listener error:", error);
     });
+    });
+}
+
+// Lắng nghe tất cả đơn hàng để đếm số lượng đơn của từng khách hàng (phục vụ POS)
+function initUserOrderCountListener() {
+    if (!db) return;
+    // Lắng nghe toàn bộ collection orders để duy trì bộ đếm thời gian thực
+    onSnapshot(collection(db, "orders"), (snapshot) => {
+        const counts = {};
+        snapshot.forEach(doc => {
+            const userId = doc.data().userId;
+            // Bỏ qua đơn khách vãng lai nếu cần, hoặc đếm theo SĐT nếu muốn phức tạp hơn
+            if (userId && userId !== 'guest') {
+                counts[userId] = (counts[userId] || 0) + 1;
+            }
+        });
+        userOrderCounts = counts;
     });
 }
 
@@ -2449,23 +2505,36 @@ window.addProductToPOS = (id, name, price, image) => {
             showToast("Sản phẩm này đã hết hàng!", "error");
             return;
         }
-        posCart.push({ id, name, price, image, quantity: 1 });
+        posCart.push({ id, name, price, cost: productInfo.cost || 0, image, quantity: 1 });
     }
     document.getElementById('pos-product-search').value = '';
     document.getElementById('pos-product-suggestions').style.display = 'none';
     renderPOSCart();
 };
 
+window.selectCustomerPOS = (id, name, phone, email) => {
+    document.getElementById('pos-cust-name').value = name || '';
+    document.getElementById('pos-cust-phone').value = phone || '';
+    document.getElementById('pos-cust-email').value = email || '';
+    document.getElementById('pos-cust-status').innerText = "✓ Đã chọn khách hàng từ hệ thống";
+    window.currentPOSCustomerId = id;
+    const suggestions = document.getElementById('pos-customer-suggestions');
+    if (suggestions) suggestions.style.display = 'none';
+    document.getElementById('pos-customer-search').value = name || phone || '';
+};
+
 window.searchCustomerPOS = async () => {
     const inputVal = document.getElementById('pos-customer-search').value.trim();
     if (!inputVal) return;
     
-    // Chuẩn hóa đầu số 0 thành +84 trước khi tìm kiếm để đồng bộ với phương thức login
-    const formattedPhone = formatPhoneNumber(inputVal);
+    // Chuẩn hóa và tạo cả 2 định dạng (0... và +84...) để tìm kiếm bao phủ hơn
+    const phone0 = formatPhoneNumber(inputVal);
+    const phone84 = phone0.startsWith('0') ? '+84' + phone0.substring(1) : phone0;
+
     const statusEl = document.getElementById('pos-cust-status');
     statusEl.innerText = "🔍 Đang tìm kiếm...";
 
-    const q = query(collection(db, "users"), where("identifiers", "array-contains", formattedPhone));
+    const q = query(collection(db, "users"), where("identifiers", "array-contains-any", [phone0, phone84]));
     const snap = await getDocs(q);
     
     if (!snap.empty) {
@@ -2482,7 +2551,7 @@ window.searchCustomerPOS = async () => {
     }
 };
 
-function printPOSReceipt(orderId, customer, items, total) {
+function printPOSReceipt(orderId, customer, items, total, subtotal = null, discountVal = 0) {
     let printArea = document.getElementById('receipt-print-area');
     if (!printArea) {
         printArea = document.createElement('div');
@@ -2495,8 +2564,6 @@ function printPOSReceipt(orderId, customer, items, total) {
     printArea.innerHTML = `
         <div class="receipt-header">
             <img src="../Asset/images/logo.webp" class="receipt-logo" alt="Logo Tiệm Nhà Gốm">
-            <h2>TIỆM NHÀ GỐM</h2>
-            <p>Gốm & Decor</p>
             <p>37 Nguyễn Duy, Phường Gia Định, TP.HCM
             <p>SĐT: 033 769 6231 - 090 938 0652</p>
         </div>
@@ -2505,6 +2572,7 @@ function printPOSReceipt(orderId, customer, items, total) {
             <p><strong>Ngày:</strong> ${now}</p>
             <p><strong>Khách hàng:</strong> ${customer.name}</p>
             <p><strong>SĐT:</strong> ${customer.phone}</p>
+            <p><strong>Thanh toán:</strong> ${customer.paymentMethod || 'Tiền mặt'}</p>
         </div>
         <table class="receipt-table">
             <thead>
@@ -2524,6 +2592,8 @@ function printPOSReceipt(orderId, customer, items, total) {
                 `).join('')}
             </tbody>
         </table>
+        ${subtotal ? `<p style="text-align:right; margin: 5px 0 0 0; font-size:11px;">Tạm tính: ${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</p>` : ''}
+        ${discountVal > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Chiết khấu: -${new Intl.NumberFormat('vi-VN').format(discountVal)}đ</p>` : ''}
         <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)}đ</div>
         <div class="receipt-qr-section">
             <p style="margin-bottom: 5px; font-weight: bold;">Quét mã theo dõi Tiệm:</p>
@@ -2536,13 +2606,96 @@ function printPOSReceipt(orderId, customer, items, total) {
     window.print();
 }
 
+// --- Logic Kết nối và In Bluetooth (ESC/POS) ---
+
+window.connectBTPrinter = async () => {
+    try {
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, { namePrefix: 'RPP' }, { namePrefix: 'MTP' }, { namePrefix: 'Printer' }],
+            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+        });
+        
+        showToast("Đang kết nối với " + bluetoothDevice.name);
+        const server = await bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+        const characteristics = await service.getCharacteristics();
+        // Thường đặc tính ghi dữ liệu là đặc tính đầu tiên có thuộc tính write
+        btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+        
+        showToast("Đã kết nối máy in Bluetooth thành công!", "success");
+        document.getElementById('btn-connect-bt-printer').innerText = "✅ Đã kết nối: " + bluetoothDevice.name;
+    } catch (e) {
+        console.error(e);
+        showToast("Không thể kết nối máy in: " + e.message, "error");
+    }
+};
+
+window.sendToBTPrinter = async (text) => {
+    if (!btCharacteristic) {
+        showToast("Vui lòng kết nối máy in Bluetooth trước", "error");
+        return;
+    }
+    // Chuẩn hóa văn bản: Bỏ dấu tiếng Việt vì máy in nhiệt giá rẻ thường lỗi font
+    const cleanText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    
+    // Lệnh ESC/POS cơ bản
+    const encoder = new TextEncoder();
+    const init = new Uint8Array([0x1B, 0x40]); // Reset máy in
+    const cut = new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03]); // Feed và cắt giấy
+
+    try {
+        await btCharacteristic.writeValue(init);
+        // BLE có giới hạn kích thước gói tin (thường 20-512 bytes), chia nhỏ để gửi
+        const data = encoder.encode(cleanText + "\n\n");
+        const chunkSize = 20;
+        for (let i = 0; i < data.length; i += chunkSize) {
+            await btCharacteristic.writeValue(data.slice(i, i + chunkSize));
+        }
+        await btCharacteristic.writeValue(cut);
+        showToast("Đã gửi lệnh in");
+    } catch (e) {
+        showToast("Lỗi khi gửi dữ liệu in", "error");
+    }
+};
+
+window.printLastOrderBT = async () => {
+    if (!lastCreatedOrderId) return showToast("Chưa có đơn hàng nào vừa được tạo", "info");
+    
+    const docSnap = await getDoc(doc(db, "orders", lastCreatedOrderId));
+    if (!docSnap.exists()) return;
+    const o = docSnap.data();
+    
+    let btContent = `   TIEM NHA GOM\n`;
+    btContent += `      Gom & Decor\n`;
+    btContent += `--------------------------------\n`;
+    btContent += `Ma DH: #${lastCreatedOrderId.substring(0,8)}\n`;
+    btContent += `Ngay: ${new Date().toLocaleString('vi-VN')}\n`;
+    btContent += `KH: ${o.shippingAddress?.fullName || 'Khach vang lai'}\n`;
+    btContent += `--------------------------------\n`;
+    
+    o.items.forEach(item => {
+        const priceStr = new Intl.NumberFormat('vi-VN').format(item.price);
+        btContent += `${item.name}\n`;
+        btContent += `   ${item.quantity} x ${priceStr}đ\n`;
+    });
+    
+    btContent += `--------------------------------\n`;
+    btContent += `TONG CONG: ${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ\n`;
+    btContent += `Thanh toan: ${o.paymentMethod || 'Tien mat'}\n`;
+    btContent += `\nCam on Quy khach. Hen gap lai!\n`;
+    btContent += `www.tiemnhagom.vn\n`;
+
+    window.sendToBTPrinter(btContent);
+};
+
 window.createPOSOrder = async () => {
     const name = document.getElementById('pos-cust-name').value.trim();
     const rawPhone = document.getElementById('pos-cust-phone').value.trim();
     const email = document.getElementById('pos-cust-email').value.trim();
     const totalText = document.getElementById('pos-total-amount').value;
+    const paymentMethod = document.querySelector('input[name="pos-payment"]:checked')?.value || "Tiền mặt";
     const total = Number(totalText.replace(/[^\d]/g, ''));
-    const phone = formatPhoneNumber(rawPhone); // Lưu vào DB theo định dạng +84 đồng bộ
+    const phone = formatPhoneNumber(rawPhone); // Lưu vào DB theo định dạng 0... đồng bộ
 
     if (!name || !phone || total <= 0 || posCart.length === 0) {
         showToast("Vui lòng điền đủ thông tin khách, chọn sản phẩm và đảm bảo số tiền > 0", "error");
@@ -2558,7 +2711,9 @@ window.createPOSOrder = async () => {
             const newCustRef = doc(collection(db, "users"));
             customerId = newCustRef.id;
             
-            const identifiers = [phone];
+            // Tự động thêm cả định dạng 0 và +84 để tìm kiếm khách hàng linh hoạt hơn
+            const altPhone = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
+            const identifiers = [phone, altPhone];
             if (email) identifiers.push(email);
 
             await setDoc(newCustRef, {
@@ -2573,7 +2728,7 @@ window.createPOSOrder = async () => {
         const docRef = await addDoc(collection(db, "orders"), {
             userId: customerId, productNames: posCart.map(i => i.name),
             items: posCart, totalAmount: total, status: "Đã hoàn thành",
-            paymentMethod: "Tại cửa hàng", orderDate: serverTimestamp(),
+            paymentMethod: paymentMethod, orderDate: serverTimestamp(),
             shippingAddress: { fullName: name, phone: phone, address: "Mua tại shop" }
         });
 
@@ -2611,8 +2766,19 @@ window.createPOSOrder = async () => {
             return updateDoc(productRef, updateData);
         });
         await Promise.all(updatePromises);
-        // 3. Tự động in hóa đơn
-        printPOSReceipt(docRef.id, { name, phone }, posCart, total);
+        
+        // Lưu ID để in lại nếu cần
+        lastCreatedOrderId = docRef.id;
+
+        // Tự động in hóa đơn sau khi lưu thành công
+        const subtotal = posCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        const discountVal = subtotal - total;
+        printPOSReceipt(docRef.id, { name, phone, paymentMethod }, posCart, total, subtotal, discountVal);
+        
+        // Nếu máy in Bluetooth đã được kết nối, tự động in bản text qua Bluetooth luôn
+        if (btCharacteristic) {
+            window.printLastOrderBT();
+        }
 
         showToast("Đã lưu đơn hàng thành công!");
         document.getElementById('pos-customer-form').reset();
@@ -2627,6 +2793,7 @@ window.createPOSOrder = async () => {
 let mainRevChart = null;
 let periodSoldChart = null;
 let comparisonChart = null;
+let paymentMethodChart = null;
 
 async function initFullReport() {
     const yearSelect = document.getElementById('stats-year-filter');
@@ -2664,11 +2831,14 @@ async function initFullReport() {
             // 2. Xử lý gom nhóm dữ liệu (Revenue & Count)
             const statsMap = {}; // Key: "Tháng 01", "Quý 1", hoặc "Ngày 01/01"
             const productMap = {}; // Thống kê sản phẩm bán chạy trong KỲ NÀY
+            const paymentMethodMap = {}; // Thống kê theo phương thức thanh toán
             const compCurrentYear = new Array(12).fill(0); // [Jan, Feb, ..., Dec] cho năm chọn
             const compPrevYear = new Array(12).fill(0);    // [Jan, Feb, ..., Dec] cho năm trước
             let totalRev = 0;
+            let totalProfit = 0;
             let totalOrders = 0;
             let prevTotalRev = 0;
+            let prevTotalProfit = 0;
             let prevTotalOrders = 0;
 
             orders.forEach(o => {
@@ -2676,6 +2846,9 @@ async function initFullReport() {
                 const orderYear = date.getFullYear();
                 const monthIdx = date.getMonth();
                 let key = '';
+
+                const orderCost = o.items ? o.items.reduce((sum, i) => sum + ((i.cost || 0) * (i.quantity || 1)), 0) : 0;
+                const orderProfit = (o.totalAmount || 0) - orderCost;
 
                 if (orderYear === selectedYear) {
                     totalOrders++;
@@ -2689,15 +2862,22 @@ async function initFullReport() {
                     }
 
                     if (key) {
-                        if (!statsMap[key]) statsMap[key] = { rev: 0, count: 0 };
+                        if (!statsMap[key]) statsMap[key] = { rev: 0, count: 0, profit: 0 };
                         statsMap[key].rev += (o.totalAmount || 0);
                         statsMap[key].count++;
+                        statsMap[key].profit += orderProfit;
                         totalRev += (o.totalAmount || 0);
+                        totalProfit += orderProfit;
 
                         // Gom sản phẩm bán chạy cho năm hiện tại
                         o.items.forEach(item => {
                             productMap[item.name] = (productMap[item.name] || 0) + (item.quantity || 1);
                         });
+
+                        // Gom theo phương thức thanh toán (Chỉ lấy các đơn trong năm chọn)
+                        const pMethod = o.paymentMethod || 'Khác';
+                        if (!paymentMethodMap[pMethod]) paymentMethodMap[pMethod] = 0;
+                        paymentMethodMap[pMethod] += (o.totalAmount || 0);
                     }
                     // Lưu dữ liệu so sánh 12 tháng
                     compCurrentYear[monthIdx] += (o.totalAmount || 0);
@@ -2705,6 +2885,7 @@ async function initFullReport() {
                     // Lưu dữ liệu năm trước
                     compPrevYear[monthIdx] += (o.totalAmount || 0);
                     prevTotalRev += (o.totalAmount || 0);
+                    prevTotalProfit += orderProfit;
                     prevTotalOrders++;
                 }
             });
@@ -2720,11 +2901,13 @@ async function initFullReport() {
 
             // 3. Cập nhật thẻ Summary
             animateNumber('period-revenue', totalRev, true);
+            animateNumber('period-profit', totalProfit, true);
             animateNumber('period-orders', totalOrders);
             animateNumber('period-avg-order', totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0, true);
 
             // Hiển thị % tăng trưởng
             document.getElementById('period-revenue-growth').innerHTML = getGrowthHtml(totalRev, prevTotalRev);
+            document.getElementById('period-profit-growth').innerHTML = getGrowthHtml(totalProfit, prevTotalProfit);
             document.getElementById('period-orders-growth').innerHTML = getGrowthHtml(totalOrders, prevTotalOrders);
             
             const currentAvg = totalOrders > 0 ? totalRev / totalOrders : 0;
@@ -2807,6 +2990,29 @@ async function initFullReport() {
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: chartType === 'pie' } } }
             });
 
+            // 5.1 Vẽ biểu đồ phương thức thanh toán
+            const pmLabels = Object.keys(paymentMethodMap);
+            const pmData = pmLabels.map(l => paymentMethodMap[l]);
+            
+            if (paymentMethodChart) paymentMethodChart.destroy();
+            paymentMethodChart = new Chart(document.getElementById('paymentMethodChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: pmLabels,
+                    datasets: [{
+                        data: pmData,
+                        backgroundColor: ['#2c3e50', '#27ae60', '#2980b9', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
             // 6. Cập nhật bảng kê chi tiết
             const tableBody = document.getElementById('stats-detail-table');
             tableBody.innerHTML = labels.map(l => `
@@ -2814,6 +3020,7 @@ async function initFullReport() {
                     <td><strong>${l}</strong></td>
                     <td>${statsMap[l].count} đơn</td>
                     <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)}đ</td>
+                    <td style="color: #27ae60; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)}đ</td>
                 </tr>
             `).join('');
 
@@ -3095,6 +3302,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Gán sự kiện cho nút thêm biến thể
     document.getElementById('btn-add-variant')?.addEventListener('click', () => window.addVariantRow());
     document.getElementById('btn-add-pattern-variant')?.addEventListener('click', () => window.addPatternVariantRow());
+    
+    // Gán sự kiện kết nối Bluetooth
+    document.getElementById('btn-connect-bt-printer')?.addEventListener('click', () => window.connectBTPrinter());
 
     // Gán sự kiện tìm kiếm cho bảng sản phẩm Admin
     document.getElementById('admin-product-search')?.addEventListener('input', renderAdminProductTable);
@@ -3122,6 +3332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initOverview();
             initCategoryManagement(); // Call initCategoryManagement here to ensure initial render
             setupNewOrderNotification();
+            initUserOrderCountListener();
             initUnprocessedOrderBadge();
             populateCategorySelect();
         }
@@ -3141,6 +3352,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const posSearchInput = document.getElementById('pos-product-search');
     const posSuggestions = document.getElementById('pos-product-suggestions');
     let posSearchTimer;
+
+        // Logic tìm kiếm khách hàng trong POS
+        const posCustSearchInput = document.getElementById('pos-customer-search');
+        const posCustSuggestions = document.getElementById('pos-customer-suggestions');
+        let posCustSearchTimer;
+
+        if (posCustSearchInput && posCustSuggestions) {
+            posCustSearchInput.addEventListener('input', () => {
+                clearTimeout(posCustSearchTimer);
+                const val = posCustSearchInput.value.trim().toLowerCase();
+                if (val.length < 1) { 
+                    posCustSuggestions.style.display = 'none'; 
+                    return; 
+                }
+
+                posCustSearchTimer = setTimeout(() => {
+                    const results = posUsersLocal.filter(u => 
+                        (u.displayName || "").toLowerCase().includes(val) || 
+                        (u.phone || "").includes(val) ||
+                        (u.identifiers || []).some(id => id.toLowerCase().includes(val))
+                    ).slice(0, 8);
+
+                    if (results.length > 0) {
+                        posCustSuggestions.innerHTML = results.map(u => {
+                            const count = userOrderCounts[u.id] || 0;
+                            return `
+                            <div class="suggestion-item" onclick="window.selectCustomerPOS('${u.id}', '${(u.displayName || '').replace(/'/g, "\\'")}', '${u.phone || ''}', '${u.email || ''}')">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 0.85rem;">${u.displayName || 'Khách không tên'}</div>
+                                    <div style="font-size: 0.7rem; color: #888;">SĐT: ${u.phone || '---'} | Đã mua: <strong style="color:var(--text-black)">${count} đơn</strong></div>
+                                </div>
+                            </div>
+                        `}).join('');
+                        posCustSuggestions.style.display = 'block';
+                    } else {
+                        posCustSuggestions.style.display = 'none';
+                    }
+                }, 200);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!posCustSearchInput.contains(e.target) && !posCustSuggestions.contains(e.target)) {
+                    posCustSuggestions.style.display = 'none';
+                }
+            });
+        }
     let posHighlightedIndex = -1; // Theo dõi vị trí đang chọn bằng phím mũi tên
 
     if (posSearchInput && posSuggestions) {

@@ -477,6 +477,7 @@
                                     <th>Ảnh</th>
                                     <th>Tên</th>
                                     <th>Giá</th>
+                                    <th>Vốn</th>
                                     <th>Tồn</th>
                                     <th>Sao</th>
                                     <th>Sale</th>
@@ -497,9 +498,11 @@
             <div class="admin-grid">
                 <div class="admin-card">
                     <h3>1. Tìm/Thêm khách hàng</h3>
-                    <div class="form-group">
+                    <div class="form-group" style="position: relative;">
                         <input type="text" id="pos-customer-search" placeholder="Nhập SĐT hoặc Tên khách...">
+                        <div id="pos-customer-suggestions" class="search-suggestions" style="width: 100%;"></div>
                         <button type="button" onclick="searchCustomerPOS()" class="btn-minimal" style="margin-top: 10px; width: 100%;">Tìm kiếm</button>
+                        <button type="button" id="btn-connect-bt-printer" class="btn-minimal" style="margin-top: 10px; width: 100%; border-color: #2980b9; color: #2980b9;">🔗 Kết nối máy in Bluetooth</button>
                     </div>
                     <hr style="margin: 1.5rem 0;">
                     <form id="pos-customer-form">
@@ -539,7 +542,23 @@
                         </div>
                         <p id="pos-discount-info" style="font-size: 0.8rem; color: #27ae60; margin-top: 5px; display: none; font-weight: 600;"></p>
                     </div>
-                    <button type="button" onclick="createPOSOrder()" class="btn-dark" style="width: 100%;">Hoàn tất & Lưu doanh thu</button>
+                    <div class="radio-group" style="margin-bottom: 20px;">
+                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; display: block;">Hình thức thanh toán:</label>
+                        <div style="display: flex; gap: 20px;">
+                            <label class="radio-container" style="margin-bottom: 0;">Tiền mặt
+                                <input type="radio" name="pos-payment" value="Tiền mặt" checked>
+                                <span class="radio-checkmark"></span>
+                            </label>
+                            <label class="radio-container" style="margin-bottom: 0;">Chuyển khoản
+                                <input type="radio" name="pos-payment" value="Chuyển khoản">
+                                <span class="radio-checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" onclick="createPOSOrder()" class="btn-dark" style="flex: 2; margin-top: 0;">Hoàn tất & Lưu</button>
+                        <button type="button" onclick="window.printLastOrderBT()" class="btn-outline" style="flex: 1; margin-top: 0; padding: 0;" title="In lại qua Bluetooth">🖨️ BT</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -753,6 +772,16 @@
                     </div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;">📈</div>
+                    <div class="stat-info">
+                        <h3>Lợi nhuận dự tính</h3>
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <p id="period-profit" style="margin: 0;">0đ</p>
+                            <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">✨</div>
                     <div class="stat-info">
                         <h3>TB đơn hàng</h3>
@@ -787,6 +816,11 @@
             </div>
 
             <div class="admin-card" style="margin-top: 2rem;">
+                <h3>Phân bổ doanh thu theo phương thức thanh toán</h3>
+                <div style="height: 300px;"><canvas id="paymentMethodChart"></canvas></div>
+            </div>
+
+            <div class="admin-card" style="margin-top: 2rem;">
                 <h3>Bảng kê chi tiết theo kỳ</h3>
                 <div class="table-responsive">
                     <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span class="spinner"></span> Đang tải dữ liệu...</div>
@@ -796,6 +830,7 @@
                                 <th>Thời gian</th>
                                 <th>Số đơn</th>
                                 <th>Doanh thu</th>
+                                <th>Lợi nhuận</th>
                             </tr>
                         </thead>
                         <tbody id="stats-detail-table"></tbody>

@@ -90,17 +90,25 @@ export function escapeHTML(str) { // Đảm bảo hàm này được export
     });
 }
 
-// Hàm hỗ trợ định dạng số điện thoại về chuẩn +84
-export function formatPhoneNumber(phone) { // Đảm bảo hàm này được export
+// Hàm hỗ trợ định dạng số điện thoại về chuẩn Việt Nam (bắt đầu bằng 0)
+export function formatPhoneNumber(phone) { 
     if (!phone) return '';
-    phone = phone.replace(/\s/g, ''); // Xóa khoảng trắng
-    if (phone.startsWith('0')) {
-        return '+84' + phone.substring(1);
+    // Xóa tất cả ký tự không phải số và dấu +
+    let cleaned = phone.toString().replace(/[^\d+]/g, '');
+    
+    // Nếu bắt đầu bằng +84, đổi thành 0
+    if (cleaned.startsWith('+84')) {
+        return '0' + cleaned.substring(3);
     }
-    if (!phone.startsWith('+')) {
-        return '+' + phone; // Giả định là định dạng quốc tế nếu không bắt đầu bằng +
+    // Nếu bắt đầu bằng 84 (không có +) và có vẻ là số di động VN (10-11 số)
+    if (cleaned.startsWith('84') && cleaned.length >= 10) {
+        return '0' + cleaned.substring(2);
     }
-    return phone;
+    // Nếu người dùng nhập 9xx... (thiếu số 0), thêm 0 vào đầu
+    if (/^[1-9]/.test(cleaned) && cleaned.length >= 9 && cleaned.length <= 11) {
+        return '0' + cleaned;
+    }
+    return cleaned;
 }
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
@@ -605,8 +613,22 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     const userRef = doc(db, "users", user.uid);
                     const userSnap = await getDoc(userRef);
                     if (!userSnap.exists()) {
-                        // Logic ghost record cũ ở đây...
-                        await setDoc(userRef, { uid: user.uid, email: user.email, isGhost: false, lastLogin: new Date().toISOString() }, { merge: true });
+                        const identifiers = [];
+                        if (user.email) identifiers.push(user.email);
+                        if (user.phoneNumber) {
+                            const p0 = formatPhoneNumber(user.phoneNumber);
+                            const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+                            identifiers.push(p0, p84);
+                        }
+
+                        await setDoc(userRef, { 
+                            uid: user.uid, 
+                            email: user.email, 
+                            phone: user.phoneNumber ? formatPhoneNumber(user.phoneNumber) : '',
+                            identifiers: identifiers,
+                            isGhost: false, 
+                            lastLogin: new Date().toISOString() 
+                        }, { merge: true });
                     } else {
                         await updateDoc(userRef, { lastLogin: new Date().toISOString() });
                     }

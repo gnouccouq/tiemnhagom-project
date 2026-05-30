@@ -115,8 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Chuyển đổi định dạng số VN: 090... -> +8490...
-        const formattedPhone = formatPhoneNumber(phoneInput);
+        // Định dạng về 0... để lưu/hiển thị, nhưng dùng +84 để gửi OTP Firebase
+        const phone = formatPhoneNumber(phoneInput);
+        const authPhone = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
 
         const btn = e.currentTarget;
         try {
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
             
             setupRecaptcha();
-            confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+            confirmationResult = await signInWithPhoneNumber(auth, authPhone, window.recaptchaVerifier);
             
             document.getElementById('otp-group').style.display = 'block';
             btn.style.display = 'none';

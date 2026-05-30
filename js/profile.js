@@ -211,7 +211,7 @@ async function handleProfileAuth(user) {
                 <div id="profile-display">
                     <p><strong>Tên hiển thị:</strong> <span id="disp-name">${user.displayName || 'Chưa cập nhật'} ${adminBadge}</span></p>
                     <p><strong>Email:</strong> ${user.email}</p>
-                    <p><strong>Số điện thoại:</strong> <span>${userData.phone || 'Chưa cập nhật'}</span></p>
+                    <p><strong>Số điện thoại:</strong> <span>${formatPhoneNumber(userData.phone) || 'Chưa cập nhật'}</span></p>
                     <p><strong>Giới tính:</strong> <span>${userData.gender || 'Chưa cập nhật'}</span></p>
                     <p><strong>Ngày sinh:</strong> <span>${userData.birthday ? new Date(userData.birthday).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</span></p>
                     <p><strong>Ngày tham gia:</strong> ${joinDate}</p>
@@ -287,11 +287,17 @@ async function handleProfileAuth(user) {
                     await updateProfile(user, { displayName: newName });
                 }
                 
+                // Cập nhật cả identifiers để tìm kiếm POS chính xác
+                const phone84 = newPhone.startsWith('0') ? '+84' + newPhone.substring(1) : newPhone;
+                const identifiers = [newPhone, phone84];
+                if (user.email) identifiers.push(user.email);
+
                 // Cập nhật dữ liệu mở rộng vào Firestore
                 await setDoc(userRef, {
                     phone: newPhone,
                     gender: newGender,
                     birthday: newBirthday,
+                    identifiers: identifiers,
                     updatedAt: new Date().toISOString()
                 }, { merge: true });
 

@@ -65,14 +65,19 @@ service cloud.firestore {
 
     // 5. Đơn hàng (orders)
     match /orders/{orderId} {
-      allow create: if 
-        // Kiểm tra dữ liệu đơn hàng cơ bản khi tạo
-        request.resource.data.status == "Đang xử lý" &&
-        request.resource.data.totalAmount > 0 &&
-        request.resource.data.items.size() > 0 &&
-        // Chống giả mạo ID người dùng
-        (request.auth != null ? request.resource.data.userId == request.auth.uid : request.resource.data.userId == 'guest') &&
-        request.resource.data.orderDate == request.time; 
+      allow create: if isAdmin() || (
+        (
+          (request.auth != null && request.resource.data.userId == request.auth.uid) || 
+          (request.resource.data.userId == 'guest')
+        ) && (
+          request.resource.data.totalAmount is number && 
+          request.resource.data.status == "Đang xử lý" &&
+          request.resource.data.totalAmount > 0 &&
+          request.resource.data.items is list &&
+          request.resource.data.items.size() > 0 &&
+          request.resource.data.orderDate == request.time
+        )
+      );
 
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
 
@@ -99,8 +104,7 @@ service cloud.firestore {
       allow create, delete: if isSuperAdmin(); // Chỉ Super Admin mới được tạo/xóa coupon
       allow update: if isSuperAdmin() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
-        // Chỉ cho phép tăng usedCount, không cho giảm
-        request.resource.data.usedCount > resource.data.usedCount
+        request.resource.data.usedCount == resource.data.usedCount + 1
       );
     }
 

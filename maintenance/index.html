@@ -14,25 +14,23 @@
         body {
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            height: 100dvh; /* Chiều cao hiển thị thực tế trên di động */
-            overflow: hidden; /* Khóa hoàn toàn thanh cuộn */
+            min-height: 100dvh; /* Sử dụng min-height thay vì height cố định */
+            overflow-x: hidden;
             padding: 0 !important; /* Xóa bỏ padding mặc định từ style.css */
             margin: 0 !important;
         }
         main {
             flex: 1; /* Đảm bảo main chiếm hết không gian còn lại */
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Cho phép nội dung bắt đầu từ đỉnh nếu dài hơn màn hình */
             justify-content: center;
             padding: 0; /* Bỏ padding mặc định của main */
-            height: 100%;
+            width: 100%;
         }
         .countdown-hero {
             width: 100%;
-            height: 100%;
+            min-height: 100dvh;
             position: relative;
-            overflow: hidden;
             margin-top: 0 !important; /* Ghi đè margin-top: 2rem từ style.css */
             background: #000; /* Nền đen dự phòng */
             display: flex;
@@ -41,10 +39,10 @@
             justify-content: center;
             color: #fff;
             text-align: center;
-            padding: 1rem 5% !important; /* Ghi đè padding: 4rem từ style.css */
+            padding: 3rem 5% !important; /* Tăng padding để tránh bị che bởi thanh công cụ trình duyệt */
         }
         .bg-video {
-            position: absolute;
+            position: fixed; /* Giữ video nền cố định khi cuộn */
             top: 0;
             left: 0;
             width: 100%;
@@ -169,11 +167,16 @@
             100% { transform: scale(1); opacity: 1; }
         }
         @media (max-width: 768px) {
-            .countdown-hero h1 { font-size: 3rem; } /* Điều chỉnh responsive */
-            .countdown-hero p { font-size: 1rem; }
-            .countdown-timer { flex-wrap: wrap; justify-content: center; gap: 15px; }
-            .countdown-item { min-width: 80px; padding: 1rem 0.5rem; }
-            .countdown-item span { font-size: 2rem; }
+            .countdown-hero { padding: 4rem 5% 2rem !important; justify-content: flex-start; } /* Đẩy nội dung lên trên một chút */
+            .coming-soon-label { font-size: 0.75rem; letter-spacing: 3px; margin-bottom: 1rem; }
+            .countdown-hero h1 { font-size: 2.2rem; margin-bottom: 1.2rem; line-height: 1.2; }
+            .countdown-hero p { font-size: 0.9rem; margin-bottom: 2rem; padding: 0 10px; }
+            .countdown-timer { gap: 10px; margin-bottom: 2.5rem; }
+            .countdown-item { min-width: 75px; padding: 1rem 0.3rem; border-radius: 10px; }
+            .countdown-item span { font-size: 1.8rem; }
+            .countdown-item small { font-size: 0.65rem; }
+            .social-links-maintenance { margin-top: 1rem; padding-bottom: 2rem; } /* Thêm padding dưới cùng */
+            body { overflow-y: auto; } /* Cho phép cuộn trên mobile nếu nội dung vẫn dài hơn màn hình */
         }
     </style>
 </head>
