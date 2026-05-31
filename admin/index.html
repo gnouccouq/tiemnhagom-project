@@ -740,12 +740,15 @@
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Xem theo</label>
                         <select id="stats-period-type" style="width: 180px;">
-                            <option value="monthly" selected>Từng tháng trong năm</option>
-                            <option value="quarterly">Từng quý trong năm</option>
+                            <option value="monthly">Từng tháng trong năm</option>
+                            <option value="quarterly" selected>Từng quý trong năm</option>
                             <option value="daily">Từng ngày (Tháng hiện tại)</option>
                         </select>
                     </div>
                     <button id="btn-refresh-stats" class="btn-dark" style="height: 40px; margin-top: 0; padding: 0 20px;">📊 Xem báo cáo</button>
+                    <button id="btn-export-stats-excel" class="btn-minimal" style="height: 40px; margin-top: 0; padding: 0 15px; display: flex; align-items: center; gap: 8px;">
+                        📊 Xuất báo cáo Excel
+                    </button>
                 </div>
             </div>
 
@@ -759,6 +762,36 @@
                             <p id="period-revenue" style="margin: 0;">0đ</p>
                             <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
                         </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #fce4ec; color: #c2185b;">📊</div>
+                    <div class="stat-info">
+                        <h3>Doanh thu thuần</h3>
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <p id="period-net-revenue" style="margin: 0;">0đ</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card" style="border: 1px solid #ffe0b2;">
+                    <div class="stat-icon" style="background: #fff3e0; color: #e65100;">🧾</div>
+                    <div class="stat-info">
+                        <h3>Tổng thuế (1.5%)</h3>
+                        <p id="period-tax-total" style="margin: 0; color: #e65100;">0đ</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="opacity: 0.8;">
+                    <div class="stat-icon" style="background: #fff8e1; color: #ffa000;">🧾</div>
+                    <div class="stat-info">
+                        <h3>Thuế VAT (1%)</h3>
+                        <p id="period-vat-total" style="margin: 0;">0đ</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="opacity: 0.8;">
+                    <div class="stat-icon" style="background: #fff3e0; color: #e67e22;">📝</div>
+                    <div class="stat-info">
+                        <h3>Thuế TNCN (0.5%)</h3>
+                        <p id="period-tncn-total" style="margin: 0;">0đ</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -829,8 +862,12 @@
                             <tr>
                                 <th>Thời gian</th>
                                 <th>Số đơn</th>
-                                <th>Doanh thu</th>
-                                <th>Lợi nhuận</th>
+                                <th>DT Thuần (Net)</th>
+                                <th>VAT (1%)</th>
+                                <th>TNCN (0.5%)</th>
+                                <th>Tổng Thuế</th>
+                                <th>Tổng DT (Gross)</th>
+                                <th>Lợi nhuận (Est)</th>
                             </tr>
                         </thead>
                         <tbody id="stats-detail-table"></tbody>

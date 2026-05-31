@@ -1570,7 +1570,7 @@ footer {
 .collection-banner {
     position: relative;
     height: 450px;
-    border-radius: 4px;
+    border-radius: 15px;
     overflow: hidden;
     display: block;
     text-decoration: none;
@@ -2367,6 +2367,47 @@ footer {
         height: 50px !important;
     }
 
+    /* Tối ưu Card cho biểu đồ trong section Thống kê */
+    #stats-section .admin-card {
+        padding: 15px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    /* Tối ưu chuyên biệt cho Section Thống kê trên Mobile */
+    #stats-section .overview-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* Hiện 2 cột cho các thẻ chỉ số */
+        gap: 10px !important;
+    }
+
+    #stats-section .stat-card {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    #stats-section .stat-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1.1rem;
+        border-radius: 10px;
+    }
+
+    #stats-section .stat-info h3 { font-size: 0.65rem; }
+    #stats-section .stat-info p { font-size: 0.95rem; }
+
+    /* Tối ưu không gian biểu đồ trên mobile */
+    #stats-section .admin-card div[style*="height"] {
+        height: 280px !important; /* Tăng nhẹ lên 280px để biểu đồ không bị quá bẹt trên màn hình dọc */
+        margin-bottom: 10px;
+    }
+
+    #stats-section .admin-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 15px !important;
+    }
+
     .form-row {
         flex-direction: column;
         gap: 0;
@@ -3088,7 +3129,7 @@ footer {
     position: relative;
     aspect-ratio: 1/1;
     overflow: hidden;
-    border-radius: 8px; /* Tăng độ bo góc để trông mềm mại hơn */
+    border-radius: 15px; /* Tăng độ bo góc để trông mềm mại hơn */
 }
 .category-square-content img {
     width: 100%;

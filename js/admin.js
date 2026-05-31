@@ -15,6 +15,7 @@ let adminCollections = []; // Mảng chứa danh sách bộ sưu tập
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
 let posUsersLocal = []; // Danh sách khách hàng để tìm kiếm nhanh trong POS
 let userOrderCounts = {}; // Lưu trữ số lượng đơn hàng theo userId: { uid: count }
+let currentReportData = null; // Lưu trữ dữ liệu báo cáo hiện tại để xuất Excel
 let currentAdminRole = 'staff'; // Quyền mặc định
 let bluetoothDevice = null;
 let btCharacteristic = null;
@@ -2801,6 +2802,9 @@ async function initFullReport() {
     const btnRefresh = document.getElementById('btn-refresh-stats');
     if (!yearSelect || !periodSelect) return;
 
+    const VAT_RATE = 0.01; // 1%
+    const TNCN_RATE = 0.005; // 0.5%
+
     // 1. Nạp danh sách năm (3 năm gần đây)
     const currentYear = new Date().getFullYear();
     if (yearSelect.options.length === 0) {
@@ -2847,8 +2851,12 @@ async function initFullReport() {
                 const monthIdx = date.getMonth();
                 let key = '';
 
+                const revGross = (o.totalAmount || 0);
+                const vatVal = Math.round(revGross * VAT_RATE);
+                const tncnVal = Math.round(revGross * TNCN_RATE);
+                const netRev = revGross - (vatVal + tncnVal);
                 const orderCost = o.items ? o.items.reduce((sum, i) => sum + ((i.cost || 0) * (i.quantity || 1)), 0) : 0;
-                const orderProfit = (o.totalAmount || 0) - orderCost;
+                const orderProfit = netRev - orderCost; // Lợi nhuận sau thuế
 
                 if (orderYear === selectedYear) {
                     totalOrders++;
@@ -2862,11 +2870,14 @@ async function initFullReport() {
                     }
 
                     if (key) {
-                        if (!statsMap[key]) statsMap[key] = { rev: 0, count: 0, profit: 0 };
-                        statsMap[key].rev += (o.totalAmount || 0);
+                        if (!statsMap[key]) statsMap[key] = { rev: 0, net: 0, vat: 0, tncn: 0, count: 0, profit: 0 };
+                        statsMap[key].rev += revGross;
+                        statsMap[key].net += netRev;
+                        statsMap[key].vat += vatVal;
+                        statsMap[key].tncn += tncnVal;
                         statsMap[key].count++;
                         statsMap[key].profit += orderProfit;
-                        totalRev += (o.totalAmount || 0);
+                        totalRev += revGross;
                         totalProfit += orderProfit;
 
                         // Gom sản phẩm bán chạy cho năm hiện tại
@@ -2900,10 +2911,16 @@ async function initFullReport() {
             };
 
             // 3. Cập nhật thẻ Summary
-            animateNumber('period-revenue', totalRev, true);
+            animateNumber('period-revenue', totalRev, true); // Tổng (có thuế)
             animateNumber('period-profit', totalProfit, true);
             animateNumber('period-orders', totalOrders);
             animateNumber('period-avg-order', totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0, true);
+
+            // Cập nhật các chỉ số thuế VAT (1%), TNCN (0.5%) và Tổng (1.5%)
+            if (document.getElementById('period-vat-total')) animateNumber('period-vat-total', Math.round(totalRev * VAT_RATE), true);
+            if (document.getElementById('period-tncn-total')) animateNumber('period-tncn-total', Math.round(totalRev * TNCN_RATE), true);
+            if (document.getElementById('period-tax-total')) animateNumber('period-tax-total', Math.round(totalRev * (VAT_RATE + TNCN_RATE)), true);
+            if (document.getElementById('period-net-revenue')) animateNumber('period-net-revenue', totalRev - Math.round(totalRev * (VAT_RATE + TNCN_RATE)), true);
 
             // Hiển thị % tăng trưởng
             document.getElementById('period-revenue-growth').innerHTML = getGrowthHtml(totalRev, prevTotalRev);
@@ -3015,14 +3032,42 @@ async function initFullReport() {
 
             // 6. Cập nhật bảng kê chi tiết
             const tableBody = document.getElementById('stats-detail-table');
-            tableBody.innerHTML = labels.map(l => `
+            const rowsHtml = labels.map(l => `
                 <tr>
                     <td><strong>${l}</strong></td>
-                    <td>${statsMap[l].count} đơn</td>
+                    <td>${statsMap[l].count} ĐH</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].net)}đ</td>
+                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat)}đ</td>
+                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].tncn)}đ</td>
+                    <td style="font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat + statsMap[l].tncn)}đ</td>
                     <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)}đ</td>
                     <td style="color: #27ae60; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)}đ</td>
                 </tr>
             `).join('');
+
+            const totalVatAll = Math.round(totalRev * VAT_RATE);
+            const totalTncnAll = Math.round(totalRev * TNCN_RATE);
+            const totalNetAll = totalRev - (totalVatAll + totalTncnAll);
+
+            tableBody.innerHTML = rowsHtml + `
+                <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
+                    <td>TỔNG CỘNG</td>
+                    <td>${totalOrders} ĐH</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(totalNetAll)}đ</td>
+                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(totalVatAll)}đ</td>
+                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(totalTncnAll)}đ</td>
+                    <td style="font-weight: bold;">${new Intl.NumberFormat('vi-VN').format(totalVatAll + totalTncnAll)}đ</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(totalRev)}đ</td>
+                    <td style="color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(totalProfit)}đ</td>
+                </tr>
+            `;
+
+            // Lưu dữ liệu vào biến global để xuất Excel
+            currentReportData = {
+                labels, statsMap, 
+                totals: { orders: totalOrders, net: totalNetAll, vat: totalVatAll, tncn: totalTncnAll, gross: totalRev, profit: totalProfit },
+                info: { year: selectedYear, type: periodType }
+            };
 
         } catch (err) { 
             console.error(err); 
@@ -3033,8 +3078,70 @@ async function initFullReport() {
     };
 
     btnRefresh.onclick = updateReport;
+    document.getElementById('btn-export-stats-excel').onclick = exportStatsToExcel;
     document.getElementById('topSoldType').onchange = updateReport;
     updateReport(); // Lần đầu load
+}
+
+async function exportStatsToExcel() {
+    if (!currentReportData) return showToast("Vui lòng xem báo cáo trước khi xuất", "error");
+    
+    const { labels, statsMap, totals, info } = currentReportData;
+    const headers = ["Thời gian", "Số đơn", "DT Thuần (Net)", "Thuế VAT (1%)", "Thuế TNCN (0.5%)", "Tổng Thuế (1.5%)", "Doanh thu (Gross)", "Lợi nhuận (Est)"];
+    
+    let excelHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"/><style>
+            th { background-color: #2c3e50; color: #ffffff; border: 0.5pt solid #000; padding: 5px; }
+            td { border: 0.5pt solid #000; padding: 5px; }
+            .num { mso-number-format:"\\#\\,\\#\\#0"; text-align: right; }
+            .bold { font-weight: bold; background-color: #f8f9fa; }
+        </style></head>
+        <body>
+            <h2>BÁO CÁO DOANH THU & THUẾ - TIỆM NHÀ GỐM</h2>
+            <p>Năm: ${info.year} | Chế độ: ${info.type === 'monthly' ? 'Từng tháng' : info.type === 'quarterly' ? 'Từng quý' : 'Từng ngày'}</p>
+            <table>
+                <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                <tbody>
+                    ${labels.map(l => {
+                        const s = statsMap[l];
+                        return `
+                        <tr>
+                            <td>${l}</td>
+                            <td class="num">${s.count}</td>
+                            <td class="num">${s.net}</td>
+                            <td class="num">${s.vat}</td>
+                            <td class="num">${s.tncn}</td>
+                            <td class="num">${s.vat + s.tncn}</td>
+                            <td class="num">${s.rev}</td>
+                            <td class="num">${s.profit}</td>
+                        </tr>`;
+                    }).join('')}
+                    <tr class="bold">
+                        <td>TỔNG CỘNG</td>
+                        <td class="num">${totals.orders}</td>
+                        <td class="num">${totals.net}</td>
+                        <td class="num">${totals.vat}</td>
+                        <td class="num">${totals.tncn}</td>
+                        <td class="num">${totals.vat + totals.tncn}</td>
+                        <td class="num">${totals.gross}</td>
+                        <td class="num">${totals.profit}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 10px; color: #666;">* Ghi chú: Doanh thu thuần = Gross - (VAT + TNCN). Thuế tính dựa trên mô hình Hộ kinh doanh (1.5%).</p>
+        </body></html>
+    `;
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Bao_cao_Tai_chinh_TNG_${info.year}_${info.type}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Đã xuất báo cáo thành công!");
 }
 
 // --- Quản lý Nhật ký kho ---

@@ -312,7 +312,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 // Lọc client-side để tìm kiếm "chữ cái bất kỳ" (substring search)
                 const results = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(val)) // Sử dụng includes()
+                    .filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(val) || p.id.toLowerCase().includes(val)) // Tìm theo tên hoặc mã SKU
                     .slice(0, 6); // Chỉ hiển thị 6 gợi ý hàng đầu
 
                 if (results.length === 0) {
@@ -324,11 +324,16 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                     const hasSale = p.sale > 0;
                     const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
                     const safeName = escapeHTML(p.name);
+                    const isOutOfStock = (p.stock || 0) <= 0;
                     return `
                         <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
                             <img src="${p.imageUrl}" alt="${p.name}">
                             <div class="suggestion-info">
                                 <h5>${safeName}</h5>
+                                <div style="display: flex; gap: 10px; font-size: 0.7rem; margin-bottom: 2px;">
+                                    <span style="color: #888;">Mã: ${p.id}</span>
+                                    <span style="color: ${isOutOfStock ? '#e74c3c' : '#27ae60'}; font-weight: 600;">${isOutOfStock ? 'Hết hàng' : 'Còn hàng'}</span>
+                                </div>
                                 <div class="suggestion-price-container">
                                     ${hasSale ? `<span class="suggestion-old-price">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
                                     <span class="suggestion-current-price ${hasSale ? 'sale' : ''}">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
