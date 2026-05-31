@@ -357,6 +357,49 @@ async function initHeroCarousel() {
     startAutoSlide();
 }
 
+// Logic cho Story Slider (Ảnh chuyển động tự động)
+function initStorySlider() {
+    const slides = document.querySelectorAll('.story-slide');
+    const dotsContainer = document.getElementById('story-dots');
+    if (slides.length <= 1 || !dotsContainer) return;
+
+    // Khởi tạo các chấm (dots) tương ứng với số lượng ảnh
+    slides.forEach((_, idx) => {
+        const dot = document.createElement('button');
+        dot.className = `story-dot ${idx === 0 ? 'active' : ''}`;
+        dot.onclick = () => {
+            showSlide(idx);
+            startAuto();
+        };
+        dotsContainer.appendChild(dot);
+    });
+
+    const dots = dotsContainer.querySelectorAll('.story-dot');
+
+    let current = 0;
+    let storyInterval;
+
+    const showSlide = (index) => {
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+        current = (index + slides.length) % slides.length;
+        slides[current].classList.add('active');
+        dots[current].classList.add('active');
+    };
+
+    const startAuto = () => {
+        if (storyInterval) clearInterval(storyInterval);
+        storyInterval = setInterval(() => showSlide(current + 1), 4500);
+    };
+
+    window.moveStorySlide = (dir) => {
+        showSlide(current + dir);
+        startAuto(); // Reset lại bộ đếm khi người dùng bấm nút
+    };
+
+    startAuto();
+}
+
 // Chạy các hàm khi DOM đã tải xong
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('./', (user) => {
@@ -367,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchCollections(); // Thêm dòng này
         initHeroCarousel();
         initWeeklyCountdown();
+        initStorySlider();
 
         // Hiệu ứng Header trong suốt mượt mà khi cuộn trang (chỉ áp dụng cho Trang chủ)
         const navbar = document.querySelector('.navbar');

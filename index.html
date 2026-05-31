@@ -270,7 +270,14 @@
                 <a href="about/" class="btn-dark">Tìm hiểu thêm về chúng tôi</a>
             </div>
             <div class="story-image">
-                <img src="Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Quy trình làm gốm" loading="lazy">
+                <img src="Asset/images/481205605_945767991014584_315534319945390599_n.jpg" alt="Quy trình 1" class="story-slide active" loading="lazy">
+                <img src="Asset/images/484397934_1826427484824769_5324677749728797257_n_11zon.webp" alt="Quy trình 2" class="story-slide" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=800&auto=format&fit=crop" alt="Quy trình 3" class="story-slide" loading="lazy">
+                <div class="story-controls">
+                    <button onclick="window.moveStorySlide(-1)" class="story-nav-btn" aria-label="Ảnh trước">&#10094;</button>
+                    <button onclick="window.moveStorySlide(1)" class="story-nav-btn" aria-label="Ảnh sau">&#10095;</button>
+                </div>
+                <div class="story-dots" id="story-dots"></div>
             </div>
         </section>
 
