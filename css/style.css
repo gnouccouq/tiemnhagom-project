@@ -4441,4 +4441,92 @@ footer {
     height: 48px;
     display: flex;
     align-items: center;
-    justi
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #888;
+}
+.detail-fav-btn:hover { border-color: var(--text-black); color: var(--text-black); }
+.detail-fav-btn.active { color: #e74c3c; border-color: #e74c3c; fill: #e74c3c; }
+
+/* --- Profile Specific Styles --- */
+.profile-tabs {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 0;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    cursor: pointer;
+    color: #888;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    color: var(--text-black);
+    border-bottom-color: var(--text-black);
+    font-weight: 600;
+}
+
+.profile-section { display: none; }
+.profile-section.active { display: block; animation: fadeIn 0.4s ease; }
+
+/* --- Modal System (Order Details) --- */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+.modal.active { display: flex; }
+.modal-content {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+.modal-close {
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+}
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    gap: 15px;
+}
+.detail-row span:first-child { color: #888; flex-shrink: 0; }
+.detail-row span:last-child { font-weight: 600; text-align: right; }
+
+.review-modal-img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 4px;
+}

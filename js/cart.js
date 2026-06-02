@@ -11,6 +11,8 @@ import {
 // API Endpoints
 const LOCAL_PROVINCES_URL = "../provinces.json";
 
+let savedAddressesLocal = [];
+
 let appliedCoupon = null; // { code: '...', type: 'percent'|'fixed', value: 10 }
 
 // Cache for location data to avoid repeated API calls
@@ -130,6 +132,34 @@ async function renderCart() {
     }
 }
 
+window.useSavedAddress = async (index) => {
+    const addr = savedAddressesLocal[index];
+    if (!addr) return;
+
+    const nameInp = document.getElementById('shipping-name');
+    const phoneInp = document.getElementById('shipping-phone');
+    const addressInp = document.getElementById('shipping-address');
+    const provinceSelect = document.getElementById('shipping-province');
+    const wardSelect = document.getElementById('shipping-ward');
+
+    if (nameInp) nameInp.value = addr.fullName || '';
+    if (phoneInp) phoneInp.value = addr.phone || '';
+    if (addressInp) addressInp.value = addr.address || '';
+    
+    if (provinceSelect) {
+        provinceSelect.value = addr.provinceId;
+        wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã --</option>';
+        const communes = await fetchCommunesByProvinceId(addr.provinceId);
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+        communes.forEach(c => {
+            wardSelect.innerHTML += `<option value="${c.id}" ${c.id == addr.wardId ? 'selected' : ''}>${c.name}</option>`;
+        });
+        wardSelect.disabled = false;
+        renderCart(); // Cập nhật phí ship dựa trên tỉnh thành mới
+        showToast("Đã áp dụng địa chỉ từ sổ địa chỉ");
+    }
+}
+
 async function renderCheckoutForm(container) {
     // Kiểm tra xem một phần tử đặc trưng của form đã tồn tại chưa thay vì kiểm tra innerHTML
     if (document.getElementById('shipping-name')) return; 
@@ -148,9 +178,30 @@ async function renderCheckoutForm(container) {
         }
     }
 
+    let savedAddressesHtml = '';
+    if (auth.currentUser) {
+        const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        savedAddressesLocal = userSnap.exists() ? (userSnap.data().addresses || []) : [];
+        if (savedAddressesLocal.length > 0) {
+            savedAddressesHtml = `
+                <div class="saved-addresses-selector" style="margin-bottom: 20px;">
+                    <label style="font-size: 0.8rem; color: #888; margin-bottom: 10px; display: block;">Sử dụng địa chỉ đã lưu:</label>
+                    <div class="address-tags-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                        ${savedAddressesLocal.map((addr, idx) => `
+                            <div class="address-tag" onclick="window.useSavedAddress(${idx})" style="background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 8px; min-width: 180px; cursor: pointer; font-size: 0.75rem; transition: 0.2s;">
+                                <strong>${addr.fullName}</strong><br>${addr.phone}<br><small style="color: #666;">${addr.address}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     container.innerHTML = `
         <div class="checkout-section">
             <h3 class="checkout-title">Billing information | Thông tin thanh toán</h3>
+            ${savedAddressesHtml}
             <div class="form-row">
                 <div class="form-group"><label>Full Name *</label><input type="text" id="shipping-name" value="${userData.displayName}" required></div>
                 <div class="form-group"><label>Email Address</label><input type="email" id="shipping-email" value="${userData.email}"></div>
@@ -186,6 +237,13 @@ async function renderCheckoutForm(container) {
                     </label>
                 </div>
             </div>
+            ${auth.currentUser ? `
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="checkbox-container">Lưu địa chỉ này vào sổ địa chỉ để dùng lần sau
+                    <input type="checkbox" id="save-address-checkbox">
+                    <span class="checkmark"></span>
+                </label>
+            </div>` : ''}
         </div>
 
         <div class="checkout-section">
@@ -451,6 +509,7 @@ window.placeOrder = async () => {
     const address = document.getElementById('shipping-address')?.value.trim();
     const note = document.getElementById('order-note')?.value.trim();
     const termsAccepted = document.getElementById('terms-agreement')?.checked;
+    const saveAddressChecked = document.getElementById('save-address-checkbox')?.checked;
     
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
@@ -628,6 +687,29 @@ window.placeOrder = async () => {
         });
 
         if (orderId) {
+            // 1.5 Lưu địa chỉ vào sổ địa chỉ nếu khách chọn "Lưu địa chỉ"
+            if (auth.currentUser && saveAddressChecked) {
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                const currentAddresses = userSnap.exists() ? (userSnap.data().addresses || []) : [];
+                
+                const newAddress = {
+                    fullName: name,
+                    phone: formattedPhone,
+                    provinceId: provinceId,
+                    provinceName: provinceName,
+                    wardId: wardId,
+                    wardName: wardName,
+                    address: address
+                };
+
+                // Tránh lưu trùng lặp hoàn toàn
+                const isDuplicate = currentAddresses.some(a => a.address === address && a.wardId === wardId);
+                if (!isDuplicate) {
+                    await updateDoc(userRef, { addresses: [newAddress, ...currentAddresses].slice(0, 10) }); // Giữ tối đa 10 địa chỉ
+                }
+            }
+
             // 2. Xóa giỏ hàng sau khi đặt thành công
             if (auth.currentUser) {
                 await setDoc(doc(db, "carts", auth.currentUser.uid), { items: [] });

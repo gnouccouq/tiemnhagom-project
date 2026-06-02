@@ -895,6 +895,15 @@ export async function loadSharedComponents(pathPrefix = './') {
             }
         }
 
+        // Bước 2: Tải và chèn nội dung Footer vào placeholder
+        if (f.ok) {
+            const footerHTML = fixPaths(await f.text());
+            const footerPlaceholder = document.getElementById('footer-placeholder');
+            if (footerPlaceholder) {
+                footerPlaceholder.innerHTML = footerHTML;
+            }
+        }
+
         // Bước 3: Lắng nghe và render danh mục động từ Firestore
         onSnapshot(doc(db, "settings", "product_categories"), async (snapshot) => {
             const data = snapshot.data();

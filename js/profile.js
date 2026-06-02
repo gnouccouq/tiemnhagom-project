@@ -4,7 +4,7 @@ import {
 } from "./utils.js";
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-    doc, getDoc, collection, query, where, getDocs, orderBy, setDoc 
+    doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Hàm điều khiển Tab
@@ -29,6 +29,9 @@ function setupTabs() {
             if (btn) btn.click();
         } else if (hash === '#favs') {
             const btn = document.querySelector('.tab-btn[data-target="fav-section"]');
+            if (btn) btn.click();
+        } else if (hash === '#addresses') {
+            const btn = document.querySelector('.tab-btn[data-target="address-section"]');
             if (btn) btn.click();
         } else {
             // Mặc định hoặc khi click vào "Trang cá nhân" (không hash) thì về tab thông tin
@@ -180,6 +183,54 @@ window.viewOrderDetails = async (orderId) => {
     }
 };
 
+// Hàm tải sổ địa chỉ
+async function fetchAddresses(userId) {
+    const container = document.getElementById('address-list');
+    const noAddrMsg = document.getElementById('no-addresses-msg');
+    if (!container) return;
+
+    try {
+        const userSnap = await getDoc(doc(db, "users", userId));
+        const addresses = userSnap.exists() ? (userSnap.data().addresses || []) : [];
+
+        if (addresses.length === 0) {
+            container.style.display = 'none';
+            if (noAddrMsg) noAddrMsg.style.display = 'block';
+            return;
+        }
+
+        container.innerHTML = addresses.map((addr, idx) => `
+            <div class="order-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; margin-bottom: 1rem;">
+                <div>
+                    <p><strong>${addr.fullName}</strong> | ${addr.phone}</p>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">${addr.address}, ${addr.wardName}, ${addr.provinceName}</p>
+                </div>
+                <button class="btn-remove-small" onclick="window.deleteAddress(${idx})">Xóa</button>
+            </div>
+        `).join('');
+
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        if (noAddrMsg) noAddrMsg.style.display = 'none';
+    } catch (error) {
+        console.error("Lỗi tải sổ địa chỉ:", error);
+    }
+}
+
+window.deleteAddress = async (index) => {
+    if (!confirm("Xóa địa chỉ này khỏi sổ địa chỉ?")) return;
+    const user = auth.currentUser;
+    try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const addresses = userSnap.data().addresses || [];
+        addresses.splice(index, 1);
+        await updateDoc(userRef, { addresses: addresses });
+        showToast("Đã xóa địa chỉ");
+        fetchAddresses(user.uid);
+    } catch (e) { showToast("Lỗi xóa địa chỉ", "error"); }
+};
+
 // Hàm thiết lập listener cho trạng thái đăng nhập và hiển thị thông tin người dùng
 async function handleProfileAuth(user) {
     const profileInfo = document.getElementById('profile-info');
@@ -326,6 +377,7 @@ async function handleProfileAuth(user) {
 
         fetchFavorites(user.uid);
         fetchOrderHistory(user.uid);
+        fetchAddresses(user.uid);
     } else {
         profileInfo.style.display = 'none';
         document.getElementById('order-history-list').innerHTML = '';
