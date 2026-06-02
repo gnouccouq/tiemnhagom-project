@@ -70,6 +70,57 @@ export const COLOR_MAP = {
     // Thêm các màu khác nếu cần
 };
 
+// 1.1 Quản lý trạng thái Flash Sale toàn cục
+export let globalFlashSaleSettings = null;
+
+export async function fetchFlashSaleSettings() {
+    if (globalFlashSaleSettings) return globalFlashSaleSettings;
+    if (!db) return null;
+    const fsRef = doc(db, "settings", "flash_sale");
+    const fsSnap = await getDoc(fsRef);
+    if (fsSnap.exists()) {
+        globalFlashSaleSettings = fsSnap.data();
+    }
+    return globalFlashSaleSettings;
+}
+
+// 1.2 Khởi tạo Scroll Reveal Observer toàn cục để dùng cho các phần tử nạp động (ví dụ bộ sưu tập ở trang chủ)
+export const revealObserver = (typeof IntersectionObserver !== 'undefined') ? new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15 }) : null;
+
+// Gán vào window để các module nạp dữ liệu động (như main.js) có thể sử dụng
+if (revealObserver) window.revealObserver = revealObserver;
+
+export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSettings) {
+    const now = new Date();
+    const isFsRunning = fsSettings && fsSettings.isActive && 
+                        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
+                        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
+
+    if (product.flashSaleGroup) {
+        return isFsRunning ? product.flashSaleGroup : product.price;
+    }
+    if (product.sale > 0) {
+        return Math.round(product.price * (1 - product.sale / 100));
+    }
+    return product.price;
+}
+
+export function getProductEffectiveSale(product, fsSettings = globalFlashSaleSettings) {
+    const now = new Date();
+    const isFsRunning = fsSettings && fsSettings.isActive && 
+                        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
+                        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
+
+    if (product.flashSaleGroup && !isFsRunning) return 0;
+    return product.sale || 0;
+}
 
 // Hàm để lấy danh mục hiện tại (có thể dùng trong các module khác)
 export function getDynamicCategories() {
@@ -391,17 +442,16 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     let starsHtml = '';
     for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
-    const hasSale = product.sale > 0;
+    const currentPrice = getProductCurrentPrice(product);
+    const displaySale = getProductEffectiveSale(product);
+    const hasSale = displaySale > 0;
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
-    // Nếu có flashSaleGroup (giá đồng giá), lấy trực tiếp giá đó để tránh bị số lẻ
-    const currentPrice = (hasSale && product.flashSaleGroup) ? product.flashSaleGroup : (hasSale ? product.price * (1 - product.sale / 100) : product.price);
-    
     const priceHtml = hasSale 
         ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>`
         : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
 
-    const saleBadge = hasSale ? `<div class="sale-badge">-${product.sale}%</div>` : '';
+    const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
@@ -498,6 +548,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
     // Chạy song song: Tải component và Lắng nghe Auth
     const componentsPromise = loadSharedComponents(pathPrefix);
 
+    // Tải trước cài đặt Flash Sale để render thẻ sản phẩm đúng giá
+    const fsPromise = fetchFlashSaleSettings();
+
     // KIỂM TRA CHẾ ĐỘ BẢO TRÌ (Chạy độc lập để redirect nhanh nhất có thể cho cả khách và thành viên)
     const maintenancePromise = (async () => {
         try {
@@ -529,6 +582,12 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
         
+        // Đợi cài đặt Flash Sale xong để render giá chính xác
+        await fsPromise;
+
+        // Kích hoạt quan sát cho các phần tử có sẵn trong DOM ngay khi khởi tạo Header
+        document.querySelectorAll('.reveal-on-scroll').forEach(r => window.revealObserver?.observe(r));
+
         // LUÔN chạy callback sớm nhất có thể để trang web load dữ liệu chính (Sản phẩm,...)
         // Không để các tác vụ Admin/Sync bên dưới làm chậm việc hiển thị dữ liệu
         if (onAuthChangeCallback) onAuthChangeCallback(user);
@@ -686,19 +745,6 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Khởi tạo nút cuộn lên đầu trang
         setupScrollToTop();
 
-        // Khởi tạo hiệu ứng Scroll Reveal nếu có class reveal-on-scroll
-        const reveals = document.querySelectorAll('.reveal-on-scroll');
-        if (reveals.length > 0) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('is-visible');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.15 });
-            reveals.forEach(r => observer.observe(r));
-        }
     });
 }
 
@@ -878,39 +924,20 @@ export async function loadSharedComponents(pathPrefix = './') {
                 footerList.innerHTML = footerHtml;
             }
             
-            // Render Header Mega Menu Categories (assuming header.html has a mega-menu-categories div)
+            // Render Header Mega Menu Categories
             const megaMenuContainer = document.getElementById('mega-menu-categories');
             if (megaMenuContainer) {
-                let megaMenuHtml = ''; // Reset HTML
-                dynamicCategories.forEach(group => { // Iterate over array
-                    megaMenuHtml += `
-                        <div class="mega-col">
-                            <h4><a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}" style="color: inherit; text-decoration: none; border: none; padding: 0 !important; font-weight: inherit; opacity: 1;">${group.name}</a></h4>
-                            ${group.subs.map(sub => `<a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>`).join('')}
-                        </div>
-                    `;
-                });
-                megaMenuContainer.innerHTML = megaMenuHtml;
+                megaMenuContainer.innerHTML = dynamicCategories.map(group => `
+                    <div class="mega-col">
+                        <h4>${group.name}</h4>
+                        ${group.subs.map(sub => `
+                            <a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>
+                        `).join('')}
+                    </div>
+                `).join('');
             }
-
-            // Cập nhật lại các thành phần UI khác có thể phụ thuộc vào danh mục
-            // Ví dụ: Nếu có hàm renderCategoryGrid() ở trang products, nó sẽ được gọi lại
-            // hoặc các hàm populateCategorySelect() ở admin.js
-            // (Các module khác sẽ tự động nhận dynamicCategories mới nhất qua getDynamicCategories() hoặc onSnapshot riêng của chúng)
         });
-
-
-
-        if (f.ok) {
-            const footerHTML = fixPaths(await f.text());
-            const footerPlaceholder = document.getElementById('footer-placeholder');
-            if (footerPlaceholder) footerPlaceholder.innerHTML = footerHTML;
-        }
-
-        return true;
-    } catch (error) {
-        console.error("Lỗi tải component dùng chung:", error);
-        return false;
+    } catch (err) {
+        console.error("Lỗi tải components:", err);
     }
 }
-                        

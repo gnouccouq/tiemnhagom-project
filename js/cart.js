@@ -1,5 +1,5 @@
 import { 
-    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -539,6 +539,8 @@ window.placeOrder = async () => {
         // 1. Thực hiện Transaction để đảm bảo trừ kho và tạo đơn đồng thời
         const orderId = await runTransaction(db, async (transaction) => {
             const newOrderRef = doc(collection(db, "orders")); // Tạo reference mới cho đơn hàng
+            // Nạp cài đặt Flash Sale mới nhất trong transaction để check giá chính xác
+            const fsSettings = await fetchFlashSaleSettings();
 
             let finalSubtotal = 0;
             const processedOrderItems = [];
@@ -576,8 +578,7 @@ window.placeOrder = async () => {
                     throw new Error(`Sản phẩm "${product.name}" (biến thể ${item.color || item.pattern || 'mặc định'}) đã hết hàng hoặc không đủ số lượng. Chỉ còn ${currentStock} sản phẩm.`);
                 }
 
-                const hasSale = product.sale > 0;
-                const currentUnitPrice = (hasSale && product.flashSaleGroup) ? product.flashSaleGroup : (hasSale ? product.price * (1 - product.sale / 100) : product.price);
+                const currentUnitPrice = getProductCurrentPrice(product, fsSettings);
                 finalSubtotal += currentUnitPrice * item.quantity;
 
                 processedOrderItems.push({

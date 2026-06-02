@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber
+    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -3349,6 +3350,9 @@ document.getElementById('flash-sale-group-select')?.addEventListener('change', (
         const salePercent = Math.round((1 - targetPrice / originalPrice) * 100);
         saleInput.value = salePercent;
         showToast(`Đã tự tính giảm giá: ${salePercent}%`);
+    } else if (e.target.value === "" && saleInput) {
+        saleInput.value = 0;
+        showToast("Đã hủy tham gia chương trình đồng giá, giảm giá về 0%");
     }
 });
 
@@ -3564,6 +3568,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, async (user) => {
         await checkAdminRights(user);
         if (document.body.style.display === "block") {
+            // Nạp settings Flash Sale trước khi init các thành phần khác
+            await fetchFlashSaleSettings(); 
             initProductListener();
             initOrderListener();
             initUserListener();
@@ -3661,24 +3667,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             posSearchTimer = setTimeout(() => {
+                const fsSettings = globalFlashSaleSettings;
                 const results = posProductsLocal.filter(p => 
                     (p.name || "").toLowerCase().includes(val) || 
                     (p.id || "").toLowerCase().includes(val)
                 ).slice(0, 10);
 
                 if (results.length > 0) {
-                    posSuggestions.innerHTML = results.map((p, idx) => `
+                    posSuggestions.innerHTML = results.map((p, idx) => {
+                        const currentPrice = getProductCurrentPrice(p, fsSettings);
+                        return `
                         <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" 
-                             onclick="window.addProductToPOS('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, '${p.imageUrl}')">
+                             onclick="window.addProductToPOS('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}')">
                             <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
                                 <div style="font-size: 0.7rem; color: #888;">
-                                    SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(p.price)}đ</strong>
+                                    SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</strong>
                                 </div>
                             </div>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
                     posSuggestions.style.display = 'block';
                     posHighlightedIndex = -1;
                 } else {

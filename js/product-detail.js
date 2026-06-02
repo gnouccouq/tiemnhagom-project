@@ -1,6 +1,7 @@
 import { 
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
-    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML
+    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
+    fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -152,8 +153,10 @@ async function fetchProductDetail() {
     `;
 
     try {
-        const docRef = doc(db, "products", productId);
-        const docSnap = await getDoc(docRef);
+        const [docSnap, fsSettings] = await Promise.all([
+            getDoc(doc(db, "products", productId)),
+            fetchFlashSaleSettings()
+        ]);
 
         if (docSnap.exists()) {
             const p = docSnap.data();
@@ -165,10 +168,10 @@ async function fetchProductDetail() {
             // Lưu vào lịch sử kèm danh mục để tối ưu gợi ý ở trang chủ
             addToHistory(productId, p.category);
 
-            const hasSale = p.sale > 0;
+            const currentPrice = getProductCurrentPrice(p, fsSettings);
+            const displaySale = getProductEffectiveSale(p, fsSettings);
+            const hasSale = displaySale > 0;
             const soldCount = p.sold || 0;
-            // Ưu tiên lấy giá đồng giá tròn trịa
-            const currentPrice = (hasSale && p.flashSaleGroup) ? p.flashSaleGroup : (hasSale ? p.price * (1 - p.sale / 100) : p.price);
             
             let starsHtml = '';
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
@@ -250,7 +253,7 @@ async function fetchProductDetail() {
                             <div class="product-price-row">
                                 <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
                                 ${hasSale ? `<span class="old-price" style="text-decoration:line-through; color:#aaa; font-size:1.2rem;">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
-                                ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${p.sale}%</span>` : ''}
+                                ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${displaySale}%</span>` : ''}
                             </div>
                         </div>
                         
@@ -1134,10 +1137,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fetchProductDetail();
         
-        // Lấy productId từ URL để khởi tạo Form
+        // Lấy productId từ URL để khởi tạo Form đánh giá
         const urlParams = new URLSearchParams(window.location.search);
-        const pid = urlParams.get('id');
-        if (pid) initReviewForm(pid);
-
+        const productId = urlParams.get('id');
+        if (productId) initReviewForm(productId);
     });
 });

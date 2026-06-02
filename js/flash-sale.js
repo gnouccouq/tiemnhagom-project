@@ -254,82 +254,50 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         // Cập nhật trạng thái nút phân trang
         if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;
         if (prevBtn) prevBtn.disabled = currentPage === 1;
-        
-        // Nếu đang lọc đồng giá, ta tạm ẩn phân trang vì kết quả đã được thu hẹp
-        if (nextBtn) nextBtn.disabled = selectedPriceGroup ? true : (querySnapshot.size < PAGE_SIZE);
+        if (nextBtn) nextBtn.disabled = querySnapshot.docs.length < PAGE_SIZE;
 
-    } catch (error) {
-        console.error("Lỗi lấy dữ liệu Flash Sale:", error);
-        productGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 5rem; color: red;">Không thể tải sản phẩm Flash Sale. Vui lòng thử lại sau.</p>';
-        noProductsMsg.style.display = 'none'; // Đảm bảo ẩn thông báo không có sản phẩm nếu có lỗi
+    } catch (e) {
+        console.error("Lỗi fetch sản phẩm sale:", e);
+        if (productGrid) productGrid.innerHTML = '<p style="text-align:center; color:red;">Đã xảy ra lỗi khi tải danh sách sản phẩm.</p>';
     }
 }
 
-// Render thanh các nút chọn mức giá đồng giá
+// Hàm render các nút chọn mức giá đồng giá
 function renderPriceTabs() {
     const container = document.getElementById('price-tabs-container');
     if (!container || !flashSaleSettings || !flashSaleSettings.priceGroups) return;
 
-    container.innerHTML = `
-        <div class="price-tab ${selectedPriceGroup === null ? 'active' : ''}" onclick="window.selectPriceGroup(null)">
-            Tất cả
+    const groups = flashSaleSettings.priceGroups.sort((a, b) => a - b);
+    
+    let html = `<div class="price-tab ${selectedPriceGroup === null ? 'active' : ''}" onclick="window.filterByPriceGroup(null)">Tất cả</div>`;
+    
+    html += groups.map(price => `
+        <div class="price-tab ${selectedPriceGroup === price ? 'active' : ''}" onclick="window.filterByPriceGroup(${price})">
+            Đồng giá ${price/1000}k
         </div>
-        ${flashSaleSettings.priceGroups.map(price => `
-            <div class="price-tab ${selectedPriceGroup === price ? 'active' : ''}" onclick="window.selectPriceGroup(${price})">
-                Đồng giá ${price / 1000}k
-            </div>
-        `).join('')}
-    `;
+    `).join('');
+
+    container.innerHTML = html;
 }
 
-// Xử lý khi chọn một mức đồng giá
-window.selectPriceGroup = (price) => {
+window.filterByPriceGroup = (price) => {
     selectedPriceGroup = price;
-    updateFlashSaleBanner(price);
+    // Hiệu ứng đổi màu banner nếu cần
+    const banner = document.querySelector('.flash-sale-banner');
+    if (banner) {
+        if (price) banner.classList.add('price-focused');
+        else banner.classList.remove('price-focused');
+    }
     fetchFlashSaleProducts('init');
 };
 
-// Cập nhật Layout Banner riêng cho từng mức giá
-function updateFlashSaleBanner(price) {
-    const banner = document.querySelector('.flash-sale-banner');
-    const bannerTitle = document.querySelector('.banner-title');
-    const saleTag = document.querySelector('.sale-tag-hero');
-
-    if (!banner) return;
-
-    if (price) {
-        banner.classList.add('price-focused');
-        if (bannerTitle) bannerTitle.innerText = `Đồng giá ${price / 1000}k`;
-        if (saleTag) saleTag.innerText = `Độc quyền tại Tiệm`;
-        
-        // Đổi màu chủ đạo theo mức giá (Tạo layout riêng bằng màu sắc)
-        const themes = {
-            39000: '#e67e22', // Cam
-            49000: '#d35400', // Cam đậm
-            59000: '#c0392b', // Đỏ đô
-            79000: '#8e44ad', // Tím
-            99000: '#2c3e50'  // Xanh than
-        };
-        banner.style.setProperty('--banner-accent', themes[price] || '#000');
-    } else {
-        banner.classList.remove('price-focused');
-        if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale";
-        if (saleTag) saleTag.innerText = "Giảm cực sâu";
-        banner.style.removeProperty('--banner-accent');
-    }
-}
-
-// Đếm ngược thời gian dựa trên cài đặt Admin
 function initDynamicCountdown(endTime) {
     const update = () => {
         const now = new Date();
         const diff = endTime - now;
         if (diff <= 0) {
-            // Dừng bộ đếm và tải lại trang để áp dụng trạng thái kết thúc sale
             if (window.fsTimer) clearInterval(window.fsTimer);
-            setTimeout(() => {
-                window.location.reload();
-            }, 500); // Trì hoãn một chút để đảm bảo trải nghiệm mượt mà
+            fetchFlashSaleProducts(); // Reload để hiện thông báo kết thúc
             return;
         }
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -337,12 +305,10 @@ function initDynamicCountdown(endTime) {
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-        if(document.getElementById('days')) {
-            document.getElementById('days').innerText = d.toString().padStart(2, '0');
-            document.getElementById('hours').innerText = h.toString().padStart(2, '0');
-            document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
-            document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
-        }
+        if(document.getElementById('days')) document.getElementById('days').innerText = d.toString().padStart(2, '0');
+        if(document.getElementById('hours')) document.getElementById('hours').innerText = h.toString().padStart(2, '0');
+        if(document.getElementById('minutes')) document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
+        if(document.getElementById('seconds')) document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
     };
     if (window.fsTimer) clearInterval(window.fsTimer);
     window.fsTimer = setInterval(update, 1000);
@@ -352,18 +318,21 @@ function initDynamicCountdown(endTime) {
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('../', (user) => {
         fetchFlashSaleProducts();
-        
-        // Gán sự kiện cho sắp xếp
-        document.getElementById('sort-by')?.addEventListener('change', () => fetchFlashSaleProducts('init'));
+    });
 
-        // Gán sự kiện cho phân trang
-        document.getElementById('next-page')?.addEventListener('click', () => {
-            currentPage++;
-            fetchFlashSaleProducts('next');
-        });
-        document.getElementById('prev-page')?.addEventListener('click', () => {
+    // Gán sự kiện sắp xếp
+    document.getElementById('sort-by')?.addEventListener('change', () => fetchFlashSaleProducts('init'));
+
+    // Gán sự kiện phân trang
+    document.getElementById('prev-page')?.addEventListener('click', () => {
+        if (currentPage > 1) {
             currentPage--;
             fetchFlashSaleProducts('prev');
-        });
+        }
+    });
+
+    document.getElementById('next-page')?.addEventListener('click', () => {
+        currentPage++;
+        fetchFlashSaleProducts('next');
     });
 });

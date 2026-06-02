@@ -385,43 +385,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (snapshot.exists()) {
             const data = snapshot.data();
             if (data && data.groups) {
-                // Cập nhật mảng dùng chung ngay lập tức để các hàm lọc phía dưới có dữ liệu
+                // Cập nhật mảng dùng chung
                 dynamicCategories.length = 0;
-                dynamicCategories.push(...data.groups.sort((a, b) => a.order - b.order));
-            }
-            renderCategoryGrid();
-            if (!categoriesInitialized) {
-                handleInitialFilters(); // handleInitialFilters sẽ gọi fetchProducts('init')
-                categoriesInitialized = true;
+                dynamicCategories.push(...data.groups);
+                renderCategoryGrid();
+                if (!categoriesInitialized) {
+                    categoriesInitialized = true;
+                    handleInitialFilters();
+                }
             }
         }
     });
 
-    // 5. Lần đầu tải sản phẩm
-
-    // 6. Gán sự kiện cho bộ lọc sale
-    document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            // Chỉ toggle class, việc fetch sẽ đợi người dùng nhấn nút "Áp dụng"
-        });
-    });
-
-    // 7. Khởi tạo logic popup mobile
     initMobileFilter();
-
-    // Gán sự kiện cho Sort select
-    document.getElementById('sort-by')?.addEventListener('change', () => fetchProducts('init'));
-
-    // 8. Gán sự kiện cho các nút phân trang
-    document.getElementById('next-page')?.addEventListener('click', () => {
-        currentPage++;
-        fetchProducts('next');
-    });
-    document.getElementById('prev-page')?.addEventListener('click', () => {
-        currentPage--;
-        fetchProducts('prev');
-    });
 });
