@@ -1,11 +1,28 @@
 import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
-    showToast, initHeader, renderProductCard
+    showToast, initHeader, renderProductCard, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue
 } from "./utils.js";
-import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Biến lưu kết quả xác thực OTP
+let confirmationResult = null;
+
+// Khởi tạo reCAPTCHA ẩn cho trang Profile
+const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+        if (!document.getElementById('recaptcha-container')) {
+            const div = document.createElement('div');
+            div.id = 'recaptcha-container';
+            document.body.appendChild(div);
+        }
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible'
+        });
+    }
+};
 
 // Hàm điều khiển Tab
 function setupTabs() {
@@ -266,7 +283,7 @@ async function handleProfileAuth(user) {
                     <p><strong>Giới tính:</strong> <span>${userData.gender || 'Chưa cập nhật'}</span></p>
                     <p><strong>Ngày sinh:</strong> <span>${userData.birthday ? new Date(userData.birthday).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</span></p>
                     <p><strong>Ngày tham gia:</strong> ${joinDate}</p>
-                    <p><strong>Tiền tích lũy:</strong> <span id="user-total-spent" style="color: #27ae60; font-weight: 600;">Đang tính...</span></p>
+                    <div id="membership-card-container"></div>
                     <button id="btn-edit-profile" class="btn-outline" style="margin-top: 1.5rem; width: 100%;">Chỉnh sửa thông tin</button>
                 </div>
 
@@ -278,6 +295,18 @@ async function handleProfileAuth(user) {
                     <div class="form-group">
                         <label>Số điện thoại</label>
                         <input type="tel" id="edit-phone" value="${userData.phone || ''}">
+                    </div>
+                    <div class="form-group" id="otp-group-profile" style="display: none;">
+                        <label>Mã xác thực OTP (Gửi tới SĐT mới)</label>
+                        <div class="otp-input-container" id="otp-inputs-profile">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                        </div>
+                        <button type="button" id="btn-resend-otp-profile" class="btn-minimal" style="font-size:0.7rem; margin-top:5px; border:none; text-decoration:underline; width:auto; padding:0;">Gửi lại mã</button>
                     </div>
                     <div class="form-group">
                         <label>Giới tính</label>
@@ -315,24 +344,110 @@ async function handleProfileAuth(user) {
             editForm.style.display = 'block';
         };
         
+        const submitBtn = editForm.querySelector('button[type="submit"]');
+        const resendBtn = document.getElementById('btn-resend-otp-profile');
+
+        // Kiểm tra đếm ngược gửi lại mã ngay khi khởi tạo form
+        startOtpCountdown(resendBtn, 'otp_ts_profile', 60);
+
+        // Hàm gửi OTP dùng chung cho trang Profile
+        const triggerOtpSend = async (phone) => {
+            const cooldown = getOtpCooldown('otp_ts_profile', 60);
+            if (cooldown > 0) return false;
+            
+            // KIỂM TRA TRÙNG LẶP SỐ ĐIỆN THOẠI
+            const q = query(collection(db, "users"), where("phone", "==", phone));
+            const snap = await getDocs(q);
+            
+            let conflict = false;
+            snap.forEach(docSnap => {
+                const data = docSnap.data();
+                // Nếu số này thuộc về UID khác VÀ tài khoản đó không phải là tài khoản vãng lai (ghost)
+                if (docSnap.id !== auth.currentUser.uid && data.isGhost === false) {
+                    conflict = true;
+                }
+            });
+
+            if (conflict) {
+                showToast("Số điện thoại này đã được liên kết với một tài khoản khác. Vui lòng đăng nhập bằng số điện thoại này.", "error");
+                return false;
+            }
+
+            setupRecaptcha();
+            const authPhone = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
+            confirmationResult = await signInWithPhoneNumber(auth, authPhone, window.recaptchaVerifier);
+            saveOtpTimestamp('otp_ts_profile');
+            startOtpCountdown(resendBtn, 'otp_ts_profile', 60);
+            return true;
+        };
+
+        resendBtn.onclick = () => {
+            const phone = formatPhoneNumber(document.getElementById('edit-phone').value);
+            triggerOtpSend(phone).then(ok => { if(ok) showToast("Đã gửi lại mã OTP"); });
+        };
+
         document.getElementById('btn-cancel-edit').onclick = () => {
             editForm.style.display = 'none';
             displayDiv.style.display = 'block';
+            confirmationResult = null;
+            document.getElementById('otp-group-profile').style.display = 'none';
+            submitBtn.innerText = "Lưu";
         };
 
         // Xử lý lưu thông tin
         editForm.onsubmit = async (e) => {
             e.preventDefault();
             const newName = document.getElementById('edit-name').value;
-            const newPhone = formatPhoneNumber(document.getElementById('edit-phone').value); // Chuẩn hóa SĐT
+            const rawPhone = document.getElementById('edit-phone').value;
+            const newPhone = formatPhoneNumber(rawPhone); // Chuẩn hóa SĐT
             const newGender = document.getElementById('edit-gender').value;
             const newBirthday = document.getElementById('edit-birthday').value;
-            
-            const submitBtn = editForm.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            const otpGroup = document.getElementById('otp-group-profile');
 
             try {
+                // 1. Kiểm tra xác thực OTP nếu người dùng thay đổi số điện thoại
+                const phoneChanged = newPhone && newPhone !== (userData.phone || '');
+                
+                if (phoneChanged && !confirmationResult) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang gửi OTP...';
+                    
+                    const ok = await triggerOtpSend(newPhone);
+                    if (!ok) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "Lưu";
+                        return;
+                    }
+
+                    otpGroup.style.display = 'block';
+                    setupOtpInputs('otp-inputs-profile');
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Xác nhận & Lưu";
+                    showToast("Mã OTP đã được gửi đến số điện thoại mới.");
+                    return; // Dừng submit để đợi người dùng nhập mã
+                }
+
+                // 2. Nếu đang trong quá trình xác thực, kiểm tra mã code
+                if (confirmationResult) {
+                    const code = getOtpValue('otp-inputs-profile');
+                    if (code.length < 6) { showToast("Vui lòng nhập đủ 6 số OTP", "error"); return; }
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang xác thực...';
+                    try {
+                        await confirmationResult.confirm(code);
+                        confirmationResult = null; // Xóa kết quả xác thực sau khi thành công
+                    } catch (err) {
+                        showToast("Mã OTP không chính xác hoặc đã hết hạn", "error");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "Xác nhận & Lưu";
+                        return;
+                    }
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+
                 // Cập nhật Profile của Firebase Auth
                 if (newName !== user.displayName) {
                     await updateProfile(user, { displayName: newName });
@@ -352,7 +467,14 @@ async function handleProfileAuth(user) {
                     updatedAt: new Date().toISOString()
                 }, { merge: true });
 
-                showToast("Cập nhật thông tin thành công!");
+                // Thực hiện liên kết đơn hàng ngay sau khi cập nhật SĐT thành công
+                const linkedCount = await autoLinkOrdersByPhone(user.uid, newPhone);
+                if (linkedCount > 0) {
+                    showToast(`Thành công! Đã liên kết ${linkedCount} đơn hàng cũ từ shop vào tài khoản của bạn.`);
+                } else {
+                    showToast("Cập nhật thông tin thành công!");
+                }
+                
                 handleProfileAuth(auth.currentUser); // Tải lại giao diện
             } catch (error) {
                 showToast("Lỗi khi cập nhật: " + error.message, "error");
@@ -410,7 +532,10 @@ async function fetchOrderHistory(userId) {
         let totalSpent = 0;
         querySnapshot.forEach((doc) => {
             const order = doc.data();
-            totalSpent += (order.totalAmount || 0);
+            // Chỉ tích lũy chi tiêu cho đơn hàng đã hoàn thành để thăng hạng
+            if (order.status === "Đã hoàn thành") {
+                totalSpent += (order.totalAmount || 0);
+            }
             const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
             const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
             const status = order.status || 'Đang xử lý';
@@ -445,9 +570,38 @@ async function fetchOrderHistory(userId) {
         });
         orderListContainer.innerHTML = htmlContent;
         
-        // Hiển thị tổng tiền tích luỹ lên mục thông tin cá nhân
-        const spentEl = document.getElementById('user-total-spent');
-        if (spentEl) spentEl.innerText = new Intl.NumberFormat('vi-VN').format(totalSpent) + 'đ';
+        // 1.5 Hiển thị Thẻ thành viên & Tiến trình
+        const cardContainer = document.getElementById('membership-card-container');
+        if (cardContainer) {
+            const currentTier = getMembershipTier(totalSpent);
+            const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
+            const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];
+            
+            let progressHtml = '';
+            if (nextTier) {
+                const range = nextTier.min - currentTier.min;
+                const currentProgress = totalSpent - currentTier.min;
+                const percent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
+                
+                progressHtml = `
+                    <div class="tier-progress-box">
+                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-bottom:5px;">
+                            <span>Đã tích lũy: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ</span>
+                            <span>Hạng tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</span>
+                        </div>
+                        <div class="tier-progress-bar"><div class="fill" style="width: ${percent}%; background:var(--text-black);"></div></div>
+                        <p style="font-size:0.75rem; margin-top:5px; text-align:center;">Còn <strong>${new Intl.NumberFormat('vi-VN').format(nextTier.min - totalSpent)}đ</strong> để lên hạng <b>${nextTier.name}</b></p>
+                    </div>`;
+            }
+
+            cardContainer.innerHTML = `
+                <div class="membership-card tier-${currentTier.id}" style="background: ${currentTier.color}">
+                    <div class="tier-name">${currentTier.name}</div>
+                    <div class="tier-discount">Ưu đãi giảm ${currentTier.discount}% đơn hàng</div>
+                </div>
+                ${progressHtml}
+                <a href="../membership/" style="font-size:0.8rem; color:var(--text-black); text-decoration:underline; display:block; text-align:center; margin-top:10px;">Xem chi tiết quyền lợi các hạng thẻ</a>`;
+        }
         
         orderListContainer.style.display = 'block';
         noOrdersMsg.style.display = 'none';

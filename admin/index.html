@@ -643,10 +643,13 @@
         <div id="order-section" class="admin-section">
             <div class="admin-card">
                 <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                    <div class="form-group pos-search-input-wrapper">
-                        <label>Tìm sản phẩm</label>
-                        <input type="text" id="pos-product-search" placeholder="Nhập tên hoặc mã sản phẩm">
-                        <div id="pos-product-suggestions" class="pos-product-suggestions"></div>
+                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                        <label for="order-filter-id">Mã đơn hàng</label>
+                        <input type="text" id="order-filter-id" placeholder="Tìm theo mã đơn...">
+                    </div>
+                    <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
+                        <label for="order-filter-product">Tìm theo tên sản phẩm</label>
+                        <input type="text" id="order-filter-product" placeholder="Nhập tên sản phẩm chính xác...">
                     </div>
                     <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
                         <label for="order-filter-status">Lọc theo trạng thái</label>
@@ -753,6 +756,12 @@
         <!-- Section Quản lý Người dùng -->
         <div id="user-section" class="admin-section">
             <div class="admin-card">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="admin-user-search">Tìm kiếm khách hàng</label>
+                        <input type="text" id="admin-user-search" placeholder="Nhập tên, số điện thoại hoặc email...">
+                    </div>
+                </div>
                 <h3>Danh sách khách hàng</h3>
                 <div class="table-responsive">
                     <table class="admin-table">
@@ -762,6 +771,7 @@
                                 <th>Số điện thoại</th>
                                 <th>Giới tính</th>
                                 <th>Ngày sinh</th>
+                                <th>Hạng thành viên</th>
                                 <th>Cập nhật cuối</th>
                                 <th>Thao tác</th>
                             </tr>

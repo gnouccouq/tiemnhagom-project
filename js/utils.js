@@ -70,6 +70,22 @@ export const COLOR_MAP = {
     // Thêm các màu khác nếu cần
 };
 
+// 1.1 Cấu hình hạng thành viên (Membership Tiers)
+export const MEMBERSHIP_TIERS = [
+    { id: 'null', name: "Gốm-Null", min: 0, discount: 0, color: '#95a5a6', icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' },
+    { id: 'new', name: "Gốm-New", min: 1000000, discount: 1, color: '#3498db', icon: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>' },
+    { id: 'mem', name: "Gốm-Mem", min: 3000000, discount: 3, color: '#f1c40f', icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>' },
+    { id: 'vip', name: "Gốm-VIP", min: 5000000, discount: 5, color: '#e74c3c', icon: '<path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm14 3c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-1h14v1z"/>' }
+];
+
+export function getMembershipTier(totalSpent) {
+    return MEMBERSHIP_TIERS.find((t, idx) => {
+        const nextTier = MEMBERSHIP_TIERS[idx + 1];
+        if (!nextTier) return true; // Hạng cao nhất
+        return totalSpent >= t.min && totalSpent < nextTier.min;
+    }) || MEMBERSHIP_TIERS[0];
+}
+
 // 1.1 Quản lý trạng thái Flash Sale toàn cục
 export let globalFlashSaleSettings = null;
 
@@ -203,6 +219,54 @@ export function setupScrollToTop() {
         else btnScrollTop.classList.remove('show');
     });
     btnScrollTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+}
+
+// 3.1 Logic UI: Xử lý hiệu ứng header trong suốt khi ở đầu trang (áp dụng cho trang có Hero)
+export function setupHeaderScroll() {
+    const nav = document.querySelector('.navbar');
+    if (!nav) return;
+
+    // Kiểm tra xem trang có Hero Section (như trang chủ) không
+    const hasHero = document.querySelector('.hero-carousel') || document.querySelector('.hero');
+
+    const handleScroll = () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+            nav.classList.remove('transparent');
+        } else {
+            if (hasHero) {
+                nav.classList.add('transparent');
+            }
+            nav.classList.remove('scrolled');
+        }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Cập nhật trạng thái ngay khi khởi tạo
+}
+
+// 3.2 Logic: Tự động liên kết đơn hàng vãng lai/tại shop vào UID tài khoản dựa trên SĐT
+export async function autoLinkOrdersByPhone(userId, phone) {
+    if (!phone || !db) return 0;
+    try {
+        const p0 = formatPhoneNumber(phone);
+        const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+        
+        // Tìm tất cả đơn hàng có SĐT này
+        const q = query(collection(db, "orders"), where("shippingAddress.phone", "in", [p0, p84]));
+        const snap = await getDocs(q);
+        
+        const updatePromises = [];
+        snap.forEach(docSnap => {
+            // Nếu đơn hàng chưa thuộc về userId này, tiến hành liên kết
+            if (docSnap.data().userId !== userId) {
+                updatePromises.push(updateDoc(docSnap.ref, { userId: userId }));
+            }
+        });
+        
+        if (updatePromises.length > 0) await Promise.all(updatePromises);
+        return updatePromises.length;
+    } catch (e) { console.error("Auto-link orders error:", e); return 0; }
 }
 
 // 4. Logic Auth: Đăng nhập & Đăng xuất
@@ -599,12 +663,13 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             // Lưu hint để lần sau vào web sẽ hiện icon đăng nhập nhanh
             localStorage.setItem('tng_user_hint', JSON.stringify({ 
                 loggedIn: true, 
-                displayName: user.displayName || user.email.split('@')[0] 
+                displayName: user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'))
             }));
             
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
             const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
-            const displayName = user.displayName || user.email.split('@')[0];
+            const membershipPath = pathPrefix === './' ? 'membership/' : `${pathPrefix}membership/`;
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'));
 
             const isProfilePage = window.location.pathname.includes('profile');
             const isOrdersTab = window.location.hash === '#orders';
@@ -637,6 +702,10 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         <li><a href="${profilePath}#orders" class="${isProfilePage && isOrdersTab ? 'active' : ''}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                             Lịch sử đơn hàng
+                        </a></li>
+                        <li><a href="${membershipPath}" class="${window.location.pathname.includes('membership') ? 'active' : ''}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            Gốm Membership
                         </a></li>
                         <li id="admin-link-placeholder"></li>
                         <li><hr></li>
@@ -694,8 +763,14 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             isGhost: false, 
                             lastLogin: new Date().toISOString() 
                         }, { merge: true });
+                        
+                        // Liên kết đơn hàng cho user mới nếu có SĐT (ví dụ login bằng phone)
+                        if (user.phoneNumber) await autoLinkOrdersByPhone(user.uid, user.phoneNumber);
                     } else {
+                        const userData = userSnap.data();
                         await updateDoc(userRef, { lastLogin: new Date().toISOString() });
+                        // Tự động cập nhật liên kết đơn hàng nếu user đã có SĐT lưu sẵn
+                        if (userData.phone) await autoLinkOrdersByPhone(user.uid, userData.phone);
                     }
                 } catch (e) { console.error("Background auth tasks error:", e); }
             })();
@@ -744,6 +819,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Khởi tạo nút cuộn lên đầu trang
         setupScrollToTop();
+
+        // Khởi tạo hiệu ứng Header trong suốt khi ở đầu trang
+        setupHeaderScroll();
 
     });
 }
@@ -836,6 +914,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="products\//g, `href="${pathPrefix}products/`)
                 .replace(/href="collections\//g, `href="${pathPrefix}collections/`)
                 .replace(/href="about\//g, `href="${pathPrefix}about/`)
+                .replace(/href="membership\//g, `href="${pathPrefix}membership/`)
                 .replace(/href="flash-sale\//g, `href="${pathPrefix}flash-sale/`)
                 .replace(/href="blog\//g, `href="${pathPrefix}blog/`)
                 .replace(/href="maintenance\//g, `href="${pathPrefix}maintenance/`)
@@ -949,4 +1028,74 @@ export async function loadSharedComponents(pathPrefix = './') {
     } catch (err) {
         console.error("Lỗi tải components:", err);
     }
+}
+
+// 12. Logic: Quản lý Cooldown gửi OTP (Tránh spam SMS)
+export function getOtpCooldown(key, durationSeconds = 60) {
+    const lastSent = localStorage.getItem(key);
+    if (!lastSent) return 0;
+    const diff = Math.floor((Date.now() - parseInt(lastSent, 10)) / 1000);
+    return Math.max(0, durationSeconds - diff);
+}
+
+export function saveOtpTimestamp(key) {
+    localStorage.setItem(key, Date.now().toString());
+}
+
+export function startOtpCountdown(btn, key, duration = 60) {
+    if (!btn) return;
+    const originalText = btn.dataset.originalText || btn.innerText;
+    if (!btn.dataset.originalText) btn.dataset.originalText = originalText;
+
+    const update = () => {
+        const cooldown = getOtpCooldown(key, duration);
+        if (cooldown > 0) {
+            btn.disabled = true;
+            btn.innerText = `Gửi lại sau ${cooldown}s`;
+            return true;
+        } else {
+            btn.disabled = false;
+            btn.innerText = btn.dataset.originalText;
+            return false;
+        }
+    };
+
+    if (update()) {
+        const interval = setInterval(() => {
+            if (!update()) clearInterval(interval);
+        }, 1000);
+    }
+}
+
+// 13. Logic: Giao diện OTP 6 ô vuông
+export function setupOtpInputs(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const inputs = container.querySelectorAll('.otp-digit');
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            if (!/^\d*$/.test(e.target.value)) { e.target.value = ''; return; }
+            if (e.target.value && index < inputs.length - 1) { inputs[index + 1].focus(); }
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) { inputs[index - 1].focus(); }
+        });
+        input.addEventListener('paste', (e) => {
+            const data = e.clipboardData.getData('text').trim().slice(0, 6);
+            if (/^\d+$/.test(data)) {
+                data.split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                const nextFocus = Math.min(data.length, inputs.length - 1);
+                inputs[nextFocus].focus();
+            }
+            e.preventDefault();
+        });
+    });
+}
+
+export function getOtpValue(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return '';
+    return Array.from(container.querySelectorAll('.otp-digit')).map(i => i.value).join('');
 }

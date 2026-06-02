@@ -81,12 +81,24 @@ service cloud.firestore {
 
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
 
-      // Cấu trúc update chặt chẽ:
-      allow update: if isAdmin() || 
-        (request.auth != null && request.auth.uid == resource.data.userId && 
-         resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" && // Chỉ cho phép chuyển từ "Đang xử lý" sang "Đã hủy"
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']) &&
-         isUnchanged('totalAmount') && isUnchanged('userId'));
+      // Cấu trúc update chặt chẽ cho người dùng
+      allow update: if isAdmin() || (
+        request.auth != null && (
+          // Trường hợp 1: Người dùng tự hủy đơn của chính mình
+          (request.auth.uid == resource.data.userId && 
+           resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']) &&
+           isUnchanged('totalAmount') && isUnchanged('userId')) ||
+          
+          // Trường hợp 2: Liên kết đơn hàng cũ dựa trên SĐT đã xác thực
+          (resource.data.userId != request.auth.uid && 
+           request.resource.data.userId == request.auth.uid &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']) &&
+           (resource.data.shippingAddress.phone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone ||
+            (resource.data.shippingAddress.phone.startsWith('+84') && '0' + resource.data.shippingAddress.phone.substring(3) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone))
+          )
+        )
+      );
 
       // Chỉ Super Admin mới được xóa đơn hàng (thường là để dọn dẹp data lỗi)
       allow delete: if isSuperAdmin();

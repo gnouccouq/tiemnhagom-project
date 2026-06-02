@@ -1,5 +1,5 @@
 import { 
-    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice, getMembershipTier
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -117,12 +117,26 @@ async function renderCart() {
     
     const shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName); // Pass name
     
-    const finalTotal = Math.max(0, total + shippingFee - discountAmount);
+    let membershipDiscountVal = 0;
+    let userTier = getMembershipTier(0);
+    if (auth.currentUser) {
+        const qOrders = query(collection(db, "orders"), 
+            where("userId", "==", auth.currentUser.uid), 
+            where("status", "==", "Đã hoàn thành"));
+        const orderSnaps = await getDocs(qOrders);
+        let totalSpent = 0;
+        orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
+        userTier = getMembershipTier(totalSpent);
+        membershipDiscountVal = Math.round(total * userTier.discount / 100);
+    }
+
+    const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
 
     priceBreakdownEl.innerHTML = `
         <div class="price-row"><span>Tạm tính (Gồm VAT)</span><span>${new Intl.NumberFormat('vi-VN').format(total)}đ</span></div>
         <div class="price-row"><span>Phí vận chuyển</span><span>${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ</span></div>
         ${discountAmount > 0 ? `<div class="price-row discount"><span>Discount</span><span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span></div>` : ''}
+        ${membershipDiscountVal > 0 ? `<div class="price-row discount"><span>Hạng ${userTier.name} (-${userTier.discount}%)</span><span>-${new Intl.NumberFormat('vi-VN').format(membershipDiscountVal)}đ</span></div>` : ''}
         <div class="price-row total"><span>Total</span><span>${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span></div>
     `;
 
@@ -544,7 +558,20 @@ window.placeOrder = async () => {
     }
 
     const shippingFee = calculateShippingFee(shippingMethod, provinceName); // Pass name
-    const finalTotal = Math.max(0, total + shippingFee - discountAmount);
+
+    let membershipDiscountVal = 0;
+    if (auth.currentUser) {
+        const qOrders = query(collection(db, "orders"), 
+            where("userId", "==", auth.currentUser.uid), 
+            where("status", "==", "Đã hoàn thành"));
+        const orderSnaps = await getDocs(qOrders);
+        let totalSpent = 0;
+        orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
+        const userTier = getMembershipTier(totalSpent);
+        membershipDiscountVal = Math.round(total * userTier.discount / 100);
+    }
+
+    const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
 
     const orderData = {
         userId: auth.currentUser ? auth.currentUser.uid : 'guest',
@@ -553,6 +580,7 @@ window.placeOrder = async () => {
         totalAmount: finalTotal, // Sử dụng finalTotal sau khi tính toán giảm giá và phí ship
         shippingFee: shippingFee,
         discountAmount: discountAmount,
+        membershipDiscount: membershipDiscountVal,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         status: "Đang xử lý",
         orderDate: serverTimestamp(),

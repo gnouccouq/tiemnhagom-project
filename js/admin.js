@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
-    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -16,6 +16,7 @@ let adminCollections = []; // Mảng chứa danh sách bộ sưu tập
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
 let posUsersLocal = []; // Danh sách khách hàng để tìm kiếm nhanh trong POS
 let userOrderCounts = {}; // Lưu trữ số lượng đơn hàng theo userId: { uid: count }
+let userTotalSpentLocal = {}; // Lưu trữ tổng chi tiêu theo userId để thăng hạng
 let currentReportData = null; // Lưu trữ dữ liệu báo cáo hiện tại để xuất Excel
 let currentAdminRole = 'staff'; // Quyền mặc định
 let bluetoothDevice = null;
@@ -1841,7 +1842,7 @@ let lastOrderVisible = null;
 let firstOrderVisible = null;
 let currentOrderPage = 1;
 
-function initOrderListener(productNameFilter = '', statusFilter = 'all', navigation = 'init', userIdFilter = '') {
+function initOrderListener(productNameFilter = '', statusFilter = 'all', navigation = 'init', userIdFilter = '', orderIdFilter = '') {
     const orderListTable = document.getElementById('admin-order-list');
     const prevBtn = document.getElementById('prev-order-page');
     const nextBtn = document.getElementById('next-order-page');
@@ -1860,14 +1861,29 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
 
     let ordersQuery = collection(db, "orders");
 
-    if (productNameFilter) {
-        ordersQuery = query(ordersQuery, where("productNames", "array-contains", productNameFilter));
-    }
-    if (statusFilter !== 'all') {
-        ordersQuery = query(ordersQuery, where("status", "==", statusFilter));
-    }
-    if (userIdFilter) {
-        ordersQuery = query(ordersQuery, where("userId", "==", userIdFilter));
+    // Nếu tìm theo mã đơn cụ thể, bỏ qua các bộ lọc khác để query chính xác
+    if (orderIdFilter) {
+        getDoc(doc(db, "orders", orderIdFilter)).then(docSnap => {
+            if (docSnap.exists()) {
+                renderOrderRows([docSnap], orderListTable);
+                if (pageInfo) pageInfo.innerText = "Kết quả tìm kiếm ID";
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+            } else {
+                orderListTable.innerHTML = '<tr><td colspan="7" style="text-align:center;">Không tìm thấy đơn hàng với mã ID này.</td></tr>';
+            }
+        });
+        return;
+    } else {
+        if (productNameFilter) {
+            ordersQuery = query(ordersQuery, where("productNames", "array-contains", productNameFilter));
+        }
+        if (statusFilter !== 'all') {
+            ordersQuery = query(ordersQuery, where("status", "==", statusFilter));
+        }
+        if (userIdFilter) {
+            ordersQuery = query(ordersQuery, where("userId", "==", userIdFilter));
+        }
     }
 
     // Xây dựng query với phân trang
@@ -1892,17 +1908,29 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
         // Lưu cursor cho phân trang
         firstOrderVisible = snapshot.docs[0];
         lastOrderVisible = snapshot.docs[snapshot.docs.length - 1];
+        
+        renderOrderRows(snapshot.docs, orderListTable);
 
-        let htmlContent = '';
-        snapshot.forEach((doc) => {
-            const order = doc.data();
-            const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
+        // Cập nhật UI phân trang
+        if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage}`;
+        if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
+        if (nextBtn) nextBtn.disabled = snapshot.docs.length < ORDER_PAGE_SIZE;
+    }, (error) => {
+        console.error("Order list listener error:", error);
+    });
+}
+
+function renderOrderRows(docs, tableElement) {
+    let htmlContent = '';
+    docs.forEach((d) => {
+        const order = d.data();
+        const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
             const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
             const status = order.status || 'Đang xử lý';
 
             htmlContent += `
                 <tr>
-                    <td data-label="Mã đơn"><small>${doc.id}</small></td>
+                    <td data-label="Mã đơn"><small>${d.id}</small></td>
                     <td data-label="Ngày đặt">${orderDate}</td>
                     <td data-label="Khách hàng">
                         <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
@@ -1928,21 +1956,13 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
                         </select>
                     </td>
                     <td data-label="Thao tác">
-                        <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${doc.id}')">Chi tiết</button>
-                        <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${doc.id}')">In Bill</button>
+                        <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${d.id}')">Chi tiết</button>
+                        <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${d.id}')">In Bill</button>
                     </td>
                 </tr>
             `;
-        });
-        orderListTable.innerHTML = htmlContent || '<tr><td colspan="6" style="text-align:center;">Chưa có đơn hàng nào.</td></tr>';
-
-        // Cập nhật UI phân trang
-        if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage}`;
-        if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
-        if (nextBtn) nextBtn.disabled = snapshot.docs.length < ORDER_PAGE_SIZE;
-    }, (error) => {
-        console.error("Order list listener error:", error);
     });
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có đơn hàng nào.</td></tr>';
 }
 
 window.updateOrderStatus = async (orderId, newStatus) => {
@@ -2022,67 +2042,193 @@ window.viewAdminOrderDetail = async (orderId) => {
 
 // --- Quản lý Người dùng ---
 function initUserListener() {
-    const userListTable = document.getElementById('admin-user-list');
-    if (!userListTable || !db) return;
+    if (!db) return;
 
     // Lấy danh sách admin để so khớp badge
     getDocs(collection(db, "admins")).then(adminsSnap => {
         const adminDataMap = new Map(adminsSnap.docs.map(d => [d.id, d.data()]));
+        window.adminDataMapLocal = adminDataMap; // Lưu để dùng cho render
 
         onSnapshot(collection(db, "users"), (snapshot) => {
-        posUsersLocal = [];
-        let htmlContent = '';
-        snapshot.forEach((doc) => {
-            const u = doc.data();
+            posUsersLocal = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderAdminUserTable();
+        }, (error) => {
+            console.error("User list listener error:", error);
+        });
+    });
+}
+
+function renderAdminUserTable() {
+    const userListTable = document.getElementById('admin-user-list');
+    const searchInput = document.getElementById('admin-user-search');
+    if (!userListTable) return;
+
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const adminDataMap = window.adminDataMapLocal || new Map();
+
+    const filtered = posUsersLocal.filter(u => {
+        return (u.displayName || "").toLowerCase().includes(term) || 
+               (u.phone || "").includes(term) || 
+               (u.email || "").toLowerCase().includes(term) ||
+               (u.identifiers || []).some(id => id.toLowerCase().includes(term));
+    });
+
+    let htmlContent = '';
+    filtered.forEach((u) => {
             const updatedAt = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('vi-VN') : 'N/A';
             const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'N/A';
-            const adminData = adminDataMap.get(doc.id);
+            const adminData = adminDataMap.get(u.id);
             const isAdminUser = !!adminData;
             
             let adminBadge = '';
             if (isAdminUser) adminBadge = `<span class="admin-text-badge" style="font-size: 0.55rem;">Admin</span>`;
 
-            posUsersLocal.push({ id: doc.id, ...u });
+            // Tính toán hạng thành viên dựa trên tổng chi tiêu đã được tổng hợp
+            const spent = userTotalSpentLocal[u.id] || 0;
+            const tier = getMembershipTier(spent);
+            const tierBadge = `<span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; text-transform:none; padding: 2px 8px; border-radius: 20px;">${tier.name}</span>`;
 
             let adminActionBtn = '';
             if (currentAdminRole === 'super_admin') {
                 const isLocked = adminData?.isLocked || false;
                 const lockBtn = isAdminUser ? `
                     <button class="btn-minimal" style="font-size: 0.7rem; border-color: ${isLocked ? '#27ae60' : '#f39c12'}; color: ${isLocked ? '#27ae60' : '#f39c12'}; margin-left: 5px;" 
-                        onclick="window.toggleAccountLock('${doc.id}', ${!isLocked})">
+                        onclick="window.toggleAccountLock('${u.id}', ${!isLocked})">
                         ${isLocked ? 'Mở khóa' : 'Khóa'}
                     </button>` : ''; // Note: Các nút này vẫn để ở user list để gán quyền nhanh
 
                 adminActionBtn = isAdminUser 
-                    ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${doc.id}', false)">Gỡ Admin</button>`
-                      + `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db; margin:0 5px;" onclick="window.editAdminPermissions('${doc.id}', '${u.email || u.displayName || ''}')">Quyền</button>`
+                    ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${u.id}', false)">Gỡ Admin</button>`
+                      + `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db; margin:0 5px;" onclick="window.editAdminPermissions('${u.id}', '${u.email || u.displayName || ''}')">Quyền</button>`
                       + lockBtn
-                    : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${doc.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
+                    : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${u.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
             }
 
             htmlContent += `
                 <tr>
                     <td data-label="Người dùng">
                         <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
-                        <small style="color: #888;">ID: ${doc.id}</small>
+                        <small style="color: #888;">ID: ${u.id}</small>
                     </td>
                     <td data-label="SĐT">${formatPhoneNumber(u.phoneNumber || u.phone) || '---'}</td>
                     <td data-label="Giới tính">${u.gender || '---'}</td>
                     <td data-label="Ngày sinh">${birthday}</td>
+                    <td data-label="Hạng thẻ">${tierBadge}</td>
                     <td data-label="Cập nhật">${updatedAt}</td>
                     <td data-label="Thao tác" style="display: flex; gap: 5px; justify-content: flex-end;">
                         ${adminActionBtn}
-                        <button class="btn-minimal" onclick="window.viewUserOrders('${doc.id}')">Xem đơn hàng</button>
+                        <button class="btn-minimal" style="border-color:var(--text-black); color:var(--text-black);" onclick="window.viewAdminUserDetail('${u.id}')">Chi tiết</button>
+                        <button class="btn-minimal" onclick="window.viewUserOrders('${u.id}')">Đơn hàng</button>
                     </td>
                 </tr>
             `;
-        });
-        userListTable.innerHTML = htmlContent || '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu khách hàng.</td></tr>';
-    }, (error) => {
-        console.error("User list listener error:", error);
     });
-    });
+    userListTable.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Không tìm thấy khách hàng phù hợp.</td></tr>';
 }
+
+// Hàm xem chi tiết và sửa thông tin người dùng
+window.viewAdminUserDetail = async (uid) => {
+    const user = posUsersLocal.find(u => u.id === uid);
+    if (!user) return;
+
+    const spent = userTotalSpentLocal[uid] || 0;
+    const tier = getMembershipTier(spent);
+    const count = userOrderCounts[uid] || 0;
+
+    let modal = document.getElementById('user-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'user-detail-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+            <h3 style="margin-bottom: 1.5rem; font-family: var(--font-serif);">Hồ sơ khách hàng</h3>
+            
+            <div style="background: #fcfbf8; padding: 20px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
+                <div style="background: ${tier.color}; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg>
+                </div>
+                <div>
+                    <div style="font-weight: 700; color: ${tier.color}; font-size: 1.1rem;">${tier.name}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(spent)}đ</strong></div>
+                    <div style="font-size: 0.85rem; color: #666;">Số đơn hoàn thành: <strong>${count} đơn</strong></div>
+                </div>
+            </div>
+
+            <form id="admin-user-edit-form">
+                <input type="hidden" id="edit-user-uid" value="${uid}">
+                <div class="form-group">
+                    <label>Họ và tên</label>
+                    <input type="text" id="edit-user-name" value="${user.displayName || ''}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="edit-user-phone" value="${user.phone || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="edit-user-email" value="${user.email || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Giới tính</label>
+                        <select id="edit-user-gender">
+                            <option value="">Chưa chọn</option>
+                            <option value="Nam" ${user.gender === 'Nam' ? 'selected' : ''}>Nam</option>
+                            <option value="Nữ" ${user.gender === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                            <option value="Khác" ${user.gender === 'Khác' ? 'selected' : ''}>Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày sinh</label>
+                        <input type="date" id="edit-user-birthday" value="${user.birthday || ''}">
+                    </div>
+                </div>
+                <button type="submit" class="btn-dark" style="width: 100%; margin-top: 10px;">Lưu thay đổi hồ sơ</button>
+            </form>
+        </div>
+    `;
+    modal.classList.add('active');
+
+    document.getElementById('admin-user-edit-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const uid = document.getElementById('edit-user-uid').value;
+        const name = document.getElementById('edit-user-name').value.trim();
+        const phone = formatPhoneNumber(document.getElementById('edit-user-phone').value.trim());
+        const email = document.getElementById('edit-user-email').value.trim();
+        const gender = document.getElementById('edit-user-gender').value;
+        const birthday = document.getElementById('edit-user-birthday').value;
+        const btn = e.target.querySelector('button');
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Đang cập nhật...';
+            
+            const phone84 = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
+            const identifiers = [phone, phone84];
+            if (email) identifiers.push(email);
+
+            await updateDoc(doc(db, "users", uid), {
+                displayName: name, phone, email, gender, birthday,
+                identifiers: identifiers,
+                updatedAt: new Date().toISOString()
+            });
+
+            showToast("Đã cập nhật thông tin khách hàng thành công!");
+            modal.classList.remove('active');
+        } catch (err) {
+            showToast("Lỗi cập nhật: " + err.message, "error");
+            btn.disabled = false;
+            btn.innerText = "Lưu thay đổi hồ sơ";
+        }
+    };
+};
 
 // Lắng nghe tất cả đơn hàng để đếm số lượng đơn của từng khách hàng (phục vụ POS)
 function initUserOrderCountListener() {
@@ -2090,14 +2236,20 @@ function initUserOrderCountListener() {
     // Lắng nghe toàn bộ collection orders để duy trì bộ đếm thời gian thực
     onSnapshot(collection(db, "orders"), (snapshot) => {
         const counts = {};
+        const spent = {};
         snapshot.forEach(doc => {
-            const userId = doc.data().userId;
+            const data = doc.data();
+            const userId = data.userId;
             // Bỏ qua đơn khách vãng lai nếu cần, hoặc đếm theo SĐT nếu muốn phức tạp hơn
             if (userId && userId !== 'guest') {
                 counts[userId] = (counts[userId] || 0) + 1;
+                if (data.status === "Đã hoàn thành") {
+                    spent[userId] = (spent[userId] || 0) + (data.totalAmount || 0);
+                }
             }
         });
         userOrderCounts = counts;
+        userTotalSpentLocal = spent;
     });
 }
 
@@ -2430,6 +2582,7 @@ window.viewUserOrders = (userId) => {
 // --- Logic POS (Bán tại shop) ---
 let posCart = [];
 window.currentPOSCustomerId = null;
+let posMembershipDiscountPercent = 0; // Tỷ lệ giảm giá theo hạng thành viên
 let posDiscountPercent = 0; // Biến lưu tỷ lệ chiết khấu
 
 function renderPOSCart() {
@@ -2466,14 +2619,20 @@ function renderPOSCart() {
         `;
     }).join('');
 
-    const discountVal = Math.round(subtotal * (posDiscountPercent / 100));
+    // Áp dụng mức chiết khấu cao nhất giữa hạng thành viên và giảm giá tay
+    const effectiveDiscount = Math.max(posDiscountPercent, posMembershipDiscountPercent);
+    const discountVal = Math.round(subtotal * (effectiveDiscount / 100));
     const total = subtotal - discountVal;
 
     if (totalInput) totalInput.value = new Intl.NumberFormat('vi-VN').format(total);
     
     if (discountInfo) {
-        if (posDiscountPercent > 0) {
-            discountInfo.innerText = `Đã chiết khấu ${posDiscountPercent}% (-${new Intl.NumberFormat('vi-VN').format(discountVal)}đ)`;
+        if (effectiveDiscount > 0) {
+            let label = `Đã chiết khấu ${effectiveDiscount}%`;
+            if (posMembershipDiscountPercent > 0 && posMembershipDiscountPercent >= posDiscountPercent) {
+                label = `Ưu đãi thành viên ${posMembershipDiscountPercent}%`;
+            }
+            discountInfo.innerText = `${label} (-${new Intl.NumberFormat('vi-VN').format(discountVal)}đ)`;
             discountInfo.style.display = 'block';
         } else {
             discountInfo.style.display = 'none';
@@ -2523,7 +2682,33 @@ window.addProductToPOS = (id, name, price, image) => {
     renderPOSCart();
 };
 
-window.selectCustomerPOS = (id, name, phone, email) => {
+// Hàm hỗ trợ tính toán giảm giá thành viên POS
+async function updatePOSMembershipDiscount(userId) {
+    if (!userId || userId === 'guest') {
+        posMembershipDiscountPercent = 0;
+        renderPOSCart();
+        return;
+    }
+    try {
+        const q = query(collection(db, "orders"), where("userId", "==", userId), where("status", "==", "Đã hoàn thành"));
+        const snap = await getDocs(q);
+        let totalSpent = 0;
+        snap.forEach(doc => totalSpent += (doc.data().totalAmount || 0));
+        
+        const tier = getMembershipTier(totalSpent);
+        posMembershipDiscountPercent = tier.discount || 0;
+
+        // Hiển thị tên hạng thẻ cạnh trạng thái khách hàng
+        const statusEl = document.getElementById('pos-cust-status');
+        if (statusEl) {
+            statusEl.innerHTML = `✓ Khách hàng hệ thống | <span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; text-transform:none; padding: 2px 8px; border-radius: 20px;">${tier.name}</span>`;
+        }
+
+        renderPOSCart();
+    } catch (e) { console.error("Lỗi lấy hạng thành viên POS:", e); }
+}
+
+window.selectCustomerPOS = async (id, name, phone, email) => {
     document.getElementById('pos-cust-name').value = name || '';
     document.getElementById('pos-cust-phone').value = phone || '';
     document.getElementById('pos-cust-email').value = email || '';
@@ -2532,6 +2717,7 @@ window.selectCustomerPOS = (id, name, phone, email) => {
     const suggestions = document.getElementById('pos-customer-suggestions');
     if (suggestions) suggestions.style.display = 'none';
     document.getElementById('pos-customer-search').value = name || phone || '';
+    await updatePOSMembershipDiscount(id);
 };
 
 window.searchCustomerPOS = async () => {
@@ -2555,10 +2741,13 @@ window.searchCustomerPOS = async () => {
         document.getElementById('pos-cust-email').value = u.email || '';
         statusEl.innerText = "✓ Đã tìm thấy khách hàng cũ";
         window.currentPOSCustomerId = snap.docs[0].id;
+        await updatePOSMembershipDiscount(snap.docs[0].id);
     } else {
         statusEl.innerText = "! Khách hàng mới (Sẽ tạo tài khoản)";
         document.getElementById('pos-cust-phone').value = inputVal;
         window.currentPOSCustomerId = null;
+        posMembershipDiscountPercent = 0;
+        renderPOSCart();
     }
 };
 
@@ -2795,6 +2984,7 @@ window.createPOSOrder = async () => {
         document.getElementById('pos-customer-form').reset();
         posCart = [];
         posDiscountPercent = 0;
+        posMembershipDiscountPercent = 0;
         renderPOSCart();
     } catch (e) { showToast("Lỗi POS: " + e.message, "error"); }
     finally { if (btn) { btn.disabled = false; btn.innerHTML = "Hoàn tất & Lưu doanh thu"; } }
@@ -3555,6 +3745,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('admin-product-stock-filter')?.addEventListener('change', renderAdminProductTable);
     document.getElementById('btn-export-excel')?.addEventListener('click', exportProductToExcel);
 
+    // Gán sự kiện tìm kiếm khách hàng
+    document.getElementById('admin-user-search')?.addEventListener('input', renderAdminUserTable);
+
     // Gán sự kiện cho bộ lọc Nhật ký kho
     document.getElementById('log-filter-product-id')?.addEventListener('input', renderInventoryLogTable);
     document.getElementById('log-filter-date')?.addEventListener('change', renderInventoryLogTable);
@@ -3562,6 +3755,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('log-filter-product-id').value = '';
         document.getElementById('log-filter-date').value = '';
         renderInventoryLogTable();
+    });
+
+    // Gán sự kiện cho bộ lọc đơn hàng
+    document.getElementById('btn-apply-order-filters')?.addEventListener('click', () => {
+        const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
+        const statusVal = document.getElementById('order-filter-status')?.value || 'all';
+        initOrderListener(productVal, statusVal, 'init');
+    });
+
+    // Phân trang đơn hàng
+    document.getElementById('prev-order-page')?.addEventListener('click', () => {
+        if (currentOrderPage > 1) {
+            currentOrderPage--;
+            const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
+            const statusVal = document.getElementById('order-filter-status')?.value || 'all';
+            initOrderListener(productVal, statusVal, 'prev');
+        }
+    });
+
+    document.getElementById('next-order-page')?.addEventListener('click', () => {
+        currentOrderPage++;
+        const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
+        const statusVal = document.getElementById('order-filter-status')?.value || 'all';
+        initOrderListener(productVal, statusVal, 'next');
     });
 
     // Thay thế initHeader bằng logic Auth riêng cho Admin Dashboard

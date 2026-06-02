@@ -4530,3 +4530,154 @@ footer {
     object-fit: contain;
     border-radius: 4px;
 }
+
+/* --- Membership Card Styles --- */
+.membership-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: #fff;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.membership-card::after {
+    content: 'TIỆM NHÀ GỐM';
+    position: absolute;
+    bottom: 15px; right: 20px;
+    font-size: 0.6rem; opacity: 0.5; letter-spacing: 2px;
+    font-weight: 700;
+}
+.membership-card .tier-name {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.tier-progress-bar {
+    background: rgba(0,0,0,0.05) !important;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+.tier-progress-bar .fill {
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+.tier-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
+.tier-discount { font-size: 0.85rem; opacity: 0.9; }
+
+.tier-progress-box { margin-top: 1rem; }
+.tier-progress-bar {
+    height: 8px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.tier-progress-bar .fill {
+    height: 100%;
+    transition: width 1s ease-in-out;
+}
+
+/* Màu sắc đặc trưng cho từng hạng */
+.tier-null { background: linear-gradient(135deg, #bdc3c7, #95a5a6); }
+.tier-new { background: linear-gradient(135deg, #3498db, #2980b9); }
+.tier-mem { background: linear-gradient(135deg, #f1c40f, #f39c12); }
+.tier-vip { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.tier-detail-item {
+    transition: all 0.3s ease;
+}
+.tier-detail-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+    background: #fff !important;
+}
+.tier-medal-icon svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    transition: transform 0.3s ease;
+}
+.tier-detail-item:hover .tier-medal-icon svg {
+    transform: scale(1.2) rotate(10deg);
+}
+
+/* Hiệu ứng hào quang cho hạng VIP */
+.tier-big-card:has(.medal[style*="#e74c3c"]) .medal {
+    animation: vip-glow 2s infinite alternate;
+}
+
+@keyframes vip-glow {
+    from { box-shadow: 0 0 10px rgba(231, 76, 60, 0.4); }
+    to { box-shadow: 0 0 30px rgba(231, 76, 60, 0.8), 0 0 10px rgba(241, 196, 15, 0.5); }
+}
+
+/* --- OTP Inputs Professional UI --- */
+.otp-input-container {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 1rem 0;
+}
+.otp-digit {
+    width: 40px;
+    height: 50px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    background: #fff;
+    transition: all 0.2s ease;
+}
+.otp-digit:focus { border-color: var(--text-black); box-shadow: 0 0 0 2px rgba(0,0,0,0.05); outline: none; }
+@media (max-width: 480px) {
+    .otp-digit { width: 35px; height: 45px; font-size: 1.2rem; }
+    .otp-input-container { gap: 5px; }
+}
+
+/* ==========================================================================
+   PRINT STYLES (Cấu hình in Bill chuyên nghiệp)
+   ========================================================================== */
+#receipt-print-area {
+    display: none; /* Mặc định ẩn bill khỏi màn hình Admin */
+}
+
+@media print {
+    /* 1. Ẩn tất cả các thành phần giao diện web (sidebar, header, buttons...) */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* 2. Chỉ hiển thị duy nhất khu vực in bill */
+    #receipt-print-area, #receipt-print-area * {
+        visibility: visible;
+    }
+
+    #receipt-print-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm; /* Khổ giấy chuẩn cho máy in nhiệt POS */
+        margin: 0;
+        padding: 5mm;
+        background: #fff;
+    }
+
+    /* 3. Loại bỏ lề và các thông tin header/footer mặc định của trình duyệt */
+    @page {
+        margin: 0;
+        size: auto;
+    }
+}
+
+/* --- Styling nội dung Bill để in ra sắc nét --- */
+.receipt-header { text-align: center; margin-bottom: 10px; }
+.receipt-logo { width: 50px; height: auto; margin-bottom: 5px; filter: grayscale(1); }
+.receipt-info { font-size: 11px; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 10px; }
+.receipt-info p { margin: 2px 0; }
+.receipt-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+.receipt-table th { text-align: left; border-bottom: 1px solid #000; padding: 5px 0; }
+.receipt-table td { padding: 5px 0; line-height: 1.2; }
+.col-qty { text-align: center; }
+.col-price { text-align: right; }
+.receipt-total { text-align: right; font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
+.receipt-qr-section { text-align: center; margin-top: 15px; font-size: 10px; }
+.receipt-qr { width: 70px; height: 70px; margin-bottom: 5px; }
+.receipt-footer { text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; font-style: italic; }

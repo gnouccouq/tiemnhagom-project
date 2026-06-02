@@ -1,5 +1,5 @@
 import { 
-    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber
+    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue
 } from "./utils.js";
 import { 
     RecaptchaVerifier, signInWithPhoneNumber 
@@ -121,14 +121,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btn = e.currentTarget;
         try {
+            // Kiểm tra cooldown gửi OTP
+            const cooldown = getOtpCooldown('otp_ts_login', 60);
+            if (cooldown > 0) {
+                showToast(`Bạn vừa yêu cầu mã. Vui lòng đợi ${cooldown}s trước khi gửi lại.`, "error");
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
             
             setupRecaptcha();
             confirmationResult = await signInWithPhoneNumber(auth, authPhone, window.recaptchaVerifier);
             
+            saveOtpTimestamp('otp_ts_login');
+            startOtpCountdown(btn, 'otp_ts_login');
+            
             document.getElementById('otp-group').style.display = 'block';
-            btn.style.display = 'none';
+            setupOtpInputs('otp-inputs-login');
+            // Bỏ dòng btn.style.display = 'none' để người dùng nhìn thấy đếm ngược
             showToast("Mã OTP đã được gửi đến số điện thoại của bạn.");
         } catch (error) {
             console.error(error);
@@ -141,8 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Xác nhận mã OTP
     document.getElementById('btn-verify-otp').onclick = async (e) => {
-        const code = document.getElementById('otp-code').value.trim();
-        if (!code || code.length < 6) {
+        const code = getOtpValue('otp-inputs-login');
+        if (code.length < 6) {
             showToast("Vui lòng nhập mã OTP 6 số", "error");
             return;
         }
@@ -161,4 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerText = "Xác nhận đăng nhập";
         }
     };
+
+    // Kiểm tra đếm ngược ngay khi load trang
+    const cooldown = getOtpCooldown('otp_ts_login', 60);
+    if (cooldown > 0) {
+        // Nếu đang trong thời gian chờ, tự động hiện ô nhập mã để người dùng điền mã đã nhận được trước đó
+        document.getElementById('otp-group').style.display = 'block';
+        setupOtpInputs('otp-inputs-login');
+        startOtpCountdown(document.getElementById('btn-send-otp'), 'otp_ts_login');
+    }
 });
