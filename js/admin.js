@@ -35,6 +35,7 @@ const ALL_SECTIONS = [
     { id: 'user-section', label: 'Người dùng' },
     { id: 'admin-account-section', label: 'Quản trị viên' },
     { id: 'stats-section', label: 'Thống kê' },
+    { id: 'flash-sale-settings-section', label: 'Cài đặt Flash Sale' },
     { id: 'inventory-log-section', label: 'Nhật ký kho' },
     { id: 'news-section', label: 'Tin tức' },
     { id: 'collections-section', label: 'Bộ sưu tập' },
@@ -44,7 +45,7 @@ const ALL_SECTIONS = [
 // Cấu hình phân quyền mặc định theo Role (Fallback)
 const ROLE_PERMISSIONS = {
     super_admin: ALL_SECTIONS.map(s => s.id), // Tự động bao gồm tất cả các section cho super_admin
-    staff: ['overview-section', 'pos-section', 'order-section'] // Mặc định tối thiểu
+    staff: ['overview-section', 'pos-section', 'order-section', 'flash-sale-settings-section', 'product-section'] // Thêm mục Sale và Sản phẩm cho Staff
 };
 
 // --- Logic chuyển đổi Tab Admin ---
@@ -107,6 +108,10 @@ function setupAdminTabs() {
 
             if (targetId === 'collections-section') {
                 initCollectionManagement();
+            }
+
+            if (targetId === 'flash-sale-settings-section') {
+                initFlashSaleSettings();
             }
         });
     });
@@ -1506,6 +1511,7 @@ productForm.addEventListener('submit', async (e) => {
         cost: Number(document.getElementById('cost').value || 0),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
+        flashSaleGroup: document.getElementById('flash-sale-group-select').value ? Number(document.getElementById('flash-sale-group-select').value) : null,
         imageUrl: finalImageUrl,
         thumbUrl: currentThumb, // Add thumbUrl to productData
         additionalImages: currentAdditionals,
@@ -1600,6 +1606,8 @@ function initProductListener() {
         });
 
         renderAdminProductTable(); // Gọi hàm hiển thị bảng
+        populateFlashSaleGroupSelect(); // Cập nhật dropdown chọn nhóm sale
+        renderAdminFlashSaleList(); // Tự động cập nhật danh sách Flash Sale
     }, (error) => {
         console.error("Product listener error:", error);
     });
@@ -1748,6 +1756,7 @@ async function editProduct(id) {
             document.getElementById('cost').value = p.cost || 0;
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
+            document.getElementById('flash-sale-group-select').value = p.flashSaleGroup || "";
 
             // Load collections checkbox
             const colCheckboxes = document.querySelectorAll('.collection-checkbox');
@@ -3249,6 +3258,129 @@ async function initMaintenanceSettings() {
     };
 
     loadSettings(); // Load cài đặt khi tab được mở
+}
+
+// Hàm đổ dữ liệu vào dropdown chọn nhóm đồng giá trong form sản phẩm
+async function populateFlashSaleGroupSelect() {
+    const select = document.getElementById('flash-sale-group-select');
+    if (!select) return;
+
+    const fsRef = doc(db, "settings", "flash_sale");
+    const snap = await getDoc(fsRef);
+    if (snap.exists() && snap.data().priceGroups) {
+        const groups = snap.data().priceGroups;
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- Không tham gia --</option>' + 
+            groups.map(p => `<option value="${p}">Đồng giá ${p/1000}k</option>`).join('');
+        select.value = currentVal;
+    }
+}
+
+// --- Quản lý Cài đặt Flash Sale ---
+async function initFlashSaleSettings() {
+    const form = document.getElementById('flash-sale-settings-form');
+    if (!form || !db) return;
+
+    const fsRef = doc(db, "settings", "flash_sale");
+
+    // Load cài đặt hiện tại
+    const snap = await getDoc(fsRef);
+    if (snap.exists()) {
+        const s = snap.data();
+        document.getElementById('fs-active-toggle').checked = s.isActive || false;
+        document.getElementById('fs-title').value = s.title || '';
+        document.getElementById('fs-subtitle').value = s.subtitle || '';
+        document.getElementById('fs-groups').value = (s.priceGroups || []).join(', ');
+        if (s.startTime) {
+            document.getElementById('fs-start-time').value = s.startTime.toDate().toISOString().slice(0, 16);
+        }
+        if (s.endTime) {
+            document.getElementById('fs-end-time').value = s.endTime.toDate().toISOString().slice(0, 16);
+        }
+        populateFlashSaleGroupSelect();
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        const priceGroups = document.getElementById('fs-groups').value.split(',')
+                            .map(p => parseInt(p.trim()))
+                            .filter(p => !isNaN(p));
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            
+            await setDoc(fsRef, {
+                isActive: document.getElementById('fs-active-toggle').checked,
+                title: document.getElementById('fs-title').value.trim(),
+                subtitle: document.getElementById('fs-subtitle').value.trim(),
+                startTime: new Date(document.getElementById('fs-start-time').value),
+                endTime: new Date(document.getElementById('fs-end-time').value),
+                priceGroups: priceGroups,
+                lastUpdated: serverTimestamp()
+            });
+            
+            showToast("Đã cập nhật cấu hình Flash Sale!");
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Lưu cấu hình Flash Sale";
+        }
+    };
+
+    renderAdminFlashSaleList(); // Render lần đầu khi mở tab
+}
+
+// Logic tự động tính % giảm giá khi chọn nhóm đồng giá
+document.getElementById('flash-sale-group-select')?.addEventListener('change', (e) => {
+    const targetPrice = parseInt(e.target.value);
+    const originalPrice = parseInt(document.getElementById('price').value);
+    const saleInput = document.getElementById('sale');
+
+    if (targetPrice && originalPrice > 0) {
+        if (targetPrice >= originalPrice) {
+            showToast("Giá đồng giá phải nhỏ hơn giá gốc!", "error");
+            e.target.value = "";
+            return;
+        }
+        // Công thức: % Sale = (1 - Giá_mới / Giá_gốc) * 100
+        const salePercent = Math.round((1 - targetPrice / originalPrice) * 100);
+        saleInput.value = salePercent;
+        showToast(`Đã tự tính giảm giá: ${salePercent}%`);
+    }
+});
+
+// Hàm hiển thị danh sách sản phẩm đang sale trong tab Cấu hình Flash Sale
+function renderAdminFlashSaleList() {
+    const list = document.getElementById('admin-flash-sale-list');
+    if (!list) return;
+
+    // Lọc sản phẩm có phần trăm giảm giá > 0 từ mảng cache local
+    const saleProducts = posProductsLocal.filter(p => (p.sale || 0) > 0);
+
+    if (saleProducts.length === 0) {
+        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #999;">Chưa có sản phẩm nào được thiết lập giảm giá.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = saleProducts.map(p => {
+        // Ưu tiên dùng flashSaleGroup để giá luôn là con số tròn
+        const salePrice = p.flashSaleGroup || Math.round(p.price * (1 - (p.sale || 0) / 100));
+        const stockClass = p.stock <= 0 ? 'color: #e74c3c; font-weight: bold;' : '';
+        
+        return `
+            <tr>
+                <td data-label="Ảnh"><img src="${p.imageUrl}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
+                <td data-label="Tên"><strong>${p.name}</strong><br><small style="color:#888;">SKU: ${p.id}</small></td>
+                <td data-label="Giá gốc">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td data-label="Giảm" style="color: #c0392b; font-weight: 700;">-${p.sale}%</td>
+                <td data-label="Giá Sale" style="font-weight: 700; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)}đ ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup/1000}k</small>` : ''}</td>
+                <td data-label="Kho" style="${stockClass}">${p.stock}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // --- Quản lý Tin tức ---

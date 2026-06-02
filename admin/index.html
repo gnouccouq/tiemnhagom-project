@@ -27,8 +27,9 @@
             <nav class="sidebar-nav">
                 <button class="admin-tab-btn active" data-target="overview-section">📊 <span>Tổng quan</span></button>
                 <button class="admin-tab-btn" data-target="product-section">📦 <span>Sản phẩm</span></button>
+                <button class="admin-tab-btn" data-target="flash-sale-settings-section">⚡ <span>Flash Sale</span></button>
                 <button class="admin-tab-btn" data-target="banner-section">🖼️ <span>Banner</span></button>
-                <button class="admin-tab-btn" data-target="pos-section">🛒 <span>Bán tại shop (POS)</span></button>
+                <button class="admin-tab-btn" data-target="pos-section">🛒 <span>POS</span></button>
                 <button class="admin-tab-btn" data-target="order-section">📋 <span>Đơn hàng</span> <span id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
                 <button class="admin-tab-btn" data-target="coupon-section">🎟️ <span>Mã giảm giá</span></button>
                 <button class="admin-tab-btn" data-target="category-section">📁 <span>Danh mục</span></button>
@@ -136,6 +137,73 @@
                 </div>
             </div>
         </div>
+
+        <!-- Section Cài đặt Flash Sale -->
+        <section id="flash-sale-settings-section" class="admin-section">
+            <div class="admin-card">
+                <h3>Cấu hình chương trình Flash Sale</h3>
+                <form id="flash-sale-settings-form">
+                    <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: #fff9f8; padding: 15px; border-radius: 8px; border: 1px solid #ffe4e1; margin-bottom: 20px;">
+                        <label class="slider-label" style="font-weight: 700; color: #c0392b;">KÍCH HOẠT FLASH SALE</label>
+                        <input type="checkbox" id="fs-active-toggle" style="width: 25px; height: 25px; cursor: pointer;">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tiêu đề chương trình</label>
+                            <input type="text" id="fs-title" placeholder="VD: Flash Sale Đồng Giá">
+                        </div>
+                        <div class="form-group">
+                            <label>Phụ đề</label>
+                            <input type="text" id="fs-subtitle" placeholder="VD: Duy nhất trong tuần này">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Thời gian bắt đầu</label>
+                            <input type="datetime-local" id="fs-start-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Thời gian kết thúc</label>
+                            <input type="datetime-local" id="fs-end-time" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Các mức đồng giá (Cách nhau bằng dấu phẩy)</label>
+                            <input type="text" id="fs-groups" placeholder="39000, 49000, 59000, 99000">
+                            <small style="color: #888;">Hệ thống sẽ tạo các Tab tương ứng dựa trên giá này.</small>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-dark" style="background: #c0392b; width: 100%; height: 50px;">Lưu cấu hình Flash Sale</button>
+                </form>
+            </div>
+
+            <div class="admin-card" style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">Sản phẩm đang thiết lập Giảm giá (Flash Sale)</h3>
+                    <small style="color: #666;">Chỉ những sản phẩm có % giảm giá > 0 mới hiện ở đây</small>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Giá gốc</th>
+                                <th>Giảm (%)</th>
+                                <th>Giá sau giảm</th>
+                                <th>Tồn kho</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-flash-sale-list">
+                            <!-- JS render list sản phẩm đang sale -->
+                            <tr><td colspan="6" style="text-align:center; padding: 2rem;">Đang tải danh sách...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
         <!-- Section Quản lý Banner -->
         <div id="banner-section" class="admin-section">
@@ -402,6 +470,14 @@
                         <div class="form-group">
                             <label>Giảm giá (%)</label>
                             <input type="number" id="sale" min="0" max="100" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Tham gia Chương trình Đồng giá</label>
+                            <select id="flash-sale-group-select">
+                                <option value="">-- Không tham gia --</option>
+                                <!-- JS render các mức giá 39k, 49k... từ cấu hình -->
+                            </select>
+                            <small style="color: #666;">* Khi chọn, hệ thống sẽ tự tính % giảm giá về mức này.</small>
                         </div>
                         <div class="form-group">
                             <label>Hình ảnh sản phẩm (Chọn nhiều ảnh)</label>

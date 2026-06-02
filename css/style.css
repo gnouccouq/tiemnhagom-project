@@ -11,7 +11,6 @@
 html {
     font-size: 110%; /* Tăng toàn bộ cỡ chữ trên trang web lên khoảng 10% */
     scroll-behavior: smooth;
-    overflow-x: hidden;
 }
 
 :root {
@@ -46,7 +45,6 @@ body {
     font-family: var(--font-serif);
     font-weight: 600;
     line-height: 1.6;
-    overflow-x: hidden;
     padding-top: 80px; 
 }
 
@@ -1609,6 +1607,7 @@ footer {
         gap: 1rem;
     }
     .social-links {
+        justify-content: center;
         align-items: center;
     }
 }
@@ -3536,10 +3535,86 @@ footer {
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
     animation: banner-pulse 2s infinite;
 }
+
+/* Layout riêng khi focus vào mức giá đồng giá */
+.flash-sale-banner.price-focused {
+    background-color: var(--banner-accent, #000) !important;
+    background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)) !important; /* Làm tối nhẹ để nổi bật text */
+    transition: background-color 0.5s ease;
+}
+
+.flash-sale-banner.price-focused .banner-title {
+    transform: scale(1.1);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 @keyframes banner-pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
+}
+
+/* Flash Sale Layout with Sticky Sidebar */
+.flash-sale-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 3rem;
+    align-items: start;
+    margin-top: 2rem;
+    overflow: visible; /* Đảm bảo không chặn sticky con */
+}
+
+.price-tabs-sidebar {
+    position: sticky;
+    top: 120px; /* Tăng khoảng cách cách đỉnh để không bị che bởi Navbar */
+    z-index: 10;
+}
+
+@media (max-width: 992px) {
+    .flash-sale-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .price-tabs-sidebar {
+        position: static;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Price Filter Tabs for Flash Sale */
+.price-tabs-container {
+    display: flex;
+    flex-direction: column; /* Xếp dọc các nút chọn mức giá */
+    align-items: stretch; /* Đẩy các nút rộng bằng nhau trong sidebar */
+    gap: 10px;
+    padding: 0;
+}
+.price-tab {
+    padding: 10px 22px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    min-width: unset;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: all 0.3s;
+    color: #666;
+}
+.price-tab:hover { border-color: #000; color: #000; }
+.price-tab.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Container cho các section chương trình Sale xếp dọc */
+.flash-sale-sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 /* Hiệu ứng Loading Spinner */
 .spinner {

@@ -577,7 +577,7 @@ window.placeOrder = async () => {
                 }
 
                 const hasSale = product.sale > 0;
-                const currentUnitPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
+                const currentUnitPrice = (hasSale && product.flashSaleGroup) ? product.flashSaleGroup : (hasSale ? product.price * (1 - product.sale / 100) : product.price);
                 finalSubtotal += currentUnitPrice * item.quantity;
 
                 processedOrderItems.push({

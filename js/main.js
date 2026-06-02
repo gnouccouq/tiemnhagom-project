@@ -13,7 +13,7 @@ window.toggleFavorite = async (event, productId) => {
     setTimeout(() => btn.classList.remove('heartbeat-anim'), 400);
     await toggleFavoriteLogic(productId, () => {
         fetchFeaturedProducts();
-        fetchSaleProducts();
+        initFlashSaleSync(); // Đồng bộ lại trạng thái sau khi toggle
     });
 };
 
@@ -58,10 +58,54 @@ async function fetchFeaturedProducts() {
     }
 }
 
-// Hàm lấy sản phẩm đang giảm giá
-async function fetchSaleProducts() {
+// Hàm đồng bộ cấu hình Flash Sale từ Firestore và kiểm tra thời hạn
+async function initFlashSaleSync() {
     const saleSection = document.getElementById('sale-section');
     const saleGrid = document.getElementById('sale-product-grid');
+    if (!saleSection || !saleGrid) return;
+
+    try {
+        // 1. Nạp cấu hình từ Firestore (đồng bộ với trang Flash Sale)
+        const fsRef = doc(db, "settings", "flash_sale");
+        const fsSnap = await getDoc(fsRef);
+        
+        if (!fsSnap.exists()) {
+            saleSection.style.display = 'none';
+            return;
+        }
+
+        const settings = fsSnap.data();
+        const now = new Date();
+        const endTime = settings.endTime?.toDate();
+        const startTime = settings.startTime?.toDate();
+        const isExpired = endTime && now > endTime;
+
+        // 2. Kiểm tra trạng thái sale
+        if (!settings.isActive || isExpired) {
+            saleSection.style.display = 'none';
+            return;
+        }
+
+        // 3. Khởi động bộ đếm ngược động (ưu tiên đếm đến giờ bắt đầu nếu chưa tới)
+        if (startTime && now < startTime) {
+            const shimmer = saleSection.querySelector('.shimmer-title');
+            if (shimmer) shimmer.innerText = "Flash Sale Sắp Bắt Đầu";
+            initDynamicCountdown(startTime);
+        } else {
+            initDynamicCountdown(endTime);
+            // 4. Lấy danh sách sản phẩm (Chỉ khi đã bắt đầu)
+            fetchSaleProducts();
+        }
+
+    } catch (e) {
+        console.error("Lỗi đồng bộ Flash Sale trang chủ:", e);
+        saleSection.style.display = 'none';
+    }
+}
+
+async function fetchSaleProducts() {
+    const saleGrid = document.getElementById('sale-product-grid');
+    if (!saleGrid) return;
 
     // Hiển thị skeleton loading trong khi chờ query Firestore
     saleGrid.innerHTML = Array(5).fill(0).map(() => `
@@ -74,7 +118,8 @@ async function fetchSaleProducts() {
     `).join('');
 
     try {
-        const q = query(collection(db, "products"), where("sale", ">", 0));
+        // Chỉ lấy tối đa 10 sản phẩm đang sale cho trang chủ
+        const q = query(collection(db, "products"), where("sale", ">", 0), limit(10));
         const querySnapshot = await getDocs(q);
         
         let favs = [];
@@ -92,7 +137,7 @@ async function fetchSaleProducts() {
 
         if (htmlContent) {
             saleGrid.innerHTML = htmlContent;
-            saleSection.style.display = 'block';
+            document.getElementById('sale-section').style.display = 'block';
         }
     } catch (error) {
         console.error("Lỗi lấy sản phẩm sale:", error);
@@ -188,21 +233,16 @@ async function fetchRecommendations() {
     }
 }
 
-// Hàm bộ đếm ngược 7 ngày (Reset vào mỗi thứ Hai 00:00:00)
-function initWeeklyCountdown() {
-    const updateTimer = () => {
+// Hàm đếm ngược thời gian dựa trên cài đặt Admin
+function initDynamicCountdown(endTime) {
+    const update = () => {
         const now = new Date();
-        // Tính toán ngày Thứ Hai tới lúc 0h00
-        // getDay(): 0 là CN, 1 là T2...
-        const daysUntilMonday = (8 - (now.getDay() === 0 ? 7 : now.getDay())) % 8 || 7;
-        
-        const target = new Date(now);
-        target.setDate(now.getDate() + (now.getDay() === 0 ? 1 : 8 - now.getDay()));
-        target.setHours(0, 0, 0, 0);
-
-        const diff = target - now;
-        if (diff <= 0) return;
-
+        const diff = endTime - now;
+        if (diff <= 0) {
+            document.getElementById('sale-section').style.display = 'none';
+            if (window.fsHomeTimer) clearInterval(window.fsHomeTimer);
+            return;
+        }
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
         const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -215,8 +255,9 @@ function initWeeklyCountdown() {
             document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
         }
     };
-    setInterval(updateTimer, 1000);
-    updateTimer();
+    if (window.fsHomeTimer) clearInterval(window.fsHomeTimer);
+    window.fsHomeTimer = setInterval(update, 1000);
+    update();
 }
 
 // Logic cho Hero Carousel
@@ -404,12 +445,11 @@ function initStorySlider() {
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('./', (user) => {
         // Chỉ cần chạy logic lấy sản phẩm ở đây
-        fetchSaleProducts();
+        initFlashSaleSync();
         fetchFeaturedProducts();
         fetchRecommendations(); // Thêm dòng này
         fetchCollections(); // Thêm dòng này
         initHeroCarousel();
-        initWeeklyCountdown();
         initStorySlider();
 
         // Hiệu ứng Header trong suốt mượt mà khi cuộn trang (chỉ áp dụng cho Trang chủ)

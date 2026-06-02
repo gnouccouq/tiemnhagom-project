@@ -167,7 +167,8 @@ async function fetchProductDetail() {
 
             const hasSale = p.sale > 0;
             const soldCount = p.sold || 0;
-            const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
+            // Ưu tiên lấy giá đồng giá tròn trịa
+            const currentPrice = (hasSale && p.flashSaleGroup) ? p.flashSaleGroup : (hasSale ? p.price * (1 - p.sale / 100) : p.price);
             
             let starsHtml = '';
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;

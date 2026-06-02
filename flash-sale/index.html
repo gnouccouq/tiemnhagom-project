@@ -70,8 +70,17 @@
             </select>
         </div>
 
-        <div id="flash-sale-grid" class="grid">
-            <!-- Sản phẩm Flash Sale sẽ được render tại đây -->
+        <div class="flash-sale-layout">
+            <!-- Sidebar chọn nhanh mức giá -->
+            <aside class="price-tabs-sidebar">
+                <h4 class="variant-title" style="margin-bottom: 1.5rem; border-bottom: 1.5px solid #eee; padding-bottom: 10px;">Lọc theo giá</h4>
+                <div id="price-tabs-container" class="price-tabs-container"></div>
+            </aside>
+
+            <!-- Container chứa các section chương trình Sale xếp dọc -->
+            <div id="flash-sale-grid" class="flash-sale-sections-container">
+                <!-- Sản phẩm Flash Sale sẽ được render tại đây -->
+            </div>
         </div>
 
         <div id="no-flash-sale-products" style="text-align: center; padding: 5rem; display: none;">

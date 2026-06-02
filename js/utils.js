@@ -394,7 +394,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const hasSale = product.sale > 0;
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
-    const currentPrice = hasSale ? product.price * (1 - product.sale / 100) : product.price;
+    // Nếu có flashSaleGroup (giá đồng giá), lấy trực tiếp giá đó để tránh bị số lẻ
+    const currentPrice = (hasSale && product.flashSaleGroup) ? product.flashSaleGroup : (hasSale ? product.price * (1 - product.sale / 100) : product.price);
     
     const priceHtml = hasSale 
         ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>`
