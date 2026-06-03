@@ -624,7 +624,7 @@ window.placeOrder = async () => {
         }
 
         // 1. Thực hiện Transaction để đảm bảo trừ kho và tạo đơn đồng thời
-        const orderId = await runTransaction(db, async (transaction) => {
+        const transactionResult = await runTransaction(db, async (transaction) => {
             const newOrderRef = doc(collection(db, "orders")); // Tạo reference mới cho đơn hàng
             // Nạp cài đặt Flash Sale mới nhất trong transaction để check giá chính xác
             const fsSettings = await fetchFlashSaleSettings();
@@ -718,11 +718,9 @@ window.placeOrder = async () => {
 
             // Lưu đơn hàng
             transaction.set(newOrderRef, { ...orderData, items: processedOrderItems, productNames, totalAmount: finalTotal });
-            return newOrderRef.id;
             return { id: newOrderRef.id, items: processedOrderItems };
         });
 
-        if (orderId) {
         if (transactionResult && transactionResult.id) {
             const orderId = transactionResult.id;
             // 1.5 Lưu địa chỉ vào sổ địa chỉ nếu khách chọn "Lưu địa chỉ"
@@ -777,6 +775,11 @@ window.placeOrder = async () => {
             }, 1500);
         }
     } catch (error) {
+        const btn = document.querySelector('.btn-place-order');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = "Đặt hàng ngay";
+        }
         showToast("Lỗi đặt hàng: " + error.message, "error");
         console.error(error);
     }
