@@ -11,6 +11,12 @@ import {
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
+// --- Tích hợp EmailJS ---
+import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
+
+// Khởi tạo EmailJS với Public Key của bạn (Lấy từ Dashboard EmailJS)
+emailjs.init("7kkSVeK5WhKKmizOZ"); 
+
 // 1. Cấu hình & Khởi tạo Firebase (Duy nhất một nơi)
 const firebaseConfig = {
     apiKey: "AIzaSyAl-Hlzfu4naiUMIuwJTnw8bXsDB4wY7zs",
@@ -190,6 +196,30 @@ export function showToast(message, type = 'success') {
         toast.style.transform = 'translateX(20px)';
         setTimeout(() => toast.remove(), 400);
     }, 4000);
+}
+
+/**
+ * Hàm gửi Email thông báo dùng chung
+ * @param {string} type - Loại thông báo (order, welcome, password, phone, promo)
+ * @param {Object} params - Các biến dữ liệu đổ vào template email
+ */
+export async function sendEmailNotification(type, params) {
+    const serviceId = "service_tiemnhagom"; // Cấu hình Service ID trong EmailJS gắn với gmail của bạn
+    let templateId = "";
+    
+    switch (type) {
+        case 'order': templateId = "template_order_confirm"; break;
+        case 'welcome': templateId = "template_welcome"; break;
+        case 'password': templateId = "template_password_reset"; break;
+        case 'phone': templateId = "template_phone_update"; break;
+        case 'promo': templateId = "template_promotion"; break;
+    }
+
+    try {
+        await emailjs.send(serviceId, templateId, params);
+    } catch (error) {
+        console.error("Lỗi gửi email:", error);
+    }
 }
 
 // Logic UI: Xem ảnh toàn màn hình dùng chung cho Gallery

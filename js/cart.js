@@ -1,5 +1,5 @@
 import { 
-    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice, getMembershipTier
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice, getMembershipTier, sendEmailNotification
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -633,7 +633,8 @@ window.placeOrder = async () => {
             const processedOrderItems = [];
             const productNames = [];
 
-            // Duyệt qua từng item trong giỏ hàng để lấy giá THẬT và kiểm tra tồn kho
+            // 1. Giai đoạn ĐỌC (READ): Thực hiện tất cả các lệnh get trước khi thực hiện bất kỳ lệnh ghi nào.
+            const productSnapshots = [];
             for (const item of cart) {
                 const productRef = doc(db, "products", item.id);
                 const productSnap = await transaction.get(productRef);
@@ -641,7 +642,11 @@ window.placeOrder = async () => {
                 if (!productSnap.exists()) {
                     throw new Error(`Sản phẩm ID ${item.id} không tồn tại.`);
                 }
+                productSnapshots.push({ item, productRef, productSnap });
+            }
 
+            // 2. Giai đoạn GHI (WRITE): Xử lý logic và thực hiện các lệnh set/update.
+            for (const { item, productRef, productSnap } of productSnapshots) {
                 const product = productSnap.data();
                 let currentStock = product.stock || 0;
                 let variantImage = product.imageUrl;
@@ -700,6 +705,8 @@ window.placeOrder = async () => {
                     });
                     updateProductData.patternVariants = updatedPatternVariants;
                 }
+                
+                // Thực hiện ghi: Từ thời điểm này trở đi không được gọi thêm lệnh transaction.get() nào khác
                 transaction.update(productRef, updateProductData);
             }
 
@@ -712,9 +719,12 @@ window.placeOrder = async () => {
             // Lưu đơn hàng
             transaction.set(newOrderRef, { ...orderData, items: processedOrderItems, productNames, totalAmount: finalTotal });
             return newOrderRef.id;
+            return { id: newOrderRef.id, items: processedOrderItems };
         });
 
         if (orderId) {
+        if (transactionResult && transactionResult.id) {
+            const orderId = transactionResult.id;
             // 1.5 Lưu địa chỉ vào sổ địa chỉ nếu khách chọn "Lưu địa chỉ"
             if (auth.currentUser && saveAddressChecked) {
                 const userRef = doc(db, "users", auth.currentUser.uid);
@@ -744,6 +754,22 @@ window.placeOrder = async () => {
             } else {
                 localStorage.removeItem('cart');
             }
+
+            // Gửi email xác nhận đơn hàng
+            const productListContent = transactionResult.items.map(item => 
+                `- ${item.name} (Mã: ${item.id}): ${new Intl.NumberFormat('vi-VN').format(item.price)}đ x ${item.quantity}`
+            ).join('\n');
+
+            sendEmailNotification('order', {
+                to_email: email || (auth.currentUser ? auth.currentUser.email : ''),
+                customer_name: name,
+                order_id: orderId,
+                total_amount: new Intl.NumberFormat('vi-VN').format(finalTotal) + 'đ',
+                shipping_fee: new Intl.NumberFormat('vi-VN').format(shippingFee) + 'đ',
+                product_list: productListContent,
+                shipping_address: `${address}, ${wardName}, ${provinceName}`
+            });
+
             showToast("Đặt hàng thành công! Đang chuyển hướng...", "success");
             updateCartCount();
             setTimeout(() => {

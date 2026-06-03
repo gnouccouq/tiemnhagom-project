@@ -1,6 +1,6 @@
 import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
-    showToast, initHeader, renderProductCard, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue
+    showToast, initHeader, renderProductCard, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
 import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
@@ -475,6 +475,14 @@ async function handleProfileAuth(user) {
                     showToast("Cập nhật thông tin thành công!");
                 }
                 
+                if (phoneChanged) {
+                    sendEmailNotification('phone', {
+                        to_email: user.email,
+                        customer_name: user.displayName || user.email,
+                        new_phone: newPhone
+                    });
+                }
+
                 handleProfileAuth(auth.currentUser); // Tải lại giao diện
             } catch (error) {
                 showToast("Lỗi khi cập nhật: " + error.message, "error");

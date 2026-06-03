@@ -1,5 +1,5 @@
 import { 
-    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue
+    auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
 import { 
     RecaptchaVerifier, signInWithPhoneNumber 
@@ -76,6 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const pass = document.getElementById('reg-password').value;
         try {
             await registerEmail(email, pass);
+            sendEmailNotification('welcome', {
+                to_email: email,
+                customer_name: email.split('@')[0]
+            });
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
         }
@@ -90,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             await resetPassword(email);
+            sendEmailNotification('password', {
+                to_email: email,
+                reset_link: "https://tiemnhagom.vn/login/" // Hoặc link thực tế
+            });
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
         }
