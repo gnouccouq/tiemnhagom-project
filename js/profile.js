@@ -566,11 +566,11 @@ async function fetchOrderHistory(userId) {
                             ${order.items.map(item => `
                                 <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                                     <img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                                    <span>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)}đ)</span>
+                                    <span>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)} VND)</span>
                                 </li>
                             `).join('')}
                         </ul>
-                        <p><strong>Tổng tiền:</strong> ${totalAmount}đ</p>
+                        <p><strong>Tổng tiền:</strong> ${totalAmount} VND</p>
                         <div style="display: flex; gap: 10px;">${detailBtn} ${cancelBtn}</div>
                     </div>
                 </div>
@@ -594,11 +594,11 @@ async function fetchOrderHistory(userId) {
                 progressHtml = `
                     <div class="tier-progress-box">
                         <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-bottom:5px;">
-                            <span>Đã tích lũy: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ</span>
-                            <span>Hạng tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</span>
+                            <span>Đã tích lũy: ${new Intl.NumberFormat('vi-VN').format(totalSpent)} VND</span>
+                            <span>Hạng tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)} VND</span>
                         </div>
                         <div class="tier-progress-bar"><div class="fill" style="width: ${percent}%; background:var(--text-black);"></div></div>
-                        <p style="font-size:0.75rem; margin-top:5px; text-align:center;">Còn <strong>${new Intl.NumberFormat('vi-VN').format(nextTier.min - totalSpent)}đ</strong> để lên hạng <b>${nextTier.name}</b></p>
+                        <p style="font-size:0.75rem; margin-top:5px; text-align:center;">Còn <strong>${new Intl.NumberFormat('vi-VN').format(nextTier.min - totalSpent)} VND</strong> để lên hạng <b>${nextTier.name}</b></p>
                     </div>`;
             }
 

@@ -71,7 +71,7 @@
                     <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;">💰</div>
                     <div class="stat-info">
                         <h3>Tổng doanh thu</h3>
-                        <p id="stat-total-revenue">0đ</p>
+                        <p id="stat-total-revenue">0 VND</p>
                         <small>Từ các đơn hoàn thành</small>
                     </div>
                     <div class="stat-chart"><canvas id="sparkline-revenue"></canvas></div>
@@ -458,11 +458,11 @@
                         <div class="form-group">
                             <div style="display: flex; gap: 10px;">
                                 <div style="flex: 1;">
-                                    <label>Giá bán (VNĐ)</label>
+                                    <label>Giá bán (VND)</label>
                                     <input type="number" id="price" required placeholder="250000">
                                 </div>
                                 <div style="flex: 1;">
-                                    <label>Giá vốn (VNĐ)</label>
+                                    <label>Giá vốn (VND)</label>
                                     <input type="number" id="cost" placeholder="150000">
                                 </div>
                             </div>
@@ -495,6 +495,48 @@
                                 <!-- Ảnh hiện có sẽ hiện ở đây khi nhấn Sửa -->
                             </div>
                             <small style="color: #666;">* Chọn file mới để thêm ảnh. Nhấn dấu X trên ảnh để xóa ảnh cũ.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Kích thước (cm) - Dài x Rộng x Cao</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" id="dim-length" step="0.1" placeholder="Dài">
+                                <input type="number" id="dim-width" step="0.1" placeholder="Rộng">
+                                <input type="number" id="dim-height" step="0.1" placeholder="Cao">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Trọng lượng (gram)</label>
+                            <input type="number" id="weight" step="0.1" placeholder="VD: 250 (gram)">
+                        </div>
+                        <div class="form-group">
+                            <label>Dung tích (ml)</label>
+                            <input type="number" id="capacity" step="0.1" placeholder="VD: 300 (ml)">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Đặc tính sản phẩm</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
+                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">An toàn thực phẩm
+                                    <input type="checkbox" id="usage-food-safe">
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò nướng
+                                    <input type="checkbox" id="usage-oven-safe">
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò vi sóng
+                                    <input type="checkbox" id="usage-microwave-safe">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Chất liệu</label>
+                            <input type="text" id="material" placeholder="VD: Gốm sứ, Gỗ, Thủy tinh...">
+                        </div>
+                        <div class="form-group">
+                            <label>Xuất xứ</label>
+                            <input type="text" id="origin" placeholder="VD: Việt Nam, Nhật Bản, Trung Quốc...">
                         </div>
                         <div class="form-group">
                             <label>Mô tả</label>
@@ -530,7 +572,7 @@
                             <label>Slug (URL thân thiện - Không dấu, gạch ngang)</label>
                             <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
                         </div>
-                        <button type="submit" class="btn-dark" style="width: 100%;">Lưu sản phẩm</button>
+                        <button type="submit" id="submit-product-btn" class="btn-dark" style="width: 100%;">Lưu sản phẩm</button>
                     </form>
                 </div>
 
@@ -724,7 +766,7 @@
                             <input type="number" id="coupon-value" required placeholder="VD: 10 hoặc 50000">
                         </div>
                         <div class="form-group">
-                            <label>Đơn hàng tối thiểu (VNĐ)</label>
+                            <label>Đơn hàng tối thiểu (VND)</label>
                             <input type="number" id="coupon-min-order" value="0">
                         </div>
                         <div class="form-group">
@@ -854,7 +896,7 @@
                     <div class="stat-info">
                         <h3>Doanh thu kỳ này</h3>
                         <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <p id="period-revenue" style="margin: 0;">0đ</p>
+                            <p id="period-revenue" style="margin: 0;">0 VND</p>
                             <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
                         </div>
                     </div>
@@ -864,7 +906,7 @@
                     <div class="stat-info">
                         <h3>Doanh thu thuần</h3>
                         <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <p id="period-net-revenue" style="margin: 0;">0đ</p>
+                            <p id="period-net-revenue" style="margin: 0;">0 VND</p>
                         </div>
                     </div>
                 </div>
@@ -872,21 +914,21 @@
                     <div class="stat-icon" style="background: #fff3e0; color: #e65100;">🧾</div>
                     <div class="stat-info">
                         <h3>Tổng thuế (1.5%)</h3>
-                        <p id="period-tax-total" style="margin: 0; color: #e65100;">0đ</p>
+                        <p id="period-tax-total" style="margin: 0; color: #e65100;">0 VND</p>
                     </div>
                 </div>
                 <div class="stat-card" style="opacity: 0.8;">
                     <div class="stat-icon" style="background: #fff8e1; color: #ffa000;">🧾</div>
                     <div class="stat-info">
                         <h3>Thuế VAT (1%)</h3>
-                        <p id="period-vat-total" style="margin: 0;">0đ</p>
+                        <p id="period-vat-total" style="margin: 0;">0 VND</p>
                     </div>
                 </div>
                 <div class="stat-card" style="opacity: 0.8;">
                     <div class="stat-icon" style="background: #fff3e0; color: #e67e22;">📝</div>
                     <div class="stat-info">
                         <h3>Thuế TNCN (0.5%)</h3>
-                        <p id="period-tncn-total" style="margin: 0;">0đ</p>
+                        <p id="period-tncn-total" style="margin: 0;">0 VND</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -904,7 +946,7 @@
                     <div class="stat-info">
                         <h3>Lợi nhuận dự tính</h3>
                         <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <p id="period-profit" style="margin: 0;">0đ</p>
+                            <p id="period-profit" style="margin: 0;">0 VND</p>
                             <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
                         </div>
                     </div>
@@ -914,7 +956,7 @@
                     <div class="stat-info">
                         <h3>TB đơn hàng</h3>
                         <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <p id="period-avg-order" style="margin: 0;">0đ</p>
+                            <p id="period-avg-order" style="margin: 0;">0 VND</p>
                             <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
                         </div>
                     </div>

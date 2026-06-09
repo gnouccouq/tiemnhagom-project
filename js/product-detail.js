@@ -251,8 +251,8 @@ async function fetchProductDetail() {
                                 <span style="color: #888; font-size: 0.85rem; font-weight:400;">Đã bán ${soldCount}</span>
                             </div>
                             <div class="product-price-row">
-                                <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
-                                ${hasSale ? `<span class="old-price" style="text-decoration:line-through; color:#aaa; font-size:1.2rem;">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
+                                <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span>
+                                ${hasSale ? `<span class="old-price" style="text-decoration:line-through; color:#aaa; font-size:1.2rem;">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</span>` : ''}
                                 ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${displaySale}%</span>` : ''}
                             </div>
                         </div>
@@ -262,8 +262,52 @@ async function fetchProductDetail() {
                             <!-- Rendered by JS -->
                         </div>
 
+                        <!-- Dimensions and Usage Icons -->
+                        <div class="product-specs-container" style="margin-top: 1.5rem;">
+                            ${(p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) || (p.specs && (p.specs.weight || p.specs.capacity)) || (p.details && (p.details.material || p.details.origin)) ? `
+                                <div style="margin-bottom: 1.5rem; padding: 15px; background: #fcfbf8; border-radius: 8px; font-size: 0.85rem; border: 1px solid #f0efeb;">
+                                    <h5 style="margin-bottom: 10px; font-family: var(--font-serif); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; color: #888;">Thông số sản phẩm</h5>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                        ${p.dimensions.length ? `<div><strong>Dài:</strong> ${p.dimensions.length} cm</div>` : ''}
+                                        ${p.dimensions.width ? `<div><strong>Rộng:</strong> ${p.dimensions.width} cm</div>` : ''}
+                                        ${p.dimensions.height ? `<div><strong>Cao:</strong> ${p.dimensions.height} cm</div>` : ''}
+                                        ${p.specs?.weight ? `<div><strong>Trọng lượng:</strong> ${p.specs.weight} g</div>` : ''}
+                                        ${p.specs?.capacity ? `<div><strong>Dung tích:</strong> ${p.specs.capacity} ml</div>` : ''}
+                                    </div>
+                                    ${(p.details?.material || p.details?.origin) ? `
+                                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
+                                            ${p.details.material ? `<div><strong>Chất liệu:</strong> ${p.details.material}</div>` : ''}
+                                            ${p.details.origin ? `<div><strong>Xuất xứ:</strong> ${p.details.origin}</div>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+
+                            <div style="display: flex; gap: 20px; margin-bottom: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+                                ${p.usage?.isFoodSafe ? `
+                                    <div style="text-align: center; font-size: 0.6rem; color: #5a8f79; width: 60px;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><path d="M12 2L3 9l9 7 9-7-9-7z"/><path d="M3 19l9-7 9 7"/></svg>
+                                        <div>An toàn thực phẩm</div>
+                                    </div>` : ''}
+                                <div style="text-align: center; font-size: 0.6rem; color: ${p.usage?.isOvenSafe ? '#2c3e50' : '#e74c3c'}; width: 60px;">
+                                    ${p.usage?.isOvenSafe ? `
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 10h12"/><path d="M6 14h12"/></svg>
+                                        <div>Đút lò được</div>
+                                    ` : `
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px; opacity: 0.5;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="5" x2="22" y2="19"/></svg>
+                                        <div>Không đút lò</div>
+                                    `}
+                                </div>
+                                ${p.usage?.isMicrowaveSafe ? `
+                                    <div style="text-align: center; font-size: 0.6rem; color: #2c3e50; width: 60px;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><path d="M2 15s1-2 4-2 4 2 4 2 1-2 4-2 4 2 4 2"/><path d="M2 10s1-2 4-2 4 2 4 2 1-2 4-2 4 2 4 2"/></svg>
+                                        <div>Lò vi sóng</div>
+                                    </div>` : ''}
+                            </div>
+                        </div>
+
                         <div class="product-description">
-                            <h4>Câu chuyện sản phẩm</h4>
+                            <h4>Thông tin sản phẩm</h4>
                             <p>${p.description ? p.description : 'Hiện tại chưa có thông tin.'}</p>
                         </div>
 

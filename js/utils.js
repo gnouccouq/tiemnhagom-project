@@ -480,8 +480,8 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                                     <span style="color: ${isOutOfStock ? '#e74c3c' : '#27ae60'}; font-weight: 600;">${isOutOfStock ? 'Hết hàng' : 'Còn hàng'}</span>
                                 </div>
                                 <div class="suggestion-price-container">
-                                    ${hasSale ? `<span class="suggestion-old-price">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</span>` : ''}
-                                    <span class="suggestion-current-price ${hasSale ? 'sale' : ''}">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span>
+                                    ${hasSale ? `<span class="suggestion-old-price">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</span>` : ''}
+                                    <span class="suggestion-current-price ${hasSale ? 'sale' : ''}">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span>
                                     ${hasSale ? `<span class="suggestion-sale-tag">-${p.sale}%</span>` : ''}
                                 </div>
                             </div>
@@ -542,8 +542,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const priceHtml = hasSale 
-        ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</p>`
-        : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)}đ</p>`;
+        ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</p>`
+        : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
 
     const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';

@@ -261,7 +261,7 @@ function animateNumber(id, target, isCurrency = false, duration = 1000) {
         const current = Math.floor(progress * target);
         
         if (isCurrency) {
-            el.innerText = new Intl.NumberFormat('vi-VN').format(current) + 'đ';
+            el.innerText = new Intl.NumberFormat('vi-VN').format(current) + ' VND';
         } else {
             el.innerText = new Intl.NumberFormat('vi-VN').format(current);
         }
@@ -321,7 +321,7 @@ async function initOverview() {
             recentOrdersContainer.innerHTML = recentOrders.map(o => `
                 <tr>
                     <td data-label="Khách hàng"><strong>${o.shippingAddress?.fullName || 'Khách vãng lai'}</strong></td>
-                    <td data-label="Tổng tiền">${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ</td>
+                    <td label="Tổng tiền">${new Intl.NumberFormat('vi-VN').format(o.totalAmount)} VND</td>
                     <td data-label="Trạng thái"><span class="order-status-${o.status.toLowerCase().replace(/\s/g, '-')}">${o.status}</span></td>
                 </tr>
             `).join('');
@@ -1348,7 +1348,7 @@ productForm.addEventListener('submit', async (e) => {
     
     const productId = document.getElementById('productId').value.trim();
     const imageFiles = document.getElementById('imageFile').files;
-    const submitBtn = productForm.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('submit-product-btn'); // Sử dụng ID để tìm nút submit
     
     if (!productId) {
         showToast("Vui lòng nhập Mã sản phẩm (SKU)", "error");
@@ -1363,11 +1363,13 @@ productForm.addEventListener('submit', async (e) => {
     
     if (!db || !storage) {
         showToast("Hệ thống chưa sẵn sàng hoặc bị chặn (Ad-block). Vui lòng tải lại trang.", "error");
-        submitBtn.disabled = false;
+        if (submitBtn) submitBtn.disabled = false; // Thêm kiểm tra an toàn
         return;
     }
 
-    submitBtn.disabled = true;
+    if (submitBtn) { // Thêm kiểm tra an toàn
+        submitBtn.disabled = true;
+    }
     
     // 1. Tạo hoặc reset khu vực hiển thị tiến trình chi tiết
     let progressContainer = document.getElementById('upload-progress-container');
@@ -1375,10 +1377,14 @@ productForm.addEventListener('submit', async (e) => {
         progressContainer = document.createElement('div');
         progressContainer.id = 'upload-progress-container';
         progressContainer.style = "margin: 15px 0; display: none;";
-        productForm.insertBefore(progressContainer, submitBtn);
+        if (submitBtn && submitBtn.parentNode) { // Đảm bảo submitBtn và phần tử cha của nó tồn tại
+            submitBtn.parentNode.insertBefore(progressContainer, submitBtn);
+        }
     }
     progressContainer.innerHTML = ''; // Xóa các tiến trình cũ
-    progressContainer.style.display = 'block';
+    if (progressContainer) { // Thêm kiểm tra an toàn
+        progressContainer.style.display = 'block';
+    }
     submitBtn.innerHTML = '<span class="spinner-small"></span> Đang nén ảnh...';
 
     try {
@@ -1556,6 +1562,24 @@ productForm.addEventListener('submit', async (e) => {
         cost: Number(document.getElementById('cost').value || 0),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
+        dimensions: {
+            length: Number(document.getElementById('dim-length').value || 0),
+            width: Number(document.getElementById('dim-width').value || 0),
+            height: Number(document.getElementById('dim-height').value || 0),
+        },
+        specs: { // Đổi tên thành specs để chứa các thông số khác ngoài kích thước
+            weight: Number(document.getElementById('weight').value || 0),
+            capacity: Number(document.getElementById('capacity').value || 0)
+        },
+        usage: {
+            isFoodSafe: document.getElementById('usage-food-safe').checked,
+            isOvenSafe: document.getElementById('usage-oven-safe').checked,
+            isMicrowaveSafe: document.getElementById('usage-microwave-safe').checked
+        },
+        details: {
+            material: document.getElementById('material').value.trim(),
+            origin: document.getElementById('origin').value.trim()
+        },
         flashSaleGroup: document.getElementById('flash-sale-group-select').value ? Number(document.getElementById('flash-sale-group-select').value) : null,
         imageUrl: finalImageUrl,
         thumbUrl: currentThumb, // Add thumbUrl to productData
@@ -1619,7 +1643,9 @@ productForm.addEventListener('submit', async (e) => {
         if (progressContainer) progressContainer.style.display = 'none';
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = "Lưu sản phẩm";
+        if (submitBtn) { // Thêm kiểm tra an toàn
+            submitBtn.innerHTML = "Lưu sản phẩm";
+        }
     }
 });
 }
@@ -1691,8 +1717,8 @@ function renderAdminProductTable() {
                 <td data-label="ID"><small>${p.id}</small></td>
                 <td data-label="Ảnh"><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Tên"><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
-                <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
-                <td data-label="Vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}đ</td>
+                <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
+                <td data-label="Vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)} VND</td>
                 <td data-label="Kho">${stockDisplay}</td>
                 <td data-label="Đánh giá">${p.rating || 5}★</td>
                 <td data-label="Giảm giá">${p.sale || 0}%</td>
@@ -1802,6 +1828,19 @@ async function editProduct(id) {
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
             document.getElementById('flash-sale-group-select').value = p.flashSaleGroup || "";
+
+            document.getElementById('dim-length').value = p.dimensions?.length || '';
+            document.getElementById('dim-width').value = p.dimensions?.width || '';
+            document.getElementById('dim-height').value = p.dimensions?.height || '';
+            document.getElementById('usage-food-safe').checked = p.usage?.isFoodSafe || false;
+            document.getElementById('usage-oven-safe').checked = p.usage?.isOvenSafe || false;
+            document.getElementById('usage-microwave-safe').checked = p.usage?.isMicrowaveSafe || false;
+
+            document.getElementById('weight').value = p.specs?.weight || '';
+            document.getElementById('capacity').value = p.specs?.capacity || '';
+            
+            document.getElementById('material').value = p.details?.material || '';
+            document.getElementById('origin').value = p.details?.origin || '';
 
             // Load collections checkbox
             const colCheckboxes = document.querySelectorAll('.collection-checkbox');
@@ -1989,7 +2028,7 @@ function renderOrderRows(docs, tableElement) {
                             `).join('')}
                         </div>
                     </td>
-                    <td data-label="Tổng tiền">${totalAmount}đ</td>
+                    <td data-label="Tổng tiền">${totalAmount} VND</td>
                     <td data-label="Trạng thái">
                         <select class="status-select" onchange="window.updateOrderStatus('${doc.id}', this.value)">
                             <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
@@ -2072,11 +2111,11 @@ window.viewAdminOrderDetail = async (orderId) => {
                             <img src="${i.image}" alt="${i.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                             <div>
                                 <div style="font-weight: 600;">${i.name}</div>
-                                <div style="font-size: 0.85rem; color: #666;">Số lượng: ${i.quantity} | Giá: ${new Intl.NumberFormat('vi-VN').format(i.price)}đ</div>
+                                <div style="font-size: 0.85rem; color: #666;">Số lượng: ${i.quantity} | Giá: ${new Intl.NumberFormat('vi-VN').format(i.price)} VND</div>
                             </div>
                         </li>`).join('')}
                 </ul>
-                <p style="font-size: 1.2rem; margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;"><strong>Tổng cộng: ${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</strong></p>
+                <p style="font-size: 1.2rem; margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;"><strong>Tổng cộng: ${new Intl.NumberFormat('vi-VN').format(order.totalAmount)} VND</strong></p>
             </div>
         `;
         modal.classList.add('active');
@@ -2197,7 +2236,7 @@ window.viewAdminUserDetail = async (uid) => {
                 </div>
                 <div>
                     <div style="font-weight: 700; color: ${tier.color}; font-size: 1.1rem;">${tier.name}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(spent)}đ</strong></div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(spent)} VND</strong></div>
                     <div style="font-size: 0.85rem; color: #666;">Số đơn hoàn thành: <strong>${count} đơn</strong></div>
                 </div>
             </div>
@@ -2558,8 +2597,8 @@ function initCouponListener() {
                 <tr>
                     <td><strong>${doc.id}</strong></td>
                     <td>${c.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
-                    <td>${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value) + 'đ'}</td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(c.minOrder)}đ</td>
+                    <td>${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value) + ' VND'}</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(c.minOrder)} VND</td>
                     <td>${usage}</td>
                     <td>${expiry}</td>
                     <td><button class="btn-delete" onclick="window.deleteCoupon('${doc.id}')">Xóa</button></td>
@@ -2650,7 +2689,7 @@ function renderPOSCart() {
                 <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                 <div style="flex: 1;">
                     <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
-                    <div style="font-size: 0.8rem; color: #666;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</div>
+                    <div style="font-size: 0.8rem; color: #666;">${new Intl.NumberFormat('vi-VN').format(item.price)} VND</div>
                 </div>
                 <div class="quantity-controls" style="height: 30px;">
                     <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, -1)">-</button>
@@ -2675,7 +2714,7 @@ function renderPOSCart() {
             if (posMembershipDiscountPercent > 0 && posMembershipDiscountPercent >= posDiscountPercent) {
                 label = `Ưu đãi thành viên ${posMembershipDiscountPercent}%`;
             }
-            discountInfo.innerText = `${label} (-${new Intl.NumberFormat('vi-VN').format(discountVal)}đ)`;
+            discountInfo.innerText = `${label} (-${new Intl.NumberFormat('vi-VN').format(discountVal)} VND)`;
             discountInfo.style.display = 'block';
         } else {
             discountInfo.style.display = 'none';
@@ -2835,9 +2874,9 @@ function printPOSReceipt(orderId, customer, items, total, subtotal = null, disco
                 `).join('')}
             </tbody>
         </table>
-        ${subtotal ? `<p style="text-align:right; margin: 5px 0 0 0; font-size:11px;">Tạm tính: ${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</p>` : ''}
-        ${discountVal > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Chiết khấu: -${new Intl.NumberFormat('vi-VN').format(discountVal)}đ</p>` : ''}
-        <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)}đ</div>
+        ${subtotal ? `<p style="text-align:right; margin: 5px 0 0 0; font-size:11px;">Tạm tính: ${new Intl.NumberFormat('vi-VN').format(subtotal)} VND</p>` : ''}
+        ${discountVal > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Chiết khấu: -${new Intl.NumberFormat('vi-VN').format(discountVal)} VND</p>` : ''}
+        <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)} VND</div>
         <div class="receipt-qr-section">
             <p style="margin-bottom: 5px; font-weight: bold;">Quét mã theo dõi Tiệm:</p>
             <img src="../Asset/images/fb-qr.webp" class="receipt-qr" alt="Facebook QR">
@@ -2919,11 +2958,11 @@ window.printLastOrderBT = async () => {
     o.items.forEach(item => {
         const priceStr = new Intl.NumberFormat('vi-VN').format(item.price);
         btContent += `${item.name}\n`;
-        btContent += `   ${item.quantity} x ${priceStr}đ\n`;
+        btContent += `   ${item.quantity} x ${priceStr} VND\n`;
     });
     
     btContent += `--------------------------------\n`;
-    btContent += `TONG CONG: ${new Intl.NumberFormat('vi-VN').format(o.totalAmount)}đ\n`;
+    btContent += `TONG CONG: ${new Intl.NumberFormat('vi-VN').format(o.totalAmount)} VND\n`;
     btContent += `Thanh toan: ${o.paymentMethod || 'Tien mat'}\n`;
     btContent += `\nCam on Quy khach. Hen gap lai!\n`;
     btContent += `www.tiemnhagom.vn\n`;
@@ -3279,12 +3318,12 @@ async function initFullReport() {
                 <tr>
                     <td><strong>${l}</strong></td>
                     <td>${statsMap[l].count} ĐH</td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].net)}đ</td>
-                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat)}đ</td>
-                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].tncn)}đ</td>
-                    <td style="font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat + statsMap[l].tncn)}đ</td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)}đ</td>
-                    <td style="color: #27ae60; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)}đ</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].net)} VND</td>
+                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat)} VND</td>
+                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].tncn)} VND</td>
+                    <td style="font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat + statsMap[l].tncn)} VND</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)} VND</td>
+                    <td style="color: #27ae60; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)} VND</td>
                 </tr>
             `).join('');
 
@@ -3296,12 +3335,12 @@ async function initFullReport() {
                 <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
                     <td>TỔNG CỘNG</td>
                     <td>${totalOrders} ĐH</td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(totalNetAll)}đ</td>
-                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(totalVatAll)}đ</td>
-                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(totalTncnAll)}đ</td>
-                    <td style="font-weight: bold;">${new Intl.NumberFormat('vi-VN').format(totalVatAll + totalTncnAll)}đ</td>
-                    <td>${new Intl.NumberFormat('vi-VN').format(totalRev)}đ</td>
-                    <td style="color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(totalProfit)}đ</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(totalNetAll)} VND</td>
+                    <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(totalVatAll)} VND</td>
+                    <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(totalTncnAll)} VND</td>
+                    <td style="font-weight: bold;">${new Intl.NumberFormat('vi-VN').format(totalVatAll + totalTncnAll)} VND</td>
+                    <td>${new Intl.NumberFormat('vi-VN').format(totalRev)} VND</td>
+                    <td style="color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(totalProfit)} VND</td>
                 </tr>
             `;
 
@@ -3611,9 +3650,9 @@ function renderAdminFlashSaleList() {
             <tr>
                 <td data-label="Ảnh"><img src="${p.imageUrl}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Tên"><strong>${p.name}</strong><br><small style="color:#888;">SKU: ${p.id}</small></td>
-                <td data-label="Giá gốc">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td data-label="Giá gốc">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
                 <td data-label="Giảm" style="color: #c0392b; font-weight: 700;">-${p.sale}%</td>
-                <td data-label="Giá Sale" style="font-weight: 700; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)}đ ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup/1000}k</small>` : ''}</td>
+                <td data-label="Giá Sale" style="font-weight: 700; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)} VND ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup/1000}k</small>` : ''}</td>
                 <td data-label="Kho" style="${stockClass}">${p.stock}</td>
             </tr>
         `;
