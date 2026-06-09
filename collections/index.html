@@ -46,7 +46,7 @@
                     if (collections.length > 0) {
                         // Hiển thị toàn bộ, sắp xếp theo thứ tự (order) đã đặt trong Admin
                         container.innerHTML = collections.sort((a,b) => (a.order || 0) - (b.order || 0)).map(c => `
-                            <a href="../products/?collection=${encodeURIComponent(c.name)}" class="collection-banner is-visible">
+                            <a href="detail.html?name=${encodeURIComponent(c.name)}" class="collection-banner is-visible">
                                 <img src="${c.imageUrl}" alt="${c.name}" loading="lazy">
                                 <div class="collection-overlay">
                                     <h3>${c.name}</h3>

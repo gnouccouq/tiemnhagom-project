@@ -722,7 +722,9 @@ async function initCollectionManagement() {
     form.onsubmit = async (e) => {
         e.preventDefault();
         const name = document.getElementById('collection-name').value.trim();
+        const description = document.getElementById('collection-description').value.trim();
         const file = document.getElementById('collection-image').files[0];
+        const galleryFiles = document.getElementById('collection-gallery').files;
         const submitBtn = form.querySelector('button[type="submit"]');
         const showHome = document.getElementById('collection-show-home').checked;
         const editIndex = parseInt(document.getElementById('collection-edit-index').value);
@@ -733,6 +735,7 @@ async function initCollectionManagement() {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
             let imageUrl = form.dataset.currentImageUrl || '';
+            let galleryUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]');
 
             if (file) {
                 const webpFile = await convertToWebP(file, 1200, false);
@@ -741,11 +744,24 @@ async function initCollectionManagement() {
                 imageUrl = await getDownloadURL(snap.ref);
             }
 
+            if (galleryFiles.length > 0) {
+                const galleryPromises = Array.from(galleryFiles).map(async (f) => {
+                    const webp = await convertToWebP(f, 1200, false);
+                    const gRef = ref(storage, `collections/gallery/${Date.now()}_${webp.name}`);
+                    const gSnap = await uploadBytes(gRef, webp);
+                    return await getDownloadURL(gSnap.ref);
+                });
+                const newGalleryUrls = await Promise.all(galleryPromises);
+                galleryUrls = [...galleryUrls, ...newGalleryUrls];
+            }
+
             if (!imageUrl) throw new Error("Vui lòng chọn ảnh cho bộ sưu tập");
 
             const collectionData = { 
                 name, 
                 imageUrl, 
+                description,
+                galleryUrls,
                 showOnHome: showHome,
                 order: editIndex > -1 ? adminCollections[editIndex].order : (adminCollections.length + 1) 
             };
@@ -759,7 +775,9 @@ async function initCollectionManagement() {
             document.getElementById('collection-edit-index').value = "-1";
             document.getElementById('collection-show-home').checked = false;
             document.getElementById('collection-image-preview').innerHTML = "";
+            document.getElementById('collection-gallery-preview').innerHTML = "";
             delete form.dataset.currentImageUrl;
+            delete form.dataset.currentGalleryUrls;
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
         } finally {
@@ -788,11 +806,36 @@ window.editCollection = (idx) => {
     const c = adminCollections[idx];
     document.getElementById('collection-edit-index').value = idx;
     document.getElementById('collection-name').value = c.name;
+    document.getElementById('collection-description').value = c.description || '';
     document.getElementById('collection-show-home').checked = c.showOnHome || false;
     document.getElementById('collection-image-preview').innerHTML = `<img src="${c.imageUrl}" style="width: 150px; border-radius: 4px;">`;
+    
+    // Hiển thị preview gallery hiện có
+    const galleryPreview = document.getElementById('collection-gallery-preview');
+    galleryPreview.innerHTML = (c.galleryUrls || []).map((url, gIdx) => `
+        <div class="preview-item">
+            <img src="${url}">
+            <button type="button" class="remove-preview" onclick="window.removeCollectionGalleryImage(${idx}, ${gIdx})">&times;</button>
+        </div>
+    `).join('');
+
     const form = document.getElementById('collection-form');
     form.dataset.currentImageUrl = c.imageUrl;
+    form.dataset.currentGalleryUrls = JSON.stringify(c.galleryUrls || []);
     window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+};
+
+// Hàm xóa ảnh trong gallery khi đang sửa
+window.removeCollectionGalleryImage = async (colIdx, imgIdx) => {
+    if(!confirm("Xóa ảnh này khỏi gallery?")) return;
+    const col = adminCollections[colIdx];
+    col.galleryUrls.splice(imgIdx, 1);
+    
+    try {
+        await setDoc(doc(db, "settings", "collections"), { items: adminCollections });
+        showToast("Đã xóa ảnh gallery");
+        window.editCollection(colIdx); // Refresh form
+    } catch (e) { showToast("Lỗi: " + e.message, "error"); }
 };
 
 window.deleteCollection = async (idx) => {

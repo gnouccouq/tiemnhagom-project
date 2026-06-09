@@ -1047,7 +1047,9 @@ export async function loadSharedComponents(pathPrefix = './') {
             if (megaMenuContainer) {
                 megaMenuContainer.innerHTML = dynamicCategories.map(group => `
                     <div class="mega-col">
-                        <h4>${group.name}</h4>
+                        <a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}" class="mega-group-link">
+                            <h4>${group.name}</h4>
+                        </a>
                         ${group.subs.map(sub => `
                             <a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>
                         `).join('')}
