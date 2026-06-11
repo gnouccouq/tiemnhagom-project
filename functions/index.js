@@ -24,6 +24,22 @@ function getFilePathFromUrl(url) {
 }
 
 /**
+ * Helper tạo Order ID phía Server (Node.js) khớp múi giờ Việt Nam
+ * Đã nâng cấp thêm mili giây và hậu tố alphanumeric để chống trùng lặp cao
+ */
+function generateServerOrderId() {
+    const now = new Date();
+    // Chuyển sang giờ VN (UTC+7)
+    const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const pad = (n, l = 2) => String(n).padStart(l, '0');
+    const dateStr = `${pad(vnTime.getUTCDate())}${pad(vnTime.getUTCMonth() + 1)}${vnTime.getUTCFullYear()}`;
+    const timeStr = `${pad(vnTime.getUTCHours())}${pad(vnTime.getUTCMinutes())}${pad(vnTime.getUTCSeconds())}${pad(vnTime.getUTCMilliseconds(), 3)}`;
+    // Random 4 ký tự (chữ + số): 36^4 = ~1.6 triệu khả năng trong mỗi mili giây
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `TNG${dateStr}${timeStr}-${randomSuffix}`;
+}
+
+/**
  * Automatically deletes product images from Firebase Storage when a product document is deleted.
  */
 exports.deleteProductImages = functions.firestore
@@ -227,7 +243,8 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
 
         // 5. Thực hiện Transaction để đảm bảo trừ kho và tạo đơn đồng thời
         const orderId = await db.runTransaction(async (transaction) => {
-            const newOrderRef = db.collection("orders").doc();
+            const customId = generateServerOrderId();
+            const newOrderRef = db.collection("orders").doc(customId);
             
             // Cập nhật kho cho từng sản phẩm
             for (const item of orderItems) {

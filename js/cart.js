@@ -1,5 +1,6 @@
 import { 
-    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, getProductCurrentPrice, getMembershipTier, sendEmailNotification
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
+    getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -625,7 +626,8 @@ window.placeOrder = async () => {
 
         // 1. Thực hiện Transaction để đảm bảo trừ kho và tạo đơn đồng thời
         const transactionResult = await runTransaction(db, async (transaction) => {
-            const newOrderRef = doc(collection(db, "orders")); // Tạo reference mới cho đơn hàng
+            const orderId = generateOrderId();
+            const newOrderRef = doc(db, "orders", orderId); // Sử dụng ID tùy chỉnh thay vì ID ngẫu nhiên của Firestore
             // Nạp cài đặt Flash Sale mới nhất trong transaction để check giá chính xác
             const fsSettings = await fetchFlashSaleSettings();
 

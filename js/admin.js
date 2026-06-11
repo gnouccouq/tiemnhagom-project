@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
-    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -3007,7 +3007,9 @@ window.createPOSOrder = async () => {
                 createdAt: new Date().toISOString()
             });
         }
-        const docRef = await addDoc(collection(db, "orders"), {
+        const orderId = generateOrderId();
+        const orderRef = doc(db, "orders", orderId);
+        await setDoc(orderRef, {
             userId: customerId, productNames: posCart.map(i => i.name),
             items: posCart, totalAmount: total, status: "Đã hoàn thành",
             paymentMethod: paymentMethod, orderDate: serverTimestamp(),
@@ -3050,12 +3052,12 @@ window.createPOSOrder = async () => {
         await Promise.all(updatePromises);
         
         // Lưu ID để in lại nếu cần
-        lastCreatedOrderId = docRef.id;
+        lastCreatedOrderId = orderId;
 
         // Tự động in hóa đơn sau khi lưu thành công
         const subtotal = posCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
         const discountVal = subtotal - total;
-        printPOSReceipt(docRef.id, { name, phone, paymentMethod }, posCart, total, subtotal, discountVal);
+        printPOSReceipt(orderId, { name, phone, paymentMethod }, posCart, total, subtotal, discountVal);
         
         // Nếu máy in Bluetooth đã được kết nối, tự động in bản text qua Bluetooth luôn
         if (btCharacteristic) {

@@ -183,6 +183,21 @@ export function formatPhoneNumber(phone) {
     }
     return cleaned;
 }
+
+/**
+ * Hàm tạo Mã đơn hàng an toàn cho hệ thống lớn: 
+ * Định dạng: TNG + DDMMYYYY + HHMMSSlll (mili giây) + -XXXX (ngẫu nhiên 4 ký tự chữ/số)
+ */
+export function generateOrderId() {
+    const now = new Date();
+    const pad = (n, l = 2) => String(n).padStart(l, '0');
+    const dateStr = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}`;
+    const timeStr = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(), 3)}`;
+    // Sử dụng chuỗi ngẫu nhiên alphanumeric để tăng entropy (độ hỗn loạn), tránh trùng lặp
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `TNG${dateStr}${timeStr}-${randomSuffix}`;
+}
+
 // 2. Logic UI: Thông báo Toast
 export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
