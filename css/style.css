@@ -2225,6 +2225,7 @@ footer {
     flex: 1;
     margin-left: 260px;
     padding: 40px;
+    padding: 30px 50px;
     max-width: calc(100% - 260px);
 }
 
@@ -2500,6 +2501,8 @@ footer {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
     gap: 2rem;
+    grid-template-columns: 420px 1fr; /* Cố định cột form, cho bảng giãn rộng tối đa */
+    gap: 2.5rem; /* Tăng khoảng cách giữa 2 cột để bớt chật chội */
 }
 @media (max-width: 992px) {
     .admin-grid { grid-template-columns: 1fr; }
@@ -2561,6 +2564,11 @@ footer {
     font-family: inherit;
     font-size: 0.85rem;
     cursor: pointer;
+}
+
+/* Ensure non-active admin sections are always hidden */
+.admin-section:not(.active) {
+    display: none !important;
 }
 
 /* Admin Stock Badges */
