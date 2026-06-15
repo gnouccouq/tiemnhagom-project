@@ -983,6 +983,17 @@ export async function loadSharedComponents(pathPrefix = './') {
             const headerHTML = fixPaths(await h.text());
             document.getElementById('header-placeholder').innerHTML = headerHTML;
             const prefix = pathPrefix === './' ? '' : pathPrefix;
+
+            // Tự động thêm class active cho link đang mở
+            const currentPath = window.location.pathname;
+            const links = document.querySelectorAll('.nav-links .nav-item');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                // Nếu path hiện tại chứa href của link (và href không phải là trang chủ)
+                if (href !== './' && currentPath.includes(href.replace('../', ''))) {
+                    link.classList.add('active');
+                }
+            });
             
             // Kích hoạt menu mobile sau khi load xong HTML
             const menuToggle = document.getElementById('menu-toggle');

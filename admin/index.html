@@ -17,6 +17,9 @@
 <body class="admin-dashboard-layout" style="display: none;">
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Lớp phủ cho Sidebar trên Mobile -->
+    <div id="admin-sidebar-overlay" class="admin-sidebar-overlay"></div>
+
     <div class="admin-wrapper">
         <!-- Sidebar bên trái -->
         <aside class="admin-sidebar">
@@ -50,6 +53,26 @@
                 <button id="btn-logout-admin" class="sidebar-link logout">🚪 Đăng xuất</button>
             </div>
         </aside>
+
+        <!-- Thanh điều hướng dưới cùng cho Mobile -->
+        <nav class="admin-bottom-nav">
+            <button class="bottom-nav-btn active" data-target="overview-section">
+                <span class="icon">📊</span>
+                <span class="label">Tổng quan</span>
+            </button>
+            <button class="bottom-nav-btn" data-target="product-section">
+                <span class="icon">📦</span>
+                <span class="label">Sản phẩm</span>
+            </button>
+            <button class="bottom-nav-btn" data-target="pos-section">
+                <span class="icon">🛒</span>
+                <span class="label">POS</span>
+            </button>
+            <button class="bottom-nav-btn" id="btn-open-sidebar-mobile">
+                <span class="icon">☰</span>
+                <span class="label">Thêm</span>
+            </button>
+        </nav>
 
         <!-- Nội dung bên phải -->
         <main class="admin-main-content">

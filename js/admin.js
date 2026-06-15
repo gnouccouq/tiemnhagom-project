@@ -53,6 +53,7 @@ const ROLE_PERMISSIONS = {
 // --- Logic chuyển đổi Tab Admin ---
 function setupAdminTabs() {
     const tabs = document.querySelectorAll('.admin-tab-btn');
+    const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
     const sections = document.querySelectorAll('.admin-section');
     const titleEl = document.getElementById('current-tab-title');
 
@@ -68,10 +69,14 @@ function setupAdminTabs() {
 
             // Xóa trạng thái active của tất cả các tab và section
             tabs.forEach(t => t.classList.remove('active'));
+            bottomNavBtns.forEach(b => b.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
 
             // Kích hoạt tab và section được chọn
             tab.classList.add('active');
+            const correspondingBottomBtn = document.querySelector(`.bottom-nav-btn[data-target="${targetId}"]`);
+            if (correspondingBottomBtn) correspondingBottomBtn.classList.add('active');
+
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
                 targetSection.classList.add('active');
@@ -117,6 +122,27 @@ function setupAdminTabs() {
             }
         });
     });
+
+    // Thiết lập listener cho Bottom Nav (Mobile)
+    bottomNavBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            if (!targetId) return; // Nút 'Thêm' xử lý riêng bên dưới
+            
+            const sidebarTab = document.querySelector(`.admin-tab-btn[data-target="${targetId}"]`);
+            if (sidebarTab) {
+                sidebarTab.click();
+                closeAdminSidebar();
+            }
+        });
+    });
+}
+
+function closeAdminSidebar() {
+    const adminSidebar = document.querySelector('.admin-sidebar');
+    const overlay = document.getElementById('admin-sidebar-overlay');
+    if (adminSidebar) adminSidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
 }
 
 // Thiết lập Auth Listener để cập nhật UI Header và kiểm tra quyền Admin
@@ -3999,25 +4025,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Điều hướng bằng bàn phím (Lên/Xuống/Enter/Esc) trong ô tìm kiếm
-        // Admin Sidebar Toggle for Mobile
-        const adminSidebarToggle = document.getElementById('admin-sidebar-toggle');
+        // Điều hướng Sidebar từ Bottom Nav
         const adminSidebar = document.querySelector('.admin-sidebar');
-        const adminBody = document.querySelector('.admin-dashboard-layout');
+        const overlay = document.getElementById('admin-sidebar-overlay');
+        const btnOpenSidebar = document.getElementById('btn-open-sidebar-mobile');
 
-        if (adminSidebarToggle && adminSidebar && adminBody) {
-            adminSidebarToggle.addEventListener('click', () => {
-                adminSidebar.classList.toggle('active'); // Toggles the sidebar visibility
-                adminBody.classList.toggle('admin-sidebar-open'); // Adds overlay and prevents scroll
+        if (btnOpenSidebar && adminSidebar && overlay) {
+            btnOpenSidebar.addEventListener('click', () => {
+                adminSidebar.classList.add('active');
+                overlay.classList.add('active');
             });
 
-            // Close sidebar when clicking outside (on the overlay)
-            adminBody.addEventListener('click', (e) => {
-                if (adminBody.classList.contains('admin-sidebar-open') &&
-                    !adminSidebar.contains(e.target) &&
-                    !adminSidebarToggle.contains(e.target)) {
-                    adminSidebar.classList.remove('active');
-                    adminBody.classList.remove('admin-sidebar-open');
-                }
+            overlay.addEventListener('click', closeAdminSidebar);
+            
+            adminSidebar.querySelectorAll('.sidebar-link, .admin-tab-btn').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 992) setTimeout(closeAdminSidebar, 100);
+                });
             });
         }
 
