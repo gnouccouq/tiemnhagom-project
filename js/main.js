@@ -241,8 +241,8 @@ function initDynamicCountdown(endTime) {
         const now = new Date();
         const diff = endTime - now;
         if (diff <= 0) {
-            document.getElementById('sale-section').style.display = 'none';
             if (window.fsHomeTimer) clearInterval(window.fsHomeTimer);
+            initFlashSaleSync(); // Gọi lại sync để tự động nạp sản phẩm khi từ Sắp bắt đầu -> Đang diễn ra
             return;
         }
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));

@@ -87,6 +87,38 @@
         .value-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
         .value-card h4 { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: 1rem; }
 
+        /* Pottery Process Styling */
+        .process-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 25px;
+            margin-top: 4rem;
+        }
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+        .step-number {
+            width: 45px; height: 45px; background: #1a1a1a; color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem; font-family: var(--font-sans); font-weight: 600;
+            position: relative; z-index: 2;
+        }
+        .process-step img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .process-step:not(:last-child)::after {
+            content: ''; position: absolute; top: 22px; left: 50%;
+            width: 100%; height: 1px; background: #e0e0e0; z-index: 1;
+        }
+        .process-step h4 { font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 0.8rem; }
+        .process-step p { font-size: 0.85rem; color: #666; line-height: 1.6; }
+
         /* Story Styling Overrides */
         .about-story-row {
             display: grid;
@@ -153,6 +185,11 @@
             .about-story-text h2::after { margin: 15px auto; }
             .about-story-img { order: 1; }
             .services-showcase, .value-grid { grid-template-columns: 1fr; }
+            .process-container { grid-template-columns: 1fr; gap: 3rem; }
+            .process-step:not(:last-child)::after {
+                left: 50%; top: 45px;
+                width: 1px; height: 100%;
+            }
         }
     </style>
 </head>
@@ -200,6 +237,44 @@
                 </div>
             </section>
             
+            <section class="about-section reveal-on-scroll">
+                <h2>Hành trình tạo tác gốm Bát Tràng</h2>
+                <p class="intro-text">Để mang những món gốm mộc mạc đến bàn tay bạn, mỗi tác phẩm tại Tiệm đều phải trải qua quy trình 5 bước khắt khe từ làng nghề truyền thống Bát Tràng.</p>
+                
+                <div class="process-container">
+                    <div class="process-step">
+                        <div class="step-number">01</div>
+                        <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=800" alt="Xử lý đất sét">
+                        <h4>Xử lý đất sét</h4>
+                        <p>Đất sét trắng đặc trưng được lắng lọc kỹ qua hệ thống bể chứa để loại bỏ tạp chất, tạo độ dẻo và trắng mịn hoàn hảo.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">02</div>
+                        <img src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=800" alt="Tạo hình thủ công">
+                        <h4>Tạo hình thủ công</h4>
+                        <p>Nghệ nhân thực hiện vuốt tay trên bàn xoay hoặc sử dụng khuôn truyền thống để định hình xương gốm sơ khai.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">03</div>
+                        <img src="https://images.unsplash.com/photo-1506544777-64cfce1142df?q=80&w=800" alt="Trang trí vẽ tay">
+                        <h4>Trang trí vẽ tay</h4>
+                        <p>Từng đường nét hoa văn Sen, Đào hay cảnh sắc dân gian được họa tay tỉ mỉ bằng bút lông và các loại màu men tự nhiên.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">04</div>
+                        <img src="https://images.unsplash.com/photo-1563245159-f793f19d8c37?q=80&w=800" alt="Tráng men bí truyền">
+                        <h4>Tráng men bí truyền</h4>
+                        <p>Sản phẩm được phủ một lớp men đặc trưng (men lam, men rạn, men ngọc...) tạo nên "linh hồn" và vẻ đẹp sang trọng.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">05</div>
+                        <img src="https://images.unsplash.com/photo-1574044158671-55ec30113837?q=80&w=800" alt="Nung nhiệt độ cao">
+                        <h4>Nung nhiệt độ cao</h4>
+                        <p>Nung trong lò ở nhiệt độ trên 1250°C, giúp xương gốm cứng cáp, bền bỉ và đảm bảo an toàn tuyệt đối cho sức khỏe.</p>
+                    </div>
+                </div>
+            </section>
+
             <section class="about-section reveal-on-scroll">
                 <h2>Dịch vụ của chúng tôi</h2>
                 <p class="intro-text">Không chỉ dừng lại ở những sản phẩm gốm sứ, Tiệm Nhà Gốm mang đến những giải pháp làm đẹp không gian sống và những trải nghiệm nghệ thuật đầy cảm hứng.</p>

@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, updateSEO 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, updateSEO, fetchFlashSaleSettings
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
@@ -32,48 +32,50 @@ async function fetchFlashSaleProducts(navigation = 'init') {
     const pageInfo = document.getElementById('page-info');
     const bannerTitle = document.querySelector('.banner-title');
     const bannerSub = document.querySelector('.flash-sale-banner p');
+    const countdownEl = document.getElementById('flash-sale-countdown');
+    const sidebarEl = document.querySelector('.price-tabs-sidebar');
+    const layoutEl = document.querySelector('.flash-sale-layout');
 
-    // 1. Nạp cấu hình Flash Sale trước
-    if (!flashSaleSettings) {
-        const fsRef = doc(db, "settings", "flash_sale");
-        const fsSnap = await getDoc(fsRef);
-        if (fsSnap.exists()) {
-            flashSaleSettings = fsSnap.data();
-        }
-    }
+    // 1. Nạp cấu hình Flash Sale (buộc làm mới nếu là khởi tạo hoặc timer kết thúc)
+    flashSaleSettings = await fetchFlashSaleSettings(navigation === 'init');
 
     // Kiểm tra trạng thái sale
     const now = new Date();
-    const startTime = flashSaleSettings.startTime?.toDate();
-    const endTime = flashSaleSettings.endTime?.toDate();
-    const isUpcoming = startTime && now < startTime;
-    const isExpired = flashSaleSettings?.endTime && now > flashSaleSettings.endTime.toDate();
+    const startTime = flashSaleSettings?.startTime?.toDate();
+    const endTime = flashSaleSettings?.endTime?.toDate();
     
-    if (!flashSaleSettings?.isActive || isExpired) {
-        productGrid.innerHTML = '';
-        noProductsMsg.innerHTML = isExpired ? "<h3>Chương trình Flash Sale đã kết thúc!</h3><p>Hẹn gặp lại bạn ở đợt ưu đãi tiếp theo.</p>" : "<h3>Sắp có Flash Sale cực lớn!</h3><p>Vui lòng quay lại sau nhé.</p>";
-        noProductsMsg.style.display = 'block';
-        if (bannerTitle) bannerTitle.innerText = "Flash Sale Tạm Nghỉ";
-        return;
-    }
+    // Xác định chương trình sale có đang DIỄN RA hay không
+    const isFsRunning = flashSaleSettings?.isActive && 
+                        (!startTime || now >= startTime) && 
+                        (!endTime || now <= endTime);
 
-    if (isUpcoming) {
-        productGrid.innerHTML = '';
-        noProductsMsg.innerHTML = `<h3>Flash Sale sắp bắt đầu!</h3><p>Chương trình sẽ chính thức diễn ra vào lúc <strong>${startTime.toLocaleString('vi-VN')}</strong>. Hãy quay lại sau nhé!</p>`;
-        noProductsMsg.style.display = 'block';
-        if (bannerTitle) bannerTitle.innerText = "Sắp Bắt Đầu";
-        if (bannerSub) bannerSub.innerText = "Đừng bỏ lỡ những ưu đãi cực sốc sắp tới";
+    const isUpcoming = flashSaleSettings?.isActive && startTime && now < startTime;
+    
+    // Cập nhật UI Banner & Sidebar dựa trên trạng thái chương trình
+    if (isFsRunning) {
+        if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale";
+        if (bannerSub) bannerSub.innerText = flashSaleSettings.subtitle || "Nhanh tay sở hữu...";
+        if (countdownEl) countdownEl.style.display = 'flex';
+        if (sidebarEl) sidebarEl.style.display = 'block';
+        if (layoutEl) layoutEl.style.display = 'grid';
+        initDynamicCountdown(endTime);
+        renderPriceTabs();
+    } else if (isUpcoming) {
+        if (bannerTitle) bannerTitle.innerText = "Sắp Bắt Đầu Flash Sale";
+        if (bannerSub) bannerSub.innerText = `Chương trình sẽ chính thức diễn ra vào lúc ${startTime.toLocaleString('vi-VN')}`;
+        if (countdownEl) countdownEl.style.display = 'flex';
+        if (sidebarEl) sidebarEl.style.display = 'none';
+        if (layoutEl) layoutEl.style.display = 'block';
         initDynamicCountdown(startTime); // Đếm ngược đến giờ bắt đầu
-        return;
+    } else {
+        if (bannerTitle) bannerTitle.innerText = "Ưu Đãi Đặc Biệt";
+        if (bannerSub) bannerSub.innerText = "Khám phá các sản phẩm đang có giá tốt nhất tại Tiệm.";
+        if (countdownEl) countdownEl.style.display = 'none';
+        if (sidebarEl) sidebarEl.style.display = 'none';
+        // Chuyển layout sang 1 cột nếu không có sidebar lọc giá
+        if (layoutEl) layoutEl.style.display = 'block';
+        if (window.fsTimer) clearInterval(window.fsTimer);
     }
-
-    // Cập nhật tiêu đề từ cấu hình
-    if (flashSaleSettings.title && bannerTitle) bannerTitle.innerText = flashSaleSettings.title;
-    if (flashSaleSettings.subtitle && bannerSub) bannerSub.innerText = flashSaleSettings.subtitle;
-
-    // Render Price Tabs (Đồng giá)
-    renderPriceTabs();
-    initDynamicCountdown(flashSaleSettings.endTime.toDate());
 
     // Hiển thị skeleton loading ngay lập tức
     productGrid.innerHTML = `
@@ -152,13 +154,13 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         // PHÂN LOẠI SẢN PHẨM
         const groupedProducts = {}; // { 39000: [...], 49000: [...] }
         const otherSales = [];
-        const priceGroups = flashSaleSettings.priceGroups || [];
+        const priceGroups = flashSaleSettings?.priceGroups || [];
         const schemaItems = [];
 
         querySnapshot.docs.forEach((doc, index) => {
             const p = { id: doc.id, ...doc.data() };
             // Ưu tiên dùng mức đồng giá được lưu
-            const currentPrice = p.flashSaleGroup || Math.round(p.price * (1 - p.sale / 100));
+            const currentPrice = (isFsRunning && p.flashSaleGroup) ? p.flashSaleGroup : Math.round(p.price * (1 - (p.sale || 0) / 100));
 
             // Chuẩn bị dữ liệu cho Schema SEO
             schemaItems.push({
@@ -179,7 +181,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             });
             
             // Phân loại dựa trên giá trị flashSaleGroup được lưu trong DB
-            if (p.flashSaleGroup && priceGroups.includes(p.flashSaleGroup)) {
+            if (isFsRunning && p.flashSaleGroup && priceGroups.includes(p.flashSaleGroup)) {
                 const group = p.flashSaleGroup;
                 if (!groupedProducts[group]) groupedProducts[group] = [];
                 groupedProducts[group].push(p);
@@ -200,14 +202,15 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         let htmlContent = '';
         
         // 1. Render các nhóm đồng giá
-        priceGroups.sort((a,b) => a-b).forEach(price => {
-            // Lọc theo nhóm được chọn nếu có
-            if (selectedPriceGroup !== null && price !== selectedPriceGroup) {
-                return;
-            }
+        if (isFsRunning) {
+            priceGroups.sort((a,b) => a-b).forEach(price => {
+                // Lọc theo nhóm được chọn nếu có
+                if (selectedPriceGroup !== null && price !== selectedPriceGroup) {
+                    return;
+                }
 
-            const products = groupedProducts[price] || [];
-            if (products.length === 0) return;
+                const products = groupedProducts[price] || [];
+                if (products.length === 0) return;
 
             htmlContent += `
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
@@ -217,13 +220,15 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     </div>
                 </div>
             `;
-        });
+            });
+        }
 
         // 2. Render nhóm Sale khác
         if (otherSales.length > 0 && selectedPriceGroup === null) {
+            const sectionTitle = isFsRunning ? "🎁 Ưu đãi hấp dẫn khác" : "Sản phẩm ưu đãi";
             htmlContent += `
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                    <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">🎁 Ưu đãi hấp dẫn khác</h2>
+                    <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">${sectionTitle}</h2>
                     <div class="grid" style="padding: 0;">
                         ${otherSales.map(p => renderProductCard(p, p.id, favs, '../product/index.html')).join('')}
                     </div>

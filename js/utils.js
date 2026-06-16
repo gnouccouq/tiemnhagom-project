@@ -3,7 +3,7 @@ import {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, 
     collection, query, where, limit, getDocs, onSnapshot, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { 
+import {
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
     signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
     RecaptchaVerifier, signInWithPhoneNumber
@@ -95,8 +95,8 @@ export function getMembershipTier(totalSpent) {
 // 1.1 Quản lý trạng thái Flash Sale toàn cục
 export let globalFlashSaleSettings = null;
 
-export async function fetchFlashSaleSettings() {
-    if (globalFlashSaleSettings) return globalFlashSaleSettings;
+export async function fetchFlashSaleSettings(forceRefresh = false) {
+    if (globalFlashSaleSettings && !forceRefresh) return globalFlashSaleSettings;
     if (!db) return null;
     const fsRef = doc(db, "settings", "flash_sale");
     const fsSnap = await getDoc(fsRef);
@@ -125,8 +125,8 @@ export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSett
                         (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
                         (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
 
-    if (product.flashSaleGroup) {
-        return isFsRunning ? product.flashSaleGroup : product.price;
+    if (isFsRunning && product.flashSaleGroup) {
+        return product.flashSaleGroup;
     }
     if (product.sale > 0) {
         return Math.round(product.price * (1 - product.sale / 100));
@@ -140,7 +140,6 @@ export function getProductEffectiveSale(product, fsSettings = globalFlashSaleSet
                         (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
                         (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
 
-    if (product.flashSaleGroup && !isFsRunning) return 0;
     return product.sale || 0;
 }
 
@@ -211,6 +210,32 @@ export function showToast(message, type = 'success') {
         toast.style.transform = 'translateX(20px)';
         setTimeout(() => toast.remove(), 400);
     }, 4000);
+}
+
+/**
+ * Saves a contact message to Firestore.
+ * @param {string} name - The name of the sender.
+ * @param {string} phone - The phone number of the sender.
+ * @param {string} message - The message content.
+ */
+export async function saveContactMessage(name, phone, message) {
+    if (!db) {
+        console.error("Firestore is not initialized.");
+        throw new Error("Firestore not available.");
+    }
+    try {
+        await addDoc(collection(db, "contact_messages"), {
+            name: name,
+            phone: phone,
+            message: message,
+            timestamp: serverTimestamp(),
+            status: "new" // e.g., new, read, replied
+        });
+        console.log("Contact message saved to Firestore.");
+    } catch (error) {
+        console.error("Error saving contact message to Firestore:", error);
+        throw error;
+    }
 }
 
 /**

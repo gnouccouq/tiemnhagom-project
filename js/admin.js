@@ -2056,8 +2056,9 @@ function renderOrderRows(docs, tableElement) {
                     </td>
                     <td data-label="Tổng tiền">${totalAmount} VND</td>
                     <td data-label="Trạng thái">
-                        <select class="status-select" onchange="window.updateOrderStatus('${doc.id}', this.value)">
+                        <select class="status-select" onchange="window.updateOrderStatus('${d.id}', this.value)">
                             <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
+                            <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
                             <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
                             <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
                             <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
