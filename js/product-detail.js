@@ -314,7 +314,7 @@ async function fetchProductDetail() {
                         <div class="purchase-card">
                             <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
-                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : `Trong kho: ${p.stock} sản phẩm`}</span>
+                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : ``}</span>
                             </div>
                             <div class="quantity-box">
                                 <div class="quantity-controls">
