@@ -398,4 +398,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initMobileFilter();
+
+    // Thêm listener cho bộ lọc sắp xếp
+    const sortBy = document.getElementById('sort-by');
+    if (sortBy) {
+        sortBy.addEventListener('change', () => fetchProducts('init'));
+    }
+
+    // Thêm listener cho ô tìm kiếm
+    const searchInput = document.getElementById('search-name');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => fetchProducts('init'), 500);
+        });
+    }
 });
