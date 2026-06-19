@@ -155,7 +155,7 @@ async function fetchCollections() {
 
         if (collections.length > 0) {
             container.innerHTML = collections.map(c => `
-                <a href="products/?collection=${encodeURIComponent(c.name)}" class="collection-banner reveal-on-scroll">
+                <a href="collections/detail.html?name=${encodeURIComponent(c.name)}" class="collection-banner reveal-on-scroll">
                     <img src="${c.imageUrl}" alt="${c.name}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
                     <div class="collection-overlay">
                         <h3>${c.name}</h3>
