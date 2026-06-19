@@ -3,7 +3,7 @@
     <!-- Trang chủ -->
     <url>
         <loc>https://tiemnhagom.vn/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
@@ -11,31 +11,31 @@
     <!-- Cửa hàng & Khuyến mãi -->
     <url>
         <loc>https://tiemnhagom.vn/products/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/product/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/flash-sale/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/collections/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/membership/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -43,13 +43,13 @@
     <!-- Dịch vụ chuyên biệt -->
     <url>
         <loc>https://tiemnhagom.vn/hoa-nha-gom/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/trang-tri-su-kien/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -57,13 +57,13 @@
     <!-- Giới thiệu & Liên hệ -->
     <url>
         <loc>https://tiemnhagom.vn/about/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/contact/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -71,7 +71,7 @@
     <!-- Blog -->
     <url>
         <loc>https://tiemnhagom.vn/blog/</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -79,25 +79,25 @@
     <!-- Các chính sách -->
     <url>
         <loc>https://tiemnhagom.vn/buying-guide.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/payment-policy.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/shipping-policy.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/return-refund-policy.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -105,13 +105,13 @@
     <!-- Thông tin pháp lý -->
     <url>
         <loc>https://tiemnhagom.vn/privacy-policy.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://tiemnhagom.vn/terms-of-service.html</loc>
-        <lastmod>2026-06-01</lastmod>
+        <lastmod>2026-06-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>

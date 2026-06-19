@@ -1,5 +1,5 @@
-import { 
-    db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount, 
+import {
+    db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale
 } from "./utils.js";
@@ -57,7 +57,7 @@ window.toggleFavoriteDetail = async (productId) => {
         const favRef = doc(db, "favorites", user.uid);
         const favSnap = await getDoc(favRef);
         favs = favSnap.exists() ? favSnap.data().productIds : [];
-        
+
         if (favs.includes(productId)) {
             favs = favs.filter(id => id !== productId);
             showToast("Đã xóa khỏi danh sách yêu thích");
@@ -65,7 +65,7 @@ window.toggleFavoriteDetail = async (productId) => {
             favs.push(productId);
             showToast("Đã thêm vào danh sách yêu thích");
         }
-        
+
         await setDoc(favRef, { productIds: favs });
     } else {
         favs = JSON.parse(localStorage.getItem('favorites')) || [];
@@ -88,9 +88,9 @@ window.changeMainImage = (src, index, isUserAction = true) => {
     if (!mainImg || (currentIndex === index && isUserAction)) return;
 
     if (isUserAction) startAutoSlide();
-    
+
     currentIndex = index;
-    
+
     // Hiệu ứng Fade out
     mainImg.style.opacity = '0';
     setTimeout(() => {
@@ -107,15 +107,15 @@ window.changeMainImage = (src, index, isUserAction = true) => {
 // Hàm bấm nút qua lại trên ảnh lớn
 window.moveImage = (direction, isUserAction = true) => {
     if (allImages.length <= 1) return;
-    
+
     if (isUserAction) startAutoSlide();
-    
+
     let nextIndex = currentIndex + direction;
     if (nextIndex < 0) nextIndex = allImages.length - 1;
     if (nextIndex >= allImages.length) nextIndex = 0;
 
     window.changeMainImage(allImages[nextIndex], nextIndex, isUserAction);
-    
+
     // Chỉ cuộn thumbnail vào tầm nhìn khi người dùng chủ động bấm (tránh giật trang khi auto-slide)
     const activeThumb = document.querySelectorAll('.thumbnail')[nextIndex];
     if (activeThumb && isUserAction) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -161,7 +161,7 @@ async function fetchProductDetail() {
         if (docSnap.exists()) {
             const p = docSnap.data();
             currentProductData = p;
-            
+
             let isOutOfStock = (p.stock || 0) <= 0; // Default to main product stock
             const colorVariants = p.colorVariants || [];
             const availablePatterns = p.patterns || [];
@@ -172,10 +172,10 @@ async function fetchProductDetail() {
             const displaySale = getProductEffectiveSale(p, fsSettings);
             const hasSale = displaySale > 0;
             const soldCount = p.sold || 0;
-            
+
             let starsHtml = '';
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-            for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '★' : '☆';
+            for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '★' : '☆';
 
             // Thiết lập màu/họa tiết mặc định nếu có
             if (colorVariants.length > 0) {
@@ -183,7 +183,7 @@ async function fetchProductDetail() {
                 // Cập nhật isOutOfStock dựa trên biến thể mặc định
                 if ((colorVariants[0].stock || 0) <= 0) isOutOfStock = true;
             }
-            
+
             // Ưu tiên lấy pattern từ patternVariants mới, nếu không có thì fallback sang patterns cũ
             const patternsToUse = (p.patternVariants && p.patternVariants.length > 0) ? p.patternVariants : (p.patterns || []);
             if (patternsToUse.length > 0) {
@@ -202,7 +202,7 @@ async function fetchProductDetail() {
             allImages = [p.imageUrl, ...additionalImages];
             currentIndex = 0;
             startAutoSlide();
-            
+
             // Xác định trạng thái yêu thích từ Firestore nếu đã đăng nhập, ngược lại dùng LocalStorage
             let isFav = false;
             if (auth.currentUser) {
@@ -214,7 +214,7 @@ async function fetchProductDetail() {
                 const favs = JSON.parse(localStorage.getItem('favorites')) || [];
                 isFav = favs.includes(productId);
             }
-            
+
             let galleryHtml = '';
             if (allImages.length > 1) {
                 galleryHtml = `
@@ -307,14 +307,14 @@ async function fetchProductDetail() {
                         </div>
 
                         <div class="product-description">
-                            <h4>Thông tin sản phẩm</h4>
+                            <h4>Mô tả sản phẩm</h4>
                             <p>${p.description ? p.description : 'Hiện tại chưa có thông tin.'}</p>
                         </div>
 
                         <div class="purchase-card">
                             <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
-                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : `Trong kho: ${p.stock} sản phẩm`}</span>
+                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : ``}</span>
                             </div>
                             <div class="quantity-box">
                                 <div class="quantity-controls">
@@ -364,11 +364,11 @@ async function fetchProductDetail() {
             // Tối ưu SEO: Cập nhật Title và các thẻ Meta (Description, Open Graph)
             const seoTitle = p.seoTitle || `${p.name} | ${p.category} | Tiệm Nhà Gốm`;
             document.title = seoTitle;
-            
-            const seoDesc = p.seoDescription || (p.description 
+
+            const seoDesc = p.seoDescription || (p.description
                 ? p.description.substring(0, 160).replace(/\s+/g, ' ').trim()
                 : `Sản phẩm ${p.name} thủ công tinh xảo từ Tiệm Nhà Gốm. Khám phá ngay bộ sưu tập gốm sứ ${p.category} độc đáo.`);
-            
+
             updateSEO(seoTitle, seoDesc, p.imageUrl);
 
             // Tối ưu SEO: Dữ liệu có cấu trúc Schema.org (JSON-LD)
@@ -441,7 +441,7 @@ async function fetchProductDetail() {
             // Gán sự kiện cho nút thêm vào giỏ hàng
             document.getElementById('btn-add-to-cart').onclick = async () => {
                 const qty = parseInt(document.getElementById('product-quantity').value);
-                
+
                 let variantImage = p.imageUrl;
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
@@ -468,7 +468,7 @@ async function fetchProductDetail() {
             document.getElementById('btn-buy-now').onclick = async (e) => {
                 const btn = e.currentTarget;
                 const qty = parseInt(document.getElementById('product-quantity').value);
-                
+
                 let variantImage = p.imageUrl;
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
@@ -520,7 +520,7 @@ async function fetchRelatedProducts(currentProductId, currentCategory) {
             limit(11) // Lấy dư 1 để phòng trường hợp trùng sản phẩm hiện tại
         );
         const querySnapshot = await getDocs(q);
-        
+
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
@@ -587,21 +587,21 @@ function renderVariantSelectors(product) {
                 <div class="variant-title">Màu sắc: <span id="selected-color-display" style="font-weight: 500; color: var(--text-black);">${selectedColor || product.colorVariants[0].name}</span></div>
                 <div class="variant-options">
                     ${product.colorVariants.map(variant => {
-                        const colorHex = COLOR_MAP[variant.name] || '#ccc'; 
-                        const isLightColor = ["#FFFFFF", "#FFFDD0", "#F5F5DC"].includes(colorHex.toUpperCase()); // Kiểm tra màu sáng để đổi màu dấu tích
-                        return `
-                            <div class="color-chip ${variant.name === selectedColor ? 'active' : ''} ${ (variant.stock || 0) <= 0 ? 'disabled-variant' : ''}"
+            const colorHex = COLOR_MAP[variant.name] || '#ccc';
+            const isLightColor = ["#FFFFFF", "#FFFDD0", "#F5F5DC"].includes(colorHex.toUpperCase()); // Kiểm tra màu sáng để đổi màu dấu tích
+            return `
+                            <div class="color-chip ${variant.name === selectedColor ? 'active' : ''} ${(variant.stock || 0) <= 0 ? 'disabled-variant' : ''}"
                                  style="background-color: ${colorHex}; ${isLightColor ? 'border-color: #ccc;' : ''}"
                                  data-color-name="${variant.name}"
                                  data-color-hex="${colorHex}"
                                  data-variant-image="${variant.imageUrl || ''}"
                                  data-stock="${variant.stock || 0}"
-                                 ${ (variant.stock || 0) <= 0 ? 'disabled' : ''}
+                                 ${(variant.stock || 0) <= 0 ? 'disabled' : ''}
                                  onclick="window.selectColor('${variant.name}', '${variant.imageUrl || ''}')"
                                  title="${variant.name}">
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -615,11 +615,11 @@ function renderVariantSelectors(product) {
                 <div class="variant-title">Họa tiết: <span id="selected-pattern-display" style="font-weight: 500; color: var(--text-black);">${selectedPattern || (typeof patternsToUse[0] === 'string' ? patternsToUse[0] : patternsToUse[0].name)}</span></div>
                 <div class="variant-options">
                     ${patternsToUse.map(item => {
-                        const isString = typeof item === 'string';
-                        const name = isString ? item : item.name;
-                        const imageUrl = isString ? '' : (item.imageUrl || '');
-                        const stock = isString ? 0 : (item.stock || 0); // Lấy stock từ variant object
-                        return `
+            const isString = typeof item === 'string';
+            const name = isString ? item : item.name;
+            const imageUrl = isString ? '' : (item.imageUrl || '');
+            const stock = isString ? 0 : (item.stock || 0); // Lấy stock từ variant object
+            return `
                             <div class="variant-chip pattern-chip ${name === selectedPattern ? 'active' : ''} ${stock <= 0 ? 'disabled-variant' : ''}"
                                  data-stock="${stock}"
                                  onclick="window.selectPattern('${name}', '${imageUrl}')"
@@ -627,7 +627,7 @@ function renderVariantSelectors(product) {
                                 ${name}
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -640,11 +640,11 @@ function renderVariantSelectors(product) {
 window.selectColor = (colorName, imageUrl) => {
     selectedColor = colorName;
     document.getElementById('selected-color-display').innerText = colorName;
-    
+
     document.querySelectorAll('.color-chip').forEach(chip => {
         chip.classList.toggle('active', chip.dataset.colorName === colorName);
     });
-    
+
     // Cập nhật thông tin kho hàng dựa trên biến thể được chọn
     const variant = currentProductData.colorVariants.find(v => v.name === colorName);
     const stock = variant ? (variant.stock || 0) : (currentProductData.stock || 0); // Fallback to main stock if variant not found
@@ -684,7 +684,7 @@ window.selectPattern = (patternName, imageUrl) => {
     document.querySelectorAll('.pattern-chip').forEach(chip => {
         chip.classList.toggle('active', chip.innerText.trim() === patternName);
     });
-    
+
     // Cập nhật thông tin kho hàng dựa trên biến thể được chọn
     let stock = currentProductData.stock || 0; // Default to main product stock
     if (currentProductData.patternVariants) {
@@ -723,28 +723,28 @@ window.selectPattern = (patternName, imageUrl) => {
 // --- Logic Sửa/Xóa Đánh giá ---
 window.deleteReview = async (reviewId, starRating) => {
     if (!confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) return;
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
     try {
         showToast("Đang xóa đánh giá...", "info");
-        
+
         // 1. Xóa document review
         await deleteDoc(doc(db, "reviews", reviewId));
 
         // 2. Cập nhật lại sản phẩm
         const productRef = doc(db, "products", productId);
         const productSnap = await getDoc(productRef);
-        
+
         if (productSnap.exists()) {
             const p = productSnap.data();
             const oldCount = p.reviewCount || 1;
             const oldRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-            
+
             let newCount = oldCount - 1;
             let newRating = 5; // Mặc định về 5 nếu không còn đánh giá nào
-            
+
             if (newCount > 0) {
                 newRating = ((oldRating * oldCount) - starRating) / newCount;
             }
@@ -773,7 +773,7 @@ window.showEditReviewForm = (reviewId, currentComment, currentRating) => {
     formContainer.style.display = 'block';
     commentInput.value = currentComment;
     selectedRating = currentRating;
-    
+
     // Cập nhật UI sao
     const starInput = document.getElementById('star-rating-input');
     starInput.querySelectorAll('span').forEach(s => {
@@ -784,7 +784,7 @@ window.showEditReviewForm = (reviewId, currentComment, currentRating) => {
     form.dataset.editMode = "true";
     form.dataset.editReviewId = reviewId;
     form.dataset.oldRating = currentRating;
-    
+
     btnShow.innerText = "Đang chỉnh sửa đánh giá";
     window.scrollTo({ top: formContainer.offsetTop - 100, behavior: 'smooth' });
 };
@@ -802,12 +802,12 @@ async function updateExistingReview(productId, reviewId, oldRating, newRating, c
         if (oldRating !== newRating) {
             const productRef = doc(db, "products", productId);
             const productSnap = await getDoc(productRef);
-            
+
             if (productSnap.exists()) {
                 const p = productSnap.data();
                 const count = p.reviewCount || 1;
                 const currentAvg = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-                
+
                 // Công thức: ((Trung bình cũ * Tổng số) - Sao cũ + Sao mới) / Tổng số
                 const newAvg = ((currentAvg * count) - oldRating + newRating) / count;
 
@@ -835,7 +835,7 @@ async function fetchReviews(productId) {
     const list = document.getElementById('reviews-list');
     const summaryContainer = document.getElementById('rating-summary-container');
     const btnShow = document.getElementById('btn-show-review-form');
-    if (!list || !summaryContainer) return; 
+    if (!list || !summaryContainer) return;
 
     try {
         const q = query(collection(db, "reviews"), where("productId", "==", productId), orderBy("createdAt", "desc"));
@@ -863,7 +863,7 @@ async function fetchReviews(productId) {
                 };
             }
         }
-        
+
         if (snap.empty) {
             summaryContainer.innerHTML = '';
             list.innerHTML = '<p style="color: #888; font-style: italic;">Chưa có đánh giá nào cho sản phẩm này.</p>';
@@ -893,15 +893,15 @@ async function fetchReviews(productId) {
                 </div>
                 <div class="rating-bars">
                     ${[5, 4, 3, 2, 1].map(star => {
-                        const count = counts[star];
-                        const percent = ((count / totalReviews) * 100).toFixed(0);
-                        return `
+            const count = counts[star];
+            const percent = ((count / totalReviews) * 100).toFixed(0);
+            return `
                             <div class="rating-bar-item">
                                 <span class="star-label">${star} ★</span>
                                 <div class="bar-bg"><div class="bar-fill" style="width: ${percent}%"></div></div>
                                 <span class="percent-label">${percent}%</span>
                             </div>`;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>`;
         summaryContainer.innerHTML = summaryHtml;
@@ -911,7 +911,7 @@ async function fetchReviews(productId) {
             const reviewId = reviewDoc.id;
             const date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('vi-VN') : 'Mới đây';
             let stars = '';
-            for(let i=1; i<=5; i++) stars += i <= (r.rating || 0) ? '★' : '☆';
+            for (let i = 1; i <= 5; i++) stars += i <= (r.rating || 0) ? '★' : '☆';
 
             const imagesHtml = (r.images || []).map(url => `
                 <img src="${url}" class="review-img" onclick="window.zoomReviewImg('${url}')" alt="Ảnh feedback">
@@ -1026,9 +1026,9 @@ function initReviewForm(productId) {
 
             // Bảo mật logic: Kiểm tra lần cuối xem user đã có review chưa (Tránh spam click)
             if (auth.currentUser) {
-                const qCheck = query(collection(db, "reviews"), 
-                    where("productId", "==", productId), 
-                    where("userId", "==", auth.currentUser.uid), 
+                const qCheck = query(collection(db, "reviews"),
+                    where("productId", "==", productId),
+                    where("userId", "==", auth.currentUser.uid),
                     limit(1));
                 const snapCheck = await getDocs(qCheck);
                 if (!snapCheck.empty) {
@@ -1151,7 +1151,7 @@ window.zoomReviewImg = (url) => {
         </div>
     `;
     modal.classList.add('active');
-    modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
 };
 
 // Hàm xem ảnh toàn màn hình
@@ -1165,7 +1165,7 @@ window.openFullScreen = (src) => {
         overlay.onclick = () => overlay.style.display = 'none';
         document.body.appendChild(overlay);
     }
-    
+
     const img = overlay.querySelector('img');
     img.src = src;
     overlay.style.display = 'flex';
@@ -1180,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
         }
         fetchProductDetail();
-        
+
         // Lấy productId từ URL để khởi tạo Form đánh giá
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');

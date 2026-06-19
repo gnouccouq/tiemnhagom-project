@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, 
+import {
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc,
     collection, query, where, limit, getDocs, onSnapshot, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
@@ -15,7 +15,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
 // Khởi tạo EmailJS với Public Key của bạn (Lấy từ Dashboard EmailJS)
-emailjs.init("7kkSVeK5WhKKmizOZ"); 
+emailjs.init("7kkSVeK5WhKKmizOZ");
 
 // 1. Cấu hình & Khởi tạo Firebase (Duy nhất một nơi)
 const firebaseConfig = {
@@ -121,9 +121,9 @@ if (revealObserver) window.revealObserver = revealObserver;
 
 export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSettings) {
     const now = new Date();
-    const isFsRunning = fsSettings && fsSettings.isActive && 
-                        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
-                        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
+    const isFsRunning = fsSettings && fsSettings.isActive &&
+        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) &&
+        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
 
     if (isFsRunning && product.flashSaleGroup) {
         return product.flashSaleGroup;
@@ -136,9 +136,9 @@ export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSett
 
 export function getProductEffectiveSale(product, fsSettings = globalFlashSaleSettings) {
     const now = new Date();
-    const isFsRunning = fsSettings && fsSettings.isActive && 
-                        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) && 
-                        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
+    const isFsRunning = fsSettings && fsSettings.isActive &&
+        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) &&
+        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
 
     return product.sale || 0;
 }
@@ -151,7 +151,7 @@ export function getDynamicCategories() {
 // Hàm hỗ trợ bảo mật: Chống tấn công XSS bằng cách mã hóa các ký tự đặc biệt
 export function escapeHTML(str) { // Đảm bảo hàm này được export
     if (!str) return "";
-    return str.toString().replace(/[&<>"']/g, function(m) {
+    return str.toString().replace(/[&<>"']/g, function (m) {
         return {
             '&': '&amp;',
             '<': '&lt;',
@@ -163,11 +163,11 @@ export function escapeHTML(str) { // Đảm bảo hàm này được export
 }
 
 // Hàm hỗ trợ định dạng số điện thoại về chuẩn Việt Nam (bắt đầu bằng 0)
-export function formatPhoneNumber(phone) { 
+export function formatPhoneNumber(phone) {
     if (!phone) return '';
     // Xóa tất cả ký tự không phải số và dấu +
     let cleaned = phone.toString().replace(/[^\d+]/g, '');
-    
+
     // Nếu bắt đầu bằng +84, đổi thành 0
     if (cleaned.startsWith('+84')) {
         return '0' + cleaned.substring(3);
@@ -246,7 +246,7 @@ export async function saveContactMessage(name, phone, message) {
 export async function sendEmailNotification(type, params) {
     const serviceId = "service_tiemnhagom"; // Cấu hình Service ID trong EmailJS gắn với gmail của bạn
     let templateId = "";
-    
+
     switch (type) {
         case 'order': templateId = "template_order_confirm"; break;
         case 'welcome': templateId = "template_welcome"; break;
@@ -321,11 +321,11 @@ export async function autoLinkOrdersByPhone(userId, phone) {
     try {
         const p0 = formatPhoneNumber(phone);
         const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
-        
+
         // Tìm tất cả đơn hàng có SĐT này
         const q = query(collection(db, "orders"), where("shippingAddress.phone", "in", [p0, p84]));
         const snap = await getDocs(q);
-        
+
         const updatePromises = [];
         snap.forEach(docSnap => {
             // Nếu đơn hàng chưa thuộc về userId này, tiến hành liên kết
@@ -333,7 +333,7 @@ export async function autoLinkOrdersByPhone(userId, phone) {
                 updatePromises.push(updateDoc(docSnap.ref, { userId: userId }));
             }
         });
-        
+
         if (updatePromises.length > 0) await Promise.all(updatePromises);
         return updatePromises.length;
     } catch (e) { console.error("Auto-link orders error:", e); return 0; }
@@ -574,14 +574,14 @@ function setupCookieConsent(pathPrefix) {
 export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html') {
     const rating = product.rating || 5;
     let starsHtml = '';
-    for(let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
+    for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
     const currentPrice = getProductCurrentPrice(product);
     const displaySale = getProductEffectiveSale(product);
     const hasSale = displaySale > 0;
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
-    const priceHtml = hasSale 
+    const priceHtml = hasSale
         ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</p>`
         : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
 
@@ -613,6 +613,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             </div>
         </div>
         <div class="product-card-info">
+            <div class="product-sku" style="font-size: 0.7rem; margin-bottom: 4px; letter-spacing: 1px;">Mã: ${id}</div>
             <a href="${linkBase}?id=${id}" class="product-title-link">
                 <h3>${product.name}</h3>
             </a>
@@ -678,7 +679,7 @@ export function setupSearchFloat(pathPrefix = '') {
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
     // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
     const userHint = JSON.parse(localStorage.getItem('tng_user_hint'));
-    
+
     // Chạy song song: Tải component và Lắng nghe Auth
     const componentsPromise = loadSharedComponents(pathPrefix);
 
@@ -698,16 +699,16 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
                 if (isMaintenanceActive) {
                     // Nếu đang ở trang bảo trì/admin/login thì không redirect nữa để tránh vòng lặp
-                    const isExcludedPage = window.location.pathname.includes('/maintenance/') || 
-                                         window.location.pathname.includes('/admin/') || 
-                                         window.location.pathname.includes('/login/');
+                    const isExcludedPage = window.location.pathname.includes('/maintenance/') ||
+                        window.location.pathname.includes('/admin/') ||
+                        window.location.pathname.includes('/login/');
                     if (isExcludedPage) return false;
 
                     return true; // Trả về true để báo hiệu cần kiểm tra quyền admin trước khi redirect
                 }
             }
-        } catch (err) { 
-            console.error("Lỗi kiểm tra trạng thái hệ thống:", err); 
+        } catch (err) {
+            console.error("Lỗi kiểm tra trạng thái hệ thống:", err);
         }
         return false;
     })();
@@ -715,7 +716,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
     onAuthStateChanged(auth, async (user) => {
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
-        
+
         // Đợi cài đặt Flash Sale xong để render giá chính xác
         await fsPromise;
 
@@ -731,11 +732,11 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         if (user) {
             // Lưu hint để lần sau vào web sẽ hiện icon đăng nhập nhanh
-            localStorage.setItem('tng_user_hint', JSON.stringify({ 
-                loggedIn: true, 
+            localStorage.setItem('tng_user_hint', JSON.stringify({
+                loggedIn: true,
                 displayName: user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'))
             }));
-            
+
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
             const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
             const membershipPath = pathPrefix === './' ? 'membership/' : `${pathPrefix}membership/`;
@@ -825,15 +826,15 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             identifiers.push(p0, p84);
                         }
 
-                        await setDoc(userRef, { 
-                            uid: user.uid, 
-                            email: user.email, 
+                        await setDoc(userRef, {
+                            uid: user.uid,
+                            email: user.email,
                             phone: user.phoneNumber ? formatPhoneNumber(user.phoneNumber) : '',
                             identifiers: identifiers,
-                            isGhost: false, 
-                            lastLogin: new Date().toISOString() 
+                            isGhost: false,
+                            lastLogin: new Date().toISOString()
                         }, { merge: true });
-                        
+
                         // Liên kết đơn hàng cho user mới nếu có SĐT (ví dụ login bằng phone)
                         if (user.phoneNumber) await autoLinkOrdersByPhone(user.uid, user.phoneNumber);
                     } else {
@@ -1019,7 +1020,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                     link.classList.add('active');
                 }
             });
-            
+
             // Kích hoạt menu mobile sau khi load xong HTML
             const menuToggle = document.getElementById('menu-toggle');
             const navLinks = document.getElementById('nav-links');
@@ -1092,7 +1093,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                 });
                 footerList.innerHTML = footerHtml;
             }
-            
+
             // Render Header Mega Menu Categories
             const megaMenuContainer = document.getElementById('mega-menu-categories');
             if (megaMenuContainer) {

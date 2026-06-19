@@ -347,7 +347,7 @@ async function initOverview() {
             recentOrdersContainer.innerHTML = recentOrders.map(o => `
                 <tr>
                     <td data-label="Khách hàng"><strong>${o.shippingAddress?.fullName || 'Khách vãng lai'}</strong></td>
-                    <td label="Tổng tiền">${new Intl.NumberFormat('vi-VN').format(o.totalAmount)} VND</td>
+                    <td data-label="Tổng tiền">${new Intl.NumberFormat('vi-VN').format(o.totalAmount)} VND</td>
                     <td data-label="Trạng thái"><span class="order-status-${o.status.toLowerCase().replace(/\s/g, '-')}">${o.status}</span></td>
                 </tr>
             `).join('');

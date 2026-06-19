@@ -8,7 +8,5 @@ Disallow: /admin/
 Disallow: /cart/
 Disallow: /login/
 Disallow: /profile/
-Disallow: /product/
-
 # Chỉ định đường dẫn tới sơ đồ trang web để bot lập chỉ mục nhanh hơn
 Sitemap: https://tiemnhagom.vn/sitemap.xml
