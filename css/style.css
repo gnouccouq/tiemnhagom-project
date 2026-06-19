@@ -2809,6 +2809,64 @@ footer {
     justify-content: center;
 }
 
+/* Tối ưu hóa thanh tìm kiếm & bộ lọc của Tab Sản phẩm */
+.admin-search-filter-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.admin-search-filter-row > input {
+    flex: 2;
+    min-width: 200px;
+}
+
+.admin-search-filter-row > select {
+    flex: 1;
+    min-width: 150px;
+}
+
+.admin-search-filter-row > button {
+    flex-shrink: 0;
+    height: 40px;
+}
+
+@media (max-width: 768px) {
+    /* Giải phóng thêm không gian màn hình ngang trên mobile */
+    .admin-main-content {
+        padding: 10px !important;
+        padding-bottom: 80px !important;
+    }
+    
+    .admin-card {
+        padding: 15px !important;
+        margin-bottom: 15px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Định hình lại thanh tìm kiếm & lọc trên mobile */
+    .admin-search-filter-row {
+        gap: 0.8rem;
+    }
+    
+    .admin-search-filter-row > input {
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+    }
+    
+    .admin-search-filter-row > select {
+        flex: 1 1 calc(50% - 0.4rem) !important;
+        min-width: 0 !important;
+    }
+    
+    .admin-search-filter-row > button {
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+    }
+}
+
 /* Toast Notifications */
 .toast-container {
     position: fixed;
