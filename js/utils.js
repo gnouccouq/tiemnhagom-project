@@ -11,11 +11,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
-// Áp dụng Dark Mode ngay lập tức trên mọi trang khi load module (ngăn Flash of White)
-if (localStorage.getItem('theme') === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-}
-
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
     { name: "Dining Decor", order: 1, subs: ["Bát & Chén", "Dĩa & Khay", "Thìa Muỗng & Đũa", "Gia Vị & Nước Chấm", "Gác Đũa & Phụ Kiện"] },
@@ -644,31 +639,6 @@ export function setupSearchFloat(pathPrefix = '') {
     initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);
 }
 
-function setupThemeToggle() {
-    // Luôn áp dụng theme ngay lập tức để cover các trang không có inline script
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    }
-
-    const btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    
-    // Ngăn chặn gắn sự kiện nhiều lần
-    if (btn.dataset.initialized) return;
-    btn.dataset.initialized = 'true';
-
-    btn.addEventListener('click', () => {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        }
-    });
-}
-
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
     // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
@@ -710,7 +680,6 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
     onAuthStateChanged(auth, async (user) => {
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
-        setupThemeToggle();
 
         // Đợi cài đặt Flash Sale xong để render giá chính xác
         await fsPromise;
