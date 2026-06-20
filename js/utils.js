@@ -306,13 +306,14 @@ export async function autoLinkOrdersByPhone(userId, phone) {
 // 4. Logic Auth: Đăng nhập & Đăng xuất
 export async function loginWithGoogle() {
     try {
-        // Dùng Popup cho Desktop, nếu lỗi trình duyệt không an toàn (mobile/in-app) 
-        // thì Firebase sẽ có gợi ý dùng Redirect.
         await signInWithPopup(auth, googleProvider);
         showToast("Đăng nhập thành công!");
+        await new Promise(r => setTimeout(r, 500)); // Đợi Firebase cập nhật IndexedDB
+        return true;
     } catch (error) {
         console.error(error);
         showToast("Lỗi đăng nhập: " + error.message, "error");
+        return false;
     }
 }
 
@@ -321,6 +322,7 @@ export async function loginEmail(email, password) {
     try {
         await signInWithEmailAndPassword(auth, email, password);
         showToast("Đăng nhập thành công!");
+        await new Promise(r => setTimeout(r, 500)); // Đợi Firebase cập nhật IndexedDB
         window.location.href = "../";
     } catch (error) {
         throw error;
@@ -353,6 +355,7 @@ export async function logout() {
         await signOut(auth);
         localStorage.removeItem('tng_user_hint'); // Xóa gợi ý khi logout
         showToast("Đã đăng xuất");
+        await new Promise(r => setTimeout(r, 500)); // Quan trọng: Đợi IndexedDB lưu trạng thái đăng xuất trước khi reload trang
     } catch (error) {
         showToast("Đăng xuất thất bại!", "error");
     }
@@ -627,22 +630,28 @@ export function setupSearchFloat(pathPrefix = '') {
 
     if (!btnOpen || !overlay) return;
 
+    const closePopup = () => {
+        overlay.classList.remove('active');
+        document.body.style.overflow = ''; 
+        document.documentElement.style.overflow = '';
+    };
+
     btnOpen.onclick = () => {
         overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Cấm cuộn trang
+        document.body.style.overflow = 'hidden'; 
+        document.documentElement.style.overflow = 'hidden';
         input.focus();
     };
 
-    btnClose.onclick = () => {
-        overlay.classList.remove('active');
-        document.body.style.overflow = ''; // Cho phép cuộn lại
-    };
-    overlay.onclick = (e) => { 
-        if (e.target === overlay) {
-            overlay.classList.remove('active');
-            document.body.style.overflow = ''; // Cho phép cuộn lại
+    btnClose.onclick = closePopup;
+    overlay.onclick = (e) => { if (e.target === overlay) closePopup(); };
+
+    // Cho phép đóng bằng phím ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+            closePopup();
         }
-    };
+    });
 
     // Khởi tạo autocomplete trên input mới của popup
     initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);

@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Xử lý Đăng nhập Google
     document.getElementById('btn-google-login').onclick = async () => {
-        await loginWithGoogle();
-        window.location.href = "../";
+        const success = await loginWithGoogle();
+        if (success) window.location.href = "../";
     };
 
     // Xử lý Đăng nhập Email
