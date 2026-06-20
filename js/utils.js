@@ -1,51 +1,20 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { db, auth, analytics, storage, googleProvider } from './config.js';
+export { db, auth, analytics, storage, googleProvider };
 import {
-    initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc,
+    doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp,
     collection, query, where, limit, getDocs, onSnapshot, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
-    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
+    signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
     signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
     RecaptchaVerifier, signInWithPhoneNumber
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-
-// --- Tích hợp EmailJS ---
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
-// Khởi tạo EmailJS với Public Key của bạn (Lấy từ Dashboard EmailJS)
-emailjs.init("7kkSVeK5WhKKmizOZ");
-
-// 1. Cấu hình & Khởi tạo Firebase (Duy nhất một nơi)
-const firebaseConfig = {
-    apiKey: "AIzaSyAl-Hlzfu4naiUMIuwJTnw8bXsDB4wY7zs",
-    authDomain: "tiemnhagom-project.firebaseapp.com",
-    projectId: "tiemnhagom-project",
-    storageBucket: "tiemnhagom-project.firebasestorage.app",
-    messagingSenderId: "571834989973",
-    appId: "1:571834989973:web:4cf2d4e9aa832327afca9c",
-    measurementId: "G-4FNKRZ13JC"
-};
-
-let app;
-try {
-    app = initializeApp(firebaseConfig);
-} catch (error) {
-    console.error("Firebase Initialization Error: Có thể SDK bị chặn bởi Ad-blocker.", error);
+// Áp dụng Dark Mode ngay lập tức trên mọi trang khi load module (ngăn Flash of White)
+if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
 }
-
-// Khởi tạo Firestore với cấu hình cache mới (thay thế enableIndexedDbPersistence)
-export const db = app ? initializeFirestore(app, {
-    localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-    })
-}) : null;
-
-export const auth = app ? getAuth(app) : null;
-export const analytics = app ? getAnalytics(app) : null;
-export const storage = app ? getStorage(app) : null;
-export const googleProvider = new GoogleAuthProvider();
 
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -675,6 +644,31 @@ export function setupSearchFloat(pathPrefix = '') {
     initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);
 }
 
+function setupThemeToggle() {
+    // Luôn áp dụng theme ngay lập tức để cover các trang không có inline script
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    
+    // Ngăn chặn gắn sự kiện nhiều lần
+    if (btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
+
+    btn.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+}
+
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
     // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
@@ -716,6 +710,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
     onAuthStateChanged(auth, async (user) => {
         // Đợi component load xong để có chỗ inject HTML, nhưng không đợi Admin check
         await componentsPromise;
+        setupThemeToggle();
 
         // Đợi cài đặt Flash Sale xong để render giá chính xác
         await fsPromise;

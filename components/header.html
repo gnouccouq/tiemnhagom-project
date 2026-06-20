@@ -15,7 +15,10 @@
             <ul class="nav-links" id="nav-links">
                 <li><a href="about/" class="nav-item">Giới thiệu</a></li>
                 <li class="dropdown">
-                    <a href="products/" class="nav-item">Sản phẩm <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></a>
+                    <a href="products/" class="nav-item">Sản phẩm <svg width="10" height="10" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg></a>
                     <div class="dropdown-menu mega-menu">
                         <!-- Các danh mục sẽ được JavaScript inject vào đây -->
                         <div id="mega-menu-categories">
@@ -34,11 +37,21 @@
         <div class="header-col-right">
             <div id="auth-section"><!-- Rendered by JS --></div>
 
+            <button id="theme-toggle" class="nav-icon-btn" title="Chế độ nền tối/sáng">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+
             <a href="cart/" class="nav-icon-btn" title="Giỏ hàng">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
                 <span class="badge cart-count-badge">0</span>
             </a>
-            
+
         </div>
     </nav>
 
@@ -46,7 +59,10 @@
     <div id="search-overlay" class="search-overlay">
         <div class="search-overlay-content">
             <div class="search-input-wrapper">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
                 <input type="text" id="header-search-input" placeholder="Bạn muốn tìm món gốm nào?" autocomplete="off">
                 <button id="btn-close-search" class="close-search-btn">&times;</button>
             </div>
