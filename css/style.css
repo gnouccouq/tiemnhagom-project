@@ -388,6 +388,32 @@ body {
     overflow-y: auto; /* Cho phép cuộn nếu danh sách dài */
 }
 
+/* CSS cho từng item trong danh sách tìm kiếm */
+.suggestion-item {
+    display: flex;
+    padding: 15px;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background-color: #f9f9f9; }
+.suggestion-item img {
+    width: 60px; height: 60px; object-fit: cover;
+    border-radius: 8px; margin-right: 15px;
+}
+.suggestion-info { flex: 1; text-align: left; }
+.suggestion-info h5 { margin: 0 0 5px 0; font-size: 0.95rem; color: var(--text-black); }
+.suggestion-price-container { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.suggestion-old-price { text-decoration: line-through; color: #999; }
+.suggestion-current-price { font-weight: 600; color: var(--text-black); }
+.suggestion-current-price.sale { color: #c0392b; }
+.suggestion-sale-tag {
+    background: #c0392b; color: white; padding: 2px 6px;
+    border-radius: 4px; font-size: 0.7rem; font-weight: bold;
+}
+
 @keyframes suggestionSlideDown {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
