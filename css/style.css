@@ -5011,6 +5011,11 @@ footer {
         bottom: 85px !important;
     }
     
+    /* Thu gọn ảnh nền banner (Hero) để vừa khít vùng hiển thị còn lại, không bị Bottom Bar che mất chữ/chi tiết */
+    .hero-carousel {
+        height: calc(100vh - 65px - env(safe-area-inset-bottom)) !important;
+    }
+    
     .bottom-nav-item {
         display: flex;
         flex-direction: column;
