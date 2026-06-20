@@ -629,11 +629,20 @@ export function setupSearchFloat(pathPrefix = '') {
 
     btnOpen.onclick = () => {
         overlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Cấm cuộn trang
         input.focus();
     };
 
-    btnClose.onclick = () => overlay.classList.remove('active');
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('active'); };
+    btnClose.onclick = () => {
+        overlay.classList.remove('active');
+        document.body.style.overflow = ''; // Cho phép cuộn lại
+    };
+    overlay.onclick = (e) => { 
+        if (e.target === overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = ''; // Cho phép cuộn lại
+        }
+    };
 
     // Khởi tạo autocomplete trên input mới của popup
     initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);
