@@ -118,17 +118,19 @@ async function fetchSaleProducts() {
     `).join('');
 
     try {
-        // Chỉ lấy tối đa 10 sản phẩm đang sale cho trang chủ
+        // Lấy danh sách sản phẩm và yêu thích CÙNG LÚC (chạy song song) để tiết kiệm 50% thời gian chờ
         const q = query(collection(db, "products"), where("sale", ">", 0), limit(10));
-        const querySnapshot = await getDocs(q);
         
-        let favs = [];
+        let favsPromise = Promise.resolve([]);
         if (auth.currentUser) {
-            const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
-            if (favSnap.exists()) favs = favSnap.data().productIds || [];
+            favsPromise = getDoc(doc(db, "favorites", auth.currentUser.uid))
+                .then(snap => snap.exists() ? snap.data().productIds || [] : [])
+                .catch(() => []);
         } else {
-            favs = JSON.parse(localStorage.getItem('favorites')) || [];
+            favsPromise = Promise.resolve(JSON.parse(localStorage.getItem('favorites')) || []);
         }
+
+        const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
 
         let htmlContent = '';
         querySnapshot.forEach((doc) => {

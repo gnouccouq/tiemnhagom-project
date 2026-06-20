@@ -1,7 +1,7 @@
 // js/config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-    initializeFirestore, persistentLocalCache, persistentMultipleTabManager
+    initializeFirestore, persistentLocalCache, persistentSingleTabManager
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
     getAuth, GoogleAuthProvider
@@ -33,7 +33,8 @@ try {
 
 export const db = app ? initializeFirestore(app, {
     localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
+        // Dùng SingleTab thay vì MultipleTab để sửa lỗi load cực chậm trên Safari
+        tabManager: persistentSingleTabManager()
     })
 }) : null;
 
