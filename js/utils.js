@@ -954,9 +954,10 @@ export function updateSEO(title, description, imageUrl, url = window.location.hr
 // 8. Logic Component: Tải Header/Footer dùng chung
 export async function loadSharedComponents(pathPrefix = './') {
     try {
+        const cacheBuster = `?v=${new Date().getTime()}`;
         const [h, f] = await Promise.all([
-            fetch(`${pathPrefix}components/header.html`),
-            fetch(`${pathPrefix}components/footer.html`)
+            fetch(`${pathPrefix}components/header.html${cacheBuster}`),
+            fetch(`${pathPrefix}components/footer.html${cacheBuster}`)
         ]);
 
         const fixPaths = (html) => {
@@ -1030,7 +1031,6 @@ export async function loadSharedComponents(pathPrefix = './') {
                         document.body.classList.remove('menu-open');
                     }
                 });
-            }
 
                 // Logic Accordion cho menu danh mục trên Mobile
                 const dropdowns = navLinks.querySelectorAll('.dropdown');
