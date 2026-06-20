@@ -1005,22 +1005,32 @@ export async function loadSharedComponents(pathPrefix = './') {
 
             // Kích hoạt menu mobile sau khi load xong HTML
             const menuToggle = document.getElementById('menu-toggle');
+            const bottomMenuToggle = document.getElementById('mobile-bottom-menu-btn');
             const navLinks = document.getElementById('nav-links');
 
-            if (menuToggle && navLinks) {
-                menuToggle.onclick = () => {
+            if (navLinks) {
+                const toggleMenu = () => {
                     const isActive = navLinks.classList.toggle('active');
-                    menuToggle.classList.toggle('active');
+                    if (menuToggle) menuToggle.classList.toggle('active', isActive);
+                    if (bottomMenuToggle) bottomMenuToggle.classList.toggle('active', isActive);
                     document.body.classList.toggle('menu-open', isActive);
                 };
+
+                if (menuToggle) menuToggle.onclick = toggleMenu;
+                if (bottomMenuToggle) bottomMenuToggle.onclick = toggleMenu;
+
                 // Đóng menu khi click ra ngoài hoặc vào link
                 document.addEventListener('click', (e) => {
-                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && 
+                        (!menuToggle || !menuToggle.contains(e.target)) &&
+                        (!bottomMenuToggle || !bottomMenuToggle.contains(e.target))) {
                         navLinks.classList.remove('active');
-                        menuToggle.classList.remove('active');
+                        if (menuToggle) menuToggle.classList.remove('active');
+                        if (bottomMenuToggle) bottomMenuToggle.classList.remove('active');
                         document.body.classList.remove('menu-open');
                     }
                 });
+            }
 
                 // Logic Accordion cho menu danh mục trên Mobile
                 const dropdowns = navLinks.querySelectorAll('.dropdown');
