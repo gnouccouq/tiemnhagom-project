@@ -285,6 +285,14 @@ body {
     mix-blend-mode: difference;
 }
 
+/* KHÔNG áp dụng hiệu ứng tắc kè hoa cho các chữ trong bảng menu mobile (vì bảng có nền trắng) */
+@media (max-width: 992px) {
+    .navbar.transparent .nav-links a {
+        color: var(--text-black) !important;
+        mix-blend-mode: normal !important;
+    }
+}
+
 /* Ép logo sang màu trắng khi header trong suốt và dùng difference để tương phản */
 .navbar.transparent .logo img {
     filter: brightness(0) invert(1);
@@ -6861,13 +6869,14 @@ footer {
         transition: color 0.2s ease;
     }
 
-    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale) */
-    .bottom-nav-item:not(.flash-sale-bottom) {
+    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale và nút Thêm menu) */
+    .bottom-nav-item:not(.flash-sale-bottom):not(#mobile-bottom-menu-btn) {
         mix-blend-mode: difference;
     }
 
-    /* Đảm bảo Flash sale không bị ảnh hưởng */
-    .bottom-nav-item.flash-sale-bottom {
+    /* Đảm bảo Flash sale và nút Thêm không bị ảnh hưởng */
+    .bottom-nav-item.flash-sale-bottom,
+    #mobile-bottom-menu-btn {
         color: #888;
     }
 
@@ -6883,7 +6892,10 @@ footer {
 
     .bottom-nav-item.flash-sale-bottom:hover,
     .bottom-nav-item.flash-sale-bottom:active,
-    .bottom-nav-item.flash-sale-bottom.active {
+    .bottom-nav-item.flash-sale-bottom.active,
+    #mobile-bottom-menu-btn:hover,
+    #mobile-bottom-menu-btn:active,
+    #mobile-bottom-menu-btn.active {
         color: var(--text-black);
     }
 
