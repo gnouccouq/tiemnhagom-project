@@ -621,42 +621,6 @@ export async function addToCart(productData) {
     showToast(`Đã thêm ${productData.quantity} ${productData.name} vào giỏ hàng!`);
 }
 
-// Logic cho Popup Tìm kiếm từ nút nổi (Di chuyển từ main.js)
-export function setupSearchFloat(pathPrefix = '') {
-    const btnOpen = document.getElementById('btn-open-search-float');
-    const overlay = document.getElementById('home-search-overlay');
-    const btnClose = document.getElementById('btn-close-home-search');
-    const input = document.getElementById('home-popup-search-input');
-
-    if (!btnOpen || !overlay) return;
-
-    const closePopup = () => {
-        overlay.classList.remove('active');
-        document.body.style.overflow = ''; 
-        document.documentElement.style.overflow = '';
-    };
-
-    btnOpen.onclick = () => {
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; 
-        document.documentElement.style.overflow = 'hidden';
-        input.focus();
-    };
-
-    btnClose.onclick = closePopup;
-    overlay.onclick = (e) => { if (e.target === overlay) closePopup(); };
-
-    // Cho phép đóng bằng phím ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && overlay.classList.contains('active')) {
-            closePopup();
-        }
-    });
-
-    // Khởi tạo autocomplete trên input mới của popup
-    initAutocomplete('home-popup-search-input', 'home-popup-search-suggestions', pathPrefix);
-}
-
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
 export async function initHeader(pathPrefix = './', onAuthChangeCallback = null) {
     // HIỂN THỊ NHANH: Kiểm tra gợi ý đăng nhập từ localStorage để hiện icon ngay lập tức (Skeleton/Placeholder)
@@ -866,9 +830,33 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Khởi tạo thanh tìm kiếm chính trong Header Overlay
         initAutocomplete('header-search-input', 'search-suggestions', pathPrefix);
-
-        // Khởi tạo nút tìm kiếm nổi và popup tìm kiếm
-        setupSearchFloat(pathPrefix);
+        
+        // Setup logic cho Header Search Overlay
+        const btnOpenSearch = document.getElementById('btn-open-search');
+        const searchOverlay = document.getElementById('search-overlay');
+        const btnCloseSearch = document.getElementById('btn-close-search');
+        const headerSearchInput = document.getElementById('header-search-input');
+        if (btnOpenSearch && searchOverlay && btnCloseSearch) {
+            const closeHeaderSearch = () => {
+                searchOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            };
+            btnOpenSearch.addEventListener('click', (e) => {
+                e.preventDefault();
+                searchOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => headerSearchInput?.focus(), 100);
+            });
+            btnCloseSearch.addEventListener('click', closeHeaderSearch);
+            searchOverlay.addEventListener('click', (e) => {
+                if (e.target === searchOverlay) closeHeaderSearch();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+                    closeHeaderSearch();
+                }
+            });
+        }
 
         // Khởi tạo nút cuộn lên đầu trang
         setupScrollToTop();
