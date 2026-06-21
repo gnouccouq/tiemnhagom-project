@@ -277,25 +277,24 @@ body {
     -webkit-backdrop-filter: none !important;
 }
 
-/* Khi header trong suốt, chuyển các chữ/icon sang màu trắng để nổi bật trên nền ảnh banner */
+/* Khi header trong suốt, tự động đổi màu chữ/icon (trắng/đen) tương phản với ảnh nền bằng difference */
 .navbar.transparent .nav-links a,
 .navbar.transparent .nav-icon-btn,
-.navbar.transparent .user-icon-link,
-.navbar.transparent .menu-toggle span {
+.navbar.transparent .user-icon-link {
     color: #fff;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    /* Tăng cường bóng đổ để chữ trắng nổi trên nền ảnh sáng */
+    mix-blend-mode: difference;
 }
 
-/* Ép logo sang màu trắng khi header trong suốt */
+/* Ép logo sang màu trắng khi header trong suốt và dùng difference để tương phản */
 .navbar.transparent .logo img {
     filter: brightness(0) invert(1);
+    mix-blend-mode: difference;
 }
 
 .navbar.transparent .menu-toggle span {
-    background-color: var(--card-bg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    /* Thêm bóng đổ nhẹ cho 3 gạch menu */
+    background-color: #fff;
+    mix-blend-mode: difference;
+    box-shadow: none !important;
 }
 
 .navbar.transparent .nav-links a::after {
@@ -354,6 +353,16 @@ body {
     -webkit-text-fill-color: transparent;
     animation: shimmer-text 3s linear infinite;
     font-weight: 700 !important;
+}
+
+@keyframes flash-stroke {
+    0% { stroke: #e74c3c; }
+    50% { stroke: #f1c40f; }
+    100% { stroke: #e74c3c; }
+}
+
+.flash-sale-bottom svg {
+    animation: flash-stroke 3s linear infinite;
 }
 
 /* Khi header trong suốt trên nền banner, dùng dải màu sáng hơn để dễ đọc */
@@ -6844,12 +6853,22 @@ footer {
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        color: #888;
+        color: #fff; /* Chuyển thành trắng để phối với difference */
         font-family: var(--font-sans);
         font-size: 0.7rem;
         gap: 4px;
         flex: 1;
         transition: color 0.2s ease;
+    }
+
+    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale) */
+    .bottom-nav-item:not(.flash-sale-bottom) {
+        mix-blend-mode: difference;
+    }
+
+    /* Đảm bảo Flash sale không bị ảnh hưởng */
+    .bottom-nav-item.flash-sale-bottom {
+        color: #888;
     }
 
     .bottom-nav-item svg {
@@ -6859,6 +6878,12 @@ footer {
     .bottom-nav-item:hover,
     .bottom-nav-item:active,
     .bottom-nav-item.active {
+        color: #fff; /* Trắng + Difference -> Đen */
+    }
+
+    .bottom-nav-item.flash-sale-bottom:hover,
+    .bottom-nav-item.flash-sale-bottom:active,
+    .bottom-nav-item.flash-sale-bottom.active {
         color: var(--text-black);
     }
 
