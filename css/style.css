@@ -37,6 +37,17 @@ html {
     }
 }
 
+@keyframes activeNavDot {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -3241,51 +3252,68 @@ footer {
         left: 0;
         width: 100%;
         height: 65px;
-        background-color: var(--card-bg);
+        background-color: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         display: flex;
         justify-content: space-around;
         align-items: center;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
         z-index: 5000;
-    }
-
-    .admin-bottom-nav:not(@media) {
-        display: flex;
-        /* Đảm bảo chỉ hiện trong media query này */
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     .bottom-nav-btn {
         min-width: 0;
-        /* Cho phép các nút thu nhỏ lại */
         background: none;
         border: none;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
-        color: #94a3b8;
-        transition: all 0.2s;
+        gap: 3px;
+        color: #8e8e93;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         flex: 1;
         padding: 8px 0;
         cursor: pointer;
+        position: relative;
     }
 
-    .bottom-nav-btn .icon {
-        font-size: 1.2rem;
+    .bottom-nav-btn .icon svg {
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s;
+    }
+
+    .bottom-nav-btn.active .icon svg {
+        transform: translateY(-2px) scale(1.05);
+        stroke-width: 1.8;
     }
 
     .bottom-nav-btn .label {
-        font-size: 0.6rem;
-        font-weight: 600;
+        font-size: 0.65rem;
+        font-weight: 500;
+        font-family: var(--font-sans);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        /* Cắt chữ nhãn Bottom Nav */
+        transition: color 0.25s;
     }
 
+    .bottom-nav-btn:hover,
+    .bottom-nav-btn:active,
     .bottom-nav-btn.active {
-        color: #4f46e5;
+        color: var(--text-black) !important;
+    }
+
+    .bottom-nav-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        background-color: var(--text-black);
+        border-radius: 50%;
+        animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     /* Lớp phủ khi mở sidebar */
@@ -6830,16 +6858,16 @@ footer {
         bottom: 0 !important;
         left: 0;
         width: 100%;
-        background-color: rgba(247, 246, 242, 0.6) !important;
+        background-color: rgba(247, 246, 242, 0.85) !important;
         /* Hiệu ứng trong suốt giống header */
-        backdrop-filter: blur(35px);
-        -webkit-backdrop-filter: blur(35px);
-        box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
         z-index: 9999 !important;
         justify-content: space-around;
-        padding: 10px 0;
+        padding: 8px 0;
         border-top: 1px solid rgba(0, 0, 0, 0.05);
-        padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
         /* Fix khoảng hở triệt để */
         margin: 0 !important;
     }
@@ -6861,48 +6889,49 @@ footer {
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        color: #fff; /* Chuyển thành trắng để phối với difference */
+        color: #8e8e93;
         font-family: var(--font-sans);
-        font-size: 0.7rem;
-        gap: 4px;
+        font-size: 0.65rem;
+        font-weight: 500;
+        gap: 3px;
         flex: 1;
-        transition: color 0.2s ease;
-    }
-
-    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale và nút Thêm menu) */
-    .bottom-nav-item:not(.flash-sale-bottom):not(#mobile-bottom-menu-btn) {
-        mix-blend-mode: difference;
-    }
-
-    /* Đảm bảo Flash sale và nút Thêm không bị ảnh hưởng */
-    .bottom-nav-item.flash-sale-bottom,
-    #mobile-bottom-menu-btn {
-        color: #888;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
 
     .bottom-nav-item svg {
-        transition: transform 0.2s ease;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s;
     }
 
     .bottom-nav-item:hover,
     .bottom-nav-item:active,
     .bottom-nav-item.active {
-        color: #fff; /* Trắng + Difference -> Đen */
+        color: var(--text-black) !important;
     }
 
-    .bottom-nav-item.flash-sale-bottom:hover,
-    .bottom-nav-item.flash-sale-bottom:active,
-    .bottom-nav-item.flash-sale-bottom.active,
-    #mobile-bottom-menu-btn:hover,
-    #mobile-bottom-menu-btn:active,
-    #mobile-bottom-menu-btn.active {
-        color: var(--text-black);
-    }
-
-    .bottom-nav-item:hover svg,
-    .bottom-nav-item:active svg,
     .bottom-nav-item.active svg {
-        transform: translateY(-2px);
+        transform: translateY(-2px) scale(1.05);
+        stroke-width: 1.8;
+    }
+
+    .bottom-nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        width: 4px;
+        height: 4px;
+        background-color: var(--text-black);
+        border-radius: 50%;
+        animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Flash Sale item style */
+    .bottom-nav-item.flash-sale-bottom {
+        color: #e74c3c;
+    }
+
+    .bottom-nav-item.flash-sale-bottom.active::after {
+        background-color: #e74c3c;
     }
 
     /* Reset style mặc định cho button */
