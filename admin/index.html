@@ -715,16 +715,16 @@
         <!-- Section Quản lý Đơn hàng -->
         <div id="order-section" class="admin-section">
             <div class="admin-card">
-                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                <div class="admin-order-filters-grid">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <label for="order-filter-id">Mã đơn hàng</label>
                         <input type="text" id="order-filter-id" placeholder="Tìm theo mã đơn...">
                     </div>
-                    <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <label for="order-filter-product">Tìm theo tên sản phẩm</label>
                         <input type="text" id="order-filter-product" placeholder="Nhập tên sản phẩm chính xác...">
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <label for="order-filter-status">Lọc theo trạng thái</label>
                         <select id="order-filter-status">
                             <option value="all">Tất cả</option>
@@ -734,7 +734,7 @@
                             <option value="Đã hủy">Đã hủy</option>
                         </select>
                     </div>
-                    <button id="btn-apply-order-filters" class="btn-dark" style="align-self: flex-end; height: 40px; margin-top: 0;">Áp dụng</button>
+                    <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 0;">Áp dụng</button>
                 </div>
 
                 <h3>Danh sách đơn hàng mới nhất</h3>

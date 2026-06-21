@@ -782,19 +782,19 @@ async function fetchUserVouchers(userId) {
             const summaryText = `Giảm ${valueStr} ${minOrderStr}${maxDiscountStr}`;
             
             return `
-                <div class="voucher-ticket" style="display: flex; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); position: relative; border: 1px solid #ebebeb; min-height: 160px;">
-                    <div style="flex: 0 0 30%; background: linear-gradient(135deg, var(--primary-color, #2c3e50), #1a252f); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1rem 0.5rem; position: relative;">
-                        <h3 style="font-size: 1.5rem; margin: 0; font-family: var(--font-serif); text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); line-height: 1.1;">
+                <div class="voucher-ticket">
+                    <div class="voucher-ticket-left">
+                        <h3>
                             ${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value / 1000) + 'K'}
                         </h3>
-                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; opacity: 0.85;">Giảm giá</span>
+                        <span>Giảm giá</span>
                         
-                        <div style="position: absolute; right: -8px; top: -8px; width: 16px; height: 16px; background: #fafafa; border-radius: 50%; box-shadow: inset 1px -1px 0 #ebebeb;"></div>
-                        <div style="position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px; background: #fafafa; border-radius: 50%; box-shadow: inset 1px 1px 0 #ebebeb;"></div>
-                        <div style="position: absolute; right: 0; top: 10px; bottom: 10px; width: 2px; background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.3) 50%); background-size: 100% 12px;"></div>
+                        <div class="voucher-ticket-circle-top"></div>
+                        <div class="voucher-ticket-circle-bottom"></div>
+                        <div class="voucher-ticket-dashed-line"></div>
                     </div>
                     
-                    <div style="flex: 1; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; background: #fff;">
+                    <div class="voucher-ticket-right">
                         <div>
                             <h4 style="color: #222; margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700; font-family: var(--font-serif); letter-spacing: 0.3px; line-height: 1.2;">
                                 ${c.name || 'Mã ưu đãi'}

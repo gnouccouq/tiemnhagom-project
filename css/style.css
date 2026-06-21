@@ -6913,3 +6913,125 @@ footer {
         padding: 0;
     }
 }
+
+/* ==========================================================================
+   VOUCHER TICKETS & ADMIN FILTERS RESPONSIVE OVERHAUL
+   ========================================================================== */
+.voucher-ticket {
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    position: relative;
+    border: 1px solid #ebebeb;
+    min-height: 155px;
+}
+
+.voucher-ticket-left {
+    flex: 0 0 100px;
+    background: linear-gradient(135deg, var(--primary-color, #2c3e50), #1a252f);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0.5rem;
+    position: relative;
+}
+
+.voucher-ticket-left h3 {
+    font-size: 1.4rem;
+    margin: 0;
+    font-family: var(--font-serif);
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    line-height: 1.1;
+}
+
+.voucher-ticket-left span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+    opacity: 0.85;
+}
+
+.voucher-ticket-circle-top {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 16px;
+    height: 16px;
+    background: #fafafa;
+    border-radius: 50%;
+    box-shadow: inset 1px -1px 0 #ebebeb;
+}
+
+.voucher-ticket-circle-bottom {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    width: 16px;
+    height: 16px;
+    background: #fafafa;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 0 #ebebeb;
+}
+
+.voucher-ticket-dashed-line {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.3) 50%);
+    background-size: 100% 12px;
+}
+
+.voucher-ticket-right {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    min-width: 0;
+}
+
+/* Responsive cho voucher ticket trên mobile nhỏ */
+@media (max-width: 480px) {
+    .voucher-ticket {
+        min-height: 140px;
+    }
+    .voucher-ticket-left {
+        flex: 0 0 85px;
+        padding: 0.5rem;
+    }
+    .voucher-ticket-left h3 {
+        font-size: 1.25rem;
+    }
+    .voucher-ticket-right {
+        padding: 0.6rem 0.8rem;
+    }
+}
+
+/* Responsive grid lọc đơn hàng của Admin */
+.admin-order-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: end;
+}
+
+@media (max-width: 768px) {
+    .admin-order-filters-grid {
+        grid-template-columns: 1fr; /* Stacks fully on small screens */
+        gap: 0.8rem;
+    }
+    .admin-order-filters-grid .btn-dark {
+        width: 100%;
+        margin-top: 5px;
+    }
+}
