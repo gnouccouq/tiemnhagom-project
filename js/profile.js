@@ -47,6 +47,9 @@ function setupTabs() {
         } else if (hash === '#favs') {
             const btn = document.querySelector('.tab-btn[data-target="fav-section"]');
             if (btn) btn.click();
+        } else if (hash === '#vouchers') {
+            const btn = document.querySelector('.tab-btn[data-target="voucher-section"]');
+            if (btn) btn.click();
         } else if (hash === '#addresses') {
             const btn = document.querySelector('.tab-btn[data-target="address-section"]');
             if (btn) btn.click();
@@ -155,6 +158,38 @@ window.viewOrderDetails = async (orderId) => {
             document.body.appendChild(modal);
         }
 
+        const couponDiscountVal = order.discountAmount || 0;
+        const vipDiscountVal = order.membershipDiscount || 0;
+        const subtotalVal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shippingFeeVal = order.shippingFee || 0;
+        
+        let pricingDetailsHtml = `
+            <div class="detail-row" style="font-size: 0.9rem; margin-top: 1rem; color: #555;">
+                <span>Tạm tính:</span>
+                <span>${new Intl.NumberFormat('vi-VN').format(subtotalVal)}đ</span>
+            </div>
+            <div class="detail-row" style="font-size: 0.9rem; color: #555;">
+                <span>Phí vận chuyển:</span>
+                <span>+${new Intl.NumberFormat('vi-VN').format(shippingFeeVal)}đ</span>
+            </div>
+        `;
+        if (order.couponCode && couponDiscountVal > 0) {
+            pricingDetailsHtml += `
+                <div class="detail-row" style="font-size: 0.9rem; color: #e74c3c;">
+                    <span>Khuyến mãi (${order.couponCode}):</span>
+                    <span>-${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ</span>
+                </div>
+            `;
+        }
+        if (vipDiscountVal > 0) {
+            pricingDetailsHtml += `
+                <div class="detail-row" style="font-size: 0.9rem; color: #27ae60;">
+                    <span>Giảm giá thành viên (VIP):</span>
+                    <span>-${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ</span>
+                </div>
+            `;
+        }
+
         modal.innerHTML = `
             <div class="modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
@@ -184,8 +219,10 @@ window.viewOrderDetails = async (orderId) => {
                             </li>
                         `).join('')}
                     </ul>
-                    <div class="detail-row" style="margin-top: 1.5rem; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 1rem;">
-                        <span>Tổng cộng:</span>
+                    <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
+                    ${pricingDetailsHtml}
+                    <div class="detail-row" style="margin-top: 0.5rem; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 0.5rem; font-weight: 700;">
+                        <span>Tổng thanh toán:</span>
                         <span style="color: var(--text-black);">${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</span>
                     </div>
                 </div>
@@ -508,10 +545,15 @@ async function handleProfileAuth(user) {
         fetchFavorites(user.uid);
         fetchOrderHistory(user.uid);
         fetchAddresses(user.uid);
+        fetchUserVouchers(user.uid);
     } else {
         profileInfo.style.display = 'none';
         document.getElementById('order-history-list').innerHTML = '';
         document.getElementById('no-orders-msg').style.display = 'none';
+        const vl = document.getElementById('voucher-list');
+        if (vl) vl.innerHTML = '';
+        const nv = document.getElementById('no-vouchers-msg');
+        if (nv) nv.style.display = 'none';
         notLoggedInMsg.style.display = 'block';
         if (btnLoginProfile) btnLoginProfile.onclick = loginWithGoogle;
     }
@@ -553,6 +595,21 @@ async function fetchOrderHistory(userId) {
                 ? `<button class="btn-minimal" style="color: #e74c3c; border-color: #e74c3c; margin-top: 1rem;" onclick="window.cancelOrder('${doc.id}')">Hủy đơn hàng</button>` 
                 : '';
             const detailBtn = `<button class="btn-outline" style="margin-top: 1rem; margin-right: 10px;" onclick="window.viewOrderDetails('${doc.id}')">Xem chi tiết</button>`;
+            const couponDiscountVal = order.discountAmount || 0;
+            const vipDiscountVal = order.membershipDiscount || 0;
+            
+            let discountDetailsHtml = '';
+            if (order.couponCode && couponDiscountVal > 0) {
+                discountDetailsHtml += `<p style="font-size: 0.85rem; color: #e74c3c; margin: 3px 0;">
+                    <strong>Giảm giá mã ưu đãi (${order.couponCode}):</strong> -${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ
+                </p>`;
+            }
+            if (vipDiscountVal > 0) {
+                discountDetailsHtml += `<p style="font-size: 0.85rem; color: #27ae60; margin: 3px 0;">
+                    <strong>Giảm giá thành viên (VIP):</strong> -${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ
+                </p>`;
+            }
+
             htmlContent += `
                 <div class="order-item">
                     <div class="order-header">
@@ -570,8 +627,9 @@ async function fetchOrderHistory(userId) {
                                 </li>
                             `).join('')}
                         </ul>
-                        <p><strong>Tổng tiền:</strong> ${totalAmount} VND</p>
-                        <div style="display: flex; gap: 10px;">${detailBtn} ${cancelBtn}</div>
+                        ${discountDetailsHtml}
+                        <p style="margin-top: 8px;"><strong>Tổng thanh toán:</strong> ${totalAmount} VND</p>
+                        <div style="display: flex; gap: 10px; margin-top: 1rem;">${detailBtn} ${cancelBtn}</div>
                     </div>
                 </div>
             `;
@@ -617,6 +675,167 @@ async function fetchOrderHistory(userId) {
     } catch (error) {
         console.error("Lỗi khi tải lịch sử đơn hàng:", error);
         orderListContainer.innerHTML = '<p style="color: red;">Không thể tải lịch sử đơn hàng. Vui lòng thử lại.</p>';
+    }
+}
+
+// Hàm tải danh sách mã ưu đãi
+async function fetchUserVouchers(userId) {
+    const listContainer = document.getElementById('voucher-list');
+    const noVouchersMsg = document.getElementById('no-vouchers-msg');
+    if (!listContainer || !noVouchersMsg) return;
+
+    listContainer.innerHTML = '<p style="text-align: center;">Đang tải danh sách mã ưu đãi...</p>';
+
+    try {
+        // Lấy tất cả mã ưu đãi
+        const qCoupons = query(collection(db, "coupons"), orderBy("createdAt", "desc"));
+        const snapCoupons = await getDocs(qCoupons);
+        
+        // Lấy lịch sử sử dụng của user để loại bỏ voucher đã dùng
+        const qUsed = query(collection(db, "orders"), where("userId", "==", userId));
+        const snapOrders = await getDocs(qUsed);
+        const usedCoupons = new Set();
+        snapOrders.forEach(doc => {
+            const data = doc.data();
+            if (data.couponCode) usedCoupons.add(data.couponCode);
+        });
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const validCoupons = [];
+        window.loadedCoupons = {};
+        snapCoupons.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            
+            // Bỏ qua mã đã hết hạn
+            if (data.expiryDate && new Date(data.expiryDate) < today) return;
+            // Bỏ qua mã hết lượt dùng hệ thống
+            if (data.limit > 0 && (data.usedCount || 0) >= data.limit) return;
+            // Bỏ qua mã người dùng đã sử dụng
+            if (usedCoupons.has(id)) return;
+
+            const couponObj = { id, ...data };
+            validCoupons.push(couponObj);
+            window.loadedCoupons[id] = couponObj;
+        });
+
+        if (validCoupons.length === 0) {
+            listContainer.style.display = 'none';
+            noVouchersMsg.style.display = 'block';
+            return;
+        }
+
+        window.copyVoucherCode = (code) => {
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("Đã sao chép mã: " + code);
+            }).catch(err => {
+                showToast("Lỗi sao chép mã", "error");
+            });
+        };
+
+        window.showCouponConditions = (code) => {
+            const c = window.loadedCoupons[code];
+            if (!c) return;
+            const conditionsText = c.conditions || '';
+            
+            let modal = document.getElementById('coupon-conditions-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'coupon-conditions-modal';
+                modal.className = 'modal';
+                document.body.appendChild(modal);
+            }
+            
+            const lines = conditionsText ? conditionsText.split('\n').map(line => line.trim()).filter(line => line) : [];
+            let conditionsHtml = '';
+            if (lines.length > 0) {
+                conditionsHtml = `<ul style="list-style-type: disc; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; color: #555;">
+                    ${lines.map(line => `<li style="margin-bottom: 8px;">${line}</li>`).join('')}
+                </ul>`;
+            } else {
+                conditionsHtml = `<p style="font-size: 0.9rem; color: #666; text-align: center;">Không có điều kiện cụ thể nào cho mã ưu đãi này.</p>`;
+            }
+
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px; padding: 2rem; border-radius: 12px; position: relative;">
+                    <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')" style="font-size: 1.5rem; cursor: pointer; position: absolute; top: 15px; right: 20px;">&times;</span>
+                    <div class="modal-header" style="margin-bottom: 1.5rem;">
+                        <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin: 0; color: #222;">Điều kiện sử dụng mã</h3>
+                        <p style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color, #2c3e50); margin: 5px 0 0 0;">${code}</p>
+                    </div>
+                    <div class="modal-body">
+                        ${conditionsHtml}
+                    </div>
+                    <button class="btn-dark" style="width: 100%; margin-top: 2rem;" onclick="this.closest('.modal').classList.remove('active')">Đóng</button>
+                </div>
+            `;
+            modal.classList.add('active');
+            modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
+        };
+
+        listContainer.innerHTML = validCoupons.map(c => {
+            const valueStr = c.type === 'percent' ? `${c.value}%` : `${new Intl.NumberFormat('vi-VN').format(c.value)}đ`;
+            const minOrderStr = `cho đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(c.minOrder || 0)}đ`;
+            const maxDiscountStr = (c.type === 'percent' && c.maxDiscount > 0) ? `, tối đa ${new Intl.NumberFormat('vi-VN').format(c.maxDiscount)}đ` : '';
+            const summaryText = `Giảm ${valueStr} ${minOrderStr}${maxDiscountStr}`;
+            
+            return `
+                <div class="voucher-ticket" style="display: flex; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); position: relative; border: 1px solid #ebebeb; min-height: 160px;">
+                    <div style="flex: 0 0 30%; background: linear-gradient(135deg, var(--primary-color, #2c3e50), #1a252f); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1rem 0.5rem; position: relative;">
+                        <h3 style="font-size: 1.5rem; margin: 0; font-family: var(--font-serif); text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); line-height: 1.1;">
+                            ${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value / 1000) + 'K'}
+                        </h3>
+                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; opacity: 0.85;">Giảm giá</span>
+                        
+                        <div style="position: absolute; right: -8px; top: -8px; width: 16px; height: 16px; background: #fafafa; border-radius: 50%; box-shadow: inset 1px -1px 0 #ebebeb;"></div>
+                        <div style="position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px; background: #fafafa; border-radius: 50%; box-shadow: inset 1px 1px 0 #ebebeb;"></div>
+                        <div style="position: absolute; right: 0; top: 10px; bottom: 10px; width: 2px; background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.3) 50%); background-size: 100% 12px;"></div>
+                    </div>
+                    
+                    <div style="flex: 1; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; background: #fff;">
+                        <div>
+                            <h4 style="color: #222; margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700; font-family: var(--font-serif); letter-spacing: 0.3px; line-height: 1.2;">
+                                ${c.name || 'Mã ưu đãi'}
+                            </h4>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="color: #666; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; font-weight: 500;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #e74c3c;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                HSD: ${c.expiryDate ? new Date(c.expiryDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+                            </span>
+                            <span style="font-size: 0.7rem; color: #2c3e50; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #e0e0e0; padding: 3px 8px; border-radius: 20px; background: #fafafa; transition: all 0.2s;" onmouseover="this.style.background='#f0f2f5'; this.style.borderColor='#ccc'; this.style.color='#111';" onmouseout="this.style.background='#fafafa'; this.style.borderColor='#e0e0e0'; this.style.color='#2c3e50';" onclick="window.showCouponConditions('${c.id}')">
+                                Xem thể lệ
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #666;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border: 1px dashed #ced4da; margin-bottom: 8px;">
+                            <code style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #2c3e50;">${c.id}</code>
+                            <button style="background: var(--primary-color, #2c3e50); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;" onclick="window.copyVoucherCode('${c.id}')">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Sao chép
+                            </button>
+                        </div>
+                        
+                        <div style="border-top: 1px solid #f1f3f5; padding-top: 6px; font-size: 0.75rem; color: #888; font-style: italic; line-height: 1.2;">
+                            ${summaryText}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        listContainer.style.display = 'grid';
+        listContainer.style.gap = '15px';
+        listContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        noVouchersMsg.style.display = 'none';
+
+    } catch (error) {
+        console.error("Lỗi khi tải mã ưu đãi:", error);
+        listContainer.innerHTML = '<p style="color: red; text-align: center;">Không thể tải danh sách mã ưu đãi. Vui lòng thử lại.</p>';
     }
 }
 

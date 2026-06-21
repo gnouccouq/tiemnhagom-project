@@ -777,6 +777,10 @@
                             <input type="text" id="coupon-code" required placeholder="Nhập mã viết liền không dấu...">
                         </div>
                         <div class="form-group">
+                            <label>Tên mã ưu đãi (VD: Siêu Sale Giữa Tháng)</label>
+                            <input type="text" id="coupon-name" required placeholder="Nhập tên mã ưu đãi hiển thị...">
+                        </div>
+                        <div class="form-group">
                             <label>Loại giảm giá</label>
                             <select id="coupon-type" required>
                                 <option value="percent">Phần trăm (%)</option>
@@ -788,7 +792,11 @@
                             <input type="number" id="coupon-value" required placeholder="VD: 10 hoặc 50000">
                         </div>
                         <div class="form-group">
-                            <label>Đơn hàng tối thiểu (VND)</label>
+                            <label>Giảm tối đa (VNĐ) (Chỉ cho loại % - 0 = Không giới hạn)</label>
+                            <input type="number" id="coupon-max-discount" value="0" placeholder="VD: 50000">
+                        </div>
+                        <div class="form-group">
+                            <label>Đơn hàng tối thiểu (VNĐ)</label>
                             <input type="number" id="coupon-min-order" value="0">
                         </div>
                         <div class="form-group">
@@ -798,6 +806,16 @@
                         <div class="form-group">
                             <label>Ngày hết hạn</label>
                             <input type="date" id="coupon-expiry">
+                        </div>
+                        <div class="form-group">
+                            <label>Áp dụng cho danh mục</label>
+                            <select id="coupon-category" required>
+                                <option value="all">Tất cả danh mục</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Thể lệ / Điều kiện sử dụng</label>
+                            <textarea id="coupon-conditions" rows="3" placeholder="Ví dụ: Giảm 8% cho đơn tối thiểu 0đ, tối đa 500.000đ. Mỗi khách hàng được dùng 1 lần."></textarea>
                         </div>
                         <button type="submit" class="btn-dark" style="width: 100%;">Lưu mã giảm giá</button>
                     </form>
@@ -809,9 +827,12 @@
                             <thead>
                                 <tr>
                                     <th>Mã</th>
+                                    <th>Tên mã</th>
                                     <th>Loại</th>
                                     <th>Giá trị</th>
                                     <th>Đơn tối thiểu</th>
+                                    <th>Giảm tối đa</th>
+                                    <th>Danh mục</th>
                                     <th>Đã dùng / Tối đa</th>
                                     <th>Hết hạn</th>
                                     <th>Thao tác</th>

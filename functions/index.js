@@ -214,7 +214,8 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
                 price: currentUnitPrice,
                 image: product.imageUrl,
                 quantity: item.quantity,
-                color: item.color || null
+                color: item.color || null,
+                category: product.category || null
             });
         }
 
@@ -227,12 +228,28 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
                 const today = admin.firestore.Timestamp.now().toDate();
                 const expiryDate = coupon.expiryDate ? new Date(coupon.expiryDate) : null;
 
+                // Tính toán tổng phụ của các sản phẩm thuộc danh mục áp dụng
+                let applicableSubtotal = subtotal;
+                if (coupon.category && coupon.category !== 'all') {
+                    applicableSubtotal = orderItems
+                        .filter(item => item.category === coupon.category)
+                        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                }
+
                 const isValid = (!expiryDate || expiryDate >= today) && 
                                 (coupon.limit === 0 || (coupon.usedCount || 0) < coupon.limit) &&
-                                (subtotal >= (coupon.minOrder || 0));
+                                (applicableSubtotal >= (coupon.minOrder || 0)) &&
+                                (!coupon.category || coupon.category === 'all' || applicableSubtotal > 0);
 
                 if (isValid) {
-                    discountAmount = coupon.type === 'percent' ? (subtotal * coupon.value / 100) : coupon.value;
+                    if (coupon.type === 'percent') {
+                        const rawDiscount = applicableSubtotal * coupon.value / 100;
+                        discountAmount = (coupon.maxDiscount && coupon.maxDiscount > 0)
+                            ? Math.min(rawDiscount, coupon.maxDiscount)
+                            : rawDiscount;
+                    } else {
+                        discountAmount = Math.min(coupon.value, applicableSubtotal);
+                    }
                 }
             }
         }

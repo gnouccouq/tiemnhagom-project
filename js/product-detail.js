@@ -153,9 +153,14 @@ async function fetchProductDetail() {
     `;
 
     try {
-        const [docSnap, fsSettings] = await Promise.all([
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const qCoupons = query(collection(db, "coupons"), orderBy("createdAt", "desc"));
+
+        const [docSnap, fsSettings, snapCoupons] = await Promise.all([
             getDoc(doc(db, "products", productId)),
-            fetchFlashSaleSettings()
+            fetchFlashSaleSettings(),
+            getDocs(qCoupons)
         ]);
 
         if (docSnap.exists()) {
@@ -224,6 +229,65 @@ async function fetchProductDetail() {
                                  onclick="window.changeMainImage('${img}', ${idx})" 
                                  alt="${p.name} - ảnh chi tiết ${idx + 1}">
                         `).join('')}
+                    </div>
+                `;
+            }
+
+            const validCoupons = [];
+            snapCoupons.forEach(doc => {
+                const data = doc.data();
+                if (data.expiryDate && new Date(data.expiryDate) < today) return;
+                if (data.limit > 0 && (data.usedCount || 0) >= data.limit) return;
+                // Lọc theo danh mục của sản phẩm hiện tại
+                if (data.category && data.category !== 'all' && data.category !== p.category) return;
+                validCoupons.push({ id: doc.id, ...data });
+            });
+
+            window.copyDetailCoupon = (code) => {
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast("Đã sao chép mã ưu đãi: " + code);
+                }).catch(() => {
+                    showToast("Lỗi sao chép mã", "error");
+                });
+            };
+
+            let couponsHtml = '';
+            if (validCoupons.length > 0) {
+                const listItems = validCoupons.map(c => {
+                    const valueStr = c.type === 'percent' ? `${c.value}%` : `${new Intl.NumberFormat('vi-VN').format(c.value)}đ`;
+                    const minOrderStr = `đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(c.minOrder || 0)}đ`;
+                    const maxDiscountStr = (c.type === 'percent' && c.maxDiscount > 0) ? `, tối đa ${new Intl.NumberFormat('vi-VN').format(c.maxDiscount)}đ` : '';
+                    const descText = `Giảm ${valueStr} cho ${minOrderStr}${maxDiscountStr}`;
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #f0f0f0; margin-bottom: 5px;">
+                            <div style="flex: 1; padding-right: 10px; text-align: left;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                                    <code style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: #2c3e50; background: #eef2f5; padding: 2px 6px; border-radius: 4px; border: 1px dashed #ced4da;">${c.id}</code>
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: #333;">${c.name || 'Mã giảm giá'}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #555; line-height: 1.3;">${descText}</div>
+                                <div style="font-size: 0.65rem; color: #888; margin-top: 3px;">
+                                    ${c.expiryDate ? `HSD: ${new Date(c.expiryDate).toLocaleDateString('vi-VN')}` : 'Không giới hạn HSD'}
+                                </div>
+                            </div>
+                            <button class="btn-minimal" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; height: auto; border-color: #2c3e50; color: #2c3e50; background: transparent; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 2px; white-space: nowrap;" onclick="window.copyDetailCoupon('${c.id}')">
+                                Sao chép
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                couponsHtml = `
+                    <div class="product-coupons-box" style="margin-top: 1.5rem; padding: 15px; background: #fff; border-radius: 8px; border: 1px dashed #2c3e50; font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        <h5 style="margin-top: 0; margin-bottom: 12px; font-family: var(--font-serif); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; color: #2c3e50; display: flex; align-items: center; gap: 5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                            Mã ưu đãi khả dụng
+                        </h5>
+                        <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+                            ${listItems}
+                        </div>
                     </div>
                 `;
             }
@@ -305,6 +369,8 @@ async function fetchProductDetail() {
                                     </div>` : ''}
                             </div>
                         </div>
+
+                        ${couponsHtml}
 
                         <div class="product-description">
                             <h4>Mô tả sản phẩm</h4>
@@ -460,7 +526,8 @@ async function fetchProductDetail() {
                     quantity: qty,
                     color: selectedColor,
                     pattern: selectedPattern,
-                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / ')
+                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    category: p.category
                 });
             };
 
@@ -491,7 +558,8 @@ async function fetchProductDetail() {
                     quantity: qty,
                     color: selectedColor,
                     pattern: selectedPattern,
-                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / ')
+                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    category: p.category
                 });
                 window.location.href = '../cart/'; // Chuyển hướng thẳng tới giỏ hàng
             };

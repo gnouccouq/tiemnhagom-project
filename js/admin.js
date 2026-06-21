@@ -1275,21 +1275,25 @@ window.deleteCategoryGroup = async (groupName) => {
 async function populateCategorySelect() {
     const categorySelect = document.getElementById('category');
     const filterSelect = document.getElementById('admin-product-category-filter');
+    const couponCategorySelect = document.getElementById('coupon-category');
     
     let html = '<option value="">-- Chọn danh mục --</option>';
     let filterHtml = '<option value="all">Tất cả danh mục</option>';
+    let couponCategoryHtml = '<option value="all">Tất cả danh mục</option>';
     
     adminDynamicCategories.forEach(group => { // Iterate over array
         html += `<optgroup label="${group.name}">`;
         group.subs.forEach(sub => {
             html += `<option value="${sub}">${sub}</option>`;
             filterHtml += `<option value="${sub}">${sub}</option>`;
+            couponCategoryHtml += `<option value="${sub}">${sub}</option>`;
         });
         html += `</optgroup>`;
     });
 
     if (categorySelect) categorySelect.innerHTML = html;
     if (filterSelect) filterSelect.innerHTML = filterHtml;
+    if (couponCategorySelect) couponCategorySelect.innerHTML = couponCategoryHtml;
 }
 
 function populateCollectionCheckboxes() {
@@ -1945,131 +1949,129 @@ async function deleteProduct(id) {
 
 // --- Quản lý đơn hàng cho Admin ---
 let unsubscribeOrders = null;
+let allOrdersCache = [];
+let currentOrderUserIdFilter = '';
 const ORDER_PAGE_SIZE = 10;
-let lastOrderVisible = null;
-let firstOrderVisible = null;
 let currentOrderPage = 1;
 
 function initOrderListener(productNameFilter = '', statusFilter = 'all', navigation = 'init', userIdFilter = '', orderIdFilter = '') {
+    currentOrderUserIdFilter = userIdFilter || '';
+    if (navigation === 'init') {
+        currentOrderPage = 1;
+    }
+    
+    // Đổ dữ liệu tìm kiếm vào các ô nếu có tham số truyền vào
+    const idInput = document.getElementById('order-filter-id');
+    if (idInput && orderIdFilter) idInput.value = orderIdFilter;
+    const prodInput = document.getElementById('order-filter-product');
+    if (prodInput && productNameFilter) prodInput.value = productNameFilter;
+    const statSelect = document.getElementById('order-filter-status');
+    if (statSelect && statusFilter !== 'all') statSelect.value = statusFilter;
+
+    if (!unsubscribeOrders && db) {
+        unsubscribeOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
+            allOrdersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderOrdersFiltered();
+        }, (error) => {
+            console.error("Order list listener error:", error);
+        });
+    } else {
+        renderOrdersFiltered();
+    }
+}
+
+function renderOrdersFiltered() {
     const orderListTable = document.getElementById('admin-order-list');
     const prevBtn = document.getElementById('prev-order-page');
     const nextBtn = document.getElementById('next-order-page');
     const pageInfo = document.getElementById('order-page-info');
+    
+    if (!orderListTable) return;
 
-    if (!orderListTable || !db) return;
+    // Lấy các giá trị bộ lọc
+    const idVal = document.getElementById('order-filter-id')?.value.trim().toLowerCase() || '';
+    const productVal = document.getElementById('order-filter-product')?.value.trim().toLowerCase() || '';
+    const statusVal = document.getElementById('order-filter-status')?.value || 'all';
 
-    // Hủy đăng ký lắng nghe cũ nếu có
-    if (unsubscribeOrders) unsubscribeOrders();
-
-    if (navigation === 'init') {
-        lastOrderVisible = null;
-        firstOrderVisible = null;
-        currentOrderPage = 1;
-    }
-
-    let ordersQuery = collection(db, "orders");
-
-    // Nếu tìm theo mã đơn cụ thể, bỏ qua các bộ lọc khác để query chính xác
-    if (orderIdFilter) {
-        getDoc(doc(db, "orders", orderIdFilter)).then(docSnap => {
-            if (docSnap.exists()) {
-                renderOrderRows([docSnap], orderListTable);
-                if (pageInfo) pageInfo.innerText = "Kết quả tìm kiếm ID";
-                if (prevBtn) prevBtn.disabled = true;
-                if (nextBtn) nextBtn.disabled = true;
-            } else {
-                orderListTable.innerHTML = '<tr><td colspan="7" style="text-align:center;">Không tìm thấy đơn hàng với mã ID này.</td></tr>';
-            }
-        });
-        return;
-    } else {
-        if (productNameFilter) {
-            ordersQuery = query(ordersQuery, where("productNames", "array-contains", productNameFilter));
-        }
-        if (statusFilter !== 'all') {
-            ordersQuery = query(ordersQuery, where("status", "==", statusFilter));
-        }
-        if (userIdFilter) {
-            ordersQuery = query(ordersQuery, where("userId", "==", userIdFilter));
-        }
-    }
-
-    // Xây dựng query với phân trang
-    let finalQuery = query(ordersQuery, orderBy("orderDate", "desc"));
-
-    if (navigation === 'next' && lastOrderVisible) {
-        finalQuery = query(finalQuery, startAfter(lastOrderVisible), limit(ORDER_PAGE_SIZE));
-    } else if (navigation === 'prev' && firstOrderVisible) {
-        finalQuery = query(finalQuery, endBefore(firstOrderVisible), limitToLast(ORDER_PAGE_SIZE));
-    } else {
-        finalQuery = query(finalQuery, limit(ORDER_PAGE_SIZE));
-    }
-
-    unsubscribeOrders = onSnapshot(finalQuery, (snapshot) => {
-        if (snapshot.empty) {
-            if (navigation === 'next') currentOrderPage--;
-            orderListTable.innerHTML = '<tr><td colspan="7" style="text-align:center;">Không tìm thấy đơn hàng nào.</td></tr>';
-            if (nextBtn) nextBtn.disabled = true;
-            return;
-        }
-
-        // Lưu cursor cho phân trang
-        firstOrderVisible = snapshot.docs[0];
-        lastOrderVisible = snapshot.docs[snapshot.docs.length - 1];
-        
-        renderOrderRows(snapshot.docs, orderListTable);
-
-        // Cập nhật UI phân trang
-        if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage}`;
-        if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
-        if (nextBtn) nextBtn.disabled = snapshot.docs.length < ORDER_PAGE_SIZE;
-    }, (error) => {
-        console.error("Order list listener error:", error);
+    // Lọc đơn hàng
+    let filtered = allOrdersCache.filter(order => {
+        const matchesId = !idVal || order.id.toLowerCase().includes(idVal);
+        const matchesProduct = !productVal || order.items.some(item => (item.name || "").toLowerCase().includes(productVal));
+        const matchesStatus = statusVal === 'all' || order.status === statusVal;
+        const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
+        return matchesId && matchesProduct && matchesStatus && matchesUserId;
     });
+
+    // Sắp xếp theo ngày đặt (Date/Timestamp) giảm dần
+    filtered.sort((a, b) => {
+        const dateA = a.orderDate ? (a.orderDate.toDate ? a.orderDate.toDate() : new Date(a.orderDate)) : new Date(0);
+        const dateB = b.orderDate ? (b.orderDate.toDate ? b.orderDate.toDate() : new Date(b.orderDate)) : new Date(0);
+        return dateB - dateA;
+    });
+
+    // Phân trang
+    const totalPages = Math.ceil(filtered.length / ORDER_PAGE_SIZE) || 1;
+    if (currentOrderPage > totalPages) {
+        currentOrderPage = totalPages;
+    }
+
+    const startIndex = (currentOrderPage - 1) * ORDER_PAGE_SIZE;
+    const endIndex = startIndex + ORDER_PAGE_SIZE;
+    const pageOrders = filtered.slice(startIndex, endIndex);
+
+    // Hiển thị các dòng đơn hàng
+    renderOrderRows(pageOrders, orderListTable);
+
+    // Cập nhật các nút phân trang
+    if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage} / ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
+    if (nextBtn) nextBtn.disabled = currentOrderPage === totalPages;
 }
 
-function renderOrderRows(docs, tableElement) {
+function renderOrderRows(ordersList, tableElement) {
     let htmlContent = '';
-    docs.forEach((d) => {
-        const order = d.data();
-        const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
-            const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
-            const status = order.status || 'Đang xử lý';
+    ordersList.forEach((order) => {
+        const orderId = order.id;
+        const orderDate = order.orderDate 
+            ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN') 
+            : 'N/A';
+        const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
+        const status = order.status || 'Đang xử lý';
 
-            htmlContent += `
-                <tr>
-                    <td data-label="Mã đơn"><small>${d.id}</small></td>
-                    <td data-label="Ngày đặt">${orderDate}</td>
-                    <td data-label="Khách hàng">
-                        <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
-                        <small>${order.shippingAddress?.phone || ''}</small>
-                    </td>
-                    <td data-label="Sản phẩm">
-                        <div style="display: flex; flex-direction: column; gap: 5px;">
-                            ${order.items.map(i => `
-                                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
-                                    <img src="${i.image}" alt="${i.name}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
-                                    <span title="${i.name}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${i.name} x${i.quantity}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </td>
-                    <td data-label="Tổng tiền">${totalAmount} VND</td>
-                    <td data-label="Trạng thái">
-                        <select class="status-select" onchange="window.updateOrderStatus('${d.id}', this.value)">
-                            <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
-                            <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
-                            <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
-                            <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
-                            <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
-                        </select>
-                    </td>
-                    <td data-label="Thao tác">
-                        <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${d.id}')">Chi tiết</button>
-                        <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${d.id}')">In Bill</button>
-                    </td>
-                </tr>
-            `;
+        htmlContent += `
+            <tr>
+                <td data-label="Mã đơn"><small>${orderId}</small></td>
+                <td data-label="Ngày đặt">${orderDate}</td>
+                <td data-label="Khách hàng">
+                    <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
+                    <small>${order.shippingAddress?.phone || ''}</small>
+                </td>
+                <td data-label="Sản phẩm">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        ${order.items.map(i => `
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
+                                <img src="${i.image}" alt="${i.name}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                                <span title="${i.name}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${i.name} x${i.quantity}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </td>
+                <td data-label="Tổng tiền">${totalAmount} VND</td>
+                <td data-label="Trạng thái">
+                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value)">
+                        <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
+                        <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
+                        <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
+                        <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                        <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
+                    </select>
+                </td>
+                <td data-label="Thao tác">
+                    <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
+                    <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${orderId}')">In Bill</button>
+                </td>
+            </tr>
+        `;
     });
     tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có đơn hàng nào.</td></tr>';
 }
@@ -2097,10 +2099,12 @@ window.printOrderBill = async (orderId) => {
             phone: o.shippingAddress?.phone || "N/A",
             paymentMethod: o.paymentMethod || 'Tiền mặt'
         };
-        // Tính toán lại chiết khấu nếu có để in bill đầy đủ thông tin
+        // Tính toán lại chiết khấu và phí vận chuyển để in bill đầy đủ thông tin
         const subtotal = o.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        const discountVal = subtotal - o.totalAmount;
-        printPOSReceipt(orderId, customer, o.items, o.totalAmount, subtotal, discountVal);
+        const shippingFee = o.shippingFee || 0;
+        const discountVal = (o.discountAmount || 0) + (o.membershipDiscount || 0);
+        
+        printPOSReceipt(orderId, customer, o.items, o.totalAmount, subtotal, discountVal, shippingFee);
     } catch (e) {
         showToast("Lỗi khi chuẩn bị in hóa đơn", "error");
     }
@@ -2120,6 +2124,38 @@ window.viewAdminOrderDetail = async (orderId) => {
             document.body.appendChild(modal);
         }
 
+        const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shippingFee = order.shippingFee || 0;
+        const discountAmount = order.discountAmount || 0;
+        const membershipDiscount = order.membershipDiscount || 0;
+
+        let pricingDetailsHtml = `
+            <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #555;">
+                <span>Tạm tính:</span>
+                <span>${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #555;">
+                <span>Phí vận chuyển:</span>
+                <span>+${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ</span>
+            </div>
+        `;
+        if (order.couponCode && discountAmount > 0) {
+            pricingDetailsHtml += `
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #e74c3c;">
+                    <span>Khuyến mãi (${order.couponCode}):</span>
+                    <span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span>
+                </div>
+            `;
+        }
+        if (membershipDiscount > 0) {
+            pricingDetailsHtml += `
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #27ae60;">
+                    <span>Giảm giá thành viên (VIP):</span>
+                    <span>-${new Intl.NumberFormat('vi-VN').format(membershipDiscount)}đ</span>
+                </div>
+            `;
+        }
+
         modal.innerHTML = `
             <div class="modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
@@ -2128,9 +2164,9 @@ window.viewAdminOrderDetail = async (orderId) => {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg> In hóa đơn (Bill)
                 </button>
                 <hr style="margin: 1rem 0;">
-                <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName}</p>
-                <p><strong>SĐT:</strong> ${order.shippingAddress?.phone}</p>
-                <p><strong>Địa chỉ:</strong> ${order.shippingAddress?.address}</p>
+                <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
+                <p><strong>SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
+                <p><strong>Địa chỉ:</strong> ${order.shippingAddress?.address || 'N/A'}</p>
                 <p><strong>Sản phẩm:</strong></p>
                 <ul style="list-style: none; padding: 0;">
                     ${order.items.map(i => `
@@ -2142,7 +2178,12 @@ window.viewAdminOrderDetail = async (orderId) => {
                             </div>
                         </li>`).join('')}
                 </ul>
-                <p style="font-size: 1.2rem; margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;"><strong>Tổng cộng: ${new Intl.NumberFormat('vi-VN').format(order.totalAmount)} VND</strong></p>
+                <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
+                ${pricingDetailsHtml}
+                <div style="display: flex; justify-content: space-between; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 10px; font-weight: 700; margin-top: 10px;">
+                    <span>Tổng thanh toán:</span>
+                    <span style="color: var(--primary-color, #2c3e50);">${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</span>
+                </div>
             </div>
         `;
         modal.classList.add('active');
@@ -2611,6 +2652,8 @@ window.editAdminPermissions = async (uid, email) => {
     } catch (e) { console.error(e); }
 };
 
+let editingCouponCode = null;
+
 function initCouponListener() {
     const list = document.getElementById('admin-coupon-list');
     if (!list || !db) return;
@@ -2620,18 +2663,26 @@ function initCouponListener() {
             const c = doc.data();
             const usage = c.limit > 0 ? `${c.usedCount || 0} / ${c.limit}` : `${c.usedCount || 0} / ∞`;
             const expiry = c.expiryDate ? new Date(c.expiryDate).toLocaleDateString('vi-VN') : 'Vô thời hạn';
+            const maxDiscountText = c.type === 'percent' ? (c.maxDiscount ? new Intl.NumberFormat('vi-VN').format(c.maxDiscount) + ' VND' : 'Không giới hạn') : 'N/A';
+            const categoryText = c.category === 'all' || !c.category ? 'Tất cả' : c.category;
             return `
                 <tr>
                     <td><strong>${doc.id}</strong></td>
+                    <td>${c.name || 'Chưa đặt tên'}</td>
                     <td>${c.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
                     <td>${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value) + ' VND'}</td>
                     <td>${new Intl.NumberFormat('vi-VN').format(c.minOrder)} VND</td>
+                    <td>${maxDiscountText}</td>
+                    <td><span class="category-tag-small" style="background:#eef2f5; padding:3px 6px; border-radius:4px; font-size:0.75rem;">${categoryText}</span></td>
                     <td>${usage}</td>
                     <td>${expiry}</td>
-                    <td><button class="btn-delete" onclick="window.deleteCoupon('${doc.id}')">Xóa</button></td>
+                    <td>
+                        <button class="btn-outline" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; border-color: #2c3e50; color: #2c3e50; margin-right: 5px; height: auto;" onclick="window.editCoupon('${doc.id}')">Sửa</button>
+                        <button class="btn-delete" onclick="window.deleteCoupon('${doc.id}')">Xóa</button>
+                    </td>
                 </tr>
             `;
-        }).join('') || '<tr><td colspan="7" style="text-align:center;">Chưa có mã giảm giá nào.</td></tr>';
+        }).join('') || '<tr><td colspan="10" style="text-align:center;">Chưa có mã giảm giá nào.</td></tr>';
     }, (error) => {
         console.error("Coupon listener error:", error);
     });
@@ -2642,8 +2693,77 @@ window.deleteCoupon = async (code) => {
         try {
             await deleteDoc(doc(db, "coupons", code));
             showToast(`Đã xóa mã ${code}`);
+            if (editingCouponCode === code) window.cancelCouponEdit();
         } catch (e) { showToast("Lỗi xóa mã: " + e.message, "error"); }
     }
+};
+
+window.editCoupon = async (code) => {
+    try {
+        const couponRef = doc(db, "coupons", code);
+        const couponSnap = await getDoc(couponRef);
+        if (couponSnap.exists()) {
+            const c = couponSnap.data();
+            editingCouponCode = code;
+            
+            // Điền dữ liệu vào form
+            document.getElementById('coupon-code').value = code;
+            document.getElementById('coupon-code').disabled = true;
+            document.getElementById('coupon-name').value = c.name || '';
+            document.getElementById('coupon-type').value = c.type;
+            document.getElementById('coupon-value').value = c.value;
+            document.getElementById('coupon-max-discount').value = c.maxDiscount || 0;
+            document.getElementById('coupon-min-order').value = c.minOrder || 0;
+            document.getElementById('coupon-limit').value = c.limit || 0;
+            document.getElementById('coupon-expiry').value = c.expiryDate || '';
+            document.getElementById('coupon-category').value = c.category || 'all';
+            document.getElementById('coupon-conditions').value = c.conditions || '';
+            
+            // Cập nhật giao diện
+            const title = document.querySelector('#coupon-section h3');
+            if (title) title.innerText = `Chỉnh sửa mã giảm giá: ${code}`;
+            
+            const submitBtn = document.querySelector('#coupon-form button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerText = "Cập nhật mã giảm giá";
+            }
+            
+            // Thêm nút Hủy sửa
+            let cancelBtn = document.getElementById('btn-cancel-coupon-edit');
+            if (!cancelBtn) {
+                cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.id = 'btn-cancel-coupon-edit';
+                cancelBtn.className = 'btn-minimal';
+                cancelBtn.innerText = 'Hủy chỉnh sửa';
+                cancelBtn.style.width = '100%';
+                cancelBtn.style.marginTop = '10px';
+                cancelBtn.onclick = window.cancelCouponEdit;
+                submitBtn.parentNode.insertBefore(cancelBtn, submitBtn.nextSibling);
+            }
+            
+            document.getElementById('coupon-form').scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (e) {
+        showToast("Lỗi tải thông tin mã giảm giá: " + e.message, "error");
+    }
+};
+
+window.cancelCouponEdit = () => {
+    editingCouponCode = null;
+    const form = document.getElementById('coupon-form');
+    if (form) form.reset();
+    
+    document.getElementById('coupon-code').disabled = false;
+    
+    const title = document.querySelector('#coupon-section h3');
+    if (title) title.innerText = "Thêm mã giảm giá mới";
+    
+    const submitBtn = document.querySelector('#coupon-form button[type="submit"]');
+    if (submitBtn) submitBtn.innerText = "Lưu mã giảm giá";
+    
+    const cancelBtn = document.getElementById('btn-cancel-coupon-edit');
+    if (cancelBtn) cancelBtn.remove();
 };
 
 const couponForm = document.getElementById('coupon-form');
@@ -2651,18 +2771,49 @@ if (couponForm) {
     couponForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+        const name = document.getElementById('coupon-name').value.trim();
         const type = document.getElementById('coupon-type').value;
         const value = Number(document.getElementById('coupon-value').value);
+        const maxDiscount = Number(document.getElementById('coupon-max-discount').value || 0);
         const minOrder = Number(document.getElementById('coupon-min-order').value || 0);
         const usageLimit = Number(document.getElementById('coupon-limit').value || 0);
         const expiryDate = document.getElementById('coupon-expiry').value; // YYYY-MM-DD
+        const category = document.getElementById('coupon-category').value;
+        const conditions = document.getElementById('coupon-conditions').value.trim();
 
         try {
-            await setDoc(doc(db, "coupons", code), {
-                type, value, minOrder, limit: usageLimit, usedCount: 0, expiryDate, createdAt: new Date().toISOString()
-            });
-            showToast(`Đã tạo thành công mã giảm giá: ${code}`);
-            couponForm.reset();
+            if (editingCouponCode) {
+                const couponRef = doc(db, "coupons", editingCouponCode);
+                await updateDoc(couponRef, {
+                    name,
+                    type,
+                    value,
+                    maxDiscount,
+                    minOrder,
+                    limit: usageLimit,
+                    expiryDate,
+                    category,
+                    conditions
+                });
+                showToast(`Đã cập nhật mã giảm giá: ${editingCouponCode}`);
+                window.cancelCouponEdit();
+            } else {
+                await setDoc(doc(db, "coupons", code), {
+                    name,
+                    type,
+                    value,
+                    maxDiscount,
+                    minOrder,
+                    limit: usageLimit,
+                    usedCount: 0,
+                    expiryDate,
+                    category,
+                    conditions,
+                    createdAt: new Date().toISOString()
+                });
+                showToast(`Đã tạo thành công mã giảm giá: ${code}`);
+                couponForm.reset();
+            }
         } catch (error) {
             showToast("Lỗi lưu dữ liệu: " + error.message, "error");
         }
@@ -2860,7 +3011,7 @@ window.searchCustomerPOS = async () => {
     }
 };
 
-function printPOSReceipt(orderId, customer, items, total, subtotal = null, discountVal = 0) {
+function printPOSReceipt(orderId, customer, items, total, subtotal = null, discountVal = 0, shippingFee = 0) {
     let printArea = document.getElementById('receipt-print-area');
     if (!printArea) {
         printArea = document.createElement('div');
@@ -2902,6 +3053,7 @@ function printPOSReceipt(orderId, customer, items, total, subtotal = null, disco
             </tbody>
         </table>
         ${subtotal ? `<p style="text-align:right; margin: 5px 0 0 0; font-size:11px;">Tạm tính: ${new Intl.NumberFormat('vi-VN').format(subtotal)} VND</p>` : ''}
+        ${shippingFee > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Phí vận chuyển: +${new Intl.NumberFormat('vi-VN').format(shippingFee)} VND</p>` : ''}
         ${discountVal > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Chiết khấu: -${new Intl.NumberFormat('vi-VN').format(discountVal)} VND</p>` : ''}
         <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)} VND</div>
         <div class="receipt-qr-section">
@@ -3869,27 +4021,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Gán sự kiện cho bộ lọc đơn hàng
+    document.getElementById('order-filter-id')?.addEventListener('input', () => {
+        currentOrderUserIdFilter = ''; // Reset user filter when typing manually
+        currentOrderPage = 1;
+        renderOrdersFiltered();
+    });
+
+    document.getElementById('order-filter-product')?.addEventListener('input', () => {
+        currentOrderPage = 1;
+        renderOrdersFiltered();
+    });
+
+    document.getElementById('order-filter-status')?.addEventListener('change', () => {
+        currentOrderPage = 1;
+        renderOrdersFiltered();
+    });
+
     document.getElementById('btn-apply-order-filters')?.addEventListener('click', () => {
-        const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
-        const statusVal = document.getElementById('order-filter-status')?.value || 'all';
-        initOrderListener(productVal, statusVal, 'init');
+        currentOrderPage = 1;
+        renderOrdersFiltered();
     });
 
     // Phân trang đơn hàng
     document.getElementById('prev-order-page')?.addEventListener('click', () => {
         if (currentOrderPage > 1) {
             currentOrderPage--;
-            const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
-            const statusVal = document.getElementById('order-filter-status')?.value || 'all';
-            initOrderListener(productVal, statusVal, 'prev');
+            renderOrdersFiltered();
         }
     });
 
     document.getElementById('next-order-page')?.addEventListener('click', () => {
-        currentOrderPage++;
-        const productVal = document.getElementById('order-filter-product')?.value.trim() || '';
+        const idVal = document.getElementById('order-filter-id')?.value.trim().toLowerCase() || '';
+        const productVal = document.getElementById('order-filter-product')?.value.trim().toLowerCase() || '';
         const statusVal = document.getElementById('order-filter-status')?.value || 'all';
-        initOrderListener(productVal, statusVal, 'next');
+        const filtered = allOrdersCache.filter(order => {
+            const matchesId = !idVal || order.id.toLowerCase().includes(idVal);
+            const matchesProduct = !productVal || order.items.some(item => (item.name || "").toLowerCase().includes(productVal));
+            const matchesStatus = statusVal === 'all' || order.status === statusVal;
+            const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
+            return matchesId && matchesProduct && matchesStatus && matchesUserId;
+        });
+        const totalPages = Math.ceil(filtered.length / ORDER_PAGE_SIZE) || 1;
+        if (currentOrderPage < totalPages) {
+            currentOrderPage++;
+            renderOrdersFiltered();
+        }
     });
 
     // Thay thế initHeader bằng logic Auth riêng cho Admin Dashboard

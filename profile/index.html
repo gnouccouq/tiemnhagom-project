@@ -22,6 +22,7 @@
             <button class="tab-btn active" data-target="info-section">Thông tin</button>
             <button class="tab-btn" data-target="fav-section">Yêu thích</button>
             <button class="tab-btn" data-target="order-section">Đơn hàng</button>
+            <button class="tab-btn" data-target="voucher-section">Mã ưu đãi</button>
         </div>
 
         <div id="info-section" class="profile-section active">
@@ -56,6 +57,18 @@
                 <div id="no-orders-msg" style="display: none; text-align: center; padding: 2rem;">
                     <p>Bạn chưa có đơn hàng nào.</p>
                     <a href="../" class="btn-dark" style="margin-top: 1rem;">Bắt đầu mua sắm</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="voucher-section" class="profile-section">
+            <div class="profile-card">
+                <h3>Mã ưu đãi của bạn</h3>
+                <div id="voucher-list" class="grid" style="padding: 1rem 0;">
+                    <p style="text-align: center;">Đang tải danh sách mã ưu đãi...</p>
+                </div>
+                <div id="no-vouchers-msg" style="display: none; text-align: center; padding: 2rem;">
+                    <p>Hiện tại chưa có mã ưu đãi nào khả dụng.</p>
                 </div>
             </div>
         </div>

@@ -109,7 +109,15 @@ async function renderCart() {
 
     let discountAmount = 0;
     if (appliedCoupon) {
-        discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
+        const applicableTotal = await getCartItemCategoryTotal(cart, appliedCoupon.category);
+        if (appliedCoupon.type === 'percent') {
+            const rawDiscount = applicableTotal * appliedCoupon.value / 100;
+            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0) 
+                ? Math.min(rawDiscount, appliedCoupon.maxDiscount) 
+                : rawDiscount;
+        } else {
+            discountAmount = Math.min(appliedCoupon.value, applicableTotal);
+        }
     }
     
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
@@ -351,23 +359,59 @@ async function fetchAvailableCoupons() {
             return;
         }
 
+        document.getElementById('available-coupons-container').style.display = 'block';
+
         listContainer.innerHTML = validCoupons.map(c => {
-            const desc = c.type === 'percent' ? `Giảm ${c.value}%` : `Giảm ${new Intl.NumberFormat('vi-VN').format(c.value)}đ`;
-            const minOrderDesc = c.minOrder > 0 ? ` cho đơn từ ${new Intl.NumberFormat('vi-VN').format(c.minOrder)}đ` : '';
+            const valueStr = c.type === 'percent' ? `${c.value}%` : `${new Intl.NumberFormat('vi-VN').format(c.value)}đ`;
+            const minOrderStr = `cho đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(c.minOrder || 0)}đ`;
+            const maxDiscountStr = (c.type === 'percent' && c.maxDiscount > 0) ? `, tối đa ${new Intl.NumberFormat('vi-VN').format(c.maxDiscount)}đ` : '';
+            const summaryText = `Giảm ${valueStr} ${minOrderStr}${maxDiscountStr}`;
             const isActive = appliedCoupon && appliedCoupon.code === c.id;
 
             return `
-                <div class="coupon-card ${isActive ? 'active' : ''}" onclick="window.selectCoupon('${c.id}')">
-                    <div class="coupon-info">
-                        <h5>${c.id}</h5>
-                        <p>${desc}${minOrderDesc}</p>
-                        ${c.expiryDate ? `<p style="color: #e74c3c; font-size: 0.7rem;">HSD: ${new Date(c.expiryDate).toLocaleDateString('vi-VN')}</p>` : ''}
+                <div class="coupon-card ${isActive ? 'active' : ''}" onclick="window.selectCoupon('${c.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 8px; border: 1px solid ${isActive ? 'var(--primary-color, #2c3e50)' : '#e0e0e0'}; background: ${isActive ? '#f4f6f8' : '#fff'}; cursor: pointer; transition: all 0.2s; text-align: left; margin-bottom: 5px;" onmouseover="this.style.borderColor='var(--primary-color, #2c3e50)';" onmouseout="this.style.borderColor='${isActive ? 'var(--primary-color, #2c3e50)' : '#e0e0e0'}';">
+                    <div class="coupon-info" style="flex: 1; padding-right: 10px;">
+                        <h5 style="margin: 0 0 4px 0; font-size: 0.85rem; font-weight: 600; color: #333;">${c.name || 'Mã giảm giá'}</h5>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                            <code style="font-family: monospace; font-size: 0.8rem; font-weight: 700; color: #2c3e50; background: #eef2f5; padding: 1px 5px; border-radius: 4px; border: 1px dashed #ced4da;">${c.id}</code>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #666; margin: 3px 0 2px 0;">${summaryText}</p>
+                        ${c.expiryDate ? `<p style="color: #e74c3c; font-size: 0.65rem; margin: 0;">HSD: ${new Date(c.expiryDate).toLocaleDateString('vi-VN')}</p>` : '<p style="color: #27ae60; font-size: 0.65rem; margin: 0;">Không giới hạn HSD</p>'}
                     </div>
-                    <div class="btn-use-coupon">${isActive ? 'Đang dùng' : 'Dùng ngay'}</div>
+                    <div class="btn-use-coupon" style="white-space: nowrap; font-size: 0.75rem; font-weight: 600; color: ${isActive ? '#fff' : '#2c3e50'}; background: ${isActive ? 'var(--primary-color, #2c3e50)' : '#f0f2f5'}; border: 1px solid ${isActive ? 'var(--primary-color, #2c3e50)' : '#e0e0e0'}; padding: 4px 10px; border-radius: 4px; transition: all 0.2s;">
+                        ${isActive ? 'Đang dùng' : 'Dùng ngay'}
+                    </div>
                 </div>
             `;
         }).join('');
     } catch (e) { console.error("Lỗi tải mã giảm giá:", e); }
+}
+
+async function getCartItemCategoryTotal(cart, targetCategory) {
+    if (!targetCategory || targetCategory === 'all') {
+        return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+    
+    let total = 0;
+    for (const item of cart) {
+        let itemCategory = item.category;
+        if (!itemCategory) {
+            try {
+                const productRef = doc(db, "products", item.id);
+                const productSnap = await getDoc(productRef);
+                if (productSnap.exists()) {
+                    itemCategory = productSnap.data().category;
+                    item.category = itemCategory;
+                }
+            } catch (err) {
+                console.error("Lỗi lấy danh mục sản phẩm:", err);
+            }
+        }
+        if (itemCategory === targetCategory) {
+            total += item.price * item.quantity;
+        }
+    }
+    return total;
 }
 
 window.selectCoupon = (code) => {
@@ -442,8 +486,17 @@ window.applyCoupon = async () => {
                 return;
             }
 
-            if (subtotal < data.minOrder) {
-                showToast(`Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(data.minOrder)}đ để dùng mã này`, "error");
+            const applicableTotal = await getCartItemCategoryTotal(cart, data.category);
+            
+            if (data.category && data.category !== 'all' && applicableTotal === 0) {
+                showToast(`Mã giảm giá này chỉ áp dụng cho sản phẩm thuộc danh mục: ${data.category}`, "error");
+                appliedCoupon = null;
+            } else if (applicableTotal < data.minOrder) {
+                if (data.category && data.category !== 'all') {
+                    showToast(`Tổng tiền các sản phẩm thuộc danh mục "${data.category}" phải tối thiểu ${new Intl.NumberFormat('vi-VN').format(data.minOrder)}đ`, "error");
+                } else {
+                    showToast(`Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(data.minOrder)}đ để dùng mã này`, "error");
+                }
                 appliedCoupon = null;
             } else {
                 appliedCoupon = { code, ...data };
@@ -555,7 +608,15 @@ window.placeOrder = async () => {
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     let discountAmount = 0;
     if (appliedCoupon) {
-        discountAmount = appliedCoupon.type === 'percent' ? (total * appliedCoupon.value / 100) : appliedCoupon.value;
+        const applicableTotal = await getCartItemCategoryTotal(cart, appliedCoupon.category);
+        if (appliedCoupon.type === 'percent') {
+            const rawDiscount = applicableTotal * appliedCoupon.value / 100;
+            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0) 
+                ? Math.min(rawDiscount, appliedCoupon.maxDiscount) 
+                : rawDiscount;
+        } else {
+            discountAmount = Math.min(appliedCoupon.value, applicableTotal);
+        }
     }
 
     const shippingFee = calculateShippingFee(shippingMethod, provinceName); // Pass name
