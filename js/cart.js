@@ -59,6 +59,38 @@ async function fetchCommunesByProvinceId(provinceId) {
 
 }
 
+async function calculateMembershipDiscount(cart, userTier) {
+    if (!userTier || userTier.id === 'null') return 0;
+    
+    let totalDiscount = 0;
+    for (const item of cart) {
+        let itemCategory = item.category;
+        if (!itemCategory) {
+            try {
+                const productSnap = await getDoc(doc(db, "products", item.id));
+                if (productSnap.exists()) {
+                    itemCategory = productSnap.data().category;
+                    item.category = itemCategory;
+                }
+            } catch(e) {}
+        }
+        
+        let subtotal = item.price * item.quantity;
+        let baseDisc = (subtotal * userTier.discount) / 100;
+        
+        let catDiscPercent = 0;
+        if (userTier.categoryDiscounts && itemCategory) {
+            const matchingCat = Object.keys(userTier.categoryDiscounts).find(c => c.toLowerCase() === itemCategory.toLowerCase());
+            if (matchingCat) {
+                catDiscPercent = userTier.categoryDiscounts[matchingCat];
+            }
+        }
+        
+        totalDiscount += (baseDisc + (subtotal * catDiscPercent) / 100);
+    }
+    return Math.round(totalDiscount);
+}
+
 async function renderCart() {
     let cart = [];
     if (auth.currentUser) {
@@ -124,10 +156,9 @@ async function renderCart() {
     const selectedProvinceOption = document.getElementById('shipping-province')?.options[document.getElementById('shipping-province').selectedIndex];
     const selectedProvinceName = selectedProvinceOption ? selectedProvinceOption.textContent : null; // Get name for shipping fee calculation
     
-    const shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName); // Pass name
-    
-    let membershipDiscountVal = 0;
     let userTier = getMembershipTier(0);
+    let membershipDiscountVal = 0;
+    
     if (auth.currentUser) {
         const qOrders = query(collection(db, "orders"), 
             where("userId", "==", auth.currentUser.uid), 
@@ -136,7 +167,12 @@ async function renderCart() {
         let totalSpent = 0;
         orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
         userTier = getMembershipTier(totalSpent);
-        membershipDiscountVal = Math.round(total * userTier.discount / 100);
+        membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
+    }
+
+    let shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName); // Pass name
+    if (userTier && userTier.freeShipping) {
+        shippingFee = 0;
     }
 
     const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
@@ -145,7 +181,7 @@ async function renderCart() {
         <div class="price-row"><span>Tạm tính (Gồm VAT)</span><span>${new Intl.NumberFormat('vi-VN').format(total)}đ</span></div>
         <div class="price-row"><span>Phí vận chuyển</span><span>${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ</span></div>
         ${discountAmount > 0 ? `<div class="price-row discount"><span>Discount</span><span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span></div>` : ''}
-        ${membershipDiscountVal > 0 ? `<div class="price-row discount"><span>Hạng ${userTier.name} (-${userTier.discount}%)</span><span>-${new Intl.NumberFormat('vi-VN').format(membershipDiscountVal)}đ</span></div>` : ''}
+        ${membershipDiscountVal > 0 ? `<div class="price-row discount"><span>Ưu đãi hạng ${userTier.name}</span><span>-${new Intl.NumberFormat('vi-VN').format(membershipDiscountVal)}đ</span></div>` : ''}
         <div class="price-row total"><span>Total</span><span>${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span></div>
     `;
 
@@ -486,6 +522,26 @@ window.applyCoupon = async () => {
                 return;
             }
 
+            // Kiểm tra voucher dành cho người thân (khách mới chưa từng mua hàng)
+            if (data.forNewCustomerOnly) {
+                const phoneInput = document.getElementById('shipping-phone')?.value.trim();
+                const checkId = auth.currentUser ? auth.currentUser.uid : (phoneInput ? formatPhoneNumber(phoneInput) : null);
+                if (!checkId) {
+                    showToast("Vui lòng đăng nhập hoặc điền Số điện thoại nhận hàng để sử dụng mã này.", "error");
+                    appliedCoupon = null;
+                    renderCart();
+                    return;
+                }
+                const qPastOrders = query(collection(db, "orders"), where(auth.currentUser ? "userId" : "shippingAddress.phone", "==", checkId), limit(1));
+                const pastOrderSnap = await getDocs(qPastOrders);
+                if (!pastOrderSnap.empty) {
+                    showToast("Mã ưu đãi này chỉ áp dụng cho khách hàng chưa từng mua hàng tại Tiệm Nhà Gốm.", "error");
+                    appliedCoupon = null;
+                    renderCart();
+                    return;
+                }
+            }
+
             const applicableTotal = await getCartItemCategoryTotal(cart, data.category);
             
             if (data.category && data.category !== 'all' && applicableTotal === 0) {
@@ -619,8 +675,7 @@ window.placeOrder = async () => {
         }
     }
 
-    const shippingFee = calculateShippingFee(shippingMethod, provinceName); // Pass name
-
+    let userTier = getMembershipTier(0);
     let membershipDiscountVal = 0;
     if (auth.currentUser) {
         const qOrders = query(collection(db, "orders"), 
@@ -629,8 +684,13 @@ window.placeOrder = async () => {
         const orderSnaps = await getDocs(qOrders);
         let totalSpent = 0;
         orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
-        const userTier = getMembershipTier(totalSpent);
-        membershipDiscountVal = Math.round(total * userTier.discount / 100);
+        userTier = getMembershipTier(totalSpent);
+        membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
+    }
+
+    let shippingFee = calculateShippingFee(shippingMethod, provinceName); // Pass name
+    if (userTier && userTier.freeShipping) {
+        shippingFee = 0;
     }
 
     const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);

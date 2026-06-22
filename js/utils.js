@@ -42,10 +42,42 @@ export const COLOR_MAP = {
 
 // 1.1 Cấu hình hạng thành viên (Membership Tiers)
 export const MEMBERSHIP_TIERS = [
-    { id: 'null', name: "Gốm-Null", min: 0, discount: 0, color: '#95a5a6', icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' },
-    { id: 'new', name: "Gốm-New", min: 1000000, discount: 1, color: '#3498db', icon: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>' },
-    { id: 'mem', name: "Gốm-Mem", min: 3000000, discount: 3, color: '#f1c40f', icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>' },
-    { id: 'vip', name: "Gốm-VIP", min: 5000000, discount: 5, color: '#e74c3c', icon: '<path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm14 3c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-1h14v1z"/>' }
+    { 
+        id: 'null', name: "Gốm Mộc", min: 0, discount: 0, color: '#95a5a6', 
+        icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+        freeShipping: false,
+        categoryDiscounts: {},
+        tierUpVoucher: 0,
+        birthdayVoucher: 0,
+        friendVoucher: false
+    },
+    { 
+        id: 'new', name: "Gốm Nung", min: 1000000, discount: 1, color: '#3498db', 
+        icon: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+        freeShipping: false,
+        categoryDiscounts: { "KitchenWare": 0.5, "HomeDecor": 1 },
+        tierUpVoucher: 50000,
+        birthdayVoucher: 50000,
+        friendVoucher: false
+    },
+    { 
+        id: 'mem', name: "Gốm Men", min: 5000000, discount: 3, color: '#f1c40f', 
+        icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>',
+        freeShipping: true,
+        categoryDiscounts: { "Túi, móc khoá, lót ly": 0.5, "KitchenWare": 1, "HomeDecor": 3 },
+        tierUpVoucher: 100000,
+        birthdayVoucher: 200000,
+        friendVoucher: true
+    },
+    { 
+        id: 'vip', name: "Gốm Độc Bản", min: 10000000, discount: 5, color: '#e74c3c', 
+        icon: '<path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm14 3c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-1h14v1z"/>',
+        freeShipping: true,
+        categoryDiscounts: { "Túi, móc khoá, lót ly": 1, "KitchenWare": 3, "HomeDecor": 5 },
+        tierUpVoucher: 300000,
+        birthdayVoucher: 500000,
+        friendVoucher: true
+    }
 ];
 
 export function getMembershipTier(totalSpent) {
@@ -354,6 +386,7 @@ export async function logout() {
     try {
         await signOut(auth);
         localStorage.removeItem('tng_user_hint'); // Xóa gợi ý khi logout
+        sessionStorage.removeItem('tng_current_tier'); // Xóa cache hạng thẻ
         showToast("Đã đăng xuất");
         await new Promise(r => setTimeout(r, 500)); // Quan trọng: Đợi IndexedDB lưu trạng thái đăng xuất trước khi reload trang
     } catch (error) {
@@ -538,6 +571,25 @@ function setupCookieConsent(pathPrefix) {
 }
 
 // 8. Logic UI: Render thẻ sản phẩm dùng chung
+export function updateMembershipPrices(tier) {
+    if (!tier || tier.discount <= 0) return;
+    const containers = document.querySelectorAll('.dynamic-membership-price:empty');
+    containers.forEach(container => {
+        const currentPrice = parseInt(container.getAttribute('data-price'));
+        if (!currentPrice) return;
+        const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+        container.innerHTML = `
+            <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">
+                <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                    ${tier.name}
+                </span> 
+                <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+            </div>`;
+    });
+}
+window.updateMembershipPrices = updateMembershipPrices;
+
 export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html') {
     const rating = product.rating || 5;
     let starsHtml = '';
@@ -549,8 +601,29 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const priceHtml = hasSale
-        ? `<p class="price"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</p>`
-        : `<p class="price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
+        ? `<p class="price" style="margin-bottom: 2px;"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</p>`
+        : `<p class="price" style="margin-bottom: 2px;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
+
+    let memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
+    try {
+        const tierStr = sessionStorage.getItem('tng_current_tier');
+        if (tierStr) {
+            const tier = JSON.parse(tierStr);
+            if (tier && tier.discount > 0) {
+                const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+                memPriceHtml = `
+                <div class="dynamic-membership-price" data-price="${currentPrice}">
+                    <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">
+                        <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            ${tier.name}
+                        </span> 
+                        <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                    </div>
+                </div>`;
+            }
+        }
+    } catch(e) {}
 
     const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
@@ -590,6 +663,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             </div>
             <div class="product-price-block">
                 ${priceHtml}
+                ${memPriceHtml}
             </div>
         </div>
     </div>
@@ -757,6 +831,27 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     const needsRedirect = await maintenancePromise;
                     if (needsRedirect && !adminSnap.exists()) {
                         window.location.href = pathPrefix + "maintenance/";
+                    }
+
+                    // Lấy hạng thành viên và cập nhật UI thẻ sản phẩm
+                    let currentTierStr = sessionStorage.getItem('tng_current_tier');
+                    if (!currentTierStr) {
+                        try {
+                            const q = query(collection(db, "orders"), where("userId", "==", user.uid), where("status", "==", "Đã hoàn thành"));
+                            const snap = await getDocs(q);
+                            let totalSpent = 0;
+                            snap.forEach(doc => totalSpent += (doc.data().totalAmount || 0));
+                            const tier = getMembershipTier(totalSpent);
+                            currentTierStr = JSON.stringify(tier);
+                            sessionStorage.setItem('tng_current_tier', currentTierStr);
+                        } catch(e) {
+                            console.error("Lỗi lấy hạng thành viên:", e);
+                        }
+                    }
+                    if (currentTierStr) {
+                        if (window.updateMembershipPrices) {
+                            window.updateMembershipPrices(JSON.parse(currentTierStr));
+                        }
                     }
 
                     // Đồng bộ dữ liệu & ghost records

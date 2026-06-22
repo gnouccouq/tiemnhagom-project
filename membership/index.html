@@ -7,7 +7,7 @@
     <meta name="description" content="Khám phá đặc quyền dành riêng cho thành viên Tiệm Nhà Gốm. Tích lũy chi tiêu để thăng hạng và nhận ưu đãi giảm giá lên đến 5% vĩnh viễn.">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
-    <link href="<https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap>" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         .membership-hero {
             height: 400px;
@@ -15,22 +15,53 @@
             display: flex; align-items: center; justify-content: center; text-align: center; color: #fff;
         }
         .tier-showcase {
-            padding: 5rem 5%; max-width: 1200px; margin: 0 auto;
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 30px;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 2rem;
+            padding: 5rem calc(50vw - 175px);
+            scroll-behavior: smooth;
+            align-items: stretch;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
+        .tier-showcase::-webkit-scrollbar { display: none; }
+
         .tier-big-card {
             background: #fff; border-radius: 20px; padding: 40px 30px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; overflow: hidden;
+            flex: 0 0 350px;
+            display: flex; flex-direction: column;
+            scroll-snap-align: center;
+            transform: scale(0.85);
+            opacity: 0.6;
         }
-        .tier-big-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .tier-big-card .medal {
-            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 25px;
-            display: flex; align-items: center; justify-content: center; color: #fff;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        .tier-big-card.active-tier {
+            transform: scale(1.05);
+            opacity: 1;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        
+        .slider-nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20;
+            background: #fff; border: 1px solid #ddd; border-radius: 50%;
+            width: 50px; height: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            color: #333; transition: 0.3s;
+        }
+        .slider-nav-btn:hover { background: var(--text-black); color: #fff; }
+        .slider-nav-btn.prev { left: 20px; }
+        .slider-nav-btn.next { right: 20px; }
+        
+        @media (max-width: 768px) {
+            .tier-showcase { padding: 3rem calc(50vw - 150px); }
+            .tier-big-card { flex: 0 0 300px; padding: 30px 20px; }
         }
         .tier-big-card h2 { font-size: 1.5rem; margin-bottom: 10px; }
         .tier-price-requirement { font-size: 0.9rem; color: #888; margin-bottom: 20px; }
-        .tier-benefit-list { list-style: none; padding: 0; margin: 25px 0; border-top: 1px solid #eee; padding-top: 25px; }
+        .tier-benefit-list { list-style: none; padding: 0; margin: 25px 0 0 0; border-top: 1px solid #eee; padding-top: 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; text-align: left; }
         .tier-benefit-list li { margin-bottom: 12px; font-size: 0.95rem; color: #555; }
         .tier-benefit-list li strong { color: #e74c3c; font-size: 1.2rem; }
         
@@ -71,9 +102,23 @@
             </div>
         </section>
 
-        <div class="tier-showcase" id="membership-tiers-render">
-            <!-- JS will render tiers here from MEMBERSHIP_TIERS in utils.js -->
+        <div class="slider-wrapper" style="position: relative; max-width: 100vw; overflow: hidden;">
+            <button class="slider-nav-btn prev" id="slider-prev">&#10094;</button>
+            <div class="tier-showcase" id="membership-tiers-render">
+                <!-- JS will render tiers here from MEMBERSHIP_TIERS in utils.js -->
+            </div>
+            <button class="slider-nav-btn next" id="slider-next">&#10095;</button>
         </div>
+
+        <!-- Phần hiển thị ưu đãi thẻ -->
+        <section id="active-tier-benefits-section" style="max-width: 800px; margin: 1rem auto 4rem; padding: 0 5%; transition: opacity 0.3s ease;">
+            <div style="padding: 2.5rem; border-radius: 20px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                <h3 id="benefits-title" style="text-align: center; font-family: var(--font-serif); font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text-black);">Ưu đãi thẻ</h3>
+                <ul class="tier-benefit-list" id="benefits-list" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <!-- JS sẽ render ưu đãi vào đây -->
+                </ul>
+            </div>
+        </section>
 
         <section class="how-it-works">
             <h2 style="font-family: var(--font-serif);">Làm sao để thăng hạng?</h2>
@@ -115,23 +160,171 @@
                 }
             });
 
+            function getTierBenefitsHtml(tier, index, allTiers) {
+                if (tier.id === 'null') {
+                    return `<li>Hiện chưa có ưu đãi mua hàng đặc biệt cho hạng thành viên Gốm Mộc. Tích lũy thêm để nhận nhiều đặc quyền nhé!</li>`;
+                }
+
+                let html = ``;
+                if (tier.discount > 0) html += `<li>Giảm giá trực tiếp <strong>${tier.discount}%</strong></li>`;
+                
+                if (tier.tierUpVoucher > 0) {
+                    let prevTierName = index > 0 ? allTiers[index - 1].name : '';
+                    html += `<li>Tặng voucher <strong>${tier.tierUpVoucher / 1000}K</strong> khi lên hạng (từ ${prevTierName} lên ${tier.name})</li>`;
+                }
+                
+                if (tier.friendVoucher) {
+                    html += `<li><strong>Đặc quyền tặng voucher cho người thân:</strong> Nhận voucher trị giá 10% tối đa 150K tặng cho người thân, bạn bè <br><small style="color: #888; display: block; margin-top: 4px;">(Voucher chỉ áp dụng cho khách hàng chưa có tài khoản Gốm Membership và chưa từng mua hàng tại Tiệm Nhà Gốm)</small></li>`;
+                }
+                
+                if (tier.freeShipping) {
+                    html += `<li><strong>Miễn phí giao hàng</strong> áp dụng cho mọi đơn hàng</li>`;
+                }
+                
+                if (Object.keys(tier.categoryDiscounts).length > 0) {
+                    for (const [cat, disc] of Object.entries(tier.categoryDiscounts)) {
+                        html += `<li>Giảm thêm <strong>${disc}%</strong> khi mua các sản phẩm thuộc nhóm hàng ${cat}</li>`;
+                    }
+                }
+                
+                if (tier.birthdayVoucher > 0) {
+                    html += `<li><strong>Ưu đãi sinh nhật:</strong> Tặng phiếu mua hàng trị giá <strong>${new Intl.NumberFormat('vi-VN').format(tier.birthdayVoucher)}đ</strong> <br><small style="color: #888; display: block; margin-top: 4px;">(Code chỉ sử dụng 1 lần, áp dụng cho các đơn hàng có giá trị lớn gấp đôi giá trị code)</small></li>`;
+                }
+
+                return html;
+            }
+
+            const benefitsMap = {};
+            MEMBERSHIP_TIERS.forEach((tier, index) => {
+                benefitsMap[tier.id] = getTierBenefitsHtml(tier, index, MEMBERSHIP_TIERS);
+            });
+
             const container = document.getElementById('membership-tiers-render');
-            container.innerHTML = MEMBERSHIP_TIERS.map(tier => `
-                <div class="tier-big-card reveal-on-scroll">
-                    <div class="medal" style="background: ${tier.color}">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg>
+            container.innerHTML = MEMBERSHIP_TIERS.map((tier, index) => `
+                <div class="tier-big-card reveal-on-scroll ${index === 0 ? 'active-tier' : ''}" id="showcase-${tier.id}" data-tier-id="${tier.id}" data-tier-name="${tier.name}">
+                    <div class="membership-card tier-${tier.id}" style="margin: 0 auto 25px auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="membership-card-chip"></div>
+                            <div style="opacity: 0.9; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg>
+                            </div>
+                        </div>
+                        <div style="text-align: left;">
+                            <div class="member-label">MEMBER TIER</div>
+                            <div class="tier-name" style="margin-bottom: 0;">${tier.name}</div>
+                        </div>
                     </div>
-                    <h2 style="color: ${tier.color}">${tier.name}</h2>
-                    <p class="tier-price-requirement">Tích lũy từ ${new Intl.NumberFormat('vi-VN').format(tier.min)}đ</p>
-                    <ul class="tier-benefit-list">
-                        <li>Giảm giá trực tiếp <strong>${tier.discount}%</strong></li>
-                        <li>Ưu tiên thông báo sản phẩm mới</li>
-                        ${tier.discount >= 3 ? '<li>Hỗ trợ phí vận chuyển nội thành</li>' : ''}
-                        ${tier.id === 'vip' ? '<li>Quà tặng đặc biệt dịp sinh nhật</li>' : ''}
-                    </ul>
+                    <p class="tier-price-requirement" style="margin-bottom: 0;">Tích lũy từ <strong>${new Intl.NumberFormat('vi-VN').format(tier.min)}đ</strong></p>
                 </div>
             `).join('');
+
+            // Setup Showcase Slider Observer and Controls
+            setupShowcaseSlider(benefitsMap);
         });
+
+        function setupShowcaseSlider(benefitsMap) {
+            const container = document.getElementById('membership-tiers-render');
+            const cards = container.querySelectorAll('.tier-big-card');
+            const benefitsList = document.getElementById('benefits-list');
+            const benefitsTitle = document.getElementById('benefits-title');
+            const benefitsSection = document.getElementById('active-tier-benefits-section');
+            
+            const handleScroll = () => {
+                const containerRect = container.getBoundingClientRect();
+                const containerCenter = containerRect.left + containerRect.width / 2;
+                let closestCard = null;
+                let minDistance = Infinity;
+                
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const cardCenter = rect.left + rect.width / 2;
+                    const distance = Math.abs(containerCenter - cardCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestCard = card;
+                    }
+                });
+                
+                if (closestCard) {
+                    cards.forEach(c => {
+                        if (c !== closestCard) c.classList.remove('active-tier');
+                    });
+                    
+                    if (!closestCard.classList.contains('active-tier')) {
+                        closestCard.classList.add('active-tier');
+                    }
+
+                    const tierId = closestCard.getAttribute('data-tier-id');
+                    const tierName = closestCard.getAttribute('data-tier-name');
+                    
+                    if (benefitsList.getAttribute('data-current-tier') !== tierId) {
+                        benefitsSection.style.opacity = '0';
+                        setTimeout(() => {
+                            benefitsTitle.innerText = `Ưu đãi thẻ ${tierName}`;
+                            benefitsList.innerHTML = benefitsMap[tierId];
+                            benefitsList.setAttribute('data-current-tier', tierId);
+                            benefitsSection.style.opacity = '1';
+                        }, 150);
+                    }
+                }
+            };
+
+            container.addEventListener('scroll', handleScroll, { passive: true });
+            
+            // Mouse Drag & Buttons
+            let isDown = false;
+            let isDragging = false;
+            let startX;
+            let scrollLeft;
+
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                isDragging = false;
+                container.style.cursor = 'grabbing';
+                container.style.scrollSnapType = 'none';
+                startX = e.pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+            });
+            container.addEventListener('mouseleave', () => {
+                isDown = false;
+                container.style.cursor = '';
+                container.style.scrollSnapType = 'x mandatory';
+            });
+            container.addEventListener('mouseup', () => {
+                isDown = false;
+                container.style.cursor = '';
+                container.style.scrollSnapType = 'x mandatory';
+                setTimeout(() => { isDragging = false; }, 50);
+            });
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                isDragging = true;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const walk = (x - startX) * 2;
+                container.scrollLeft = scrollLeft - walk;
+            });
+            
+            // Nhấn vào thẻ để đưa vào tâm
+            cards.forEach(card => {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', () => {
+                    if (isDragging) return;
+                    card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                });
+            });
+            
+            document.getElementById('slider-prev').addEventListener('click', () => {
+                container.scrollBy({ left: -350, behavior: 'smooth' });
+            });
+            document.getElementById('slider-next').addEventListener('click', () => {
+                container.scrollBy({ left: 350, behavior: 'smooth' });
+            });
+            
+            // Cập nhật lại vị trí zoom ban đầu
+            setTimeout(handleScroll, 100);
+        }
 
         async function renderPersonalProgress(userId) {
             const section = document.getElementById('personal-membership-section');
@@ -147,6 +340,14 @@
                 const currentTier = getMembershipTier(totalSpent);
                 const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
                 const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];
+                
+                // Cuộn tới hạng hiện tại trên Slider một cách chính xác
+                const activeCard = document.getElementById('showcase-' + currentTier.id);
+                if (activeCard) {
+                    setTimeout(() => {
+                        activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }, 600); // Đợi render xong
+                }
                 
                 let progressHtml = '';
                 if (nextTier) {
@@ -170,9 +371,13 @@
                 }
                 
                 progressContainer.innerHTML = `
-                    <div class="membership-card tier-${currentTier.id}" style="background: ${currentTier.color}; margin-top: 0;">
-                        <div class="tier-name">${currentTier.name}</div>
-                        <div class="tier-discount">Ưu đãi hiện tại: Giảm ${currentTier.discount}% đơn hàng</div>
+                    <div class="membership-card tier-${currentTier.id}">
+                        <div class="membership-card-chip"></div>
+                        <div>
+                            <div class="member-label">MEMBER TIER</div>
+                            <div class="tier-name">${currentTier.name}</div>
+                            <div class="tier-discount">Ưu đãi: Giảm ${currentTier.discount}% đơn hàng</div>
+                        </div>
                     </div>
                     ${progressHtml}`;
                 

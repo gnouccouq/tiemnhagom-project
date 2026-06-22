@@ -319,6 +319,28 @@ async function fetchProductDetail() {
                                 ${hasSale ? `<span class="old-price" style="text-decoration:line-through; color:#aaa; font-size:1.2rem;">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</span>` : ''}
                                 ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${displaySale}%</span>` : ''}
                             </div>
+                            ${(() => {
+                                try {
+                                    const tierStr = sessionStorage.getItem('tng_current_tier');
+                                    if (tierStr) {
+                                        const tier = JSON.parse(tierStr);
+                                        if (tier && tier.discount > 0) {
+                                            const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+                                            return `
+                                            <div class="dynamic-membership-price" data-price="${currentPrice}">
+                                                <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 12px; margin-bottom: 5px;">
+                                                    <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                                        Giá ${tier.name}
+                                                    </span> 
+                                                    <strong style="color: #e74c3c; font-size: 1.1rem;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                                                </div>
+                                            </div>`;
+                                        }
+                                    }
+                                } catch(e) {}
+                                return `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
+                            })()}
                         </div>
                         
                         <!-- Variant Selectors (Colors/Patterns) -->

@@ -648,25 +648,43 @@ async function fetchOrderHistory(userId) {
                 const range = nextTier.min - currentTier.min;
                 const currentProgress = totalSpent - currentTier.min;
                 const percent = Math.min(100, Math.max(0, (currentProgress / range) * 100));
-                
+
                 progressHtml = `
-                    <div class="tier-progress-box">
-                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-bottom:5px;">
-                            <span>Đã tích lũy: ${new Intl.NumberFormat('vi-VN').format(totalSpent)} VND</span>
-                            <span>Hạng tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)} VND</span>
+                    <div style="margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #555;">
+                            <span>Đã chi tiêu: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ</span>
+                            <span>Mốc tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</span>
                         </div>
-                        <div class="tier-progress-bar"><div class="fill" style="width: ${percent}%; background:var(--text-black);"></div></div>
-                        <p style="font-size:0.75rem; margin-top:5px; text-align:center;">Còn <strong>${new Intl.NumberFormat('vi-VN').format(nextTier.min - totalSpent)} VND</strong> để lên hạng <b>${nextTier.name}</b></p>
-                    </div>`;
+                        <div class="progress-bar-bg" style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div class="progress-bar-fill" style="background: var(--primary-color, #2c3e50); width: ${percent}%; height: 100%; transition: width 0.5s;"></div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #777; margin-top: 5px; text-align: right;">
+                            Còn ${new Intl.NumberFormat('vi-VN').format(nextTier.min - totalSpent)}đ để lên hạng <strong>${nextTier.name}</strong>
+                        </div>
+                    </div>
+                `;
+            } else {
+                progressHtml = `
+                    <div style="margin-top: 15px; font-size: 0.85rem; color: #27ae60; font-weight: 600;">
+                        Bạn đã đạt hạng thẻ cao nhất!
+                    </div>
+                `;
             }
 
             cardContainer.innerHTML = `
-                <div class="membership-card tier-${currentTier.id}" style="background: ${currentTier.color}">
-                    <div class="tier-name">${currentTier.name}</div>
-                    <div class="tier-discount">Ưu đãi giảm ${currentTier.discount}% đơn hàng</div>
+                <div class="membership-card tier-${currentTier.id}">
+                    <div class="membership-card-chip"></div>
+                    <div>
+                        <div class="member-label">MEMBER TIER</div>
+                        <div class="tier-name">${currentTier.name}</div>
+                        <div class="tier-discount">Ưu đãi: Giảm ${currentTier.discount}% đơn hàng</div>
+                    </div>
                 </div>
                 ${progressHtml}
                 <a href="../membership/" style="font-size:0.8rem; color:var(--text-black); text-decoration:underline; display:block; text-align:center; margin-top:10px;">Xem chi tiết quyền lợi các hạng thẻ</a>`;
+            
+            // Sinh voucher tự động
+            await generateAutomaticVouchers(userId, currentTier);
         }
         
         orderListContainer.style.display = 'block';
@@ -675,6 +693,76 @@ async function fetchOrderHistory(userId) {
     } catch (error) {
         console.error("Lỗi khi tải lịch sử đơn hàng:", error);
         orderListContainer.innerHTML = '<p style="color: red;">Không thể tải lịch sử đơn hàng. Vui lòng thử lại.</p>';
+    }
+}
+
+async function generateAutomaticVouchers(userId, currentTier) {
+    if (!currentTier || currentTier.id === 'null') return;
+
+    try {
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? userSnap.data() : null;
+
+        if (!userData) return;
+
+        // 1. Voucher sinh nhật
+        if (currentTier.birthdayVoucher > 0 && userData.birthday) {
+            const today = new Date();
+            const birthDate = new Date(userData.birthday);
+            
+            if (today.getMonth() === birthDate.getMonth()) {
+                const yearStr = today.getFullYear().toString();
+                const bdayCode = `BDAY${yearStr}${userId.substring(0, 5).toUpperCase()}`;
+                
+                const bdayCouponRef = doc(db, "coupons", bdayCode);
+                const bdaySnap = await getDoc(bdayCouponRef);
+                
+                if (!bdaySnap.exists()) {
+                    const expiryDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    await setDoc(bdayCouponRef, {
+                        name: `Quà tặng sinh nhật hạng ${currentTier.name}`,
+                        type: "fixed",
+                        value: currentTier.birthdayVoucher,
+                        limit: 1,
+                        usedCount: 0,
+                        category: "all",
+                        minOrder: currentTier.birthdayVoucher * 2,
+                        expiryDate: expiryDate.toISOString(),
+                        createdAt: serverTimestamp(),
+                        isAutoGenerated: true,
+                        assignedTo: userId
+                    });
+                }
+            }
+        }
+
+        // 2. Voucher người thân
+        if (currentTier.friendVoucher) {
+            const friendCode = `GIFT${userId.substring(0, 5).toUpperCase()}`;
+            const friendCouponRef = doc(db, "coupons", friendCode);
+            const friendSnap = await getDoc(friendCouponRef);
+            
+            if (!friendSnap.exists()) {
+                await setDoc(friendCouponRef, {
+                    name: `Voucher tặng người thân (từ ${userData.displayName || 'Khách hàng'})`,
+                    type: "percent",
+                    value: 10,
+                    maxDiscount: 150000,
+                    limit: 1,
+                    usedCount: 0,
+                    category: "all",
+                    minOrder: 0,
+                    createdAt: serverTimestamp(),
+                    isAutoGenerated: true,
+                    assignedBy: userId,
+                    forNewCustomerOnly: true
+                });
+            }
+        }
+
+    } catch (e) {
+        console.error("Lỗi sinh voucher tự động:", e);
     }
 }
 
@@ -715,6 +803,9 @@ async function fetchUserVouchers(userId) {
             if (data.limit > 0 && (data.usedCount || 0) >= data.limit) return;
             // Bỏ qua mã người dùng đã sử dụng
             if (usedCoupons.has(id)) return;
+            
+            // Chỉ hiển thị mã công khai hoặc mã tự động sinh dành riêng cho user này
+            if (data.isAutoGenerated && data.assignedTo !== userId && data.assignedBy !== userId) return;
 
             const couponObj = { id, ...data };
             validCoupons.push(couponObj);
