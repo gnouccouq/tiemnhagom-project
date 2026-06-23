@@ -339,49 +339,42 @@ body {
 }
 
 .countdown-item {
-    background: #1a1a1a;
-    color: #fff;
-    min-width: 55px;
-    padding: 8px;
-    border-radius: 6px;
+    background: transparent;
+    color: #222;
+    min-width: 60px;
+    padding: 10px 5px;
+    border: 1px solid rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .countdown-num {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    font-weight: 400;
     line-height: 1;
 }
 
 .countdown-label {
-    font-size: 0.55rem;
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
     text-transform: uppercase;
-    margin-top: 4px;
-    opacity: 0.7;
-    letter-spacing: 0.5px;
+    margin-top: 6px;
+    color: #888;
+    letter-spacing: 1.5px;
 }
 
-/* Hiệu ứng nổi bật cho link Flash Sale */
+/* Flash Sale Link */
 .flash-sale-link {
-    background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer-text 3s linear infinite;
-    font-weight: 700 !important;
-}
-
-@keyframes flash-stroke {
-    0% { stroke: #e74c3c; }
-    50% { stroke: #f1c40f; }
-    100% { stroke: #e74c3c; }
+    color: #e74c3c;
+    font-weight: 500;
 }
 
 .flash-sale-bottom svg {
-    animation: flash-stroke 3s linear infinite;
+    stroke: #e74c3c;
+}
 }
 
 /* Khi header trong suốt trên nền banner, dùng dải màu sáng hơn để dễ đọc */
@@ -802,16 +795,17 @@ body {
     transform-origin: center;
 }
 
-/* Benefits Section */
+/* Benefits Section Redesign */
 .benefits-bar {
-    background-color: var(--card-bg);
-    padding: 2rem 5%;
-    border-bottom: 1px solid #f0f0f0;
+    background-color: #FAF6F0; /* Soft artisanal cream */
+    padding: 3.5rem 5%;
+    border-top: 1px solid rgba(0,0,0,0.03);
+    border-bottom: 1px solid rgba(0,0,0,0.03);
 }
 
 .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
     max-width: 1200px;
     margin: 0 auto;
@@ -819,21 +813,48 @@ body {
 
 .benefit-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     justify-content: center;
+    text-align: center;
+    position: relative;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.benefit-item:hover {
+    transform: translateY(-5px);
+}
+
+/* Vertical dividers (desktop only) */
+@media (min-width: 769px) {
+    .benefit-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: -1rem; /* Half of gap */
+        top: 10%;
+        height: 80%;
+        width: 1px;
+        background-color: rgba(0,0,0,0.08);
+    }
 }
 
 .benefit-item svg {
-    color: #5a8f79;
+    color: #8C7A6B; /* Warm earthy clay color */
     flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    stroke-width: 1.2;
 }
 
 .benefit-item span {
+    font-family: var(--font-sans);
     font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    font-weight: 500;
+    letter-spacing: 2px;
     text-transform: uppercase;
+    color: #444;
 }
 
 /* Facebook Feed Styles (Global) */
@@ -1125,10 +1146,15 @@ body {
     display: inline-block;
     background: var(--text-black);
     color: var(--bg-cream);
-    padding: 1rem 2.5rem;
+    padding: 0.8rem 2.5rem;
     text-decoration: none;
     margin-top: 1.5rem;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    border: 1px solid var(--text-black);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
 }
 
 .btn-hero-cta {
@@ -1136,7 +1162,8 @@ body {
 }
 
 .btn-dark:hover {
-    opacity: 0.8;
+    background: transparent;
+    color: var(--text-black);
 }
 
 .btn-outline {
@@ -1144,10 +1171,14 @@ body {
     background: transparent;
     color: var(--text-black);
     border: 1px solid var(--text-black);
-    padding: 0.8rem 1.5rem;
+    padding: 0.8rem 2.5rem;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     cursor: pointer;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
 }
 
 .btn-outline:hover {
@@ -1157,10 +1188,18 @@ body {
 
 .btn-minimal {
     background: none;
-    border: 1px solid var(--text-black);
-    padding: 0.5rem 1rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 0.5rem 1.5rem;
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: all 0.3s ease;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.btn-minimal:hover {
+    border-color: var(--text-black);
 }
 
 /* Grid */
@@ -1175,10 +1214,10 @@ body {
 
 /* Product Card */
 .product-card {
-    background-color: var(--card-bg, #ffffff);
-    padding: 12px;
+    background-color: #fff;
+    padding: 15px;
     border-radius: 12px;
-    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.03));
+    border: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -1186,10 +1225,9 @@ body {
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px rgba(231, 76, 60, 0.2);
-    /* Glow effect */
+    transform: translateY(-6px);
     border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
 }
 
 .section-header {
@@ -1213,18 +1251,19 @@ body {
     overflow: hidden;
     background-color: #f5f5f5;
     border-radius: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .product-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: block;
+    transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .product-card:hover .product-card-image img {
-    transform: scale(1.1);
+    transform: scale(1.03);
 }
 
 .product-card-actions {
@@ -1473,21 +1512,12 @@ h2 {
     color: var(--text-black);
     width: 100%;
     display: block;
-    font-size: 2.2rem;
+    font-size: 2.8rem;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: 1px;
     position: relative;
     padding-bottom: 15px;
-}
-
-h2::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 1.5px;
-    background: var(--text-black);
-    opacity: 0.3;
 }
 
 /* --- Responsive Improvements --- */
@@ -7144,4 +7174,4 @@ footer {
         width: 100%;
         margin-top: 5px;
     }
-}
+}
