@@ -290,6 +290,7 @@ export function setupScrollToTop() {
 // 3.1 Logic UI: Xử lý hiệu ứng header trong suốt khi ở đầu trang (áp dụng cho trang có Hero)
 export function setupHeaderScroll() {
     const nav = document.querySelector('.navbar');
+    const bottomNav = document.querySelector('.mobile-bottom-nav');
     if (!nav) return;
 
     // Kiểm tra xem trang có Hero Section (như trang chủ) không
@@ -299,9 +300,11 @@ export function setupHeaderScroll() {
         if (window.scrollY > 50) {
             nav.classList.add('scrolled');
             nav.classList.remove('transparent');
+            if (hasHero && bottomNav) bottomNav.classList.add('scrolled-show');
         } else {
             if (hasHero) {
                 nav.classList.add('transparent');
+                if (bottomNav) bottomNav.classList.remove('scrolled-show');
             }
             nav.classList.remove('scrolled');
         }

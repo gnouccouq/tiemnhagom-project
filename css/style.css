@@ -6918,6 +6918,22 @@ footer {
     .mobile-bottom-nav {
         display: flex !important;
         position: fixed;
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+
+    /* Ẩn Bottom Nav khi ở đầu trang chủ để xem full banner */
+    body.home-page .mobile-bottom-nav {
+        transform: translateY(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Hiện lại Bottom Nav khi cuộn xuống */
+    body.home-page .mobile-bottom-nav.scrolled-show {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
         bottom: 0 !important;
         left: 0;
         width: 100%;
@@ -6941,9 +6957,12 @@ footer {
         bottom: 85px !important;
     }
 
-    /* Thu gọn ảnh nền banner (Hero) để vừa khít vùng hiển thị còn lại, không bị Bottom Bar che mất chữ/chi tiết */
-    .hero-carousel {
+    /* Đổi chiều cao banner (Hero) để trải full màn hình trên trang chủ khi Bottom Bar bị ẩn, ở trang khác vẫn tính toán để trừ hao */
+    body:not(.home-page) .hero-carousel {
         height: calc(100vh - 65px - env(safe-area-inset-bottom)) !important;
+    }
+    body.home-page .hero-carousel {
+        height: 100vh !important;
     }
 
     .bottom-nav-item {
