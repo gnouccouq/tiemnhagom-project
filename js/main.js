@@ -384,6 +384,17 @@ async function initHeroCarousel() {
     container.addEventListener('touchmove', handleMove, { passive: true });
     container.addEventListener('touchend', handleEnd);
 
+    // Ngăn hành vi kéo link mặc định của trình duyệt để có thể vuốt được
+    container.addEventListener('dragstart', (e) => e.preventDefault());
+    
+    // Ngăn việc vô tình click vào link khi đang vuốt ảnh
+    container.addEventListener('click', (e) => {
+        if (preventClick) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
     dots.forEach(dot => {
         dot.addEventListener('click', (e) => {
             if (preventClick) return;
