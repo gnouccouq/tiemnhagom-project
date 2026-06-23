@@ -450,6 +450,10 @@ async function convertToWebP(file, targetSize = 1000, cropSquare = true) {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
+                
+                // Tối ưu hóa chất lượng render của canvas để chống răng cưa
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
 
                 if (cropSquare) {
                     // Tính toán để cắt lấy hình vuông ở giữa ảnh gốc (Dành cho sản phẩm)
@@ -479,7 +483,7 @@ async function convertToWebP(file, targetSize = 1000, cropSquare = true) {
                 canvas.toBlob((blob) => {
                     const newFile = new File([blob], currentFile.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
                     resolve(newFile);
-                }, 'image/webp', 0.7); // Nén ở mức 70% để tối ưu dung lượng (file sẽ nhẹ hơn ~50% so với mức 85%)
+                }, 'image/webp', 0.9); // Tăng chất lượng lên 90% để giữ độ chi tiết cao, tránh nhòe/răng cưa
             };
             img.src = e.target.result;
         };
