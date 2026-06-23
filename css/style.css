@@ -289,7 +289,7 @@ body {
 }
 
 /* Khi header trong suốt, tự động đổi màu chữ/icon (trắng/đen) tương phản với ảnh nền bằng difference */
-.navbar.transparent .nav-links a,
+.navbar.transparent .nav-links > li > a,
 .navbar.transparent .nav-icon-btn,
 .navbar.transparent .user-icon-link {
     color: #fff;
@@ -298,7 +298,7 @@ body {
 
 /* KHÔNG áp dụng hiệu ứng tắc kè hoa cho các chữ trong bảng menu mobile (vì bảng có nền trắng) */
 @media (max-width: 992px) {
-    .navbar.transparent .nav-links a {
+    .navbar.transparent .nav-links > li > a {
         color: var(--text-black) !important;
         mix-blend-mode: normal !important;
     }
@@ -316,7 +316,7 @@ body {
     box-shadow: none !important;
 }
 
-.navbar.transparent .nav-links a::after {
+.navbar.transparent .nav-links > li > a::after {
     background-color: var(--card-bg);
 }
 
