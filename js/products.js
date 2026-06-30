@@ -6,10 +6,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Cấu hình phân trang
-const PAGE_SIZE = 25; // 5 hàng x 5 sản phẩm
+const PAGE_SIZE = 10; // Tải mỗi lần 10 sản phẩm
 let lastVisible = null; // Document cuối cùng của trang hiện tại
-let firstVisible = null; // Document đầu tiên của trang hiện tại
-let currentPage = 1;
 let activeSubCategory = null; // Lưu trữ danh mục con từ URL
 let searchTimeout; // Biến để xử lý debounce cho tìm kiếm (no change)
 // dynamicCategories is now imported directly from utils.js
@@ -67,14 +65,11 @@ function renderCategoryGrid() {
 async function fetchProducts(navigation = 'init', categoryOverride = null) {
     const productGrid = document.getElementById('all-product-grid');
     const noProductsMsg = document.getElementById('no-products-found');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-    const pageInfo = document.getElementById('page-info');
-
-    // Luôn áp dụng hiệu ứng mờ khi bắt đầu tải dữ liệu mới
-    productGrid.classList.add('loading-fade');
+    const loadMoreBtn = document.getElementById('load-more-btn');
 
     if (navigation === 'init') {
+        // Áp dụng hiệu ứng mờ chỉ khi tải mới
+        productGrid.classList.add('loading-fade');
         productGrid.innerHTML = Array(PAGE_SIZE).fill(0).map(() => `
             <div class="skeleton-card">
                 <div class="skeleton skeleton-img"></div>
@@ -105,8 +100,6 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Reset khi đổi bộ lọc hoặc khởi tạo
         if (navigation === 'init') {
             lastVisible = null;
-            firstVisible = null;
-            currentPage = 1;
         }
 
         // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục đang xem
@@ -216,12 +209,10 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                 break; // END OLD SORTING LOGIC
         } */
 
-        // Thêm logic phân trang vào Query
+        // Thêm logic tải thêm vào Query
         let finalQuery;
-        if (navigation === 'next' && lastVisible) {
+        if (navigation === 'load-more' && lastVisible) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-        } else if (navigation === 'prev' && firstVisible) {
-            finalQuery = query(productsQuery, endBefore(firstVisible), limitToLast(PAGE_SIZE));
         } else {
             finalQuery = query(productsQuery, limit(PAGE_SIZE));
         }
@@ -229,17 +220,18 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         const querySnapshot = await getDocs(finalQuery);
         
         if (querySnapshot.empty) {
-            if (navigation === 'next') {
-                currentPage--;
-                return;
+            if (navigation === 'init') {
+                productGrid.innerHTML = '';
+                noProductsMsg.style.display = 'block';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } else if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
             }
-            productGrid.innerHTML = '';
-            noProductsMsg.style.display = 'block';
+            productGrid.classList.remove('loading-fade');
             return;
         }
 
-        // Lưu vết documents để phân trang lần sau
-        firstVisible = querySnapshot.docs[0];
+        // Lưu vết documents để tải lần sau
         lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
 
         let htmlContent = '';
@@ -261,27 +253,40 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             return renderProductCard(p, p.id, favs, '../product/index.html');
         }).join('');
 
-        // Hiển thị nội dung và kích hoạt animation fade-in
+        // Hiển thị nội dung
+        if (navigation === 'init') {
+            productGrid.innerHTML = htmlContent;
+            // Reset animation fade-in cho grid
+            productGrid.classList.remove('fade-in-content');
+            void productGrid.offsetWidth; // Force reflow
+            productGrid.classList.add('fade-in-content');
+        } else {
+            // Nối thêm vào cuối grid
+            productGrid.insertAdjacentHTML('beforeend', htmlContent);
+        }
         productGrid.classList.remove('loading-fade');
-        productGrid.innerHTML = htmlContent;
         
-        // Reset animation fade-in cho grid
-        productGrid.classList.remove('fade-in-content');
-        void productGrid.offsetWidth; // Kỹ thuật Force reflow để trình duyệt nhận diện lại animation
-        productGrid.classList.add('fade-in-content');
-        
-        // Cập nhật trạng thái nút
-        if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;
-        if (prevBtn) prevBtn.disabled = currentPage === 1;
-        // Kiểm tra xem có trang tiếp theo không (Lookahead logic tương tự trang Flash Sale)
+        // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm
         const nextQueryCheck = query(productsQuery, startAfter(lastVisible), limit(1));
         const nextSnap = await getDocs(nextQueryCheck);
-        if (nextBtn) nextBtn.disabled = nextSnap.empty;
+        if (loadMoreBtn) {
+            loadMoreBtn.style.display = nextSnap.empty ? 'none' : 'block';
+            // Cập nhật lại sự kiện click nếu chưa có
+            loadMoreBtn.onclick = () => {
+                loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
+                loadMoreBtn.disabled = true;
+                fetchProducts('load-more').then(() => {
+                    loadMoreBtn.innerHTML = 'Xem thêm sản phẩm';
+                    loadMoreBtn.disabled = false;
+                });
+            };
+        }
 
     } catch (error) {
         console.error("Lỗi lấy dữ liệu sản phẩm:", error);
         productGrid.classList.remove('loading-fade');
         productGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 5rem; color: red;">Không thể tải sản phẩm. Vui lòng thử lại sau.</p>';
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
     }
 }
 

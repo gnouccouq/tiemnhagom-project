@@ -1,6 +1,7 @@
-const functions = require('firebase-functions');
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const functions = require('firebase-functions/v1');
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const admin = require('firebase-admin');
+const kiotviet = require('./kiotviet');
 
 // Initialize Firebase Admin SDK if not already initialized
 admin.initializeApp();
@@ -324,10 +325,74 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
             return newOrderRef.id;
         });
 
+        // 6. Gửi đơn hàng sang KiotViet
+        try {
+            const kvOrderDetails = orderItems.map(item => ({
+                productCode: item.id, // Giả sử ID sản phẩm trên Firestore trùng với Mã hàng KiotViet
+                quantity: item.quantity,
+                price: item.price
+            }));
+
+            const kvOrderData = {
+                description: `Đơn hàng từ Website - Mã đơn: ${orderId}\nPhương thức: ${shippingMethod}\nThanh toán: ${paymentMethod || 'COD'}`,
+                totalPayment: 0, 
+                method: paymentMethod || "COD",
+                orderDetails: kvOrderDetails
+            };
+
+            if (shippingAddress) {
+                kvOrderData.orderDelivery = {
+                    receiver: shippingAddress.name || "Khách mua web",
+                    contactNumber: shippingAddress.phone || "",
+                    address: `${shippingAddress.street || ''}, ${shippingAddress.ward || ''}, ${shippingAddress.district || ''}, ${shippingAddress.city || ''}`.replace(/^, | , /g, '').trim(),
+                    deliveryCode: shippingMethod,
+                    price: shippingFee || 0
+                };
+            }
+
+            if (discountAmount > 0) {
+                kvOrderData.discount = discountAmount;
+            }
+
+            await kiotviet.createOrderInKiotViet(kvOrderData);
+            functions.logger.info(`Đã gửi đơn hàng ${orderId} sang KiotViet thành công.`);
+        } catch (kvError) {
+            functions.logger.error(`Lỗi gửi đơn hàng ${orderId} sang KiotViet:`, kvError);
+            // Không throw error để người dùng vẫn thấy đặt hàng thành công trên web
+        }
+
         return { success: true, orderId: orderId };
 
     } catch (error) {
         console.error("Order Creation Error:", error);
         throw new HttpsError("internal", error.message);
+    }
+});
+
+// Hàm hỗ trợ đồng bộ toàn bộ sản phẩm lên KiotViet (gọi dễ dàng qua trình duyệt)
+exports.syncAllProductsToKV = onRequest({ cors: true, timeoutSeconds: 540 }, async (req, res) => {
+    try {
+        const productsSnap = await db.collection('products').get();
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const doc of productsSnap.docs) {
+            const productData = { id: doc.id, ...doc.data() };
+            try {
+                await kiotviet.createProductInKiotViet(productData);
+                successCount++;
+                functions.logger.info(`Đồng bộ thành công SP: ${productData.name}`);
+            } catch (error) {
+                failCount++;
+            }
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Đồng bộ hoàn tất. Đã đẩy lên thành công: ${successCount} sản phẩm. Lỗi/Trùng lặp: ${failCount} sản phẩm.` 
+        });
+    } catch (error) {
+        console.error("Lỗi đồng bộ sản phẩm:", error);
+        res.status(500).json({ error: error.message });
     }
 });
