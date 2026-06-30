@@ -205,6 +205,25 @@ async function fetchProductDetail() {
 
             const additionalImages = p.additionalImages || [];
             allImages = [p.imageUrl, ...additionalImages];
+
+            // Thêm ảnh từ biến thể màu sắc vào danh sách ảnh
+            if (p.colorVariants) {
+                p.colorVariants.forEach(v => {
+                    if (v && v.imageUrl && !allImages.includes(v.imageUrl)) {
+                        allImages.push(v.imageUrl);
+                    }
+                });
+            }
+
+            // Thêm ảnh từ biến thể họa tiết vào danh sách ảnh
+            if (p.patternVariants) {
+                p.patternVariants.forEach(v => {
+                    if (v && v.imageUrl && !allImages.includes(v.imageUrl)) {
+                        allImages.push(v.imageUrl);
+                    }
+                });
+            }
+
             currentIndex = 0;
             startAutoSlide();
 
@@ -761,8 +780,13 @@ window.selectColor = (colorName, imageUrl) => {
 
     // Đổi ảnh chính nếu biến thể có ảnh đi kèm
     if (imageUrl) {
-        const mainImg = document.getElementById('main-product-img');
-        if (mainImg) mainImg.src = imageUrl;
+        const index = allImages.indexOf(imageUrl);
+        if (index !== -1) {
+            window.changeMainImage(imageUrl, index, true);
+        } else {
+            const mainImg = document.getElementById('main-product-img');
+            if (mainImg) mainImg.src = imageUrl;
+        }
     }
     showToast(`Đã chọn màu: ${colorName}`);
 };
@@ -804,8 +828,13 @@ window.selectPattern = (patternName, imageUrl) => {
     if (qtyPlusBtn) qtyPlusBtn.disabled = isDisabled;
     // Đổi ảnh chính nếu biến thể có ảnh đi kèm
     if (imageUrl) {
-        const mainImg = document.getElementById('main-product-img');
-        if (mainImg) mainImg.src = imageUrl;
+        const index = allImages.indexOf(imageUrl);
+        if (index !== -1) {
+            window.changeMainImage(imageUrl, index, true);
+        } else {
+            const mainImg = document.getElementById('main-product-img');
+            if (mainImg) mainImg.src = imageUrl;
+        }
     }
     showToast(`Đã chọn họa tiết: ${patternName}`);
 };
