@@ -166,21 +166,28 @@ async function fetchProductDetail() {
         if (docSnap.exists()) {
             const p = docSnap.data();
             
-            // Nếu không có ảnh đại diện, lấy ảnh từ biến thể màu sắc hoặc họa tiết
-            if (!p.imageUrl) {
+            // Nếu không có ảnh đại diện, hoặc ảnh là placeholder thì lấy ảnh từ biến thể màu sắc hoặc họa tiết
+            const isPlaceholder = !p.imageUrl || p.imageUrl.includes('placehold.co') || p.imageUrl.includes('via.placeholder.com');
+            if (isPlaceholder) {
+                let variantImage = null;
                 if (p.colorVariants && p.colorVariants.length > 0) {
                     const firstColorWithImage = p.colorVariants.find(v => v && v.imageUrl);
-                    if (firstColorWithImage) p.imageUrl = firstColorWithImage.imageUrl;
+                    if (firstColorWithImage) variantImage = firstColorWithImage.imageUrl;
                 }
-                if (!p.imageUrl && p.patternVariants && p.patternVariants.length > 0) {
+                if (!variantImage && p.patternVariants && p.patternVariants.length > 0) {
                     const firstPatternWithImage = p.patternVariants.find(v => v && v.imageUrl);
-                    if (firstPatternWithImage) p.imageUrl = firstPatternWithImage.imageUrl;
+                    if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
                 }
-                if (!p.imageUrl && p.patterns && typeof p.patterns[0] === 'object') {
+                if (!variantImage && p.patterns && typeof p.patterns[0] === 'object') {
                     const firstPatternWithImage = p.patterns.find(v => v && v.imageUrl);
-                    if (firstPatternWithImage) p.imageUrl = firstPatternWithImage.imageUrl;
+                    if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
                 }
-                if (!p.imageUrl) p.imageUrl = 'https://placehold.co/800x800?text=No+Image';
+                
+                if (variantImage) {
+                    p.imageUrl = variantImage;
+                } else if (!p.imageUrl) {
+                    p.imageUrl = 'https://placehold.co/800x800?text=No+Image';
+                }
             }
             
             currentProductData = p;

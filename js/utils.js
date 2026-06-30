@@ -635,21 +635,28 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     let finalImageUrl = product.thumbUrl || product.imageUrl;
-    if (!finalImageUrl) {
+    const isPlaceholder = !finalImageUrl || finalImageUrl.includes('placehold.co') || finalImageUrl.includes('via.placeholder.com');
+    
+    if (isPlaceholder) {
+        let variantImage = null;
         if (product.colorVariants && product.colorVariants.length > 0) {
             const firstColorWithImage = product.colorVariants.find(v => v && v.imageUrl);
-            if (firstColorWithImage) finalImageUrl = firstColorWithImage.imageUrl;
+            if (firstColorWithImage) variantImage = firstColorWithImage.imageUrl;
         }
-        if (!finalImageUrl && product.patternVariants && product.patternVariants.length > 0) {
+        if (!variantImage && product.patternVariants && product.patternVariants.length > 0) {
             const firstPatternWithImage = product.patternVariants.find(v => v && v.imageUrl);
-            if (firstPatternWithImage) finalImageUrl = firstPatternWithImage.imageUrl;
+            if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
         }
-        // Thử xem patterns cũ (nếu có dạng object mảng)
-        if (!finalImageUrl && product.patterns && typeof product.patterns[0] === 'object') {
+        if (!variantImage && product.patterns && typeof product.patterns[0] === 'object') {
             const firstPatternWithImage = product.patterns.find(v => v && v.imageUrl);
-            if (firstPatternWithImage) finalImageUrl = firstPatternWithImage.imageUrl;
+            if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
         }
-        if (!finalImageUrl) finalImageUrl = 'https://placehold.co/300x300?text=No+Image';
+        
+        if (variantImage) {
+            finalImageUrl = variantImage;
+        } else if (!finalImageUrl) {
+            finalImageUrl = 'https://placehold.co/300x300?text=No+Image';
+        }
     }
 
     return `
