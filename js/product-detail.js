@@ -165,6 +165,24 @@ async function fetchProductDetail() {
 
         if (docSnap.exists()) {
             const p = docSnap.data();
+            
+            // Nếu không có ảnh đại diện, lấy ảnh từ biến thể màu sắc hoặc họa tiết
+            if (!p.imageUrl) {
+                if (p.colorVariants && p.colorVariants.length > 0) {
+                    const firstColorWithImage = p.colorVariants.find(v => v && v.imageUrl);
+                    if (firstColorWithImage) p.imageUrl = firstColorWithImage.imageUrl;
+                }
+                if (!p.imageUrl && p.patternVariants && p.patternVariants.length > 0) {
+                    const firstPatternWithImage = p.patternVariants.find(v => v && v.imageUrl);
+                    if (firstPatternWithImage) p.imageUrl = firstPatternWithImage.imageUrl;
+                }
+                if (!p.imageUrl && p.patterns && typeof p.patterns[0] === 'object') {
+                    const firstPatternWithImage = p.patterns.find(v => v && v.imageUrl);
+                    if (firstPatternWithImage) p.imageUrl = firstPatternWithImage.imageUrl;
+                }
+                if (!p.imageUrl) p.imageUrl = 'https://placehold.co/800x800?text=No+Image';
+            }
+            
             currentProductData = p;
 
             let isOutOfStock = (p.stock || 0) <= 0; // Default to main product stock

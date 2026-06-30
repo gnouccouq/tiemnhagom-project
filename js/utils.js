@@ -634,11 +634,29 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
     const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
+    let finalImageUrl = product.thumbUrl || product.imageUrl;
+    if (!finalImageUrl) {
+        if (product.colorVariants && product.colorVariants.length > 0) {
+            const firstColorWithImage = product.colorVariants.find(v => v && v.imageUrl);
+            if (firstColorWithImage) finalImageUrl = firstColorWithImage.imageUrl;
+        }
+        if (!finalImageUrl && product.patternVariants && product.patternVariants.length > 0) {
+            const firstPatternWithImage = product.patternVariants.find(v => v && v.imageUrl);
+            if (firstPatternWithImage) finalImageUrl = firstPatternWithImage.imageUrl;
+        }
+        // Thử xem patterns cũ (nếu có dạng object mảng)
+        if (!finalImageUrl && product.patterns && typeof product.patterns[0] === 'object') {
+            const firstPatternWithImage = product.patterns.find(v => v && v.imageUrl);
+            if (firstPatternWithImage) finalImageUrl = firstPatternWithImage.imageUrl;
+        }
+        if (!finalImageUrl) finalImageUrl = 'https://placehold.co/300x300?text=No+Image';
+    }
+
     return `
     <div class="product-card ${sparkleClass} ${outOfStockClass}">
         <div class="product-card-image">
             <a href="${linkBase}?id=${id}">
-                <img src="${product.thumbUrl || product.imageUrl || 'https://placehold.co/300x300?text=No+Image'}" 
+                <img src="${finalImageUrl}" 
                      alt="${product.name}" loading="lazy" width="300" height="300">
             </a>
             ${isOutOfStock ? stockBadge : saleBadge}
@@ -648,7 +666,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
-                <button class="quick-add-btn" onclick="addToCart({id: '${id}', name: '${product.name.replace(/'/g, "\\'")}', price: ${currentPrice}, image: '${product.imageUrl}', quantity: 1, category: '${product.category}'})" title="Thêm nhanh vào giỏ">
+                <button class="quick-add-btn" onclick="addToCart({id: '${id}', name: '${product.name.replace(/'/g, "\\'")}', price: ${currentPrice}, image: '${finalImageUrl}', quantity: 1, category: '${product.category}'})" title="Thêm nhanh vào giỏ">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"></path>
                     </svg>
