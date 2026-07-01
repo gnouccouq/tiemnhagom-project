@@ -1333,13 +1333,6 @@ body {
     font-weight: 400;
 }
 
-.sale-badge {
-    border-radius: 0 0 8px 0;
-    top: 0;
-    left: 0;
-    padding: 4px 10px;
-    font-size: 0.7rem;
-}
 
 section {
     padding: 4rem 5%;
@@ -7087,3 +7080,152 @@ border-radius: 4px; }
 
 
 
+/* ==========================================================================
+   Admin Modal Styles
+   ========================================================================== */
+.admin-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 2000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.5); 
+    backdrop-filter: blur(4px);
+}
+
+.admin-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-modal-content {
+    background-color: #fcfcfc;
+    margin: auto;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    z-index: 1;
+}
+
+.admin-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-black);
+    font-family: var(--font-serif);
+}
+
+.admin-modal-close {
+    color: #999;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    line-height: 1;
+    transition: color 0.2s;
+    padding: 0;
+}
+
+.admin-modal-close:hover,
+.admin-modal-close:focus {
+    color: var(--error-red);
+    text-decoration: none;
+}
+
+.admin-modal-body {
+    padding: 25px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Tweak inside modal */
+.admin-modal-body .admin-card {
+    box-shadow: none;
+    border: 1px solid #eee;
+    margin-bottom: 0;
+}
+}
+
+        background-color: rgba(247, 246, 242, 0.85) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
+        padding: 8px 0;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+
+    /* ß║¿n Bottom Nav khi ß╗ƒ ─æß║ºu trang chß╗º ─æß╗â xem full banner */
+    body.home-page .mobile-bottom-nav {
+        transform: translateY(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Hiß╗çn lß║íi Bottom Nav khi cuß╗Ön xuß╗æng */
+    body.home-page .mobile-bottom-nav.scrolled-show {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    /* ─Éß╗òi chiß╗üu cao banner (Hero) ─æß╗â trß║úi full m├án h├¼nh tr├¬n trang chß╗º khi Bottom Bar bß╗ï ß║⌐n, ß╗ƒ 
+trang kh├íc vß║½n t├¡nh to├ín ─æß╗â trß╗½ hao */
+    body:not(.home-page) .hero-carousel {
+    body.home-page .hero-carousel {
+        height: 100vh !important;
+    }
+        color: #8e8e93;
+        font-size: 0.65rem;
+        font-weight: 500;
+        gap: 3px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    .bottom-nav-item svg {
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s;
+    .bottom-nav-item:hover,
+    .bottom-nav-item:active,
+    .bottom-nav-item.active {
+        color: var(--text-black) !important;
+    .bottom-nav-item.active svg {
+        transform: translateY(-2px) scale(1.05);
+        stroke-width: 1.8;
+    .bottom-nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        width: 4px;
+        height: 4px;
+        background-color: var(--text-black);
+        border-radius: 50%;
+        animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    /* Flash Sale item style */
+    .bottom-nav-item.flash-sale-bottom {
+        color: #e74c3c;
+    .bottom-nav-item.flash-sale-bottom.active::after {
+        background-color: #e74c3c;
+}
+
+/* ==========================================================================
