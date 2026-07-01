@@ -2,12 +2,14 @@ import {
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES // Import dynamicCategories directly
 } from "./utils.js";
 import { 
-    collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot
+    collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Cấu hình phân trang
 const PAGE_SIZE = 10; // Tải mỗi lần 10 sản phẩm
 let lastVisible = null; // Document cuối cùng của trang hiện tại
+let currentTotalCount = 0; // Tổng số sản phẩm của query hiện tại
+let currentLoadedCount = 0; // Số sản phẩm đã tải
 let activeSubCategory = null; // Lưu trữ danh mục con từ URL
 let searchTimeout; // Biến để xử lý debounce cho tìm kiếm (no change)
 // dynamicCategories is now imported directly from utils.js
@@ -215,6 +217,17 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(PAGE_SIZE));
         } else {
             finalQuery = query(productsQuery, limit(PAGE_SIZE));
+            // Reset state
+            currentLoadedCount = 0;
+            if (!hasSearchTerm) {
+                try {
+                    const snapCount = await getCountFromServer(productsQuery);
+                    currentTotalCount = snapCount.data().count;
+                } catch (e) {
+                    console.error("Lỗi đếm số lượng:", e);
+                    currentTotalCount = 0;
+                }
+            }
         }
 
         const querySnapshot = await getDocs(finalQuery);
@@ -267,19 +280,28 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         productGrid.classList.remove('loading-fade');
         
         // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm
-        const nextQueryCheck = query(productsQuery, startAfter(lastVisible), limit(1));
-        const nextSnap = await getDocs(nextQueryCheck);
+        if (hasSearchTerm) {
+            currentTotalCount = finalResults.length;
+            currentLoadedCount = finalResults.length;
+        } else {
+            currentLoadedCount += finalResults.length;
+        }
+
         if (loadMoreBtn) {
-            loadMoreBtn.style.display = nextSnap.empty ? 'none' : 'block';
-            // Cập nhật lại sự kiện click nếu chưa có
-            loadMoreBtn.onclick = () => {
-                loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
-                loadMoreBtn.disabled = true;
-                fetchProducts('load-more').then(() => {
-                    loadMoreBtn.innerHTML = 'Xem thêm sản phẩm';
-                    loadMoreBtn.disabled = false;
-                });
-            };
+            const remaining = currentTotalCount - currentLoadedCount;
+            if (remaining > 0 && !hasSearchTerm) { // Ẩn phân trang cho trường hợp search
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.innerHTML = `Xem thêm ${remaining} sản phẩm`;
+                loadMoreBtn.onclick = () => {
+                    loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
+                    loadMoreBtn.disabled = true;
+                    fetchProducts('load-more').then(() => {
+                        loadMoreBtn.disabled = false;
+                    });
+                };
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
 
     } catch (error) {
