@@ -649,6 +649,8 @@ async function initBannerManagement() {
                     <p style="font-size: 0.75rem; color: #666; margin: 5px 0;">${b.subtitle || '<em style="color:#ccc">(Trống)</em>'}</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
+                    <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 8px;" onclick="window.moveBannerUp(${idx})" ${idx === 0 ? 'disabled' : ''} title="Lên trên">▲</button>
+                    <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 8px;" onclick="window.moveBannerDown(${idx})" ${idx === currentBanners.length - 1 ? 'disabled' : ''} title="Xuống dưới">▼</button>
                     <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 8px;" onclick="window.editBanner(${idx})">Sửa</button>
                     <button class="btn-delete" style="font-size: 0.7rem;" onclick="window.deleteBanner(${idx})">Xóa</button>
                 </div>
@@ -678,6 +680,24 @@ async function initBannerManagement() {
         currentBanners.splice(idx, 1);
         await setDoc(bannerRef, { slides: currentBanners });
         showToast("Đã xóa slide banner");
+        renderBanners();
+    };
+
+    window.moveBannerUp = async (idx) => {
+        if (idx <= 0) return;
+        const temp = currentBanners[idx];
+        currentBanners[idx] = currentBanners[idx - 1];
+        currentBanners[idx - 1] = temp;
+        await setDoc(bannerRef, { slides: currentBanners });
+        renderBanners();
+    };
+
+    window.moveBannerDown = async (idx) => {
+        if (idx >= currentBanners.length - 1) return;
+        const temp = currentBanners[idx];
+        currentBanners[idx] = currentBanners[idx + 1];
+        currentBanners[idx + 1] = temp;
+        await setDoc(bannerRef, { slides: currentBanners });
         renderBanners();
     };
 
