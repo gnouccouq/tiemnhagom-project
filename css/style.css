@@ -7254,3 +7254,72 @@ footer {
         margin-top: 5px;
     }
 }
+
+/* T?i uu danh sách s?n ph?m trên Mobile */
+@media (max-width: 768px) {
+    #admin-product-list tr {
+        display: grid !important;
+        grid-template-columns: 70px 1fr auto;
+        grid-template-areas:
+            "img name name"
+            "img price stock"
+            "id action action";
+        gap: 5px 12px;
+        padding: 12px !important;
+        align-items: center;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 12px !important;
+    }
+    
+    #admin-product-list td {
+        display: flex !important;
+        padding: 0 !important;
+        border: none !important;
+        align-items: center;
+        font-size: 0.85rem;
+    }
+    
+    #admin-product-list td::before {
+        display: none !important;
+    }
+
+    /* ID */
+    #admin-product-list td:nth-child(1) { grid-area: id; color: #888; font-size: 0.75rem; }
+    
+    /* Image */
+    #admin-product-list td:nth-child(2) { grid-area: img; justify-content: center; }
+    #admin-product-list td:nth-child(2) img { width: 70px !important; height: 70px !important; border-radius: 6px; }
+    
+    /* Name */
+    #admin-product-list td:nth-child(3) { grid-area: name; font-size: 0.95rem; font-weight: bold; align-items: flex-start; }
+    
+    /* Price */
+    #admin-product-list td:nth-child(4) { grid-area: price; color: #d97706; font-weight: 600; font-size: 0.9rem; }
+    
+    /* Stock */
+    #admin-product-list td:nth-child(6) { grid-area: stock; justify-content: flex-end; }
+    #admin-product-list td:nth-child(6)::before { content: "Kho: "; display: inline-block !important; font-weight: normal; text-transform: none; color: #888; margin-right: 4px; font-size: 0.8rem; }
+    
+    /* Actions (Delete btn) */
+    #admin-product-list td:nth-child(9) { grid-area: action; justify-content: flex-end; }
+    #admin-product-list td:nth-child(9) .btn-delete { padding: 4px 8px; font-size: 0.75rem; background: #fee2e2; border-radius: 4px; }
+    
+    /* Hide on mobile: V?n, Ðánh giá, Gi?m giá */
+    #admin-product-list td:nth-child(5),
+    #admin-product-list td:nth-child(7),
+    #admin-product-list td:nth-child(8) {
+        display: none !important;
+    }
+}
+
+
+@media (max-width: 768px) {
+    #btn-open-add-product {
+        bottom: 90px !important;
+        right: 20px !important;
+        padding: 12px 20px !important;
+    }
+}
+
