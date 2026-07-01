@@ -658,6 +658,7 @@ async function fetchRelatedProducts(currentProductId, currentCategory) {
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
             if (doc.id !== currentProductId && count < 10) { // Hiển thị tối đa 10 sản phẩm (2 hàng x 5 cột)
                 // Truyền './index.html' làm linkBase vì chúng ta đang ở trong thư mục /product/
                 htmlContent += renderProductCard(doc.data(), doc.id, [], './index.html');
@@ -692,7 +693,7 @@ async function fetchRecentlyViewed(currentProductId) {
         let htmlContent = '';
         for (const id of historyToShow) {
             const pSnap = await getDoc(doc(db, "products", id));
-            if (pSnap.exists()) {
+            if (pSnap.exists() && !pSnap.data().isHidden) {
                 // Dùng renderProductCard từ utils, linkBase là './index.html'
                 htmlContent += renderProductCard(pSnap.data(), id, [], './index.html');
             }

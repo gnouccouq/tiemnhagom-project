@@ -243,8 +243,8 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        // Lọc Substring client-side nếu có search term
-        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Lọc Substring client-side nếu có search term và lọc sản phẩm bị ẩn
+        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => !p.isHidden);
         const finalResults = hasSearchTerm 
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;

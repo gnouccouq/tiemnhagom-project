@@ -1625,6 +1625,7 @@ productForm.addEventListener('submit', async (e) => {
         seoTitle: document.getElementById('seoTitle').value.trim(),
         seoDescription: document.getElementById('seoDescription').value.trim(),
         slug: document.getElementById('slug').value.trim(),
+        isHidden: document.getElementById('product-is-hidden').checked,
         updatedAt: new Date().toISOString()
     };
 
@@ -1750,7 +1751,10 @@ function renderAdminProductTable() {
             <tr>
                 <td data-label="ID"><small>${p.id}</small></td>
                 <td data-label="Ảnh"><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td data-label="Tên"><a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a></td>
+                <td data-label="Tên">
+                    <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
+                    ${p.isHidden ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #ffeeba; color: #856404; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Đang ẩn</span>' : ''}
+                </td>
                 <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
                 <td data-label="Vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)} VND</td>
                 <td data-label="Kho">${stockDisplay}</td>
@@ -1916,6 +1920,7 @@ async function editProduct(id) {
             document.getElementById('seoTitle').value = p.seoTitle || '';
             document.getElementById('seoDescription').value = p.seoDescription || '';
             document.getElementById('slug').value = p.slug || '';
+            document.getElementById('product-is-hidden').checked = p.isHidden || false;
             
             // Lưu URL ảnh hiện tại để không bị mất nếu không upload ảnh mới
             document.getElementById('productId').dataset.currentImageUrl = p.imageUrl;

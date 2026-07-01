@@ -49,6 +49,7 @@ async function fetchFeaturedProducts() {
         let htmlContent = ''; // Sử dụng biến tạm để tối ưu hiệu suất
 
         querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm nào.</p>';
@@ -134,6 +135,7 @@ async function fetchSaleProducts() {
 
         let htmlContent = '';
         querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
         });
 
@@ -220,6 +222,7 @@ async function fetchRecommendations() {
         const querySnapshot = await getDocs(q);
 
         querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
             // Không hiện lại sản phẩm đã nằm trong lịch sử xem gần đây
             if (!historyIds.slice(0, 4).includes(doc.id)) {
                 htmlContent += renderProductCard(doc.data(), doc.id, [], 'product/index.html');
