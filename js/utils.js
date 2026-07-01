@@ -604,8 +604,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const priceHtml = hasSale
-        ? `<p class="price" style="margin-bottom: 2px;"><span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> ${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</p>`
-        : `<p class="price" style="margin-bottom: 2px;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
+        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> <span style="white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
+        : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
 
     let memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
     try {
@@ -687,7 +687,6 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             </a>
             <div class="product-rating-row">
                 <div class="rating-mini" style="display: none;">${starsHtml}</div>
-                <span class="sold-count">Đã bán ${soldCount}</span>
             </div>
             <div class="product-price-block">
                 ${priceHtml}

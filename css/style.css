@@ -1377,19 +1377,7 @@ body {
     letter-spacing: -1px;
 }
 
-.sold-count {
-    color: #888;
-    font-size: 0.7rem;
-    font-weight: 400;
-}
 
-.sale-badge {
-    border-radius: 0 0 8px 0;
-    top: 0;
-    left: 0;
-    padding: 4px 10px;
-    font-size: 0.7rem;
-}
 
 section {
     padding: 4rem 5%;
@@ -1473,17 +1461,21 @@ section {
     position: absolute;
     top: 15px;
     left: 15px;
-    background: #e74c3c;
-    /* Đỏ tươi hơn để thực sự nổi bật */
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    /* Dạng pill trông hiện đại hơn */
+    background: var(--bg-cream);
+    color: var(--text-black);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.5px;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: rotate(-15deg);
+    border: 1px solid #e0dcd3;
 }
 
 /* Out of Stock Styles */
