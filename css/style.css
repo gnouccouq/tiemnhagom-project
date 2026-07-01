@@ -37,17 +37,6 @@ html {
     }
 }
 
-@keyframes activeNavDot {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -289,19 +278,11 @@ body {
 }
 
 /* Khi header trong suốt, tự động đổi màu chữ/icon (trắng/đen) tương phản với ảnh nền bằng difference */
-.navbar.transparent .nav-links > li > a,
+.navbar.transparent .nav-links a,
 .navbar.transparent .nav-icon-btn,
 .navbar.transparent .user-icon-link {
     color: #fff;
     mix-blend-mode: difference;
-}
-
-/* KHÔNG áp dụng hiệu ứng tắc kè hoa cho các chữ trong bảng menu mobile (vì bảng có nền trắng) */
-@media (max-width: 992px) {
-    .navbar.transparent .nav-links > li > a {
-        color: var(--text-black) !important;
-        mix-blend-mode: normal !important;
-    }
 }
 
 /* Ép logo sang màu trắng khi header trong suốt và dùng difference để tương phản */
@@ -316,7 +297,7 @@ body {
     box-shadow: none !important;
 }
 
-.navbar.transparent .nav-links > li > a::after {
+.navbar.transparent .nav-links a::after {
     background-color: var(--card-bg);
 }
 
@@ -339,42 +320,57 @@ body {
 }
 
 .countdown-item {
-    background: transparent;
-    color: #222;
-    min-width: 60px;
-    padding: 10px 5px;
-    border: 1px solid rgba(0,0,0,0.1);
+    background: #1a1a1a;
+    color: #fff;
+    min-width: 55px;
+    padding: 8px;
+    border-radius: 6px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-shadow: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .countdown-num {
-    font-family: var(--font-serif);
-    font-size: 1.6rem;
-    font-weight: 400;
+    font-size: 1.4rem;
+    font-weight: 700;
     line-height: 1;
 }
 
 .countdown-label {
-    font-family: var(--font-sans);
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
-    margin-top: 6px;
-    color: #888;
-    letter-spacing: 1.5px;
+    margin-top: 4px;
+    opacity: 0.7;
+    letter-spacing: 0.5px;
 }
 
-/* Flash Sale Link */
+/* Hiệu ứng nổi bật cho link Flash Sale */
 .flash-sale-link {
-    color: #e74c3c;
-    font-weight: 500;
+    background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-text 3s linear infinite;
+    font-weight: 700 !important;
+}
+
+@keyframes flash-stroke {
+    0% {
+        stroke: #e74c3c;
+    }
+
+    50% {
+        stroke: #f1c40f;
+    }
+
+    100% {
+        stroke: #e74c3c;
+    }
 }
 
 .flash-sale-bottom svg {
-    stroke: #e74c3c;
-}
+    animation: flash-stroke 3s linear infinite;
 }
 
 /* Khi header trong suốt trên nền banner, dùng dải màu sáng hơn để dễ đọc */
@@ -795,17 +791,16 @@ body {
     transform-origin: center;
 }
 
-/* Benefits Section Redesign */
+/* Benefits Section */
 .benefits-bar {
-    background-color: #FAF6F0; /* Soft artisanal cream */
-    padding: 3.5rem 5%;
-    border-top: 1px solid rgba(0,0,0,0.03);
-    border-bottom: 1px solid rgba(0,0,0,0.03);
+    background-color: var(--card-bg);
+    padding: 2rem 5%;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 2rem;
     max-width: 1200px;
     margin: 0 auto;
@@ -813,48 +808,21 @@ body {
 
 .benefit-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     justify-content: center;
-    text-align: center;
-    position: relative;
-    padding: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.benefit-item:hover {
-    transform: translateY(-5px);
-}
-
-/* Vertical dividers (desktop only) */
-@media (min-width: 769px) {
-    .benefit-item:not(:last-child)::after {
-        content: '';
-        position: absolute;
-        right: -1rem; /* Half of gap */
-        top: 10%;
-        height: 80%;
-        width: 1px;
-        background-color: rgba(0,0,0,0.08);
-    }
 }
 
 .benefit-item svg {
-    color: #8C7A6B; /* Warm earthy clay color */
+    color: #5a8f79;
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    stroke-width: 1.2;
 }
 
 .benefit-item span {
-    font-family: var(--font-sans);
     font-size: 0.85rem;
-    font-weight: 500;
-    letter-spacing: 2px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: #444;
 }
 
 /* Facebook Feed Styles (Global) */
@@ -1146,15 +1114,10 @@ body {
     display: inline-block;
     background: var(--text-black);
     color: var(--bg-cream);
-    padding: 0.8rem 2.5rem;
+    padding: 1rem 2.5rem;
     text-decoration: none;
     margin-top: 1.5rem;
-    border: 1px solid var(--text-black);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    font-weight: 400;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-hero-cta {
@@ -1162,8 +1125,7 @@ body {
 }
 
 .btn-dark:hover {
-    background: transparent;
-    color: var(--text-black);
+    opacity: 0.8;
 }
 
 .btn-outline {
@@ -1171,14 +1133,10 @@ body {
     background: transparent;
     color: var(--text-black);
     border: 1px solid var(--text-black);
-    padding: 0.8rem 2.5rem;
+    padding: 0.8rem 1.5rem;
     text-decoration: none;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.3s ease;
     cursor: pointer;
-    font-weight: 400;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
 }
 
 .btn-outline:hover {
@@ -1188,18 +1146,10 @@ body {
 
 .btn-minimal {
     background: none;
-    border: 1px solid rgba(0,0,0,0.1);
-    padding: 0.5rem 1.5rem;
+    border: 1px solid var(--text-black);
+    padding: 0.5rem 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 400;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-}
-
-.btn-minimal:hover {
-    border-color: var(--text-black);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Grid */
@@ -1214,10 +1164,10 @@ body {
 
 /* Product Card */
 .product-card {
-    background-color: #fff;
-    padding: 15px;
+    background-color: var(--card-bg, #ffffff);
+    padding: 12px;
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.03));
     display: flex;
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -1225,9 +1175,10 @@ body {
 }
 
 .product-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px rgba(231, 76, 60, 0.2);
+    /* Glow effect */
     border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
 }
 
 .section-header {
@@ -1251,19 +1202,18 @@ body {
     overflow: hidden;
     background-color: #f5f5f5;
     border-radius: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .product-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
-    transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .product-card:hover .product-card-image img {
-    transform: scale(1.03);
+    transform: scale(1.1);
 }
 
 .product-card-actions {
@@ -1377,7 +1327,19 @@ body {
     letter-spacing: -1px;
 }
 
+.sold-count {
+    color: #888;
+    font-size: 0.7rem;
+    font-weight: 400;
+}
 
+.sale-badge {
+    border-radius: 0 0 8px 0;
+    top: 0;
+    left: 0;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+}
 
 section {
     padding: 4rem 5%;
@@ -1461,21 +1423,17 @@ section {
     position: absolute;
     top: 15px;
     left: 15px;
-    background: var(--bg-cream);
-    color: var(--text-black);
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    background: #e74c3c;
+    /* Đỏ tươi hơn để thực sự nổi bật */
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    /* Dạng pill trông hiện đại hơn */
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.5px;
     z-index: 10;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transform: rotate(-15deg);
-    border: 1px solid #e0dcd3;
+    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
 }
 
 /* Out of Stock Styles */
@@ -1504,12 +1462,21 @@ h2 {
     color: var(--text-black);
     width: 100%;
     display: block;
-    font-size: 2.8rem;
-    font-family: var(--font-serif);
-    font-weight: 400;
-    letter-spacing: 1px;
+    font-size: 2.2rem;
     position: relative;
     padding-bottom: 15px;
+}
+
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 1.5px;
+    background: var(--text-black);
+    opacity: 0.3;
 }
 
 /* --- Responsive Improvements --- */
@@ -3274,68 +3241,51 @@ footer {
         left: 0;
         width: 100%;
         height: 65px;
-        background-color: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background-color: var(--card-bg);
         display: flex;
         justify-content: space-around;
         align-items: center;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
         z-index: 5000;
-        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .admin-bottom-nav:not(@media) {
+        display: flex;
+        /* Đảm bảo chỉ hiện trong media query này */
     }
 
     .bottom-nav-btn {
         min-width: 0;
+        /* Cho phép các nút thu nhỏ lại */
         background: none;
         border: none;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 3px;
-        color: #8e8e93;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        gap: 4px;
+        color: #94a3b8;
+        transition: all 0.2s;
         flex: 1;
         padding: 8px 0;
         cursor: pointer;
-        position: relative;
     }
 
-    .bottom-nav-btn .icon svg {
-        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s;
-    }
-
-    .bottom-nav-btn.active .icon svg {
-        transform: translateY(-2px) scale(1.05);
-        stroke-width: 1.8;
+    .bottom-nav-btn .icon {
+        font-size: 1.2rem;
     }
 
     .bottom-nav-btn .label {
-        font-size: 0.65rem;
-        font-weight: 500;
-        font-family: var(--font-sans);
+        font-size: 0.6rem;
+        font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        transition: color 0.25s;
+        /* Cắt chữ nhãn Bottom Nav */
     }
 
-    .bottom-nav-btn:hover,
-    .bottom-nav-btn:active,
     .bottom-nav-btn.active {
-        color: var(--text-black) !important;
-    }
-
-    .bottom-nav-btn.active::after {
-        content: '';
-        position: absolute;
-        bottom: 4px;
-        width: 4px;
-        height: 4px;
-        background-color: var(--text-black);
-        border-radius: 50%;
-        animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        color: #4f46e5;
     }
 
     /* Lớp phủ khi mở sidebar */
@@ -4055,8 +4005,9 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 12px;
-    flex-wrap: wrap;
+    overflow-x: auto;
     padding: 5px 0 15px;
+    scrollbar-width: thin;
 }
 
 .thumbnail {
@@ -4747,7 +4698,7 @@ footer {
 .product-banner {
     width: 100%;
     height: 300px;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=100&w=2560&auto=format&fit=crop') no-repeat center center/cover;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=1600&auto=format&fit=crop') no-repeat center center/cover;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5825,7 +5776,9 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    /* Cho phép cuộn ngang các thumbnail */
+    scroll-behavior: smooth;
     padding-bottom: 10px;
 }
 
@@ -6573,92 +6526,30 @@ footer {
 
 /* --- Membership Card Styles --- */
 .membership-card {
-    padding: 25px;
-    border-radius: 16px;
+    padding: 1.5rem;
+    border-radius: 12px;
     color: #fff;
-    margin: 1.5rem auto;
+    margin: 1.5rem 0;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.3);
-    aspect-ratio: 1.58 / 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    max-width: 380px;
-    width: 100%;
-}
-
-.membership-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%; width: 50%; height: 100%;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-    transform: skewX(-25deg);
-    animation: card-shine 6s infinite;
-}
-
-@keyframes card-shine {
-    0% { left: -100%; }
-    20% { left: 200%; }
-    100% { left: 200%; }
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .membership-card::after {
-    content: '';
+    content: 'TIỆM NHÀ GỐM';
     position: absolute;
-    bottom: 25px;
-    right: 25px;
-    width: 80px;
-    height: 35px;
-    background-image: url('../Asset/images/logobrand.png');
-    background-size: contain;
-    background-position: right bottom;
-    background-repeat: no-repeat;
-    opacity: 0.9;
-    filter: brightness(0) invert(1);
-}
-
-.membership-card-chip {
-    width: 45px;
-    height: 35px;
-    background: linear-gradient(135deg, #d4af37, #f3e5ab, #d4af37);
-    border-radius: 6px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
-    margin-top: 10px;
-}
-
-.membership-card-chip::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 0; width: 100%; height: 1px;
-    background: rgba(0,0,0,0.2);
-}
-
-.membership-card-chip::before {
-    content: '';
-    position: absolute;
-    left: 50%; top: 0; width: 1px; height: 100%;
-    background: rgba(0,0,0,0.2);
-}
-
-.member-label {
+    bottom: 15px;
+    right: 20px;
     font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.8;
-    margin-bottom: 2px;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+    opacity: 0.5;
+    letter-spacing: 2px;
+    font-weight: 700;
 }
 
 .membership-card .tier-name {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
     text-transform: uppercase;
-    font-size: 1.5rem;
-    font-family: monospace;
-    margin-bottom: 5px;
 }
 
 .tier-progress-bar {
@@ -6679,7 +6570,6 @@ footer {
 .tier-discount {
     font-size: 0.85rem;
     opacity: 0.9;
-    letter-spacing: 0.5px;
 }
 
 .tier-progress-box {
@@ -6913,96 +6803,6 @@ footer {
     display: none;
 }
 
-/* ==========================================================================
-   Admin Modal Styles
-   ========================================================================== */
-.admin-modal {
-    display: none; 
-    position: fixed; 
-    z-index: 2000; 
-    left: 0;
-    top: 0;
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.5); 
-    backdrop-filter: blur(4px);
-}
-
-.admin-modal.show {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.admin-modal-content {
-    background-color: #fcfcfc;
-    margin: auto;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: modalFadeIn 0.3s ease-out;
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.admin-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 25px;
-    background-color: #fff;
-    border-bottom: 1px solid #eee;
-    z-index: 1;
-}
-
-.admin-modal-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: var(--text-black);
-    font-family: var(--font-serif);
-}
-
-.admin-modal-close {
-    color: #999;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    background: none;
-    border: none;
-    line-height: 1;
-    transition: color 0.2s;
-    padding: 0;
-}
-
-.admin-modal-close:hover,
-.admin-modal-close:focus {
-    color: var(--error-red);
-    text-decoration: none;
-}
-
-.admin-modal-body {
-    padding: 25px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-/* Tweak inside modal */
-.admin-modal-body .admin-card {
-    box-shadow: none;
-    border: 1px solid #eee;
-    margin-bottom: 0;
-}
-}
-
 @media (max-width: 992px) {
     .header-col-right {
         gap: 0.5rem;
@@ -7030,33 +6830,18 @@ footer {
         bottom: 0 !important;
         left: 0;
         width: 100%;
-        background-color: rgba(247, 246, 242, 0.85) !important;
+        background-color: rgba(247, 246, 242, 0.6) !important;
         /* Hiệu ứng trong suốt giống header */
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
+        backdrop-filter: blur(35px);
+        -webkit-backdrop-filter: blur(35px);
+        box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
         z-index: 9999 !important;
         justify-content: space-around;
-        padding: 8px 0;
+        padding: 10px 0;
         border-top: 1px solid rgba(0, 0, 0, 0.05);
-        padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
         /* Fix khoảng hở triệt để */
         margin: 0 !important;
-        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    }
-
-    /* Ẩn Bottom Nav khi ở đầu trang chủ để xem full banner */
-    body.home-page .mobile-bottom-nav {
-        transform: translateY(100%);
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    /* Hiện lại Bottom Nav khi cuộn xuống */
-    body.home-page .mobile-bottom-nav.scrolled-show {
-        transform: translateY(0);
-        opacity: 1;
-        pointer-events: auto;
     }
 
     /* Đẩy các nút nổi lên để không đè lên thanh Bottom Nav (khoảng 80px) */
@@ -7065,12 +6850,9 @@ footer {
         bottom: 85px !important;
     }
 
-    /* Đổi chiều cao banner (Hero) để trải full màn hình trên trang chủ khi Bottom Bar bị ẩn, ở trang khác vẫn tính toán để trừ hao */
-    body:not(.home-page) .hero-carousel {
+    /* Thu gọn ảnh nền banner (Hero) để vừa khít vùng hiển thị còn lại, không bị Bottom Bar che mất chữ/chi tiết */
+    .hero-carousel {
         height: calc(100vh - 65px - env(safe-area-inset-bottom)) !important;
-    }
-    body.home-page .hero-carousel {
-        height: 100vh !important;
     }
 
     .bottom-nav-item {
@@ -7079,49 +6861,46 @@ footer {
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        color: #8e8e93;
+        color: #fff;
+        /* Chuyển thành trắng để phối với difference */
         font-family: var(--font-sans);
-        font-size: 0.65rem;
-        font-weight: 500;
-        gap: 3px;
+        font-size: 0.7rem;
+        gap: 4px;
         flex: 1;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
+        transition: color 0.2s ease;
+    }
+
+    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale) */
+    .bottom-nav-item:not(.flash-sale-bottom) {
+        mix-blend-mode: difference;
+    }
+
+    /* Đảm bảo Flash sale không bị ảnh hưởng */
+    .bottom-nav-item.flash-sale-bottom {
+        color: #888;
     }
 
     .bottom-nav-item svg {
-        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s;
+        transition: transform 0.2s ease;
     }
 
     .bottom-nav-item:hover,
     .bottom-nav-item:active,
     .bottom-nav-item.active {
-        color: var(--text-black) !important;
+        color: #fff;
+        /* Trắng + Difference -> Đen */
     }
 
+    .bottom-nav-item.flash-sale-bottom:hover,
+    .bottom-nav-item.flash-sale-bottom:active,
+    .bottom-nav-item.flash-sale-bottom.active {
+        color: var(--text-black);
+    }
+
+    .bottom-nav-item:hover svg,
+    .bottom-nav-item:active svg,
     .bottom-nav-item.active svg {
-        transform: translateY(-2px) scale(1.05);
-        stroke-width: 1.8;
-    }
-
-    .bottom-nav-item.active::after {
-        content: '';
-        position: absolute;
-        bottom: 2px;
-        width: 4px;
-        height: 4px;
-        background-color: var(--text-black);
-        border-radius: 50%;
-        animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-
-    /* Flash Sale item style */
-    .bottom-nav-item.flash-sale-bottom {
-        color: #e74c3c;
-    }
-
-    .bottom-nav-item.flash-sale-bottom.active::after {
-        background-color: #e74c3c;
+        transform: translateY(-2px);
     }
 
     /* Reset style mặc định cho button */
@@ -7132,194 +6911,3 @@ footer {
         padding: 0;
     }
 }
-
-/* ==========================================================================
-   VOUCHER TICKETS & ADMIN FILTERS RESPONSIVE OVERHAUL
-   ========================================================================== */
-.voucher-ticket {
-    display: flex;
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-    position: relative;
-    border: 1px solid #ebebeb;
-    min-height: 155px;
-}
-
-.voucher-ticket-left {
-    flex: 0 0 100px;
-    background: linear-gradient(135deg, var(--primary-color, #2c3e50), #1a252f);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem 0.5rem;
-    position: relative;
-}
-
-.voucher-ticket-left h3 {
-    font-size: 1.4rem;
-    margin: 0;
-    font-family: var(--font-serif);
-    text-align: center;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-    line-height: 1.1;
-}
-
-.voucher-ticket-left span {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 5px;
-    opacity: 0.85;
-}
-
-.voucher-ticket-circle-top {
-    position: absolute;
-    right: -8px;
-    top: -8px;
-    width: 16px;
-    height: 16px;
-    background: #fafafa;
-    border-radius: 50%;
-    box-shadow: inset 1px -1px 0 #ebebeb;
-}
-
-.voucher-ticket-circle-bottom {
-    position: absolute;
-    right: -8px;
-    bottom: -8px;
-    width: 16px;
-    height: 16px;
-    background: #fafafa;
-    border-radius: 50%;
-    box-shadow: inset 1px 1px 0 #ebebeb;
-}
-
-.voucher-ticket-dashed-line {
-    position: absolute;
-    right: 0;
-    top: 10px;
-    bottom: 10px;
-    width: 2px;
-    background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.3) 50%);
-    background-size: 100% 12px;
-}
-
-.voucher-ticket-right {
-    flex: 1;
-    padding: 0.8rem 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: #fff;
-    min-width: 0;
-}
-
-/* Responsive cho voucher ticket trên mobile nhỏ */
-@media (max-width: 480px) {
-    .voucher-ticket {
-        min-height: 140px;
-    }
-    .voucher-ticket-left {
-        flex: 0 0 85px;
-        padding: 0.5rem;
-    }
-    .voucher-ticket-left h3 {
-        font-size: 1.25rem;
-    }
-    .voucher-ticket-right {
-        padding: 0.6rem 0.8rem;
-    }
-}
-
-/* Responsive grid lọc đơn hàng của Admin */
-.admin-order-filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    align-items: end;
-}
-
-@media (max-width: 768px) {
-    .admin-order-filters-grid {
-        grid-template-columns: 1fr; /* Stacks fully on small screens */
-        gap: 0.8rem;
-    }
-    .admin-order-filters-grid .btn-dark {
-        width: 100%;
-        margin-top: 5px;
-    }
-}
-
-/* T?i uu danh s�ch s?n ph?m tr�n Mobile */
-@media (max-width: 768px) {
-    #admin-product-list tr {
-        display: grid !important;
-        grid-template-columns: 70px 1fr auto;
-        grid-template-areas:
-            "img name name"
-            "img price stock"
-            "id action action";
-        gap: 5px 12px;
-        padding: 12px !important;
-        align-items: center;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        margin-bottom: 12px !important;
-    }
-    
-    #admin-product-list td {
-        display: flex !important;
-        padding: 0 !important;
-        border: none !important;
-        align-items: center;
-        font-size: 0.85rem;
-    }
-    
-    #admin-product-list td::before {
-        display: none !important;
-    }
-
-    /* ID */
-    #admin-product-list td:nth-child(1) { grid-area: id; color: #888; font-size: 0.75rem; }
-    
-    /* Image */
-    #admin-product-list td:nth-child(2) { grid-area: img; justify-content: center; }
-    #admin-product-list td:nth-child(2) img { width: 70px !important; height: 70px !important; border-radius: 6px; }
-    
-    /* Name */
-    #admin-product-list td:nth-child(3) { grid-area: name; font-size: 0.95rem; font-weight: bold; align-items: flex-start; }
-    
-    /* Price */
-    #admin-product-list td:nth-child(4) { grid-area: price; color: #d97706; font-weight: 600; font-size: 0.9rem; }
-    
-    /* Stock */
-    #admin-product-list td:nth-child(6) { grid-area: stock; justify-content: flex-end; }
-    #admin-product-list td:nth-child(6)::before { content: "Kho: "; display: inline-block !important; font-weight: normal; text-transform: none; color: #888; margin-right: 4px; font-size: 0.8rem; }
-    
-    /* Actions (Delete btn) */
-    #admin-product-list td:nth-child(9) { grid-area: action; justify-content: flex-end; }
-    #admin-product-list td:nth-child(9) .btn-delete { padding: 4px 8px; font-size: 0.75rem; background: #fee2e2; border-radius: 4px; }
-    
-    /* Hide on mobile: V?n, ��nh gi�, Gi?m gi� */
-    #admin-product-list td:nth-child(5),
-    #admin-product-list td:nth-child(7),
-    #admin-product-list td:nth-child(8) {
-        display: none !important;
-    }
-}
-
-
-@media (max-width: 768px) {
-    #btn-open-add-product {
-        bottom: 90px !important;
-        right: 20px !important;
-        padding: 12px 20px !important;
-    }
-}
-
