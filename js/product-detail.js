@@ -813,7 +813,6 @@ window.selectColor = (colorName, imageUrl) => {
             if (mainImg) mainImg.src = imageUrl;
         }
     }
-    showToast(`Đã chọn màu: ${colorName}`);
 };
 
 // Hàm chọn họa tiết
@@ -861,7 +860,6 @@ window.selectPattern = (patternName, imageUrl) => {
             if (mainImg) mainImg.src = imageUrl;
         }
     }
-    showToast(`Đã chọn họa tiết: ${patternName}`);
 };
 
 // --- Logic Sửa/Xóa Đánh giá ---

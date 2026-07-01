@@ -4063,9 +4063,8 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 12px;
-    overflow-x: auto;
+    flex-wrap: wrap;
     padding: 5px 0 15px;
-    scrollbar-width: thin;
 }
 
 .thumbnail {
@@ -5834,9 +5833,7 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 10px;
-    overflow-x: auto;
-    /* Cho phép cuộn ngang các thumbnail */
-    scroll-behavior: smooth;
+    flex-wrap: wrap;
     padding-bottom: 10px;
 }
 
