@@ -513,6 +513,72 @@ function notifyOutOfStock(productName) {
 const productForm = document.getElementById('product-form');
 const productListTable = document.getElementById('admin-product-list');
 
+// --- Quản lý Modal Sản Phẩm ---
+const productModal = document.getElementById('product-modal');
+const btnOpenProductModal = document.getElementById('btn-open-add-product');
+const btnCloseProductModal = document.getElementById('btn-close-product-modal');
+
+window.openProductModal = function() {
+    if(productModal) productModal.classList.add('show');
+};
+
+window.closeProductModal = function() {
+    if(productModal) productModal.classList.remove('show');
+    if(productForm) {
+        productForm.reset();
+        document.getElementById('variant-items-container').innerHTML = '';
+        document.getElementById('pattern-variant-items-container').innerHTML = '';
+        document.getElementById('image-preview-container').innerHTML = '';
+        delete document.getElementById('productId').dataset.currentImageUrl;
+        delete document.getElementById('productId').dataset.currentAdditionalImages;
+        delete document.getElementById('productId').dataset.currentThumbUrl;
+        document.getElementById('productId').readOnly = false;
+        
+        const titleEl = document.getElementById('product-modal-title');
+        if(titleEl) titleEl.innerText = 'Thêm/Sửa sản phẩm';
+        
+        const additiveCheckbox = document.getElementById('stock-additive');
+        const stockInput = document.getElementById('stock');
+        if (additiveCheckbox) additiveCheckbox.checked = false;
+        if (stockInput) {
+            stockInput.disabled = false;
+            stockInput.placeholder = "10";
+        }
+        if (additiveCheckbox) additiveCheckbox.disabled = false;
+    }
+};
+
+if(btnOpenProductModal) {
+    btnOpenProductModal.addEventListener('click', () => {
+        window.closeProductModal(); // clean form
+        const titleEl = document.getElementById('product-modal-title');
+        if(titleEl) titleEl.innerText = 'Thêm sản phẩm mới';
+        window.openProductModal();
+    });
+}
+if(btnCloseProductModal) {
+    btnCloseProductModal.addEventListener('click', window.closeProductModal);
+}
+
+// Logic hiển thị nút Floating Action Button (Thêm sản phẩm) theo Tab
+const productSection = document.getElementById('product-section');
+if (productSection && btnOpenProductModal) {
+    // Check initial state
+    btnOpenProductModal.style.display = productSection.classList.contains('active') ? 'flex' : 'none';
+    
+    // Observe tab changes
+    const tabObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                const isActive = productSection.classList.contains('active');
+                btnOpenProductModal.style.display = isActive ? 'flex' : 'none';
+            }
+        });
+    });
+    tabObserver.observe(productSection, { attributes: true });
+}
+
+
 // Hàm hiển thị danh sách ảnh đang có trong Form (khi sửa)
 function renderImagePreviews() {
     const productIdEl = document.getElementById('productId');
@@ -1676,22 +1742,13 @@ productForm.addEventListener('submit', async (e) => {
 
         await setDoc(productRef, productData);
         showToast(`Đã lưu sản phẩm ${productId} thành công!`);
-        productForm.reset();
-        document.getElementById('variant-items-container').innerHTML = '';
-        document.getElementById('pattern-variant-items-container').innerHTML = '';
         
-        // Reset trạng thái checkbox và placeholder
-        if (additiveCheckbox) additiveCheckbox.checked = false; // Reset checkbox
-        if (stockInput) stockInput.placeholder = "10";
-
-        progressContainer.style.display = 'none';
-        document.getElementById('image-preview-container').innerHTML = '';
-        // Clear stored image URLs from dataset
-        delete document.getElementById('productId').dataset.currentImageUrl;
-        delete document.getElementById('productId').dataset.currentAdditionalImages;
-        delete document.getElementById('productId').dataset.currentThumbUrl;
-        // Reset form và clear các state khác
-        document.getElementById('productId').readOnly = false;
+        if (progressContainer) progressContainer.style.display = 'none';
+        
+        // Đóng modal, tự động dọn dẹp form
+        if (typeof window.closeProductModal === 'function') {
+            window.closeProductModal();
+        }
     } catch (error) {
         console.error("Lỗi khi lưu:", error);
         showToast("Lỗi lưu dữ liệu: " + error.message, "error");
@@ -1886,8 +1943,12 @@ async function editProduct(id) {
 
         if (docSnap.exists()) {
             const p = docSnap.data();
+            const titleEl = document.getElementById('product-modal-title');
+            if(titleEl) titleEl.innerText = 'Sửa sản phẩm: ' + (p.name || id);
+            
             // Điền dữ liệu vào form
             document.getElementById('productId').value = id;
+            document.getElementById('productId').readOnly = true;
             document.getElementById('name').value = p.name;
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = p.price;
@@ -1958,8 +2019,10 @@ async function editProduct(id) {
             // Hiển thị xem trước ảnh
             renderImagePreviews();
 
-            // Cuộn lên form để người dùng thấy
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Mở form modal
+            if (typeof window.openProductModal === 'function') {
+                window.openProductModal();
+            }
         }
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu sửa:", error);

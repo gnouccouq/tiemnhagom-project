@@ -460,159 +460,16 @@
 
         <!-- Section Quản lý Sản phẩm -->
         <div id="product-section" class="admin-section">
-            <section class="admin-grid">
-                <!-- Form thêm sản phẩm -->
-                <div class="admin-card">
-                    <h3>Thêm/Sửa sản phẩm</h3>
-                    <form id="product-form" class="admin-form">
-                        <div class="form-group">
-                            <label>Mã sản phẩm (ID tự đặt)</label>
-                            <input type="text" id="productId" required placeholder="VD: CHEN-001">
-                        </div>
-                        <div class="form-group">
-                            <label>Tên sản phẩm</label>
-                            <input type="text" id="name" required placeholder="Tên sản phẩm...">
-                        </div>
-                        <div class="form-group">
-                            <label>Phân loại</label>
-                            <select id="category" required>
-                                <option value="">-- Chọn danh mục --</option> 
-                                <!-- Danh mục sẽ được nạp động từ Firestore -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Bộ sưu tập (Chọn nhiều)</label>
-                            <div id="product-collections-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
-                                <!-- JS render checkboxes -->
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div style="display: flex; gap: 10px;">
-                                <div style="flex: 1;">
-                                    <label>Giá bán (VND)</label>
-                                    <input type="number" id="price" required placeholder="250000">
-                                </div>
-                                <div style="flex: 1;">
-                                    <label>Giá vốn (VND)</label>
-                                    <input type="number" id="cost" placeholder="150000">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Tồn kho</label>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="number" id="stock" required placeholder="10" style="flex: 1;">
-                                <label style="margin-bottom: 0; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; white-space: nowrap; cursor: pointer;">
-                                    <input type="checkbox" id="stock-additive" style="width: auto;"> Nhập thêm
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Giảm giá (%)</label>
-                            <input type="number" id="sale" min="0" max="100" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Tham gia Chương trình Đồng giá</label>
-                            <select id="flash-sale-group-select">
-                                <option value="">-- Không tham gia --</option>
-                                <!-- JS render các mức giá 39k, 49k... từ cấu hình -->
-                            </select>
-                            <small style="color: #666;">* Khi chọn, hệ thống sẽ tự tính % giảm giá về mức này.</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Hình ảnh sản phẩm (Chọn nhiều ảnh)</label>
-                            <input type="file" id="imageFile" accept="image/*" multiple>
-                            <div id="image-preview-container" class="image-preview-grid">
-                                <!-- Ảnh hiện có sẽ hiện ở đây khi nhấn Sửa -->
-                            </div>
-                            <small style="color: #666;">* Chọn file mới để thêm ảnh. Nhấn dấu X trên ảnh để xóa ảnh cũ.</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Kích thước (cm) - Dài x Rộng x Cao</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="number" id="dim-length" step="0.1" placeholder="Dài">
-                                <input type="number" id="dim-width" step="0.1" placeholder="Rộng">
-                                <input type="number" id="dim-height" step="0.1" placeholder="Cao">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Trọng lượng (gram)</label>
-                            <input type="number" id="weight" step="0.1" placeholder="VD: 250 (gram)">
-                        </div>
-                        <div class="form-group">
-                            <label>Dung tích (ml)</label>
-                            <input type="number" id="capacity" step="0.1" placeholder="VD: 300 (ml)">
-                        </div>
-                        <div class="form-group">
-                            <label>Đặc tính sản phẩm</label>
-                            <div style="display: flex; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">An toàn thực phẩm
-                                    <input type="checkbox" id="usage-food-safe">
-                                    <span class="checkmark"></span>
-                                </label>
-                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò nướng
-                                    <input type="checkbox" id="usage-oven-safe">
-                                    <span class="checkmark"></span>
-                                </label>
-                                <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò vi sóng
-                                    <input type="checkbox" id="usage-microwave-safe">
-                                    <span class="checkmark"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Chất liệu</label>
-                            <input type="text" id="material" placeholder="VD: Gốm sứ, Gỗ, Thủy tinh...">
-                        </div>
-                        <div class="form-group">
-                            <label>Xuất xứ</label>
-                            <input type="text" id="origin" placeholder="VD: Việt Nam, Nhật Bản, Trung Quốc...">
-                        </div>
-                        <div class="form-group">
-                            <label>Mô tả</label>
-                            <textarea id="description" rows="3" placeholder="Thông tin chi tiết..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Biến thể màu sắc (Màu & Ảnh riêng)</label>
-                            <div id="variant-items-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                                <!-- Biến thể màu sắc sẽ được render bằng JS -->
-                            </div>
-                            <button type="button" id="btn-add-variant" class="btn-minimal" style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm màu mới</button>
-                        </div>
-                        <div class="form-group">
-                            <label>Biến thể họa tiết (Họa tiết & Ảnh riêng)</label>
-                            <div id="pattern-variant-items-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                                <!-- Biến thể họa tiết sẽ được render bằng JS -->
-                            </div>
-                            <button type="button" id="btn-add-pattern-variant" class="btn-minimal" style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm họa tiết mới</button>
-                        </div>
-                        <hr style="margin: 2rem 0; border-top: 1px dashed #ddd;">
-                        <h4 style="margin-bottom: 1rem; font-family: var(--font-serif);">Tối ưu SEO</h4>
-                        <div class="form-group">
-                            <label>SEO Title (Tiêu đề Google)</label>
-                            <input type="text" id="seoTitle" placeholder="Để trống nếu dùng tên sản phẩm...">
-                            <small style="color: #888;">Nên dưới 60 ký tự.</small>
-                        </div>
-                        <div class="form-group">
-                            <label>SEO Description (Mô tả Google)</label>
-                            <textarea id="seoDescription" rows="2" placeholder="Mô tả ngắn gọn thu hút khách hàng click..."></textarea>
-                            <small style="color: #888;">Nên từ 150-160 ký tự.</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Slug (URL thân thiện - Không dấu, gạch ngang)</label>
-                            <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px;">
-                            <input type="checkbox" id="product-is-hidden" style="width: auto;">
-                            <label for="product-is-hidden" style="margin: 0; font-weight: bold; color: #856404; cursor: pointer;">Ẩn sản phẩm này khỏi cửa hàng</label>
-                        </div>
-                        <button type="submit" id="submit-product-btn" class="btn-dark" style="width: 100%;">Lưu sản phẩm</button>
-                    </form>
-                </div>
-
+                
                 <!-- Danh sách sản phẩm -->
                 <div class="admin-card">
-                    <h3>Danh sách sản phẩm hiện có</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">Danh sách sản phẩm hiện có</h3>
+                    </div>
+
+
+
+
                     
                     <!-- Ô tìm kiếm & Lọc sản phẩm trong quản trị -->
                     <div class="admin-search-filter-row">
@@ -1069,6 +926,169 @@
         </div>
         </main>
     </div>
+
+    <!-- Nút Thêm sản phẩm dạng Floating -->
+    <button id="btn-open-add-product" class="btn-dark" style="display: none; position: fixed; bottom: 30px; right: 30px; z-index: 999; border-radius: 50px; padding: 15px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 1rem; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Thêm sản phẩm
+    </button>
+
+    <!-- Modal Thêm/Sửa Sản phẩm -->
+    <div id="product-modal" class="admin-modal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3 id="product-modal-title">Thêm/Sửa sản phẩm</h3>
+                <button type="button" class="admin-modal-close" id="btn-close-product-modal">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="product-form" class="admin-form">
+                    <div class="form-group">
+                        <label>Mã sản phẩm (ID tự đặt)</label>
+                        <input type="text" id="productId" required placeholder="VD: CHEN-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" id="name" required placeholder="Tên sản phẩm...">
+                    </div>
+                    <div class="form-group">
+                        <label>Phân loại</label>
+                        <select id="category" required>
+                            <option value="">-- Chọn danh mục --</option> 
+                            <!-- Danh mục sẽ được nạp động từ Firestore -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bộ sưu tập (Chọn nhiều)</label>
+                        <div id="product-collections-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+                            <!-- JS render checkboxes -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label>Giá bán (VND)</label>
+                                <input type="number" id="price" required placeholder="250000">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Giá vốn (VND)</label>
+                                <input type="number" id="cost" placeholder="150000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tồn kho</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="stock" required placeholder="10" style="flex: 1;">
+                            <label style="margin-bottom: 0; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; white-space: nowrap; cursor: pointer;">
+                                <input type="checkbox" id="stock-additive" style="width: auto;"> Nhập thêm
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Giảm giá (%)</label>
+                        <input type="number" id="sale" min="0" max="100" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Tham gia Chương trình Đồng giá</label>
+                        <select id="flash-sale-group-select">
+                            <option value="">-- Không tham gia --</option>
+                            <!-- JS render các mức giá 39k, 49k... từ cấu hình -->
+                        </select>
+                        <small style="color: #666;">* Khi chọn, hệ thống sẽ tự tính % giảm giá về mức này.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Hình ảnh sản phẩm (Chọn nhiều ảnh)</label>
+                        <input type="file" id="imageFile" accept="image/*" multiple>
+                        <div id="image-preview-container" class="image-preview-grid">
+                            <!-- Ảnh hiện có sẽ hiện ở đây khi nhấn Sửa -->
+                        </div>
+                        <small style="color: #666;">* Chọn file mới để thêm ảnh. Nhấn dấu X trên ảnh để xóa ảnh cũ.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Kích thước (cm) - Dài x Rộng x Cao</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="dim-length" step="0.1" placeholder="Dài">
+                            <input type="number" id="dim-width" step="0.1" placeholder="Rộng">
+                            <input type="number" id="dim-height" step="0.1" placeholder="Cao">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Trọng lượng (gram)</label>
+                        <input type="number" id="weight" step="0.1" placeholder="VD: 250 (gram)">
+                    </div>
+                    <div class="form-group">
+                        <label>Dung tích (ml)</label>
+                        <input type="number" id="capacity" step="0.1" placeholder="VD: 300 (ml)">
+                    </div>
+                    <div class="form-group">
+                        <label>Đặc tính sản phẩm</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">An toàn thực phẩm
+                                <input type="checkbox" id="usage-food-safe">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò nướng
+                                <input type="checkbox" id="usage-oven-safe">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò vi sóng
+                                <input type="checkbox" id="usage-microwave-safe">
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Chất liệu</label>
+                        <input type="text" id="material" placeholder="VD: Gốm sứ, Gỗ, Thủy tinh...">
+                    </div>
+                    <div class="form-group">
+                        <label>Xuất xứ</label>
+                        <input type="text" id="origin" placeholder="VD: Việt Nam, Nhật Bản, Trung Quốc...">
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea id="description" rows="3" placeholder="Thông tin chi tiết..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Biến thể màu sắc (Màu & Ảnh riêng)</label>
+                        <div id="variant-items-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+                            <!-- Biến thể màu sắc sẽ được render bằng JS -->
+                        </div>
+                        <button type="button" id="btn-add-variant" class="btn-minimal" style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm màu mới</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Biến thể họa tiết (Họa tiết & Ảnh riêng)</label>
+                        <div id="pattern-variant-items-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+                            <!-- Biến thể họa tiết sẽ được render bằng JS -->
+                        </div>
+                        <button type="button" id="btn-add-pattern-variant" class="btn-minimal" style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm họa tiết mới</button>
+                    </div>
+                    <hr style="margin: 2rem 0; border-top: 1px dashed #ddd;">
+                    <h4 style="margin-bottom: 1rem; font-family: var(--font-serif);">Tối ưu SEO</h4>
+                    <div class="form-group">
+                        <label>SEO Title (Tiêu đề Google)</label>
+                        <input type="text" id="seoTitle" placeholder="Để trống nếu dùng tên sản phẩm...">
+                        <small style="color: #888;">Nên dưới 60 ký tự.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>SEO Description (Mô tả Google)</label>
+                        <textarea id="seoDescription" rows="2" placeholder="Mô tả ngắn gọn thu hút khách hàng click..."></textarea>
+                        <small style="color: #888;">Nên từ 150-160 ký tự.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Slug (URL thân thiện - Không dấu, gạch ngang)</label>
+                        <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px;">
+                        <input type="checkbox" id="product-is-hidden" style="width: auto;">
+                        <label for="product-is-hidden" style="margin: 0; font-weight: bold; color: #856404; cursor: pointer;">Ẩn sản phẩm này khỏi cửa hàng</label>
+                    </div>
+                    <button type="submit" id="submit-product-btn" class="btn-dark" style="width: 100%;">Lưu sản phẩm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Kết thúc Modal -->
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
