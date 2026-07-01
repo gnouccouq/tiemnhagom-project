@@ -6892,4 +6892,198 @@ footer {
         cursor: pointer;
         padding: 0;
     }
+}/* ==========================================================================
+   VOUCHER TICKETS & ADMIN FILTERS RESPONSIVE OVERHAUL
+   ========================================================================== */
+.voucher-ticket {
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    position: relative;
+    border: 1px solid #ebebeb;
+    min-height: 155px;
 }
+
+.voucher-ticket-left {
+    flex: 0 0 100px;
+    background: linear-gradient(135deg, var(--primary-color, #2c3e50), #1a252f);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0.5rem;
+    position: relative;
+}
+
+.voucher-ticket-left h3 {
+    font-size: 1.4rem;
+    margin: 0;
+    font-family: var(--font-serif);
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    line-height: 1.1;
+}
+
+.voucher-ticket-left span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+    opacity: 0.85;
+}
+
+.voucher-ticket-circle-top {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 16px;
+    height: 16px;
+    background: #fafafa;
+    border-radius: 50%;
+    box-shadow: inset 1px -1px 0 #ebebeb;
+}
+
+.voucher-ticket-circle-bottom {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    width: 16px;
+    height: 16px;
+    background: #fafafa;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 0 #ebebeb;
+}
+
+.voucher-ticket-dashed-line {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-image: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.3) 50%);
+    background-size: 100% 12px;
+}
+
+.voucher-ticket-right {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    min-width: 0;
+}
+
+/* Responsive cho voucher ticket tr├¬n mobile nhß╗Å */
+@media (max-width: 480px) {
+    .voucher-ticket {
+        min-height: 140px;
+    }
+    .voucher-ticket-left {
+        flex: 0 0 85px;
+        padding: 0.5rem;
+    }
+    .voucher-ticket-left h3 {
+        font-size: 1.25rem;
+    }
+    .voucher-ticket-right {
+        padding: 0.6rem 0.8rem;
+    }
+}
+
+/* Responsive grid lß╗ìc ─æ╞ín h├áng cß╗ºa Admin */
+.admin-order-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: end;
+}
+
+@media (max-width: 768px) {
+    .admin-order-filters-grid {
+        grid-template-columns: 1fr; /* Stacks fully on small screens */
+        gap: 0.8rem;
+    }
+    .admin-order-filters-grid .btn-dark {
+        width: 100%;
+        margin-top: 5px;
+    }
+}
+
+/* Tối ưu danh sách sản phẩm trên Mobile */
+@media (max-width: 768px) {
+    #admin-product-list tr {
+        display: grid !important;
+        grid-template-columns: 70px 1fr auto;
+        grid-template-areas:
+            "img name name"
+            "img price stock"
+            "id action action";
+        gap: 5px 12px;
+        padding: 12px !important;
+        align-items: center;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 12px !important;
+    }
+    
+    #admin-product-list td {
+        display: flex !important;
+        padding: 0 !important;
+        border: none !important;
+        align-items: center;
+        font-size: 0.85rem;
+    }
+    
+    #admin-product-list td::before {
+        display: none !important;
+    }
+
+    /* ID */
+    #admin-product-list td:nth-child(1) { grid-area: id; color: #888; font-size: 0.75rem; }
+    
+    /* Image */
+    #admin-product-list td:nth-child(2) { grid-area: img; justify-content: center; }
+    #admin-product-list td:nth-child(2) img { width: 70px !important; height: 70px !important; border-radius: 6px; }
+    
+    /* Name */
+    #admin-product-list td:nth-child(3) { grid-area: name; font-size: 0.95rem; font-weight: bold; align-items: 
+flex-start; }
+    
+    /* Price */
+    #admin-product-list td:nth-child(4) { grid-area: price; color: #d97706; font-weight: 600; font-size: 0.9rem; }
+    
+    /* Stock */
+    #admin-product-list td:nth-child(6) { grid-area: stock; justify-content: flex-end; }
+    #admin-product-list td:nth-child(6)::before { content: "Kho: "; display: inline-block !important; font-weight: 
+normal; text-transform: none; color: #888; margin-right: 4px; font-size: 0.8rem; }
+    
+    /* Actions (Delete btn) */
+    #admin-product-list td:nth-child(9) { grid-area: action; justify-content: flex-end; }
+    #admin-product-list td:nth-child(9) .btn-delete { padding: 4px 8px; font-size: 0.75rem; background: #fee2e2; 
+border-radius: 4px; }
+    
+    /* Hide on mobile: Vốn, Đánh giá, Giảm giá */
+    #admin-product-list td:nth-child(5),
+    #admin-product-list td:nth-child(7),
+    #admin-product-list td:nth-child(8) {
+        display: none !important;
+    }
+}
+
+
+@media (max-width: 768px) {
+    #btn-open-add-product {
+        bottom: 90px !important;
+        right: 20px !important;
+        padding: 12px 20px !important;
+    }
+}
+
+
+
