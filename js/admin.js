@@ -1747,10 +1747,19 @@ function renderAdminProductTable() {
             ? `<span class="stock-badge stock-out">Hết hàng</span>` 
             : p.stock;
 
+        let displayImgUrl = p.thumbUrl || p.imageUrl;
+        if (!displayImgUrl || displayImgUrl.includes('placehold.co') || displayImgUrl === 'https://placehold.co/300x300?text=No+Image') {
+            if (p.patternVariants && p.patternVariants.length > 0 && p.patternVariants[0].imageUrl) {
+                displayImgUrl = p.patternVariants[0].imageUrl;
+            } else if (p.colorVariants && p.colorVariants.length > 0 && p.colorVariants[0].imageUrl) {
+                displayImgUrl = p.colorVariants[0].imageUrl;
+            }
+        }
+
         htmlContent += `
             <tr>
                 <td data-label="ID"><small>${p.id}</small></td>
-                <td data-label="Ảnh"><img src="${p.imageUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
+                <td data-label="Ảnh"><img src="${displayImgUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Tên">
                     <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #ffeeba; color: #856404; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Đang ẩn</span>' : ''}
