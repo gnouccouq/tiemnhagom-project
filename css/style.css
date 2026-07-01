@@ -3250,7 +3250,7 @@ footer {
         z-index: 5000;
     }
 
-    .admin-bottom-nav:not(@media) {
+    .admin-bottom-nav {
         display: flex;
         /* Đảm bảo chỉ hiện trong media query này */
     }
