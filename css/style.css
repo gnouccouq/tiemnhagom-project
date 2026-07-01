@@ -6861,23 +6861,12 @@ footer {
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        color: #fff;
-        /* Chuyển thành trắng để phối với difference */
+        color: #888;
         font-family: var(--font-sans);
         font-size: 0.7rem;
         gap: 4px;
         flex: 1;
         transition: color 0.2s ease;
-    }
-
-    /* Hiệu ứng tắc kè hoa cho các icon (trừ flash sale) */
-    .bottom-nav-item:not(.flash-sale-bottom) {
-        mix-blend-mode: difference;
-    }
-
-    /* Đảm bảo Flash sale không bị ảnh hưởng */
-    .bottom-nav-item.flash-sale-bottom {
-        color: #888;
     }
 
     .bottom-nav-item svg {
@@ -6887,13 +6876,6 @@ footer {
     .bottom-nav-item:hover,
     .bottom-nav-item:active,
     .bottom-nav-item.active {
-        color: #fff;
-        /* Trắng + Difference -> Đen */
-    }
-
-    .bottom-nav-item.flash-sale-bottom:hover,
-    .bottom-nav-item.flash-sale-bottom:active,
-    .bottom-nav-item.flash-sale-bottom.active {
         color: var(--text-black);
     }
 
