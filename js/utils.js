@@ -628,7 +628,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     } catch(e) {}
 
-    const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
+    const saleBadge = ''; // User requested to hide sale badge
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
@@ -685,8 +685,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             <a href="${linkBase}?id=${id}" class="product-title-link">
                 <h3>${product.name}</h3>
             </a>
-            <div class="product-rating-row">
-                <div class="rating-mini" style="display: none;">${starsHtml}</div>
+            <div class="product-card-rating">
+                <div class="rating-mini">${starsHtml}</div>
             </div>
             <div class="product-price-block">
                 ${priceHtml}
