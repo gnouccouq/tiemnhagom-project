@@ -628,7 +628,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     } catch(e) {}
 
-    const saleBadge = ''; // User requested to hide sale badge
+    const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = hasSale ? 'sale-sparkle' : '';
