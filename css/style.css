@@ -7552,3 +7552,10 @@ footer {
     }
   }
 }
+
+/* Disable jumpy hover effect on variant add buttons in admin modal */
+#btn-add-variant:hover,
+#btn-add-pattern-variant:hover {
+  transform: none !important;
+  padding: 0.5rem 1rem !important;
+}
