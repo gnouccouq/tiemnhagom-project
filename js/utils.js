@@ -594,10 +594,6 @@ export function updateMembershipPrices(tier) {
 window.updateMembershipPrices = updateMembershipPrices;
 
 export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html') {
-    const rating = product.rating || 5;
-    let starsHtml = '';
-    for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
-
     const currentPrice = getProductCurrentPrice(product);
     const displaySale = getProductEffectiveSale(product);
     const hasSale = displaySale > 0;
@@ -685,9 +681,6 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             <a href="${linkBase}?id=${id}" class="product-title-link">
                 <h3>${product.name}</h3>
             </a>
-            <div class="product-card-rating">
-                <div class="rating-mini">${starsHtml}</div>
-            </div>
             <div class="product-price-block">
                 ${priceHtml}
                 ${memPriceHtml}
