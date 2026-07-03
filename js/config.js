@@ -22,7 +22,8 @@ const firebaseConfig = {
     storageBucket: "tiemnhagom-project.firebasestorage.app",
     messagingSenderId: "571834989973",
     appId: "1:571834989973:web:4cf2d4e9aa832327afca9c",
-    measurementId: "G-4FNKRZ13JC"
+    measurementId: "G-4FNKRZ13JC",
+    databaseURL: "https://tiemnhagom-project-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 let app;
