@@ -6981,41 +6981,8 @@ footer {
 }
 
 .btn-minimal:hover {
-  border-color: var(--text-black);
-  background-color: #fff;
-  padding: 15px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transform: translateY(-6px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04);
-  margin-bottom: 16px;
-  display: block;
-  transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
-  transform: scale(1.03);
-  background: var(--bg-cream);
-  color: var(--text-black);
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transform: rotate(-15deg);
-  border: 1px solid #e0dcd3;
-  font-size: 2.8rem;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: 1px;
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
-  padding-bottom: env(safe-area-inset-bottom);
-  gap: 3px;
-  color: #8e8e93;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  background-color: var(--text-black);
+  color: var(--bg-cream);
 }
 
 .bottom-nav-btn .icon svg {
