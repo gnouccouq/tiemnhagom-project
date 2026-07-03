@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
-    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, initPresence
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -40,6 +40,7 @@ function listenToOnlineUsers() {
         if (statEl) statEl.innerText = count;
     });
 }
+initPresence(); // Admin cũng được tính là đang online
 listenToOnlineUsers();
 
 let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
