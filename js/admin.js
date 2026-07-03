@@ -35,6 +35,9 @@ function listenToOnlineUsers() {
         }
         const countEl = document.getElementById('online-users-count');
         if (countEl) countEl.innerText = count;
+        
+        const statEl = document.getElementById('stat-online-users');
+        if (statEl) statEl.innerText = count;
     });
 }
 listenToOnlineUsers();
