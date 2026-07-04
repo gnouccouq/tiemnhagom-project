@@ -3037,30 +3037,61 @@ function renderPOSCart() {
 
     let subtotal = 0;
     list.innerHTML = posCart.map((item, index) => {
-        subtotal += item.price * item.quantity;
+        let itemDiscount = 0;
+        if (item.discountInput) {
+            let discStr = String(item.discountInput).trim();
+            if (discStr.endsWith('%')) {
+                let p = parseFloat(discStr.replace('%', ''));
+                if (!isNaN(p)) itemDiscount = Math.round(((item.price * item.quantity) * (p / 100)) / 1000) * 1000;
+            } else {
+                let val = parseFloat(discStr.replace(/,/g, ''));
+                if (!isNaN(val)) itemDiscount = val;
+            }
+        }
+        itemDiscount = Math.min(itemDiscount, item.price * item.quantity); // Không giảm quá tổng tiền
+        const lineTotal = (item.price * item.quantity) - itemDiscount;
+        subtotal += lineTotal;
+
+        let itemDiscountHtml = '';
+        if (itemDiscount > 0) {
+            itemDiscountHtml = `<div style="font-size: 0.75rem; color: #27ae60;">Giảm: -${new Intl.NumberFormat('vi-VN').format(itemDiscount)}đ</div>`;
+        }
+
         return `
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f5f5f5;">
-                <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
-                    <div style="font-size: 0.8rem; color: #666;">${new Intl.NumberFormat('vi-VN').format(item.price)} VND</div>
+            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f5f5f5;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">${new Intl.NumberFormat('vi-VN').format(item.price)} VND</div>
+                        ${itemDiscountHtml}
+                    </div>
+                    <div class="quantity-controls" style="height: 30px;">
+                        <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, -1)">-</button>
+                        <input type="number" value="${item.quantity}" readonly style="width: 30px; height: 30px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; padding: 0;">
+                        <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, 1)">+</button>
+                    </div>
+                    <button onclick="window.removePOSItem(${index})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">&times;</button>
                 </div>
-                <div class="quantity-controls" style="height: 30px;">
-                    <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, -1)">-</button>
-                    <input type="number" value="${item.quantity}" readonly style="width: 30px; height: 30px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; padding: 0;">
-                    <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, 1)">+</button>
+                <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <div style="position: relative; width: 100%;">
+                        <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: #888;">⬇️</span>
+                        <input type="text" placeholder="Giảm giá (VD: 10% hoặc 50000)" value="${item.discountInput || ''}" onchange="window.updatePOSItemDiscount(${index}, this.value)" style="width: 100%; padding: 8px 10px 8px 30px; font-size: 0.85rem; border: 1px solid #ddd; border-radius: 6px; outline: none; transition: 0.3s; background: #fff;" onfocus="this.style.borderColor='#3498db'; this.style.boxShadow='0 0 0 2px rgba(52,152,219,0.1)'" onblur="this.style.borderColor='#ddd'; this.style.boxShadow='none'">
+                    </div>
                 </div>
-                <button onclick="window.removePOSItem(${index})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">&times;</button>
             </div>
         `;
     }).join('');
 
-    // Áp dụng mức chiết khấu cao nhất giữa hạng thành viên và giảm giá tay
+    // Áp dụng mức chiết khấu cao nhất giữa hạng thành viên và giảm giá tay (trên phần tiền còn lại)
     const effectiveDiscount = Math.max(posDiscountPercent, posMembershipDiscountPercent);
-    const discountVal = Math.round(subtotal * (effectiveDiscount / 100));
+    const discountVal = Math.round((subtotal * (effectiveDiscount / 100)) / 1000) * 1000;
     const total = subtotal - discountVal;
 
-    if (totalInput) totalInput.value = new Intl.NumberFormat('vi-VN').format(total);
+    if (totalInput) {
+        totalInput.value = new Intl.NumberFormat('vi-VN').format(total);
+        totalInput.dataset.val = total; // Lưu lại giá trị raw để tính tiền thừa
+    }
     
     if (discountInfo) {
         if (effectiveDiscount > 0) {
@@ -3074,7 +3105,58 @@ function renderPOSCart() {
             discountInfo.style.display = 'none';
         }
     }
+
+    if (typeof window.calculatePOSChange === 'function') {
+        window.calculatePOSChange();
+    }
 }
+
+window.updatePOSItemDiscount = (index, val) => {
+    if (posCart[index]) {
+        posCart[index].discountInput = val;
+        renderPOSCart();
+    }
+};
+
+window.togglePOSCashSection = () => {
+    const cashSection = document.getElementById('pos-cash-section');
+    const isCash = document.querySelector('input[name="pos-payment"]:checked')?.value === 'Tiền mặt';
+    if (cashSection) cashSection.style.display = isCash ? 'block' : 'none';
+    if (!isCash) {
+        const cashGiven = document.getElementById('pos-cash-given');
+        const changeAmount = document.getElementById('pos-change-amount');
+        if (cashGiven) cashGiven.value = '';
+        if (changeAmount) changeAmount.value = '';
+    } else {
+        window.calculatePOSChange();
+    }
+};
+
+window.calculatePOSChange = (inputElem) => {
+    const input = inputElem || document.getElementById('pos-cash-given');
+    if (!input) return;
+    
+    // Lọc bỏ ký tự không phải số
+    let rawValue = input.value.replace(/,/g, '').replace(/[^\d]/g, '');
+    if (rawValue) {
+        input.value = new Intl.NumberFormat('vi-VN').format(rawValue);
+    } else {
+        input.value = '';
+    }
+    
+    const cash = parseFloat(rawValue) || 0;
+    const totalInput = document.getElementById('pos-total-amount');
+    const total = parseFloat(totalInput?.dataset?.val || 0);
+    
+    const changeInput = document.getElementById('pos-change-amount');
+    if (changeInput) {
+        if (cash >= total && total > 0) {
+            changeInput.value = new Intl.NumberFormat('vi-VN').format(cash - total);
+        } else {
+            changeInput.value = '';
+        }
+    }
+};
 
 window.applyQuickDiscount = (percent) => {
     if (posCart.length === 0) return;
