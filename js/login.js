@@ -160,7 +160,17 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Lỗi gửi OTP: " + error.message, "error");
             btn.disabled = false;
             btn.innerText = "Gửi mã xác thực";
-            if (window.recaptchaVerifier) window.recaptchaVerifier.render().then(widgetId => grecaptcha.reset(widgetId));
+            
+            // Xóa và tạo lại reCAPTCHA để tránh lỗi DUPE ở lần click tiếp theo
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                    setupRecaptcha();
+                } catch (e) {
+                    console.error("Lỗi reset reCAPTCHA:", e);
+                }
+            }
         }
     };
 
