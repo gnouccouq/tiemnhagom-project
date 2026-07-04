@@ -109,11 +109,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Khởi tạo reCAPTCHA ẩn
     const setupRecaptcha = () => {
         if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'invisible'
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'btn-send-otp', {
+                'size': 'invisible',
+                'callback': (response) => {
+                    // reCAPTCHA solved
+                }
             });
+            window.recaptchaVerifier.render().catch(console.error);
         }
     };
+    
+    // Khởi tạo trước để reCAPTCHA kịp tải
+    setupRecaptcha();
 
     // 2. Gửi mã OTP
     document.getElementById('btn-send-otp').onclick = async (e) => {
@@ -139,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
             
-            setupRecaptcha();
             confirmationResult = await signInWithPhoneNumber(auth, authPhone, window.recaptchaVerifier);
             
             saveOtpTimestamp('otp_ts_login');
