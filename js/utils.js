@@ -128,7 +128,7 @@ export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSett
         return product.flashSaleGroup;
     }
     if (product.sale > 0) {
-        return Math.round(product.price * (1 - product.sale / 100));
+        return Math.round((product.price * (1 - product.sale / 100)) / 1000) * 1000;
     }
     return product.price;
 }
@@ -513,7 +513,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
 
                 box.innerHTML = results.map(p => {
                     const hasSale = p.sale > 0;
-                    const currentPrice = hasSale ? p.price * (1 - p.sale / 100) : p.price;
+                    const currentPrice = hasSale ? Math.round((p.price * (1 - p.sale / 100)) / 1000) * 1000 : p.price;
                     const safeName = escapeHTML(p.name);
                     const isOutOfStock = (p.stock || 0) <= 0;
                     return `
@@ -583,7 +583,7 @@ export function updateMembershipPrices(tier) {
     containers.forEach(container => {
         const currentPrice = parseInt(container.getAttribute('data-price'));
         if (!currentPrice) return;
-        const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+        const memPrice = Math.round((currentPrice * (1 - tier.discount / 100)) / 1000) * 1000;
         container.innerHTML = `
             <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">
                 <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 4px;">
@@ -616,7 +616,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         if (tierStr) {
             const tier = JSON.parse(tierStr);
             if (tier && tier.discount > 0) {
-                const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+                const memPrice = Math.round((currentPrice * (1 - tier.discount / 100)) / 1000) * 1000;
                 memPriceHtml = `
                 <div class="dynamic-membership-price" data-price="${currentPrice}">
                     <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">

@@ -4000,7 +4000,7 @@ function renderAdminFlashSaleList() {
 
     list.innerHTML = saleProducts.map(p => {
         // Ưu tiên dùng flashSaleGroup để giá luôn là con số tròn
-        const salePrice = p.flashSaleGroup || Math.round(p.price * (1 - (p.sale || 0) / 100));
+        const salePrice = p.flashSaleGroup || Math.round((p.price * (1 - (p.sale || 0) / 100)) / 1000) * 1000;
         const stockClass = p.stock <= 0 ? 'color: #e74c3c; font-weight: bold;' : '';
         
         return `
