@@ -1,5 +1,8 @@
-import { db, auth, analytics, storage, googleProvider } from './config.js';
-export { db, auth, analytics, storage, googleProvider };
+import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+export { db, auth, analytics, storage, googleProvider, rtdb };
+import {
+    ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp,
     collection, query, where, limit, getDocs, onSnapshot, orderBy
@@ -1285,3 +1288,33 @@ export function getOtpValue(containerId) {
     if (!container) return '';
     return Array.from(container.querySelectorAll('.otp-digit')).map(i => i.value).join('');
 }
+
+// 14. Logic: Realtime Presence
+export function initPresence() {
+    if (!rtdb) return;
+    const connectedRef = rtdbRef(rtdb, '.info/connected');
+    
+    // Tạo sessionId duy nhất cho mỗi tab/trình duyệt
+    let sessionId = sessionStorage.getItem('tng_session_id');
+    if (!sessionId) {
+        sessionId = 'session_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        sessionStorage.setItem('tng_session_id', sessionId);
+    }
+    const myConnectionsRef = rtdbRef(rtdb, `presence/${sessionId}`);
+    
+    rtdbOnValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+            // Khi kết nối, đăng ký xoá khi mất kết nối
+            onDisconnect(myConnectionsRef).remove().then(() => {
+                // Sau khi đăng ký onDisconnect thành công, mới ghi dữ liệu online
+                rtdbSet(myConnectionsRef, {
+                    online: true,
+                    lastChanged: rtdbServerTimestamp()
+                });
+            });
+        }
+    });
+}
+
+// Tự động khởi chạy khi load utils
+initPresence();

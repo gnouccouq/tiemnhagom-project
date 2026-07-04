@@ -8,6 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
 // BẢO MẬT: Khuyến nghị mạnh mẽ thiết lập Origin Restriction trên trang quản trị EmailJS
@@ -21,7 +22,8 @@ const firebaseConfig = {
     storageBucket: "tiemnhagom-project.firebasestorage.app",
     messagingSenderId: "571834989973",
     appId: "1:571834989973:web:4cf2d4e9aa832327afca9c",
-    measurementId: "G-4FNKRZ13JC"
+    measurementId: "G-4FNKRZ13JC",
+    databaseURL: "https://tiemnhagom-project-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 let app;
@@ -41,4 +43,5 @@ export const db = app ? initializeFirestore(app, {
 export const auth = app ? getAuth(app) : null;
 export const analytics = app ? getAnalytics(app) : null;
 export const storage = app ? getStorage(app) : null;
+export const rtdb = app ? getDatabase(app) : null;
 export const googleProvider = new GoogleAuthProvider();

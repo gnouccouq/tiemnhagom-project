@@ -42,6 +42,7 @@
                 <button class="admin-tab-btn" data-target="inventory-log-section">📜 <span>Nhật ký kho</span></button>
                 <button class="admin-tab-btn" data-target="news-section">📰 <span>Tin tức</span></button>
                 <button class="admin-tab-btn" data-target="collections-section">🎨 <span>Bộ sưu tập</span></button>
+                <button class="admin-tab-btn" data-target="online-users-section">🟢 <span>Online</span></button>
                 <button class="admin-tab-btn" data-target="maintenance-section">🛠️ <span>Bảo trì</span></button>
             </nav>
 
@@ -95,6 +96,18 @@
                 </div>
             </header>
 
+        <!-- Section Online Users -->
+        <div id="online-users-section" class="admin-section">
+            <div class="admin-card" style="text-align: center; padding: 40px;">
+                <h2 style="font-family: var(--font-serif); margin-bottom: 20px;">Lượng truy cập trực tuyến</h2>
+                <div style="font-size: 5rem; font-weight: bold; color: #4caf50;" id="online-users-count">0</div>
+                <p style="color: #666; margin-top: 10px;">người dùng đang truy cập</p>
+                <div style="margin-top: 20px; color: #999; font-size: 0.85rem;">
+                    Dữ liệu được cập nhật tự động theo thời gian thực (Realtime Database).
+                </div>
+            </div>
+        </div>
+
         <!-- Section Tổng quan -->
         <div id="overview-section" class="admin-section active">
             <div class="overview-grid">
@@ -133,6 +146,14 @@
                         <small>Đã đăng ký</small>
                     </div>
                     <div class="stat-chart"><canvas id="sparkline-users"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #e8f5e9; color: #4caf50;">🟢</div>
+                    <div class="stat-info">
+                        <h3>Đang truy cập</h3>
+                        <p id="stat-online-users">0</p>
+                        <small>Hoạt động lúc này</small>
+                    </div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    db, auth, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
+    db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId
 } from "./utils.js";
 import { 
@@ -9,6 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
@@ -22,6 +23,25 @@ let currentAdminRole = 'staff'; // Quyền mặc định
 let bluetoothDevice = null;
 let btCharacteristic = null;
 let lastCreatedOrderId = null; // Lưu ID đơn vừa tạo để in lại nhanh
+
+// Lắng nghe dữ liệu người dùng trực tuyến
+function listenToOnlineUsers() {
+    if (!rtdb) return;
+    const presenceRef = dbRef(rtdb, 'presence');
+    onValue(presenceRef, (snap) => {
+        let count = 0;
+        if (snap.exists()) {
+            count = Object.keys(snap.val()).length;
+        }
+        const countEl = document.getElementById('online-users-count');
+        if (countEl) countEl.innerText = count;
+        
+        // Cập nhật thẻ stat nếu có (đã bị xóa, hoặc tồn tại ở dashboard)
+        const statEl = document.getElementById('stat-online-users');
+        if(statEl) statEl.innerText = count;
+    });
+}
+listenToOnlineUsers();
 
 let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
 
@@ -41,6 +61,7 @@ const ALL_SECTIONS = [
     { id: 'inventory-log-section', label: 'Nhật ký kho' },
     { id: 'news-section', label: 'Tin tức' },
     { id: 'collections-section', label: 'Bộ sưu tập' },
+    { id: 'online-users-section', label: 'Lượng truy cập' },
     { id: 'maintenance-section', label: 'Bảo trì' }
 ];
 
