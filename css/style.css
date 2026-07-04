@@ -1416,17 +1416,20 @@ section {
     position: absolute;
     top: 15px;
     left: 15px;
-    background: #e74c3c;
-    /* Đỏ tươi hơn để thực sự nổi bật */
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    /* Dạng pill trông hiện đại hơn */
+    background: #f5f5dc; /* màu be */
+    color: #e74c3c; /* chữ đỏ */
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
+    transform: rotate(-15deg); /* chữ nằm xéo */
     letter-spacing: 0.5px;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Out of Stock Styles */
@@ -3998,9 +4001,8 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 12px;
-    overflow-x: auto;
+    flex-wrap: wrap;
     padding: 5px 0 15px;
-    scrollbar-width: thin;
 }
 
 .thumbnail {
@@ -5769,19 +5771,8 @@ footer {
 .product-image-gallery {
     display: flex;
     gap: 10px;
-    overflow-x: auto;
-    /* Cho phép cuộn ngang các thumbnail */
-    scroll-behavior: smooth;
+    flex-wrap: wrap;
     padding-bottom: 10px;
-}
-
-.product-image-gallery::-webkit-scrollbar {
-    height: 4px;
-}
-
-.product-image-gallery::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
 }
 
 .thumbnail {

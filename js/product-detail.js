@@ -165,7 +165,7 @@ async function fetchProductDetail() {
 
         if (docSnap.exists()) {
             const p = docSnap.data();
-            
+
             // Nếu không có ảnh đại diện, hoặc ảnh là placeholder thì lấy ảnh từ biến thể màu sắc hoặc họa tiết
             const isPlaceholder = !p.imageUrl || p.imageUrl.includes('placehold.co') || p.imageUrl.includes('via.placeholder.com');
             if (isPlaceholder) {
@@ -182,14 +182,14 @@ async function fetchProductDetail() {
                     const firstPatternWithImage = p.patterns.find(v => v && v.imageUrl);
                     if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
                 }
-                
+
                 if (variantImage) {
                     p.imageUrl = variantImage;
                 } else if (!p.imageUrl) {
                     p.imageUrl = 'https://placehold.co/800x800?text=No+Image';
                 }
             }
-            
+
             currentProductData = p;
 
             let isOutOfStock = (p.stock || 0) <= 0; // Default to main product stock
@@ -302,7 +302,7 @@ async function fetchProductDetail() {
                     const minOrderStr = `đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(c.minOrder || 0)}đ`;
                     const maxDiscountStr = (c.type === 'percent' && c.maxDiscount > 0) ? `, tối đa ${new Intl.NumberFormat('vi-VN').format(c.maxDiscount)}đ` : '';
                     const descText = `Giảm ${valueStr} cho ${minOrderStr}${maxDiscountStr}`;
-                    
+
                     return `
                         <div style="display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #f0f0f0; margin-bottom: 5px;">
                             <div style="flex: 1; padding-right: 10px; text-align: left;">
@@ -364,13 +364,13 @@ async function fetchProductDetail() {
                                 ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${displaySale}%</span>` : ''}
                             </div>
                             ${(() => {
-                                try {
-                                    const tierStr = sessionStorage.getItem('tng_current_tier');
-                                    if (tierStr) {
-                                        const tier = JSON.parse(tierStr);
-                                        if (tier && tier.discount > 0) {
-                                            const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
-                                            return `
+                    try {
+                        const tierStr = sessionStorage.getItem('tng_current_tier');
+                        if (tierStr) {
+                            const tier = JSON.parse(tierStr);
+                            if (tier && tier.discount > 0) {
+                                const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+                                return `
                                             <div class="dynamic-membership-price" data-price="${currentPrice}">
                                                 <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 12px; margin-bottom: 5px;">
                                                     <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
@@ -380,11 +380,11 @@ async function fetchProductDetail() {
                                                     <strong style="color: #e74c3c; font-size: 1.1rem;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
                                                 </div>
                                             </div>`;
-                                        }
-                                    }
-                                } catch(e) {}
-                                return `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
-                            })()}
+                            }
+                        }
+                    } catch (e) { }
+                    return `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
+                })()}
                         </div>
                         
                         <!-- Variant Selectors (Colors/Patterns) -->

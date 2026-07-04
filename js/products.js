@@ -289,9 +289,20 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         if (loadMoreBtn) {
             const remaining = currentTotalCount - currentLoadedCount;
-            if (remaining > 0 && !hasSearchTerm) { // Ẩn phân trang cho trường hợp search
+            if (remaining > 0 && !hasSearchTerm) { 
                 loadMoreBtn.style.display = 'block';
                 loadMoreBtn.innerHTML = `Xem thêm ${remaining} sản phẩm`;
+                loadMoreBtn.onclick = () => {
+                    loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
+                    loadMoreBtn.disabled = true;
+                    fetchProducts('load-more').then(() => {
+                        loadMoreBtn.disabled = false;
+                    });
+                };
+            } else if (querySnapshot.docs.length === PAGE_SIZE && !hasSearchTerm) {
+                // Đề phòng lỗi đếm tổng số, nếu vẫn lấy được đủ 10 sản phẩm thì khả năng cao vẫn còn
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.innerHTML = `Xem thêm sản phẩm`;
                 loadMoreBtn.onclick = () => {
                     loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
                     loadMoreBtn.disabled = true;

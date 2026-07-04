@@ -45,8 +45,8 @@ export const COLOR_MAP = {
 
 // 1.1 Cấu hình hạng thành viên (Membership Tiers)
 export const MEMBERSHIP_TIERS = [
-    { 
-        id: 'null', name: "Gốm Mộc", min: 0, discount: 0, color: '#95a5a6', 
+    {
+        id: 'null', name: "Gốm Mộc", min: 0, discount: 0, color: '#95a5a6',
         icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
         freeShipping: false,
         categoryDiscounts: {},
@@ -54,8 +54,8 @@ export const MEMBERSHIP_TIERS = [
         birthdayVoucher: 0,
         friendVoucher: false
     },
-    { 
-        id: 'new', name: "Gốm Nung", min: 1000000, discount: 1, color: '#3498db', 
+    {
+        id: 'new', name: "Gốm Nung", min: 1000000, discount: 1, color: '#3498db',
         icon: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
         freeShipping: false,
         categoryDiscounts: { "KitchenWare": 0.5, "HomeDecor": 1 },
@@ -63,8 +63,8 @@ export const MEMBERSHIP_TIERS = [
         birthdayVoucher: 50000,
         friendVoucher: false
     },
-    { 
-        id: 'mem', name: "Gốm Men", min: 5000000, discount: 3, color: '#f1c40f', 
+    {
+        id: 'mem', name: "Gốm Men", min: 5000000, discount: 3, color: '#f1c40f',
         icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>',
         freeShipping: true,
         categoryDiscounts: { "Túi, móc khoá, lót ly": 0.5, "KitchenWare": 1, "HomeDecor": 3 },
@@ -72,8 +72,8 @@ export const MEMBERSHIP_TIERS = [
         birthdayVoucher: 200000,
         friendVoucher: true
     },
-    { 
-        id: 'vip', name: "Gốm Độc Bản", min: 10000000, discount: 5, color: '#e74c3c', 
+    {
+        id: 'vip', name: "Gốm Độc Bản", min: 10000000, discount: 5, color: '#e74c3c',
         icon: '<path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm14 3c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-1h14v1z"/>',
         freeShipping: true,
         categoryDiscounts: { "Túi, móc khoá, lót ly": 1, "KitchenWare": 3, "HomeDecor": 5 },
@@ -629,7 +629,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                 </div>`;
             }
         }
-    } catch(e) {}
+    } catch (e) { }
 
     const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
@@ -639,7 +639,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
 
     let finalImageUrl = product.thumbUrl || product.imageUrl;
     const isPlaceholder = !finalImageUrl || finalImageUrl.includes('placehold.co') || finalImageUrl.includes('via.placeholder.com');
-    
+
     if (isPlaceholder) {
         let variantImage = null;
         if (product.colorVariants && product.colorVariants.length > 0) {
@@ -654,7 +654,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             const firstPatternWithImage = product.patterns.find(v => v && v.imageUrl);
             if (firstPatternWithImage) variantImage = firstPatternWithImage.imageUrl;
         }
-        
+
         if (variantImage) {
             finalImageUrl = variantImage;
         } else if (!finalImageUrl) {
@@ -874,7 +874,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             const tier = getMembershipTier(totalSpent);
                             currentTierStr = JSON.stringify(tier);
                             sessionStorage.setItem('tng_current_tier', currentTierStr);
-                        } catch(e) {
+                        } catch (e) {
                             console.error("Lỗi lấy hạng thành viên:", e);
                         }
                     }
@@ -955,7 +955,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Khởi tạo thanh tìm kiếm chính trong Header Overlay
         initAutocomplete('header-search-input', 'search-suggestions', pathPrefix);
-        
+
         // Setup logic cho Header Search Overlay
         const btnOpenSearch = document.getElementById('btn-open-search');
         const searchOverlay = document.getElementById('search-overlay');
@@ -1135,7 +1135,7 @@ export async function loadSharedComponents(pathPrefix = './') {
 
                 // Đóng menu khi click ra ngoài hoặc vào link
                 document.addEventListener('click', (e) => {
-                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && 
+                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) &&
                         (!menuToggle || !menuToggle.contains(e.target)) &&
                         (!bottomMenuToggle || !bottomMenuToggle.contains(e.target))) {
                         navLinks.classList.remove('active');
@@ -1293,7 +1293,7 @@ export function getOtpValue(containerId) {
 export function initPresence() {
     if (!rtdb) return;
     const connectedRef = rtdbRef(rtdb, '.info/connected');
-    
+
     // Tạo sessionId duy nhất cho mỗi tab/trình duyệt
     let sessionId = sessionStorage.getItem('tng_session_id');
     if (!sessionId) {
@@ -1301,7 +1301,7 @@ export function initPresence() {
         sessionStorage.setItem('tng_session_id', sessionId);
     }
     const myConnectionsRef = rtdbRef(rtdb, `presence/${sessionId}`);
-    
+
     rtdbOnValue(connectedRef, (snap) => {
         if (snap.val() === true) {
             // Khi kết nối, đăng ký xoá khi mất kết nối
