@@ -31,8 +31,8 @@ async function fetchFeaturedProducts() {
             </div>
         `).join('');
 
-        // TỐI ƯU: Chỉ lấy 10 sản phẩm mới nhất thay vì toàn bộ collection
-        const q = query(collection(db, "products"), orderBy("updatedAt", "desc"), limit(10));
+        // TỐI ƯU: Lấy 30 sản phẩm để dự phòng các sản phẩm bị ẩn, sau đó giới hạn 10 ở client
+        const q = query(collection(db, "products"), orderBy("updatedAt", "desc"), limit(30));
         
         // Lấy yêu thích song song để tránh blocking
         let favsPromise = Promise.resolve([]);
@@ -48,9 +48,12 @@ async function fetchFeaturedProducts() {
         
         let htmlContent = ''; // Sử dụng biến tạm để tối ưu hiệu suất
 
+        let count = 0;
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
+            if (count >= 10) return;
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm nào.</p>';
     } catch (error) {
@@ -120,7 +123,7 @@ async function fetchSaleProducts() {
 
     try {
         // Lấy danh sách sản phẩm và yêu thích CÙNG LÚC (chạy song song) để tiết kiệm 50% thời gian chờ
-        const q = query(collection(db, "products"), where("sale", ">", 0), limit(10));
+        const q = query(collection(db, "products"), where("sale", ">", 0), limit(30));
         
         let favsPromise = Promise.resolve([]);
         if (auth.currentUser) {
@@ -134,9 +137,12 @@ async function fetchSaleProducts() {
         const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
 
         let htmlContent = '';
+        let count = 0;
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
+            if (count >= 10) return;
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            count++;
         });
 
         if (htmlContent) {
@@ -412,13 +418,15 @@ async function initHeroCarousel() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initHeader('./', (user) => {
-        initHeroCarousel();
-        fetchFeaturedProducts();
-        initFlashSaleSync();
-        fetchRecommendations();
-        fetchCollections();
-    });
+    initHeader('./');
+    
+    // Kích hoạt ngay lập tức mà không cần chờ Auth để tăng tốc độ load
+    initHeroCarousel();
+    fetchFeaturedProducts();
+    initFlashSaleSync();
+    fetchRecommendations();
+    fetchCollections();
+    
     // Khởi tạo tìm kiếm ở trang chủ
     initAutocomplete('home-search-input', 'home-search-suggestions', './');
 });

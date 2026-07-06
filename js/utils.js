@@ -634,7 +634,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
-    const sparkleClass = hasSale ? 'sale-sparkle' : '';
+    const sparkleClass = ''; // hasSale ? 'sale-sparkle' : '';
     const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     let finalImageUrl = product.thumbUrl || product.imageUrl;

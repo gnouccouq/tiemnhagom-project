@@ -213,10 +213,11 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Thêm logic tải thêm vào Query
         let finalQuery;
+        const FETCH_LIMIT = 50; // Tải dư 50 sản phẩm để phòng hờ trường hợp các sản phẩm đã bị ẩn (cần hiển thị 10)
         if (navigation === 'load-more' && lastVisible) {
-            finalQuery = query(productsQuery, startAfter(lastVisible), limit(PAGE_SIZE));
+            finalQuery = query(productsQuery, startAfter(lastVisible), limit(FETCH_LIMIT));
         } else {
-            finalQuery = query(productsQuery, limit(PAGE_SIZE));
+            finalQuery = query(productsQuery, limit(FETCH_LIMIT));
             // Reset state
             currentLoadedCount = 0;
             if (!hasSearchTerm) {
@@ -244,9 +245,6 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             return;
         }
 
-        // Lưu vết documents để tải lần sau
-        lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-
         let htmlContent = '';
         let favs = [];
         if (auth.currentUser) {
@@ -257,10 +255,20 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         }
 
         // Lọc Substring client-side nếu có search term và lọc sản phẩm bị ẩn
-        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => !p.isHidden);
-        const finalResults = hasSearchTerm 
+        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden);
+        let finalResults = hasSearchTerm 
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;
+
+        // Giới hạn lại số lượng hiển thị thực tế (PAGE_SIZE)
+        finalResults = finalResults.slice(0, PAGE_SIZE);
+
+        // Lưu vết documents để tải lần sau dựa trên phần tử hiển thị cuối cùng
+        if (finalResults.length > 0) {
+            lastVisible = finalResults[finalResults.length - 1]._ref;
+        } else {
+            lastVisible = null;
+        }
 
         htmlContent = finalResults.map((p) => {
             return renderProductCard(p, p.id, favs, '../product/index.html');
@@ -299,7 +307,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                         loadMoreBtn.disabled = false;
                     });
                 };
-            } else if (querySnapshot.docs.length === PAGE_SIZE && !hasSearchTerm) {
+            } else if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm) {
                 // Đề phòng lỗi đếm tổng số, nếu vẫn lấy được đủ 10 sản phẩm thì khả năng cao vẫn còn
                 loadMoreBtn.style.display = 'block';
                 loadMoreBtn.innerHTML = `Xem thêm sản phẩm`;
@@ -410,13 +418,8 @@ function handleInitialFilters() {
 let categoriesInitialized = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 4. Khởi tạo Header và lắng nghe Auth (để cập nhật icon tim)
-    initHeader('../', (user) => {
-        // Khi Auth thay đổi, ta cần fetch lại để cập nhật trạng thái Yêu thích
-        if (categoriesInitialized) {
-            fetchProducts('init');
-        }
-    });
+    // 4. Khởi tạo Header
+    initHeader('../');
 
     // 5. Lắng nghe danh mục động (Duy nhất 1 listener độc lập)
     onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
