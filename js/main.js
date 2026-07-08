@@ -31,7 +31,7 @@ async function fetchFeaturedProducts() {
             </div>
         `).join('');
 
-        // TỐI ƯU: Lấy 30 sản phẩm để dự phòng các sản phẩm bị ẩn, sau đó giới hạn 10 ở client
+        // TỐI ƯU: Lấy 30 sản phẩm để dự phòng các sản phẩm bị ẩn, sau đó giới hạn 14 ở client
         const q = query(collection(db, "products"), orderBy("updatedAt", "desc"), limit(30));
         
         // Lấy yêu thích song song để tránh blocking
@@ -51,7 +51,7 @@ async function fetchFeaturedProducts() {
         let count = 0;
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
-            if (count >= 10) return;
+            if (count >= 14) return;
             htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
             count++;
         });
