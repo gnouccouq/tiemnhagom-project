@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
-    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
 } from "./utils.js";
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
@@ -641,6 +641,16 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0) => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
     
+    // Tạo datalist cho màu sắc nếu chưa có
+    let datalist = document.getElementById('color-suggestions');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'color-suggestions';
+        const colorOptions = Object.keys(COLOR_MAP).map(colorName => `<option value="${colorName}">`).join('');
+        datalist.innerHTML = colorOptions;
+        document.body.appendChild(datalist);
+    }
+
     const row = document.createElement('div');
     row.className = 'variant-row';
     row.style = 'display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;';
@@ -648,7 +658,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0) => {
 
     row.innerHTML = `
         <div style="flex: 1;">
-            <input type="text" class="variant-name" value="${name}" placeholder="Tên màu (VD: Trắng)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+            <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Trắng)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="width: 80px;">
             <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">

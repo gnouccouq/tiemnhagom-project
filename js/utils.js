@@ -29,7 +29,7 @@ export let dynamicCategories = [];
 // Ánh xạ màu sắc sang mã hex để hiển thị swatch (Dùng chung)
 export const COLOR_MAP = {
     "Trắng": "#FFFFFF",
-    "Đen": "#000000",
+    "Đen": "#1C1D21",
     "Xám": "#808080",
     "Xanh": "#0000FF",
     "Đỏ": "#FF0000",
@@ -39,8 +39,26 @@ export const COLOR_MAP = {
     "Nâu": "#A52A2A",
     "Kem": "#FFFDD0",
     "Beige": "#F5F5DC",
-    "Xanh lá": "#008000"
-    // Thêm các màu khác nếu cần
+    "Xanh lá": "#16B54E",
+    "Xanh tím": "#6E7CB9",
+    "Hồng sen": "#CD4C95",
+    "Vàng mù tạt": "#BCA211",
+    "Xanh bạc hà": "#7BB29A",
+    "Xanh đọt chuối": "#BED809",
+    "Tím nhạt": "#BC94CD",
+    "Xanh dương đậm": "#2A54B4",
+    "Vàng rêu": "#B4BD1B",
+    "Hồng đậm": "#C11D6F",
+    "Tím đậm": "#7A42B8",
+    "Xanh biển": "#2997BA",
+    "Hồng san hô": "#E35875",
+    "Màu be": "#B39B7C",
+    "Đỏ gạch": "#A6131C",
+    "Trắng kem": "#E6E4DB",
+    "Xanh coban": "#1D17B6",
+    "Vàng tươi": "#ECD22A",
+    "Cam": "#E6732B",
+    "Hồng tím đậm": "#A30953"
 };
 
 // 1.1 Cấu hình hạng thành viên (Membership Tiers)
