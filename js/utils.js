@@ -58,7 +58,11 @@ export const COLOR_MAP = {
     "Xanh coban": "#1D17B6",
     "Vàng tươi": "#ECD22A",
     "Cam": "#E6732B",
-    "Hồng tím đậm": "#A30953"
+    "Hồng tím đậm": "#A30953",
+    "Hồng đất": "#A88E89",
+    "Xanh rêu đậm": "#2E4D36",
+    "Xám rêu": "#6E6D68",
+    "Đỏ rượu": "#6C292E",
 };
 
 // 1.1 Cấu hình hạng thành viên (Membership Tiers)
