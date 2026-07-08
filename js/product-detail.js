@@ -1,7 +1,7 @@
 import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
-    fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale
+    fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, COLOR_MAP
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -15,22 +15,7 @@ let currentProductData = null; // Lưu trữ dữ liệu sản phẩm để truy
 let selectedPattern = null; // Biến lưu họa tiết đang chọn
 let isAdmin = false;
 
-// Ánh xạ màu sắc sang mã hex để hiển thị swatch
-const COLOR_MAP = {
-    "Trắng": "#FFFFFF",
-    "Đen": "#000000",
-    "Xám": "#808080",
-    "Xanh": "#0000FF",
-    "Đỏ": "#FF0000",
-    "Vàng": "#FFFF00",
-    "Hồng": "#FFC0CB",
-    "Tím": "#800080",
-    "Nâu": "#A52A2A",
-    "Kem": "#FFFDD0",
-    "Beige": "#F5F5DC",
-    "Xanh lá": "#008000"
-    // Thêm các màu khác nếu cần
-};
+// Đã xóa khai báo COLOR_MAP nội bộ để dùng chung từ utils.js
 
 // Hàm khởi tạo/đặt lại bộ đếm tự động chuyển ảnh
 function startAutoSlide() {
