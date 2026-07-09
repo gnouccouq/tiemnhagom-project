@@ -742,8 +742,7 @@ async function initBannerManagement() {
                 <img src="${b.imageUrl}" title="Desktop" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;">
                 <img src="${b.mobileImageUrl || b.imageUrl}" title="Mobile" style="width: 35px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
                 <div style="flex: 1;">
-                    <h4 style="margin: 0; font-size: 0.9rem;">${b.title || '<em style="color:#ccc">(Trống)</em>'}</h4>
-                    <p style="font-size: 0.75rem; color: #666; margin: 5px 0;">${b.subtitle || '<em style="color:#ccc">(Trống)</em>'}</p>
+                    <p style="font-size: 0.75rem; color: #666; margin: 5px 0;">Link: ${b.link || '<em style="color:#ccc">(Trống)</em>'}</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 8px;" onclick="window.moveBannerUp(${idx})" ${idx === 0 ? 'disabled' : ''} title="Lên trên">▲</button>
@@ -762,8 +761,6 @@ async function initBannerManagement() {
     window.editBanner = (idx) => {
         const b = currentBanners[idx];
         document.getElementById('banner-index').value = idx;
-        document.getElementById('banner-title').value = b.title;
-        document.getElementById('banner-subtitle').value = b.subtitle;
         document.getElementById('banner-link').value = b.link || '';
         document.getElementById('banner-image-preview').innerHTML = `<img src="${b.imageUrl}" style="width: 150px; border-radius: 4px;">`;
         document.getElementById('banner-image-mobile-preview').innerHTML = b.mobileImageUrl ? `<img src="${b.mobileImageUrl}" style="width: 60px; border-radius: 4px;">` : "";
@@ -810,8 +807,6 @@ async function initBannerManagement() {
     form.onsubmit = async (e) => {
         e.preventDefault();
         const idx = parseInt(document.getElementById('banner-index').value);
-        const title = document.getElementById('banner-title').value.trim();
-        const subtitle = document.getElementById('banner-subtitle').value.trim();
         const link = document.getElementById('banner-link').value.trim();
         const pcFile = document.getElementById('banner-image').files[0];
         const mbFile = document.getElementById('banner-image-mobile').files[0];
@@ -838,7 +833,7 @@ async function initBannerManagement() {
             }
 
             if (!imageUrl) throw new Error("Chưa có ảnh banner");
-            const slideData = { title, subtitle, link, imageUrl, mobileImageUrl };
+            const slideData = { link, imageUrl, mobileImageUrl };
             if (idx === -1) currentBanners.push(slideData);
             else currentBanners[idx] = slideData;
             await setDoc(bannerRef, { slides: currentBanners });

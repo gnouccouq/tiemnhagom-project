@@ -288,26 +288,18 @@ async function initHeroCarousel() {
     // Fallback nếu không có data hoặc lỗi
     if (slidesData.length === 0) {
         slidesData = [
-            { imageUrl: 'Asset/images/hero-bg.webp', title: 'Gốm & Decor', subtitle: 'Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo.', link: 'products/' },
-            { imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=100&w=2560', title: 'Nghệ thuật của Đất', subtitle: 'Mang hơi thở thiên nhiên vào ngôi nhà của bạn.', link: 'products/' }
+            { imageUrl: 'Asset/images/hero-bg.webp', link: 'products/' },
+            { imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=100&w=2560', link: 'products/' }
         ];
     }
 
     // Inject HTML
     container.innerHTML = slidesData.map((s, idx) => {
-        const hasContent = s.title || s.subtitle || s.link;
         const slideInner = `
             <picture>
                 <source media="(max-width: 768px)" srcset="${s.mobileImageUrl || s.imageUrl}">
-                <img src="${s.imageUrl}" alt="${s.title || 'Banner Tiệm Nhà Gốm'}" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} style="width:100%; height:100%; object-fit:cover;">
-            </picture>
-            ${hasContent ? `
-                <div class="hero-content">
-                    ${s.title ? `<h1>${s.title}</h1>` : ''}
-                    ${s.subtitle ? `<p>${s.subtitle}</p>` : ''}
-                    ${s.link ? `<span class="btn-dark btn-hero-cta">Xem chi tiết</span>` : ''}
-                </div>
-            ` : ''}`;
+                <img src="${s.imageUrl}" alt="Banner Tiệm Nhà Gốm" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} style="width:100%; height:100%; object-fit:cover;">
+            </picture>`;
         
         return s.link 
             ? `<a href="${s.link}" class="carousel-slide ${idx === 0 ? 'active' : ''}">${slideInner}</a>`
