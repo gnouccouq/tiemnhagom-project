@@ -9,7 +9,7 @@
 
 html {
     font-size: 110%;
-    /* Tăng toàn bộ cỡ chữ trên trang web lên khoảng 10% */
+    /* TÃ„Æ’ng toÃƒÂ n bÃ¡Â»â„¢ cÃ¡Â»Â¡ chÃ¡Â»Â¯ trÃƒÂªn trang web lÃƒÂªn khoÃ¡ÂºÂ£ng 10% */
     scroll-behavior: smooth;
 }
 
@@ -69,9 +69,9 @@ h6 {
 
 html {
     scroll-behavior: smooth;
-    /* Cho hiệu ứng cuộn mượt mà */
+    /* Cho hiÃ¡Â»â€¡u Ã¡Â»Â©ng cuÃ¡Â»â„¢n mÃ†Â°Ã¡Â»Â£t mÃƒÂ  */
     overflow-x: hidden;
-    /* Ngăn chặn cuộn ngang do hiệu ứng slide-in trên toàn bộ trang */
+    /* NgÃ„Æ’n chÃ¡ÂºÂ·n cuÃ¡Â»â„¢n ngang do hiÃ¡Â»â€¡u Ã¡Â»Â©ng slide-in trÃƒÂªn toÃƒÂ n bÃ¡Â»â„¢ trang */
 }
 
 body {
@@ -92,18 +92,20 @@ body {
     height: 100vh;
     overflow: hidden;
     margin-top: -80px;
-    /* Bù đắp để banner bắt đầu từ tận cùng phía trên màn hình */
+    /* BÃƒÂ¹ Ã„â€˜Ã¡ÂºÂ¯p Ã„â€˜Ã¡Â»Æ’ banner bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« tÃ¡ÂºÂ­n cÃƒÂ¹ng phÃƒÂ­a trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh */
     user-select: none;
-    /* Ngăn bôi đen văn bản khi kéo */
+    /* NgÃ„Æ’n bÃƒÂ´i Ã„â€˜en vÃ„Æ’n bÃ¡ÂºÂ£n khi kÃƒÂ©o */
     cursor: grab;
     background-color: #000;
-    /* Nền đen giúp hiệu ứng mờ dần (fade) trông sâu và chuyên nghiệp hơn */
+    /* NÃ¡Â»Ân Ã„â€˜en giÃƒÂºp hiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ¡Â»Â dÃ¡ÂºÂ§n (fade) trÃƒÂ´ng sÃƒÂ¢u vÃƒÂ  chuyÃƒÂªn nghiÃ¡Â»â€¡p hÃ†Â¡n */
 }
 
 .carousel-container {
     width: 100%;
     height: 100%;
 }
+
+.out-of-stock-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.6); color: white; width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 500; z-index: 12; pointer-events: none; }
 
 .hero-carousel:active {
     cursor: grabbing;
@@ -123,9 +125,9 @@ body {
     text-align: center;
     visibility: hidden;
     text-decoration: none;
-    /* Bỏ gạch chân khi slide là thẻ <a> */
+    /* BÃ¡Â»Â gÃ¡ÂºÂ¡ch chÃƒÂ¢n khi slide lÃƒÂ  thÃ¡ÂºÂ» <a> */
     color: inherit;
-    /* Giữ nguyên màu chữ của nội dung bên trong */
+    /* GiÃ¡Â»Â¯ nguyÃƒÂªn mÃƒÂ u chÃ¡Â»Â¯ cÃ¡Â»Â§a nÃ¡Â»â„¢i dung bÃƒÂªn trong */
     z-index: 1;
 }
 
@@ -133,7 +135,7 @@ body {
     opacity: 1;
     visibility: visible;
     z-index: 2;
-    /* Slide đang kích hoạt sẽ nằm trên slide cũ để tạo hiệu ứng chồng mờ (cross-fade) */
+    /* Slide Ã„â€˜ang kÃƒÂ­ch hoÃ¡ÂºÂ¡t sÃ¡ÂºÂ½ nÃ¡ÂºÂ±m trÃƒÂªn slide cÃ…Â© Ã„â€˜Ã¡Â»Æ’ tÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng chÃ¡Â»â€œng mÃ¡Â»Â (cross-fade) */
 }
 
 .carousel-slide img {
@@ -145,7 +147,7 @@ body {
     object-fit: cover;
     z-index: -1;
     pointer-events: none;
-    /* Tránh kích hoạt tính năng kéo ảnh mặc định của trình duyệt */
+    /* TrÃƒÂ¡nh kÃƒÂ­ch hoÃ¡ÂºÂ¡t tÃƒÂ­nh nÃ„Æ’ng kÃƒÂ©o Ã¡ÂºÂ£nh mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»Â§a trÃƒÂ¬nh duyÃ¡Â»â€¡t */
 }
 
 .carousel-slide picture {
@@ -166,7 +168,7 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.2);
-    /* Lớp phủ nhẹ giúp chữ dễ đọc hơn */
+    /* LÃ¡Â»â€ºp phÃ¡Â»Â§ nhÃ¡ÂºÂ¹ giÃƒÂºp chÃ¡Â»Â¯ dÃ¡Â»â€¦ Ã„â€˜Ã¡Â»Âc hÃ†Â¡n */
     z-index: 0;
 }
 
@@ -238,12 +240,12 @@ body {
     width: 100%;
     height: 80px;
     background-color: rgba(247, 246, 242, 0.25);
-    /* Giảm độ đục xuống 75% để trong suốt hơn */
+    /* GiÃ¡ÂºÂ£m Ã„â€˜Ã¡Â»â„¢ Ã„â€˜Ã¡Â»Â¥c xuÃ¡Â»â€˜ng 75% Ã„â€˜Ã¡Â»Æ’ trong suÃ¡Â»â€˜t hÃ†Â¡n */
     backdrop-filter: blur(35px);
-    /* Tăng độ mờ để hiệu ứng kính mờ rõ rệt hơn */
+    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â„¢ mÃ¡Â»Â Ã„â€˜Ã¡Â»Æ’ hiÃ¡Â»â€¡u Ã¡Â»Â©ng kÃƒÂ­nh mÃ¡Â»Â rÃƒÂµ rÃ¡Â»â€¡t hÃ†Â¡n */
     -webkit-backdrop-filter: blur(35px);
     z-index: 3000;
-    /* Tăng z-index để navbar luôn nằm trên lớp mờ */
+    /* TÃ„Æ’ng z-index Ã„â€˜Ã¡Â»Æ’ navbar luÃƒÂ´n nÃ¡ÂºÂ±m trÃƒÂªn lÃ¡Â»â€ºp mÃ¡Â»Â */
     font-family: var(--font-serif);
     font-weight: 300;
     align-items: center;
@@ -276,19 +278,19 @@ body {
     width: auto;
     display: block;
     transition: filter 0.4s ease;
-    /* Tạo hiệu ứng chuyển đổi màu logo mượt mà */
+    /* TÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng chuyÃ¡Â»Æ’n Ã„â€˜Ã¡Â»â€¢i mÃƒÂ u logo mÃ†Â°Ã¡Â»Â£t mÃƒÂ  */
 }
 
-/* --- Trạng thái Header trong suốt (Cho trang chủ) --- */
+/* --- TrÃ¡ÂºÂ¡ng thÃƒÂ¡i Header trong suÃ¡Â»â€˜t (Cho trang chÃ¡Â»Â§) --- */
 .navbar.transparent {
     background-color: transparent !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
-    /* Tắt blur khi đang ở trạng thái trong suốt (đầu trang chủ) */
+    /* TÃ¡ÂºÂ¯t blur khi Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i trong suÃ¡Â»â€˜t (Ã„â€˜Ã¡ÂºÂ§u trang chÃ¡Â»Â§) */
     -webkit-backdrop-filter: none !important;
 }
 
-/* Khi header trong suốt, tự động đổi màu chữ/icon (trắng/đen) tương phản với ảnh nền bằng difference */
+/* Khi header trong suÃ¡Â»â€˜t, tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜Ã¡Â»â€¢i mÃƒÂ u chÃ¡Â»Â¯/icon (trÃ¡ÂºÂ¯ng/Ã„â€˜en) tÃ†Â°Ã†Â¡ng phÃ¡ÂºÂ£n vÃ¡Â»â€ºi Ã¡ÂºÂ£nh nÃ¡Â»Ân bÃ¡ÂºÂ±ng difference */
 .navbar.transparent .nav-links > li > a,
 .navbar.transparent .nav-icon-btn,
 .navbar.transparent .user-icon-link {
@@ -296,7 +298,7 @@ body {
     mix-blend-mode: difference;
 }
 
-/* KHÔNG áp dụng hiệu ứng tắc kè hoa cho các chữ trong bảng menu mobile (vì bảng có nền trắng) */
+/* KHÃƒâ€NG ÃƒÂ¡p dÃ¡Â»Â¥ng hiÃ¡Â»â€¡u Ã¡Â»Â©ng tÃ¡ÂºÂ¯c kÃƒÂ¨ hoa cho cÃƒÂ¡c chÃ¡Â»Â¯ trong bÃ¡ÂºÂ£ng menu mobile (vÃƒÂ¬ bÃ¡ÂºÂ£ng cÃƒÂ³ nÃ¡Â»Ân trÃ¡ÂºÂ¯ng) */
 @media (max-width: 992px) {
     .navbar.transparent .nav-links > li > a {
         color: var(--text-black) !important;
@@ -304,7 +306,7 @@ body {
     }
 }
 
-/* Ép logo sang màu trắng khi header trong suốt và dùng difference để tương phản */
+/* Ãƒâ€°p logo sang mÃƒÂ u trÃ¡ÂºÂ¯ng khi header trong suÃ¡Â»â€˜t vÃƒÂ  dÃƒÂ¹ng difference Ã„â€˜Ã¡Â»Æ’ tÃ†Â°Ã†Â¡ng phÃ¡ÂºÂ£n */
 .navbar.transparent .logo img {
     filter: brightness(0) invert(1);
     mix-blend-mode: difference;
@@ -320,7 +322,7 @@ body {
     background-color: var(--card-bg);
 }
 
-/* Hiệu ứng chữ chạy màu cho tiêu đề */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng chÃ¡Â»Â¯ chÃ¡ÂºÂ¡y mÃƒÂ u cho tiÃƒÂªu Ã„â€˜Ã¡Â»Â */
 .shimmer-title {
     background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
     background-size: 200% auto;
@@ -330,7 +332,7 @@ body {
     display: inline-block;
 }
 
-/* Style cho bộ đếm ngược */
+/* Style cho bÃ¡Â»â„¢ Ã„â€˜Ã¡ÂºÂ¿m ngÃ†Â°Ã¡Â»Â£c */
 .countdown-container {
     display: flex;
     justify-content: center;
@@ -364,7 +366,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Hiệu ứng nổi bật cho link Flash Sale */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng nÃ¡Â»â€¢i bÃ¡ÂºÂ­t cho link Flash Sale */
 .flash-sale-link {
     background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
     background-size: 200% auto;
@@ -384,7 +386,7 @@ body {
     animation: flash-stroke 3s linear infinite;
 }
 
-/* Khi header trong suốt trên nền banner, dùng dải màu sáng hơn để dễ đọc */
+/* Khi header trong suÃ¡Â»â€˜t trÃƒÂªn nÃ¡Â»Ân banner, dÃƒÂ¹ng dÃ¡ÂºÂ£i mÃƒÂ u sÃƒÂ¡ng hÃ†Â¡n Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€¦ Ã„â€˜Ã¡Â»Âc */
 .navbar.transparent .flash-sale-link {
     background: linear-gradient(90deg, #ff7675, #ffeaa7, #ff7675);
     background-size: 200% auto;
@@ -398,16 +400,16 @@ body {
     }
 }
 
-/* Khi menu mobile đang mở (biến thành dấu X), nút phải luôn có màu đậm để nổi bật trên nền menu trắng/cream */
+/* Khi menu mobile Ã„â€˜ang mÃ¡Â»Å¸ (biÃ¡ÂºÂ¿n thÃƒÂ nh dÃ¡ÂºÂ¥u X), nÃƒÂºt phÃ¡ÂºÂ£i luÃƒÂ´n cÃƒÂ³ mÃƒÂ u Ã„â€˜Ã¡ÂºÂ­m Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â€¢i bÃ¡ÂºÂ­t trÃƒÂªn nÃ¡Â»Ân menu trÃ¡ÂºÂ¯ng/cream */
 .menu-toggle.active span {
     background-color: var(--text-black) !important;
     box-shadow: none !important;
 }
 
-/* --- Trạng thái Header khi đã cuộn trang (Scrolled) --- */
+/* --- TrÃ¡ÂºÂ¡ng thÃƒÂ¡i Header khi Ã„â€˜ÃƒÂ£ cuÃ¡Â»â„¢n trang (Scrolled) --- */
 .navbar.scrolled {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-    /* Chỉ tăng cường đổ bóng khi cuộn */
+    /* ChÃ¡Â»â€° tÃ„Æ’ng cÃ†Â°Ã¡Â»Âng Ã„â€˜Ã¡Â»â€¢ bÃƒÂ³ng khi cuÃ¡Â»â„¢n */
 }
 
 .nav-links {
@@ -447,7 +449,7 @@ body {
     width: 100%;
 }
 
-/* Loại bỏ hiệu ứng gạch chân cho các liên kết bên trong mega menu */
+/* LoÃ¡ÂºÂ¡i bÃ¡Â»Â hiÃ¡Â»â€¡u Ã¡Â»Â©ng gÃ¡ÂºÂ¡ch chÃƒÂ¢n cho cÃƒÂ¡c liÃƒÂªn kÃ¡ÂºÂ¿t bÃƒÂªn trong mega menu */
 .mega-menu a::after {
     content: none;
 }
@@ -459,13 +461,13 @@ body {
     cursor: pointer;
     position: relative;
     padding: 0;
-    /* Loại bỏ padding mặc định */
+    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â padding mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
     width: 32px;
-    /* Kích thước cố định */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
     height: 32px;
-    /* Kích thước cố định */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
     display: flex;
-    /* Sử dụng flexbox để căn giữa nội dung */
+    /* SÃ¡Â»Â­ dÃ¡Â»Â¥ng flexbox Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n giÃ¡Â»Â¯a nÃ¡Â»â„¢i dung */
     align-items: center;
     justify-content: center;
     transition: transform 0.2s;
@@ -483,15 +485,15 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.7);
-    /* Nền trong suốt hơn */
+    /* NÃ¡Â»Ân trong suÃ¡Â»â€˜t hÃ†Â¡n */
     z-index: 9990;
-    /* Đảm bảo nằm trên hầu hết các lớp khác */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃ¡ÂºÂ±m trÃƒÂªn hÃ¡ÂºÂ§u hÃ¡ÂºÂ¿t cÃƒÂ¡c lÃ¡Â»â€ºp khÃƒÂ¡c */
     display: none;
     align-items: flex-start;
     justify-content: center;
     padding-top: 10vh;
     backdrop-filter: blur(10px);
-    /* Giảm độ mờ để trong suốt hơn */
+    /* GiÃ¡ÂºÂ£m Ã„â€˜Ã¡Â»â„¢ mÃ¡Â»Â Ã„â€˜Ã¡Â»Æ’ trong suÃ¡Â»â€˜t hÃ†Â¡n */
     -webkit-backdrop-filter: blur(10px);
 }
 
@@ -512,9 +514,9 @@ body {
     gap: 15px;
     border-bottom: 2px solid var(--text-black);
     padding-bottom: 15px;
-    /* Tăng khoảng cách dưới */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃ†Â°Ã¡Â»â€ºi */
     margin-bottom: 20px;
-    /* Thêm khoảng cách với gợi ý */
+    /* ThÃƒÂªm khoÃ¡ÂºÂ£ng cÃƒÂ¡ch vÃ¡Â»â€ºi gÃ¡Â»Â£i ÃƒÂ½ */
 }
 
 .search-input-wrapper input {
@@ -548,10 +550,10 @@ body {
     animation: suggestionSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 450px;
     overflow-y: auto;
-    /* Cho phép cuộn nếu danh sách dài */
+    /* Cho phÃƒÂ©p cuÃ¡Â»â„¢n nÃ¡ÂºÂ¿u danh sÃƒÂ¡ch dÃƒÂ i */
 }
 
-/* CSS cho từng item trong danh sách tìm kiếm */
+/* CSS cho tÃ¡Â»Â«ng item trong danh sÃƒÂ¡ch tÃƒÂ¬m kiÃ¡ÂºÂ¿m */
 .suggestion-item {
     display: flex;
     padding: 15px;
@@ -688,30 +690,30 @@ body {
     background: #f9f9f9;
 }
 
-/* Cho phép Mega Menu tràn toàn màn hình */
+/* Cho phÃƒÂ©p Mega Menu trÃƒÂ n toÃƒÂ n mÃƒÂ n hÃƒÂ¬nh */
 .nav-links>li.dropdown {
     position: static;
 }
 
-/* Mega Dropdown cho danh mục lớn như Dụng cụ bếp */
+/* Mega Dropdown cho danh mÃ¡Â»Â¥c lÃ¡Â»â€ºn nhÃ†Â° DÃ¡Â»Â¥ng cÃ¡Â»Â¥ bÃ¡ÂºÂ¿p */
 .mega-menu {
     width: 100% !important;
     left: 0 !important;
     right: 0 !important;
     top: 80px;
-    /* Khớp với chiều cao của navbar */
+    /* KhÃ¡Â»â€ºp vÃ¡Â»â€ºi chiÃ¡Â»Âu cao cÃ¡Â»Â§a navbar */
     display: flex;
     padding: 60px 10% !important;
-    /* Tăng thêm padding để dồn nội dung vào giữa */
+    /* TÃ„Æ’ng thÃƒÂªm padding Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€œn nÃ¡Â»â„¢i dung vÃƒÂ o giÃ¡Â»Â¯a */
     gap: 80px;
-    /* Tăng khoảng cách giữa các cột (từ 60px lên 80px) */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c cÃ¡Â»â„¢t (tÃ¡Â»Â« 60px lÃƒÂªn 80px) */
     flex-wrap: wrap;
-    /* Cho phép rớt dòng nếu quá nhiều danh mục */
+    /* Cho phÃƒÂ©p rÃ¡Â»â€ºt dÃƒÂ²ng nÃ¡ÂºÂ¿u quÃƒÂ¡ nhiÃ¡Â»Âu danh mÃ¡Â»Â¥c */
     transform: translateY(10px) !important;
     justify-content: space-between;
-    /* Giãn đều các cột ra hết chiều ngang container */
+    /* GiÃƒÂ£n Ã„â€˜Ã¡Â»Âu cÃƒÂ¡c cÃ¡Â»â„¢t ra hÃ¡ÂºÂ¿t chiÃ¡Â»Âu ngang container */
     border-radius: 0;
-    /* Tràn ngang thường không để bo góc */
+    /* TrÃƒÂ n ngang thÃ†Â°Ã¡Â»Âng khÃƒÂ´ng Ã„â€˜Ã¡Â»Æ’ bo gÃƒÂ³c */
     border-left: none;
     border-right: none;
 }
@@ -728,27 +730,27 @@ body {
     flex-wrap: wrap;
 }
 
-/* Tối ưu khoảng cách cho màn hình laptop nhỏ (1024px - 1366px) */
+/* TÃ¡Â»â€˜i Ã†Â°u khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cho mÃƒÂ n hÃƒÂ¬nh laptop nhÃ¡Â»Â (1024px - 1366px) */
 @media (min-width: 993px) and (max-width: 1366px) {
     .mega-menu {
         gap: 40px !important;
-        /* Giảm từ 80px xuống 40px */
+        /* GiÃ¡ÂºÂ£m tÃ¡Â»Â« 80px xuÃ¡Â»â€˜ng 40px */
         padding: 40px 5% !important;
-        /* Thu hẹp padding hai bên */
+        /* Thu hÃ¡ÂºÂ¹p padding hai bÃƒÂªn */
     }
 
     .mega-col {
         width: 160px;
-        /* Thu nhỏ độ rộng cột một chút */
+        /* Thu nhÃ¡Â»Â Ã„â€˜Ã¡Â»â„¢ rÃ¡Â»â„¢ng cÃ¡Â»â„¢t mÃ¡Â»â„¢t chÃƒÂºt */
         min-width: 140px;
     }
 }
 
 .mega-col {
     flex: 0 0 auto;
-    /* Không cho cột co giãn tùy tiện */
+    /* KhÃƒÂ´ng cho cÃ¡Â»â„¢t co giÃƒÂ£n tÃƒÂ¹y tiÃ¡Â»â€¡n */
     width: 180px;
-    /* Cố định độ rộng cột để căn lề thẳng hàng */
+    /* CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh Ã„â€˜Ã¡Â»â„¢ rÃ¡Â»â„¢ng cÃ¡Â»â„¢t Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n lÃ¡Â»Â thÃ¡ÂºÂ³ng hÃƒÂ ng */
     min-width: 180px;
 }
 
@@ -757,7 +759,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 25px;
-    /* Tăng khoảng cách dưới tiêu đề */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃ†Â°Ã¡Â»â€ºi tiÃƒÂªu Ã„â€˜Ã¡Â»Â */
     color: #888;
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
@@ -765,7 +767,7 @@ body {
 
 .mega-col a {
     padding: 12px 0 !important;
-    /* Tăng khoảng cách dòng (từ 10px lên 12px) giúp menu "thở" hơn */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃƒÂ²ng (tÃ¡Â»Â« 10px lÃƒÂªn 12px) giÃƒÂºp menu "thÃ¡Â»Å¸" hÃ†Â¡n */
     color: var(--text-black) !important;
     opacity: 0.6;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -790,7 +792,7 @@ body {
     border: none;
     padding: 10px;
     z-index: 4000;
-    /* Tăng z-index để không bị đè */
+    /* TÃ„Æ’ng z-index Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ Ã„â€˜ÃƒÂ¨ */
     margin-right: 15px;
 }
 
@@ -950,18 +952,18 @@ body {
         background: var(--bg-cream);
         flex-direction: column;
         padding: 70px 20px 20px 20px;
-        /* Giảm padding trên và dưới */
+        /* GiÃ¡ÂºÂ£m padding trÃƒÂªn vÃƒÂ  dÃ†Â°Ã¡Â»â€ºi */
         height: 100dvh;
-        /* Tự động điều chỉnh theo thanh công cụ trình duyệt mobile */
+        /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh theo thanh cÃƒÂ´ng cÃ¡Â»Â¥ trÃƒÂ¬nh duyÃ¡Â»â€¡t mobile */
         transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 3100;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
         gap: 0.5rem;
-        /* Giảm khoảng cách giữa các mục menu chính */
+        /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c mÃ¡Â»Â¥c menu chÃƒÂ­nh */
         overflow-y: auto;
-        /* Cho phép cuộn nếu danh mục quá dài */
+        /* Cho phÃƒÂ©p cuÃ¡Â»â„¢n nÃ¡ÂºÂ¿u danh mÃ¡Â»Â¥c quÃƒÂ¡ dÃƒÂ i */
         -webkit-overflow-scrolling: touch;
-        /* Giúp cuộn mượt hơn trên iPhone */
+        /* GiÃƒÂºp cuÃ¡Â»â„¢n mÃ†Â°Ã¡Â»Â£t hÃ†Â¡n trÃƒÂªn iPhone */
     }
 
     .nav-links.active {
@@ -973,9 +975,9 @@ body {
         letter-spacing: 2px;
     }
 
-    /* Giữ nguyên font-size */
+    /* GiÃ¡Â»Â¯ nguyÃƒÂªn font-size */
 
-    /* Ép chữ menu sang màu đen khi menu mobile mở, tránh bị trùng màu trắng khi header đang ở trạng thái transparent */
+    /* Ãƒâ€°p chÃ¡Â»Â¯ menu sang mÃƒÂ u Ã„â€˜en khi menu mobile mÃ¡Â»Å¸, trÃƒÂ¡nh bÃ¡Â»â€¹ trÃƒÂ¹ng mÃƒÂ u trÃ¡ÂºÂ¯ng khi header Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i transparent */
     .nav-links.active a {
         color: var(--text-black) !important;
         text-shadow: none !important;
@@ -985,9 +987,9 @@ body {
         padding: 8px 0;
     }
 
-    /* Thêm padding dọc cho các mục menu cấp cao nhất */
+    /* ThÃƒÂªm padding dÃ¡Â»Âc cho cÃƒÂ¡c mÃ¡Â»Â¥c menu cÃ¡ÂºÂ¥p cao nhÃ¡ÂºÂ¥t */
 
-    /* Overlay khi mở menu */
+    /* Overlay khi mÃ¡Â»Å¸ menu */
     body.menu-open::after {
         content: '';
         position: fixed;
@@ -1017,20 +1019,20 @@ body {
         transform: translateY(-7.5px) rotate(-45deg);
     }
 
-    /* Tối ưu Mega Menu trên Mobile thành dạng Accordion */
+    /* TÃ¡Â»â€˜i Ã†Â°u Mega Menu trÃƒÂªn Mobile thÃƒÂ nh dÃ¡ÂºÂ¡ng Accordion */
     .nav-links li.dropdown .mega-menu {
         position: static !important;
         display: none !important;
-        /* Mặc định ẩn trên mobile */
+        /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n trÃƒÂªn mobile */
         width: 100% !important;
         padding: 8px 0 8px 15px !important;
-        /* Giảm padding cho mega-menu con */
+        /* GiÃ¡ÂºÂ£m padding cho mega-menu con */
         background: rgba(0, 0, 0, 0.02) !important;
         box-shadow: none !important;
         transform: none !important;
         flex-direction: column;
         gap: 0.5rem !important;
-        /* Giảm khoảng cách giữa các cột trong mega-menu */
+        /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c cÃ¡Â»â„¢t trong mega-menu */
         border: none !important;
     }
 
@@ -1039,7 +1041,7 @@ body {
         gap: 0.5rem;
     }
 
-    /* Hiện menu con khi cha có class mobile-expanded */
+    /* HiÃ¡Â»â€¡n menu con khi cha cÃƒÂ³ class mobile-expanded */
     .nav-links li.dropdown.mobile-expanded .mega-menu {
         display: flex !important;
     }
@@ -1065,7 +1067,7 @@ body {
         letter-spacing: 0.5px !important;
     }
 
-    /* Hiệu ứng xoay mũi tên khi mở rộng */
+    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng xoay mÃ…Â©i tÃƒÂªn khi mÃ¡Â»Å¸ rÃ¡Â»â„¢ng */
     li.dropdown>a svg {
         transition: transform 0.3s;
     }
@@ -1085,13 +1087,13 @@ body {
     justify-content: center;
     text-align: center;
     background: linear-gradient(rgba(235, 234, 230, 0.8), rgba(235, 234, 230, 0.8)), url('../Asset/images/hero-bg.webp') no-repeat center center/cover;
-    /* Đã đổi sang .webp */
+    /* Ã„ÂÃƒÂ£ Ã„â€˜Ã¡Â»â€¢i sang .webp */
     background-attachment: fixed;
-    /* Hiệu ứng parallax */
+    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng parallax */
     color: var(--text-black);
-    /* Đảm bảo chữ rõ ràng trên nền ảnh */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o chÃ¡Â»Â¯ rÃƒÂµ rÃƒÂ ng trÃƒÂªn nÃ¡Â»Ân Ã¡ÂºÂ£nh */
     position: relative;
-    /* Để dùng cho hiệu ứng */
+    /* Ã„ÂÃ¡Â»Æ’ dÃƒÂ¹ng cho hiÃ¡Â»â€¡u Ã¡Â»Â©ng */
     width: 100%;
 }
 
@@ -1099,16 +1101,16 @@ body {
     font-size: 3.5rem;
     margin-bottom: 1rem;
     opacity: 0;
-    /* Ban đầu ẩn để tạo hiệu ứng fade-in */
+    /* Ban Ã„â€˜Ã¡ÂºÂ§u Ã¡ÂºÂ©n Ã„â€˜Ã¡Â»Æ’ tÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng fade-in */
     animation: fadeIn 1s ease-out forwards;
 }
 
 .hero p {
     animation: fadeIn 1.5s ease-out forwards;
-    /* Chậm hơn h1 */
+    /* ChÃ¡ÂºÂ­m hÃ†Â¡n h1 */
 }
 
-/* Home Search Bar - Nằm trong Hero */
+/* Home Search Bar - NÃ¡ÂºÂ±m trong Hero */
 .search-container-home {
     max-width: 550px;
     margin: 2.5rem auto 0;
@@ -1150,7 +1152,9 @@ body {
 
 /* Buttons */
 .btn-dark {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: var(--text-black);
     color: var(--bg-cream);
     padding: 1rem 2.5rem;
@@ -1168,7 +1172,9 @@ body {
 }
 
 .btn-outline {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
     color: var(--text-black);
     border: 1px solid var(--text-black);
@@ -1195,13 +1201,16 @@ body {
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    /* Tự động xuống dòng linh hoạt cho trang chuẩn */
+    /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng xuÃ¡Â»â€˜ng dÃƒÂ²ng linh hoÃ¡ÂºÂ¡t cho trang chuÃ¡ÂºÂ©n */
     gap: 2rem;
     padding: 2rem 5%;
-    /* Trả về lề chuẩn cho các trang */
+    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»Â chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
+    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â  lÃ¡Â»Â  chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
 }
 
 /* Product Card */
+.sale-badge { position: absolute; top: 10px; left: 10px; background: #e6d5c3; color: #4a3c31; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; transform: rotate(-15deg); z-index: 10; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+
 .product-card {
     background-color: var(--card-bg, #ffffff);
     padding: 12px;
@@ -1350,7 +1359,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-black);
-    /* Đồng bộ với màu chữ chính của website */
+    /* Ã„ÂÃ¡Â»â€œng bÃ¡Â»â„¢ vÃ¡Â»â€ºi mÃƒÂ u chÃ¡Â»Â¯ chÃƒÂ­nh cÃ¡Â»Â§a website */
 }
 
 .product-card .price .old-price {
@@ -1372,25 +1381,19 @@ body {
     font-weight: 400;
 }
 
-.sale-badge {
-    border-radius: 0 0 8px 0;
-    top: 0;
-    left: 0;
-    padding: 4px 10px;
-    font-size: 0.7rem;
-}
+
 
 section {
     padding: 4rem 5%;
-    /* Trả về lề chuẩn cho các trang */
+    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»Â chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
     margin-top: 2rem;
 }
 
 .special-offers {
     display: none;
-    /* Ẩn mặc định, JS sẽ hiện khi có data */
+    /* Ã¡ÂºÂ¨n mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh, JS sÃ¡ÂºÂ½ hiÃ¡Â»â€¡n khi cÃƒÂ³ data */
     background-color: #fff9f8;
-    /* Nền hồng đất nhạt ấm cúng */
+    /* NÃ¡Â»Ân hÃ¡Â»â€œng Ã„â€˜Ã¡ÂºÂ¥t nhÃ¡ÂºÂ¡t Ã¡ÂºÂ¥m cÃƒÂºng */
     padding: 5rem 5%;
     margin-top: 4rem;
     border-top: 1px solid #ffe4e1;
@@ -1444,7 +1447,7 @@ section {
 .fire-icon {
     display: inline-block;
     height: 40px;
-    /* Điều chỉnh chiều cao khớp với chữ */
+    /* Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh chiÃ¡Â»Âu cao khÃ¡Â»â€ºp vÃ¡Â»â€ºi chÃ¡Â»Â¯ */
     width: auto;
     animation: fire-burn 0.8s infinite ease-in-out;
     vertical-align: middle;
@@ -1458,38 +1461,10 @@ section {
     font-weight: normal;
 }
 
-.sale-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: #e74c3c;
-    /* Đỏ tươi hơn để thực sự nổi bật */
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    /* Dạng pill trông hiện đại hơn */
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    z-index: 10;
-    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
-}
+
 
 /* Out of Stock Styles */
-.out-of-stock-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: #888;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    z-index: 12;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
+.out-of-stock-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.6); color: white; width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 500; z-index: 12; pointer-events: none; }
 
 .product-card.is-out-of-stock {
     opacity: 0.7;
@@ -1522,7 +1497,7 @@ h2::after {
 
 @media (max-width: 768px) {
 
-    /* Ép tất cả container chính về một chuẩn lề ngang duy nhất */
+    /* Ãƒâ€°p tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ container chÃƒÂ­nh vÃ¡Â»Â mÃ¡Â»â„¢t chuÃ¡ÂºÂ©n lÃ¡Â»Â ngang duy nhÃ¡ÂºÂ¥t */
     .navbar,
     section,
     .products-page-container,
@@ -1543,7 +1518,7 @@ h2::after {
     .logo {
         position: relative;
         z-index: 1400;
-        /* Đảm bảo logo luôn hiện trên nền trắng của menu mobile */
+        /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o logo luÃƒÂ´n hiÃ¡Â»â€¡n trÃƒÂªn nÃ¡Â»Ân trÃ¡ÂºÂ¯ng cÃ¡Â»Â§a menu mobile */
     }
 
     h2 {
@@ -1580,24 +1555,24 @@ h2::after {
 
     .menu-toggle {
         display: flex;
-        /* Hiện nút trên mobile */
+        /* HiÃ¡Â»â€¡n nÃƒÂºt trÃƒÂªn mobile */
     }
 
     .nav-links {
         position: fixed;
         top: 0;
         left: -100%;
-        /* Đổi sang trượt từ trái sang để không đè cụm icon phải */
+        /* Ã„ÂÃ¡Â»â€¢i sang trÃ†Â°Ã¡Â»Â£t tÃ¡Â»Â« trÃƒÂ¡i sang Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng Ã„â€˜ÃƒÂ¨ cÃ¡Â»Â¥m icon phÃ¡ÂºÂ£i */
         height: 100vh;
         width: 100%;
-        /* Hiện full màn hình */
+        /* HiÃ¡Â»â€¡n full mÃƒÂ n hÃƒÂ¬nh */
         background-color: var(--card-bg);
         flex-direction: column;
         justify-content: center;
         align-items: center;
         gap: 2.5rem;
         z-index: 1300;
-        /* Phải cao hơn Navbar (1100) và Toggle (1200) */
+        /* PhÃ¡ÂºÂ£i cao hÃ†Â¡n Navbar (1100) vÃƒÂ  Toggle (1200) */
         transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
         gap: 1.2rem;
@@ -1610,7 +1585,7 @@ h2::after {
     .logo,
     .nav-right {
         flex: 0 0 auto;
-        /* Trên mobile không cần chiếm 1fr */
+        /* TrÃƒÂªn mobile khÃƒÂ´ng cÃ¡ÂºÂ§n chiÃ¡ÂºÂ¿m 1fr */
         min-width: unset;
     }
 
@@ -1618,10 +1593,10 @@ h2::after {
         gap: 0.8rem;
     }
 
-    /* Tối ưu nút đóng menu (dấu X phụ) */
+    /* TÃ¡Â»â€˜i Ã†Â°u nÃƒÂºt Ã„â€˜ÃƒÂ³ng menu (dÃ¡ÂºÂ¥u X phÃ¡Â»Â¥) */
     .btn-close-menu {
         display: none;
-        /* Ẩn đi vì nút Toggle đã chuyển thành dấu X và nằm trên cùng rồi */
+        /* Ã¡ÂºÂ¨n Ã„â€˜i vÃƒÂ¬ nÃƒÂºt Toggle Ã„â€˜ÃƒÂ£ chuyÃ¡Â»Æ’n thÃƒÂ nh dÃ¡ÂºÂ¥u X vÃƒÂ  nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¹ng rÃ¡Â»â€œi */
         position: absolute;
         top: 20px;
         right: 5%;
@@ -1633,7 +1608,7 @@ h2::after {
         z-index: 1401;
     }
 
-    /* Hiệu ứng chuyển Hamburger thành dấu X */
+    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng chuyÃ¡Â»Æ’n Hamburger thÃƒÂ nh dÃ¡ÂºÂ¥u X */
     .menu-toggle.active span:nth-child(1) {
         transform: translateY(8px) rotate(45deg);
     }
@@ -1666,12 +1641,14 @@ h2::after {
 
     .grid {
         grid-template-columns: repeat(2, 1fr);
-        /* Đảm bảo luôn 2 cột trên mobile */
+        /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o luÃƒÂ´n 2 cÃ¡Â»â„¢t trÃƒÂªn mobile */
         gap: 12px;
         padding: 1.5rem 0;
     }
 
-    .product-card {
+    .sale-badge { position: absolute; top: 10px; left: 10px; background: #e6d5c3; color: #4a3c31; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; transform: rotate(-15deg); z-index: 10; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+
+
         padding: 0.8rem;
     }
 
@@ -1699,7 +1676,7 @@ h2::after {
         padding: 4rem 5% !important;
     }
 
-    /* Tối ưu trang Products */
+    /* TÃ¡Â»â€˜i Ã†Â°u trang Products */
     .products-page-container {
         padding: 1.5rem 5% 4rem;
     }
@@ -1750,7 +1727,7 @@ h2::after {
         border-color: var(--text-black);
     }
 
-    /* Tối ưu trang Cart */
+    /* TÃ¡Â»â€˜i Ã†Â°u trang Cart */
     .cart-container {
         padding: 2rem 5%;
     }
@@ -1774,7 +1751,7 @@ h2::after {
         margin-bottom: 1.5rem;
     }
 
-    /* Tối ưu trang Detail */
+    /* TÃ¡Â»â€˜i Ã†Â°u trang Detail */
     .product-detail-container {
         padding: 2rem 5%;
     }
@@ -1801,7 +1778,7 @@ h2::after {
     }
 }
 
-/* Ẩn nút đóng trên desktop */
+/* Ã¡ÂºÂ¨n nÃƒÂºt Ã„â€˜ÃƒÂ³ng trÃƒÂªn desktop */
 .btn-close-menu {
     display: none;
 }
@@ -1980,7 +1957,7 @@ h2::after {
     opacity: 1;
 }
 
-/* Nút điều hướng cho Story Slider */
+/* NÃƒÂºt Ã„â€˜iÃ¡Â»Âu hÃ†Â°Ã¡Â»â€ºng cho Story Slider */
 .story-controls {
     position: absolute;
     bottom: 20px;
@@ -2039,16 +2016,16 @@ h2::after {
     transform: scale(1.3);
 }
 
-/* Căn giữa các nút btn-dark trong các section flower, event, story */
+/* CÃ„Æ’n giÃ¡Â»Â¯a cÃƒÂ¡c nÃƒÂºt btn-dark trong cÃƒÂ¡c section flower, event, story */
 .flower-intro-section .flower-intro-content .btn-dark,
 .event-intro-section .event-intro-content .btn-dark,
 .story-section .story-content .btn-dark {
     display: block;
-    /* Biến thành phần tử khối */
+    /* BiÃ¡ÂºÂ¿n thÃƒÂ nh phÃ¡ÂºÂ§n tÃ¡Â»Â­ khÃ¡Â»â€˜i */
     margin: 1.5rem auto 0 auto;
-    /* Căn giữa theo chiều ngang, giữ margin-top */
+    /* CÃ„Æ’n giÃ¡Â»Â¯a theo chiÃ¡Â»Âu ngang, giÃ¡Â»Â¯ margin-top */
     max-width: fit-content;
-    /* Giới hạn chiều rộng của nút để không bị tràn */
+    /* GiÃ¡Â»â€ºi hÃ¡ÂºÂ¡n chiÃ¡Â»Âu rÃ¡Â»â„¢ng cÃ¡Â»Â§a nÃƒÂºt Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ trÃƒÂ n */
 }
 
 @media (max-width: 768px) {
@@ -2065,18 +2042,18 @@ h2::after {
 .reveal-on-scroll {
     opacity: 0;
     transform: translateY(30px);
-    /* Mặc định trượt lên cho các section khác */
+    /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh trÃ†Â°Ã¡Â»Â£t lÃƒÂªn cho cÃƒÂ¡c section khÃƒÂ¡c */
     transition: opacity 1s cubic-bezier(0.5, 0, 0, 1), transform 1s cubic-bezier(0.5, 0, 0, 1);
 }
 
 .reveal-on-scroll.reveal-left {
     transform: translateX(-50px);
-    /* Giảm khoảng cách trượt để an toàn hơn trên mobile */
+    /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch trÃ†Â°Ã¡Â»Â£t Ã„â€˜Ã¡Â»Æ’ an toÃƒÂ n hÃ†Â¡n trÃƒÂªn mobile */
 }
 
 .reveal-on-scroll.reveal-right {
     transform: translateX(50px);
-    /* Giảm khoảng cách trượt để tránh tràn lề phải */
+    /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch trÃ†Â°Ã¡Â»Â£t Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh trÃƒÂ n lÃ¡Â»Â phÃ¡ÂºÂ£i */
 }
 
 .reveal-on-scroll.is-visible {
@@ -2421,7 +2398,7 @@ footer {
 .collection-overlay {
     position: absolute;
     inset: 0;
-    /* Tăng độ đậm của gradient để chữ nổi bật hơn */
+    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â„¢ Ã„â€˜Ã¡ÂºÂ­m cÃ¡Â»Â§a gradient Ã„â€˜Ã¡Â»Æ’ chÃ¡Â»Â¯ nÃ¡Â»â€¢i bÃ¡ÂºÂ­t hÃ†Â¡n */
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 40%, transparent 100%);
     display: flex;
     flex-direction: column;
@@ -2435,7 +2412,7 @@ footer {
     font-size: 1.8rem;
     margin-bottom: 12px;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    /* Tăng đổ bóng cho chữ */
+    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â€¢ bÃƒÂ³ng cho chÃ¡Â»Â¯ */
 }
 
 .collection-overlay .btn-minimal {
@@ -2444,7 +2421,7 @@ footer {
     align-self: flex-start;
 }
 
-/* Responsive cho Bộ sưu tập trên Mobile */
+/* Responsive cho BÃ¡Â»â„¢ sÃ†Â°u tÃ¡ÂºÂ­p trÃƒÂªn Mobile */
 @media (max-width: 768px) {
     .collections-section {
         padding-top: 3rem;
@@ -2452,13 +2429,13 @@ footer {
 
     .collection-grid {
         grid-template-columns: 1fr;
-        /* Chuyển về 1 cột trên mobile */
+        /* ChuyÃ¡Â»Æ’n vÃ¡Â»Â 1 cÃ¡Â»â„¢t trÃƒÂªn mobile */
         gap: 15px;
     }
 
     .collection-banner {
         height: 300px;
-        /* Giảm chiều cao trên mobile để cân đối */
+        /* GiÃ¡ÂºÂ£m chiÃ¡Â»Âu cao trÃƒÂªn mobile Ã„â€˜Ã¡Â»Æ’ cÃƒÂ¢n Ã„â€˜Ã¡Â»â€˜i */
     }
 }
 
@@ -2516,7 +2493,7 @@ footer {
     height: 1.4rem;
 }
 
-/* Skeleton riêng cho trang chi tiết */
+/* Skeleton riÃƒÂªng cho trang chi tiÃ¡ÂºÂ¿t */
 .skeleton-detail-img {
     width: 100%;
     aspect-ratio: 1/1;
@@ -2547,14 +2524,14 @@ footer {
     }
 }
 
-/* Ảnh chính trong trang chi tiết - To rõ nét */
+/* Ã¡ÂºÂ¢nh chÃƒÂ­nh trong trang chi tiÃ¡ÂºÂ¿t - To rÃƒÂµ nÃƒÂ©t */
 #main-product-img {
     width: 100% !important;
     height: auto !important;
     object-fit: cover;
     border-radius: 4px;
     cursor: zoom-in;
-    /* Hiệu ứng trỏ chuột báo hiệu có thể phóng to */
+    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng trÃ¡Â»Â chuÃ¡Â»â„¢t bÃƒÂ¡o hiÃ¡Â»â€¡u cÃƒÂ³ thÃ¡Â»Æ’ phÃƒÂ³ng to */
     transition: transform 0.3s ease, opacity 0.3s ease;
     image-rendering: -webkit-optimize-contrast;
 }
@@ -2563,7 +2540,7 @@ footer {
     opacity: 0.9;
 }
 
-/* Modal xem ảnh toàn màn hình */
+/* Modal xem Ã¡ÂºÂ£nh toÃƒÂ n mÃƒÂ n hÃƒÂ¬nh */
 .fullscreen-overlay {
     position: fixed;
     top: 0;
@@ -2584,7 +2561,7 @@ footer {
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Hiệu ứng mượt mà khi hiện nội dung thật */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ†Â°Ã¡Â»Â£t mÃƒÂ  khi hiÃ¡Â»â€¡n nÃ¡Â»â„¢i dung thÃ¡ÂºÂ­t */
 .fade-in-content {
     animation: fadeInEffect 0.6s ease-out forwards;
 }
@@ -2601,7 +2578,7 @@ footer {
     }
 }
 
-/* Hiệu ứng mờ dần khi đang tải dữ liệu mới */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ¡Â»Â dÃ¡ÂºÂ§n khi Ã„â€˜ang tÃ¡ÂºÂ£i dÃ¡Â»Â¯ liÃ¡Â»â€¡u mÃ¡Â»â€ºi */
 .loading-fade {
     opacity: 0.3;
     filter: blur(1px);
@@ -2612,31 +2589,31 @@ footer {
 /* POS Product Search Suggestions */
 .pos-search-input-wrapper {
     position: relative;
-    /* Quan trọng để khối gợi ý định vị tương đối */
+    /* Quan trÃ¡Â»Âng Ã„â€˜Ã¡Â»Æ’ khÃ¡Â»â€˜i gÃ¡Â»Â£i ÃƒÂ½ Ã„â€˜Ã¡Â»â€¹nh vÃ¡Â»â€¹ tÃ†Â°Ã†Â¡ng Ã„â€˜Ã¡Â»â€˜i */
 }
 
 .pos-product-suggestions {
     position: absolute;
     top: 100%;
-    /* Định vị ngay bên dưới input */
+    /* Ã„ÂÃ¡Â»â€¹nh vÃ¡Â»â€¹ ngay bÃƒÂªn dÃ†Â°Ã¡Â»â€ºi input */
     left: 0;
     right: 0;
     background-color: var(--card-bg);
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    /* Đảm bảo nằm trên các phần tử khác */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¡c phÃ¡ÂºÂ§n tÃ¡Â»Â­ khÃƒÂ¡c */
     display: none;
     overflow: hidden;
     border: 1px solid #eee;
     max-height: 300px;
-    /* Giới hạn chiều cao và thêm thanh cuộn */
+    /* GiÃ¡Â»â€ºi hÃ¡ÂºÂ¡n chiÃ¡Â»Âu cao vÃƒÂ  thÃƒÂªm thanh cuÃ¡Â»â„¢n */
     overflow-y: auto;
 }
 
 .pos-product-suggestions .suggestion-item {
     padding: 10px 15px;
-    /* Điều chỉnh padding cho phù hợp với ngữ cảnh POS */
+    /* Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh padding cho phÃƒÂ¹ hÃ¡Â»Â£p vÃ¡Â»â€ºi ngÃ¡Â»Â¯ cÃ¡ÂºÂ£nh POS */
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -2648,14 +2625,14 @@ footer {
 .pos-product-suggestions .suggestion-item.highlighted {
     background: #f5f3eb;
     padding-left: 20px;
-    /* Thụt lề nhẹ khi hover */
+    /* ThÃ¡Â»Â¥t lÃ¡Â»Â nhÃ¡ÂºÂ¹ khi hover */
 }
 
 /* Cookie Consent Popup */
 .cookie-consent {
     position: fixed;
     bottom: -150px;
-    /* Ban đầu ẩn dưới màn hình */
+    /* Ban Ã„â€˜Ã¡ÂºÂ§u Ã¡ÂºÂ©n dÃ†Â°Ã¡Â»â€ºi mÃƒÂ n hÃƒÂ¬nh */
     left: 15px;
     right: 15px;
     background-color: var(--card-bg);
@@ -2670,7 +2647,7 @@ footer {
 
 .cookie-consent.show {
     bottom: 20px;
-    /* Trượt lên khi hiển thị */
+    /* TrÃ†Â°Ã¡Â»Â£t lÃƒÂªn khi hiÃ¡Â»Æ’n thÃ¡Â»â€¹ */
     opacity: 1;
     visibility: visible;
 }
@@ -2753,7 +2730,7 @@ footer {
 .float-btn-left {
     position: fixed;
     z-index: 9999;
-    /* Đảm bảo nút luôn nằm trên cùng */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃƒÂºt luÃƒÂ´n nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¹ng */
     bottom: 30px;
     left: 30px !important;
     right: auto !important;
@@ -2769,10 +2746,10 @@ footer {
 
 #btn-scroll-top {
     display: none;
-    /* Ẩn mặc định, chỉ hiện khi cuộn xuống */
+    /* Ã¡ÂºÂ¨n mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh, chÃ¡Â»â€° hiÃ¡Â»â€¡n khi cuÃ¡Â»â„¢n xuÃ¡Â»â€˜ng */
     opacity: 0.9;
     background-color: #444;
-    /* Màu nhạt hơn một chút cho nút cuộn */
+    /* MÃƒÂ u nhÃ¡ÂºÂ¡t hÃ†Â¡n mÃ¡Â»â„¢t chÃƒÂºt cho nÃƒÂºt cuÃ¡Â»â„¢n */
 }
 
 #btn-scroll-top.show {
@@ -2865,7 +2842,7 @@ footer {
     animation: heartbeat 0.4s ease-in-out;
 }
 
-/* Hiệu ứng rung nhẹ thu hút sự chú ý cho nút liên hệ */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng rung nhÃ¡ÂºÂ¹ thu hÃƒÂºt sÃ¡Â»Â± chÃƒÂº ÃƒÂ½ cho nÃƒÂºt liÃƒÂªn hÃ¡Â»â€¡ */
 @keyframes ring-zalo {
     0% {
         transform: scale(1) rotate(0);
@@ -2898,18 +2875,18 @@ footer {
 
 .vibrate-btn {
     animation: ring-zalo 3s infinite;
-    /* Rung mỗi 3 giây một lần */
+    /* Rung mÃ¡Â»â€”i 3 giÃƒÂ¢y mÃ¡Â»â„¢t lÃ¡ÂºÂ§n */
 }
 
 .vibrate-btn:hover {
     animation: none;
-    /* Dừng rung khi rê chuột vào để khách dễ nhấn */
+    /* DÃ¡Â»Â«ng rung khi rÃƒÂª chuÃ¡Â»â„¢t vÃƒÂ o Ã„â€˜Ã¡Â»Æ’ khÃƒÂ¡ch dÃ¡Â»â€¦ nhÃ¡ÂºÂ¥n */
 }
 
 /* Zalo Icon Styling */
 .zalo-icon {
     width: 50px;
-    /* Kích thước phù hợp với nút 50x50px */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc phÃƒÂ¹ hÃ¡Â»Â£p vÃ¡Â»â€ºi nÃƒÂºt 50x50px */
     height: 50px;
 }
 
@@ -2924,7 +2901,7 @@ footer {
 .zalo-sub-menu {
     position: absolute;
     bottom: 60px;
-    /* Hiển thị phía trên nút chính */
+    /* HiÃ¡Â»Æ’n thÃ¡Â»â€¹ phÃƒÂ­a trÃƒÂªn nÃƒÂºt chÃƒÂ­nh */
     right: 0;
     display: flex;
     flex-direction: column;
@@ -2938,23 +2915,23 @@ footer {
     z-index: 10000;
 }
 
-/* Tạo mũi tên trỏ xuống cho menu Zalo */
+/* TÃ¡ÂºÂ¡o mÃ…Â©i tÃƒÂªn trÃ¡Â»Â xuÃ¡Â»â€˜ng cho menu Zalo */
 .zalo-sub-menu::after {
     content: '';
     position: absolute;
     bottom: -6px;
-    /* Nằm sát cạnh dưới của menu */
+    /* NÃ¡ÂºÂ±m sÃƒÂ¡t cÃ¡ÂºÂ¡nh dÃ†Â°Ã¡Â»â€ºi cÃ¡Â»Â§a menu */
     right: 19px;
-    /* Căn giữa theo nút Zalo tròn 50px */
+    /* CÃ„Æ’n giÃ¡Â»Â¯a theo nÃƒÂºt Zalo trÃƒÂ²n 50px */
     width: 0;
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-top: 6px solid var(--text-black);
-    /* Màu trùng với background menu item */
+    /* MÃƒÂ u trÃƒÂ¹ng vÃ¡Â»â€ºi background menu item */
 }
 
-/* Hiện menu khi hover hoặc khi nút được click (focus) */
+/* HiÃ¡Â»â€¡n menu khi hover hoÃ¡ÂºÂ·c khi nÃƒÂºt Ã„â€˜Ã†Â°Ã¡Â»Â£c click (focus) */
 .zalo-group:hover .zalo-sub-menu,
 .zalo-group:focus-within .zalo-sub-menu {
     opacity: 1;
@@ -2992,7 +2969,7 @@ footer {
     color: #334155;
     /* Slate 700 */
     overflow-x: hidden;
-    /* Ngăn chặn toàn trang bị kéo ngang */
+    /* NgÃ„Æ’n chÃ¡ÂºÂ·n toÃƒÂ n trang bÃ¡Â»â€¹ kÃƒÂ©o ngang */
 }
 
 .admin-wrapper {
@@ -3077,7 +3054,7 @@ footer {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* Cắt chữ nếu tên menu sidebar quá dài */
+    /* CÃ¡ÂºÂ¯t chÃ¡Â»Â¯ nÃ¡ÂºÂ¿u tÃƒÂªn menu sidebar quÃƒÂ¡ dÃƒÂ i */
 }
 
 .sidebar-badge {
@@ -3254,7 +3231,7 @@ footer {
         max-width: 100%;
         padding: 15px;
         padding-bottom: 80px;
-        /* Chừa chỗ cho bottom nav */
+        /* ChÃ¡Â»Â«a chÃ¡Â»â€” cho bottom nav */
     }
 
     .overview-grid {
@@ -3271,7 +3248,7 @@ footer {
         display: none !important;
     }
 
-    /* Ẩn nút 3 gạch ở header */
+    /* Ã¡ÂºÂ¨n nÃƒÂºt 3 gÃ¡ÂºÂ¡ch Ã¡Â»Å¸ header */
 
     /* Bottom Navigation Admin */
     .admin-bottom-nav {
@@ -3344,7 +3321,7 @@ footer {
         animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
-    /* Lớp phủ khi mở sidebar */
+    /* LÃ¡Â»â€ºp phÃ¡Â»Â§ khi mÃ¡Â»Å¸ sidebar */
     .admin-sidebar-overlay {
         position: fixed;
         top: 0;
@@ -3364,7 +3341,7 @@ footer {
         opacity: 1;
     }
 
-    /* Tối ưu Card chỉ số Mobile */
+    /* TÃ¡Â»â€˜i Ã†Â°u Card chÃ¡Â»â€° sÃ¡Â»â€˜ Mobile */
     .stat-card {
         padding: 12px;
         gap: 8px;
@@ -3385,7 +3362,7 @@ footer {
         font-size: 1rem;
     }
 
-    /* Tối ưu Header Mobile */
+    /* TÃ¡Â»â€˜i Ã†Â°u Header Mobile */
     .content-header {
         padding: 10px 15px;
         margin-bottom: 20px;
@@ -3554,7 +3531,7 @@ footer {
         padding: 10px 0;
         gap: 6px;
         word-break: break-word;
-        /* Tự động xuống hàng nếu text quá dài */
+        /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng xuÃ¡Â»â€˜ng hÃƒÂ ng nÃ¡ÂºÂ¿u text quÃƒÂ¡ dÃƒÂ i */
     }
 
     .admin-table td::before {
@@ -3618,36 +3595,36 @@ footer {
     }
 }
 
-/* Xử lý cuộn ngang cho các nhóm Tab ngang */
+/* XÃ¡Â»Â­ lÃƒÂ½ cuÃ¡Â»â„¢n ngang cho cÃƒÂ¡c nhÃƒÂ³m Tab ngang */
 .admin-tabs {
     display: flex;
     gap: 1.5rem;
     margin-bottom: 2rem;
     border-bottom: 2px solid #eee;
     overflow-x: auto;
-    /* Cho phép vuốt ngang các tab */
+    /* Cho phÃƒÂ©p vuÃ¡Â»â€˜t ngang cÃƒÂ¡c tab */
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
 
-/* Ẩn Bottom Nav trên Desktop */
+/* Ã¡ÂºÂ¨n Bottom Nav trÃƒÂªn Desktop */
 @media (min-width: 993px) {
     .admin-bottom-nav {
         display: none !important;
     }
 }
 
-/* Tối ưu Card cho biểu đồ trong section Thống kê */
+/* TÃ¡Â»â€˜i Ã†Â°u Card cho biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ trong section ThÃ¡Â»â€˜ng kÃƒÂª */
 #stats-section .admin-card {
     padding: 15px;
     margin-bottom: 15px;
     width: 100%;
 }
 
-/* Tối ưu chuyên biệt cho Section Thống kê trên Mobile */
+/* TÃ¡Â»â€˜i Ã†Â°u chuyÃƒÂªn biÃ¡Â»â€¡t cho Section ThÃ¡Â»â€˜ng kÃƒÂª trÃƒÂªn Mobile */
 #stats-section .overview-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    /* Hiện 2 cột cho các thẻ chỉ số */
+    /* HiÃ¡Â»â€¡n 2 cÃ¡Â»â„¢t cho cÃƒÂ¡c thÃ¡ÂºÂ» chÃ¡Â»â€° sÃ¡Â»â€˜ */
     gap: 10px !important;
 }
 
@@ -3673,10 +3650,10 @@ footer {
     font-size: 0.95rem;
 }
 
-/* Tối ưu không gian biểu đồ trên mobile */
+/* TÃ¡Â»â€˜i Ã†Â°u khÃƒÂ´ng gian biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ trÃƒÂªn mobile */
 #stats-section .admin-card div[style*="height"] {
     height: 280px !important;
-    /* Tăng nhẹ lên 280px để biểu đồ không bị quá bẹt trên màn hình dọc */
+    /* TÃ„Æ’ng nhÃ¡ÂºÂ¹ lÃƒÂªn 280px Ã„â€˜Ã¡Â»Æ’ biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ khÃƒÂ´ng bÃ¡Â»â€¹ quÃƒÂ¡ bÃ¡ÂºÂ¹t trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh dÃ¡Â»Âc */
     margin-bottom: 10px;
 }
 
@@ -3692,7 +3669,7 @@ footer {
 
 .admin-tab-btn {
     font-size: 0.85rem !important;
-    /* Hạ font size về mức hợp lý */
+    /* HÃ¡ÂºÂ¡ font size vÃ¡Â»Â mÃ¡Â»Â©c hÃ¡Â»Â£p lÃƒÂ½ */
     padding: 10px 15px !important;
 }
 }
@@ -3713,9 +3690,9 @@ footer {
     grid-template-columns: 1fr 1.5fr;
     gap: 2rem;
     grid-template-columns: 420px 1fr;
-    /* Cố định cột form, cho bảng giãn rộng tối đa */
+    /* CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»â„¢t form, cho bÃ¡ÂºÂ£ng giÃƒÂ£n rÃ¡Â»â„¢ng tÃ¡Â»â€˜i Ã„â€˜a */
     gap: 2.5rem;
-    /* Tăng khoảng cách giữa 2 cột để bớt chật chội */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a 2 cÃ¡Â»â„¢t Ã„â€˜Ã¡Â»Æ’ bÃ¡Â»â€ºt chÃ¡ÂºÂ­t chÃ¡Â»â„¢i */
 }
 
 @media (max-width: 992px) {
@@ -3897,7 +3874,7 @@ footer {
     justify-content: center;
 }
 
-/* Tối ưu hóa thanh tìm kiếm & bộ lọc của Tab Sản phẩm */
+/* TÃ¡Â»â€˜i Ã†Â°u hÃƒÂ³a thanh tÃƒÂ¬m kiÃ¡ÂºÂ¿m & bÃ¡Â»â„¢ lÃ¡Â»Âc cÃ¡Â»Â§a Tab SÃ¡ÂºÂ£n phÃ¡ÂºÂ©m */
 .admin-search-filter-row {
     display: flex;
     gap: 1rem;
@@ -3923,7 +3900,7 @@ footer {
 
 @media (max-width: 768px) {
 
-    /* Giải phóng thêm không gian màn hình ngang trên mobile */
+    /* GiÃ¡ÂºÂ£i phÃƒÂ³ng thÃƒÂªm khÃƒÂ´ng gian mÃƒÂ n hÃƒÂ¬nh ngang trÃƒÂªn mobile */
     .admin-main-content {
         padding: 10px !important;
         padding-bottom: 80px !important;
@@ -3935,7 +3912,7 @@ footer {
         border-radius: 12px !important;
     }
 
-    /* Định hình lại thanh tìm kiếm & lọc trên mobile */
+    /* Ã„ÂÃ¡Â»â€¹nh hÃƒÂ¬nh lÃ¡ÂºÂ¡i thanh tÃƒÂ¬m kiÃ¡ÂºÂ¿m & lÃ¡Â»Âc trÃƒÂªn mobile */
     .admin-search-filter-row {
         gap: 0.8rem;
     }
@@ -4006,7 +3983,7 @@ footer {
    ========================================================================== */
 .product-detail-container {
     max-width: 1900px;
-    /* Thu hẹp lại để cân đối hơn trên màn hình PC siêu rộng */
+    /* Thu hÃ¡ÂºÂ¹p lÃ¡ÂºÂ¡i Ã„â€˜Ã¡Â»Æ’ cÃƒÂ¢n Ã„â€˜Ã¡Â»â€˜i hÃ†Â¡n trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh PC siÃƒÂªu rÃ¡Â»â„¢ng */
     margin: 0 auto;
     padding: 4rem 5%;
     display: block;
@@ -4038,7 +4015,7 @@ footer {
 .product-detail-grid {
     display: grid;
     grid-template-columns: 1.5fr 0.3fr;
-    /* Cân bằng 50/50 cho cảm giác cao cấp */
+    /* CÃƒÂ¢n bÃ¡ÂºÂ±ng 50/50 cho cÃ¡ÂºÂ£m giÃƒÂ¡c cao cÃ¡ÂºÂ¥p */
     gap: 3rem;
     align-items: start;
     width: 100%;
@@ -4188,42 +4165,42 @@ footer {
 /* Specific styles for color chips */
 .color-chip {
     width: 40px;
-    /* Kích thước cố định cho swatch màu */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh cho swatch mÃƒÂ u */
     height: 40px;
     border-radius: 50%;
-    /* Hình tròn */
+    /* HÃƒÂ¬nh trÃƒÂ²n */
     padding: 0;
-    /* Bỏ padding để màu tràn ra */
+    /* BÃ¡Â»Â padding Ã„â€˜Ã¡Â»Æ’ mÃƒÂ u trÃƒÂ n ra */
     border: 2px solid #ddd;
-    /* Viền mặc định */
+    /* ViÃ¡Â»Ân mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     position: relative;
 }
 
 .color-chip.active {
     border-color: var(--text-black);
-    /* Viền đậm khi active */
+    /* ViÃ¡Â»Ân Ã„â€˜Ã¡ÂºÂ­m khi active */
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
-    /* Thêm bóng đổ nhẹ bên ngoài viền */
+    /* ThÃƒÂªm bÃƒÂ³ng Ã„â€˜Ã¡Â»â€¢ nhÃ¡ÂºÂ¹ bÃƒÂªn ngoÃƒÂ i viÃ¡Â»Ân */
     transform: scale(1.05);
-    /* Hiệu ứng phóng to nhẹ */
+    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng phÃƒÂ³ng to nhÃ¡ÂºÂ¹ */
 }
 
 .color-chip.active::after {
-    content: '✓';
-    /* Dấu tích khi chọn */
+    content: 'Ã¢Å“â€œ';
+    /* DÃ¡ÂºÂ¥u tÃƒÂ­ch khi chÃ¡Â»Ân */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    /* Màu dấu tích */
+    /* MÃƒÂ u dÃ¡ÂºÂ¥u tÃƒÂ­ch */
     font-size: 1.2rem;
     font-weight: bold;
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Đảm bảo dấu tích hiện rõ trên màu sáng */
+/* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o dÃ¡ÂºÂ¥u tÃƒÂ­ch hiÃ¡Â»â€¡n rÃƒÂµ trÃƒÂªn mÃƒÂ u sÃƒÂ¡ng */
 .color-chip[data-color-hex="#FFFFFF"].active::after,
 .color-chip[data-color-hex="#F5F5DC"].active::after,
 /* Beige */
@@ -4300,7 +4277,7 @@ footer {
 
 .product-description p {
     white-space: pre-line;
-    /* Giữ các dấu xuống dòng trong mô tả */
+    /* GiÃ¡Â»Â¯ cÃƒÂ¡c dÃ¡ÂºÂ¥u xuÃ¡Â»â€˜ng dÃƒÂ²ng trong mÃƒÂ´ tÃ¡ÂºÂ£ */
     word-break: break-word;
 }
 
@@ -4314,18 +4291,18 @@ footer {
 }
 
 .purchase-card {
-    /* Loại bỏ khung màu trắng */
+    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â khung mÃƒÂ u trÃ¡ÂºÂ¯ng */
     background: transparent;
     padding: 1rem 0;
     border: none;
     box-shadow: none;
     display: flex;
     flex-direction: row;
-    /* Chuyển box thành hàng ngang */
+    /* ChuyÃ¡Â»Æ’n box thÃƒÂ nh hÃƒÂ ng ngang */
     align-items: center;
     gap: 2rem;
     flex-wrap: wrap;
-    /* Cho phép xuống dòng nếu không đủ chỗ, tránh kéo ngang */
+    /* Cho phÃƒÂ©p xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u khÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ chÃ¡Â»â€”, trÃƒÂ¡nh kÃƒÂ©o ngang */
 }
 
 .quantity-box {
@@ -4335,17 +4312,17 @@ footer {
     padding: 0;
     border: none;
     flex-shrink: 0;
-    /* Không cho bộ số lượng bị co lại */
+    /* KhÃƒÂ´ng cho bÃ¡Â»â„¢ sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng bÃ¡Â»â€¹ co lÃ¡ÂºÂ¡i */
 }
 
 .action-group {
     display: flex;
     gap: 10px;
     flex: 1;
-    /* Chiếm hết phần còn lại của box */
+    /* ChiÃ¡ÂºÂ¿m hÃ¡ÂºÂ¿t phÃ¡ÂºÂ§n cÃƒÂ²n lÃ¡ÂºÂ¡i cÃ¡Â»Â§a box */
     align-items: center;
     min-width: 0;
-    /* Cho phép co giãn */
+    /* Cho phÃƒÂ©p co giÃƒÂ£n */
 }
 
 .action-group .btn-dark {
@@ -4419,10 +4396,10 @@ footer {
         font-size: 2rem;
     }
 
-    /* Tối ưu hàng nút bấm trên Mobile */
+    /* TÃ¡Â»â€˜i Ã†Â°u hÃƒÂ ng nÃƒÂºt bÃ¡ÂºÂ¥m trÃƒÂªn Mobile */
     .purchase-card {
         flex-direction: column;
-        /* Chuyển sang cột trên tablet/mobile để tránh tràn */
+        /* ChuyÃ¡Â»Æ’n sang cÃ¡Â»â„¢t trÃƒÂªn tablet/mobile Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh trÃƒÂ n */
         align-items: stretch;
         gap: 1.5rem;
         padding: 0;
@@ -4446,7 +4423,7 @@ footer {
 
     .action-group {
         flex-direction: column;
-        /* Trên màn hình cực nhỏ thì xếp dọc để dễ bấm */
+        /* TrÃƒÂªn mÃƒÂ n hÃƒÂ¬nh cÃ¡Â»Â±c nhÃ¡Â»Â thÃƒÂ¬ xÃ¡ÂºÂ¿p dÃ¡Â»Âc Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€¦ bÃ¡ÂºÂ¥m */
     }
 
     .action-group .btn-dark,
@@ -4457,7 +4434,7 @@ footer {
         flex: none;
         height: 50px;
         white-space: normal;
-        /* Cho phép xuống dòng nếu chữ quá dài trên máy nhỏ */
+        /* Cho phÃƒÂ©p xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u chÃ¡Â»Â¯ quÃƒÂ¡ dÃƒÂ i trÃƒÂªn mÃƒÂ¡y nhÃ¡Â»Â */
     }
 
     .quantity-controls {
@@ -4734,7 +4711,7 @@ footer {
     font-family: inherit;
     font-size: 0.9rem;
     text-transform: uppercase;
-    /* Mã giảm giá thường là chữ hoa */
+    /* MÃƒÂ£ giÃ¡ÂºÂ£m giÃƒÂ¡ thÃ†Â°Ã¡Â»Âng lÃƒÂ  chÃ¡Â»Â¯ hoa */
 }
 
 #coupon-input:focus {
@@ -4829,7 +4806,7 @@ footer {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 30px 15px;
-    /* Tăng khoảng cách hàng lên 30px và giữ khoảng cách cột 15px */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch hÃƒÂ ng lÃƒÂªn 30px vÃƒÂ  giÃ¡Â»Â¯ khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cÃ¡Â»â„¢t 15px */
 }
 
 .category-square-item {
@@ -4842,7 +4819,7 @@ footer {
     aspect-ratio: 1/1;
     overflow: hidden;
     border-radius: 15px;
-    /* Tăng độ bo góc để trông mềm mại hơn */
+    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â„¢ bo gÃƒÂ³c Ã„â€˜Ã¡Â»Æ’ trÃƒÂ´ng mÃ¡Â»Âm mÃ¡ÂºÂ¡i hÃ†Â¡n */
 }
 
 .category-square-content img {
@@ -4861,14 +4838,14 @@ footer {
     color: #fff;
     font-weight: 600;
     text-transform: none;
-    /* Bỏ viết hoa toàn bộ */
+    /* BÃ¡Â»Â viÃ¡ÂºÂ¿t hoa toÃƒÂ n bÃ¡Â»â„¢ */
     letter-spacing: 0;
-    /* Để chữ sát lại tự nhiên theo font Serif */
+    /* Ã„ÂÃ¡Â»Æ’ chÃ¡Â»Â¯ sÃƒÂ¡t lÃ¡ÂºÂ¡i tÃ¡Â»Â± nhiÃƒÂªn theo font Serif */
     z-index: 2;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     font-size: 1.1rem;
-    /* Tăng size vì chữ thường trông nhỏ hơn chữ in hoa */
+    /* TÃ„Æ’ng size vÃƒÂ¬ chÃ¡Â»Â¯ thÃ†Â°Ã¡Â»Âng trÃƒÂ´ng nhÃ¡Â»Â hÃ†Â¡n chÃ¡Â»Â¯ in hoa */
     text-align: center;
     width: 90%;
     transition: transform 0.3s ease;
@@ -5030,13 +5007,13 @@ footer {
 
 .products-content {
     display: block;
-    /* Hủy bỏ grid layout cũ của sidebar */
+    /* HÃ¡Â»Â§y bÃ¡Â»Â grid layout cÃ…Â© cÃ¡Â»Â§a sidebar */
 }
 
 @media (max-width: 992px) {
     .products-content {
         grid-template-columns: 1fr;
-        /* Sidebar nằm trên khi màn hình nhỏ */
+        /* Sidebar nÃ¡ÂºÂ±m trÃƒÂªn khi mÃƒÂ n hÃƒÂ¬nh nhÃ¡Â»Â */
     }
 
     .sidebar {
@@ -5164,7 +5141,7 @@ footer {
 
 .filter-group.expanded .filter-list {
     max-height: 1000px;
-    /* Giá trị đủ lớn để chứa nội dung */
+    /* GiÃƒÂ¡ trÃ¡Â»â€¹ Ã„â€˜Ã¡Â»Â§ lÃ¡Â»â€ºn Ã„â€˜Ã¡Â»Æ’ chÃ¡Â»Â©a nÃ¡Â»â„¢i dung */
     opacity: 1;
     transition: max-height 0.4s ease-in, opacity 0.3s ease;
 }
@@ -5222,7 +5199,7 @@ footer {
 
 #no-products-found {
     grid-column: 1 / -1;
-    /* Chiếm toàn bộ chiều rộng grid */
+    /* ChiÃ¡ÂºÂ¿m toÃƒÂ n bÃ¡Â»â„¢ chiÃ¡Â»Âu rÃ¡Â»â„¢ng grid */
 }
 
 /* Search Input in Sidebar */
@@ -5261,11 +5238,11 @@ footer {
     cursor: not-allowed;
 }
 
-/* Nút xem thêm chung */
+/* NÃƒÂºt xem thÃƒÂªm chung */
 .btn-dark,
 .btn-outline {
     margin-top: 1.5rem;
-    /* Đảm bảo khoảng cách với nội dung phía trên */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khoÃ¡ÂºÂ£ng cÃƒÂ¡ch vÃ¡Â»â€ºi nÃ¡Â»â„¢i dung phÃƒÂ­a trÃƒÂªn */
 }
 
 /* Flash Sale Page Banner */
@@ -5311,11 +5288,11 @@ footer {
     animation: banner-pulse 2s infinite;
 }
 
-/* Layout riêng khi focus vào mức giá đồng giá */
+/* Layout riÃƒÂªng khi focus vÃƒÂ o mÃ¡Â»Â©c giÃƒÂ¡ Ã„â€˜Ã¡Â»â€œng giÃƒÂ¡ */
 .flash-sale-banner.price-focused {
     background-color: var(--banner-accent, #000) !important;
     background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) !important;
-    /* Làm tối nhẹ để nổi bật text */
+    /* LÃƒÂ m tÃ¡Â»â€˜i nhÃ¡ÂºÂ¹ Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â€¢i bÃ¡ÂºÂ­t text */
     transition: background-color 0.5s ease;
 }
 
@@ -5346,13 +5323,13 @@ footer {
     align-items: start;
     margin-top: 2rem;
     overflow: visible;
-    /* Đảm bảo không chặn sticky con */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khÃƒÂ´ng chÃ¡ÂºÂ·n sticky con */
 }
 
 .price-tabs-sidebar {
     position: sticky;
     top: 120px;
-    /* Tăng khoảng cách cách đỉnh để không bị che bởi Navbar */
+    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cÃƒÂ¡ch Ã„â€˜Ã¡Â»â€°nh Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ che bÃ¡Â»Å¸i Navbar */
     z-index: 10;
 }
 
@@ -5372,9 +5349,9 @@ footer {
 .price-tabs-container {
     display: flex;
     flex-direction: column;
-    /* Xếp dọc các nút chọn mức giá */
+    /* XÃ¡ÂºÂ¿p dÃ¡Â»Âc cÃƒÂ¡c nÃƒÂºt chÃ¡Â»Ân mÃ¡Â»Â©c giÃƒÂ¡ */
     align-items: stretch;
-    /* Đẩy các nút rộng bằng nhau trong sidebar */
+    /* Ã„ÂÃ¡ÂºÂ©y cÃƒÂ¡c nÃƒÂºt rÃ¡Â»â„¢ng bÃ¡ÂºÂ±ng nhau trong sidebar */
     gap: 10px;
     padding: 0;
 }
@@ -5405,14 +5382,14 @@ footer {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Container cho các section chương trình Sale xếp dọc */
+/* Container cho cÃƒÂ¡c section chÃ†Â°Ã†Â¡ng trÃƒÂ¬nh Sale xÃ¡ÂºÂ¿p dÃ¡Â»Âc */
 .flash-sale-sections-container {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
-/* Hiệu ứng Loading Spinner */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng Loading Spinner */
 .spinner {
     width: 40px;
     height: 40px;
@@ -5423,7 +5400,7 @@ footer {
     display: inline-block;
 }
 
-/* Spinner nhỏ cho các nút bấm */
+/* Spinner nhÃ¡Â»Â cho cÃƒÂ¡c nÃƒÂºt bÃ¡ÂºÂ¥m */
 .spinner-small {
     width: 18px;
     height: 18px;
@@ -5497,7 +5474,7 @@ footer {
 .form-row .form-group {
     flex: 1;
     min-width: 0;
-    /* Ngăn chặn flex item phình to hơn container */
+    /* NgÃ„Æ’n chÃ¡ÂºÂ·n flex item phÃƒÂ¬nh to hÃ†Â¡n container */
 }
 
 .checkout-section {
@@ -5544,14 +5521,14 @@ footer {
 .summary-item-details {
     flex: 1;
     min-width: 0;
-    /* Quan trọng: cho phép container co lại khi text dài */
+    /* Quan trÃ¡Â»Âng: cho phÃƒÂ©p container co lÃ¡ÂºÂ¡i khi text dÃƒÂ i */
 }
 
 .summary-item-details h4 {
     font-size: 0.9rem;
     margin-bottom: 4px;
     word-break: break-word;
-    /* Tự xuống dòng nếu tên sản phẩm quá dài */
+    /* TÃ¡Â»Â± xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u tÃƒÂªn sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m quÃƒÂ¡ dÃƒÂ i */
 }
 
 .summary-item-price {
@@ -5615,6 +5592,8 @@ footer {
     opacity: 0;
     cursor: pointer;
 }
+
+.product-image-gallery { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 10px; }
 
 .radio-checkmark,
 .checkmark {
@@ -5714,7 +5693,7 @@ footer {
     }
 }
 
-/* Sửa lỗi tràn màn hình cho thiết bị cực nhỏ */
+/* SÃ¡Â»Â­a lÃ¡Â»â€”i trÃƒÂ n mÃƒÂ n hÃƒÂ¬nh cho thiÃ¡ÂºÂ¿t bÃ¡Â»â€¹ cÃ¡Â»Â±c nhÃ¡Â»Â */
 @media (max-width: 480px) {
     .cart-container {
         padding-left: 10px !important;
@@ -5735,8 +5714,6 @@ footer {
 .q-btn {
     background-color: var(--card-bg);
     border: none;
-    width: 35px;
-    height: 100%;
     cursor: pointer;
     font-size: 1.2rem;
     transition: background 0.2s;
@@ -5779,7 +5756,7 @@ footer {
     height: 17px;
     border-radius: 50%;
     display: flex !important;
-    /* Đảm bảo luôn sử dụng flex để căn giữa số */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o luÃƒÂ´n sÃ¡Â»Â­ dÃ¡Â»Â¥ng flex Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n giÃ¡Â»Â¯a sÃ¡Â»â€˜ */
     align-items: center;
     justify-content: center;
     font-weight: bold;
@@ -5817,7 +5794,7 @@ footer {
 /* Product Gallery */
 .product-detail-image {
     position: relative;
-    /* Container chính cho ảnh lớn và nút bấm */
+    /* Container chÃƒÂ­nh cho Ã¡ÂºÂ£nh lÃ¡Â»â€ºn vÃƒÂ  nÃƒÂºt bÃ¡ÂºÂ¥m */
 }
 
 .main-img-container {
@@ -5826,14 +5803,7 @@ footer {
     margin-bottom: 1rem;
 }
 
-.product-image-gallery {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    /* Cho phép cuộn ngang các thumbnail */
-    scroll-behavior: smooth;
-    padding-bottom: 10px;
-}
+.product-image-gallery { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 10px; }
 
 .product-image-gallery::-webkit-scrollbar {
     height: 4px;
@@ -5953,7 +5923,7 @@ footer {
         box-shadow: none;
         background: transparent;
         display: none;
-        /* Sẽ hiện ra khi hover/click tùy theo thiết kế mobile */
+        /* SÃ¡ÂºÂ½ hiÃ¡Â»â€¡n ra khi hover/click tÃƒÂ¹y theo thiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿ mobile */
     }
 
     .dropdown:hover .dropdown-menu {
@@ -5975,13 +5945,13 @@ footer {
     transition: opacity 0.3s ease;
     position: relative;
     padding: 0;
-    /* Loại bỏ padding mặc định */
+    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â padding mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
     width: 32px;
-    /* Kích thước cố định */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
     height: 32px;
-    /* Kích thước cố định */
+    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
     justify-content: center;
-    /* Căn giữa nội dung theo chiều ngang */
+    /* CÃ„Æ’n giÃ¡Â»Â¯a nÃ¡Â»â„¢i dung theo chiÃ¡Â»Âu ngang */
 }
 
 .user-icon-link:hover {
@@ -5994,7 +5964,7 @@ footer {
     bottom: -4px;
     right: -4px;
     background: #f1c40f;
-    /* Màu vàng đặc trưng cho Admin */
+    /* MÃƒÂ u vÃƒÂ ng Ã„â€˜Ã¡ÂºÂ·c trÃ†Â°ng cho Admin */
     color: #000;
     width: 14px;
     height: 14px;
@@ -6006,7 +5976,7 @@ footer {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Admin Text Badge (Dùng cạnh tên) */
+/* Admin Text Badge (DÃƒÂ¹ng cÃ¡ÂºÂ¡nh tÃƒÂªn) */
 .admin-text-badge {
     background: #f1c40f;
     color: #000;
@@ -6300,7 +6270,7 @@ footer {
     font-weight: 600;
 }
 
-/* Màu xanh dương cho trạng thái đang giao hàng */
+/* MÃƒÂ u xanh dÃ†Â°Ã†Â¡ng cho trÃ¡ÂºÂ¡ng thÃƒÂ¡i Ã„â€˜ang giao hÃƒÂ ng */
 
 /* Cart Page Styles */
 .cart-container {
@@ -6424,17 +6394,17 @@ footer {
     }
 }
 
-/* Căn chỉnh khu vực đăng nhập/đăng xuất */
+/* CÃ„Æ’n chÃ¡Â»â€°nh khu vÃ¡Â»Â±c Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p/Ã„â€˜Ã„Æ’ng xuÃ¡ÂºÂ¥t */
 #auth-section {
     display: flex;
     align-items: center;
     gap: 1rem;
-    /* Tạo khoảng cách giữa tên và nút logout */
+    /* TÃ¡ÂºÂ¡o khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a tÃƒÂªn vÃƒÂ  nÃƒÂºt logout */
     flex-shrink: 0;
-    /* Đảm bảo không bao giờ bị co lại mất nút */
+    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khÃƒÂ´ng bao giÃ¡Â»Â bÃ¡Â»â€¹ co lÃ¡ÂºÂ¡i mÃ¡ÂºÂ¥t nÃƒÂºt */
 }
 
-/* Đồng bộ độ cao các nút trong phần mua hàng */
+/* Ã„ÂÃ¡Â»â€œng bÃ¡Â»â„¢ Ã„â€˜Ã¡Â»â„¢ cao cÃƒÂ¡c nÃƒÂºt trong phÃ¡ÂºÂ§n mua hÃƒÂ ng */
 .purchase-section .btn-dark {
     height: 40px;
     margin-top: 0;
@@ -6704,7 +6674,7 @@ footer {
     transition: width 1s ease-in-out;
 }
 
-/* Màu sắc đặc trưng cho từng hạng */
+/* MÃƒÂ u sÃ¡ÂºÂ¯c Ã„â€˜Ã¡ÂºÂ·c trÃ†Â°ng cho tÃ¡Â»Â«ng hÃ¡ÂºÂ¡ng */
 .tier-null {
     background: linear-gradient(135deg, #bdc3c7, #95a5a6);
 }
@@ -6740,7 +6710,7 @@ footer {
     transform: scale(1.2) rotate(10deg);
 }
 
-/* Hiệu ứng hào quang cho hạng VIP */
+/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng hÃƒÂ o quang cho hÃ¡ÂºÂ¡ng VIP */
 .tier-big-card:has(.medal[style*="#e74c3c"]) .medal {
     animation: vip-glow 2s infinite alternate;
 }
@@ -6795,21 +6765,21 @@ footer {
 }
 
 /* ==========================================================================
-   PRINT STYLES (Cấu hình in Bill chuyên nghiệp)
+   PRINT STYLES (CÃ¡ÂºÂ¥u hÃƒÂ¬nh in Bill chuyÃƒÂªn nghiÃ¡Â»â€¡p)
    ========================================================================== */
 #receipt-print-area {
     display: none;
-    /* Mặc định ẩn bill khỏi màn hình Admin */
+    /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n bill khÃ¡Â»Âi mÃƒÂ n hÃƒÂ¬nh Admin */
 }
 
 @media print {
 
-    /* 1. Ẩn tất cả các thành phần giao diện web (sidebar, header, buttons...) */
+    /* 1. Ã¡ÂºÂ¨n tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c thÃƒÂ nh phÃ¡ÂºÂ§n giao diÃ¡Â»â€¡n web (sidebar, header, buttons...) */
     body * {
         visibility: hidden;
     }
 
-    /* 2. Chỉ hiển thị duy nhất khu vực in bill */
+    /* 2. ChÃ¡Â»â€° hiÃ¡Â»Æ’n thÃ¡Â»â€¹ duy nhÃ¡ÂºÂ¥t khu vÃ¡Â»Â±c in bill */
     #receipt-print-area,
     #receipt-print-area * {
         visibility: visible;
@@ -6821,20 +6791,20 @@ footer {
         left: 0;
         top: 0;
         width: 80mm;
-        /* Khổ giấy chuẩn cho máy in nhiệt POS */
+        /* KhÃ¡Â»â€¢ giÃ¡ÂºÂ¥y chuÃ¡ÂºÂ©n cho mÃƒÂ¡y in nhiÃ¡Â»â€¡t POS */
         margin: 0;
         padding: 5mm;
         background-color: var(--card-bg);
     }
 
-    /* 3. Loại bỏ lề và các thông tin header/footer mặc định của trình duyệt */
+    /* 3. LoÃ¡ÂºÂ¡i bÃ¡Â»Â lÃ¡Â»Â vÃƒÂ  cÃƒÂ¡c thÃƒÂ´ng tin header/footer mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»Â§a trÃƒÂ¬nh duyÃ¡Â»â€¡t */
     @page {
         margin: 0;
         size: auto;
     }
 }
 
-/* --- Styling nội dung Bill để in ra sắc nét --- */
+/* --- Styling nÃ¡Â»â„¢i dung Bill Ã„â€˜Ã¡Â»Æ’ in ra sÃ¡ÂºÂ¯c nÃƒÂ©t --- */
 .receipt-header {
     text-align: center;
     margin-bottom: 10px;
@@ -6914,7 +6884,7 @@ footer {
     font-style: italic;
 }
 
-/* Mặc định ẩn trên Desktop */
+/* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n trÃƒÂªn Desktop */
 .mobile-bottom-nav {
     display: none;
 }
@@ -6924,22 +6894,22 @@ footer {
         gap: 0.5rem;
     }
 
-    /* Ẩn các class chỉ định trên mobile */
+    /* Ã¡ÂºÂ¨n cÃƒÂ¡c class chÃ¡Â»â€° Ã„â€˜Ã¡Â»â€¹nh trÃƒÂªn mobile */
     .mobile-hide {
         display: none !important;
     }
 
-    /* Ẩn khu vực auth (icon user) trên header do đã chuyển xuống dưới */
+    /* Ã¡ÂºÂ¨n khu vÃ¡Â»Â±c auth (icon user) trÃƒÂªn header do Ã„â€˜ÃƒÂ£ chuyÃ¡Â»Æ’n xuÃ¡Â»â€˜ng dÃ†Â°Ã¡Â»â€ºi */
     .header-col-right #auth-section {
         display: none !important;
     }
 
-    /* Chừa không gian dưới cùng để nội dung không bị che */
+    /* ChÃ¡Â»Â«a khÃƒÂ´ng gian dÃ†Â°Ã¡Â»â€ºi cÃƒÂ¹ng Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â„¢i dung khÃƒÂ´ng bÃ¡Â»â€¹ che */
     body {
         padding-bottom: 70px !important;
     }
 
-    /* Style cho thanh điều hướng dưới cùng */
+    /* Style cho thanh Ã„â€˜iÃ¡Â»Âu hÃ†Â°Ã¡Â»â€ºng dÃ†Â°Ã¡Â»â€ºi cÃƒÂ¹ng */
     .mobile-bottom-nav {
         display: flex !important;
         position: fixed;
@@ -6947,7 +6917,7 @@ footer {
         left: 0;
         width: 100%;
         background-color: rgba(247, 246, 242, 0.85) !important;
-        /* Hiệu ứng trong suốt giống header */
+        /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng trong suÃ¡Â»â€˜t giÃ¡Â»â€˜ng header */
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
@@ -6956,32 +6926,32 @@ footer {
         padding: 8px 0;
         border-top: 1px solid rgba(0, 0, 0, 0.05);
         padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-        /* Fix khoảng hở triệt để */
+        /* Fix khoÃ¡ÂºÂ£ng hÃ¡Â»Å¸ triÃ¡Â»â€¡t Ã„â€˜Ã¡Â»Æ’ */
         margin: 0 !important;
         transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     }
 
-    /* Ẩn Bottom Nav khi ở đầu trang chủ để xem full banner */
+    /* Ã¡ÂºÂ¨n Bottom Nav khi Ã¡Â»Å¸ Ã„â€˜Ã¡ÂºÂ§u trang chÃ¡Â»Â§ Ã„â€˜Ã¡Â»Æ’ xem full banner */
     body.home-page .mobile-bottom-nav {
         transform: translateY(100%);
         opacity: 0;
         pointer-events: none;
     }
 
-    /* Hiện lại Bottom Nav khi cuộn xuống */
+    /* HiÃ¡Â»â€¡n lÃ¡ÂºÂ¡i Bottom Nav khi cuÃ¡Â»â„¢n xuÃ¡Â»â€˜ng */
     body.home-page .mobile-bottom-nav.scrolled-show {
         transform: translateY(0);
         opacity: 1;
         pointer-events: auto;
     }
 
-    /* Đẩy các nút nổi lên để không đè lên thanh Bottom Nav (khoảng 80px) */
+    /* Ã„ÂÃ¡ÂºÂ©y cÃƒÂ¡c nÃƒÂºt nÃ¡Â»â€¢i lÃƒÂªn Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng Ã„â€˜ÃƒÂ¨ lÃƒÂªn thanh Bottom Nav (khoÃ¡ÂºÂ£ng 80px) */
     .floating-widgets,
     .float-btn-left {
         bottom: 85px !important;
     }
 
-    /* Đổi chiều cao banner (Hero) để trải full màn hình trên trang chủ khi Bottom Bar bị ẩn, ở trang khác vẫn tính toán để trừ hao */
+    /* Ã„ÂÃ¡Â»â€¢i chiÃ¡Â»Âu cao banner (Hero) Ã„â€˜Ã¡Â»Æ’ trÃ¡ÂºÂ£i full mÃƒÂ n hÃƒÂ¬nh trÃƒÂªn trang chÃ¡Â»Â§ khi Bottom Bar bÃ¡Â»â€¹ Ã¡ÂºÂ©n, Ã¡Â»Å¸ trang khÃƒÂ¡c vÃ¡ÂºÂ«n tÃƒÂ­nh toÃƒÂ¡n Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»Â« hao */
     body:not(.home-page) .hero-carousel {
         height: calc(100vh - 65px - env(safe-area-inset-bottom)) !important;
     }
@@ -7040,7 +7010,7 @@ footer {
         background-color: #e74c3c;
     }
 
-    /* Reset style mặc định cho button */
+    /* Reset style mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cho button */
     .bottom-nav-item.btn-transparent {
         background: transparent;
         border: none;
@@ -7134,7 +7104,7 @@ footer {
     min-width: 0;
 }
 
-/* Responsive cho voucher ticket trên mobile nhỏ */
+/* Responsive cho voucher ticket trÃƒÂªn mobile nhÃ¡Â»Â */
 @media (max-width: 480px) {
     .voucher-ticket {
         min-height: 140px;
@@ -7151,7 +7121,7 @@ footer {
     }
 }
 
-/* Responsive grid lọc đơn hàng của Admin */
+/* Responsive grid lÃ¡Â»Âc Ã„â€˜Ã†Â¡n hÃƒÂ ng cÃ¡Â»Â§a Admin */
 .admin-order-filters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -7332,3 +7302,8 @@ footer {
     color: #333;
     font-weight: 500;
 }
+
+
+
+
+

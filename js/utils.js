@@ -724,6 +724,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
 
 // 9. Logic Giỏ hàng: Thêm sản phẩm
 export async function addToCart(productData) {
+    window.addToCart = addToCart;
     let cart = [];
     const user = auth.currentUser;
 
