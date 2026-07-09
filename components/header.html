@@ -51,7 +51,7 @@
                 <span class="badge fav-count-badge">0</span>
             </a>
 
-            <a href="cart/" class="nav-icon-btn" title="Giỏ hàng">
+            <a href="cart/" id="btn-open-cart" class="nav-icon-btn" title="Giỏ hàng">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -74,6 +74,25 @@
                 <button id="btn-close-search" class="close-search-btn">&times;</button>
             </div>
             <div id="search-suggestions" class="search-suggestions"></div>
+        </div>
+    </div>
+
+    <!-- Drawer Cart UI -->
+    <div id="drawer-cart-overlay" class="drawer-cart-overlay"></div>
+    <div id="drawer-cart" class="drawer-cart">
+        <div class="drawer-cart-header">
+            <h3>Giỏ hàng của bạn</h3>
+            <button id="btn-close-cart" class="btn-close-drawer">&times;</button>
+        </div>
+        <div class="drawer-cart-body" id="drawer-cart-items">
+            <!-- Items rendered via JS -->
+        </div>
+        <div class="drawer-cart-footer">
+            <div class="drawer-cart-total">
+                <span>Tạm tính:</span>
+                <span id="drawer-cart-total-amount">0đ</span>
+            </div>
+            <a href="cart/" class="btn btn-primary" style="width: 100%; display: block; text-align: center; margin-top: 15px;">Xem giỏ hàng</a>
         </div>
     </div>
 

@@ -743,8 +743,14 @@ export async function addToCart(productData) {
     if (user) await setDoc(doc(db, "carts", user.uid), { items: cart });
     else localStorage.setItem('cart', JSON.stringify(cart));
 
-    updateCartCount();
-    showToast(`Đã thêm ${productData.quantity} ${productData.name} vào giỏ hàng!`);
+    await updateCartCount();
+    if (typeof openDrawerCart === 'function') {
+        openDrawerCart();
+    } else if (window.openDrawerCart) {
+        window.openDrawerCart();
+    } else {
+        showToast(`Đã thêm ${productData.quantity} ${productData.name} vào giỏ hàng!`);
+    }
 }
 
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
@@ -1339,4 +1345,155 @@ export function initPresence() {
 }
 
 // Tự động khởi chạy khi load utils
-initPresence();
+initPresence();// 15. Logic: Drawer Cart
+export function initDrawerCart() {
+    const btnOpen = document.getElementById('btn-open-cart');
+    const btnClose = document.getElementById('btn-close-cart');
+    const drawer = document.getElementById('drawer-cart');
+    const overlay = document.getElementById('drawer-cart-overlay');
+
+    if (!btnOpen || !drawer || !overlay) return;
+
+    btnOpen.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDrawerCart();
+    });
+
+    if (btnClose) btnClose.addEventListener('click', closeDrawerCart);
+    overlay.addEventListener('click', closeDrawerCart);
+}
+
+export function openDrawerCart() {
+    const drawer = document.getElementById('drawer-cart');
+    const overlay = document.getElementById('drawer-cart-overlay');
+    if (drawer) drawer.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    renderDrawerCart();
+}
+
+export function closeDrawerCart() {
+    const drawer = document.getElementById('drawer-cart');
+    const overlay = document.getElementById('drawer-cart-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+}
+
+export async function renderDrawerCart() {
+    const container = document.getElementById('drawer-cart-items');
+    const totalEl = document.getElementById('drawer-cart-total-amount');
+    if (!container || !totalEl) return;
+
+    container.innerHTML = '<div style="text-align:center; padding: 20px;"><div class="spinner"></div></div>';
+
+    try {
+        let cart = [];
+        const user = auth.currentUser;
+        if (user) {
+            const cartSnap = await getDoc(doc(db, "carts", user.uid));
+            if (cartSnap.exists()) cart = cartSnap.data().items || [];
+        } else {
+            cart = JSON.parse(localStorage.getItem('cart')) || [];
+        }
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 40px 20px; color: #888;">Giỏ hàng của bạn đang trống.</div>';
+            totalEl.innerText = '0đ';
+            return;
+        }
+
+        let html = '';
+        let totalAmount = 0;
+        const baseUrl = window.location.pathname.includes('/tiemnhagom-project') ? '/tiemnhagom-project' : '';
+
+        for (const item of cart) {
+            const pSnap = await getDoc(doc(db, "products", item.id));
+            if (!pSnap.exists()) continue;
+            const pData = pSnap.data();
+            
+            const hasSale = pData.sale > 0;
+            const currentPrice = hasSale ? Math.round((pData.price * (1 - pData.sale / 100)) / 1000) * 1000 : pData.price;
+            
+            const itemTotal = currentPrice * item.quantity;
+            totalAmount += itemTotal;
+
+            const variantText = (item.color || item.pattern) ? ` - ${item.color || ''} ${item.pattern || ''}`.trim() : '';
+
+            html += `
+                <div class="drawer-cart-item">
+                    <img src="${pData.imageUrl}" alt="${escapeHTML(pData.name)}">
+                    <div class="drawer-cart-item-info">
+                        <a href="${baseUrl}/product/index.html?id=${item.id}" class="drawer-cart-item-title">${escapeHTML(pData.name)}${variantText}</a>
+                        <div class="drawer-cart-item-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</div>
+                        <div class="drawer-cart-qty">
+                            <button onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', -1)">-</button>
+                            <input type="number" value="${item.quantity}" readonly>
+                            <button onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', 1)">+</button>
+                        </div>
+                        <button class="btn-remove-item" onclick="window.removeDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}')">Xóa</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+        totalEl.innerText = new Intl.NumberFormat('vi-VN').format(totalAmount) + 'đ';
+    } catch (error) {
+        console.error("Lỗi render drawer cart:", error);
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color: red;">Đã có lỗi xảy ra.</div>';
+    }
+}
+
+window.updateDrawerCartItem = async (id, color, pattern, change) => {
+    try {
+        let cart = [];
+        const user = auth.currentUser;
+        if (user) {
+            const cartRef = doc(db, "carts", user.uid);
+            const cartSnap = await getDoc(cartRef);
+            if (cartSnap.exists()) cart = cartSnap.data().items || [];
+            
+            const idx = cart.findIndex(i => i.id === id && (i.color || '') === color && (i.pattern || '') === pattern);
+            if (idx !== -1) {
+                cart[idx].quantity += change;
+                if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+                await setDoc(cartRef, { items: cart });
+            }
+        } else {
+            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const idx = cart.findIndex(i => i.id === id && (i.color || '') === color && (i.pattern || '') === pattern);
+            if (idx !== -1) {
+                cart[idx].quantity += change;
+                if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+            }
+        }
+        await updateCartCount();
+        renderDrawerCart();
+    } catch (e) { console.error(e); }
+};
+
+window.removeDrawerCartItem = async (id, color, pattern) => {
+    try {
+        let cart = [];
+        const user = auth.currentUser;
+        if (user) {
+            const cartRef = doc(db, "carts", user.uid);
+            const cartSnap = await getDoc(cartRef);
+            if (cartSnap.exists()) cart = cartSnap.data().items || [];
+            cart = cart.filter(i => !(i.id === id && (i.color || '') === color && (i.pattern || '') === pattern));
+            await setDoc(cartRef, { items: cart });
+        } else {
+            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(i => !(i.id === id && (i.color || '') === color && (i.pattern || '') === pattern));
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+        await updateCartCount();
+        renderDrawerCart();
+    } catch (e) { console.error(e); }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDrawerCart);
+} else {
+    initDrawerCart();
+}

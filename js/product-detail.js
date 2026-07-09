@@ -546,6 +546,20 @@ async function fetchProductDetail() {
                 ]
             };
 
+            // Hiển thị Breadcrumbs trên giao diện
+            const breadcrumbContainer = document.getElementById('breadcrumb-container');
+            if (breadcrumbContainer) {
+                breadcrumbContainer.innerHTML = `
+                    <a href="${baseUrl}/">Trang chủ</a>
+                    <span class="separator">&rsaquo;</span>
+                    <a href="${baseUrl}/products/">Sản phẩm</a>
+                    <span class="separator">&rsaquo;</span>
+                    <a href="${baseUrl}/products/?category=${encodeURIComponent(p.category)}">${escapeHTML(p.category)}</a>
+                    <span class="separator">&rsaquo;</span>
+                    <span class="current">${escapeHTML(p.name)}</span>
+                `;
+            }
+
             let scriptTag = document.getElementById('product-schema');
             if (!scriptTag) {
                 scriptTag = document.createElement('script');
