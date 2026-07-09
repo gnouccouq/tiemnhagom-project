@@ -430,13 +430,22 @@ async function fetchProductDetail() {
                                     Combo này gồm có
                                 </h4>
                                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                                    ${p.comboItems.map(item => `
+                                    ${p.comboItems.map(item => {
+                                        let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/60';
+                                        if (item.selectedPattern && item.patternVariants) {
+                                            const pv = item.patternVariants.find(v => (v.name === item.selectedPattern || v === item.selectedPattern) && v.imageUrl);
+                                            if (pv) displayImg = pv.imageUrl;
+                                        } else if (item.selectedColor && item.colorVariants) {
+                                            const cv = item.colorVariants.find(v => v.name === item.selectedColor && v.imageUrl);
+                                            if (cv) displayImg = cv.imageUrl;
+                                        }
+                                        return `
                                         <div style="display: flex; align-items: center; gap: 12px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                            <a href="product-detail.html?id=${item.id}" target="_blank" style="flex-shrink: 0;">
-                                                <img src="${item.thumbUrl || item.imageUrl || 'https://placehold.co/60'}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
+                                            <a href="?id=${item.id}" target="_blank" style="flex-shrink: 0;">
+                                                <img src="${displayImg}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
                                             </a>
                                             <div style="flex: 1;">
-                                                <a href="product-detail.html?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.95rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 4px;">${item.name}</a>
+                                                <a href="?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.95rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 4px;">${item.name}</a>
                                                 <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
                                                     <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
                                                     <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
