@@ -2056,7 +2056,7 @@ function renderAdminProductTable() {
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
                 <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
                 <td data-label="Tồn kho">${p.isCombo ? '-' : stockDisplay}</td>
-                <td data-label="Khách đặt">${p.ordersCount || 0}</td>
+                <td data-label="Khách đặt">${p.sold || 0}</td>
                 <td data-label="Thời gian tạo">${formattedDate}</td>
                 <td data-label="Sale">${p.sale || 0}%</td>
                 <td data-label="Thao tác">
