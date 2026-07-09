@@ -422,6 +422,38 @@ async function fetchProductDetail() {
                         </div>
 
                         ${couponsHtml}
+                        
+                        ${p.isCombo && p.comboItems && p.comboItems.length > 0 ? `
+                            <div class="product-combo-section" style="margin-top: 1.5rem; padding: 15px; background: #f4f8fb; border-radius: 8px; border: 1px solid #d0e8ff; margin-bottom: 1.5rem;">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-family: var(--font-serif); font-size: 1.1rem; color: #0056b3; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    Combo này gồm có
+                                </h4>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    ${p.comboItems.map(item => `
+                                        <div style="display: flex; align-items: center; gap: 12px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                            <a href="product-detail.html?id=${item.id}" target="_blank" style="flex-shrink: 0;">
+                                                <img src="${item.thumbUrl || item.imageUrl || 'https://placehold.co/60'}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
+                                            </a>
+                                            <div style="flex: 1;">
+                                                <a href="product-detail.html?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.95rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 4px;">${item.name}</a>
+                                                <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
+                                                    <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
+                                                    <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
+                                                </div>
+                                                ${item.selectedColor || item.selectedPattern ? `
+                                                    <div style="font-size: 0.75rem; color: #5a8f79; margin-top: 4px; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; display: inline-block;">
+                                                        ${item.selectedColor ? `Màu: <strong>${item.selectedColor}</strong>` : ''} 
+                                                        ${item.selectedColor && item.selectedPattern ? ' | ' : ''}
+                                                        ${item.selectedPattern ? `Họa tiết: <strong>${item.selectedPattern}</strong>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
 
                         <div class="product-description">
                             <h4>Mô tả sản phẩm</h4>

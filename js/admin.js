@@ -1487,6 +1487,156 @@ window.migrateProductCategories = async () => {
     }
 };
 
+// --- Logic Combo Sản Phẩm ---
+window.comboItems = [];
+
+window.toggleComboSection = function() {
+    const type = document.querySelector('input[name="product-type"]:checked').value;
+    const comboSection = document.getElementById('combo-section');
+    const stockInput = document.getElementById('stock');
+    if (type === 'combo') {
+        comboSection.style.display = 'block';
+        if (stockInput) stockInput.value = ''; // Combo không quản lý tồn kho trực tiếp ở đây, hoặc nhập tay tùy ý
+    } else {
+        comboSection.style.display = 'none';
+    }
+};
+
+window.renderComboItems = function() {
+    const list = document.getElementById('combo-items-list');
+    if (!list) return;
+    if (window.comboItems.length === 0) {
+        list.innerHTML = '<div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho combo.</div>';
+        return;
+    }
+    
+    list.innerHTML = window.comboItems.map((item, idx) => {
+        let colorOptions = '';
+        if (item.colorVariants && item.colorVariants.length > 0) {
+            colorOptions = `
+                <select style="margin-top:4px; padding: 2px 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem;" onchange="window.updateComboItemVariant(${idx}, 'color', this.value)">
+                    <option value="">-- Chọn màu --</option>
+                    ${item.colorVariants.map(v => `<option value="${v.name}" ${item.selectedColor === v.name ? 'selected' : ''}>${v.name}</option>`).join('')}
+                </select>
+            `;
+        }
+
+        let patternOptions = '';
+        let availablePatterns = (item.patternVariants && item.patternVariants.length > 0) ? item.patternVariants : (item.patterns || []);
+        if (availablePatterns.length > 0) {
+            patternOptions = `
+                <select style="margin-top:4px; padding: 2px 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem;" onchange="window.updateComboItemVariant(${idx}, 'pattern', this.value)">
+                    <option value="">-- Chọn họa tiết --</option>
+                    ${availablePatterns.map(v => {
+                        const vName = typeof v === 'string' ? v : v.name;
+                        return `<option value="${vName}" ${item.selectedPattern === vName ? 'selected' : ''}>${vName}</option>`;
+                    }).join('')}
+                </select>
+            `;
+        }
+
+        return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                <img src="${item.thumbUrl || item.imageUrl || 'https://placehold.co/50'}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                <div style="display: flex; flex-direction: column;">
+                    <div style="font-weight: 600; font-size: 0.85rem;">${item.name}</div>
+                    <div style="font-size: 0.75rem; color: #666;">Mã: ${item.id}</div>
+                    <div style="display: flex; gap: 5px;">
+                        ${colorOptions}
+                        ${patternOptions}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="number" min="1" value="${item.quantity || 1}" onchange="window.updateComboItemQty(${idx}, this.value)" style="width: 60px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                <button type="button" class="btn-delete" style="padding: 4px 8px; font-size: 0.8rem;" onclick="window.removeComboItem(${idx})">&times;</button>
+            </div>
+        </div>
+        `;
+    }).join('');
+};
+
+window.addComboItem = function(product) {
+    const existing = window.comboItems.find(i => i.id === product.id);
+    if (existing) {
+        existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+        window.comboItems.push({
+            id: product.id,
+            name: product.name,
+            imageUrl: product.imageUrl || product.thumbUrl,
+            thumbUrl: product.thumbUrl,
+            price: product.price,
+            quantity: 1,
+            colorVariants: product.colorVariants || [],
+            patternVariants: product.patternVariants || [],
+            patterns: product.patterns || [],
+            selectedColor: '',
+            selectedPattern: ''
+        });
+    }
+    window.renderComboItems();
+    document.getElementById('combo-product-search').value = '';
+    document.getElementById('combo-product-suggestions').innerHTML = '';
+};
+
+window.updateComboItemVariant = function(idx, type, value) {
+    if (type === 'color') window.comboItems[idx].selectedColor = value;
+    if (type === 'pattern') window.comboItems[idx].selectedPattern = value;
+};
+
+window.removeComboItem = function(idx) {
+    window.comboItems.splice(idx, 1);
+    window.renderComboItems();
+};
+
+window.updateComboItemQty = function(idx, qty) {
+    qty = parseInt(qty);
+    if (qty > 0) {
+        window.comboItems[idx].quantity = qty;
+    }
+};
+
+// Gắn event cho ô tìm kiếm combo
+document.addEventListener('DOMContentLoaded', () => {
+    const comboSearchInput = document.getElementById('combo-product-search');
+    if (comboSearchInput) {
+        comboSearchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            const suggs = document.getElementById('combo-product-suggestions');
+            if (!val) {
+                suggs.innerHTML = '';
+                return;
+            }
+            const results = posProductsLocal.filter(p => !p.isCombo && ((p.name && p.name.toLowerCase().includes(val)) || (p.id && p.id.toLowerCase().includes(val)))).slice(0, 10);
+            if (results.length > 0) {
+                suggs.innerHTML = results.map(p => `
+                    <div class="suggestion-item" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px;" onclick='window.addComboItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+                        <img src="${p.thumbUrl || p.imageUrl || 'https://placehold.co/40'}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.85rem;">${p.name}</div>
+                            <div style="font-size: 0.75rem; color: #666;">${p.id}</div>
+                        </div>
+                    </div>
+                `).join('');
+                suggs.style.display = 'block';
+            } else {
+                suggs.innerHTML = '<div style="padding: 8px; font-size: 0.85rem; color: #999;">Không tìm thấy sản phẩm phù hợp.</div>';
+                suggs.style.display = 'block';
+            }
+        });
+        
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== comboSearchInput && !comboSearchInput.contains(e.target)) {
+                const suggs = document.getElementById('combo-product-suggestions');
+                if (suggs) suggs.innerHTML = '';
+            }
+        });
+    }
+});
+
 // Hàm lưu/cập nhật sản phẩm
 if (productForm) {
 productForm.addEventListener('submit', async (e) => {
@@ -1698,6 +1848,8 @@ productForm.addEventListener('submit', async (e) => {
 
         const finalImageUrl = currentMain || 'https://placehold.co/300x300?text=No+Image';
 
+        const isCombo = document.querySelector('input[name="product-type"]:checked').value === 'combo';
+
         // 2. Lưu thông tin vào Firestore
     const productData = {
         name: document.getElementById('name').value,
@@ -1738,7 +1890,10 @@ productForm.addEventListener('submit', async (e) => {
         seoDescription: document.getElementById('seoDescription').value.trim(),
         slug: document.getElementById('slug').value.trim(),
         isHidden: document.getElementById('product-is-hidden').checked,
-        updatedAt: new Date().toISOString()
+        isCombo: isCombo,
+        comboItems: isCombo ? window.comboItems : [],
+        updatedAt: new Date().toISOString(),
+        createdAt: isEdit && existingSnap.data().createdAt ? existingSnap.data().createdAt : new Date().toISOString()
     };
 
     // Nếu có biến thể, tổng tồn kho của sản phẩm sẽ là tổng của các biến thể
@@ -1822,7 +1977,10 @@ function initProductListener() {
     });
 }
 
-// Hàm hiển thị bảng sản phẩm Admin (có hỗ trợ lọc tìm kiếm)
+window.currentSortCol = 'createdAt';
+window.currentSortDir = 'desc';
+
+// Hàm hiển thị bảng sản phẩm Admin (có hỗ trợ lọc tìm kiếm và sắp xếp)
 function renderAdminProductTable() {
     const listTable = document.getElementById('admin-product-list');
     const searchInput = document.getElementById('admin-product-search');
@@ -1835,13 +1993,34 @@ function renderAdminProductTable() {
     const stockValue = stockFilter ? stockFilter.value : 'all';
 
     // Lọc sản phẩm dựa trên từ khóa tìm kiếm từ mảng local đã cache
-    const filtered = posProductsLocal.filter(p => {
+    let filtered = posProductsLocal.filter(p => {
         const matchesSearch = (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
         const matchesCategory = catValue === 'all' || p.category === catValue;
         const matchesStock = stockValue === 'all' || 
                            (stockValue === 'in-stock' && p.stock > 0) || 
                            (stockValue === 'out-of-stock' && p.stock <= 0);
         return matchesSearch && matchesCategory && matchesStock;
+    });
+
+    // Sắp xếp
+    filtered.sort((a, b) => {
+        let valA = a[window.currentSortCol];
+        let valB = b[window.currentSortCol];
+        
+        if (window.currentSortCol === 'createdAt') {
+            valA = valA ? (valA.toMillis ? valA.toMillis() : new Date(valA).getTime()) : 0;
+            valB = valB ? (valB.toMillis ? valB.toMillis() : new Date(valB).getTime()) : 0;
+        } else if (window.currentSortCol === 'name' || window.currentSortCol === 'id') {
+            valA = (valA || '').toString().toLowerCase();
+            valB = (valB || '').toString().toLowerCase();
+        } else {
+            valA = valA || 0;
+            valB = valB || 0;
+        }
+
+        if (valA < valB) return window.currentSortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return window.currentSortDir === 'asc' ? 1 : -1;
+        return 0;
     });
 
     let htmlContent = '';
@@ -1858,32 +2037,68 @@ function renderAdminProductTable() {
                 displayImgUrl = p.colorVariants[0].imageUrl;
             }
         }
+        
+        const createdDate = p.createdAt ? (p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt)) : null;
+        const formattedDate = createdDate ? 
+            `${createdDate.getDate().toString().padStart(2, '0')}/${(createdDate.getMonth() + 1).toString().padStart(2, '0')}/${createdDate.getFullYear()} ${createdDate.getHours().toString().padStart(2, '0')}:${createdDate.getMinutes().toString().padStart(2, '0')}` : '---';
 
         htmlContent += `
             <tr>
-                <td data-label="ID"><small>${p.id}</small></td>
+                <td style="text-align: center;"><input type="checkbox" class="product-row-checkbox" value="${p.id}"></td>
+                <td style="text-align: center; color: ${p.isFeatured ? '#f1c40f' : '#ccc'}; cursor: pointer;" class="star-toggle" data-id="${p.id}">⭐</td>
                 <td data-label="Ảnh"><img src="${displayImgUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td data-label="Tên">
+                <td data-label="Mã hàng"><small>${p.id}</small></td>
+                <td data-label="Tên hàng">
                     <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #ffeeba; color: #856404; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Đang ẩn</span>' : ''}
+                    ${p.isCombo ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #d0e8ff; color: #0056b3; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Combo</span>' : ''}
                 </td>
-                <td data-label="Giá">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
-                <td data-label="Vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)} VND</td>
-                <td data-label="Kho">${stockDisplay}</td>
-                <td data-label="Đánh giá">${p.rating || 5}★</td>
-                <td data-label="Giảm giá">${p.sale || 0}%</td>
+                <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
+                <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
+                <td data-label="Tồn kho">${p.isCombo ? '-' : stockDisplay}</td>
+                <td data-label="Khách đặt">${p.ordersCount || 0}</td>
+                <td data-label="Thời gian tạo">${formattedDate}</td>
+                <td data-label="Sale">${p.sale || 0}%</td>
                 <td data-label="Thao tác">
                     <button class="btn-delete" data-id="${p.id}">Xóa</button>
                 </td>
             </tr>`;
     });
     
-    listTable.innerHTML = htmlContent || '<tr><td colspan="8" style="text-align:center;">Không tìm thấy sản phẩm phù hợp.</td></tr>';
+    listTable.innerHTML = htmlContent || '<tr><td colspan="12" style="text-align:center;">Không tìm thấy sản phẩm phù hợp.</td></tr>';
+
+    // Update sort icons
+    document.querySelectorAll('.sortable-header').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (icon) {
+            if (th.getAttribute('data-sort') === window.currentSortCol) {
+                icon.textContent = window.currentSortDir === 'asc' ? '↑' : '↓';
+            } else {
+                icon.textContent = '↕';
+            }
+        }
+    });
 
     // Gán lại sự kiện cho các nút mới render
     document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = () => deleteProduct(btn.getAttribute('data-id')));
     document.querySelectorAll('.edit-link').forEach(link => link.onclick = () => editProduct(link.getAttribute('data-id')));
 }
+
+// Lắng nghe sự kiện click vào các tiêu đề cột để sắp xếp
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.sortable-header').forEach(th => {
+        th.addEventListener('click', () => {
+            const sortCol = th.getAttribute('data-sort');
+            if (window.currentSortCol === sortCol) {
+                window.currentSortDir = window.currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                window.currentSortCol = sortCol;
+                window.currentSortDir = 'asc';
+            }
+            renderAdminProductTable();
+        });
+    });
+});
 
 // Hàm xuất danh sách sản phẩm hiện tại ra file Excel (CSV)
 async function exportProductToExcel() {
@@ -1982,6 +2197,17 @@ async function editProduct(id) {
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
             document.getElementById('flash-sale-group-select').value = p.flashSaleGroup || "";
+
+            // Xử lý nạp dữ liệu Combo
+            if (p.isCombo) {
+                document.querySelector('input[name="product-type"][value="combo"]').checked = true;
+                window.comboItems = p.comboItems || [];
+            } else {
+                document.querySelector('input[name="product-type"][value="normal"]').checked = true;
+                window.comboItems = [];
+            }
+            window.toggleComboSection();
+            window.renderComboItems();
 
             document.getElementById('dim-length').value = p.dimensions?.length || '';
             document.getElementById('dim-width').value = p.dimensions?.width || '';

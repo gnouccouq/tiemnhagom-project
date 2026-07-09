@@ -505,13 +505,16 @@
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Ảnh</th>
-                                    <th>Tên</th>
-                                    <th>Giá</th>
-                                    <th>Vốn</th>
-                                    <th>Tồn</th>
-                                    <th>Sao</th>
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllProducts"></th>
+                                    <th style="width: 40px; text-align: center;">⭐</th>
+                                    <th style="width: 60px;">Ảnh</th>
+                                    <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng <span class="sort-icon">↕</span></th>
+                                    <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng <span class="sort-icon">↕</span></th>
+                                    <th>Giá bán</th>
+                                    <th>Giá vốn</th>
+                                    <th>Tồn kho</th>
+                                    <th>Khách đặt</th>
+                                    <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời gian tạo <span class="sort-icon">↕</span></th>
                                     <th>Sale</th>
                                     <th>Xóa</th>
                                 </tr>
@@ -982,6 +985,30 @@
                             <option value="">-- Chọn danh mục --</option> 
                             <!-- Danh mục sẽ được nạp động từ Firestore -->
                         </select>
+                    </div>
+
+                    <div class="form-group" style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; background: #f0f8ff; padding: 10px; border-radius: 4px; border: 1px solid #d0e8ff;">
+                        <label style="margin-bottom: 0; font-weight: bold;">Loại sản phẩm:</label>
+                        <label class="radio-container" style="margin-bottom: 0;">Sản phẩm thường
+                            <input type="radio" name="product-type" value="normal" checked onchange="window.toggleComboSection()">
+                            <span class="radio-checkmark"></span>
+                        </label>
+                        <label class="radio-container" style="margin-bottom: 0;">Combo
+                            <input type="radio" name="product-type" value="combo" onchange="window.toggleComboSection()">
+                            <span class="radio-checkmark"></span>
+                        </label>
+                    </div>
+                    
+                    <div id="combo-section" style="display: none; background: #fffdf5; border: 1px dashed #f1c40f; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: #d35400;">Cấu hình Combo</h4>
+                        <div class="form-group" style="position: relative;">
+                            <label>Tìm và thêm sản phẩm vào Combo</label>
+                            <input type="text" id="combo-product-search" placeholder="Nhập mã hoặc tên sản phẩm..." autocomplete="off">
+                            <div id="combo-product-suggestions" class="search-suggestions" style="width: 100%; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
+                        </div>
+                        <div id="combo-items-list" style="margin-top: 10px; min-height: 50px; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho combo.</div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Bộ sưu tập (Chọn nhiều)</label>
