@@ -4187,7 +4187,7 @@ footer {
 }
 
 .color-chip.active::after {
-    content: 'Ã¢Å“â€œ';
+    content: '✓';
     /* DÃ¡ÂºÂ¥u tÃƒÂ­ch khi chÃ¡Â»Ân */
     position: absolute;
     top: 50%;
