@@ -7307,3 +7307,7 @@ footer {
 
 
 
+
+/* Admin Product Modal Specific Styles */
+#product-modal .modal-content { max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; overflow-x: hidden; }
+
