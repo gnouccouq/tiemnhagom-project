@@ -377,6 +377,78 @@ async function fetchProductDetail() {
                             <!-- Rendered by JS -->
                         </div>
 
+                        <div class="purchase-card">
+                            <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
+                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : ``}</span>
+                            </div>
+                            <div class="quantity-box">
+                                <div class="quantity-controls">
+                                    <button type="button" class="q-btn" onclick="const input = document.getElementById('product-quantity'); if(parseInt(input.value) > 1) input.stepDown()" ${isOutOfStock ? 'disabled' : ''}>&minus;</button>
+                                    <input type="number" id="product-quantity" value="1" min="1" max="${p.stock}" readonly>
+                                    <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" ${isOutOfStock ? 'disabled' : ''} id="qty-plus-btn">&plus;</button>
+                                </div>                                
+                            </div>
+
+                            <div class="action-group">
+                                <button id="btn-buy-now" class="btn-dark" ${isOutOfStock ? 'disabled' : ''}>${isOutOfStock ? 'Hết hàng' : 'Mua ngay'}</button>
+                                <button id="btn-add-to-cart" class="btn-outline" ${isOutOfStock ? 'disabled' : ''}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                    Giỏ hàng
+                                </button>
+                                <button class="detail-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavoriteDetail('${productId}')" style="border-radius:8px">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                </button>
+                                <button class="detail-share-btn" onclick="window.shareProduct()" style="border-radius:8px" title="Chia sẻ sản phẩm">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        ${couponsHtml}
+                        
+                        ${p.isCombo && p.comboItems && p.comboItems.length > 0 ? `
+                            <div class="product-combo-section" style="margin-top: 1.5rem; padding: 15px; background: #f4f8fb; border-radius: 8px; border: 1px solid #d0e8ff; margin-bottom: 1.5rem;">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-family: var(--font-serif); font-size: 1.1rem; color: #0056b3; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    Combo này gồm có
+                                </h4>
+                                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
+                                    ${p.comboItems.map(item => {
+                    let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/60';
+                    if (item.selectedPattern && item.patternVariants) {
+                        const pv = item.patternVariants.find(v => (v.name === item.selectedPattern || v === item.selectedPattern) && v.imageUrl);
+                        if (pv) displayImg = pv.imageUrl;
+                    } else if (item.selectedColor && item.colorVariants) {
+                        const cv = item.colorVariants.find(v => v.name === item.selectedColor && v.imageUrl);
+                        if (cv) displayImg = cv.imageUrl;
+                    }
+                    return `
+                                        <div style="display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                            <a href="?id=${item.id}" target="_blank" style="flex-shrink: 0;">
+                                                <img src="${displayImg}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
+                                            </a>
+                                            <div style="flex: 1;">
+                                                <a href="?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 2px;">${item.name}</a>
+                                                <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
+                                                    <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
+                                                    <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
+                                                </div>
+                                                ${item.selectedColor || item.selectedPattern ? `
+                                                    <div style="font-size: 0.75rem; color: #5a8f79; margin-top: 4px; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; display: inline-block;">
+                                                        ${item.selectedColor ? `Màu: <strong>${item.selectedColor}</strong>` : ''} 
+                                                        ${item.selectedColor && item.selectedPattern ? ' | ' : ''}
+                                                        ${item.selectedPattern ? `Họa tiết: <strong>${item.selectedPattern}</strong>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
                         <!-- Dimensions and Usage Icons -->
                         <div class="product-specs-container" style="margin-top: 1.5rem;">
                             ${(p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) || (p.specs && (p.specs.weight || p.specs.capacity)) || (p.details && (p.details.material || p.details.origin)) ? `
@@ -421,80 +493,9 @@ async function fetchProductDetail() {
                             </div>
                         </div>
 
-                        ${couponsHtml}
-                        
-                        ${p.isCombo && p.comboItems && p.comboItems.length > 0 ? `
-                            <div class="product-combo-section" style="margin-top: 1.5rem; padding: 15px; background: #f4f8fb; border-radius: 8px; border: 1px solid #d0e8ff; margin-bottom: 1.5rem;">
-                                <h4 style="margin-top: 0; margin-bottom: 12px; font-family: var(--font-serif); font-size: 1.1rem; color: #0056b3; display: flex; align-items: center; gap: 8px;">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                    Combo này gồm có
-                                </h4>
-                                <div style="display: flex; flex-direction: column; gap: 10px;">
-                                    ${p.comboItems.map(item => {
-                                        let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/60';
-                                        if (item.selectedPattern && item.patternVariants) {
-                                            const pv = item.patternVariants.find(v => (v.name === item.selectedPattern || v === item.selectedPattern) && v.imageUrl);
-                                            if (pv) displayImg = pv.imageUrl;
-                                        } else if (item.selectedColor && item.colorVariants) {
-                                            const cv = item.colorVariants.find(v => v.name === item.selectedColor && v.imageUrl);
-                                            if (cv) displayImg = cv.imageUrl;
-                                        }
-                                        return `
-                                        <div style="display: flex; align-items: center; gap: 12px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                            <a href="?id=${item.id}" target="_blank" style="flex-shrink: 0;">
-                                                <img src="${displayImg}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
-                                            </a>
-                                            <div style="flex: 1;">
-                                                <a href="?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.95rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 4px;">${item.name}</a>
-                                                <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
-                                                    <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
-                                                    <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
-                                                </div>
-                                                ${item.selectedColor || item.selectedPattern ? `
-                                                    <div style="font-size: 0.75rem; color: #5a8f79; margin-top: 4px; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; display: inline-block;">
-                                                        ${item.selectedColor ? `Màu: <strong>${item.selectedColor}</strong>` : ''} 
-                                                        ${item.selectedColor && item.selectedPattern ? ' | ' : ''}
-                                                        ${item.selectedPattern ? `Họa tiết: <strong>${item.selectedPattern}</strong>` : ''}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-
                         <div class="product-description">
                             <h4>Mô tả sản phẩm</h4>
                             <p>${p.description ? p.description : 'Hiện tại chưa có thông tin.'}</p>
-                        </div>
-
-                        <div class="purchase-card">
-                            <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
-                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : ``}</span>
-                            </div>
-                            <div class="quantity-box">
-                                <div class="quantity-controls">
-                                    <button type="button" class="q-btn" onclick="const input = document.getElementById('product-quantity'); if(parseInt(input.value) > 1) input.stepDown()" ${isOutOfStock ? 'disabled' : ''}>&minus;</button>
-                                    <input type="number" id="product-quantity" value="1" min="1" max="${p.stock}" readonly>
-                                    <button type="button" class="q-btn" onclick="document.getElementById('product-quantity').stepUp()" ${isOutOfStock ? 'disabled' : ''} id="qty-plus-btn">&plus;</button>
-                                </div>                                
-                            </div>
-
-                            <div class="action-group">
-                                <button id="btn-buy-now" class="btn-dark" ${isOutOfStock ? 'disabled' : ''}>${isOutOfStock ? 'Hết hàng' : 'Mua ngay'}</button>
-                                <button id="btn-add-to-cart" class="btn-outline" ${isOutOfStock ? 'disabled' : ''}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                                    Giỏ hàng
-                                </button>
-                                <button class="detail-fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavoriteDetail('${productId}')" style="border-radius:8px">
-                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                                </button>
-                                <button class="detail-share-btn" onclick="window.shareProduct()" style="border-radius:8px" title="Chia sẻ sản phẩm">
-                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
