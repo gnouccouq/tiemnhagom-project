@@ -111,35 +111,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         // LUÔN LUÔN LỌC SẢN PHẨM ĐANG SALE
         productsQuery = query(productsQuery, where("sale", ">", 0));
 
-        // Apply sorting
-        switch (currentSort) {
-            case 'price-asc':
-                productsQuery = query(productsQuery, orderBy("price", "asc"));
-                break;
-            case 'price-desc':
-                productsQuery = query(productsQuery, orderBy("price", "desc"));
-                break;
-            case 'rating-desc':
-                productsQuery = query(productsQuery, orderBy("rating", "desc"));
-                break;
-            case 'newest':
-                productsQuery = query(productsQuery, orderBy("updatedAt", "desc"));
-                break;
-            case 'sale-desc':
-            default:
-                productsQuery = query(productsQuery, orderBy("sale", "desc")); // Sắp xếp theo % giảm giá nhiều nhất
-                break;
-        }
-
-        // Thêm logic phân trang vào Query
-        let finalQuery;
-        if (navigation === 'next' && lastVisible) {
-            finalQuery = query(productsQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-        } else if (navigation === 'prev' && firstVisible) {
-            finalQuery = query(productsQuery, endBefore(firstVisible), limitToLast(PAGE_SIZE));
-        } else {
-            finalQuery = query(productsQuery, limit(PAGE_SIZE));
-        }
+        // Lọc client side nên không cần query phức tạp
 
         // Lấy TOÀN BỘ sản phẩm đang có sale để phân loại trực quan
         const qAll = query(collection(db, "products"), where("sale", ">", 0), orderBy("sale", "desc"));
@@ -202,6 +174,23 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         // RENDER GIAO DIỆN THEO TỪNG CHƯƠNG TRÌNH
         let htmlContent = '';
         
+        // HÀM SẮP XẾP CLIENT-SIDE
+        const sortProducts = (productsArray) => {
+            productsArray.sort((a, b) => {
+                const priceA = (isFsRunning && a.flashSaleGroup) ? a.flashSaleGroup : Math.round((a.price * (1 - (a.sale || 0) / 100)) / 1000) * 1000;
+                const priceB = (isFsRunning && b.flashSaleGroup) ? b.flashSaleGroup : Math.round((b.price * (1 - (b.sale || 0) / 100)) / 1000) * 1000;
+                
+                switch (currentSort) {
+                    case 'price-asc': return priceA - priceB;
+                    case 'price-desc': return priceB - priceA;
+                    case 'rating-desc': return (b.rating || 0) - (a.rating || 0);
+                    case 'newest': return (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0);
+                    case 'sale-desc':
+                    default: return (b.sale || 0) - (a.sale || 0);
+                }
+            });
+        };
+        
         // 1. Render các nhóm đồng giá
         if (isFsRunning) {
             priceGroups.sort((a,b) => a-b).forEach(price => {
@@ -212,6 +201,8 @@ async function fetchFlashSaleProducts(navigation = 'init') {
 
                 const products = groupedProducts[price] || [];
                 if (products.length === 0) return;
+                
+                sortProducts(products);
 
             htmlContent += `
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
@@ -226,6 +217,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
 
         // 2. Render nhóm Sale khác
         if (otherSales.length > 0 && selectedPriceGroup === null) {
+            sortProducts(otherSales);
             const sectionTitle = isFsRunning ? "🎁 Ưu đãi hấp dẫn khác" : "Sản phẩm ưu đãi";
             htmlContent += `
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">

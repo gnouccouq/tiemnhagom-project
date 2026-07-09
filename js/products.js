@@ -260,6 +260,15 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;
 
+        // Sắp xếp lại danh sách trả về (tối đa 50) theo giá cuối cùng (đã giảm) nếu user chọn sort giá
+        if (currentSort === 'price-asc' || currentSort === 'price-desc') {
+            finalResults.sort((a, b) => {
+                const priceA = Math.round((a.price * (1 - (a.sale || 0) / 100)) / 1000) * 1000;
+                const priceB = Math.round((b.price * (1 - (b.sale || 0) / 100)) / 1000) * 1000;
+                return currentSort === 'price-desc' ? priceB - priceA : priceA - priceB;
+            });
+        }
+
         // Giới hạn lại số lượng hiển thị thực tế (PAGE_SIZE)
         finalResults = finalResults.slice(0, PAGE_SIZE);
 
