@@ -540,11 +540,11 @@ const btnOpenProductModal = document.getElementById('btn-open-add-product');
 const btnCloseProductModal = document.getElementById('btn-close-product-modal');
 
 window.openProductModal = function() {
-    if(productModal) productModal.classList.add('show');
+    if(productModal) productModal.classList.add('active');
 };
 
 window.closeProductModal = function() {
-    if(productModal) productModal.classList.remove('show');
+    if(productModal) productModal.classList.remove('active');
     if(productForm) {
         productForm.reset();
         document.getElementById('variant-items-container').innerHTML = '';
