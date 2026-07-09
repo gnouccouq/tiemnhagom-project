@@ -7311,3 +7311,7 @@ footer {
 /* Admin Product Modal Specific Styles */
 #product-modal .modal-content { max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; overflow-x: hidden; }
 
+
+#product-modal .modal-header { position: sticky; top: -2rem; background-color: var(--card-bg); z-index: 100; padding: 2rem 2rem 1rem; margin: -2rem -2rem 1rem -2rem; border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 12px 12px 0 0; }
+#product-modal .modal-close { top: 2rem; right: 2rem; }
+

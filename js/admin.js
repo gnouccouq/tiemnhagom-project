@@ -4506,3 +4506,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+if(productModal) { productModal.addEventListener('click', (e) => { if(e.target === productModal) { window.closeProductModal(); } }); }
+
