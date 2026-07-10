@@ -62,6 +62,49 @@ async function fetchFeaturedProducts() {
     }
 }
 
+// Hàm lấy sản phẩm bán chạy
+async function fetchBestSellingProducts() {
+    const grid = document.getElementById('best-selling-grid');
+    if (!grid) return;
+    
+    try {
+        grid.innerHTML = Array(5).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-img"></div>
+                <div class="skeleton skeleton-text skeleton-title"></div>
+                <div class="skeleton skeleton-text skeleton-small"></div>
+                <div class="skeleton skeleton-text skeleton-price"></div>
+            </div>
+        `).join('');
+
+        const q = query(collection(db, "products"), orderBy("sold", "desc"), limit(15));
+        
+        let favsPromise = Promise.resolve([]);
+        if (auth.currentUser) {
+            favsPromise = getDoc(doc(db, "favorites", auth.currentUser.uid))
+                .then(snap => snap.exists() ? snap.data().productIds || [] : [])
+                .catch(() => []);
+        } else {
+            favsPromise = Promise.resolve(JSON.parse(localStorage.getItem('favorites')) || []);
+        }
+
+        const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
+        
+        let htmlContent = '';
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
+            if (count >= 10) return;
+            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            count++;
+        });
+        grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm bán chạy.</p>';
+    } catch (error) {
+        console.error("Lỗi lấy dữ liệu sản phẩm bán chạy:", error);
+        grid.innerHTML = '<p>Không thể tải sản phẩm. Vui lòng thử lại sau.</p>';
+    }
+}
+
 // Hàm đồng bộ cấu hình Flash Sale từ Firestore và kiểm tra thời hạn
 async function initFlashSaleSync() {
     const saleSection = document.getElementById('sale-section');
@@ -415,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kích hoạt ngay lập tức mà không cần chờ Auth để tăng tốc độ load
     initHeroCarousel();
     fetchFeaturedProducts();
+    fetchBestSellingProducts();
     initFlashSaleSync();
     fetchRecommendations();
     fetchCollections();
