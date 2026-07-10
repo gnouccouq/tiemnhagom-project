@@ -555,6 +555,9 @@ window.closeProductModal = function() {
         delete document.getElementById('productId').dataset.currentThumbUrl;
         document.getElementById('productId').readOnly = false;
         
+        window.comboVariants = [{ name: 'Mặc định', items: [] }];
+        window.currentComboVariantIndex = 0;
+        
         const titleEl = document.getElementById('product-modal-title');
         if(titleEl) titleEl.innerText = 'Thêm/Sửa sản phẩm';
         
@@ -566,6 +569,11 @@ window.closeProductModal = function() {
             stockInput.placeholder = "10";
         }
         if (additiveCheckbox) additiveCheckbox.disabled = false;
+        
+        // Reset luôn giao diện combo
+        if (typeof window.toggleComboSection === 'function') {
+            window.toggleComboSection();
+        }
     }
 };
 
@@ -1488,7 +1496,8 @@ window.migrateProductCategories = async () => {
 };
 
 // --- Logic Combo Sản Phẩm ---
-window.comboItems = [];
+window.comboVariants = [{ name: 'Mặc định', items: [] }];
+window.currentComboVariantIndex = 0;
 
 window.toggleComboSection = function() {
     const type = document.querySelector('input[name="product-type"]:checked').value;
@@ -1497,20 +1506,120 @@ window.toggleComboSection = function() {
     if (type === 'combo') {
         comboSection.style.display = 'block';
         if (stockInput) stockInput.value = ''; // Combo không quản lý tồn kho trực tiếp ở đây, hoặc nhập tay tùy ý
+        window.renderComboVariantsTabs();
     } else {
         comboSection.style.display = 'none';
+    }
+};
+
+window.renderComboVariantsTabs = function() {
+    const tabsContainer = document.getElementById('combo-variants-tabs');
+    const contentContainer = document.getElementById('combo-variant-content');
+    if (!tabsContainer || !contentContainer) return;
+
+    if (!window.comboVariants || window.comboVariants.length === 0) {
+        tabsContainer.innerHTML = '';
+        contentContainer.style.display = 'none';
+        return;
+    }
+
+    contentContainer.style.display = 'block';
+
+    if (window.currentComboVariantIndex >= window.comboVariants.length) {
+        window.currentComboVariantIndex = window.comboVariants.length - 1;
+    }
+
+    tabsContainer.innerHTML = window.comboVariants.map((v, idx) => `
+        <button type="button" class="btn-minimal ${idx === window.currentComboVariantIndex ? 'active' : ''}" 
+                onclick="window.selectComboVariant(${idx})"
+                style="${idx === window.currentComboVariantIndex ? 'background: #d35400; color: #fff; border-color: #d35400;' : ''}">
+            ${v.name || `Phân loại ${idx + 1}`}
+        </button>
+    `).join('');
+
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    const nameInput = document.getElementById('combo-variant-name');
+    if (nameInput) nameInput.value = currentVariant.name || '';
+    
+    const imageInput = document.getElementById('combo-variant-image');
+    if (imageInput) imageInput.value = currentVariant.imageUrl || '';
+
+    window.renderComboItems();
+};
+
+window.addComboVariant = function() {
+    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [] });
+    window.currentComboVariantIndex = window.comboVariants.length - 1;
+    window.renderComboVariantsTabs();
+};
+
+window.selectComboVariant = function(idx) {
+    window.currentComboVariantIndex = idx;
+    window.renderComboVariantsTabs();
+};
+
+window.updateCurrentComboVariantName = function(name) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].name = name;
+        window.renderComboVariantsTabs(); // Rerender to update tab title
+        // Re-focus the input
+        const input = document.getElementById('combo-variant-name');
+        if(input) {
+            input.focus();
+        }
+    }
+};
+
+window.updateCurrentComboVariantImage = function(url) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].imageUrl = url;
+    }
+};
+
+window.uploadComboVariantImage = async function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    try {
+        const storageRef = ref(storage, `combo_variants/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        
+        const imgInput = document.getElementById('combo-variant-image');
+        if (imgInput) imgInput.value = url;
+        window.updateCurrentComboVariantImage(url);
+        showToast("Đã tải lên ảnh phân loại thành công", "success");
+    } catch (e) {
+        console.error("Lỗi tải ảnh:", e);
+        showToast("Lỗi tải ảnh: " + e.message, "error");
+    } finally {
+        input.value = ''; // Reset input
+    }
+};
+
+window.removeCurrentComboVariant = function() {
+    if (window.comboVariants.length <= 1) {
+        showToast('Phải có ít nhất 1 phân loại combo.', 'error');
+        return;
+    }
+    if (confirm('Xóa phân loại này?')) {
+        window.comboVariants.splice(window.currentComboVariantIndex, 1);
+        window.currentComboVariantIndex = 0;
+        window.renderComboVariantsTabs();
     }
 };
 
 window.renderComboItems = function() {
     const list = document.getElementById('combo-items-list');
     if (!list) return;
-    if (window.comboItems.length === 0) {
-        list.innerHTML = '<div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho combo.</div>';
+
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    if (!currentVariant || !currentVariant.items || currentVariant.items.length === 0) {
+        list.innerHTML = '<div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho phân loại này.</div>';
         return;
     }
     
-    list.innerHTML = window.comboItems.map((item, idx) => {
+    list.innerHTML = currentVariant.items.map((item, idx) => {
         let colorOptions = '';
         if (item.colorVariants && item.colorVariants.length > 0) {
             colorOptions = `
@@ -1558,11 +1667,15 @@ window.renderComboItems = function() {
 };
 
 window.addComboItem = function(product) {
-    const existing = window.comboItems.find(i => i.id === product.id);
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    if (!currentVariant) return;
+    if (!currentVariant.items) currentVariant.items = [];
+
+    const existing = currentVariant.items.find(i => i.id === product.id);
     if (existing) {
         existing.quantity = (existing.quantity || 1) + 1;
     } else {
-        window.comboItems.push({
+        currentVariant.items.push({
             id: product.id,
             name: product.name,
             imageUrl: product.imageUrl || product.thumbUrl,
@@ -1582,19 +1695,28 @@ window.addComboItem = function(product) {
 };
 
 window.updateComboItemVariant = function(idx, type, value) {
-    if (type === 'color') window.comboItems[idx].selectedColor = value;
-    if (type === 'pattern') window.comboItems[idx].selectedPattern = value;
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    if (currentVariant && currentVariant.items[idx]) {
+        if (type === 'color') currentVariant.items[idx].selectedColor = value;
+        if (type === 'pattern') currentVariant.items[idx].selectedPattern = value;
+    }
 };
 
 window.removeComboItem = function(idx) {
-    window.comboItems.splice(idx, 1);
-    window.renderComboItems();
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    if (currentVariant && currentVariant.items) {
+        currentVariant.items.splice(idx, 1);
+        window.renderComboItems();
+    }
 };
 
 window.updateComboItemQty = function(idx, qty) {
-    qty = parseInt(qty);
-    if (qty > 0) {
-        window.comboItems[idx].quantity = qty;
+    const currentVariant = window.comboVariants[window.currentComboVariantIndex];
+    if (currentVariant && currentVariant.items[idx]) {
+        qty = parseInt(qty);
+        if (qty > 0) {
+            currentVariant.items[idx].quantity = qty;
+        }
     }
 };
 
@@ -1891,7 +2013,8 @@ productForm.addEventListener('submit', async (e) => {
         slug: document.getElementById('slug').value.trim(),
         isHidden: document.getElementById('product-is-hidden').checked,
         isCombo: isCombo,
-        comboItems: isCombo ? window.comboItems : [],
+        comboVariants: isCombo ? window.comboVariants : [],
+        comboItems: isCombo && window.comboVariants.length > 0 ? window.comboVariants[0].items : [], // Backward compatibility
         updatedAt: new Date().toISOString(),
         createdAt: isEdit && existingSnap.data().createdAt ? existingSnap.data().createdAt : new Date().toISOString()
     };
@@ -2201,13 +2324,20 @@ async function editProduct(id) {
             // Xử lý nạp dữ liệu Combo
             if (p.isCombo) {
                 document.querySelector('input[name="product-type"][value="combo"]').checked = true;
-                window.comboItems = p.comboItems || [];
+                if (p.comboVariants && p.comboVariants.length > 0) {
+                    window.comboVariants = p.comboVariants;
+                } else if (p.comboItems && p.comboItems.length > 0) {
+                    window.comboVariants = [{ name: 'Mặc định', items: p.comboItems }];
+                } else {
+                    window.comboVariants = [{ name: 'Mặc định', items: [] }];
+                }
+                window.currentComboVariantIndex = 0;
             } else {
                 document.querySelector('input[name="product-type"][value="normal"]').checked = true;
-                window.comboItems = [];
+                window.comboVariants = [{ name: 'Mặc định', items: [] }];
+                window.currentComboVariantIndex = 0;
             }
             window.toggleComboSection();
-            window.renderComboItems();
 
             document.getElementById('dim-length').value = p.dimensions?.length || '';
             document.getElementById('dim-width').value = p.dimensions?.width || '';

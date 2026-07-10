@@ -11,6 +11,7 @@ let allImages = [];
 let currentIndex = 0;
 let autoSlideInterval;
 let selectedColor = null; // Biến lưu màu sắc đang chọn
+let selectedComboVariant = null; // Biến lưu phân loại combo đang chọn
 let currentProductData = null; // Lưu trữ dữ liệu sản phẩm để truy xuất kho biến thể
 let selectedPattern = null; // Biến lưu họa tiết đang chọn
 let isAdmin = false;
@@ -213,6 +214,51 @@ async function fetchProductDetail() {
                 isOutOfStock = true;
             }
 
+            // Thiết lập combo mặc định nếu có
+            if (p.isCombo) {
+                if (p.comboVariants && p.comboVariants.length > 0) {
+                    selectedComboVariant = p.comboVariants[0].name || 'Phân loại 1';
+                } else if (p.comboItems && p.comboItems.length > 0) {
+                    selectedComboVariant = 'Mặc định';
+                    p.comboVariants = [{ name: 'Mặc định', items: p.comboItems }]; // Chuẩn hóa data cũ
+                }
+            }
+
+            window.renderComboItemsHTML = (items) => {
+                if (!items || items.length === 0) return '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 10px;">Phân loại combo này chưa có sản phẩm.</div>';
+                return items.map(item => {
+                    let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/60';
+                    if (item.selectedPattern && item.patternVariants) {
+                        const pv = item.patternVariants.find(v => (v.name === item.selectedPattern || v === item.selectedPattern) && v.imageUrl);
+                        if (pv) displayImg = pv.imageUrl;
+                    } else if (item.selectedColor && item.colorVariants) {
+                        const cv = item.colorVariants.find(v => v.name === item.selectedColor && v.imageUrl);
+                        if (cv) displayImg = cv.imageUrl;
+                    }
+                    return `
+                        <div style="display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <a href="?id=${item.id}" target="_blank" style="flex-shrink: 0;">
+                                <img src="${displayImg}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
+                            </a>
+                            <div style="flex: 1;">
+                                <a href="?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 2px;">${item.name}</a>
+                                <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
+                                    <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
+                                    <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
+                                </div>
+                                ${item.selectedColor || item.selectedPattern ? `
+                                    <div style="font-size: 0.75rem; color: #5a8f79; margin-top: 4px; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; display: inline-block;">
+                                        ${item.selectedColor ? `Màu: <strong>${item.selectedColor}</strong>` : ''} 
+                                        ${item.selectedColor && item.selectedPattern ? ' | ' : ''}
+                                        ${item.selectedPattern ? `Họa tiết: <strong>${item.selectedPattern}</strong>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+
             const additionalImages = p.additionalImages || [];
             allImages = [p.imageUrl, ...additionalImages];
 
@@ -228,6 +274,15 @@ async function fetchProductDetail() {
             // Thêm ảnh từ biến thể họa tiết vào danh sách ảnh
             if (p.patternVariants) {
                 p.patternVariants.forEach(v => {
+                    if (v && v.imageUrl && !allImages.includes(v.imageUrl)) {
+                        allImages.push(v.imageUrl);
+                    }
+                });
+            }
+
+            // Thêm ảnh từ biến thể combo vào danh sách ảnh
+            if (p.comboVariants) {
+                p.comboVariants.forEach(v => {
                     if (v && v.imageUrl && !allImages.includes(v.imageUrl)) {
                         allImages.push(v.imageUrl);
                     }
@@ -407,44 +462,14 @@ async function fetchProductDetail() {
 
                         ${couponsHtml}
                         
-                        ${p.isCombo && p.comboItems && p.comboItems.length > 0 ? `
+                        ${p.isCombo && p.comboVariants && p.comboVariants.length > 0 ? `
                             <div class="product-combo-section" style="margin-top: 1.5rem; padding: 15px; background: #f4f8fb; border-radius: 8px; border: 1px solid #d0e8ff; margin-bottom: 1.5rem;">
                                 <h4 style="margin-top: 0; margin-bottom: 12px; font-family: var(--font-serif); font-size: 1.1rem; color: #0056b3; display: flex; align-items: center; gap: 8px;">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                                     Combo này gồm có
                                 </h4>
-                                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
-                                    ${p.comboItems.map(item => {
-                    let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/60';
-                    if (item.selectedPattern && item.patternVariants) {
-                        const pv = item.patternVariants.find(v => (v.name === item.selectedPattern || v === item.selectedPattern) && v.imageUrl);
-                        if (pv) displayImg = pv.imageUrl;
-                    } else if (item.selectedColor && item.colorVariants) {
-                        const cv = item.colorVariants.find(v => v.name === item.selectedColor && v.imageUrl);
-                        if (cv) displayImg = cv.imageUrl;
-                    }
-                    return `
-                                        <div style="display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                            <a href="?id=${item.id}" target="_blank" style="flex-shrink: 0;">
-                                                <img src="${displayImg}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; transition: transform 0.2s;">
-                                            </a>
-                                            <div style="flex: 1;">
-                                                <a href="?id=${item.id}" target="_blank" style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; text-decoration: none; display: block; margin-bottom: 2px;">${item.name}</a>
-                                                <div style="font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between;">
-                                                    <span>Số lượng: <strong style="color: #0f172a;">${item.quantity || 1}</strong></span>
-                                                    <span>Đơn giá: <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong></span>
-                                                </div>
-                                                ${item.selectedColor || item.selectedPattern ? `
-                                                    <div style="font-size: 0.75rem; color: #5a8f79; margin-top: 4px; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; display: inline-block;">
-                                                        ${item.selectedColor ? `Màu: <strong>${item.selectedColor}</strong>` : ''} 
-                                                        ${item.selectedColor && item.selectedPattern ? ' | ' : ''}
-                                                        ${item.selectedPattern ? `Họa tiết: <strong>${item.selectedPattern}</strong>` : ''}
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    `;
-                }).join('')}
+                                <div id="combo-items-display" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
+                                    ${window.renderComboItemsHTML(p.comboVariants[0].items)}
                                 </div>
                             </div>
                         ` : ''}
@@ -500,24 +525,6 @@ async function fetchProductDetail() {
                     </div>
                 </div>
                 
-                <!-- Phần Đánh giá từ người dùng -->
-                <div class="reviews-section">
-                    <div class="reviews-header">
-                        <h3>Đánh giá từ khách hàng</h3>
-                        <button id="btn-show-review-form" class="btn-outline">Viết đánh giá của bạn</button>
-                    </div>
-                    <div id="review-form-container" style="display: none;" class="fade-in-content">
-                        <form id="product-review-form">
-                            <label>Mức độ hài lòng của bạn:</label>
-                            <div class="star-rating-input" id="star-rating-input"></div>
-                            <textarea id="review-comment" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..."></textarea>
-                            <input type="file" id="review-images" multiple accept="image/*" style="margin-bottom: 1rem;">
-                            <button type="submit" class="btn-dark" style="width: auto; padding: 0.8rem 2rem;">Gửi đánh giá</button>
-                        </form>
-                    </div>
-                    <div id="rating-summary-container"></div>
-                    <div id="reviews-list"></div>
-                </div>
             </div>`;
 
             // Tối ưu SEO: Cập nhật Title và các thẻ Meta (Description, Open Graph)
@@ -633,7 +640,7 @@ async function fetchProductDetail() {
                     quantity: qty,
                     color: selectedColor,
                     pattern: selectedPattern,
-                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / '),
                     category: p.category
                 });
             };
@@ -665,7 +672,7 @@ async function fetchProductDetail() {
                     quantity: qty,
                     color: selectedColor,
                     pattern: selectedPattern,
-                    variant: [selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / '),
                     category: p.category
                 });
                 window.location.href = '../cart/'; // Chuyển hướng thẳng tới giỏ hàng
@@ -673,7 +680,6 @@ async function fetchProductDetail() {
 
             fetchRelatedProducts(productId, p.category); // Gọi hàm lấy sản phẩm liên quan
             fetchRecentlyViewed(productId); // Gọi hàm lấy sản phẩm đã xem gần đây
-            fetchReviews(productId); // Tải đánh giá của khách hàng
             renderVariantSelectors(p); // Render bộ chọn biến thể
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";
@@ -809,8 +815,61 @@ function renderVariantSelectors(product) {
         `;
     }
 
+    // Render Combo Variants Selectors
+    if (product.isCombo && product.comboVariants && product.comboVariants.length > 1) {
+        html += `
+            <div class="variant-selection">
+                <div class="variant-title">Phân loại Combo: <span id="selected-combo-variant-display" style="font-weight: 500; color: var(--text-black);">${selectedComboVariant || product.comboVariants[0].name || 'Phân loại 1'}</span></div>
+                <div class="variant-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${product.comboVariants.map((v, i) => {
+                        const name = v.name || `Phân loại ${i+1}`;
+                        const isActive = name === selectedComboVariant;
+                        return `
+                            <div class="variant-chip combo-variant-chip ${isActive ? 'active' : ''}"
+                                 style="display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;"
+                                 onclick="window.selectComboVariant(${i})"
+                                 title="${name}">
+                                ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">` : ''}
+                                ${name}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     container.innerHTML = html;
 }
+
+// Hàm chọn Combo Variant
+window.selectComboVariant = (idx) => {
+    if (!currentProductData || !currentProductData.comboVariants || !currentProductData.comboVariants[idx]) return;
+    const variant = currentProductData.comboVariants[idx];
+    selectedComboVariant = variant.name || `Phân loại ${idx + 1}`;
+    
+    const displayEl = document.getElementById('selected-combo-variant-display');
+    if (displayEl) displayEl.innerText = selectedComboVariant;
+
+    document.querySelectorAll('.combo-variant-chip').forEach((chip, i) => {
+        chip.classList.toggle('active', i === idx);
+    });
+
+    const itemsContainer = document.getElementById('combo-items-display');
+    if (itemsContainer) {
+        itemsContainer.innerHTML = window.renderComboItemsHTML(variant.items);
+    }
+
+    if (variant.imageUrl) {
+        const index = allImages.indexOf(variant.imageUrl);
+        if (index !== -1) {
+            window.changeMainImage(variant.imageUrl, index, true);
+        } else {
+            const mainImg = document.getElementById('main-product-img');
+            if (mainImg) mainImg.src = variant.imageUrl;
+        }
+    }
+};
 
 // Hàm chọn màu sắc
 window.selectColor = (colorName, imageUrl) => {
@@ -904,403 +963,6 @@ window.selectPattern = (patternName, imageUrl) => {
     }
 };
 
-// --- Logic Sửa/Xóa Đánh giá ---
-window.deleteReview = async (reviewId, starRating) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
-    try {
-        showToast("Đang xóa đánh giá...", "info");
-
-        // 1. Xóa document review
-        await deleteDoc(doc(db, "reviews", reviewId));
-
-        // 2. Cập nhật lại sản phẩm
-        const productRef = doc(db, "products", productId);
-        const productSnap = await getDoc(productRef);
-
-        if (productSnap.exists()) {
-            const p = productSnap.data();
-            const oldCount = p.reviewCount || 1;
-            const oldRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-
-            let newCount = oldCount - 1;
-            let newRating = 5; // Mặc định về 5 nếu không còn đánh giá nào
-
-            if (newCount > 0) {
-                newRating = ((oldRating * oldCount) - starRating) / newCount;
-            }
-
-            await updateDoc(productRef, {
-                rating: parseFloat(newRating.toFixed(1)),
-                reviewCount: newCount
-            });
-        }
-
-        showToast("Đã xóa đánh giá thành công");
-        fetchReviews(productId);
-    } catch (e) {
-        console.error(e);
-        showToast("Lỗi khi xóa đánh giá", "error");
-    }
-};
-
-window.showEditReviewForm = (reviewId, currentComment, currentRating) => {
-    const btnShow = document.getElementById('btn-show-review-form');
-    const formContainer = document.getElementById('review-form-container');
-    const commentInput = document.getElementById('review-comment');
-    const form = document.getElementById('product-review-form');
-
-    // Mở form và điền dữ liệu cũ
-    formContainer.style.display = 'block';
-    commentInput.value = currentComment;
-    selectedRating = currentRating;
-
-    // Cập nhật UI sao
-    const starInput = document.getElementById('star-rating-input');
-    starInput.querySelectorAll('span').forEach(s => {
-        s.classList.toggle('active', parseInt(s.dataset.val) <= selectedRating);
-    });
-
-    // Gắn cờ đang sửa vào form
-    form.dataset.editMode = "true";
-    form.dataset.editReviewId = reviewId;
-    form.dataset.oldRating = currentRating;
-
-    btnShow.innerText = "Đang chỉnh sửa đánh giá";
-    window.scrollTo({ top: formContainer.offsetTop - 100, behavior: 'smooth' });
-};
-
-async function updateExistingReview(productId, reviewId, oldRating, newRating, comment) {
-    try {
-        // 1. Cập nhật document review
-        await updateDoc(doc(db, "reviews", reviewId), {
-            rating: newRating,
-            comment: comment,
-            updatedAt: serverTimestamp()
-        });
-
-        // 2. Tính toán lại rating trung bình cho sản phẩm
-        if (oldRating !== newRating) {
-            const productRef = doc(db, "products", productId);
-            const productSnap = await getDoc(productRef);
-
-            if (productSnap.exists()) {
-                const p = productSnap.data();
-                const count = p.reviewCount || 1;
-                const currentAvg = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-
-                // Công thức: ((Trung bình cũ * Tổng số) - Sao cũ + Sao mới) / Tổng số
-                const newAvg = ((currentAvg * count) - oldRating + newRating) / count;
-
-                await updateDoc(productRef, {
-                    rating: parseFloat(newAvg.toFixed(1))
-                });
-            }
-        }
-
-        showToast("Đã cập nhật đánh giá!");
-        const form = document.getElementById('product-review-form');
-        const btnShow = document.getElementById('btn-show-review-form');
-        delete form.dataset.editMode;
-        btnShow.innerText = "Viết đánh giá của bạn";
-        form.reset();
-        document.getElementById('review-form-container').style.display = 'none';
-        fetchReviews(productId);
-    } catch (e) { console.error(e); showToast("Lỗi cập nhật", "error"); }
-}
-
-// --- Logic Đánh giá & Bình luận ---
-let selectedRating = 5;
-
-async function fetchReviews(productId) {
-    const list = document.getElementById('reviews-list');
-    const summaryContainer = document.getElementById('rating-summary-container');
-    const btnShow = document.getElementById('btn-show-review-form');
-    if (!list || !summaryContainer) return;
-
-    try {
-        const q = query(collection(db, "reviews"), where("productId", "==", productId), orderBy("createdAt", "desc"));
-        const snap = await getDocs(q);
-
-        // Logic: Cập nhật trạng thái nút đánh giá (Viết mới hoặc Sửa cái cũ)
-        if (btnShow) {
-            const userReviewDoc = snap.docs.find(d => d.data().userId === auth.currentUser?.uid);
-            if (userReviewDoc) {
-                const r = userReviewDoc.data();
-                btnShow.innerText = "Sửa đánh giá của bạn";
-                btnShow.onclick = () => window.showEditReviewForm(userReviewDoc.id, r.comment, r.rating);
-            } else {
-                btnShow.innerText = "Viết đánh giá của bạn";
-                btnShow.onclick = () => {
-                    if (!auth.currentUser) {
-                        showToast("Vui lòng đăng nhập để viết đánh giá", "error");
-                        return;
-                    }
-                    const container = document.getElementById('review-form-container');
-                    container.style.display = container.style.display === 'none' ? 'block' : 'none';
-                    // Đảm bảo form reset về mode thêm mới nếu trước đó đang sửa
-                    const form = document.getElementById('product-review-form');
-                    if (form) delete form.dataset.editMode;
-                };
-            }
-        }
-
-        if (snap.empty) {
-            summaryContainer.innerHTML = '';
-            list.innerHTML = '<p style="color: #888; font-style: italic;">Chưa có đánh giá nào cho sản phẩm này.</p>';
-            return;
-        }
-
-        // TÍNH TOÁN THỐNG KÊ
-        const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-        let totalStars = 0;
-        snap.docs.forEach(doc => {
-            const r = doc.data();
-            const star = Math.round((r.rating !== undefined) ? r.rating : 5);
-            if (counts[star] !== undefined) counts[star]++;
-            totalStars += star;
-        });
-
-        const totalReviews = snap.size;
-        const avgRating = (totalStars / totalReviews).toFixed(1);
-
-        // RENDER BIỂU ĐỒ TÓM TẮT
-        let summaryHtml = `
-            <div class="rating-summary fade-in-content">
-                <div class="rating-avg-box">
-                    <div class="avg-score">${avgRating}</div>
-                    <div class="avg-stars" style="color: #f1c40f; font-size: 1.2rem;">${'★'.repeat(Math.round(avgRating))}${'☆'.repeat(5 - Math.round(avgRating))}</div>
-                    <div class="total-reviews-count">${totalReviews} nhận xét</div>
-                </div>
-                <div class="rating-bars">
-                    ${[5, 4, 3, 2, 1].map(star => {
-            const count = counts[star];
-            const percent = ((count / totalReviews) * 100).toFixed(0);
-            return `
-                            <div class="rating-bar-item">
-                                <span class="star-label">${star} ★</span>
-                                <div class="bar-bg"><div class="bar-fill" style="width: ${percent}%"></div></div>
-                                <span class="percent-label">${percent}%</span>
-                            </div>`;
-        }).join('')}
-                </div>
-            </div>`;
-        summaryContainer.innerHTML = summaryHtml;
-
-        list.innerHTML = snap.docs.map(reviewDoc => {
-            const r = reviewDoc.data();
-            const reviewId = reviewDoc.id;
-            const date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('vi-VN') : 'Mới đây';
-            let stars = '';
-            for (let i = 1; i <= 5; i++) stars += i <= (r.rating || 0) ? '★' : '☆';
-
-            const imagesHtml = (r.images || []).map(url => `
-                <img src="${url}" class="review-img" onclick="window.zoomReviewImg('${url}')" alt="Ảnh feedback">
-            `).join('');
-
-            const adminReplyHtml = r.adminReply ? `
-                <div class="admin-reply">
-                    <h6><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Phản hồi từ Tiệm Nhà Gốm</h6>
-                    <p style="font-size: 0.95rem; color: #444; margin-bottom: 0.5rem;">${r.adminReply.comment}</p>
-                    <small style="color: #999;">${r.adminReply.createdAt ? new Date(r.adminReply.createdAt.toDate()).toLocaleDateString('vi-VN') : 'Mới đây'}</small>
-                </div>
-            ` : '';
-
-            // Kiểm tra quyền sửa/xóa (User hiện tại hoặc Admin)
-            const isOwner = auth.currentUser && r.userId === auth.currentUser.uid;
-            const actionButtons = isOwner ? `
-                <div class="review-actions" style="margin-top: 10px; display: flex; gap: 15px;">
-                    <button class="btn-minimal" style="font-size: 0.75rem; padding: 2px 8px; border-color: #3498db; color: #3498db;" 
-                        onclick="window.showEditReviewForm('${reviewId}', '${r.comment.replace(/'/g, "\\'")}', ${r.rating})">
-                        Sửa đánh giá
-                    </button>
-                    <button class="btn-minimal" style="font-size: 0.75rem; padding: 2px 8px; border-color: #e74c3c; color: #e74c3c;" 
-                        onclick="window.deleteReview('${reviewId}', ${r.rating})">
-                        Xóa
-                    </button>
-                </div>
-            ` : '';
-
-            const replyBtnHtml = (isAdmin && !r.adminReply) ? `
-                <div style="margin-top: 10px;">
-                    <button class="btn-minimal" style="font-size: 0.7rem; padding: 4px 10px;" onclick="window.showAdminReplyForm('${reviewId}')">Trả lời khách hàng</button>
-                    <div id="reply-form-${reviewId}" class="admin-reply-form" style="display: none; margin-top: 10px; flex-direction: column; gap: 10px; background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 4px;">
-                        <textarea id="reply-text-${reviewId}" placeholder="Nhập nội dung phản hồi..." style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; font-family: inherit; font-size: 0.9rem;"></textarea>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-dark" style="padding: 0.5rem 1.2rem; font-size: 0.8rem; margin: 0;" onclick="window.submitAdminReply('${reviewId}')">Gửi phản hồi</button>
-                            <button class="btn-outline" style="padding: 0.5rem 1.2rem; font-size: 0.8rem; margin: 0;" onclick="document.getElementById('reply-form-${reviewId}').style.display='none'">Hủy</button>
-                        </div>
-                    </div>
-                </div>
-            ` : '';
-
-            return `
-                <div class="review-item">
-                    <div class="review-header">
-                        <img src="${r.userAvatar || '../Asset/images/logo.png'}" class="review-avatar" alt="User">
-                        <div class="review-user-info">
-                            <h5>${escapeHTML(r.userName || 'Khách hàng')}</h5>
-                            <div style="color: #f1c40f; font-size: 0.8rem;">${stars} <span class="review-date">${date}</span></div>
-                        </div>
-                    </div>
-                    <div class="review-content">
-                        <p>${escapeHTML(r.comment)}</p>
-                        <div class="review-images-gallery">${imagesHtml}</div>
-                        ${actionButtons}
-                        ${adminReplyHtml}
-                        ${replyBtnHtml}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } catch (e) { console.error(e); }
-}
-
-// Khởi tạo Form Đánh giá
-function initReviewForm(productId) {
-    const btnShow = document.getElementById('btn-show-review-form');
-    const formContainer = document.getElementById('review-form-container');
-    const starInput = document.getElementById('star-rating-input');
-    const form = document.getElementById('product-review-form');
-
-    if (!btnShow || !formContainer || !starInput || !form) return;
-
-    // Tạo UI chọn sao
-    starInput.innerHTML = `
-        <span data-val="0" class="star-zero" style="font-size: 0.75rem; color: #999; cursor: pointer; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; margin-right: 12px; transition: 0.3s;">0 sao</span>
-    ` + [1, 2, 3, 4, 5].map(i => `<span data-val="${i}" class="active">★</span>`).join('');
-
-    starInput.querySelectorAll('span').forEach(star => {
-        star.onclick = (e) => {
-            selectedRating = parseInt(e.target.dataset.val);
-            starInput.querySelectorAll('span').forEach(s => {
-                if (s.dataset.val === "0") {
-                    s.style.borderColor = selectedRating === 0 ? "var(--text-black)" : "#ddd";
-                    s.style.color = selectedRating === 0 ? "var(--text-black)" : "#999";
-                } else {
-                    s.classList.toggle('active', parseInt(s.dataset.val) <= selectedRating);
-                }
-            });
-        };
-    });
-
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const comment = document.getElementById('review-comment').value.trim();
-        const imageFiles = document.getElementById('review-images').files;
-        const submitBtn = form.querySelector('button[type="submit"]');
-
-        if (!comment) return;
-
-        // KIỂM TRA CHẾ ĐỘ SỬA
-        if (form.dataset.editMode === "true") {
-            const reviewId = form.dataset.editReviewId;
-            const oldRating = parseInt(form.dataset.oldRating);
-            await updateExistingReview(productId, reviewId, oldRating, selectedRating, comment);
-            submitBtn.disabled = false;
-            return;
-        }
-
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
-
-            // Bảo mật logic: Kiểm tra lần cuối xem user đã có review chưa (Tránh spam click)
-            if (auth.currentUser) {
-                const qCheck = query(collection(db, "reviews"),
-                    where("productId", "==", productId),
-                    where("userId", "==", auth.currentUser.uid),
-                    limit(1));
-                const snapCheck = await getDocs(qCheck);
-                if (!snapCheck.empty) {
-                    showToast("Bạn đã đánh giá sản phẩm này rồi. Vui lòng chọn 'Sửa' nếu muốn thay đổi.", "error");
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Gửi đánh giá";
-                    return;
-                }
-            }
-
-            // 1. Upload ảnh feedback (nếu có)
-            const imageUrls = [];
-            if (imageFiles.length > 0) {
-                for (const file of imageFiles) {
-                    const storageRef = ref(storage, `reviews/${productId}/${auth.currentUser.uid}_${Date.now()}_${file.name}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    const url = await getDownloadURL(snapshot.ref);
-                    imageUrls.push(url);
-                }
-            }
-
-            // 2. Lưu vào Firestore
-            await addDoc(collection(db, "reviews"), {
-                productId,
-                userId: auth.currentUser.uid,
-                userName: auth.currentUser.displayName || auth.currentUser.email.split('@')[0],
-                userAvatar: auth.currentUser.photoURL,
-                rating: selectedRating,
-                comment,
-                images: imageUrls,
-                createdAt: serverTimestamp()
-            });
-
-            // 3. Cập nhật Rating trung bình cho sản phẩm
-            const productRef = doc(db, "products", productId);
-            const productSnap = await getDoc(productRef);
-            if (productSnap.exists()) {
-                const p = productSnap.data();
-                const oldCount = p.reviewCount || 0;
-                const oldRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-                const newCount = oldCount + 1;
-                const newRating = ((oldRating * oldCount) + selectedRating) / newCount;
-
-                await updateDoc(productRef, {
-                    rating: parseFloat(newRating.toFixed(1)), // Làm tròn 1 chữ số thập phân
-                    reviewCount: increment(1)
-                });
-            }
-
-            showToast("Cảm ơn bạn đã đánh giá sản phẩm!");
-            form.reset();
-            formContainer.style.display = 'none';
-            fetchReviews(productId);
-        } catch (error) {
-            showToast("Lỗi khi gửi đánh giá: " + error.message, "error");
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Gửi đánh giá";
-        }
-    };
-}
-
-// --- Logic Phản hồi của Admin ---
-window.showAdminReplyForm = (reviewId) => {
-    const form = document.getElementById(`reply-form-${reviewId}`);
-    if (form) form.style.display = 'flex';
-};
-
-window.submitAdminReply = async (reviewId) => {
-    const text = document.getElementById(`reply-text-${reviewId}`).value.trim();
-    if (!text) return;
-
-    try {
-        const reviewRef = doc(db, "reviews", reviewId);
-        await updateDoc(reviewRef, {
-            adminReply: {
-                comment: text,
-                createdAt: serverTimestamp()
-            }
-        });
-        showToast("Đã gửi phản hồi thành công");
-        const urlParams = new URLSearchParams(window.location.search);
-        fetchReviews(urlParams.get('id'));
-    } catch (e) {
-        showToast("Lỗi khi gửi phản hồi: " + e.message, "error");
-    }
-};
-
 // Hàm chia sẻ sản phẩm sử dụng Web Share API hoặc Fallback Copy Link
 window.shareProduct = async () => {
     const shareData = {
@@ -1364,10 +1026,5 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) { console.error("Lỗi kiểm tra quyền admin:", e); }
         }
         fetchProductDetail();
-
-        // Lấy productId từ URL để khởi tạo Form đánh giá
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        if (productId) initReviewForm(productId);
     });
 });

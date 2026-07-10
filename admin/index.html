@@ -1000,15 +1000,43 @@
                     </div>
                     
                     <div id="combo-section" style="display: none; background: #fffdf5; border: 1px dashed #f1c40f; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                        <h4 style="margin-top: 0; margin-bottom: 10px; color: #d35400;">Cấu hình Combo</h4>
-                        <div class="form-group" style="position: relative;">
-                            <label>Tìm và thêm sản phẩm vào Combo</label>
-                            <input type="text" id="combo-product-search" placeholder="Nhập mã hoặc tên sản phẩm..." autocomplete="off">
-                            <div id="combo-product-suggestions" class="search-suggestions" style="width: 100%; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
+                        <h4 style="margin-top: 0; margin-bottom: 5px; color: #d35400;">Cấu hình Phân loại Combo</h4>
+                        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Tạo nhiều phân loại (VD: Set Xanh, Set Đỏ) để khách hàng chọn giống như chọn màu sắc. Mỗi phân loại sẽ có danh sách các món đồ riêng.</p>
+                        
+                        <div id="combo-variants-tabs" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                            <!-- Tabs được render bằng JS -->
                         </div>
-                        <div id="combo-items-list" style="margin-top: 10px; min-height: 50px; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
-                            <div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho combo.</div>
+                        
+                        <div id="combo-variant-content" style="display: none;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label>Tên phân loại (VD: Set Mùa Xuân)</label>
+                                    <input type="text" id="combo-variant-name" placeholder="Tên phân loại đang chọn" oninput="window.updateCurrentComboVariantName(this.value)">
+                                </div>
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label>Ảnh phân loại (URL hoặc Tải lên)</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="text" id="combo-variant-image" placeholder="URL ảnh..." oninput="window.updateCurrentComboVariantImage(this.value)">
+                                        <button type="button" class="btn-outline" onclick="document.getElementById('combo-variant-image-file').click()" style="margin: 0; padding: 0 10px;" title="Tải ảnh lên">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                                        </button>
+                                        <input type="file" id="combo-variant-image-file" style="display: none;" accept="image/*" onchange="window.uploadComboVariantImage(this)">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-outline" style="margin-bottom: 0; border-color: #e74c3c; color: #e74c3c;" onclick="window.removeCurrentComboVariant()">Xóa</button>
+                            </div>
+
+                            <div class="form-group" style="position: relative;">
+                                <label>Tìm và thêm sản phẩm vào phân loại này</label>
+                                <input type="text" id="combo-product-search" placeholder="Nhập mã hoặc tên sản phẩm..." autocomplete="off">
+                                <div id="combo-product-suggestions" class="search-suggestions" style="width: 100%; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
+                            </div>
+                            <div id="combo-items-list" style="margin-top: 10px; min-height: 50px; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
+                                <div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa chọn sản phẩm nào cho combo.</div>
+                            </div>
                         </div>
+
+                        <button type="button" class="btn-minimal" style="width: 100%; margin-top: 10px; border: 1px dashed #ccc;" onclick="window.addComboVariant()">+ Thêm phân loại Combo</button>
                     </div>
                     <div class="form-group">
                         <label>Bộ sưu tập (Chọn nhiều)</label>
