@@ -133,7 +133,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             const p = { id: doc.id, ...doc.data() };
             if (p.isHidden) return;
             // Ưu tiên dùng mức đồng giá được lưu
-            const currentPrice = (isFsRunning && p.flashSaleGroup) ? p.flashSaleGroup : Math.round((p.price * (1 - (p.sale || 0) / 100)) / 1000) * 1000;
+            const currentPrice = (isFsRunning && p.flashSaleGroup) ? p.flashSaleGroup : (p.salePrice || Math.round(p.price * (1 - (p.sale || 0) / 100)));
 
             // Chuẩn bị dữ liệu cho Schema SEO
             schemaItems.push({
@@ -177,8 +177,8 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         // HÀM SẮP XẾP CLIENT-SIDE
         const sortProducts = (productsArray) => {
             productsArray.sort((a, b) => {
-                const priceA = (isFsRunning && a.flashSaleGroup) ? a.flashSaleGroup : Math.round((a.price * (1 - (a.sale || 0) / 100)) / 1000) * 1000;
-                const priceB = (isFsRunning && b.flashSaleGroup) ? b.flashSaleGroup : Math.round((b.price * (1 - (b.sale || 0) / 100)) / 1000) * 1000;
+                const priceA = (isFsRunning && a.flashSaleGroup) ? a.flashSaleGroup : (a.salePrice || Math.round(a.price * (1 - (a.sale || 0) / 100)));
+                const priceB = (isFsRunning && b.flashSaleGroup) ? b.flashSaleGroup : (b.salePrice || Math.round(b.price * (1 - (b.sale || 0) / 100)));
                 
                 switch (currentSort) {
                     case 'price-asc': return priceA - priceB;

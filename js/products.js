@@ -263,8 +263,8 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Sắp xếp lại danh sách trả về (tối đa 50) theo giá cuối cùng (đã giảm) nếu user chọn sort giá
         if (currentSort === 'price-asc' || currentSort === 'price-desc') {
             finalResults.sort((a, b) => {
-                const priceA = Math.round((a.price * (1 - (a.sale || 0) / 100)) / 1000) * 1000;
-                const priceB = Math.round((b.price * (1 - (b.sale || 0) / 100)) / 1000) * 1000;
+                const priceA = a.salePrice || Math.round(a.price * (1 - (a.sale || 0) / 100));
+                const priceB = b.salePrice || Math.round(b.price * (1 - (b.sale || 0) / 100));
                 return currentSort === 'price-desc' ? priceB - priceA : priceA - priceB;
             });
         }

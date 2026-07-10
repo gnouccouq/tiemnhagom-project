@@ -409,7 +409,7 @@ async function fetchProductDetail() {
                         if (tierStr) {
                             const tier = JSON.parse(tierStr);
                             if (tier && tier.discount > 0) {
-                                const memPrice = Math.round((currentPrice * (1 - tier.discount / 100)) / 1000) * 1000;
+                                const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
                                 return `
                                             <div class="dynamic-membership-price" data-price="${currentPrice}">
                                                 <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 12px; margin-bottom: 5px;">

@@ -1982,6 +1982,7 @@ productForm.addEventListener('submit', async (e) => {
         cost: Number(document.getElementById('cost').value || 0),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
+        salePrice: document.getElementById('salePrice').value ? Number(document.getElementById('salePrice').value) : null,
         dimensions: {
             length: Number(document.getElementById('dim-length').value || 0),
             width: Number(document.getElementById('dim-width').value || 0),
@@ -3403,7 +3404,7 @@ function renderPOSCart() {
             let discStr = String(item.discountInput).trim();
             if (discStr.endsWith('%')) {
                 let p = parseFloat(discStr.replace('%', ''));
-                if (!isNaN(p)) itemDiscount = Math.round(((item.price * item.quantity) * (p / 100)) / 1000) * 1000;
+                if (!isNaN(p)) itemDiscount = Math.round(((item.price * item.quantity) * (p / 100)));
             } else {
                 let val = parseFloat(discStr.replace(/,/g, ''));
                 if (!isNaN(val)) itemDiscount = val;
@@ -3446,7 +3447,7 @@ function renderPOSCart() {
 
     // Áp dụng mức chiết khấu cao nhất giữa hạng thành viên và giảm giá tay (trên phần tiền còn lại)
     const effectiveDiscount = Math.max(posDiscountPercent, posMembershipDiscountPercent);
-    const discountVal = Math.round((subtotal * (effectiveDiscount / 100)) / 1000) * 1000;
+    const discountVal = Math.round((subtotal * (effectiveDiscount / 100)));
     const total = subtotal - discountVal;
 
     if (totalInput) {
@@ -4443,7 +4444,7 @@ function renderAdminFlashSaleList() {
 
     list.innerHTML = saleProducts.map(p => {
         // Ưu tiên dùng flashSaleGroup để giá luôn là con số tròn
-        const salePrice = p.flashSaleGroup || Math.round((p.price * (1 - (p.sale || 0) / 100)) / 1000) * 1000;
+        const salePrice = p.flashSaleGroup || p.salePrice || Math.round((p.price * (1 - (p.sale || 0) / 100)));
         const stockClass = p.stock <= 0 ? 'color: #e74c3c; font-weight: bold;' : '';
         
         return `

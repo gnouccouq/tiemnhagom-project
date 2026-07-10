@@ -1066,8 +1066,16 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Giảm giá (%)</label>
-                        <input type="number" id="sale" min="0" max="100" value="0">
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label>Giảm giá (%)</label>
+                                <input type="number" id="sale" min="0" max="100" value="0">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Giá bán giảm (VND)</label>
+                                <input type="number" id="salePrice" placeholder="VD: 199000">
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Tham gia Chương trình Đồng giá</label>
