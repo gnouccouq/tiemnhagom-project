@@ -84,9 +84,15 @@ window.changeMainImage = (src, index, isUserAction = true) => {
         mainImg.style.opacity = '1'; // Hiệu ứng Fade in
     }, 300); // 300ms khớp với thời gian transition trong CSS
 
-    // Cập nhật trạng thái active cho thumbnail
+    // Cập nhật trạng thái active cho thumbnail và cuộn tới ảnh đó
+    const gallery = document.getElementById('product-image-gallery');
     document.querySelectorAll('.thumbnail').forEach((t, i) => {
         t.classList.toggle('active', i === index);
+        if (i === index && gallery) {
+            // Cuộn thanh thumbnail ngang sao cho ảnh active nằm ở giữa
+            const scrollLeft = t.offsetLeft - gallery.offsetWidth / 2 + t.offsetWidth / 2;
+            gallery.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        }
     });
 };
 
@@ -101,10 +107,6 @@ window.moveImage = (direction, isUserAction = true) => {
     if (nextIndex >= allImages.length) nextIndex = 0;
 
     window.changeMainImage(allImages[nextIndex], nextIndex, isUserAction);
-
-    // Chỉ cuộn thumbnail vào tầm nhìn khi người dùng chủ động bấm (tránh giật trang khi auto-slide)
-    const activeThumb = document.querySelectorAll('.thumbnail')[nextIndex];
-    if (activeThumb && isUserAction) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 };
 
 async function fetchProductDetail() {
@@ -307,15 +309,27 @@ async function fetchProductDetail() {
             let galleryHtml = '';
             if (allImages.length > 1) {
                 galleryHtml = `
-                    <div class="product-image-gallery">
-                        ${allImages.map((img, idx) => `
-                            <img src="${img}" class="thumbnail ${idx === 0 ? 'active' : ''}" 
-                                 onclick="window.changeMainImage('${img}', ${idx})" 
-                                 alt="${p.name} - ảnh chi tiết ${idx + 1}">
-                        `).join('')}
+                    <div class="thumbnail-slider-wrapper">
+                        <button class="thumb-nav-btn left" onclick="window.scrollThumbnails(-1)" aria-label="Cuộn trái">&#10094;</button>
+                        <div class="product-image-gallery" id="product-image-gallery">
+                            ${allImages.map((img, idx) => `
+                                <img src="${img}" class="thumbnail ${idx === 0 ? 'active' : ''}" 
+                                     onclick="window.changeMainImage('${img}', ${idx})" 
+                                     alt="${p.name} - ảnh chi tiết ${idx + 1}">
+                            `).join('')}
+                        </div>
+                        <button class="thumb-nav-btn right" onclick="window.scrollThumbnails(1)" aria-label="Cuộn phải">&#10095;</button>
                     </div>
                 `;
             }
+            
+            window.scrollThumbnails = (direction) => {
+                const gallery = document.getElementById('product-image-gallery');
+                if (gallery) {
+                    const scrollAmount = 200; // Khoảng cách mỗi lần cuộn
+                    gallery.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+                }
+            };
 
             const validCoupons = [];
             snapCoupons.forEach(doc => {

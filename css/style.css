@@ -5675,9 +5675,11 @@ footer {
 
 .product-image-gallery {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 10px;
     padding-bottom: 10px;
+    scrollbar-width: thin;
 }
 
 .radio-checkmark,
@@ -5888,20 +5890,64 @@ footer {
     margin-bottom: 1rem;
 }
 
+.thumbnail-slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 642px; /* Giới hạn chiều rộng khoảng 8 ảnh */
+    margin: 0 auto; /* Căn giữa */
+    padding: 0 30px; /* Tạo khoảng trống cho nút */
+}
+
 .product-image-gallery {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 10px;
-    padding-bottom: 10px;
+    padding: 5px 0;
+    scroll-behavior: smooth;
+    /* Ẩn thanh cuộn */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    width: 100%;
 }
 
 .product-image-gallery::-webkit-scrollbar {
-    height: 4px;
+    display: none;
 }
 
-.product-image-gallery::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
+.thumb-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fff;
+    color: #333;
+    border: 1px solid #eaeaea;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.thumb-nav-btn:hover {
+    background: #f8f8f8;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.thumb-nav-btn.left {
+    left: -5px;
+}
+
+.thumb-nav-btn.right {
+    right: -5px;
 }
 
 .thumbnail {
