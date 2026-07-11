@@ -7514,3 +7514,9 @@ footer {
     top: 2rem;
     right: 2rem;
 }
+
+@media (max-width: 768px) {
+    .thumbnail-slider-wrapper {
+        max-width: 375px !important;
+    }
+}
