@@ -105,6 +105,49 @@ async function fetchBestSellingProducts() {
     }
 }
 
+// Hàm lấy sản phẩm Combo
+async function fetchComboProducts() {
+    const grid = document.getElementById('combo-grid');
+    if (!grid) return;
+    
+    try {
+        grid.innerHTML = Array(5).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-img"></div>
+                <div class="skeleton skeleton-text skeleton-title"></div>
+                <div class="skeleton skeleton-text skeleton-small"></div>
+                <div class="skeleton skeleton-text skeleton-price"></div>
+            </div>
+        `).join('');
+
+        const q = query(collection(db, "products"), where("isCombo", "==", true), limit(10));
+        
+        let favsPromise = Promise.resolve([]);
+        if (auth.currentUser) {
+            favsPromise = getDoc(doc(db, "favorites", auth.currentUser.uid))
+                .then(snap => snap.exists() ? snap.data().productIds || [] : [])
+                .catch(() => []);
+        } else {
+            favsPromise = Promise.resolve(JSON.parse(localStorage.getItem('favorites')) || []);
+        }
+
+        const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
+        
+        let htmlContent = '';
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+            if (doc.data().isHidden) return;
+            if (count >= 10) return;
+            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            count++;
+        });
+        grid.innerHTML = htmlContent || '<p>Hiện chưa có Combo nào.</p>';
+    } catch (error) {
+        console.error("Lỗi lấy dữ liệu Combo:", error);
+        grid.innerHTML = '<p>Không thể tải Combo. Vui lòng thử lại sau.</p>';
+    }
+}
+
 // Hàm đồng bộ cấu hình Flash Sale từ Firestore và kiểm tra thời hạn
 async function initFlashSaleSync() {
     const saleSection = document.getElementById('sale-section');
@@ -459,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initHeroCarousel();
     fetchFeaturedProducts();
     fetchBestSellingProducts();
+    fetchComboProducts();
     initFlashSaleSync();
     fetchRecommendations();
     fetchCollections();
