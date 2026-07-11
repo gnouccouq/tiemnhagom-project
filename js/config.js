@@ -42,7 +42,8 @@ if (app) {
         if (isInAppBrowser) {
             // Trình duyệt nhúng thường bị lỗi với IndexedDB và WebSockets
             dbInstance = initializeFirestore(app, {
-                experimentalForceLongPolling: true
+                experimentalForceLongPolling: true,
+                ignoreUndefinedProperties: true
                 // Bỏ qua persistentLocalCache để dùng memory mặc định tránh lỗi
             });
         } else {
@@ -50,7 +51,8 @@ if (app) {
                 localCache: persistentLocalCache({
                     // Dùng MultipleTab để hỗ trợ mở nhiều tab cùng lúc mà không bị lỗi Failed precondition
                     tabManager: persistentMultipleTabManager()
-                })
+                }),
+                ignoreUndefinedProperties: true
             });
         }
     } catch (e) {
