@@ -751,9 +751,9 @@ body {
 #mega-menu-categories {
     display: flex;
     width: 100%;
-    gap: inherit;
+    gap: 30px;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 /* TÃ¡Â»â€˜i Ã†Â°u khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cho mÃƒÂ n hÃƒÂ¬nh laptop nhÃ¡Â»Â (1024px - 1366px) */
@@ -773,11 +773,10 @@ body {
 }
 
 .mega-col {
-    flex: 0 0 auto;
-    /* KhÃƒÂ´ng cho cÃ¡Â»â„¢t co giÃƒÂ£n tÃƒÂ¹y tiÃ¡Â»â€¡n */
-    width: 180px;
-    /* CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh Ã„â€˜Ã¡Â»â„¢ rÃ¡Â»â„¢ng cÃ¡Â»â„¢t Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n lÃ¡Â»Â thÃ¡ÂºÂ³ng hÃƒÂ ng */
-    min-width: 180px;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 130px;
+    max-width: 200px;
 }
 
 .mega-col h4 {
