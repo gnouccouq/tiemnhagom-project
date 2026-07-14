@@ -789,7 +789,7 @@ window.placeOrder = async () => {
                     if (variant.imageUrl) variantImage = variant.imageUrl;
                 }
 
-                if (currentStock < item.quantity) {
+                if (!product.isCombo && currentStock < item.quantity) {
                     throw new Error(`Sản phẩm "${product.name}" (biến thể ${item.color || item.pattern || 'mặc định'}) đã hết hàng hoặc không đủ số lượng. Chỉ còn ${currentStock} sản phẩm.`);
                 }
 
@@ -810,9 +810,11 @@ window.placeOrder = async () => {
 
                 // Cập nhật tồn kho sản phẩm/biến thể
                 let updateProductData = {
-                    stock: increment(-item.quantity),
                     sold: increment(item.quantity)
                 };
+                if (!product.isCombo) {
+                    updateProductData.stock = increment(-item.quantity);
+                }
 
                 if (item.color && Array.isArray(product.colorVariants)) {
                     const updatedColorVariants = product.colorVariants.map(v => {

@@ -634,6 +634,14 @@ async function fetchProductDetail() {
 
             // Gán sự kiện cho nút thêm vào giỏ hàng
             document.getElementById('btn-add-to-cart').onclick = async () => {
+                if (!auth.currentUser) {
+                    showToast("Bạn cần đăng nhập để thực hiện chức năng này", "error");
+                    setTimeout(() => {
+                        window.location.href = '../login/';
+                    }, 1000);
+                    return;
+                }
+
                 const qty = parseInt(document.getElementById('product-quantity').value);
 
                 let variantImage = p.imageUrl;
@@ -662,6 +670,15 @@ async function fetchProductDetail() {
             // Nút Mua ngay
             document.getElementById('btn-buy-now').onclick = async (e) => {
                 const btn = e.currentTarget;
+                
+                if (!auth.currentUser) {
+                    showToast("Bạn cần đăng nhập để thực hiện chức năng này", "error");
+                    setTimeout(() => {
+                        window.location.href = '../login/';
+                    }, 1000);
+                    return;
+                }
+
                 const qty = parseInt(document.getElementById('product-quantity').value);
 
                 let variantImage = p.imageUrl;
