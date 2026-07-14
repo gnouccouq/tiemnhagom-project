@@ -40,9 +40,8 @@ service cloud.firestore {
     
     // 2. Danh sách Admin
     match /admins/{adminId} {
-      allow get: if request.auth != null && (request.auth.uid == adminId || isAdmin());
-      allow list: if isSuperAdmin(); 
-      allow create, update, delete: if isSuperAdmin(); 
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin(); 
     }
 
     // 3. Giỏ hàng & Yêu thích
@@ -177,6 +176,12 @@ service firebase.storage {
 
     // 5. Ảnh Tin tức (news)
     match /news/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 6. Ảnh Combo (combo_variants)
+    match /combo_variants/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
