@@ -1,9 +1,9 @@
-import { 
+﻿import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, updateSEO, fetchFlashSaleSettings
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Cấu hình phân trang
 const PAGE_SIZE = 10; // Hiển thị 10 sản phẩm mỗi trang

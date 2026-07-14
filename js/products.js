@@ -1,9 +1,9 @@
-import { 
+﻿import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES // Import dynamicCategories directly
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Cấu hình phân trang
 const PAGE_SIZE = 10; // Tải mỗi lần 10 sản phẩm

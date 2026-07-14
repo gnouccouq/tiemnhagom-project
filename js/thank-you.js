@@ -1,5 +1,5 @@
-import { db, auth, initHeader } from "./utils.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+﻿import { db, auth, initHeader } from "./utils.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 async function initThankYouPage() {
     const urlParams = new URLSearchParams(window.location.search);

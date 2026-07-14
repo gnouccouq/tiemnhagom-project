@@ -1,11 +1,11 @@
-import { 
+﻿import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
     showToast, initHeader, renderProductCard, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
-import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Biến lưu kết quả xác thực OTP
 let confirmationResult = null;
@@ -943,3 +943,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initHeader('../', handleProfileAuth);
     setupTabs();
 });
+

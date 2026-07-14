@@ -1,14 +1,14 @@
-// js/config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+﻿// js/config.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
     getAuth, GoogleAuthProvider
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
 // BẢO MẬT: Khuyến nghị mạnh mẽ thiết lập Origin Restriction trên trang quản trị EmailJS
@@ -67,3 +67,4 @@ export const analytics = app ? getAnalytics(app) : null;
 export const storage = app ? getStorage(app) : null;
 export const rtdb = app ? getDatabase(app) : null;
 export const googleProvider = new GoogleAuthProvider();
+

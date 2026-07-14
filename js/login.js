@@ -1,9 +1,9 @@
-import { 
+﻿import { 
     auth, initHeader, loginWithGoogle, loginEmail, registerEmail, resetPassword, showToast, formatPhoneNumber, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
 import { 
     RecaptchaVerifier, signInWithPhoneNumber 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Bảo mật: Ngăn chặn index các trang đăng nhập/xác thực
@@ -109,13 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Khởi tạo reCAPTCHA ẩn
     const setupRecaptcha = () => {
         if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'btn-send-otp', {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
                 'callback': (response) => {
                     // reCAPTCHA solved
                 }
             });
-            window.recaptchaVerifier.render().catch(console.error);
+            // Do not call .render() manually to avoid 'already rendered' error when signInWithPhoneNumber internally verifies it
         }
     };
     
@@ -166,6 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     window.recaptchaVerifier.clear();
                     window.recaptchaVerifier = null;
+                    const container = document.getElementById('recaptcha-container');
+                    if (container) container.innerHTML = ''; // Force clear DOM
                     setupRecaptcha();
                 } catch (e) {
                     console.error("Lỗi reset reCAPTCHA:", e);

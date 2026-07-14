@@ -1,11 +1,11 @@
-import { 
+﻿import { 
     db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
     getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
     query, where, getDocs, limit, orderBy
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // --- Logic xử lý giỏ hàng ---
 

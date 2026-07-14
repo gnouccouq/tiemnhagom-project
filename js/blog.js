@@ -1,5 +1,5 @@
-import { db, initHeader } from "./utils.js";
-import { collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+﻿import { db, initHeader } from "./utils.js";
+import { collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 async function fetchNews() {
     const container = document.getElementById('blog-list');
@@ -36,3 +36,4 @@ async function fetchNews() {
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('../', () => fetchNews());
 });
+

@@ -1,8 +1,8 @@
-// js/main.js
+﻿// js/main.js
 import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, initAutocomplete 
 } from "./utils.js?v=3";
-import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Hàm toggle yêu thích
 window.toggleFavorite = async (event, productId) => {

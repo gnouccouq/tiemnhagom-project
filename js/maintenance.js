@@ -1,6 +1,6 @@
-// d:\tiemnhagom-project\js\maintenance.js
+﻿// d:\tiemnhagom-project\js\maintenance.js
 import { db } from "./utils.js";
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const maintenanceLabel = document.getElementById('maintenance-label');

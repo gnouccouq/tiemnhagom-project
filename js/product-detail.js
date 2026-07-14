@@ -1,10 +1,10 @@
-import {
+﻿import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, COLOR_MAP
 } from "./utils.js";
-import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 // Biến toàn cục để quản lý gallery
 let allImages = [];

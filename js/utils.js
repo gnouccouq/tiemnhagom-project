@@ -1,17 +1,17 @@
-import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+﻿import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp,
     collection, query, where, limit, getDocs, onSnapshot, orderBy
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import {
     signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
     signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
     RecaptchaVerifier, signInWithPhoneNumber
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 
 // Default/initial category structure (used if Firestore document doesn't exist)
@@ -1498,3 +1498,4 @@ if (document.readyState === 'loading') {
 } else {
     initDrawerCart();
 }
+

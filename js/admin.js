@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -6,10 +6,10 @@ import {
 import { 
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy, 
     limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
@@ -3107,7 +3107,7 @@ window.showCreateStaffModal = () => {
             const secondaryApp = initializeApp(auth.app.options, "Secondary");
             const secondaryAuth = auth.app.options ? onAuthStateChanged(auth, () => {}) : null; // Dùng Auth của instance mới
             // (Lưu ý: createUserWithEmailAndPassword yêu cầu auth instance)
-            const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+            const { getAuth } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
             const tempAuth = getAuth(secondaryApp);
             
             const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
@@ -3132,7 +3132,7 @@ window.showCreateStaffModal = () => {
             showToast("Đã tạo tài khoản nhân viên thành công!");
             modal.classList.remove('active');
             // Xóa instance phụ để giải phóng bộ nhớ
-            const { deleteApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+            const { deleteApp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
             await deleteApp(secondaryApp);
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
@@ -4864,4 +4864,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 if(productModal) { productModal.addEventListener('click', (e) => { if(e.target === productModal) { window.closeProductModal(); } }); }
+
 
