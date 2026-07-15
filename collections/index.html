@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -8,16 +8,26 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="product-banner" style="height: 300px; background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Bộ sưu tập</h1>
-                <p>Nơi lưu giữ những câu chuyện của đất và lửa</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('../Asset/images/bannercollection.jpg'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Bộ sưu tập</h1>
         </section>
 
         <section class="collections-section" style="padding-top: 2rem; margin-bottom: 5rem;">
@@ -31,7 +41,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { db, initHeader } from "../js/utils.js";
+        import { db, initHeader } from "../js/utils.js?v=7";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {

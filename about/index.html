@@ -191,16 +191,27 @@
             }
         }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="product-banner" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg');">
-            <div class="banner-content">
-                <h1>Về Tiệm Nhà Gốm</h1>
-                <p>Nơi kể chuyện bằng đất sét và đôi bàn tay</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('../Asset/images/hero-bg.jpg'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Về Tiệm Nhà Gốm</h1>
         </section>
 
         <div class="profile-container about-content" style="padding-top: 0;">
@@ -338,7 +349,7 @@
 
     <!-- Firebase SDK & Global Utils -->
     <script type="module">
-        import { initHeader } from "../js/utils.js";
+        import { initHeader } from "../js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => {
             // Khởi tạo Header/Footer với pathPrefix giật cấp (../)
             initHeader('../');

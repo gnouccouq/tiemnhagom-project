@@ -1,4 +1,4 @@
-﻿import { 
+import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES // Import dynamicCategories directly
 } from "./utils.js";
 import { 
@@ -108,28 +108,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         const categoryDisplay = collectionParam ? `Bộ sưu tập: ${collectionParam}` : (currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm');
         const seoTitle = `${categoryDisplay} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
 
-        const bannerContent = document.querySelector('.product-banner .banner-content');
-        if (bannerContent) {
-            const bannerTitleH1 = bannerContent.querySelector('h1');
-            if (bannerTitleH1) bannerTitleH1.innerText = categoryDisplay;
-
-            // Cập nhật Breadcrumb động
-            let breadcrumb = bannerContent.querySelector('.breadcrumb');
-            if (!breadcrumb) {
-                breadcrumb = document.createElement('div');
-                breadcrumb.className = 'breadcrumb';
-                bannerContent.appendChild(breadcrumb);
-            }
-            
-            let breadcrumbHtml = `<a href="../">Trang chủ</a> <span>/</span> `;
-            if (collectionParam) {
-                breadcrumbHtml += `<a href="../collections/">Bộ sưu tập</a> <span>/</span> ${collectionParam}`;
-            } else if (currentCategory !== 'all') {
-                breadcrumbHtml += `<a href="./">Tất cả sản phẩm</a> <span>/</span> ${currentCategory}`;
-            } else {
-                breadcrumbHtml += `Tất cả sản phẩm`;
-            }
-            breadcrumb.innerHTML = breadcrumbHtml;
+        const bannerTitleH1 = document.getElementById('hero-banner-title');
+        if (bannerTitleH1) {
+            bannerTitleH1.innerText = categoryDisplay.replace('Bộ sưu tập: ', '').toLowerCase();
         }
 
         const seoDesc = `Khám phá bộ sưu tập ${categoryDisplay.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm thủ công chất lượng cao, thiết kế mộc mạc cho không gian sống.`;

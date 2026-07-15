@@ -56,17 +56,26 @@
       }]
     }
     </script>
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh; /* Chiều cao vừa phải cho trang danh sách sản phẩm */
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem; /* Bù trừ khoảng trắng header */
+        }
+    </style>
 </head>
-<body class="products-page">
+<body class="home-page products-page">
     <div id="header-placeholder"></div>
 
     <main>
-        <!-- Banner đầu trang full chiều ngang -->
-        <section class="product-banner" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Cửa hàng Gốm</h1>
-                <p>Tìm thấy món đồ mang linh hồn cho không gian của bạn</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10;">sản phẩm</h1>
         </section>
 
         <div class="products-page-container" style="padding-top: 0;">
@@ -158,6 +167,6 @@
 
     <div id="footer-placeholder"></div>
 
-    <script type="module" src="../js/products.js"></script>
+    <script type="module" src="../js/products.js?v=6"></script>
 </body>
 </html>

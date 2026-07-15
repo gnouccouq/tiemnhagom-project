@@ -30,15 +30,26 @@
         .legal-content p { margin-bottom: 1rem; color: #555; font-size: 0.95rem; }
         .important-note { background: #fff9f8; padding: 15px; border-left: 4px solid #c0392b; margin: 1rem 0; }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
     <main>
-        <section class="product-banner" style="height: 250px; background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Chính sách đổi trả</h1>
-                <p>Đảm bảo quyền lợi khách hàng trong mọi đơn hàng</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Chính sách đổi trả</h1>
         </section>
 
         <div class="profile-container" style="padding-top: 0;">
@@ -69,7 +80,7 @@
     </main>
     <div id="footer-placeholder"></div>
     <script type="module">
-        import { initHeader } from "./js/utils.js";
+        import { initHeader } from "./js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => { initHeader('./'); });
     </script>
 </body>

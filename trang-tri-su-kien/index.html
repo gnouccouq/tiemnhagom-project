@@ -55,16 +55,27 @@
         .event-gallery-item:hover img { transform: scale(1.05); }
         .consult-form { background: #fff; padding: 3rem; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); max-width: 700px; margin: 4rem auto; }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="product-banner" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Trang trí Sự kiện</h1>
-                <p>Biến không gian của bạn trở nên ấm cúng và đầy cảm xúc</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Trang trí Sự kiện</h1>
         </section>
 
         <div class="profile-container" style="max-width: 1200px; padding-top: 0;">
@@ -153,7 +164,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader, showToast } from "../js/utils.js";
+        import { initHeader, showToast } from "../js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => {
             initHeader('../');
 

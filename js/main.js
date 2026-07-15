@@ -1,4 +1,4 @@
-﻿// js/main.js
+// js/main.js
 import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, initAutocomplete 
 } from "./utils.js?v=3";
@@ -247,7 +247,7 @@ async function fetchCollections() {
 
     try {
         const snap = await getDoc(doc(db, "settings", "collections"));
-        const collections = (snap.exists() && snap.data().items) ? snap.data().items.filter(c => c.showOnHome).slice(0, 3) : [];
+        const collections = (snap.exists() && snap.data().items) ? snap.data().items.filter(c => c.showOnHome).slice(0, 6) : [];
 
         if (collections.length > 0) {
             container.innerHTML = collections.map(c => `

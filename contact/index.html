@@ -73,21 +73,27 @@
             #contact-page-form div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
         }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="product-banner" style="height: 300px; background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('../Asset/images/hero-bg.jpg');">
-            <div class="banner-content">
-                <h1>Liên hệ</h1>
-                <p>Ghé thăm hoặc gửi lời nhắn cho Tiệm nhé</p>
-                <div class="breadcrumb" style="margin-top: 15px; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;">
-                    <a href="../" style="color: rgba(255,255,255,0.7); text-decoration: none;">Trang chủ</a> 
-                    <span style="margin: 0 10px; opacity: 0.5;">/</span> 
-                    Liên hệ
-                </div>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('../Asset/images/hero-bg.jpg'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Liên hệ</h1>
         </section>
 
         <div class="contact-page-content">
@@ -183,7 +189,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader, showToast, sendEmailNotification, saveContactMessage } from "../js/utils.js";
+        import { initHeader, showToast, sendEmailNotification, saveContactMessage } from "../js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => {
             initHeader('../');
 

@@ -1,4 +1,4 @@
-﻿import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
@@ -319,7 +319,7 @@ export function setupHeaderScroll() {
     if (!nav) return;
 
     // Kiểm tra xem trang có Hero Section (như trang chủ) không
-    const hasHero = document.querySelector('.hero-carousel') || document.querySelector('.hero');
+    const hasHero = document.querySelector('.hero-carousel') || document.querySelector('.hero') || document.querySelector('#col-hero');
 
     const handleScroll = () => {
         if (window.scrollY > 50) {
@@ -1499,3 +1499,20 @@ if (document.readyState === 'loading') {
     initDrawerCart();
 }
 
+// --- Mobile Hover Fix for Collection Banners ---
+document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768) {
+        const banner = e.target.closest('.collection-banner');
+        if (banner) {
+            if (!banner.classList.contains('hover-active')) {
+                e.preventDefault(); // Ngăn chuyển trang ở lần nhấn đầu
+                // Tắt hết hover-active cũ
+                document.querySelectorAll('.collection-banner').forEach(b => b.classList.remove('hover-active'));
+                banner.classList.add('hover-active'); // Hiện overlay
+            }
+        } else {
+            // Click ra ngoài thì tắt
+            document.querySelectorAll('.collection-banner').forEach(b => b.classList.remove('hover-active'));
+        }
+    }
+});

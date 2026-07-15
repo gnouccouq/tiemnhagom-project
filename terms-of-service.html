@@ -58,15 +58,26 @@
         .legal-content ul { margin-bottom: 1rem; padding-left: 1.5rem; color: #555; }
         .legal-content li { margin-bottom: 0.5rem; }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
     <main>
-        <section class="product-banner" style="height: 250px; background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Điều khoản dịch vụ</h1>
-                <p>Minh bạch và bảo vệ quyền lợi khách hàng</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Điều khoản dịch vụ</h1>
         </section>
         
         <div class="profile-container" style="padding-top: 0;">
@@ -122,7 +133,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader } from "./js/utils.js";
+        import { initHeader } from "./js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => {
             initHeader('./');
         });

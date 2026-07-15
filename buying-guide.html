@@ -31,15 +31,26 @@
         .guide-step { margin-bottom: 1.5rem; display: flex; gap: 15px; }
         .step-num { background: var(--text-black); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 600; }
     </style>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 4rem;
+        }
+    </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
     <main>
-        <section class="product-banner" style="height: 250px; background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=1600');">
-            <div class="banner-content">
-                <h1>Hướng dẫn mua hàng</h1>
-                <p>Dễ dàng sở hữu những món gốm yêu thích</p>
-            </div>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Hướng dẫn mua hàng</h1>
         </section>
 
         <div class="profile-container" style="padding-top: 0;">
@@ -82,7 +93,7 @@
     </main>
     <div id="footer-placeholder"></div>
     <script type="module">
-        import { initHeader } from "./js/utils.js";
+        import { initHeader } from "./js/utils.js?v=7";
         document.addEventListener('DOMContentLoaded', () => { initHeader('./'); });
     </script>
 </body>

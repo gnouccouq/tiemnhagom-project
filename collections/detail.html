@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -9,66 +9,142 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         #col-hero { 
-            background-attachment: fixed; 
+            background-attachment: scroll; /* Bỏ fixed để cuộn tự nhiên giống mẫu */
             background-position: center; 
             background-size: cover;
-            transition: background-image 0.5s ease-in-out;
+            width: 100%;
+            height: 100vh; /* Ảnh full màn hình ban đầu */
+            margin-top: -80px; /* Bù đắp padding-top của body để ảnh dính sát mép trên */
         }
-        .collection-story { max-width: 900px; margin: 5rem auto; text-align: center; padding: 0 20px; }
-        .collection-story h2 { font-size: 2.8rem; margin-bottom: 2rem; color: var(--text-black); }
-        .collection-story p { font-size: 1.15rem; line-height: 1.8; color: #555; white-space: pre-line; font-family: var(--font-serif); }
         
-        .collection-gallery-masonry { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin: 4rem 0 6rem; }
-        .gallery-item { border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); aspect-ratio: 1 / 1; }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); cursor: zoom-in; }
-        .gallery-item img:hover { transform: scale(1.05); }
-        
-        @media (max-width: 992px) { .collection-gallery-masonry { grid-template-columns: repeat(2, 1fr); } .collection-story h2 { font-size: 2rem; } }
-        @media (max-width: 600px) { .collection-gallery-masonry { grid-template-columns: 1fr; } }
+        .split-layout-container {
+            display: flex;
+            gap: 60px;
+            padding: 5rem 5%;
+            max-width: 1600px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        .left-album {
+            flex: 1.2; /* Cột trái to hơn một chút */
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .left-album img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .right-products {
+            flex: 1;
+            position: sticky;
+            top: 100px; /* Dính lại khi cuộn */
+        }
+
+        .right-products p.story-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 3rem;
+            line-height: 1.8;
+            font-family: var(--font-serif);
+        }
+
+        .right-products h3.featured-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .product-split-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .album-navigation {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            margin-top: 4rem;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .album-navigation span {
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .album-navigation span:hover {
+            color: #333;
+        }
+
+        @media (max-width: 992px) {
+            .split-layout-container {
+                flex-direction: column;
+            }
+            .right-products {
+                position: static;
+                margin-top: 2rem;
+            }
+            .product-split-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .product-split-grid {
+                grid-template-columns: 1fr;
+            }
+            #col-hero { height: 60vh; }
+        }
     </style>
 </head>
-<body>
+<body class="home-page">
     <div id="header-placeholder"></div>
 
     <main id="collection-detail-page" style="display: none;">
-        <!-- Hero Banner -->
-        <section id="col-hero" class="product-banner" style="height: 60vh; min-height: 400px;">
-            <div class="banner-content">
-                <h1 id="col-title">Tên Bộ Sưu Tập</h1>
-                <p id="col-subtitle">Tiệm Nhà Gốm - Ceramics & Decor</p>
-            </div>
-        </section>
+        <!-- Hero Banner (Ảnh full) -->
+        <section id="col-hero"></section>
 
-        <!-- Câu chuyện -->
-        <section class="collection-story reveal-on-scroll">
-            <h2 id="story-heading">Cảm hứng từ đất</h2>
-            <p id="col-description">Đang tải câu chuyện...</p>
-        </section>
-
-        <!-- Gallery ảnh nghệ thuật -->
-        <section class="collection-gallery-section" style="padding: 0 5%;">
-            <div id="col-gallery" class="collection-gallery-masonry">
+        <!-- Split Layout Area -->
+        <section class="split-layout-container">
+            
+            <!-- Cột trái: Ảnh album -->
+            <div class="left-album" id="col-gallery">
                 <!-- JS render ảnh -->
             </div>
-        </section>
 
-        <!-- Danh sách sản phẩm -->
-        <section class="featured-products" style="background: #fff; padding: 6rem 5%;">
-            <div class="section-header">
-                <h2>Các tác phẩm trong bộ sưu tập</h2>
-                <p class="section-subtitle">Những mẫu gốm được tuyển chọn kỹ lưỡng</p>
+            <!-- Cột phải: Sản phẩm -->
+            <div class="right-products">
+                <p id="col-description" class="story-text">Đang tải câu chuyện...</p>
+                <h3 class="featured-title">Featured Product</h3>
+                
+                <div id="col-product-grid" class="product-split-grid">
+                    <!-- JS render sản phẩm -->
+                    <div style="text-align:center; padding: 2rem; grid-column: 1/-1;"><span class="spinner"></span></div>
+                </div>
+                
+                <div class="album-navigation">
+                    <span>Previous album</span>
+                    <span>Next album</span>
+                </div>
             </div>
-            <div id="col-product-grid" class="grid">
-                <!-- JS render sản phẩm -->
-                <div style="text-align:center; padding: 5rem; grid-column: 1/-1;"><span class="spinner"></span></div>
-            </div>
+            
         </section>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { db, initHeader, renderProductCard } from "../js/utils.js";
+        import { db, initHeader, renderProductCard } from "../js/utils.js?v=4";
         import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -84,21 +160,22 @@
                 const collectionData = colSnap.exists() ? colSnap.data().items.find(c => c.name === colName) : null;
 
                 if (collectionData) {
-                    document.getElementById('col-title').innerText = collectionData.name;
                     document.getElementById('col-description').innerText = collectionData.description || "Từng món gốm trong bộ sưu tập này mang trong mình hơi thở của đất và lửa, được tạo tác thủ công với tất cả sự tỉ mỉ.";
-                    document.getElementById('col-hero').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${collectionData.imageUrl}')`;
+                    // Gán ảnh chính của bộ sưu tập cho ảnh Hero
+                    document.getElementById('col-hero').style.backgroundImage = `url('${collectionData.imageUrl}')`;
                     
-                    // Render Gallery
+                    // Render Gallery (Cột trái)
                     const galleryContainer = document.getElementById('col-gallery');
                     if (collectionData.galleryUrls && collectionData.galleryUrls.length > 0) {
                         galleryContainer.innerHTML = collectionData.galleryUrls.map(url => `
-                            <div class="gallery-item reveal-on-scroll">
-                                <img src="${url}" onclick="window.openFullScreen(this.src)" loading="lazy">
-                            </div>
+                            <img src="${url}" class="reveal-on-scroll" loading="lazy" style="margin-bottom: 20px;">
                         `).join('');
+                    } else {
+                        // Nếu không có ảnh gallery phụ thì lặp lại ảnh chính để cho có bố cục
+                        galleryContainer.innerHTML = `<img src="${collectionData.imageUrl}" class="reveal-on-scroll" loading="lazy">`;
                     }
 
-                    // 2. Lấy danh sách sản phẩm thuộc bộ sưu tập này
+                    // 2. Lấy danh sách sản phẩm thuộc bộ sưu tập này (Cột phải)
                     const q = query(collection(db, "products"), where("collections", "array-contains", colName));
                     const pSnap = await getDocs(q);
                     const grid = document.getElementById('col-product-grid');
@@ -112,7 +189,6 @@
                 }
             } catch (e) {
                 console.error(e);
-                showToast("Lỗi tải dữ liệu", "error");
             }
         });
     </script>
