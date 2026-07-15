@@ -292,7 +292,35 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         }
 
         htmlContent = finalResults.map((p) => {
-            return renderProductCard(p, p.id, favs, '../product/index.html');
+            let cardsHtml = renderProductCard(p, p.id, favs, '../product/index.html');
+            
+            // Render independent color variants
+            if (p.colorVariants && Array.isArray(p.colorVariants)) {
+                p.colorVariants.forEach(v => {
+                    if (v.showOnProductPage) {
+                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
+                            type: 'color',
+                            name: v.name,
+                            imageUrl: v.imageUrl
+                        });
+                    }
+                });
+            }
+            
+            // Render independent pattern variants
+            if (p.patternVariants && Array.isArray(p.patternVariants)) {
+                p.patternVariants.forEach(v => {
+                    if (v.showOnProductPage) {
+                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
+                            type: 'pattern',
+                            name: v.name,
+                            imageUrl: v.imageUrl
+                        });
+                    }
+                });
+            }
+            
+            return cardsHtml;
         }).join('');
 
         // Hiển thị nội dung

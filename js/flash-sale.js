@@ -1,6 +1,6 @@
-﻿import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, updateSEO, fetchFlashSaleSettings
-} from "./utils.js";
+import { 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, updateSEO, fetchFlashSaleSettings
+} from "./utils.js?v=3";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -208,7 +208,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                     <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left;">⚡ Đồng giá ${price/1000}k</h2>
                     <div class="grid" style="padding: 0;">
-                        ${products.map(p => renderProductCard(p, p.id, favs, '../product/index.html')).join('')}
+                        ${products.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                     </div>
                 </div>
             `;
@@ -223,7 +223,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                     <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">${sectionTitle}</h2>
                     <div class="grid" style="padding: 0;">
-                        ${otherSales.map(p => renderProductCard(p, p.id, favs, '../product/index.html')).join('')}
+                        ${otherSales.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                     </div>
                 </div>
             `;

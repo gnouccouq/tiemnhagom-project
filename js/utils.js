@@ -618,7 +618,39 @@ export function updateMembershipPrices(tier) {
 }
 window.updateMembershipPrices = updateMembershipPrices;
 
-export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html') {
+export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html') {
+    let cardsHtml = renderProductCard(product, id, favsList, linkBase);
+            
+    // Render independent color variants
+    if (product.colorVariants && Array.isArray(product.colorVariants)) {
+        product.colorVariants.forEach(v => {
+            if (v.showOnProductPage) {
+                cardsHtml += renderProductCard(product, id, favsList, linkBase, {
+                    type: 'color',
+                    name: v.name,
+                    imageUrl: v.imageUrl
+                });
+            }
+        });
+    }
+            
+    // Render independent pattern variants
+    if (product.patternVariants && Array.isArray(product.patternVariants)) {
+        product.patternVariants.forEach(v => {
+            if (v.showOnProductPage) {
+                cardsHtml += renderProductCard(product, id, favsList, linkBase, {
+                    type: 'pattern',
+                    name: v.name,
+                    imageUrl: v.imageUrl
+                });
+            }
+        });
+    }
+            
+    return cardsHtml;
+}
+
+export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html', variantOverride = null) {
     const rating = product.rating || 5;
     let starsHtml = '';
     for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
@@ -660,9 +692,18 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const outOfStockClass = isOutOfStock ? 'is-out-of-stock' : '';
 
     let finalImageUrl = product.thumbUrl || product.imageUrl;
+    let displayName = product.name;
+    let linkUrl = `${linkBase}?id=${id}`;
+
+    if (variantOverride) {
+        if (variantOverride.imageUrl) finalImageUrl = variantOverride.imageUrl;
+        displayName = `${product.name} - ${variantOverride.name}`;
+        linkUrl += `&${variantOverride.type}=${encodeURIComponent(variantOverride.name)}`;
+    }
+
     const isPlaceholder = !finalImageUrl || finalImageUrl.includes('placehold.co') || finalImageUrl.includes('via.placeholder.com');
 
-    if (isPlaceholder) {
+    if (isPlaceholder && !variantOverride) {
         let variantImage = null;
         if (product.colorVariants && product.colorVariants.length > 0) {
             const firstColorWithImage = product.colorVariants.find(v => v && v.imageUrl);
@@ -687,9 +728,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     return `
     <div class="product-card ${sparkleClass} ${outOfStockClass}">
         <div class="product-card-image">
-            <a href="${linkBase}?id=${id}">
+            <a href="${linkUrl}">
                 <img src="${finalImageUrl}" 
-                     alt="${product.name}" loading="lazy" width="300" height="300">
+                     alt="${displayName}" loading="lazy" width="300" height="300">
             </a>
             ${isOutOfStock ? stockBadge : saleBadge}
             <div class="product-card-actions">
@@ -698,7 +739,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                 </button>
-                <button class="quick-add-btn" onclick="addToCart({id: '${id}', name: '${product.name.replace(/'/g, "\\'")}', price: ${currentPrice}, image: '${finalImageUrl}', quantity: 1, category: '${product.category}'})" title="Thêm nhanh vào giỏ">
+                <button class="quick-add-btn" onclick="addToCart({id: '${id}', name: '${displayName.replace(/'/g, "\\'")}', price: ${currentPrice}, image: '${finalImageUrl}', quantity: 1, category: '${product.category}'${variantOverride ? `, variant: '${variantOverride.name}'` : ''}})" title="Thêm nhanh vào giỏ">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"></path>
                     </svg>
@@ -707,8 +748,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         </div>
         <div class="product-card-info">
             <div class="product-sku" style="font-size: 0.7rem; margin-bottom: 4px; letter-spacing: 1px;">Mã: ${id}</div>
-            <a href="${linkBase}?id=${id}" class="product-title-link">
-                <h3>${product.name}</h3>
+            <a href="${linkUrl}" class="product-title-link">
+                <h3>${displayName}</h3>
             </a>
             <div class="product-rating-row">
                 <div class="rating-mini" style="display: none;">${starsHtml}</div>

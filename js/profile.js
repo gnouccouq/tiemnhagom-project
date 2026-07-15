@@ -1,6 +1,6 @@
-﻿import { 
+import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
-    showToast, initHeader, renderProductCard, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
+    showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
 import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
@@ -107,7 +107,7 @@ async function fetchFavorites(userId) {
             if (pSnap.exists()) {
                 // Lấy danh sách yêu thích để render đúng trạng thái nút
                 const favs = favSnap.data().productIds;
-                htmlContent += renderProductCard(pSnap.data(), pid, favs, '../product/index.html');
+                htmlContent += renderProductCardWithVariants(pSnap.data(), pid, favs, '../product/index.html');
             }
         }
 

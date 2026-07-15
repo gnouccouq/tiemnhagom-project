@@ -1,4 +1,4 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -645,7 +645,7 @@ function renderImagePreviews() {
 }
 
 // --- Logic Quản lý Biến thể Màu sắc & Ảnh ---
-window.addVariantRow = (name = '', imageUrl = '', stock = 0) => {
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false) => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
     
@@ -668,10 +668,14 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0) => {
         <div style="flex: 1;">
             <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Trắng)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
-        <div style="width: 80px;">
+        <div style="width: 70px;">
             <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
-        <div class="variant-img-preview" style="width: 45px; height: 45px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho màu này">
+        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+            <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
+            <label style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+        </div>
+        <div class="variant-img-preview" style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho màu này">
             ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:20px; color:#999;">+</div>'}
         </div>
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
@@ -695,7 +699,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0) => {
     container.appendChild(row);
 };
 
-window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0) => {
+window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false) => {
     const container = document.getElementById('pattern-variant-items-container');
     if (!container) return;
     
@@ -708,10 +712,14 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0) => {
         <div style="flex: 1;">
             <input type="text" class="variant-name" value="${name}" placeholder="Tên họa tiết (VD: Nhám)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
-        <div style="width: 80px;">
+        <div style="width: 70px;">
             <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
-        <div class="variant-img-preview" style="width: 45px; height: 45px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho họa tiết này">
+        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+            <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
+            <label style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+        </div>
+        <div class="variant-img-preview" style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho họa tiết này">
             ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:20px; color:#999;">+</div>'}
         </div>
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
@@ -1843,6 +1851,8 @@ productForm.addEventListener('submit', async (e) => {
             const stock = Number(row.querySelector('.variant-stock').value || 0);
             const fileInput = row.querySelector('.variant-file-input');
             const file = fileInput.files[0];
+            const showOnProductPageCheckbox = row.querySelector('.variant-show-independent');
+            const showOnProductPage = showOnProductPageCheckbox ? showOnProductPageCheckbox.checked : false;
             let variantUrl = row.dataset.currentUrl || null;
 
             if (file) {
@@ -1851,7 +1861,7 @@ productForm.addEventListener('submit', async (e) => {
                 const vSnap = await uploadBytes(vRef, webpFile);
                 variantUrl = await getDownloadURL(vSnap.ref);
             }
-            return { name, imageUrl: variantUrl, stock };
+            return { name, imageUrl: variantUrl, stock, showOnProductPage };
         });
         const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
         if (colorVariantsResult.length > 0) hasVariants = true;
@@ -1864,6 +1874,8 @@ productForm.addEventListener('submit', async (e) => {
             const stock = Number(row.querySelector('.variant-stock').value || 0);
             const fileInput = row.querySelector('.variant-file-input');
             const file = fileInput.files[0];
+            const showOnProductPageCheckbox = row.querySelector('.variant-show-independent');
+            const showOnProductPage = showOnProductPageCheckbox ? showOnProductPageCheckbox.checked : false;
             let variantUrl = row.dataset.currentUrl || null;
 
             if (file) {
@@ -1872,7 +1884,7 @@ productForm.addEventListener('submit', async (e) => {
                 const vSnap = await uploadBytes(vRef, webpFile);
                 variantUrl = await getDownloadURL(vSnap.ref);
             }
-            return { name, imageUrl: variantUrl, stock };
+            return { name, imageUrl: variantUrl, stock, showOnProductPage };
         });
         const patternVariantsResult = (await Promise.all(patternPromises)).filter(v => v.name);
         if (patternVariantsResult.length > 0) hasVariants = true;
@@ -2368,7 +2380,7 @@ async function editProduct(id) {
             if (variantContainer) {
                 variantContainer.innerHTML = '';
                 if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0));
+                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false));
                 }
             }
 
@@ -2377,10 +2389,10 @@ async function editProduct(id) {
             if (patternContainer) {
                 patternContainer.innerHTML = '';
                 if (p.patternVariants && Array.isArray(p.patternVariants)) {
-                    p.patternVariants.forEach(v => window.addPatternVariantRow(v.name, v.imageUrl, v.stock || 0));
+                    p.patternVariants.forEach(v => window.addPatternVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false));
                 } else if (p.patterns && Array.isArray(p.patterns)) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
-                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0));
+                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false));
                 }
             }
 

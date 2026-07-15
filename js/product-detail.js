@@ -1,6 +1,6 @@
-﻿import {
+import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
-    renderProductCard, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
+    renderProductCard, renderProductCardWithVariants, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, COLOR_MAP
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -712,6 +712,19 @@ async function fetchProductDetail() {
             fetchRelatedProducts(productId, p.category); // Gọi hàm lấy sản phẩm liên quan
             fetchRecentlyViewed(productId); // Gọi hàm lấy sản phẩm đã xem gần đây
             renderVariantSelectors(p); // Render bộ chọn biến thể
+
+            // Tự động chọn biến thể từ URL
+            const urlColor = urlParams.get('color');
+            const urlPattern = urlParams.get('pattern');
+            
+            if (urlColor && p.colorVariants) {
+                const colorV = p.colorVariants.find(v => v.name === urlColor);
+                if (colorV) window.selectColor(colorV.name, colorV.imageUrl);
+            }
+            if (urlPattern && p.patternVariants) {
+                const patternV = p.patternVariants.find(v => v.name === urlPattern);
+                if (patternV) window.selectPattern(patternV.name, patternV.imageUrl);
+            }
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";
         }
@@ -739,7 +752,7 @@ async function fetchRelatedProducts(currentProductId, currentCategory) {
             if (doc.data().isHidden) return;
             if (doc.id !== currentProductId && count < 10) { // Hiển thị tối đa 10 sản phẩm (2 hàng x 5 cột)
                 // Truyền './index.html' làm linkBase vì chúng ta đang ở trong thư mục /product/
-                htmlContent += renderProductCard(doc.data(), doc.id, [], './index.html');
+                htmlContent += renderProductCardWithVariants(doc.data(), doc.id, [], './index.html');
                 count++;
             }
         });
@@ -772,8 +785,8 @@ async function fetchRecentlyViewed(currentProductId) {
         for (const id of historyToShow) {
             const pSnap = await getDoc(doc(db, "products", id));
             if (pSnap.exists() && !pSnap.data().isHidden) {
-                // Dùng renderProductCard từ utils, linkBase là './index.html'
-                htmlContent += renderProductCard(pSnap.data(), id, [], './index.html');
+                // Dùng renderProductCardWithVariants từ utils, linkBase là './index.html'
+                htmlContent += renderProductCardWithVariants(pSnap.data(), id, [], './index.html');
             }
         }
 

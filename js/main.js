@@ -1,6 +1,6 @@
 // js/main.js
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, initAutocomplete 
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, initAutocomplete 
 } from "./utils.js?v=3";
 import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
@@ -52,7 +52,7 @@ async function fetchFeaturedProducts() {
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
             if (count >= 14) return;
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm nào.</p>';
@@ -95,7 +95,7 @@ async function fetchBestSellingProducts() {
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
             if (count >= 10) return;
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm bán chạy.</p>';
@@ -138,7 +138,7 @@ async function fetchComboProducts() {
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
             if (count >= 10) return;
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có Combo nào.</p>';
@@ -227,7 +227,7 @@ async function fetchSaleProducts() {
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden) return;
             if (count >= 10) return;
-            htmlContent += renderProductCard(doc.data(), doc.id, favs, 'product/index.html');
+            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
         });
 
@@ -317,7 +317,7 @@ async function fetchRecommendations() {
             if (doc.data().isHidden) return;
             // Không hiện lại sản phẩm đã nằm trong lịch sử xem gần đây
             if (!historyIds.slice(0, 4).includes(doc.id)) {
-                htmlContent += renderProductCard(doc.data(), doc.id, [], 'product/index.html');
+                htmlContent += renderProductCardWithVariants(doc.data(), doc.id, [], 'product/index.html');
             }
         });
 
