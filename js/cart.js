@@ -1,4 +1,4 @@
-﻿import { 
+import { 
     db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
     getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId
 } from "./utils.js";
@@ -717,7 +717,8 @@ window.placeOrder = async () => {
             address: `${address}, ${wardName}, ${provinceName}` // Full address string
         },
         shippingMethod: shippingMethod,
-        paymentMethod: paymentMethod || "COD"
+        paymentMethod: paymentMethod || "COD",
+        note: note || ""
     };
 
     try {

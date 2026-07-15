@@ -419,6 +419,7 @@ exports.sendTelegramOnNewOrder = functions.firestore
         const customerPhone = orderData.shippingAddress?.phone || 'Không có';
         const customerEmail = orderData.shippingAddress?.email || 'Không có';
         const address = orderData.shippingAddress?.address || 'Không có';
+        const orderNote = orderData.note ? `\n📝 <b>Ghi chú:</b> ${orderData.note}` : '';
         const totalAmount = orderData.totalAmount || 0;
         const shippingFee = orderData.shippingFee || 0;
         const discountAmount = orderData.discountAmount || 0;
@@ -442,7 +443,7 @@ exports.sendTelegramOnNewOrder = functions.firestore
 - Tên: ${customerName}
 - SĐT: ${customerPhone}
 - Email: ${customerEmail}
-- Địa chỉ: ${address}
+- Địa chỉ: ${address}${orderNote}
 
 🛒 <b>Sản phẩm:</b>
 ${itemsList}
