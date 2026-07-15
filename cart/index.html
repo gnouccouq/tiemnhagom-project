@@ -11,6 +11,36 @@
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     
+    <!-- Tom Select cho dropdown tìm kiếm -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        .ts-control {
+            padding: 0.7rem !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px !important;
+            font-family: inherit !important;
+            font-size: 0.9rem !important;
+            box-shadow: none !important;
+            background-color: #fff !important;
+            color: #333 !important;
+            min-height: 42px; /* Ensure same height as standard inputs */
+            display: flex;
+            align-items: center;
+        }
+        .ts-control.focus {
+            border-color: #888 !important;
+            box-shadow: none !important;
+        }
+        .ts-wrapper.single .ts-control:after {
+            right: 15px !important;
+        }
+        .ts-dropdown {
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+    </style>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4FNKRZ13JC"></script>
     <script>

@@ -206,14 +206,33 @@ window.useSavedAddress = async (index) => {
     if (addressInp) addressInp.value = addr.address || '';
     
     if (provinceSelect) {
-        provinceSelect.value = addr.provinceId;
+        if (window.tsProvince) {
+            window.tsProvince.setValue(addr.provinceId, true);
+        } else {
+            provinceSelect.value = addr.provinceId;
+        }
+
         wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã --</option>';
+        if (window.tsWard) {
+            window.tsWard.clear(true);
+            window.tsWard.clearOptions();
+            window.tsWard.disable();
+        }
+
         const communes = await fetchCommunesByProvinceId(addr.provinceId);
-        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-        communes.forEach(c => {
-            wardSelect.innerHTML += `<option value="${c.id}" ${c.id == addr.wardId ? 'selected' : ''}>${c.name}</option>`;
-        });
-        wardSelect.disabled = false;
+        
+        if (window.tsWard) {
+            window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
+            communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+            window.tsWard.setValue(addr.wardId, true);
+            window.tsWard.enable();
+        } else {
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            communes.forEach(c => {
+                wardSelect.innerHTML += `<option value="${c.id}" ${c.id == addr.wardId ? 'selected' : ''}>${c.name}</option>`;
+            });
+            wardSelect.disabled = false;
+        }
         renderCart(); // Cập nhật phí ship dựa trên tỉnh thành mới
         showToast("Đã áp dụng địa chỉ từ sổ địa chỉ");
     }
@@ -339,21 +358,50 @@ async function renderCheckoutForm(container) {
         provinceSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
     });
 
+    if (window.TomSelect) {
+        if (window.tsProvince) window.tsProvince.destroy();
+        if (window.tsWard) window.tsWard.destroy();
+        
+        window.tsProvince = new TomSelect('#shipping-province', {
+            create: false,
+            sortField: { field: "text", direction: "asc" }
+        });
+        window.tsWard = new TomSelect('#shipping-ward', {
+            create: false,
+            sortField: { field: "text", direction: "asc" }
+        });
+    }
+
     // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã
     provinceSelect?.addEventListener('change', async (e) => {
         const provinceId = e.target.value;
-        wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã --</option>';
-        wardSelect.disabled = true;
+        
+        if (window.tsWard) {
+            window.tsWard.clear(true);
+            window.tsWard.clearOptions();
+            window.tsWard.disable();
+        } else {
+            wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã --</option>';
+            wardSelect.disabled = true;
+        }
 
         if (provinceId) {
             const communes = await fetchCommunesByProvinceId(provinceId);
-            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-            communes.forEach(c => {
-                wardSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            });
-            wardSelect.disabled = false;
+            if (window.tsWard) {
+                window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
+                communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+                window.tsWard.enable();
+            } else {
+                wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                communes.forEach(c => {
+                    wardSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                });
+                wardSelect.disabled = false;
+            }
         } else {
-            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            if (!window.tsWard) {
+                wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            }
         }
         renderCart(); // Cập nhật phí ship
     });
