@@ -2,6 +2,7 @@ const functions = require('firebase-functions/v1');
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const admin = require('firebase-admin');
 const kiotviet = require('./kiotviet');
+const axios = require('axios');
 
 // Initialize Firebase Admin SDK if not already initialized
 admin.initializeApp();
@@ -396,3 +397,76 @@ exports.syncAllProductsToKV = onRequest({ cors: true, timeoutSeconds: 540 }, asy
         res.status(500).json({ error: error.message });
     }
 });
+
+/**
+ * Automatically send a Telegram message when a new order is created.
+ */
+exports.sendTelegramOnNewOrder = functions.firestore
+    .document('orders/{orderId}')
+    .onCreate(async (snap, context) => {
+        const orderData = snap.data();
+        const orderId = context.params.orderId;
+        
+        const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+        if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+            functions.logger.warn("Chưa cấu hình Telegram Bot Token hoặc Chat ID trong .env");
+            return null;
+        }
+
+        const customerName = orderData.shippingAddress?.fullName || 'Khách vãng lai';
+        const customerPhone = orderData.shippingAddress?.phone || 'Không có';
+        const customerEmail = orderData.shippingAddress?.email || 'Không có';
+        const address = orderData.shippingAddress?.address || 'Không có';
+        const totalAmount = orderData.totalAmount || 0;
+        const shippingFee = orderData.shippingFee || 0;
+        const discountAmount = orderData.discountAmount || 0;
+        const membershipDiscount = orderData.membershipDiscount || 0;
+        
+        let itemsList = '';
+        if (orderData.items && Array.isArray(orderData.items)) {
+            orderData.items.forEach((item, index) => {
+                itemsList += `${index + 1}. ${item.name} ${item.variant && item.variant !== 'null' ? `(${item.variant})` : ''} - SL: ${item.quantity} - Giá: ${new Intl.NumberFormat('vi-VN').format(item.price)}đ\n`;
+            });
+        }
+
+        // Tính tạm tính trước khi trừ đi phí ship và giảm giá
+        const tempTotal = totalAmount - shippingFee + discountAmount + membershipDiscount;
+
+        const message = `
+📦 <b>CÓ ĐƠN HÀNG MỚI</b> 📦
+<b>Mã đơn:</b> #${orderId}
+
+👤 <b>Thông tin khách hàng:</b>
+- Tên: ${customerName}
+- SĐT: ${customerPhone}
+- Email: ${customerEmail}
+- Địa chỉ: ${address}
+
+🛒 <b>Sản phẩm:</b>
+${itemsList}
+💰 <b>Thanh toán:</b>
+- Tạm tính: ${new Intl.NumberFormat('vi-VN').format(tempTotal)}đ
+- Phí ship: ${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ
+- Mã giảm giá: ${discountAmount > 0 ? '-' + new Intl.NumberFormat('vi-VN').format(discountAmount) + 'đ' : '0đ'}
+- Ưu đãi TV: ${membershipDiscount > 0 ? '-' + new Intl.NumberFormat('vi-VN').format(membershipDiscount) + 'đ' : '0đ'}
+- <b>Tổng cộng: ${new Intl.NumberFormat('vi-VN').format(totalAmount)}đ</b>
+
+💵 <b>Hình thức:</b> ${orderData.paymentMethod || 'COD'}
+        `.trim();
+
+        try {
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            await axios.post(url, {
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            });
+            functions.logger.info(`Đã gửi thông báo Telegram cho đơn hàng ${orderId}`);
+        } catch (error) {
+            functions.logger.error(`Lỗi gửi thông báo Telegram cho đơn hàng ${orderId}:`, error.message);
+        }
+        
+        return null;
+    });
