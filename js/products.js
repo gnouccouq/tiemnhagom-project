@@ -35,32 +35,63 @@ window.toggleFavorite = async (event, productId) => {
     await toggleFavoriteLogic(productId, fetchProducts);
 };
 
-// Hàm render danh mục sản phẩm (Dạng ô vuông có chữ ở giữa)
+// Hàm render danh mục sản phẩm (Dạng text đơn giản)
 function renderCategoryGrid() {
     const container = document.getElementById('category-grid-display');
     if (!container) return;
 
+    container.className = 'minimal-category-list';
+
+    // Lấy lại danh mục đã chọn từ URL nếu có
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('category') || 'all';
+
     let html = `
-        <div class="category-square-item active" data-filter-category="all">
-            <div class="category-square-content">
-                <img src="../Asset/images/481662171_945340464390670_9004286649668063676_n.jpg" alt="Tất cả">
-                <span>Tất cả</span>
-            </div>
-        </div>
+        <a href="javascript:void(0)" class="minimal-cat-item ${catParam === 'all' ? 'active' : ''}" data-filter-category="all" id="cat-all">
+            tất cả <span class="cat-count">(...)</span>
+        </a>
     `;
 
     dynamicCategories.forEach(group => {
-        html += ` 
-            <div class="category-square-item" data-filter-category="${group.name}">
-                <div class="category-square-content">
-                    <img src="${group.imageUrl || 'https://via.placeholder.com/400'}" alt="${group.name}">
-                    <span>${group.name}</span>
-                </div>
-            </div>
+        const isActive = catParam === group.name || (group.subs && group.subs.includes(catParam));
+        html += `
+            <a href="javascript:void(0)" class="minimal-cat-item ${isActive ? 'active' : ''}" data-filter-category="${group.name}" id="cat-${group.name.replace(/\s+/g, '-')}">
+                ${group.name.toLowerCase()} <span class="cat-count">(...)</span>
+            </a>
         `;
     });
+    
     container.innerHTML = html;
     setupCategoryEvents();
+
+    // Tải số lượng bất đồng bộ
+    fetchCategoryCounts();
+}
+
+async function fetchCategoryCounts() {
+    try {
+        const snap = await getCountFromServer(collection(db, "products"));
+        const el = document.getElementById('cat-all');
+        if (el) el.querySelector('.cat-count').textContent = `(${snap.data().count})`;
+    } catch (e) {
+        console.error("Lỗi đếm số lượng tất cả:", e);
+    }
+
+    dynamicCategories.forEach(async (group) => {
+        try {
+            let q;
+            if (group.subs && group.subs.length > 0) {
+                q = query(collection(db, "products"), where("category", "in", group.subs));
+            } else {
+                q = query(collection(db, "products"), where("category", "==", group.name));
+            }
+            const snap = await getCountFromServer(q);
+            const el = document.getElementById(`cat-${group.name.replace(/\s+/g, '-')}`);
+            if (el) el.querySelector('.cat-count').textContent = `(${snap.data().count})`;
+        } catch (e) {
+            console.error("Lỗi đếm số lượng " + group.name + ":", e);
+        }
+    });
 }
 
 // Hàm chính để lấy và hiển thị sản phẩm
@@ -90,7 +121,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Chỉ ghi đè activeSubCategory nếu categoryOverride được truyền vào cụ thể (không phải null)
         if (navigation === 'init' && categoryOverride !== null) activeSubCategory = categoryOverride;
         
-        let currentCategory = activeSubCategory || document.querySelector('.category-square-item.active')?.dataset.filterCategory || 'all';
+        let currentCategory = activeSubCategory || document.querySelector('.minimal-cat-item.active')?.dataset.filterCategory || 'all';
         let currentSort = document.getElementById('sort-by')?.value || 'newest';
         let filterSale = document.querySelector('.filter-list a[data-filter-sale].active')?.dataset.filterSale;
         let searchTerm = document.getElementById('search-name')?.value.trim() || '';
@@ -322,9 +353,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 }
 
 function setupCategoryEvents() {
-    document.querySelectorAll('.category-square-item').forEach(item => {
+    document.querySelectorAll('.minimal-cat-item').forEach(item => {
         item.onclick = () => {
-            document.querySelectorAll('.category-square-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.minimal-cat-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             activeSubCategory = null; // Xóa ghi đè danh mục con khi người dùng chọn nhóm lớn tay
             window.history.replaceState({}, '', window.location.pathname);
@@ -378,8 +409,8 @@ function handleInitialFilters() {
     const collParam = urlParams.get('collection');
     
     if (catParam && !collParam) {
-        document.querySelectorAll('.category-square-item').forEach(l => l.classList.remove('active'));
-        const targetLink = document.querySelector(`.category-square-item[data-filter-category="${catParam}"]`);
+        document.querySelectorAll('.minimal-cat-item').forEach(l => l.classList.remove('active'));
+        const targetLink = document.querySelector(`.minimal-cat-item[data-filter-category="${catParam}"]`);
         
         if (targetLink) {
             targetLink.classList.add('active'); // Khớp nhóm chính (ví dụ từ Footer)
@@ -387,7 +418,7 @@ function handleInitialFilters() {
             // Nếu là danh mục con (ví dụ từ Mega Menu), tìm nhóm cha để highlight icon nhóm
             for (const group of dynamicCategories) {
                 if (group.subs && group.subs.includes(catParam)) {
-                    const groupLink = document.querySelector(`.category-square-item[data-filter-category="${group.name}"]`);
+                    const groupLink = document.querySelector(`.minimal-cat-item[data-filter-category="${group.name}"]`);
                     if (groupLink) groupLink.classList.add('active');
                     activeSubCategory = catParam; // Ghi đè để fetchProducts lọc đúng sub-category
                     break;

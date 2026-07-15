@@ -65,7 +65,56 @@
             height: 30vh; /* Chiều cao vừa phải cho trang danh sách sản phẩm */
             min-height: 300px;
             margin-top: -80px;
-            margin-bottom: 4rem; /* Bù trừ khoảng trắng header */
+            margin-bottom: 2rem; /* Giảm khoảng trắng dưới banner */
+        }
+
+        /* Minimal category list styles */
+        .minimal-category-list {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0; /* Xóa margin cũ */
+        }
+        
+        .category-grid-section {
+            margin-bottom: 2rem; /* Giảm khoảng trắng dưới danh mục */
+        }
+        .minimal-cat-item {
+            color: #333;
+            text-decoration: none;
+            font-size: 1rem;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+        .minimal-cat-item.active {
+            font-weight: 700;
+        }
+        .minimal-cat-item:hover {
+            color: #000;
+            opacity: 0.7;
+        }
+
+        /* Group search and sort together on the left */
+        @media (min-width: 769px) {
+            .listing-toolbar {
+                justify-content: flex-start !important;
+                gap: 2rem;
+                border-bottom: none !important;
+            }
+            .toolbar-right {
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+            }
+            .sort-options {
+                margin-bottom: 0 !important; /* Align height with search box */
+            }
+            .toolbar-left .search-input {
+                min-width: 250px !important;
+            }
         }
     </style>
 </head>
