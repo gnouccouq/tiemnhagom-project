@@ -428,7 +428,7 @@ exports.sendTelegramOnNewOrder = functions.firestore
         let itemsList = '';
         if (orderData.items && Array.isArray(orderData.items)) {
             orderData.items.forEach((item, index) => {
-                itemsList += `${index + 1}. ${item.name} ${item.variant && item.variant !== 'null' ? `(${item.variant})` : ''} - SL: ${item.quantity} - Giá: ${new Intl.NumberFormat('vi-VN').format(item.price)}đ\n`;
+                itemsList += `${index + 1}. ${item.name} ${item.variant && item.variant !== 'null' ? `(${item.variant})` : ''} (Mã: ${item.id}) - SL: ${item.quantity} - Giá: ${new Intl.NumberFormat('vi-VN').format(item.price)}đ\n`;
             });
         }
 
