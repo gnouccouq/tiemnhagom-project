@@ -687,11 +687,11 @@
                         </div>
                         <div class="form-group">
                             <label>Giá trị giảm</label>
-                            <input type="number" id="coupon-value" required placeholder="VD: 10 hoặc 50000">
+                            <input type="text" class="currency-input" id="coupon-value" required placeholder="VD: 10 hoặc 50000">
                         </div>
                         <div class="form-group">
                             <label>Giảm tối đa (VNĐ) (Chỉ cho loại % - 0 = Không giới hạn)</label>
-                            <input type="number" id="coupon-max-discount" value="0" placeholder="VD: 50000">
+                            <input type="text" class="currency-input" id="coupon-max-discount" value="0" placeholder="VD: 50000">
                         </div>
                         <div class="form-group">
                             <label>Đơn hàng tối thiểu (VNĐ)</label>
@@ -1048,11 +1048,11 @@
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;">
                                 <label>Giá bán (VND)</label>
-                                <input type="number" id="price" required placeholder="250000">
+                                <input type="text" class="currency-input" id="price" required placeholder="250000">
                             </div>
                             <div style="flex: 1;">
                                 <label>Giá vốn (VND)</label>
-                                <input type="number" id="cost" placeholder="150000">
+                                <input type="text" class="currency-input" id="cost" placeholder="150000">
                             </div>
                         </div>
                     </div>
@@ -1073,7 +1073,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <label>Giá bán giảm (VND)</label>
-                                <input type="number" id="salePrice" placeholder="VD: 199000">
+                                <input type="text" class="currency-input" id="salePrice" placeholder="VD: 199000">
                             </div>
                         </div>
                     </div>

@@ -1781,7 +1781,7 @@ productForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const price = Number(document.getElementById('price').value);
+    const price = window.getCurrencyValue('price');
     if (price <= 0) {
         showToast("Giá sản phẩm phải lớn hơn 0", "error");
         return;
@@ -1990,11 +1990,11 @@ productForm.addEventListener('submit', async (e) => {
         name_lowercase: document.getElementById('name').value.toLowerCase(), // Thêm trường này cho tìm kiếm
         category: document.getElementById('category').value,
         collections: collectionsList,
-        price: Number(document.getElementById('price').value), // Base price
-        cost: Number(document.getElementById('cost').value || 0),
+        price: window.getCurrencyValue('price'), // Base price
+        cost: window.getCurrencyValue('cost'),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
-        salePrice: document.getElementById('salePrice').value ? Number(document.getElementById('salePrice').value) : null,
+        salePrice: document.getElementById('salePrice').value ? window.getCurrencyValue('salePrice') : null,
         dimensions: {
             length: Number(document.getElementById('dim-length').value || 0),
             width: Number(document.getElementById('dim-width').value || 0),
@@ -2328,8 +2328,9 @@ async function editProduct(id) {
             document.getElementById('productId').readOnly = true;
             document.getElementById('name').value = p.name;
             document.getElementById('category').value = p.category;
-            document.getElementById('price').value = p.price;
-            document.getElementById('cost').value = p.cost || 0;
+            document.getElementById('price').value = window.formatCurrencyDisplay(p.price);
+            document.getElementById('cost').value = window.formatCurrencyDisplay(p.cost || 0);
+            document.getElementById('salePrice').value = p.salePrice ? window.formatCurrencyDisplay(p.salePrice) : '';
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
             document.getElementById('flash-sale-group-select').value = p.flashSaleGroup || "";
@@ -3261,8 +3262,8 @@ window.editCoupon = async (code) => {
             document.getElementById('coupon-code').disabled = true;
             document.getElementById('coupon-name').value = c.name || '';
             document.getElementById('coupon-type').value = c.type;
-            document.getElementById('coupon-value').value = c.value;
-            document.getElementById('coupon-max-discount').value = c.maxDiscount || 0;
+            document.getElementById('coupon-value').value = window.formatCurrencyDisplay(c.value);
+            document.getElementById('coupon-max-discount').value = window.formatCurrencyDisplay(c.maxDiscount || 0);
             document.getElementById('coupon-min-order').value = c.minOrder || 0;
             document.getElementById('coupon-limit').value = c.limit || 0;
             document.getElementById('coupon-expiry').value = c.expiryDate || '';
@@ -3323,8 +3324,8 @@ if (couponForm) {
         const code = document.getElementById('coupon-code').value.trim().toUpperCase();
         const name = document.getElementById('coupon-name').value.trim();
         const type = document.getElementById('coupon-type').value;
-        const value = Number(document.getElementById('coupon-value').value);
-        const maxDiscount = Number(document.getElementById('coupon-max-discount').value || 0);
+        const value = window.getCurrencyValue('coupon-value');
+        const maxDiscount = window.getCurrencyValue('coupon-max-discount');
         const minOrder = Number(document.getElementById('coupon-min-order').value || 0);
         const usageLimit = Number(document.getElementById('coupon-limit').value || 0);
         const expiryDate = document.getElementById('coupon-expiry').value; // YYYY-MM-DD
@@ -4422,7 +4423,7 @@ async function initFlashSaleSettings() {
 // Logic tự động tính % giảm giá khi chọn nhóm đồng giá
 document.getElementById('flash-sale-group-select')?.addEventListener('change', (e) => {
     const targetPrice = parseInt(e.target.value);
-    const originalPrice = parseInt(document.getElementById('price').value);
+    const originalPrice = window.getCurrencyValue('price');
     const saleInput = document.getElementById('sale');
 
     if (targetPrice && originalPrice > 0) {
@@ -4877,4 +4878,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 if(productModal) { productModal.addEventListener('click', (e) => { if(e.target === productModal) { window.closeProductModal(); } }); }
 
+// --- Helper Functions for Currency Formatting ---
+window.getCurrencyValue = function(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.value) return 0;
+    return Number(el.value.replace(/\D/g, ''));
+};
 
+window.formatCurrencyDisplay = function(val) {
+    if (val === null || val === undefined || isNaN(val)) return '';
+    return new Intl.NumberFormat('vi-VN').format(val);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('input', (e) => {
+        if (e.target && e.target.classList.contains('currency-input')) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val !== '') {
+                e.target.value = window.formatCurrencyDisplay(Number(val));
+            } else {
+                e.target.value = '';
+            }
+        }
+    });
+});
