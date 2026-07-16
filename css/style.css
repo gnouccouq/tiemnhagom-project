@@ -3080,7 +3080,12 @@ footer {
     color: #334155;
     /* Slate 700 */
     overflow-x: hidden;
-    /* NgÃ„Æ’n chÃ¡ÂºÂ·n toÃƒÂ n trang bÃ¡Â»â€¹ kÃƒÂ©o ngang */
+    /* Ngăn chặn toàn trang bị kéo ngang */
+}
+
+body.admin-dashboard-layout > * {
+    animation: none !important;
+    filter: none !important;
 }
 
 .admin-wrapper {
