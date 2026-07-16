@@ -1181,6 +1181,20 @@ export async function loadSharedComponents(pathPrefix = './') {
                 initDrawerCart();
             }
 
+            // Khởi tạo GTranslate (Dịch tự động)
+            if (!window.gtranslateSettings) {
+                window.gtranslateSettings = {
+                    "default_language": "vi",
+                    "languages": ["vi", "en"],
+                    "wrapper_selector": ".gtranslate_wrapper",
+                    "flag_size": 16
+                };
+                const gtScript = document.createElement('script');
+                gtScript.src = "https://cdn.gtranslate.net/widgets/latest/dropdown.js";
+                gtScript.defer = true;
+                document.head.appendChild(gtScript);
+            }
+
             // Tự động thêm class active cho link đang mở
             const currentPath = window.location.pathname;
             const links = document.querySelectorAll('.nav-links .nav-item');
