@@ -1,4 +1,4 @@
-import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js?v=2';
+import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
@@ -642,6 +642,19 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'pattern',
                     name: v.name,
                     imageUrl: v.imageUrl
+                });
+            }
+        });
+    }
+
+    // Render independent combo variants
+    if (product.comboVariants && Array.isArray(product.comboVariants)) {
+        product.comboVariants.forEach(v => {
+            if (v.showOnProductPage) {
+                cardsHtml += renderProductCard(product, id, favsList, linkBase, {
+                    type: 'combo',
+                    name: v.name,
+                    imageUrl: v.imageUrl || v.thumbUrl
                 });
             }
         });

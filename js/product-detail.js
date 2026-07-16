@@ -145,11 +145,24 @@ async function fetchProductDetail() {
         today.setHours(0, 0, 0, 0);
         const qCoupons = query(collection(db, "coupons"), orderBy("createdAt", "desc"));
 
-        const [docSnap, fsSettings, snapCoupons] = await Promise.all([
+        let usedCouponsPromise = Promise.resolve({ empty: true, forEach: () => {} });
+        if (auth.currentUser) {
+            usedCouponsPromise = getDocs(query(collection(db, "orders"), where("userId", "==", auth.currentUser.uid)));
+        }
+
+        const [docSnap, fsSettings, snapCoupons, usedOrdersSnap] = await Promise.all([
             getDoc(doc(db, "products", productId)),
             fetchFlashSaleSettings(),
-            getDocs(qCoupons)
+            getDocs(qCoupons),
+            usedCouponsPromise
         ]);
+
+        const usedCoupons = [];
+        if (!usedOrdersSnap.empty) {
+            usedOrdersSnap.forEach(d => {
+                if (d.data().couponCode) usedCoupons.push(d.data().couponCode);
+            });
+        }
 
         if (docSnap.exists()) {
             const p = docSnap.data();
@@ -336,6 +349,8 @@ async function fetchProductDetail() {
                 const data = doc.data();
                 if (data.expiryDate && new Date(data.expiryDate) < today) return;
                 if (data.limit > 0 && (data.usedCount || 0) >= data.limit) return;
+                // Bỏ qua nếu user đã sử dụng mã này
+                if (usedCoupons.includes(doc.id)) return;
                 // Lọc theo danh mục của sản phẩm hiện tại
                 if (data.category && data.category !== 'all' && data.category !== p.category) return;
                 validCoupons.push({ id: doc.id, ...data });
@@ -716,6 +731,7 @@ async function fetchProductDetail() {
             // Tự động chọn biến thể từ URL
             const urlColor = urlParams.get('color');
             const urlPattern = urlParams.get('pattern');
+            const urlCombo = urlParams.get('combo');
             
             if (urlColor && p.colorVariants) {
                 const colorV = p.colorVariants.find(v => v.name === urlColor);
@@ -724,6 +740,10 @@ async function fetchProductDetail() {
             if (urlPattern && p.patternVariants) {
                 const patternV = p.patternVariants.find(v => v.name === urlPattern);
                 if (patternV) window.selectPattern(patternV.name, patternV.imageUrl);
+            }
+            if (urlCombo && p.comboVariants) {
+                const comboIdx = p.comboVariants.findIndex(v => v.name === urlCombo);
+                if (comboIdx !== -1) window.selectComboVariant(comboIdx);
             }
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";

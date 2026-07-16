@@ -545,9 +545,16 @@ window.applyCoupon = async () => {
                 }
             }
 
+            // Bắt buộc đăng nhập để sử dụng mã ưu đãi
+            if (!auth.currentUser) {
+                showToast("Vui lòng đăng nhập để sử dụng mã ưu đãi này.", "error");
+                appliedCoupon = null;
+                renderCart();
+                return;
+            }
+
             // Kiểm tra giới hạn 1 lần sử dụng cho mỗi khách hàng (Thành viên)
-            if (auth.currentUser) {
-                const qUsed = query(
+            const qUsed = query(
                     collection(db, "orders"), 
                     where("userId", "==", auth.currentUser.uid), 
                     where("couponCode", "==", code), 
@@ -560,7 +567,6 @@ window.applyCoupon = async () => {
                     renderCart();
                     return;
                 }
-            }
 
             // Kiểm tra giới hạn số lần sử dụng
             if (data.limit > 0 && (data.usedCount || 0) >= data.limit) {

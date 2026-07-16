@@ -1,6 +1,6 @@
 import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, updateSEO, fetchFlashSaleSettings
-} from "./utils.js?v=3";
+} from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore 
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";

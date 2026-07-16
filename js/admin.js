@@ -1598,7 +1598,7 @@ window.uploadComboVariantImage = async function(input) {
     if (!file) return;
 
     try {
-        const storageRef = ref(storage, `combo_variants/${Date.now()}_${file.name}`);
+        const storageRef = ref(storage, `products/combo_variants/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         

@@ -1018,7 +1018,7 @@
                                     <div style="display: flex; gap: 5px;">
                                         <input type="text" id="combo-variant-image" placeholder="URL ảnh..." oninput="window.updateCurrentComboVariantImage(this.value)">
                                         <button type="button" class="btn-outline" onclick="document.getElementById('combo-variant-image-file').click()" style="margin: 0; padding: 0 10px;" title="Tải ảnh lên">
-                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                                         </button>
                                         <input type="file" id="combo-variant-image-file" style="display: none;" accept="image/*" onchange="window.uploadComboVariantImage(this)">
                                     </div>
@@ -1185,6 +1185,6 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/admin.js?v=4"></script>
+    <script type="module" src="../js/admin.js?v=5"></script>
 </body>
 </html>

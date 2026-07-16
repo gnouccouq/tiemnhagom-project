@@ -25,7 +25,7 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
         // Cho phép cập nhật tồn kho, số lượng bán và các mảng biến thể
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold', 'colorVariants', 'patternVariants']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sold', 'colorVariants', 'patternVariants', 'comboVariants', 'comboItems']) &&
         // Kiểm tra tính hợp lệ của dữ liệu số
         request.resource.data.stock is int &&
         request.resource.data.sold is int &&

@@ -319,6 +319,19 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                     }
                 });
             }
+
+            // Render independent combo variants
+            if (p.comboVariants && Array.isArray(p.comboVariants)) {
+                p.comboVariants.forEach(v => {
+                    if (v.showOnProductPage) {
+                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
+                            type: 'combo',
+                            name: v.name,
+                            imageUrl: v.imageUrl || v.thumbUrl
+                        });
+                    }
+                });
+            }
             
             return cardsHtml;
         }).join('');

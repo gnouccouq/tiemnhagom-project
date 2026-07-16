@@ -1,7 +1,7 @@
 // js/main.js
 import { 
     db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, initAutocomplete 
-} from "./utils.js?v=5";
+} from "./utils.js";
 import { collection, getDocs, doc, getDoc, query, where, setDoc, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Hàm toggle yêu thích
