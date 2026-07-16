@@ -9,7 +9,7 @@
 
 html {
     font-size: 110%;
-    /* TÃ„Æ’ng toÃƒÂ n bÃ¡Â»â„¢ cÃ¡Â»Â¡ chÃ¡Â»Â¯ trÃƒÂªn trang web lÃƒÂªn khoÃ¡ÂºÂ£ng 10% */
+    /* Tăng toàn bộ cỡ chữ trên trang web lên khoảng 10% */
     scroll-behavior: smooth;
 }
 
@@ -447,10 +447,9 @@ body {
 .nav-links a {
     text-decoration: none;
     color: var(--text-black);
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 1.5px;
-    font-weight: 300;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    font-weight: 600;
     position: relative;
     transition: opacity 0.3s ease;
 }
