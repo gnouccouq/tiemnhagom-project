@@ -75,6 +75,17 @@ html {
     /* NgÃ„Æ’n chÃ¡ÂºÂ·n cuÃ¡Â»â„¢n ngang do hiÃ¡Â»â€¡u Ã¡Â»Â©ng slide-in trÃƒÂªn toÃƒÂ n bÃ¡Â»â„¢ trang */
 }
 
+@keyframes pageFadeIn {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
 body {
     background-color: var(--bg-cream);
     color: var(--text-black);
@@ -82,6 +93,10 @@ body {
     font-weight: 600;
     line-height: 1.6;
     padding-top: 80px;
+}
+
+body > *:not(#header-placeholder) {
+    animation: pageFadeIn 0.8s ease-out forwards;
 }
 
 /* ==========================================================================
