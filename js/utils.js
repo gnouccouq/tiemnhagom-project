@@ -848,6 +848,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         if (onAuthChangeCallback) onAuthChangeCallback(user);
 
         const authSection = document.getElementById('auth-section');
+        const loginPath = pathPrefix === './' ? 'login/' : `${pathPrefix}login/`;
         if (!authSection) return;
 
         if (user) {
@@ -909,6 +910,65 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             `;
             document.getElementById('btn-logout-header').onclick = () => logout().then(() => window.location.href = `${pathPrefix}index.html`);
 
+            // ===== Cập nhật Mobile Bottom Nav Dropdown =====
+            const bottomAuthBtn = document.getElementById('bottom-auth-btn');
+            const bottomAuthMenu = document.getElementById('bottom-auth-menu');
+            if (bottomAuthBtn && bottomAuthMenu) {
+                // Đổi thành link # để kích hoạt dropdown
+                bottomAuthBtn.href = "#";
+                
+                bottomAuthMenu.innerHTML = `
+                    <li class="dropdown-user-info" style="padding: 10px 20px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
+                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-black);">${displayName}</div>
+                    </li>
+                    <li><a href="${profilePath}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Trang cá nhân
+                    </a></li>
+                    <li><a href="${profilePath}#favs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        Danh sách yêu thích
+                    </a></li>
+                    <li><a href="${profilePath}#orders">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        Lịch sử đơn hàng
+                    </a></li>
+                    <li><a href="${membershipPath}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                        Gốm Membership
+                    </a></li>
+                    <li id="mobile-admin-link-placeholder"></li>
+                    <li><hr style="margin: 5px 0;"></li>
+                    <li><button id="btn-logout-bottom" class="btn-minimal" style="width: 100%; text-align: left; padding: 10px 20px; display: flex; align-items: center; color: var(--text-black);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Đăng xuất
+                    </button></li>
+                `;
+                
+                document.getElementById('btn-logout-bottom').onclick = () => logout().then(() => window.location.href = `${pathPrefix}index.html`);
+                
+                // Click để toggle dropdown
+                bottomAuthBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (bottomAuthMenu.style.display === 'block') {
+                        bottomAuthMenu.style.display = 'none';
+                        bottomAuthBtn.classList.remove('active');
+                    } else {
+                        bottomAuthMenu.style.display = 'block';
+                        bottomAuthBtn.classList.add('active');
+                    }
+                });
+                
+                // Click ra ngoài để đóng
+                document.addEventListener('click', (e) => {
+                    if (!bottomAuthBtn.contains(e.target) && !bottomAuthMenu.contains(e.target)) {
+                        bottomAuthMenu.style.display = 'none';
+                        bottomAuthBtn.classList.remove('active');
+                    }
+                });
+            }
+            // ===============================================
+
             // CHẠY NGẦM: Kiểm tra quyền Admin và các xử lý dữ liệu nặng
             (async () => {
                 try {
@@ -925,6 +985,15 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                                 Trang quản trị
                             </a>`;
+                            
+                        const mobileAdminPlaceholder = document.getElementById('mobile-admin-link-placeholder');
+                        if (mobileAdminPlaceholder) {
+                            mobileAdminPlaceholder.innerHTML = `
+                            <a href="${adminPath}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                Trang quản trị
+                            </a>`;
+                        }
                     }
 
                     // Xử lý kết quả kiểm tra bảo trì cho user đã đăng nhập
