@@ -928,17 +928,26 @@ window.placeOrder = async () => {
             }
 
             // Gửi email xác nhận đơn hàng
-            const productListContent = transactionResult.items.map(item => 
-                `- ${item.name} (Mã: ${item.id}): ${new Intl.NumberFormat('vi-VN').format(item.price)}đ x ${item.quantity}`
-            ).join('\n');
+            const ordersForEmail = transactionResult.items.map(item => ({
+                image_url: item.image || 'https://via.placeholder.com/64',
+                name: item.name,
+                units: item.quantity,
+                price: new Intl.NumberFormat('vi-VN').format(item.price)
+            }));
 
             sendEmailNotification('order', {
                 to_email: email || (auth.currentUser ? auth.currentUser.email : ''),
                 customer_name: name,
+                customer_phone: formattedPhone,
                 order_id: orderId,
-                total_amount: new Intl.NumberFormat('vi-VN').format(finalTotal) + 'đ',
-                shipping_fee: new Intl.NumberFormat('vi-VN').format(shippingFee) + 'đ',
-                product_list: productListContent,
+                total_amount: new Intl.NumberFormat('vi-VN').format(finalTotal),
+                'cost.shipping': new Intl.NumberFormat('vi-VN').format(shippingFee),
+                discount_amount: discountAmount > 0 ? new Intl.NumberFormat('vi-VN').format(discountAmount) : '0',
+                coupon_code: appliedCoupon ? appliedCoupon.code : 'Không có',
+                membership_discount: membershipDiscountVal > 0 ? new Intl.NumberFormat('vi-VN').format(membershipDiscountVal) : '0',
+                payment_method: paymentMethod || "Thanh toán khi nhận hàng (COD)",
+                note: note || "Không có ghi chú",
+                orders: ordersForEmail,
                 shipping_address: `${address}, ${wardName}, ${provinceName}`
             });
 
