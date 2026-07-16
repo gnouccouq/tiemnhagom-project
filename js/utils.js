@@ -1207,9 +1207,18 @@ export async function loadSharedComponents(pathPrefix = './') {
                     option.addEventListener('click', (e) => {
                         e.preventDefault();
                         const nextLang = option.getAttribute('data-lang');
-                        // Thay đổi cookie của Google Translate
-                        document.cookie = `googtrans=/vi/${nextLang}; path=/`;
-                        document.cookie = `googtrans=/vi/${nextLang}; domain=${window.location.hostname}; path=/`;
+                        
+                        if (nextLang === 'vi') {
+                            // Trở về ngôn ngữ gốc: Xóa cookie googtrans
+                            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${window.location.hostname}; path=/;`;
+                            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=.${window.location.hostname}; path=/;`;
+                        } else {
+                            // Chuyển sang tiếng Anh: Đặt cookie googtrans
+                            document.cookie = `googtrans=/vi/${nextLang}; path=/`;
+                            document.cookie = `googtrans=/vi/${nextLang}; domain=${window.location.hostname}; path=/`;
+                            document.cookie = `googtrans=/vi/${nextLang}; domain=.${window.location.hostname}; path=/`;
+                        }
                         location.reload(); // Tải lại trang để áp dụng ngôn ngữ mới
                     });
                 });
