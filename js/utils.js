@@ -1250,7 +1250,10 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="buying-guide\.html"/g, `href="${pathPrefix}buying-guide.html"`)
                 .replace(/href="payment-policy\.html"/g, `href="${pathPrefix}payment-policy.html"`)
                 .replace(/href="shipping-policy\.html"/g, `href="${pathPrefix}shipping-policy.html"`)
-                .replace(/href="return-refund-policy\.html"/g, `href="${pathPrefix}return-refund-policy.html"`);
+                .replace(/href="return-refund-policy\.html"/g, `href="${pathPrefix}return-refund-policy.html"`)
+                .replace(/href="chinh-sach-gia\.html"/g, `href="${pathPrefix}chinh-sach-gia.html"`)
+                .replace(/href="giai-quyet-khieu-nai\.html"/g, `href="${pathPrefix}giai-quyet-khieu-nai.html"`)
+                .replace(/href="ho-tro-truc-tuyen\.html"/g, `href="${pathPrefix}ho-tro-truc-tuyen.html"`);
         };
 
         if (h.ok) {
