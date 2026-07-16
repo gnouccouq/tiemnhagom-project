@@ -1175,6 +1175,11 @@ export async function loadSharedComponents(pathPrefix = './') {
             const headerHTML = fixPaths(await h.text());
             document.getElementById('header-placeholder').innerHTML = headerHTML;
             const prefix = pathPrefix === './' ? '' : pathPrefix;
+            
+            // Khởi tạo lại các event listener cho giỏ hàng sau khi load header
+            if (typeof initDrawerCart === 'function') {
+                initDrawerCart();
+            }
 
             // Tự động thêm class active cho link đang mở
             const currentPath = window.location.pathname;

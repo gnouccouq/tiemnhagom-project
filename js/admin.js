@@ -1552,11 +1552,14 @@ window.renderComboVariantsTabs = function() {
     const imageInput = document.getElementById('combo-variant-image');
     if (imageInput) imageInput.value = currentVariant.imageUrl || '';
 
+    const showOnCardCheckbox = document.getElementById('combo-variant-show-independent');
+    if (showOnCardCheckbox) showOnCardCheckbox.checked = currentVariant.showOnProductPage || false;
+
     window.renderComboItems();
 };
 
 window.addComboVariant = function() {
-    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [] });
+    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], showOnProductPage: false });
     window.currentComboVariantIndex = window.comboVariants.length - 1;
     window.renderComboVariantsTabs();
 };
@@ -1581,6 +1584,12 @@ window.updateCurrentComboVariantName = function(name) {
 window.updateCurrentComboVariantImage = function(url) {
     if (window.comboVariants[window.currentComboVariantIndex]) {
         window.comboVariants[window.currentComboVariantIndex].imageUrl = url;
+    }
+};
+
+window.updateCurrentComboVariantShowOnCard = function(checked) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].showOnProductPage = checked;
     }
 };
 

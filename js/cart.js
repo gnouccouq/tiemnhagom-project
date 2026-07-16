@@ -940,8 +940,10 @@ window.placeOrder = async () => {
                 customer_name: name,
                 customer_phone: formattedPhone,
                 order_id: orderId,
+                subtotal_amount: new Intl.NumberFormat('vi-VN').format(total),
+                shipping_fee: new Intl.NumberFormat('vi-VN').format(shippingFee),
                 total_amount: new Intl.NumberFormat('vi-VN').format(finalTotal),
-                'cost.shipping': new Intl.NumberFormat('vi-VN').format(shippingFee),
+                'cost.shipping': new Intl.NumberFormat('vi-VN').format(shippingFee), // Giữ lại để tránh lỗi template cũ
                 discount_amount: discountAmount > 0 ? new Intl.NumberFormat('vi-VN').format(discountAmount) : '0',
                 coupon_code: appliedCoupon ? appliedCoupon.code : 'Không có',
                 membership_discount: membershipDiscountVal > 0 ? new Intl.NumberFormat('vi-VN').format(membershipDiscountVal) : '0',

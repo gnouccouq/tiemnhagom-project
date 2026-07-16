@@ -1023,6 +1023,10 @@
                                         <input type="file" id="combo-variant-image-file" style="display: none;" accept="image/*" onchange="window.uploadComboVariantImage(this)">
                                     </div>
                                 </div>
+                                <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+                                    <input type="checkbox" id="combo-variant-show-independent" onchange="window.updateCurrentComboVariantShowOnCard(this.checked)" style="cursor: pointer;">
+                                    <label for="combo-variant-show-independent" style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+                                </div>
                                 <button type="button" class="btn-outline" style="margin-bottom: 0; border-color: #e74c3c; color: #e74c3c;" onclick="window.removeCurrentComboVariant()">Xóa</button>
                             </div>
 
