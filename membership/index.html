@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -9,10 +9,16 @@
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        .membership-hero {
-            height: 400px;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1520408222757-6f9f95d87d5d?q=80&w=1600') center/cover;
-            display: flex; align-items: center; justify-content: center; text-align: center; color: #fff;
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 300px;
+            margin-top: -80px;
+            margin-bottom: 2rem;
+            display: flex; align-items: center; justify-content: center; text-align: center; position: relative;
         }
         .tier-showcase {
             display: flex;
@@ -82,10 +88,11 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <section class="membership-hero">
-            <div class="reveal-on-scroll">
-                <h1 style="font-size: 3.5rem; margin-bottom: 15px; color: #fff;">Gốm-Membership</h1>
-                <p style="font-size: 1.2rem; opacity: 0.9;">Gắn kết đam mê - Nhận ngàn đặc quyền</p>
+        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1520408222757-6f9f95d87d5d?q=80&w=1600');">
+            <div class="reveal-on-scroll" style="z-index: 10;">
+                <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; margin-bottom: 5px;">gốm-membership</h1>
+                <p style="color: #fff; font-size: 0.9rem; letter-spacing: 0.5px; opacity: 0.9;">Gắn kết đam mê - Nhận ngàn đặc quyền</p>
             </div>
         </section>
 
