@@ -7773,3 +7773,9 @@ footer {
         width: 100%;
     }
 }
+
+/* Hide Google Translate Toolbar */
+.goog-te-banner-frame.skiptranslate { display: none !important; }
+body { top: 0px !important; }
+#goog-gt-tt { display: none !important; }
+

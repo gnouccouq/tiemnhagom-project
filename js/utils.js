@@ -1181,18 +1181,38 @@ export async function loadSharedComponents(pathPrefix = './') {
                 initDrawerCart();
             }
 
-            // Khởi tạo GTranslate (Dịch tự động)
-            if (!window.gtranslateSettings) {
-                window.gtranslateSettings = {
-                    "default_language": "vi",
-                    "languages": ["vi", "en"],
-                    "wrapper_selector": ".gtranslate_wrapper",
-                    "flag_size": 16
+            // Khởi tạo Google Translate và nút đổi ngôn ngữ
+            if (!window.googleTranslateElementInit) {
+                window.googleTranslateElementInit = function() {
+                    new google.translate.TranslateElement({pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false}, 'google_translate_element');
                 };
                 const gtScript = document.createElement('script');
-                gtScript.src = "https://cdn.gtranslate.net/widgets/latest/dropdown.js";
-                gtScript.defer = true;
+                gtScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
                 document.head.appendChild(gtScript);
+            }
+
+            // Logic nút Toggle Ngôn ngữ
+            const langText = document.getElementById('custom-lang-text');
+            const langOptions = document.querySelectorAll('.lang-option');
+            if (langText) {
+                // Kiểm tra cookie xem đang ở ngôn ngữ nào
+                const match = document.cookie.match(/(^|;) ?googtrans=([^;]*)(;|$)/);
+                let currentLang = 'vi';
+                if (match && match[2] && match[2].includes('/en')) {
+                    currentLang = 'en';
+                }
+                langText.innerText = currentLang === 'en' ? 'EN' : 'VI';
+
+                langOptions.forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const nextLang = option.getAttribute('data-lang');
+                        // Thay đổi cookie của Google Translate
+                        document.cookie = `googtrans=/vi/${nextLang}; path=/`;
+                        document.cookie = `googtrans=/vi/${nextLang}; domain=${window.location.hostname}; path=/`;
+                        location.reload(); // Tải lại trang để áp dụng ngôn ngữ mới
+                    });
+                });
             }
 
             // Tự động thêm class active cho link đang mở
