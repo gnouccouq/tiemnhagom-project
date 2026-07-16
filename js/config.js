@@ -1,4 +1,4 @@
-﻿// js/config.js
+// js/config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager
@@ -38,18 +38,21 @@ if (app) {
     // Nhận diện trình duyệt trong ứng dụng (Zalo, Facebook, Instagram...)
     const isInAppBrowser = /Zalo|FBAN|FBAV|Instagram|Messenger|Line|TikTok/i.test(navigator.userAgent);
     
+    // Nhận diện Safari hoặc iOS để tối ưu Firestore (lỗi WebSocket và IndexedDB lock)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
     try {
-        if (isInAppBrowser) {
-            // Trình duyệt nhúng thường bị lỗi với IndexedDB và WebSockets
+        if (isInAppBrowser || isIOS || isSafari) {
+            // Safari/iOS thường bị treo WebSocket 10s trước khi fallback, nên bắt buộc dùng LongPolling.
+            // Đồng thời bỏ MultipleTabManager để tránh lỗi treo do IndexedDB lock.
             dbInstance = initializeFirestore(app, {
                 experimentalForceLongPolling: true,
                 ignoreUndefinedProperties: true
-                // Bỏ qua persistentLocalCache để dùng memory mặc định tránh lỗi
             });
         } else {
             dbInstance = initializeFirestore(app, {
                 localCache: persistentLocalCache({
-                    // Dùng MultipleTab để hỗ trợ mở nhiều tab cùng lúc mà không bị lỗi Failed precondition
                     tabManager: persistentMultipleTabManager()
                 }),
                 ignoreUndefinedProperties: true

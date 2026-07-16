@@ -1,4 +1,4 @@
-import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js?v=2';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
