@@ -3786,9 +3786,9 @@ window.addToPOSCart = async (id, name, price, image, category = 'khac', color = 
     // Fetch cost if available
     let cost = 0;
     try {
-        const docRef = window.doc ? window.doc(window.db, "products", id) : null;
-        if (docRef && window.getDoc) {
-            const snap = await window.getDoc(docRef);
+        const docRef = doc ? doc(db, "products", id) : null;
+        if (docRef && getDoc) {
+            const snap = await getDoc(docRef);
             if (snap.exists()) {
                 const data = snap.data();
                 cost = data.cost || 0;
@@ -3823,14 +3823,14 @@ window.searchCustomerPOS = async () => {
     if (suggestions) suggestions.innerHTML = '<div class="suggestion-item">Đang tìm...</div>';
     
     try {
-        if (window.collection && window.query && window.where && window.getDocs) {
-            const usersRef = window.collection(window.db, "users");
-            const qPhone = window.query(usersRef, window.where("phone", "==", q));
-            let snap = await window.getDocs(qPhone);
+        if (collection && query && where && getDocs) {
+            const usersRef = collection(db, "users");
+            const qPhone = query(usersRef, where("phone", "==", q));
+            let snap = await getDocs(qPhone);
             
             if (snap.empty) {
-                const qName = window.query(usersRef, window.where("displayName", ">=", q), window.where("displayName", "<=", q + "\uf8ff"));
-                snap = await window.getDocs(qName);
+                const qName = query(usersRef, where("displayName", ">=", q), where("displayName", "<=", q + "\uf8ff"));
+                snap = await getDocs(qName);
             }
             
             if (!snap.empty) {
@@ -3911,13 +3911,14 @@ window.createPOSOrder = async () => {
         const orderData = {
             orderId: orderId,
             userId: customerId,
-            customerInfo: { fullName: customerName, phone: customerPhone },
+            shippingAddress: { fullName: customerName, phone: customerPhone },
             productNames: bill.cart.map(i => i.name),
             items: bill.cart,
             totalAmount: total,
             subtotal: subtotal,
             discount: discountVal,
             status: "Đã hoàn thành",
+            orderDate: serverTimestamp ? serverTimestamp() : new Date(),
             createdAt: serverTimestamp ? serverTimestamp() : new Date(),
             paymentMethod: paymentMethod,
             paymentStatus: "Đã thanh toán",
