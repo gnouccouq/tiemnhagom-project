@@ -3906,7 +3906,7 @@ window.createPOSOrder = async () => {
         }
 
         const subtotal = bill.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        const orderRef = window.doc ? window.doc(window.db, "orders", orderId) : null;
+        const orderRef = doc ? doc(db, "orders", orderId) : null;
         
         const orderData = {
             orderId: orderId,
@@ -3918,23 +3918,23 @@ window.createPOSOrder = async () => {
             subtotal: subtotal,
             discount: discountVal,
             status: "Đã hoàn thành",
-            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date(),
+            createdAt: serverTimestamp ? serverTimestamp() : new Date(),
             paymentMethod: paymentMethod,
             paymentStatus: "Đã thanh toán",
             source: 'pos'
         };
 
-        if (window.setDoc) {
-            await window.setDoc(orderRef, orderData);
+        if (setDoc) {
+            await setDoc(orderRef, orderData);
             
             // Update inventory
             const updatePromises = bill.cart.map(async (item) => {
-                const productRef = window.doc(window.db, "products", item.id);
-                const pSnap = await window.getDoc(productRef);
+                const productRef = doc(db, "products", item.id);
+                const pSnap = await getDoc(productRef);
                 if (!pSnap.exists()) return;
                 
                 const pData = pSnap.data();
-                const updateData = { stock: window.increment(-item.quantity) };
+                const updateData = { stock: increment(-item.quantity) };
                 
                 // Color variant inventory
                 if (item.color && pData.colorVariants) {
@@ -3956,7 +3956,7 @@ window.createPOSOrder = async () => {
                     });
                     updateData.patternVariants = updatedVariants;
                 }
-                return window.updateDoc(productRef, updateData);
+                return updateDoc(productRef, updateData);
             });
             await Promise.all(updatePromises);
         }
@@ -5057,16 +5057,16 @@ window.posSaveNewCustomer = async () => {
             address: address,
             identifiers: [phone, name.toLowerCase(), email],
             role: 'user',
-            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date()
+            createdAt: serverTimestamp ? serverTimestamp() : new Date()
         };
 
-        if (window.setDoc && window.doc && window.db) {
-            await window.setDoc(window.doc(window.db, "users", newCustId), userData);
+        if (setDoc && doc && db) {
+            await setDoc(doc(db, "users", newCustId), userData);
         }
 
         // Add to local array if it exists
-        if (window.posUsersLocal) {
-            window.posUsersLocal.push(userData);
+        if (typeof posUsersLocal !== 'undefined') {
+            posUsersLocal.push(userData);
         }
 
         if (typeof showToast !== 'undefined') showToast("Thêm khách hàng thành công");
