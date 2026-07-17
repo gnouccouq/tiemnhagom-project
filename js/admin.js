@@ -141,6 +141,10 @@ function setupAdminTabs() {
             if (targetId === 'flash-sale-settings-section') {
                 initFlashSaleSettings();
             }
+
+            if (targetId === 'pos-section') {
+                if (typeof window.initPOSBills === 'function') window.initPOSBills();
+            }
         });
     });
 
@@ -3399,501 +3403,591 @@ window.viewUserOrders = (userId) => {
     }
 };
 
-// --- Logic POS (Bán tại shop) ---
-let posCart = [];
-window.currentPOSCustomerId = null;
-let posMembershipDiscountPercent = 0; // Tỷ lệ giảm giá theo hạng thành viên
-let posDiscountPercent = 0; // Biến lưu tỷ lệ chiết khấu
+// --- Logic POS (Bán tại shop) Redesign ---
+window.posBills = [];
+window.currentBillId = null;
 
-function renderPOSCart() {
-    const list = document.getElementById('pos-cart-list');
-    const totalInput = document.getElementById('pos-total-amount');
-    const discountInfo = document.getElementById('pos-discount-info');
-    if (!list) return;
-
-    if (posCart.length === 0) {
-        list.innerHTML = '<p style="color: #999; font-size: 0.9rem; text-align: center; margin-top: 2rem;">Chưa có sản phẩm nào được chọn.</p>';
-        if (totalInput) totalInput.value = "0";
-        if (discountInfo) discountInfo.style.display = 'none';
-        posDiscountPercent = 0;
-        return;
-    }
-
-    let subtotal = 0;
-    list.innerHTML = posCart.map((item, index) => {
-        let itemDiscount = 0;
-        if (item.discountInput) {
-            let discStr = String(item.discountInput).trim();
-            if (discStr.endsWith('%')) {
-                let p = parseFloat(discStr.replace('%', ''));
-                if (!isNaN(p)) itemDiscount = Math.round(((item.price * item.quantity) * (p / 100)));
-            } else {
-                let val = parseFloat(discStr.replace(/,/g, ''));
-                if (!isNaN(val)) itemDiscount = val;
+window.initPOSBills = () => {
+    const saved = localStorage.getItem('posBills');
+    if (saved) {
+        try {
+            window.posBills = JSON.parse(saved);
+            if (window.posBills.length > 0) {
+                window.currentBillId = window.posBills[0].id;
             }
-        }
-        itemDiscount = Math.min(itemDiscount, item.price * item.quantity); // Không giảm quá tổng tiền
-        const lineTotal = (item.price * item.quantity) - itemDiscount;
-        subtotal += lineTotal;
-
-        let itemDiscountHtml = '';
-        if (itemDiscount > 0) {
-            itemDiscountHtml = `<div style="font-size: 0.75rem; color: #27ae60;">Giảm: -${new Intl.NumberFormat('vi-VN').format(itemDiscount)}đ</div>`;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f5f5f5;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="${item.image}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
-                        <div style="font-size: 0.8rem; color: #666;">${new Intl.NumberFormat('vi-VN').format(item.price)} VND</div>
-                        ${itemDiscountHtml}
-                    </div>
-                    <div class="quantity-controls" style="height: 30px;">
-                        <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, -1)">-</button>
-                        <input type="number" value="${item.quantity}" readonly style="width: 30px; height: 30px; border-left: 1px solid #ddd; border-right: 1px solid #ddd; padding: 0;">
-                        <button class="q-btn" style="width: 30px; height: 30px;" onclick="window.changePOSQty(${index}, 1)">+</button>
-                    </div>
-                    <button onclick="window.removePOSItem(${index})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem;">&times;</button>
-                </div>
-                <div style="display: flex; align-items: center; margin-top: 5px;">
-                    <div style="position: relative; width: 100%;">
-                        <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: #888;">⬇️</span>
-                        <input type="text" placeholder="Giảm giá (VD: 10% hoặc 50000)" value="${item.discountInput || ''}" onchange="window.updatePOSItemDiscount(${index}, this.value)" style="width: 100%; padding: 8px 10px 8px 30px; font-size: 0.85rem; border: 1px solid #ddd; border-radius: 6px; outline: none; transition: 0.3s; background: #fff;" onfocus="this.style.borderColor='#3498db'; this.style.boxShadow='0 0 0 2px rgba(52,152,219,0.1)'" onblur="this.style.borderColor='#ddd'; this.style.boxShadow='none'">
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    // Áp dụng mức chiết khấu cao nhất giữa hạng thành viên và giảm giá tay (trên phần tiền còn lại)
-    const effectiveDiscount = Math.max(posDiscountPercent, posMembershipDiscountPercent);
-    const discountVal = Math.round((subtotal * (effectiveDiscount / 100)));
-    const total = subtotal - discountVal;
-
-    if (totalInput) {
-        totalInput.value = new Intl.NumberFormat('vi-VN').format(total);
-        totalInput.dataset.val = total; // Lưu lại giá trị raw để tính tiền thừa
-    }
-    
-    if (discountInfo) {
-        if (effectiveDiscount > 0) {
-            let label = `Đã chiết khấu ${effectiveDiscount}%`;
-            if (posMembershipDiscountPercent > 0 && posMembershipDiscountPercent >= posDiscountPercent) {
-                label = `Ưu đãi thành viên ${posMembershipDiscountPercent}%`;
-            }
-            discountInfo.innerText = `${label} (-${new Intl.NumberFormat('vi-VN').format(discountVal)} VND)`;
-            discountInfo.style.display = 'block';
-        } else {
-            discountInfo.style.display = 'none';
+        } catch(e) {
+            window.posBills = [];
         }
     }
-
-    if (typeof window.calculatePOSChange === 'function') {
-        window.calculatePOSChange();
+    if (window.posBills.length === 0) {
+        window.posCreateNewBill();
+    } else {
+        renderPOSTabs();
+        renderPOSCart();
     }
+};
+
+window.savePOSBills = () => {
+    localStorage.setItem('posBills', JSON.stringify(window.posBills));
+};
+
+window.getCurrentBill = () => {
+    return window.posBills.find(b => b.id === window.currentBillId);
+};
+
+window.posCreateNewBill = () => {
+    const newId = 'bill_' + Date.now();
+    const count = window.posBills.length + 1;
+    window.posBills.push({
+        id: newId,
+        name: 'Hóa đơn ' + count,
+        cart: [],
+        customerId: null,
+        customerName: '',
+        customerPhone: '',
+        discountVal: 0, // Giá trị discount tổng (VND)
+        paymentMethod: 'Tiền mặt',
+        cashGiven: ''
+    });
+    window.currentBillId = newId;
+    window.savePOSBills();
+    renderPOSTabs();
+    renderPOSCart();
+};
+
+window.posSwitchBill = (id) => {
+    window.currentBillId = id;
+    renderPOSTabs();
+    renderPOSCart();
+};
+
+window.posCloseBill = (id, event) => {
+    if (event) event.stopPropagation();
+    window.posBills = window.posBills.filter(b => b.id !== id);
+    if (window.posBills.length === 0) {
+        window.posCreateNewBill();
+    } else if (window.currentBillId === id) {
+        window.currentBillId = window.posBills[0].id;
+    }
+    window.savePOSBills();
+    renderPOSTabs();
+    renderPOSCart();
+};
+
+window.posClearCustomer = () => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        bill.customerId = null;
+        bill.customerName = '';
+        bill.customerPhone = '';
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
+
+function renderPOSTabs() {
+    const container = document.getElementById('pos-tabs-list');
+    if (!container) return;
+    container.innerHTML = window.posBills.map(bill => `
+        <button class="pos-tab ${bill.id === window.currentBillId ? 'active' : ''}" onclick="window.posSwitchBill('${bill.id}')">
+            ${bill.name}
+            <span class="close-btn" onclick="window.posCloseBill('${bill.id}', event)">&times;</span>
+        </button>
+    `).join('');
 }
 
-window.updatePOSItemDiscount = (index, val) => {
-    if (posCart[index]) {
-        posCart[index].discountInput = val;
+function renderPOSCart() {
+    const bill = window.getCurrentBill();
+    if (!bill) return;
+
+    // Render cart items
+    const list = document.getElementById('pos-cart-list');
+    if (list) {
+        if (bill.cart.length === 0) {
+            list.innerHTML = '<p style="color: #999; font-size: 0.9rem; text-align: center; margin-top: 2rem;">Chưa có sản phẩm nào được chọn.</p>';
+        } else {
+            list.innerHTML = bill.cart.map((item, index) => {
+                const lineTotal = (item.price - (item.discount || 0)) * item.quantity;
+                const origPriceText = new Intl.NumberFormat('vi-VN').format(item.price);
+                const isDiscounted = item.discount > 0;
+                
+                return `
+                <div class="pos-item-row">
+                    <div class="pos-item-idx">${index + 1}</div>
+                    <button class="pos-item-del" onclick="window.removePOSItem(${index})"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <div class="pos-item-sku">${item.id}</div>
+                    <div class="pos-item-name">${item.name} ${item.color ? `(${item.color})` : ''}</div>
+                    <div class="pos-item-qty">
+                        <input type="number" value="${item.quantity}" min="1" onchange="window.changePOSQtyInput(${index}, this.value)" style="width: 100%; border: none; text-align: center; outline: none;">
+                    </div>
+                    <div class="pos-item-price" onclick="window.posShowDiscountPopover(${index}, this, event)">
+                        ${isDiscounted ? `<span style="text-decoration: line-through; color: #999; font-size: 0.8rem; display: block;">${origPriceText}</span>` : ''}
+                        <span>${new Intl.NumberFormat('vi-VN').format(item.price - (item.discount || 0))}</span>
+                    </div>
+                    <div class="pos-item-total">${new Intl.NumberFormat('vi-VN').format(lineTotal)}</div>
+                    <div><button class="pos-icon-btn" style="color: #666; padding: 0;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // Render customer info
+    const custSearchBox = document.querySelector('.pos-customer-search-box');
+    const custSelected = document.getElementById('pos-selected-customer');
+    if (custSearchBox && custSelected) {
+        if (bill.customerId) {
+            custSearchBox.style.display = 'none';
+            custSelected.style.display = 'flex';
+            document.getElementById('pos-cust-name-display').innerText = bill.customerName;
+            document.getElementById('pos-cust-phone-display').innerText = bill.customerPhone;
+        } else {
+            custSearchBox.style.display = 'flex';
+            custSelected.style.display = 'none';
+        }
+    }
+
+    // Render summary
+    const subtotal = bill.cart.reduce((sum, i) => sum + ((i.price - (i.discount || 0)) * i.quantity), 0);
+    const totalQty = bill.cart.reduce((sum, i) => sum + i.quantity, 0);
+    const discountVal = bill.discountVal || 0;
+    const finalTotal = Math.max(0, subtotal - discountVal);
+
+    document.getElementById('pos-total-qty').innerText = `(${totalQty})`;
+    document.getElementById('pos-subtotal').innerText = new Intl.NumberFormat('vi-VN').format(subtotal);
+    document.getElementById('pos-bill-discount-input').value = discountVal > 0 ? new Intl.NumberFormat('vi-VN').format(discountVal) : '';
+    
+    const totalEl = document.getElementById('pos-total-amount');
+    if (totalEl) {
+        totalEl.innerText = new Intl.NumberFormat('vi-VN').format(finalTotal);
+        totalEl.dataset.val = finalTotal;
+    }
+
+    // Payment methods
+    document.querySelectorAll('input[name="pos-payment"]').forEach(r => {
+        r.checked = (r.value === bill.paymentMethod);
+    });
+
+    const cashGivenInput = document.getElementById('pos-cash-given');
+    if (cashGivenInput) {
+        cashGivenInput.value = bill.cashGiven ? new Intl.NumberFormat('vi-VN').format(bill.cashGiven) : '';
+    }
+
+    window.togglePOSCashSection();
+}
+
+window.changePOSQtyInput = (index, value) => {
+    const bill = window.getCurrentBill();
+    if (bill && bill.cart[index]) {
+        let val = parseInt(value, 10);
+        if (isNaN(val) || val < 1) val = 1;
+        bill.cart[index].quantity = val;
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
+
+window.removePOSItem = (index) => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        bill.cart.splice(index, 1);
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
+
+window.updateBillDiscount = (val) => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        let raw = val.replace(/,/g, '').replace(/[^\d]/g, '');
+        bill.discountVal = parseFloat(raw) || 0;
+        window.savePOSBills();
         renderPOSCart();
     }
 };
 
 window.togglePOSCashSection = () => {
-    const cashSection = document.getElementById('pos-cash-section');
-    const isCash = document.querySelector('input[name="pos-payment"]:checked')?.value === 'Tiền mặt';
-    if (cashSection) cashSection.style.display = isCash ? 'block' : 'none';
+    const bill = window.getCurrentBill();
+    if (!bill) return;
+    
+    const fastCash = document.getElementById('pos-fast-cash-container');
+    const returnRow = document.getElementById('pos-return-row');
+    const cashGivenInput = document.getElementById('pos-cash-given');
+    const isCash = (bill.paymentMethod === 'Tiền mặt');
+    
+    if (fastCash) fastCash.style.display = isCash ? 'grid' : 'none';
+    if (cashGivenInput) cashGivenInput.disabled = !isCash;
+    
     if (!isCash) {
-        const cashGiven = document.getElementById('pos-cash-given');
-        const changeAmount = document.getElementById('pos-change-amount');
-        if (cashGiven) cashGiven.value = '';
-        if (changeAmount) changeAmount.value = '';
+        bill.cashGiven = '';
+        if (returnRow) returnRow.style.display = 'none';
+        if (cashGivenInput) cashGivenInput.value = '';
     } else {
         window.calculatePOSChange();
+    }
+
+    // Update state based on radio change
+    const checkedRadio = document.querySelector('input[name="pos-payment"]:checked');
+    if (checkedRadio && checkedRadio.value !== bill.paymentMethod) {
+        bill.paymentMethod = checkedRadio.value;
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
+
+window.posSetCashGiven = (amount) => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        bill.cashGiven = amount;
+        window.savePOSBills();
+        renderPOSCart();
     }
 };
 
 window.calculatePOSChange = (inputElem) => {
+    const bill = window.getCurrentBill();
+    if (!bill) return;
+
     const input = inputElem || document.getElementById('pos-cash-given');
     if (!input) return;
     
-    // Lọc bỏ ký tự không phải số
     let rawValue = input.value.replace(/,/g, '').replace(/[^\d]/g, '');
-    if (rawValue) {
+    if (rawValue && inputElem) {
         input.value = new Intl.NumberFormat('vi-VN').format(rawValue);
-    } else {
+    } else if (!rawValue && inputElem) {
         input.value = '';
     }
     
     const cash = parseFloat(rawValue) || 0;
-    const totalInput = document.getElementById('pos-total-amount');
-    const total = parseFloat(totalInput?.dataset?.val || 0);
+    if (inputElem) {
+        bill.cashGiven = cash;
+        window.savePOSBills();
+    }
     
+    const total = parseFloat(document.getElementById('pos-total-amount')?.dataset?.val || 0);
+    const returnRow = document.getElementById('pos-return-row');
     const changeInput = document.getElementById('pos-change-amount');
-    if (changeInput) {
-        if (cash >= total && total > 0) {
-            changeInput.value = new Intl.NumberFormat('vi-VN').format(cash - total);
+    
+    if (changeInput && returnRow) {
+        if (bill.cashGiven >= total && total > 0) {
+            returnRow.style.display = 'flex';
+            changeInput.innerText = new Intl.NumberFormat('vi-VN').format(bill.cashGiven - total);
         } else {
-            changeInput.value = '';
+            returnRow.style.display = 'none';
         }
     }
 };
 
-window.applyQuickDiscount = (percent) => {
-    if (posCart.length === 0) return;
-    // Toggle logic: nhấn lại cùng mức % thì hủy bỏ
-    posDiscountPercent = (posDiscountPercent === percent) ? 0 : percent;
-    renderPOSCart();
+// Popover Logic
+let currentPopoverIndex = -1;
+
+window.posShowDiscountPopover = (index, element, event) => {
+    event.stopPropagation();
+    const bill = window.getCurrentBill();
+    if (!bill || !bill.cart[index]) return;
+    
+    currentPopoverIndex = index;
+    const item = bill.cart[index];
+    
+    let popover = document.getElementById('pos-discount-popover');
+    if (!popover) {
+        popover = document.createElement('div');
+        popover.id = 'pos-discount-popover';
+        popover.className = 'pos-popover';
+        popover.innerHTML = `
+            <div class="pos-popover-row">
+                <label>Đơn giá</label>
+                <span id="pos-popover-price" style="font-weight: 500;">0</span>
+            </div>
+            <div class="pos-popover-row">
+                <label>Giảm giá</label>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="text" id="pos-popover-discount" oninput="window.posUpdatePopoverDiscount(this.value)">
+                    <div class="pos-discount-type">
+                        <button id="pos-type-vnd" class="active" onclick="window.posSetDiscountType('VND')">VND</button>
+                        <button id="pos-type-pct" onclick="window.posSetDiscountType('%')">%</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pos-popover-row">
+                <label>Giá bán</label>
+                <span id="pos-popover-final" style="font-weight: bold; color: #1e88e5;">0</span>
+            </div>
+        `;
+        document.body.appendChild(popover);
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (popover && !popover.contains(e.target)) {
+                popover.style.display = 'none';
+            }
+        });
+    }
+
+    const rect = element.getBoundingClientRect();
+    popover.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+    popover.style.left = (rect.left + window.scrollX - 250 + rect.width) + 'px';
+    popover.style.display = 'block';
+
+    popover.dataset.type = 'VND';
+    document.getElementById('pos-type-vnd').classList.add('active');
+    document.getElementById('pos-type-pct').classList.remove('active');
+
+    document.getElementById('pos-popover-price').innerText = new Intl.NumberFormat('vi-VN').format(item.price);
+    const input = document.getElementById('pos-popover-discount');
+    input.value = item.discount ? new Intl.NumberFormat('vi-VN').format(item.discount) : '';
+    window.posUpdatePopoverDiscount(input.value);
+    input.focus();
 };
 
-window.changePOSQty = (index, delta) => {
-    posCart[index].quantity += delta;
-    if (posCart[index].quantity < 1) posCart[index].quantity = 1;
-    renderPOSCart();
+window.posSetDiscountType = (type) => {
+    const popover = document.getElementById('pos-discount-popover');
+    if (!popover) return;
+    popover.dataset.type = type;
+    document.getElementById('pos-type-vnd').classList.toggle('active', type === 'VND');
+    document.getElementById('pos-type-pct').classList.toggle('active', type === '%');
+    window.posUpdatePopoverDiscount(document.getElementById('pos-popover-discount').value);
 };
 
-window.removePOSItem = (index) => {
-    posCart.splice(index, 1);
-    renderPOSCart();
-};
+window.posUpdatePopoverDiscount = (val) => {
+    if (currentPopoverIndex === -1) return;
+    const bill = window.getCurrentBill();
+    const item = bill.cart[currentPopoverIndex];
+    const popover = document.getElementById('pos-discount-popover');
+    const type = popover.dataset.type;
+    
+    let raw = val.replace(/,/g, '').replace(/[^\d]/g, '');
+    let num = parseFloat(raw) || 0;
+    let finalDiscount = 0;
 
-window.addProductToPOS = (id, name, price, image) => {
-    // Tìm thông tin sản phẩm trong cache local để kiểm tra tồn kho
-    const productInfo = posProductsLocal.find(p => p.id === id);
-    const currentStock = productInfo ? (productInfo.stock || 0) : 0;
-
-    const existing = posCart.find(i => i.id === id);
-    if (existing) {
-        if (existing.quantity >= currentStock) {
-            showToast(`Sản phẩm "${name}" chỉ còn tối đa ${currentStock} trong kho`, "error");
-            return;
-        }
-        existing.quantity++;
+    if (type === '%') {
+        if (num > 100) num = 100;
+        document.getElementById('pos-popover-discount').value = num;
+        finalDiscount = Math.round(item.price * (num / 100));
     } else {
-        if (currentStock <= 0) {
-            showToast("Sản phẩm này đã hết hàng!", "error");
-            return;
-        }
-        posCart.push({ id, name, price, cost: productInfo.cost || 0, image, quantity: 1 });
+        if (num > item.price) num = item.price;
+        document.getElementById('pos-popover-discount').value = num > 0 ? new Intl.NumberFormat('vi-VN').format(num) : '';
+        finalDiscount = num;
     }
-    document.getElementById('pos-product-search').value = '';
-    document.getElementById('pos-product-suggestions').style.display = 'none';
-    renderPOSCart();
+
+    const finalPrice = item.price - finalDiscount;
+    document.getElementById('pos-popover-final').innerText = new Intl.NumberFormat('vi-VN').format(finalPrice);
+    
+    item.discount = finalDiscount;
+    window.savePOSBills();
+    renderPOSCart(); // Re-render cart in background
 };
 
-// Hàm hỗ trợ tính toán giảm giá thành viên POS
-async function updatePOSMembershipDiscount(userId) {
-    if (!userId || userId === 'guest') {
-        posMembershipDiscountPercent = 0;
-        renderPOSCart();
-        return;
-    }
+window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null) => {
+    const bill = window.getCurrentBill();
+    if (!bill) return;
+
+    if (typeof showToast !== 'undefined') showToast(`Đã thêm ${name} vào đơn hàng`);
+
+    // Fetch cost if available
+    let cost = 0;
     try {
-        const q = query(collection(db, "orders"), where("userId", "==", userId), where("status", "==", "Đã hoàn thành"));
-        const snap = await getDocs(q);
-        let totalSpent = 0;
-        snap.forEach(doc => totalSpent += (doc.data().totalAmount || 0));
-        
-        const tier = getMembershipTier(totalSpent);
-        posMembershipDiscountPercent = tier.discount || 0;
-
-        // Hiển thị tên hạng thẻ cạnh trạng thái khách hàng
-        const statusEl = document.getElementById('pos-cust-status');
-        if (statusEl) {
-            statusEl.innerHTML = `✓ Khách hàng hệ thống | <span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; text-transform:none; padding: 2px 8px; border-radius: 20px;">${tier.name}</span>`;
+        const docRef = window.doc ? window.doc(window.db, "products", id) : null;
+        if (docRef && window.getDoc) {
+            const snap = await window.getDoc(docRef);
+            if (snap.exists()) {
+                const data = snap.data();
+                cost = data.cost || 0;
+            }
         }
+    } catch(e) {}
 
-        renderPOSCart();
-    } catch (e) { console.error("Lỗi lấy hạng thành viên POS:", e); }
-}
-
-window.selectCustomerPOS = async (id, name, phone, email) => {
-    document.getElementById('pos-cust-name').value = name || '';
-    document.getElementById('pos-cust-phone').value = phone || '';
-    document.getElementById('pos-cust-email').value = email || '';
-    document.getElementById('pos-cust-status').innerText = "✓ Đã chọn khách hàng từ hệ thống";
-    window.currentPOSCustomerId = id;
-    const suggestions = document.getElementById('pos-customer-suggestions');
-    if (suggestions) suggestions.style.display = 'none';
-    document.getElementById('pos-customer-search').value = name || phone || '';
-    await updatePOSMembershipDiscount(id);
+    const existing = bill.cart.find(i => i.id === id && i.color === color && i.pattern === pattern);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color, pattern, discount: 0 });
+    }
+    
+    window.savePOSBills();
+    renderPOSCart();
+    
+    const searchInput = document.getElementById('pos-product-search');
+    if (searchInput) {
+        searchInput.value = '';
+        const suggestions = document.getElementById('pos-product-suggestions');
+        if (suggestions) suggestions.innerHTML = '';
+        searchInput.focus();
+    }
 };
 
 window.searchCustomerPOS = async () => {
-    const inputVal = document.getElementById('pos-customer-search').value.trim();
-    if (!inputVal) return;
+    const q = document.getElementById('pos-customer-search')?.value.trim();
+    if (!q) return;
     
-    // Chuẩn hóa và tạo cả 2 định dạng (0... và +84...) để tìm kiếm bao phủ hơn
-    const phone0 = formatPhoneNumber(inputVal);
-    const phone84 = phone0.startsWith('0') ? '+84' + phone0.substring(1) : phone0;
-
-    const statusEl = document.getElementById('pos-cust-status');
-    statusEl.innerText = "🔍 Đang tìm kiếm...";
-
-    const q = query(collection(db, "users"), where("identifiers", "array-contains-any", [phone0, phone84]));
-    const snap = await getDocs(q);
+    const suggestions = document.getElementById('pos-customer-suggestions');
+    if (suggestions) suggestions.innerHTML = '<div class="suggestion-item">Đang tìm...</div>';
     
-    if (!snap.empty) {
-        const u = snap.docs[0].data();
-        document.getElementById('pos-cust-name').value = u.displayName || u.name || '';
-        document.getElementById('pos-cust-phone').value = u.phone || u.phoneNumber || inputVal;
-        document.getElementById('pos-cust-email').value = u.email || '';
-        statusEl.innerText = "✓ Đã tìm thấy khách hàng cũ";
-        window.currentPOSCustomerId = snap.docs[0].id;
-        await updatePOSMembershipDiscount(snap.docs[0].id);
-    } else {
-        statusEl.innerText = "! Khách hàng mới (Sẽ tạo tài khoản)";
-        document.getElementById('pos-cust-phone').value = inputVal;
-        window.currentPOSCustomerId = null;
-        posMembershipDiscountPercent = 0;
+    try {
+        if (window.collection && window.query && window.where && window.getDocs) {
+            const usersRef = window.collection(window.db, "users");
+            const qPhone = window.query(usersRef, window.where("phone", "==", q));
+            let snap = await window.getDocs(qPhone);
+            
+            if (snap.empty) {
+                const qName = window.query(usersRef, window.where("displayName", ">=", q), window.where("displayName", "<=", q + "\uf8ff"));
+                snap = await window.getDocs(qName);
+            }
+            
+            if (!snap.empty) {
+                let html = '';
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    html += `
+                        <div class="suggestion-item" style="display:flex; justify-content:space-between; align-items:center;" onclick="window.posSelectCustomer('${docSnap.id}', '${data.displayName.replace(/'/g, "\\'")}', '${data.phone}')">
+                            <div>
+                                <div style="font-weight:bold;">${data.displayName}</div>
+                                <div style="font-size:0.8rem; color:#666;">${data.phone}</div>
+                            </div>
+                            <button class="btn-minimal" style="padding: 2px 8px;">Chọn</button>
+                        </div>
+                    `;
+                });
+                if (suggestions) suggestions.innerHTML = html;
+            } else {
+                if (suggestions) suggestions.innerHTML = '<div class="suggestion-item">Không tìm thấy khách hàng.</div>';
+            }
+        }
+    } catch(e) {
+        console.error(e);
+        if (suggestions) suggestions.innerHTML = '<div class="suggestion-item">Lỗi tìm kiếm.</div>';
+    }
+};
+
+window.posSelectCustomer = (id, name, phone) => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        bill.customerId = id;
+        bill.customerName = name;
+        bill.customerPhone = phone;
+        window.savePOSBills();
         renderPOSCart();
     }
-};
-
-function printPOSReceipt(orderId, customer, items, total, subtotal = null, discountVal = 0, shippingFee = 0) {
-    let printArea = document.getElementById('receipt-print-area');
-    if (!printArea) {
-        printArea = document.createElement('div');
-        printArea.id = 'receipt-print-area';
-        document.body.appendChild(printArea);
-    }
-
-    const now = new Date().toLocaleString('vi-VN');
-    
-    printArea.innerHTML = `
-        <div class="receipt-header">
-            <img src="../Asset/images/logo.webp" class="receipt-logo" alt="Logo Tiệm Nhà Gốm">
-            <p>37 Nguyễn Duy, Phường Gia Định, TP.HCM
-            <p>SĐT: 033 769 6231 - 090 938 0652</p>
-        </div>
-        <div class="receipt-info">
-            <p><strong>Mã ĐH:</strong> #${orderId}</p>
-            <p><strong>Ngày:</strong> ${now}</p>
-            <p><strong>Khách hàng:</strong> ${customer.name}</p>
-            <p><strong>SĐT:</strong> ${customer.phone}</p>
-            <p><strong>Thanh toán:</strong> ${customer.paymentMethod || 'Tiền mặt'}</p>
-        </div>
-        <table class="receipt-table">
-            <thead>
-                <tr>
-                    <th>Sản phẩm</th>
-                    <th class="col-qty">SL</th>
-                    <th class="col-price">T.Tiền</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${items.map(item => `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td class="col-qty">${item.quantity}</td>
-                        <td class="col-price">${new Intl.NumberFormat('vi-VN').format(item.price * item.quantity)}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        ${subtotal ? `<p style="text-align:right; margin: 5px 0 0 0; font-size:11px;">Tạm tính: ${new Intl.NumberFormat('vi-VN').format(subtotal)} VND</p>` : ''}
-        ${shippingFee > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Phí vận chuyển: +${new Intl.NumberFormat('vi-VN').format(shippingFee)} VND</p>` : ''}
-        ${discountVal > 0 ? `<p style="text-align:right; margin: 0; font-size:11px;">Chiết khấu: -${new Intl.NumberFormat('vi-VN').format(discountVal)} VND</p>` : ''}
-        <div class="receipt-total">TỔNG CỘNG: ${new Intl.NumberFormat('vi-VN').format(total)} VND</div>
-        <div class="receipt-qr-section">
-            <p style="margin-bottom: 5px; font-weight: bold;">Quét mã theo dõi Tiệm:</p>
-            <img src="../Asset/images/fb-qr.webp" class="receipt-qr" alt="Facebook QR">
-            <p style="margin-top: 5px; font-size: 14px; font-weight: bold;">www.tiemnhagom.vn</p>
-        </div>
-        <div class="receipt-footer">Cảm ơn Quý khách. Hẹn gặp lại!</div>
-    `;
-
-    window.print();
-}
-
-// --- Logic Kết nối và In Bluetooth (ESC/POS) ---
-
-window.connectBTPrinter = async () => {
-    try {
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, { namePrefix: 'RPP' }, { namePrefix: 'MTP' }, { namePrefix: 'Printer' }],
-            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-        });
-        
-        showToast("Đang kết nối với " + bluetoothDevice.name);
-        const server = await bluetoothDevice.gatt.connect();
-        const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-        const characteristics = await service.getCharacteristics();
-        // Thường đặc tính ghi dữ liệu là đặc tính đầu tiên có thuộc tính write
-        btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-        
-        showToast("Đã kết nối máy in Bluetooth thành công!", "success");
-        document.getElementById('btn-connect-bt-printer').innerText = "✅ Đã kết nối: " + bluetoothDevice.name;
-    } catch (e) {
-        console.error(e);
-        showToast("Không thể kết nối máy in: " + e.message, "error");
-    }
-};
-
-window.sendToBTPrinter = async (text) => {
-    if (!btCharacteristic) {
-        showToast("Vui lòng kết nối máy in Bluetooth trước", "error");
-        return;
-    }
-    // Chuẩn hóa văn bản: Bỏ dấu tiếng Việt vì máy in nhiệt giá rẻ thường lỗi font
-    const cleanText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
-    
-    // Lệnh ESC/POS cơ bản
-    const encoder = new TextEncoder();
-    const init = new Uint8Array([0x1B, 0x40]); // Reset máy in
-    const cut = new Uint8Array([0x0A, 0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x41, 0x03]); // Feed và cắt giấy
-
-    try {
-        await btCharacteristic.writeValue(init);
-        // BLE có giới hạn kích thước gói tin (thường 20-512 bytes), chia nhỏ để gửi
-        const data = encoder.encode(cleanText + "\n\n");
-        const chunkSize = 20;
-        for (let i = 0; i < data.length; i += chunkSize) {
-            await btCharacteristic.writeValue(data.slice(i, i + chunkSize));
-        }
-        await btCharacteristic.writeValue(cut);
-        showToast("Đã gửi lệnh in");
-    } catch (e) {
-        showToast("Lỗi khi gửi dữ liệu in", "error");
-    }
-};
-
-window.printLastOrderBT = async () => {
-    if (!lastCreatedOrderId) return showToast("Chưa có đơn hàng nào vừa được tạo", "info");
-    
-    const docSnap = await getDoc(doc(db, "orders", lastCreatedOrderId));
-    if (!docSnap.exists()) return;
-    const o = docSnap.data();
-    
-    let btContent = `   TIEM NHA GOM\n`;
-    btContent += `      Gom & Decor\n`;
-    btContent += `--------------------------------\n`;
-    btContent += `Ma DH: #${lastCreatedOrderId.substring(0,8)}\n`;
-    btContent += `Ngay: ${new Date().toLocaleString('vi-VN')}\n`;
-    btContent += `KH: ${o.shippingAddress?.fullName || 'Khach vang lai'}\n`;
-    btContent += `--------------------------------\n`;
-    
-    o.items.forEach(item => {
-        const priceStr = new Intl.NumberFormat('vi-VN').format(item.price);
-        btContent += `${item.name}\n`;
-        btContent += `   ${item.quantity} x ${priceStr} VND\n`;
-    });
-    
-    btContent += `--------------------------------\n`;
-    btContent += `TONG CONG: ${new Intl.NumberFormat('vi-VN').format(o.totalAmount)} VND\n`;
-    btContent += `Thanh toan: ${o.paymentMethod || 'Tien mat'}\n`;
-    btContent += `\nCam on Quy khach. Hen gap lai!\n`;
-    btContent += `www.tiemnhagom.vn\n`;
-
-    window.sendToBTPrinter(btContent);
+    const suggestions = document.getElementById('pos-customer-suggestions');
+    if (suggestions) suggestions.innerHTML = '';
+    const searchInput = document.getElementById('pos-customer-search');
+    if (searchInput) searchInput.value = '';
 };
 
 window.createPOSOrder = async () => {
-    const name = document.getElementById('pos-cust-name').value.trim();
-    const rawPhone = document.getElementById('pos-cust-phone').value.trim();
-    const email = document.getElementById('pos-cust-email').value.trim();
-    const totalText = document.getElementById('pos-total-amount').value;
-    const paymentMethod = document.querySelector('input[name="pos-payment"]:checked')?.value || "Tiền mặt";
-    const total = Number(totalText.replace(/[^\d]/g, ''));
-    const phone = formatPhoneNumber(rawPhone); // Lưu vào DB theo định dạng 0... đồng bộ
+    const bill = window.getCurrentBill();
+    if (!bill) return;
 
-    if (!name || !phone || total <= 0 || posCart.length === 0) {
-        showToast("Vui lòng điền đủ thông tin khách, chọn sản phẩm và đảm bảo số tiền > 0", "error");
+    if (bill.cart.length === 0) {
+        if (typeof showToast !== 'undefined') showToast("Đơn hàng trống!", "error");
         return;
     }
+    
+    let total = parseFloat(document.getElementById('pos-total-amount')?.dataset?.val || 0);
+    const btn = document.querySelector('.pos-btn-complete');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "Đang xử lý...";
+    }
 
-    const btn = document.querySelector('#pos-section button[onclick="createPOSOrder()"]');
     try {
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-small"></span> Đang xử lý...'; }
-
-        let customerId = window.currentPOSCustomerId;
+        const orderId = window.generateOrderId ? window.generateOrderId() : 'POS-' + Date.now();
+        const paymentMethod = bill.paymentMethod;
+        const discountVal = bill.discountVal || 0;
+        
+        let customerId = bill.customerId;
+        let customerName = bill.customerName;
+        let customerPhone = bill.customerPhone;
+        
+        // If no customer selected, default to "Khách lẻ"
         if (!customerId) {
-            const newCustRef = doc(collection(db, "users"));
-            customerId = newCustRef.id;
-            
-            // Tự động thêm cả định dạng 0 và +84 để tìm kiếm khách hàng linh hoạt hơn
-            const altPhone = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
-            const identifiers = [phone, altPhone];
-            if (email) identifiers.push(email);
-
-            await setDoc(newCustRef, {
-                displayName: name, 
-                phone: phone, 
-                email: email,
-                identifiers: identifiers, 
-                isGhost: true, 
-                createdAt: new Date().toISOString()
-            });
+            customerName = "Khách mua tại shop";
+            customerPhone = "N/A";
+            customerId = "guest_pos";
         }
-        const orderId = generateOrderId();
-        const orderRef = doc(db, "orders", orderId);
-        await setDoc(orderRef, {
-            userId: customerId, productNames: posCart.map(i => i.name),
-            items: posCart, totalAmount: total, status: "Đã hoàn thành",
-            paymentMethod: paymentMethod, orderDate: serverTimestamp(),
-            shippingAddress: { fullName: name, phone: phone, address: "Mua tại shop" }
-        });
 
-        // Cập nhật tồn kho và số lượng đã bán (bao gồm cả biến thể)
-        const updatePromises = posCart.map(async (item) => {
-            const productRef = doc(db, "products", item.id);
-            const productSnap = await getDoc(productRef);
-            const pData = productSnap.data();
-
-            let updateData = {
-                stock: increment(-item.quantity),
-                sold: increment(item.quantity)
-            };
-
-            // Cập nhật kho riêng của biến thể màu sắc
-            if (item.color && pData.colorVariants) {
-                const updatedVariants = pData.colorVariants.map(v => {
-                    if (v.name === item.color) {
-                        return { ...v, stock: (v.stock || 0) - item.quantity };
-                    }
-                    return v;
-                });
-                updateData.colorVariants = updatedVariants;
-            }
-            // Cập nhật kho riêng của biến thể họa tiết
-            if (item.pattern && pData.patternVariants) {
-                const updatedVariants = pData.patternVariants.map(v => {
-                    if (v.name === item.pattern) {
-                        return { ...v, stock: (v.stock || 0) - item.quantity };
-                    }
-                    return v;
-                });
-                updateData.patternVariants = updatedVariants;
-            }
-            return updateDoc(productRef, updateData);
-        });
-        await Promise.all(updatePromises);
+        const subtotal = bill.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        const orderRef = window.doc ? window.doc(window.db, "orders", orderId) : null;
         
-        // Lưu ID để in lại nếu cần
-        lastCreatedOrderId = orderId;
+        const orderData = {
+            orderId: orderId,
+            userId: customerId,
+            customerInfo: { fullName: customerName, phone: customerPhone },
+            productNames: bill.cart.map(i => i.name),
+            items: bill.cart,
+            totalAmount: total,
+            subtotal: subtotal,
+            discount: discountVal,
+            status: "Đã hoàn thành",
+            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date(),
+            paymentMethod: paymentMethod,
+            paymentStatus: "Đã thanh toán",
+            source: 'pos'
+        };
 
-        // Tự động in hóa đơn sau khi lưu thành công
-        const subtotal = posCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        const discountVal = subtotal - total;
-        printPOSReceipt(orderId, { name, phone, paymentMethod }, posCart, total, subtotal, discountVal);
-        
-        // Nếu máy in Bluetooth đã được kết nối, tự động in bản text qua Bluetooth luôn
-        if (btCharacteristic) {
+        if (window.setDoc) {
+            await window.setDoc(orderRef, orderData);
+            
+            // Update inventory
+            const updatePromises = bill.cart.map(async (item) => {
+                const productRef = window.doc(window.db, "products", item.id);
+                const pSnap = await window.getDoc(productRef);
+                if (!pSnap.exists()) return;
+                
+                const pData = pSnap.data();
+                const updateData = { stock: window.increment(-item.quantity) };
+                
+                // Color variant inventory
+                if (item.color && pData.colorVariants) {
+                    const updatedVariants = pData.colorVariants.map(v => {
+                        if (v.name === item.color) {
+                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                        }
+                        return v;
+                    });
+                    updateData.colorVariants = updatedVariants;
+                }
+                // Pattern variant inventory
+                if (item.pattern && pData.patternVariants) {
+                    const updatedVariants = pData.patternVariants.map(v => {
+                        if (v.name === item.pattern) {
+                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                        }
+                        return v;
+                    });
+                    updateData.patternVariants = updatedVariants;
+                }
+                return window.updateDoc(productRef, updateData);
+            });
+            await Promise.all(updatePromises);
+        }
+
+        window.lastCreatedOrderId = orderId;
+
+        // Tự động in hóa đơn
+        if (typeof window.printPOSReceipt === 'function') {
+            window.printPOSReceipt(orderId, { name: customerName, phone: customerPhone, paymentMethod }, bill.cart, total, subtotal, discountVal);
+        }
+        if (window.btCharacteristic && typeof window.printLastOrderBT === 'function') {
             window.printLastOrderBT();
         }
 
-        showToast("Đã lưu đơn hàng thành công!");
-        document.getElementById('pos-customer-form').reset();
-        posCart = [];
-        posDiscountPercent = 0;
-        posMembershipDiscountPercent = 0;
-        renderPOSCart();
-    } catch (e) { showToast("Lỗi POS: " + e.message, "error"); }
-    finally { if (btn) { btn.disabled = false; btn.innerHTML = "Hoàn tất & Lưu doanh thu"; } }
+        if (typeof showToast !== 'undefined') showToast("Đã lưu đơn hàng thành công!");
+        
+        // Đóng bill hiện tại
+        window.posCloseBill(bill.id);
+
+    } catch (e) { 
+        if (typeof showToast !== 'undefined') showToast("Lỗi POS: " + e.message, "error"); 
+        console.error(e);
+    } finally { 
+        if (btn) { 
+            btn.disabled = false; 
+            btn.innerHTML = "THANH TOÁN"; 
+        } 
+    }
 };
+
+window.applyQuickDiscount = () => {}; // Obsolete but keep to avoid errors if called elsewhere
 
 // --- Quản lý Thống kê Nâng cao ---
 let mainRevChart = null;
@@ -4769,7 +4863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         posCustSuggestions.innerHTML = results.map(u => {
                             const count = userOrderCounts[u.id] || 0;
                             return `
-                            <div class="suggestion-item" onclick="window.selectCustomerPOS('${u.id}', '${(u.displayName || '').replace(/'/g, "\\'")}', '${u.phone || ''}', '${u.email || ''}')">
+                            <div class="suggestion-item" onclick="window.posSelectCustomer('${u.id}', '${(u.displayName || '').replace(/'/g, "\\'")}', '${u.phone || ''}', '${u.email || ''}')">
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 0.85rem;">${u.displayName || 'Khách không tên'}</div>
                                     <div style="font-size: 0.7rem; color: #888;">SĐT: ${u.phone || '---'} | Đã mua: <strong style="color:var(--text-black)">${count} đơn</strong></div>
@@ -4824,10 +4918,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const currentPrice = getProductCurrentPrice(p, fsSettings);
                         return `
                         <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" 
-                             onclick="window.addProductToPOS('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}')">
+                             onclick="window.addToPOSCart('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}')">
                             <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333;">${p.name}</div>
                                 <div style="font-size: 0.7rem; color: #888;">
                                     SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</strong>
                                 </div>
@@ -4911,3 +5005,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+// --- POS Add Customer Modal Logic ---
+window.posOpenAddCustomerModal = () => {
+    const modal = document.getElementById('pos-add-customer-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Reset form
+        document.getElementById('pos-new-cust-code').value = '';
+        document.getElementById('pos-new-cust-name').value = '';
+        document.getElementById('pos-new-cust-phone').value = '';
+        document.getElementById('pos-new-cust-address').value = '';
+        document.getElementById('pos-new-cust-area').value = '';
+        document.getElementById('pos-new-cust-ward').value = '';
+        document.getElementById('pos-new-cust-email').value = '';
+        
+        // Auto-fill phone if there is search query
+        const searchInput = document.getElementById('pos-customer-search');
+        if (searchInput && searchInput.value && !isNaN(searchInput.value.trim())) {
+            document.getElementById('pos-new-cust-phone').value = searchInput.value.trim();
+        }
+    }
+};
+
+window.posCloseAddCustomerModal = () => {
+    const modal = document.getElementById('pos-add-customer-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.posSaveNewCustomer = async () => {
+    const name = document.getElementById('pos-new-cust-name').value.trim();
+    const phone = document.getElementById('pos-new-cust-phone').value.trim();
+    const email = document.getElementById('pos-new-cust-email').value.trim();
+    const address = document.getElementById('pos-new-cust-address').value.trim();
+    
+    if (!name) {
+        if (typeof showToast !== 'undefined') showToast("Vui lòng nhập tên khách hàng", "error");
+        return;
+    }
+    if (!phone) {
+        if (typeof showToast !== 'undefined') showToast("Vui lòng nhập số điện thoại", "error");
+        return;
+    }
+
+    try {
+        const newCustId = 'cust_' + Date.now();
+        const userData = {
+            id: newCustId,
+            displayName: name,
+            phone: phone,
+            email: email,
+            address: address,
+            identifiers: [phone, name.toLowerCase(), email],
+            role: 'user',
+            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date()
+        };
+
+        if (window.setDoc && window.doc && window.db) {
+            await window.setDoc(window.doc(window.db, "users", newCustId), userData);
+        }
+
+        // Add to local array if it exists
+        if (window.posUsersLocal) {
+            window.posUsersLocal.push(userData);
+        }
+
+        if (typeof showToast !== 'undefined') showToast("Thêm khách hàng thành công");
+        
+        window.posCloseAddCustomerModal();
+        
+        // Auto select new customer
+        if (typeof window.posSelectCustomer === 'function') {
+            window.posSelectCustomer(newCustId, name, phone, email);
+        }
+    } catch (e) {
+        if (typeof showToast !== 'undefined') showToast("Lỗi: " + e.message, "error");
+        console.error(e);
+    }
+};

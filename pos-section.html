@@ -1,0 +1,108 @@
+﻿        <div id="pos-section" class="admin-section pos-section-new">
+            <!-- POS Header -->
+            <div class="pos-header">
+                <div class="pos-search-wrapper">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="pos-product-search" placeholder="TÃ¬m kiáº¿m hoáº·c quÃ©t mÃ£ váº¡ch sáº£n pháº©m...">
+                    <div id="pos-product-suggestions" class="search-suggestions"></div>
+                </div>
+                <button class="pos-icon-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h4v4H4zM16 4h4v4h-4zM4 16h4v4H4zM12 4v16M4 12h16"></path></svg></button>
+                
+                <div class="pos-tabs-container">
+                    <div class="pos-tabs" id="pos-tabs-list">
+                        <!-- Tabs sáº½ Ä‘Æ°á»£c render báº±ng JS -->
+                    </div>
+                    <button class="pos-tab-add" onclick="window.posCreateNewBill()">+</button>
+                </div>
+                
+                <div class="pos-actions">
+                    <button class="pos-icon-btn" title="LÃ m má»›i"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                    <button class="pos-icon-btn" title="In láº¡i qua Bluetooth" id="btn-connect-bt-printer" onclick="window.printLastOrderBT()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></button>
+                </div>
+            </div>
+
+            <!-- POS Body -->
+            <div class="pos-body">
+                <!-- Left Panel: Cart -->
+                <div class="pos-left-panel">
+                    <div class="pos-cart-list" id="pos-cart-list">
+                        <!-- Items rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Right Panel: Checkout -->
+                <div class="pos-right-panel">
+                    <!-- Customer Section -->
+                    <div class="pos-customer-section" style="position: relative;">
+                        <div class="pos-customer-search-box">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="pos-customer-search" placeholder="TÃ¬m khÃ¡ch hÃ ng (SÄT/TÃªn)">
+                            <button class="pos-icon-btn" style="padding: 4px;" onclick="searchCustomerPOS()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                        </div>
+                        <div id="pos-customer-suggestions" class="search-suggestions"></div>
+                        <div id="pos-selected-customer" class="pos-selected-customer" style="display: none;">
+                            <span id="pos-cust-name-display" style="font-weight: 600; font-size: 0.9rem;"></span>
+                            <span id="pos-cust-phone-display" style="font-size: 0.8rem; color: #666; margin-left: 5px;"></span>
+                            <button onclick="window.posClearCustomer()" class="btn-minimal" style="padding: 2px 5px; color: #e74c3c; border: none; margin-left: auto;">âœ•</button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Section -->
+                    <div class="pos-summary-section">
+                        <div class="summary-row">
+                            <span>Tá»•ng tiá»n hÃ ng <span id="pos-total-qty" style="color: #666; font-size: 0.9em; margin-left: 5px;">(0)</span></span>
+                            <span id="pos-subtotal">0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Giáº£m giÃ¡</span>
+                            <div class="pos-bill-discount">
+                                <input type="text" id="pos-bill-discount-input" placeholder="0" onchange="window.updateBillDiscount(this.value)">
+                            </div>
+                        </div>
+                        <div class="summary-row total">
+                            <span style="font-weight: bold;">KhÃ¡ch cáº§n tráº£</span>
+                            <span id="pos-total-amount" style="color: #0984e3; font-size: 1.4rem;">0</span>
+                        </div>
+                        <div class="summary-row payment">
+                            <span style="font-weight: bold;">KhÃ¡ch thanh toÃ¡n</span>
+                            <input type="text" id="pos-cash-given" placeholder="0" oninput="window.calculatePOSChange(this)">
+                        </div>
+                        <div class="summary-row return" id="pos-return-row" style="display: none;">
+                            <span style="font-weight: bold;">Tiá»n thá»‘i láº¡i</span>
+                            <span id="pos-change-amount" style="color: #d63031; font-weight: bold;">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="pos-payment-methods">
+                        <label class="radio-container">
+                            <input type="radio" name="pos-payment" value="Tiá»n máº·t" checked onchange="window.togglePOSCashSection()">
+                            <span class="radio-checkmark"></span> Tiá»n máº·t
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="pos-payment" value="Chuyá»ƒn khoáº£n" onchange="window.togglePOSCashSection()">
+                            <span class="radio-checkmark"></span> Chuyá»ƒn khoáº£n
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="pos-payment" value="Tháº»" onchange="window.togglePOSCashSection()">
+                            <span class="radio-checkmark"></span> Tháº»
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="pos-payment" value="VÃ­" onchange="window.togglePOSCashSection()">
+                            <span class="radio-checkmark"></span> VÃ­
+                        </label>
+                    </div>
+
+                    <!-- Fast Cash Buttons -->
+                    <div class="pos-fast-cash" id="pos-fast-cash-container">
+                        <button onclick="window.posSetCashGiven(60000)">60,000</button>
+                        <button onclick="window.posSetCashGiven(100000)">100,000</button>
+                        <button onclick="window.posSetCashGiven(200000)">200,000</button>
+                        <button onclick="window.posSetCashGiven(500000)">500,000</button>
+                    </div>
+
+                    <!-- Complete Button -->
+                    <button class="pos-btn-complete" onclick="createPOSOrder()">THANH TOÃN</button>
+                </div>
+            </div>
+        </div>
