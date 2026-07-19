@@ -859,7 +859,7 @@ window.placeOrder = async () => {
                     quantity: item.quantity,
                     color: item.color || null,
                     pattern: item.pattern || null,
-                    variant: [item.color, item.pattern].filter(Boolean).join(' / ') || null
+                    variant: item.variant || [item.color, item.pattern].filter(Boolean).join(' / ') || null
                 });
                 productNames.push(product.name);
 
