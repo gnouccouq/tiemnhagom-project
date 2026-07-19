@@ -1,4 +1,4 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -2752,6 +2752,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                             <img src="${i.image}" alt="${i.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                             <div>
                                 <div style="font-weight: 600;">${i.name}</div>
+                                ${i.variant ? `<div style="font-size: 0.8rem; color: #e67e22; margin-bottom: 2px;">Phân loại: ${i.variant}</div>` : ''}
                                 <div style="font-size: 0.85rem; color: #666;">Số lượng: ${i.quantity} | Giá: ${new Intl.NumberFormat('vi-VN').format(i.price)} VND</div>
                             </div>
                         </li>`).join('')}

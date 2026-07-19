@@ -221,6 +221,7 @@ window.viewOrderDetails = async (orderId) => {
                                     <img src="${item.image}" alt="${item.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
                                     <div>
                                         <div style="font-weight: 600;">${item.name}</div>
+                                        ${item.variant ? `<div style="font-size: 0.75rem; color: #e67e22;">Phân loại: ${item.variant}</div>` : ''}
                                         <div style="font-size: 0.8rem; color: #777;">x ${item.quantity}</div>
                                     </div>
                                 </div>
