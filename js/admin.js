@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -2568,7 +2568,7 @@ function renderOrderRows(ordersList, tableElement) {
                 </td>
                 <td data-label="Tổng tiền">${totalAmount} VND</td>
                 <td data-label="Trạng thái">
-                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value)">
+                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value, this)">
                         <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
                         <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
                         <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
@@ -2608,7 +2608,7 @@ async function generateTierUpVoucher(userId, tier) {
     }
 }
 
-window.updateOrderStatus = async (orderId, newStatus) => {
+window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
     try {
         let oldStatus = null;
         let userId = null;
@@ -2642,7 +2642,21 @@ window.updateOrderStatus = async (orderId, newStatus) => {
             }
         }
 
-        await setDoc(doc(db, "orders", orderId), { status: newStatus }, { merge: true });
+                let trackingLink = "";
+        if (newStatus === "Đang giao hàng") {
+            trackingLink = prompt("Nhập link theo dõi lộ trình giao hàng (Grab, Ahamove, GHTK...) nếu có (để trống nếu không có):");
+            if (trackingLink === null) {
+                if (selectElement) selectElement.value = oldStatus;
+                return;
+            }
+        }
+
+        const updateData = { status: newStatus };
+        if (trackingLink) {
+            updateData.trackingLink = trackingLink.trim();
+        }
+
+        await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
         showToast(`Đã cập nhật trạng thái đơn hàng #${orderId} thành: ${newStatus}`);
     } catch (error) {
         showToast("Lỗi cập nhật: " + error.message, "error");
@@ -2711,7 +2725,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                 </div>
             `;
         }
-        if (membershipDiscount > 0) {
+        if (order.trackingLink) { pricingDetailsHtml += `<div style="font-size: 0.95rem; margin-bottom: 8px; color: #2980b9;"><span><strong>Lộ trình giao hàng:</strong> <a href="${order.trackingLink}" target="_blank" style="color: #3498db; text-decoration: underline;">Xem (Grab/Ahamove/...)</a></span></div>`; } if (membershipDiscount > 0) {
             pricingDetailsHtml += `
                 <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #27ae60;">
                     <span>Giảm giá thành viên (VIP):</span>

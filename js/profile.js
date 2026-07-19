@@ -189,6 +189,15 @@ window.viewOrderDetails = async (orderId) => {
                 </div>
             `;
         }
+        
+        if (order.trackingLink) {
+            pricingDetailsHtml += `
+                <div class="detail-row" style="font-size: 0.9rem; color: #2980b9;">
+                    <span>Lộ trình giao hàng:</span>
+                    <a href="${order.trackingLink}" target="_blank" style="color: #3498db; text-decoration: underline; font-weight: bold;">Theo dõi (Grab/Ahamove/...)</a>
+                </div>
+            `;
+        }
 
         modal.innerHTML = `
             <div class="modal-content">
