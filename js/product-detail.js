@@ -405,6 +405,18 @@ async function fetchProductDetail() {
                 `;
             }
 
+            let initialStockText = isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : `Trong kho: ${p.stock || 0} sản phẩm`;
+            if (!isOutOfStock) {
+                if (colorVariants.length > 0) {
+                    initialStockText = `Trong kho: ${colorVariants[0].stock || 0} sản phẩm (màu ${colorVariants[0].name})`;
+                } else if (patternsToUse.length > 0) {
+                    const p0 = patternsToUse[0];
+                    const pStock = typeof p0 === 'string' ? 0 : (p0.stock || 0);
+                    const pName = typeof p0 === 'string' ? p0 : p0.name;
+                    initialStockText = pStock <= 0 ? 'Rất tiếc, họa tiết này đã hết hàng' : `Trong kho: ${pStock} sản phẩm (họa tiết ${pName})`;
+                }
+            }
+
             // Bao bọc toàn bộ nội dung thật trong div .fade-in-content để tạo hiệu ứng mượt mà
             container.innerHTML = `
             <div class="fade-in-content">
@@ -462,9 +474,9 @@ async function fetchProductDetail() {
                         </div>
 
                         <div class="purchase-card">
-                            <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
-                                <span style="font-size: 0.85rem;">${isOutOfStock ? 'Rất tiếc, sản phẩm đã hết hàng' : ``}</span>
+                            <div class="stock-info ${isOutOfStock ? 'out' : ''}" style="width: 100%; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 5px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><path d="M21 8V21H3V8M1 3H23V8H1V3ZM10 12H14"/></svg>
+                                <span style="font-size: 0.85rem;">${initialStockText}</span>
                             </div>
                             <div class="quantity-box">
                                 <div class="quantity-controls">

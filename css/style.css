@@ -1,4 +1,4 @@
-﻿/* css/style.css */
+/* css/style.css */
 @font-face {
     font-family: 'Elle Gabor Std Light';
     src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff');
@@ -4272,10 +4272,11 @@ body.admin-dashboard-layout > * {
 }
 
 .variant-chip.active {
-    background: #000;
-    color: #fff;
+    background: #f8f9fa !important;
+    color: #000;
     border-color: #000;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px #000;
 }
 
 /* Specific styles for color chips */
@@ -4334,16 +4335,7 @@ body.admin-dashboard-layout > * {
     margin-bottom: 2.5rem;
 }
 
-.purchase-card {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    padding: 2.5rem;
-    background-color: #fff !important;
-    border-radius: 12px;
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.02);
-}
+
 
 .action-group {
     display: flex;
@@ -4386,9 +4378,7 @@ body.admin-dashboard-layout > * {
         font-size: 2rem;
     }
 
-    .purchase-card {
-        padding: 1.5rem;
-    }
+
 }
 
 .product-description p {
