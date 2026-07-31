@@ -829,12 +829,15 @@ window.placeOrder = async () => {
                 let currentStock = product.stock || 0;
                 let variantImage = product.imageUrl;
 
+                let variantPriceValue = null;
+
                 // Kiểm tra tồn kho biến thể màu sắc
                 if (item.color && Array.isArray(product.colorVariants)) {
                     const variant = product.colorVariants.find(v => v.name === item.color);
                     if (!variant) throw new Error(`Biến thể màu "${item.color}" của sản phẩm ${product.name} không tồn tại.`);
                     currentStock = variant.stock || 0;
                     if (variant.imageUrl) variantImage = variant.imageUrl;
+                    if (variant.price) variantPriceValue = variant.price;
                 }
                 // Kiểm tra tồn kho biến thể họa tiết
                 if (item.pattern && Array.isArray(product.patternVariants)) {
@@ -842,13 +845,25 @@ window.placeOrder = async () => {
                     if (!variant) throw new Error(`Biến thể họa tiết "${item.pattern}" của sản phẩm ${product.name} không tồn tại.`);
                     currentStock = variant.stock || 0;
                     if (variant.imageUrl) variantImage = variant.imageUrl;
+                    if (variant.price) variantPriceValue = variant.price;
                 }
 
                 if (!product.isCombo && currentStock < item.quantity) {
                     throw new Error(`Sản phẩm "${product.name}" (biến thể ${item.color || item.pattern || 'mặc định'}) đã hết hàng hoặc không đủ số lượng. Chỉ còn ${currentStock} sản phẩm.`);
                 }
 
-                const currentUnitPrice = getProductCurrentPrice(product, fsSettings);
+                let mockProduct = { ...product };
+                if (variantPriceValue !== null) {
+                    if (variantPriceValue < product.price) {
+                        mockProduct.salePrice = variantPriceValue;
+                        mockProduct.sale = Math.round((1 - variantPriceValue / product.price) * 100);
+                    } else {
+                        mockProduct.price = variantPriceValue;
+                        mockProduct.sale = 0;
+                        mockProduct.salePrice = null;
+                    }
+                }
+                const currentUnitPrice = getProductCurrentPrice(mockProduct, fsSettings);
                 finalSubtotal += currentUnitPrice * item.quantity;
 
                 processedOrderItems.push({

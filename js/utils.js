@@ -628,7 +628,8 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'color',
                     name: v.name,
-                    imageUrl: v.imageUrl
+                    imageUrl: v.imageUrl,
+                    price: v.price
                 });
             }
         });
@@ -641,7 +642,8 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'pattern',
                     name: v.name,
-                    imageUrl: v.imageUrl
+                    imageUrl: v.imageUrl,
+                    price: v.price
                 });
             }
         });
@@ -654,7 +656,8 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'combo',
                     name: v.name,
-                    imageUrl: v.imageUrl || v.thumbUrl
+                    imageUrl: v.imageUrl || v.thumbUrl,
+                    price: v.price
                 });
             }
         });
@@ -668,14 +671,31 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     let starsHtml = '';
     for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
-    const currentPrice = getProductCurrentPrice(product);
-    const displaySale = getProductEffectiveSale(product);
+    let variantPriceValue = null;
+    if (variantOverride && variantOverride.price) {
+        variantPriceValue = variantOverride.price;
+    }
+
+    let mockProduct = { ...product };
+    if (variantPriceValue !== null) {
+        if (variantPriceValue < product.price) {
+            mockProduct.salePrice = variantPriceValue;
+            mockProduct.sale = Math.round((1 - variantPriceValue / product.price) * 100);
+        } else {
+            mockProduct.price = variantPriceValue;
+            mockProduct.sale = 0;
+            mockProduct.salePrice = null;
+        }
+    }
+
+    const currentPrice = getProductCurrentPrice(mockProduct);
+    const displaySale = getProductEffectiveSale(mockProduct);
     const hasSale = displaySale > 0;
     const isOutOfStock = (product.stock || 0) <= 0;
     const soldCount = product.sold || 0;
     const priceHtml = hasSale
-        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</span> <span style="white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
-        : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(product.price)} VND</p>`;
+        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
+        : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</p>`;
 
     let memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
     try {

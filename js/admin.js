@@ -649,7 +649,7 @@ function renderImagePreviews() {
 }
 
 // --- Logic Quản lý Biến thể Màu sắc & Ảnh ---
-window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false) => {
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
     
@@ -671,6 +671,9 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     row.innerHTML = `
         <div style="flex: 1;">
             <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Trắng)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+        </div>
+        <div style="width: 90px;">
+            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="width: 70px;">
             <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
@@ -703,7 +706,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     container.appendChild(row);
 };
 
-window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false) => {
+window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
     const container = document.getElementById('pattern-variant-items-container');
     if (!container) return;
     
@@ -715,6 +718,9 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
     row.innerHTML = `
         <div style="flex: 1;">
             <input type="text" class="variant-name" value="${name}" placeholder="Tên họa tiết (VD: Nhám)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+        </div>
+        <div style="width: 90px;">
+            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="width: 70px;">
             <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
@@ -1874,7 +1880,9 @@ productForm.addEventListener('submit', async (e) => {
                 const vSnap = await uploadBytes(vRef, webpFile);
                 variantUrl = await getDownloadURL(vSnap.ref);
             }
-            return { name, imageUrl: variantUrl, stock, showOnProductPage };
+            const priceInput = row.querySelector('.variant-price');
+            const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
+            return { name, imageUrl: variantUrl, stock, showOnProductPage, price };
         });
         const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
         if (colorVariantsResult.length > 0) hasVariants = true;
@@ -1897,7 +1905,9 @@ productForm.addEventListener('submit', async (e) => {
                 const vSnap = await uploadBytes(vRef, webpFile);
                 variantUrl = await getDownloadURL(vSnap.ref);
             }
-            return { name, imageUrl: variantUrl, stock, showOnProductPage };
+            const priceInput = row.querySelector('.variant-price');
+            const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
+            return { name, imageUrl: variantUrl, stock, showOnProductPage, price };
         });
         const patternVariantsResult = (await Promise.all(patternPromises)).filter(v => v.name);
         if (patternVariantsResult.length > 0) hasVariants = true;
@@ -2394,7 +2404,7 @@ async function editProduct(id) {
             if (variantContainer) {
                 variantContainer.innerHTML = '';
                 if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false));
+                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || ''));
                 }
             }
 
@@ -2403,10 +2413,10 @@ async function editProduct(id) {
             if (patternContainer) {
                 patternContainer.innerHTML = '';
                 if (p.patternVariants && Array.isArray(p.patternVariants)) {
-                    p.patternVariants.forEach(v => window.addPatternVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false));
+                    p.patternVariants.forEach(v => window.addPatternVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || ''));
                 } else if (p.patterns && Array.isArray(p.patterns)) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
-                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false));
+                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, ''));
                 }
             }
 

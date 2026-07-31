@@ -301,7 +301,8 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                         cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
                             type: 'color',
                             name: v.name,
-                            imageUrl: v.imageUrl
+                            imageUrl: v.imageUrl,
+                            price: v.price
                         });
                     }
                 });
@@ -314,7 +315,8 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                         cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
                             type: 'pattern',
                             name: v.name,
-                            imageUrl: v.imageUrl
+                            imageUrl: v.imageUrl,
+                            price: v.price
                         });
                     }
                 });

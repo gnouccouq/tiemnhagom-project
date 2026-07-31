@@ -672,19 +672,35 @@ async function fetchProductDetail() {
                 const qty = parseInt(document.getElementById('product-quantity').value);
 
                 let variantImage = p.imageUrl;
+                let variantPriceValue = null;
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
+                    if (c && c.price) variantPriceValue = c.price;
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
+                    if (pattern && pattern.price) variantPriceValue = pattern.price;
                 }
+                
+                let mockProduct = { ...p };
+                if (variantPriceValue !== null) {
+                    if (variantPriceValue < p.price) {
+                        mockProduct.salePrice = variantPriceValue;
+                        mockProduct.sale = Math.round((1 - variantPriceValue / p.price) * 100);
+                    } else {
+                        mockProduct.price = variantPriceValue;
+                        mockProduct.sale = 0;
+                        mockProduct.salePrice = null;
+                    }
+                }
+                const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
                 await addToCart({
                     id: productId,
                     name: p.name,
-                    price: currentPrice,
+                    price: currentVariantPrice,
                     image: variantImage,
                     quantity: qty,
                     color: selectedColor,
@@ -709,14 +725,30 @@ async function fetchProductDetail() {
                 const qty = parseInt(document.getElementById('product-quantity').value);
 
                 let variantImage = p.imageUrl;
+                let variantPriceValue = null;
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
+                    if (c && c.price) variantPriceValue = c.price;
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
+                    if (pattern && pattern.price) variantPriceValue = pattern.price;
                 }
+                
+                let mockProduct = { ...p };
+                if (variantPriceValue !== null) {
+                    if (variantPriceValue < p.price) {
+                        mockProduct.salePrice = variantPriceValue;
+                        mockProduct.sale = Math.round((1 - variantPriceValue / p.price) * 100);
+                    } else {
+                        mockProduct.price = variantPriceValue;
+                        mockProduct.sale = 0;
+                        mockProduct.salePrice = null;
+                    }
+                }
+                const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
                 // Hiển thị trạng thái loading
                 btn.disabled = true;
@@ -725,7 +757,7 @@ async function fetchProductDetail() {
                 await addToCart({ // Thêm vào giỏ hàng trước khi chuyển trang
                     id: productId,
                     name: p.name,
-                    price: currentPrice,
+                    price: currentVariantPrice,
                     image: variantImage,
                     quantity: qty,
                     color: selectedColor,
@@ -757,6 +789,9 @@ async function fetchProductDetail() {
                 const comboIdx = p.comboVariants.findIndex(v => v.name === urlCombo);
                 if (comboIdx !== -1) window.selectComboVariant(comboIdx);
             }
+
+            // Gọi updateDisplayPrice để hiển thị đúng giá của biến thể mặc định (nếu có)
+            if (window.updateDisplayPrice) window.updateDisplayPrice();
         } else {
             container.innerHTML = "<p>Sản phẩm không tồn tại.</p>";
         }
@@ -990,6 +1025,8 @@ window.selectColor = (colorName, imageUrl) => {
             if (mainImg) mainImg.src = imageUrl;
         }
     }
+
+    if (window.updateDisplayPrice) window.updateDisplayPrice();
 };
 
 // Hàm chọn họa tiết
@@ -1037,6 +1074,59 @@ window.selectPattern = (patternName, imageUrl) => {
             if (mainImg) mainImg.src = imageUrl;
         }
     }
+
+    if (window.updateDisplayPrice) window.updateDisplayPrice();
+};
+
+window.updateDisplayPrice = () => {
+    if (!currentProductData) return;
+    let variantPriceValue = null;
+    if (selectedColor && currentProductData.colorVariants) {
+        const c = currentProductData.colorVariants.find(v => v.name === selectedColor);
+        if (c && c.price) variantPriceValue = c.price;
+    }
+    if (selectedPattern && currentProductData.patternVariants) {
+        const pattern = currentProductData.patternVariants.find(v => v.name === selectedPattern);
+        if (pattern && pattern.price) variantPriceValue = pattern.price;
+    }
+    
+    let mockProduct = { ...currentProductData };
+    if (variantPriceValue !== null) {
+        if (variantPriceValue < currentProductData.price) {
+            mockProduct.salePrice = variantPriceValue;
+            mockProduct.sale = Math.round((1 - variantPriceValue / currentProductData.price) * 100);
+        } else {
+            mockProduct.price = variantPriceValue;
+            mockProduct.sale = 0;
+            mockProduct.salePrice = null;
+        }
+    }
+    const currentPrice = getProductCurrentPrice(mockProduct);
+    
+    const priceSpan = document.querySelector('.main-price');
+    if (priceSpan) priceSpan.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
+    
+    const oldPriceSpan = document.querySelector('.old-price');
+    const saleLabel = document.querySelector('.sale-label');
+    
+    if (mockProduct.sale > 0) {
+        if (oldPriceSpan) {
+            oldPriceSpan.style.display = 'inline';
+            oldPriceSpan.innerText = new Intl.NumberFormat('vi-VN').format(mockProduct.price) + ' VND';
+        }
+        if (saleLabel) {
+            saleLabel.style.display = 'inline';
+            saleLabel.innerText = '-' + mockProduct.sale + '%';
+        }
+    } else {
+        if (oldPriceSpan) oldPriceSpan.style.display = 'none';
+        if (saleLabel) saleLabel.style.display = 'none';
+    }
+    
+    const dynamicPriceDivs = document.querySelectorAll('.dynamic-membership-price');
+    dynamicPriceDivs.forEach(div => {
+        div.dataset.price = currentPrice;
+    });
 };
 
 // Hàm chia sẻ sản phẩm sử dụng Web Share API hoặc Fallback Copy Link
