@@ -2,10 +2,11 @@ import {
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
     showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
 } from "./utils.js";
-import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
-    doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc
+    doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 // Biến lưu kết quả xác thực OTP
 let confirmationResult = null;
@@ -26,10 +27,11 @@ const setupRecaptcha = () => {
 
 // Hàm điều khiển Tab
 function setupTabs() {
-    const btns = document.querySelectorAll('.tab-btn');
+    const btns = document.querySelectorAll('.profile-nav-btn');
     const sections = document.querySelectorAll('.profile-section');
     btns.forEach(btn => {
         btn.addEventListener('click', () => {
+            if (btn.id === 'btn-logout-sidebar' || btn.id === 'btn-change-password') return; // Bỏ qua nếu là nút chức năng
             btns.forEach(b => b.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
             btn.classList.add('active');
@@ -42,20 +44,20 @@ function setupTabs() {
     const handleHash = () => {
         const hash = window.location.hash;
         if (hash === '#orders') {
-            const btn = document.querySelector('.tab-btn[data-target="order-section"]');
+            const btn = document.querySelector('.profile-nav-btn[data-target="order-section"]');
             if (btn) btn.click();
         } else if (hash === '#favs') {
-            const btn = document.querySelector('.tab-btn[data-target="fav-section"]');
+            const btn = document.querySelector('.profile-nav-btn[data-target="fav-section"]');
             if (btn) btn.click();
         } else if (hash === '#vouchers') {
-            const btn = document.querySelector('.tab-btn[data-target="voucher-section"]');
+            const btn = document.querySelector('.profile-nav-btn[data-target="voucher-section"]');
             if (btn) btn.click();
-        } else if (hash === '#addresses') {
-            const btn = document.querySelector('.tab-btn[data-target="address-section"]');
+        } else if (hash === '#membership') {
+            const btn = document.querySelector('.profile-nav-btn[data-target="membership-section"]');
             if (btn) btn.click();
         } else {
             // Mặc định hoặc khi click vào "Trang cá nhân" (không hash) thì về tab thông tin
-            const btn = document.querySelector('.tab-btn[data-target="info-section"]');
+            const btn = document.querySelector('.profile-nav-btn[data-target="info-section"]');
             if (btn) btn.click();
         }
     };
@@ -297,10 +299,9 @@ window.deleteAddress = async (index) => {
 
 // Hàm thiết lập listener cho trạng thái đăng nhập và hiển thị thông tin người dùng
 async function handleProfileAuth(user) {
-    const profileInfo = document.getElementById('profile-info');
+    const profileLayout = document.getElementById('profile-main-layout');
     const notLoggedInMsg = document.getElementById('not-logged-in-msg');
     const btnLoginProfile = document.getElementById('btn-login-profile');
-    const btnLogoutProfile = document.getElementById('btn-logout-profile');
 
     if (user) {
         // Tải thêm thông tin từ Firestore (users collection)
@@ -308,115 +309,105 @@ async function handleProfileAuth(user) {
         const userSnap = await getDoc(userRef);
         const userData = userSnap.exists() ? userSnap.data() : {};
         
-        // Lấy ngày tham gia từ metadata của Firebase Auth
-        const joinDate = user.metadata.creationTime 
-            ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') 
-            : 'N/A';
+        // Cập nhật thông tin trên Sidebar
+        document.getElementById('sidebar-name').innerText = user.displayName || 'Khách hàng';
+        const avatarImg = document.getElementById('sidebar-avatar');
+        avatarImg.src = userData.avatar || user.photoURL || '../Asset/images/default-avatar.png';
+
+        profileLayout.style.display = 'flex';
+        notLoggedInMsg.style.display = 'none';
+
+        // Điền dữ liệu vào form thông tin khách hàng
+        const editName = document.getElementById('edit-name');
+        const editPhone = document.getElementById('edit-phone');
+        const editEmail = document.getElementById('edit-email');
+        const editDob = document.getElementById('edit-dob');
+        const editGender = document.getElementById('edit-gender');
+        const editJoinDate = document.getElementById('edit-join-date');
+
+        if (editName) editName.value = user.displayName || '';
+        if (editPhone) editPhone.value = userData.phone || '';
+        if (editEmail) editEmail.value = user.email || '';
+        if (editDob) editDob.value = userData.dob || '';
+        if (editGender) editGender.value = userData.gender || '';
+        if (editJoinDate) {
+            const joinDateStr = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') : 'Không rõ';
+            editJoinDate.value = joinDateStr;
+        }
+
+        // Xử lý đổi ảnh đại diện
+        const btnEditAvatar = document.getElementById('btn-edit-avatar');
+        const avatarInput = document.getElementById('avatar-input');
+        if (btnEditAvatar && avatarInput) {
+            btnEditAvatar.onclick = () => avatarInput.click();
+            avatarInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Hiển thị trạng thái đang tải
+                btnEditAvatar.disabled = true;
+                btnEditAvatar.innerText = 'Đang tải lên...';
+                
+                try {
+                    const storageRef = ref(getStorage(), `avatars/${user.uid}/${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytesResumable(storageRef, file);
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+                    
+                    // Cập nhật Firestore
+                    await setDoc(userRef, { avatar: downloadURL }, { merge: true });
+                    // Cập nhật Firebase Auth
+                    await updateProfile(user, { photoURL: downloadURL });
+                    
+                    // Cập nhật UI
+                    avatarImg.src = downloadURL;
+                    showToast('Đã cập nhật ảnh đại diện');
+                } catch (error) {
+                    showToast('Lỗi khi tải ảnh lên: ' + error.message, 'error');
+                } finally {
+                    btnEditAvatar.disabled = false;
+                    btnEditAvatar.innerText = 'Sửa ảnh đại diện';
+                }
+            };
+        }
 
         // Kiểm tra quyền Admin
         const adminRef = doc(db, "admins", user.uid);
         const adminSnap = await getDoc(adminRef);
         const isAdmin = adminSnap.exists();
-        const adminBadge = isAdmin ? `<span class="admin-text-badge" title="Quản trị viên"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg> Admin</span>` : '';
+        if (isAdmin) {
+            const adminContainer = document.getElementById('admin-action-container');
+            if (adminContainer) {
+                adminContainer.innerHTML = `
+                    <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
+                    <a href="../admin/" class="btn-dark" style="display: block; text-align: center; margin-top: 0; min-width: 150px; width: auto;">Vào bảng điều khiển Admin</a>
+                `;
+                adminContainer.style.display = 'block';
+            }
+        }
 
-        // Cấu trúc lại giao diện trang cá nhân
-        profileInfo.innerHTML = `
-            <div class="profile-card">
-                <h3>Thông tin cá nhân</h3>
-                <div id="profile-display">
-                    <p><strong>Tên hiển thị:</strong> <span id="disp-name">${user.displayName || 'Chưa cập nhật'} ${adminBadge}</span></p>
-                    <p><strong>Email:</strong> ${user.email}</p>
-                    <p><strong>Số điện thoại:</strong> <span>${formatPhoneNumber(userData.phone) || 'Chưa cập nhật'}</span></p>
-                    <p><strong>Giới tính:</strong> <span>${userData.gender || 'Chưa cập nhật'}</span></p>
-                    <p><strong>Ngày sinh:</strong> <span>${userData.birthday ? new Date(userData.birthday).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</span></p>
-                    <p><strong>Ngày tham gia:</strong> ${joinDate}</p>
-                    <div id="membership-card-container"></div>
-                    <button id="btn-edit-profile" class="btn-outline" style="margin-top: 1.5rem; width: 100%;">Chỉnh sửa thông tin</button>
-                </div>
-
-                <form id="edit-profile-form" style="display: none; margin-top: 1rem;">
-                    <div class="form-group">
-                        <label>Tên hiển thị</label>
-                        <input type="text" id="edit-name" value="${user.displayName || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label>Số điện thoại</label>
-                        <input type="tel" id="edit-phone" value="${userData.phone || ''}">
-                    </div>
-                    <div class="form-group" id="otp-group-profile" style="display: none;">
-                        <label>Mã xác thực OTP (Gửi tới SĐT mới)</label>
-                        <div class="otp-input-container" id="otp-inputs-profile">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                        </div>
-                        <button type="button" id="btn-resend-otp-profile" class="btn-minimal" style="font-size:0.7rem; margin-top:5px; border:none; text-decoration:underline; width:auto; padding:0;">Gửi lại mã</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Giới tính</label>
-                        <select id="edit-gender">
-                            <option value="">Chọn giới tính</option>
-                            <option value="Nam" ${userData.gender === 'Nam' ? 'selected' : ''}>Nam</option>
-                            <option value="Nữ" ${userData.gender === 'Nữ' ? 'selected' : ''}>Nữ</option>
-                            <option value="Khác" ${userData.gender === 'Khác' ? 'selected' : ''}>Khác</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Ngày sinh</label>
-                        <input type="date" id="edit-birthday" value="${userData.birthday || ''}">
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn-dark" style="flex: 1;">Lưu</button>
-                        <button type="button" id="btn-cancel-edit" class="btn-minimal" style="flex: 1;">Hủy</button>
-                    </div>
-                </form>
-
-                <div id="admin-action-container" style="display: none; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed #eee;"></div>
-                <button id="btn-logout-profile" class="btn-minimal" style="margin-top: 2rem; width: 100%; color: #e74c3c; border-color: #e74c3c;">Đăng xuất</button>
-            </div>
-        `;
-
-        profileInfo.style.display = 'block';
-        notLoggedInMsg.style.display = 'none';
-
-        // Điều khiển ẩn/hiện Form sửa
-        const displayDiv = document.getElementById('profile-display');
         const editForm = document.getElementById('edit-profile-form');
-        
-        document.getElementById('btn-edit-profile').onclick = () => {
-            displayDiv.style.display = 'none';
-            editForm.style.display = 'block';
-        };
-        
-        const submitBtn = editForm.querySelector('button[type="submit"]');
+        const submitBtn = editForm ? editForm.querySelector('button[type="submit"]') : null;
         const resendBtn = document.getElementById('btn-resend-otp-profile');
 
-        // Kiểm tra đếm ngược gửi lại mã ngay khi khởi tạo form
-        startOtpCountdown(resendBtn, 'otp_ts_profile', 60);
+        if (resendBtn) startOtpCountdown(resendBtn, 'otp_ts_profile', 60);
 
-        // Hàm gửi OTP dùng chung cho trang Profile
         const triggerOtpSend = async (phone) => {
             const cooldown = getOtpCooldown('otp_ts_profile', 60);
             if (cooldown > 0) return false;
             
-            // KIỂM TRA TRÙNG LẶP SỐ ĐIỆN THOẠI
             const q = query(collection(db, "users"), where("phone", "==", phone));
             const snap = await getDocs(q);
             
             let conflict = false;
             snap.forEach(docSnap => {
                 const data = docSnap.data();
-                // Nếu số này thuộc về UID khác VÀ tài khoản đó không phải là tài khoản vãng lai (ghost)
                 if (docSnap.id !== auth.currentUser.uid && data.isGhost === false) {
                     conflict = true;
                 }
             });
 
             if (conflict) {
-                showToast("Số điện thoại này đã được liên kết với một tài khoản khác. Vui lòng đăng nhập bằng số điện thoại này.", "error");
+                showToast("Số điện thoại này đã được liên kết với một tài khoản khác.", "error");
                 return false;
             }
 
@@ -428,128 +419,125 @@ async function handleProfileAuth(user) {
             return true;
         };
 
-        resendBtn.onclick = () => {
-            const phone = formatPhoneNumber(document.getElementById('edit-phone').value);
-            triggerOtpSend(phone).then(ok => { if(ok) showToast("Đã gửi lại mã OTP"); });
-        };
-
-        document.getElementById('btn-cancel-edit').onclick = () => {
-            editForm.style.display = 'none';
-            displayDiv.style.display = 'block';
-            confirmationResult = null;
-            document.getElementById('otp-group-profile').style.display = 'none';
-            submitBtn.innerText = "Lưu";
-        };
+        if (resendBtn) {
+            resendBtn.onclick = () => {
+                const phone = formatPhoneNumber(document.getElementById('edit-phone').value);
+                triggerOtpSend(phone).then(ok => { if(ok) showToast("Đã gửi lại mã OTP"); });
+            };
+        }
 
         // Xử lý lưu thông tin
-        editForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const newName = document.getElementById('edit-name').value;
-            const rawPhone = document.getElementById('edit-phone').value;
-            const newPhone = formatPhoneNumber(rawPhone); // Chuẩn hóa SĐT
-            const newGender = document.getElementById('edit-gender').value;
-            const newBirthday = document.getElementById('edit-birthday').value;
-            const otpGroup = document.getElementById('otp-group-profile');
+        if (editForm) {
+            editForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('edit-name').value;
+                const rawPhone = document.getElementById('edit-phone').value;
+                const newPhone = formatPhoneNumber(rawPhone);
+                const newDob = document.getElementById('edit-dob') ? document.getElementById('edit-dob').value : '';
+                const newGender = document.getElementById('edit-gender') ? document.getElementById('edit-gender').value : '';
+                const otpGroup = document.getElementById('otp-group-profile');
 
-            try {
-                // 1. Kiểm tra xác thực OTP nếu người dùng thay đổi số điện thoại
-                const phoneChanged = newPhone && newPhone !== (userData.phone || '');
-                
-                if (phoneChanged && !confirmationResult) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang gửi OTP...';
+                try {
+                    const phoneChanged = newPhone && newPhone !== (userData.phone || '');
                     
-                    const ok = await triggerOtpSend(newPhone);
-                    if (!ok) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = "Lưu";
-                        return;
-                    }
+                    if (phoneChanged && !confirmationResult) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-small"></span> Đang gửi OTP...';
+                        
+                        const ok = await triggerOtpSend(newPhone);
+                        if (!ok) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = "Lưu thông tin";
+                            return;
+                        }
 
-                    otpGroup.style.display = 'block';
-                    setupOtpInputs('otp-inputs-profile');
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Xác nhận & Lưu";
-                    showToast("Mã OTP đã được gửi đến số điện thoại mới.");
-                    return; // Dừng submit để đợi người dùng nhập mã
-                }
-
-                // 2. Nếu đang trong quá trình xác thực, kiểm tra mã code
-                if (confirmationResult) {
-                    const code = getOtpValue('otp-inputs-profile');
-                    if (code.length < 6) { showToast("Vui lòng nhập đủ 6 số OTP", "error"); return; }
-                    
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang xác thực...';
-                    try {
-                        await confirmationResult.confirm(code);
-                        confirmationResult = null; // Xóa kết quả xác thực sau khi thành công
-                    } catch (err) {
-                        showToast("Mã OTP không chính xác hoặc đã hết hạn", "error");
+                        otpGroup.style.display = 'block';
+                        setupOtpInputs('otp-inputs-profile');
                         submitBtn.disabled = false;
                         submitBtn.innerText = "Xác nhận & Lưu";
+                        showToast("Mã OTP đã được gửi đến số điện thoại mới.");
                         return;
                     }
+
+                    if (confirmationResult) {
+                        const code = getOtpValue('otp-inputs-profile');
+                        if (code.length < 6) { showToast("Vui lòng nhập đủ 6 số OTP", "error"); return; }
+                        
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-small"></span> Đang xác thực...';
+                        try {
+                            await confirmationResult.confirm(code);
+                            confirmationResult = null;
+                            otpGroup.style.display = 'none';
+                        } catch (err) {
+                            showToast("Mã OTP không chính xác hoặc đã hết hạn", "error");
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = "Xác nhận & Lưu";
+                            return;
+                        }
+                    }
+
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+
+                    if (newName !== user.displayName) {
+                        await updateProfile(user, { displayName: newName });
+                    }
+                    
+                    const phone84 = newPhone.startsWith('0') ? '+84' + newPhone.substring(1) : newPhone;
+                    const identifiers = [newPhone, phone84];
+                    if (user.email) identifiers.push(user.email);
+
+                    await setDoc(userRef, {
+                        phone: newPhone,
+                        dob: newDob,
+                        gender: newGender,
+                        identifiers: identifiers,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+
+                    const linkedCount = await autoLinkOrdersByPhone(user.uid, newPhone);
+                    if (linkedCount > 0) {
+                        showToast(`Thành công! Đã liên kết ${linkedCount} đơn hàng cũ.`);
+                    } else {
+                        showToast("Cập nhật thông tin thành công!");
+                    }
+                    
+                    if (phoneChanged) {
+                        sendEmailNotification('phone', {
+                            to_email: user.email,
+                            customer_name: user.displayName || user.email,
+                            new_phone: newPhone
+                        });
+                    }
+
+                    handleProfileAuth(auth.currentUser); 
+                } catch (error) {
+                    showToast("Lỗi khi cập nhật: " + error.message, "error");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Lưu thông tin";
                 }
+            };
+        }
 
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+        const btnLogoutSidebar = document.getElementById('btn-logout-sidebar');
+        if (btnLogoutSidebar) btnLogoutSidebar.onclick = logout;
 
-                // Cập nhật Profile của Firebase Auth
-                if (newName !== user.displayName) {
-                    await updateProfile(user, { displayName: newName });
-                }
-                
-                // Cập nhật cả identifiers để tìm kiếm POS chính xác
-                const phone84 = newPhone.startsWith('0') ? '+84' + newPhone.substring(1) : newPhone;
-                const identifiers = [newPhone, phone84];
-                if (user.email) identifiers.push(user.email);
-
-                // Cập nhật dữ liệu mở rộng vào Firestore
-                await setDoc(userRef, {
-                    phone: newPhone,
-                    gender: newGender,
-                    birthday: newBirthday,
-                    identifiers: identifiers,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-
-                // Thực hiện liên kết đơn hàng ngay sau khi cập nhật SĐT thành công
-                const linkedCount = await autoLinkOrdersByPhone(user.uid, newPhone);
-                if (linkedCount > 0) {
-                    showToast(`Thành công! Đã liên kết ${linkedCount} đơn hàng cũ từ shop vào tài khoản của bạn.`);
+        const btnChangePassword = document.getElementById('btn-change-password');
+        if (btnChangePassword) {
+            btnChangePassword.onclick = async () => {
+                if (user.email) {
+                    try {
+                        // Using sendPasswordResetEmail from firebase-auth
+                        await sendPasswordResetEmail(auth, user.email);
+                        showToast("Đã gửi email đổi mật khẩu. Vui lòng kiểm tra hộp thư của bạn.");
+                    } catch (error) {
+                        showToast("Lỗi: " + error.message, "error");
+                    }
                 } else {
-                    showToast("Cập nhật thông tin thành công!");
+                    showToast("Tài khoản của bạn không có email liên kết.", "error");
                 }
-                
-                if (phoneChanged) {
-                    sendEmailNotification('phone', {
-                        to_email: user.email,
-                        customer_name: user.displayName || user.email,
-                        new_phone: newPhone
-                    });
-                }
-
-                handleProfileAuth(auth.currentUser); // Tải lại giao diện
-            } catch (error) {
-                showToast("Lỗi khi cập nhật: " + error.message, "error");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Lưu";
-            }
-        };
-
-        document.getElementById('btn-logout-profile').onclick = logout;
-
-        // Hiển thị link Admin nếu có quyền
-        if (isAdmin) {
-            const adminContainer = document.getElementById('admin-action-container');
-            if (adminContainer) {
-                adminContainer.innerHTML = `
-                    <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
-                    <a href="../admin/" class="btn-dark" style="display: block; text-align: center; margin-top: 0;">Vào bảng điều khiển Admin</a>
-                `;
-                adminContainer.style.display = 'block';
-            }
+            };
         }
 
         fetchFavorites(user.uid);
@@ -557,7 +545,7 @@ async function handleProfileAuth(user) {
         fetchAddresses(user.uid);
         fetchUserVouchers(user.uid);
     } else {
-        profileInfo.style.display = 'none';
+        profileLayout.style.display = 'none';
         document.getElementById('order-history-list').innerHTML = '';
         document.getElementById('no-orders-msg').style.display = 'none';
         const vl = document.getElementById('voucher-list');
@@ -579,72 +567,69 @@ async function fetchOrderHistory(userId) {
         const q = query(collection(db, "orders"), where("userId", "==", userId), orderBy("orderDate", "desc"));
         const querySnapshot = await getDocs(q);
 
+        let htmlContent = '';
+        let totalSpent = 0;
+
         if (querySnapshot.empty) {
             orderListContainer.style.display = 'none';
             noOrdersMsg.style.display = 'block';
-            // Cập nhật số tiền tích luỹ về 0 nếu chưa có đơn
-            const spentEl = document.getElementById('user-total-spent');
-            if (spentEl) spentEl.innerText = '0đ';
-            return;
+        } else {
+            querySnapshot.forEach((doc) => {
+                const order = doc.data();
+                // Chỉ tích lũy chi tiêu cho đơn hàng đã hoàn thành để thăng hạng
+                if (order.status === "Đã hoàn thành") {
+                    totalSpent += (order.totalAmount || 0);
+                }
+                const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
+                const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
+                const status = order.status || 'Đang xử lý';
+
+                const canCancel = status === 'Đang xử lý'; // Chỉ cho phép hủy khi đang xử lý
+                const cancelBtn = canCancel 
+                    ? `<button class="btn-minimal" style="color: #e74c3c; border-color: #e74c3c; margin-top: 1rem;" onclick="window.cancelOrder('${doc.id}')">Hủy đơn hàng</button>` 
+                    : '';
+                const detailBtn = `<button class="btn-outline" style="margin-top: 1rem; margin-right: 10px;" onclick="window.viewOrderDetails('${doc.id}')">Xem chi tiết</button>`;
+                const couponDiscountVal = order.discountAmount || 0;
+                const vipDiscountVal = order.membershipDiscount || 0;
+                
+                let discountDetailsHtml = '';
+                if (order.couponCode && couponDiscountVal > 0) {
+                    discountDetailsHtml += `<p style="font-size: 0.85rem; color: #e74c3c; margin: 3px 0;">
+                        <strong>Giảm giá mã ưu đãi (${order.couponCode}):</strong> -${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ
+                    </p>`;
+                }
+                if (vipDiscountVal > 0) {
+                    discountDetailsHtml += `<p style="font-size: 0.85rem; color: #27ae60; margin: 3px 0;">
+                        <strong>Giảm giá thành viên (VIP):</strong> -${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ
+                    </p>`;
+                }
+
+                htmlContent += `
+                    <div class="order-item">
+                        <div class="order-header">
+                            <span><strong>Mã đơn hàng:</strong> ${doc.id}</span>
+                            <span><strong>Ngày đặt:</strong> ${orderDate}</span>
+                            <span><strong>Trạng thái:</strong> <span class="order-status-${status.toLowerCase().replace(/\s/g, '-')}">${status}</span></span>
+                        </div>
+                        <div class="order-details">
+                            <h4>Sản phẩm:</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                ${order.items.map(item => `
+                                    <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)} VND)</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            ${discountDetailsHtml}
+                            <p style="margin-top: 8px;"><strong>Tổng thanh toán:</strong> ${totalAmount} VND</p>
+                            <div style="display: flex; gap: 10px; margin-top: 1rem;">${detailBtn} ${cancelBtn}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            orderListContainer.innerHTML = htmlContent;
         }
-
-        let htmlContent = '';
-        let totalSpent = 0;
-        querySnapshot.forEach((doc) => {
-            const order = doc.data();
-            // Chỉ tích lũy chi tiêu cho đơn hàng đã hoàn thành để thăng hạng
-            if (order.status === "Đã hoàn thành") {
-                totalSpent += (order.totalAmount || 0);
-            }
-            const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 'N/A';
-            const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
-            const status = order.status || 'Đang xử lý';
-
-            const canCancel = status === 'Đang xử lý'; // Chỉ cho phép hủy khi đang xử lý
-            const cancelBtn = canCancel 
-                ? `<button class="btn-minimal" style="color: #e74c3c; border-color: #e74c3c; margin-top: 1rem;" onclick="window.cancelOrder('${doc.id}')">Hủy đơn hàng</button>` 
-                : '';
-            const detailBtn = `<button class="btn-outline" style="margin-top: 1rem; margin-right: 10px;" onclick="window.viewOrderDetails('${doc.id}')">Xem chi tiết</button>`;
-            const couponDiscountVal = order.discountAmount || 0;
-            const vipDiscountVal = order.membershipDiscount || 0;
-            
-            let discountDetailsHtml = '';
-            if (order.couponCode && couponDiscountVal > 0) {
-                discountDetailsHtml += `<p style="font-size: 0.85rem; color: #e74c3c; margin: 3px 0;">
-                    <strong>Giảm giá mã ưu đãi (${order.couponCode}):</strong> -${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ
-                </p>`;
-            }
-            if (vipDiscountVal > 0) {
-                discountDetailsHtml += `<p style="font-size: 0.85rem; color: #27ae60; margin: 3px 0;">
-                    <strong>Giảm giá thành viên (VIP):</strong> -${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ
-                </p>`;
-            }
-
-            htmlContent += `
-                <div class="order-item">
-                    <div class="order-header">
-                        <span><strong>Mã đơn hàng:</strong> ${doc.id}</span>
-                        <span><strong>Ngày đặt:</strong> ${orderDate}</span>
-                        <span><strong>Trạng thái:</strong> <span class="order-status-${status.toLowerCase().replace(/\s/g, '-')}">${status}</span></span>
-                    </div>
-                    <div class="order-details">
-                        <h4>Sản phẩm:</h4>
-                        <ul style="list-style: none; padding: 0;">
-                            ${order.items.map(item => `
-                                <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                    <img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                                    <span>${item.name} x ${item.quantity} (${new Intl.NumberFormat('vi-VN').format(item.price)} VND)</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                        ${discountDetailsHtml}
-                        <p style="margin-top: 8px;"><strong>Tổng thanh toán:</strong> ${totalAmount} VND</p>
-                        <div style="display: flex; gap: 10px; margin-top: 1rem;">${detailBtn} ${cancelBtn}</div>
-                    </div>
-                </div>
-            `;
-        });
-        orderListContainer.innerHTML = htmlContent;
         
         // 1.5 Hiển thị Thẻ thành viên & Tiến trình
         const cardContainer = document.getElementById('membership-card-container');
@@ -952,5 +937,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initHeader('../', handleProfileAuth);
     setupTabs();
+
+    // Logic Modal Thêm Địa Chỉ
+    const btnAddAddress = document.getElementById('btn-add-address');
+    const addressModal = document.getElementById('address-modal');
+    const closeAddressModal = document.getElementById('close-address-modal');
+    const formAddAddress = document.getElementById('form-add-address');
+
+    if (btnAddAddress && addressModal) {
+        btnAddAddress.onclick = () => {
+            addressModal.style.display = 'block';
+            setTimeout(() => {
+                addressModal.style.opacity = '1';
+                addressModal.style.visibility = 'visible';
+                addressModal.querySelector('.modal-content').style.transform = 'translateY(0)';
+            }, 10);
+        };
+    }
+
+    if (closeAddressModal && addressModal) {
+        closeAddressModal.onclick = () => {
+            addressModal.style.opacity = '0';
+            addressModal.style.visibility = 'hidden';
+            addressModal.querySelector('.modal-content').style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                addressModal.style.display = 'none';
+            }, 200);
+        };
+    }
+
+    if (formAddAddress) {
+        formAddAddress.onsubmit = async (e) => {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-address');
+            if(btnSave) {
+                btnSave.disabled = true;
+                btnSave.innerText = "Đang lưu...";
+            }
+            
+            try {
+                if (!auth.currentUser) throw new Error("Bạn chưa đăng nhập");
+                
+                const newAddress = {
+                    fullName: document.getElementById('new-addr-name').value,
+                    phone: document.getElementById('new-addr-phone').value,
+                    provinceName: document.getElementById('new-addr-province').value,
+                    wardName: document.getElementById('new-addr-ward').value,
+                    address: document.getElementById('new-addr-detail').value
+                };
+                
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(userRef, {
+                    addresses: arrayUnion(newAddress)
+                });
+                
+                showToast("Thêm địa chỉ thành công!");
+                formAddAddress.reset();
+                if(closeAddressModal) closeAddressModal.click();
+                if (typeof fetchAddresses === "function") {
+                    fetchAddresses(auth.currentUser.uid);
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Lỗi khi thêm địa chỉ: " + error.message, "error");
+            } finally {
+                if(btnSave) {
+                    btnSave.disabled = false;
+                    btnSave.innerText = "Lưu Địa Chỉ";
+                }
+            }
+        };
+    }
 });
 

@@ -1,4 +1,4 @@
-/* css/style.css */
+﻿/* css/style.css */
 @font-face {
     font-family: 'Elle Gabor Std Light';
     src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff');
@@ -9,7 +9,7 @@
 
 html {
     font-size: 110%;
-    /* Tăng toàn bộ cỡ chữ trên trang web lên khoảng 10% */
+    /* TÄƒng toÃ n bá»™ cá»¡ chá»¯ trÃªn trang web lÃªn khoáº£ng 10% */
     scroll-behavior: smooth;
 }
 
@@ -70,9 +70,9 @@ h6 {
 
 html {
     scroll-behavior: smooth;
-    /* Cho hiÃ¡Â»â€¡u Ã¡Â»Â©ng cuÃ¡Â»â„¢n mÃ†Â°Ã¡Â»Â£t mÃƒÂ  */
+    /* Cho hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  */
     overflow-x: hidden;
-    /* NgÃ„Æ’n chÃ¡ÂºÂ·n cuÃ¡Â»â„¢n ngang do hiÃ¡Â»â€¡u Ã¡Â»Â©ng slide-in trÃƒÂªn toÃƒÂ n bÃ¡Â»â„¢ trang */
+    /* NgÃƒâ€žÃ†â€™n chÃƒÂ¡Ã‚ÂºÃ‚Â·n cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n ngang do hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng slide-in trÃƒÆ’Ã‚Âªn toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ trang */
 }
 
 @keyframes pageFadeIn {
@@ -108,12 +108,12 @@ body > *:not(#header-placeholder) {
     height: 100vh;
     overflow: hidden;
     margin-top: -80px;
-    /* BÃƒÂ¹ Ã„â€˜Ã¡ÂºÂ¯p Ã„â€˜Ã¡Â»Æ’ banner bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« tÃ¡ÂºÂ­n cÃƒÂ¹ng phÃƒÂ­a trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh */
+    /* BÃƒÆ’Ã‚Â¹ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¯p Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ banner bÃƒÂ¡Ã‚ÂºÃ‚Â¯t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u tÃƒÂ¡Ã‚Â»Ã‚Â« tÃƒÂ¡Ã‚ÂºÃ‚Â­n cÃƒÆ’Ã‚Â¹ng phÃƒÆ’Ã‚Â­a trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh */
     user-select: none;
-    /* NgÃ„Æ’n bÃƒÂ´i Ã„â€˜en vÃ„Æ’n bÃ¡ÂºÂ£n khi kÃƒÂ©o */
+    /* NgÃƒâ€žÃ†â€™n bÃƒÆ’Ã‚Â´i Ãƒâ€žÃ¢â‚¬Ëœen vÃƒâ€žÃ†â€™n bÃƒÂ¡Ã‚ÂºÃ‚Â£n khi kÃƒÆ’Ã‚Â©o */
     cursor: grab;
     background-color: #000;
-    /* NÃ¡Â»Ân Ã„â€˜en giÃƒÂºp hiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ¡Â»Â dÃ¡ÂºÂ§n (fade) trÃƒÂ´ng sÃƒÂ¢u vÃƒÂ  chuyÃƒÂªn nghiÃ¡Â»â€¡p hÃ†Â¡n */
+    /* NÃƒÂ¡Ã‚Â»Ã‚Ân Ãƒâ€žÃ¢â‚¬Ëœen giÃƒÆ’Ã‚Âºp hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng mÃƒÂ¡Ã‚Â»Ã‚Â dÃƒÂ¡Ã‚ÂºÃ‚Â§n (fade) trÃƒÆ’Ã‚Â´ng sÃƒÆ’Ã‚Â¢u vÃƒÆ’Ã‚Â  chuyÃƒÆ’Ã‚Âªn nghiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡p hÃƒâ€ Ã‚Â¡n */
 }
 
 .carousel-container {
@@ -158,9 +158,9 @@ body > *:not(#header-placeholder) {
     text-align: center;
     visibility: hidden;
     text-decoration: none;
-    /* BÃ¡Â»Â gÃ¡ÂºÂ¡ch chÃƒÂ¢n khi slide lÃƒÂ  thÃ¡ÂºÂ» <a> */
+    /* BÃƒÂ¡Ã‚Â»Ã‚Â gÃƒÂ¡Ã‚ÂºÃ‚Â¡ch chÃƒÆ’Ã‚Â¢n khi slide lÃƒÆ’Ã‚Â  thÃƒÂ¡Ã‚ÂºÃ‚Â» <a> */
     color: inherit;
-    /* GiÃ¡Â»Â¯ nguyÃƒÂªn mÃƒÂ u chÃ¡Â»Â¯ cÃ¡Â»Â§a nÃ¡Â»â„¢i dung bÃƒÂªn trong */
+    /* GiÃƒÂ¡Ã‚Â»Ã‚Â¯ nguyÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â u chÃƒÂ¡Ã‚Â»Ã‚Â¯ cÃƒÂ¡Ã‚Â»Ã‚Â§a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung bÃƒÆ’Ã‚Âªn trong */
     z-index: 1;
 }
 
@@ -168,7 +168,7 @@ body > *:not(#header-placeholder) {
     opacity: 1;
     visibility: visible;
     z-index: 2;
-    /* Slide Ã„â€˜ang kÃƒÂ­ch hoÃ¡ÂºÂ¡t sÃ¡ÂºÂ½ nÃ¡ÂºÂ±m trÃƒÂªn slide cÃ…Â© Ã„â€˜Ã¡Â»Æ’ tÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng chÃ¡Â»â€œng mÃ¡Â»Â (cross-fade) */
+    /* Slide Ãƒâ€žÃ¢â‚¬Ëœang kÃƒÆ’Ã‚Â­ch hoÃƒÂ¡Ã‚ÂºÃ‚Â¡t sÃƒÂ¡Ã‚ÂºÃ‚Â½ nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn slide cÃƒâ€¦Ã‚Â© Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ tÃƒÂ¡Ã‚ÂºÃ‚Â¡o hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng chÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng mÃƒÂ¡Ã‚Â»Ã‚Â (cross-fade) */
 }
 
 .carousel-slide img {
@@ -180,7 +180,7 @@ body > *:not(#header-placeholder) {
     object-fit: cover;
     z-index: -1;
     pointer-events: none;
-    /* TrÃƒÂ¡nh kÃƒÂ­ch hoÃ¡ÂºÂ¡t tÃƒÂ­nh nÃ„Æ’ng kÃƒÂ©o Ã¡ÂºÂ£nh mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»Â§a trÃƒÂ¬nh duyÃ¡Â»â€¡t */
+    /* TrÃƒÆ’Ã‚Â¡nh kÃƒÆ’Ã‚Â­ch hoÃƒÂ¡Ã‚ÂºÃ‚Â¡t tÃƒÆ’Ã‚Â­nh nÃƒâ€žÃ†â€™ng kÃƒÆ’Ã‚Â©o ÃƒÂ¡Ã‚ÂºÃ‚Â£nh mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cÃƒÂ¡Ã‚Â»Ã‚Â§a trÃƒÆ’Ã‚Â¬nh duyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t */
 }
 
 .carousel-slide picture {
@@ -201,7 +201,7 @@ body > *:not(#header-placeholder) {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.2);
-    /* LÃ¡Â»â€ºp phÃ¡Â»Â§ nhÃ¡ÂºÂ¹ giÃƒÂºp chÃ¡Â»Â¯ dÃ¡Â»â€¦ Ã„â€˜Ã¡Â»Âc hÃ†Â¡n */
+    /* LÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp phÃƒÂ¡Ã‚Â»Ã‚Â§ nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ giÃƒÆ’Ã‚Âºp chÃƒÂ¡Ã‚Â»Ã‚Â¯ dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Âc hÃƒâ€ Ã‚Â¡n */
     z-index: 0;
 }
 
@@ -273,12 +273,12 @@ body > *:not(#header-placeholder) {
     width: 100%;
     height: 80px;
     background-color: rgba(247, 246, 242, 0.25);
-    /* GiÃ¡ÂºÂ£m Ã„â€˜Ã¡Â»â„¢ Ã„â€˜Ã¡Â»Â¥c xuÃ¡Â»â€˜ng 75% Ã„â€˜Ã¡Â»Æ’ trong suÃ¡Â»â€˜t hÃ†Â¡n */
+    /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â¥c xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng 75% Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt hÃƒâ€ Ã‚Â¡n */
     backdrop-filter: blur(35px);
-    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â„¢ mÃ¡Â»Â Ã„â€˜Ã¡Â»Æ’ hiÃ¡Â»â€¡u Ã¡Â»Â©ng kÃƒÂ­nh mÃ¡Â»Â rÃƒÂµ rÃ¡Â»â€¡t hÃ†Â¡n */
+    /* TÃƒâ€žÃ†â€™ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ mÃƒÂ¡Ã‚Â»Ã‚Â Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng kÃƒÆ’Ã‚Â­nh mÃƒÂ¡Ã‚Â»Ã‚Â rÃƒÆ’Ã‚Âµ rÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t hÃƒâ€ Ã‚Â¡n */
     -webkit-backdrop-filter: blur(35px);
     z-index: 3000;
-    /* TÃ„Æ’ng z-index Ã„â€˜Ã¡Â»Æ’ navbar luÃƒÂ´n nÃ¡ÂºÂ±m trÃƒÂªn lÃ¡Â»â€ºp mÃ¡Â»Â */
+    /* TÃƒâ€žÃ†â€™ng z-index Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ navbar luÃƒÆ’Ã‚Â´n nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp mÃƒÂ¡Ã‚Â»Ã‚Â */
     font-family: var(--font-serif);
     font-weight: 300;
     align-items: center;
@@ -311,19 +311,19 @@ body > *:not(#header-placeholder) {
     width: auto;
     display: block;
     transition: filter 0.4s ease;
-    /* TÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng chuyÃ¡Â»Æ’n Ã„â€˜Ã¡Â»â€¢i mÃƒÂ u logo mÃ†Â°Ã¡Â»Â£t mÃƒÂ  */
+    /* TÃƒÂ¡Ã‚ÂºÃ‚Â¡o hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng chuyÃƒÂ¡Ã‚Â»Ã†â€™n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i mÃƒÆ’Ã‚Â u logo mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  */
 }
 
-/* --- TrÃ¡ÂºÂ¡ng thÃƒÂ¡i Header trong suÃ¡Â»â€˜t (Cho trang chÃ¡Â»Â§) --- */
+/* --- TrÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i Header trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt (Cho trang chÃƒÂ¡Ã‚Â»Ã‚Â§) --- */
 .navbar.transparent {
     background-color: transparent !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
-    /* TÃ¡ÂºÂ¯t blur khi Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i trong suÃ¡Â»â€˜t (Ã„â€˜Ã¡ÂºÂ§u trang chÃ¡Â»Â§) */
+    /* TÃƒÂ¡Ã‚ÂºÃ‚Â¯t blur khi Ãƒâ€žÃ¢â‚¬Ëœang ÃƒÂ¡Ã‚Â»Ã…Â¸ trÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt (Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u trang chÃƒÂ¡Ã‚Â»Ã‚Â§) */
     -webkit-backdrop-filter: none !important;
 }
 
-/* Khi header trong suÃ¡Â»â€˜t, tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜Ã¡Â»â€¢i mÃƒÂ u chÃ¡Â»Â¯/icon (trÃ¡ÂºÂ¯ng/Ã„â€˜en) tÃ†Â°Ã†Â¡ng phÃ¡ÂºÂ£n vÃ¡Â»â€ºi Ã¡ÂºÂ£nh nÃ¡Â»Ân bÃ¡ÂºÂ±ng difference */
+/* Khi header trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt, tÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i mÃƒÆ’Ã‚Â u chÃƒÂ¡Ã‚Â»Ã‚Â¯/icon (trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng/Ãƒâ€žÃ¢â‚¬Ëœen) tÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng phÃƒÂ¡Ã‚ÂºÃ‚Â£n vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi ÃƒÂ¡Ã‚ÂºÃ‚Â£nh nÃƒÂ¡Ã‚Â»Ã‚Ân bÃƒÂ¡Ã‚ÂºÃ‚Â±ng difference */
 .navbar.transparent .nav-links>li>a,
 .navbar.transparent .nav-icon-btn,
 .navbar.transparent .user-icon-link {
@@ -331,7 +331,7 @@ body > *:not(#header-placeholder) {
     mix-blend-mode: difference;
 }
 
-/* KHÃƒâ€NG ÃƒÂ¡p dÃ¡Â»Â¥ng hiÃ¡Â»â€¡u Ã¡Â»Â©ng tÃ¡ÂºÂ¯c kÃƒÂ¨ hoa cho cÃƒÂ¡c chÃ¡Â»Â¯ trong bÃ¡ÂºÂ£ng menu mobile (vÃƒÂ¬ bÃ¡ÂºÂ£ng cÃƒÂ³ nÃ¡Â»Ân trÃ¡ÂºÂ¯ng) */
+/* KHÃƒÆ’Ã¢â‚¬ÂNG ÃƒÆ’Ã‚Â¡p dÃƒÂ¡Ã‚Â»Ã‚Â¥ng hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng tÃƒÂ¡Ã‚ÂºÃ‚Â¯c kÃƒÆ’Ã‚Â¨ hoa cho cÃƒÆ’Ã‚Â¡c chÃƒÂ¡Ã‚Â»Ã‚Â¯ trong bÃƒÂ¡Ã‚ÂºÃ‚Â£ng menu mobile (vÃƒÆ’Ã‚Â¬ bÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â³ nÃƒÂ¡Ã‚Â»Ã‚Ân trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng) */
 @media (max-width: 992px) {
     .navbar.transparent .nav-links>li>a {
         color: var(--text-black) !important;
@@ -339,7 +339,7 @@ body > *:not(#header-placeholder) {
     }
 }
 
-/* Ãƒâ€°p logo sang mÃƒÂ u trÃ¡ÂºÂ¯ng khi header trong suÃ¡Â»â€˜t vÃƒÂ  dÃƒÂ¹ng difference Ã„â€˜Ã¡Â»Æ’ tÃ†Â°Ã†Â¡ng phÃ¡ÂºÂ£n */
+/* ÃƒÆ’Ã¢â‚¬Â°p logo sang mÃƒÆ’Ã‚Â u trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng khi header trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt vÃƒÆ’Ã‚Â  dÃƒÆ’Ã‚Â¹ng difference Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ tÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng phÃƒÂ¡Ã‚ÂºÃ‚Â£n */
 .navbar.transparent .logo img {
     filter: brightness(0) invert(1);
     mix-blend-mode: difference;
@@ -355,7 +355,7 @@ body > *:not(#header-placeholder) {
     background-color: #fff !important;
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng chÃ¡Â»Â¯ chÃ¡ÂºÂ¡y mÃƒÂ u cho tiÃƒÂªu Ã„â€˜Ã¡Â»Â */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng chÃƒÂ¡Ã‚Â»Ã‚Â¯ chÃƒÂ¡Ã‚ÂºÃ‚Â¡y mÃƒÆ’Ã‚Â u cho tiÃƒÆ’Ã‚Âªu Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â */
 .shimmer-title {
     background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
     background-size: 200% auto;
@@ -365,7 +365,7 @@ body > *:not(#header-placeholder) {
     display: inline-block;
 }
 
-/* Style cho bÃ¡Â»â„¢ Ã„â€˜Ã¡ÂºÂ¿m ngÃ†Â°Ã¡Â»Â£c */
+/* Style cho bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¿m ngÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c */
 .countdown-container {
     display: flex;
     justify-content: center;
@@ -399,7 +399,7 @@ body > *:not(#header-placeholder) {
     letter-spacing: 0.5px;
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng nÃ¡Â»â€¢i bÃ¡ÂºÂ­t cho link Flash Sale */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng nÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i bÃƒÂ¡Ã‚ÂºÃ‚Â­t cho link Flash Sale */
 .flash-sale-link {
     background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c);
     background-size: 200% auto;
@@ -427,7 +427,7 @@ body > *:not(#header-placeholder) {
     animation: flash-stroke 3s linear infinite;
 }
 
-/* Khi header trong suÃ¡Â»â€˜t trÃƒÂªn nÃ¡Â»Ân banner, dÃƒÂ¹ng dÃ¡ÂºÂ£i mÃƒÂ u sÃƒÂ¡ng hÃ†Â¡n Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€¦ Ã„â€˜Ã¡Â»Âc */
+/* Khi header trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt trÃƒÆ’Ã‚Âªn nÃƒÂ¡Ã‚Â»Ã‚Ân banner, dÃƒÆ’Ã‚Â¹ng dÃƒÂ¡Ã‚ÂºÃ‚Â£i mÃƒÆ’Ã‚Â u sÃƒÆ’Ã‚Â¡ng hÃƒâ€ Ã‚Â¡n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Âc */
 .navbar.transparent .flash-sale-link {
     background: linear-gradient(90deg, #ff7675, #ffeaa7, #ff7675);
     background-size: 200% auto;
@@ -441,16 +441,16 @@ body > *:not(#header-placeholder) {
     }
 }
 
-/* Khi menu mobile Ã„â€˜ang mÃ¡Â»Å¸ (biÃ¡ÂºÂ¿n thÃƒÂ nh dÃ¡ÂºÂ¥u X), nÃƒÂºt phÃ¡ÂºÂ£i luÃƒÂ´n cÃƒÂ³ mÃƒÂ u Ã„â€˜Ã¡ÂºÂ­m Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â€¢i bÃ¡ÂºÂ­t trÃƒÂªn nÃ¡Â»Ân menu trÃ¡ÂºÂ¯ng/cream */
+/* Khi menu mobile Ãƒâ€žÃ¢â‚¬Ëœang mÃƒÂ¡Ã‚Â»Ã…Â¸ (biÃƒÂ¡Ã‚ÂºÃ‚Â¿n thÃƒÆ’Ã‚Â nh dÃƒÂ¡Ã‚ÂºÃ‚Â¥u X), nÃƒÆ’Ã‚Âºt phÃƒÂ¡Ã‚ÂºÃ‚Â£i luÃƒÆ’Ã‚Â´n cÃƒÆ’Ã‚Â³ mÃƒÆ’Ã‚Â u Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â­m Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ nÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i bÃƒÂ¡Ã‚ÂºÃ‚Â­t trÃƒÆ’Ã‚Âªn nÃƒÂ¡Ã‚Â»Ã‚Ân menu trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng/cream */
 .menu-toggle.active span {
     background-color: var(--text-black) !important;
     box-shadow: none !important;
 }
 
-/* --- TrÃ¡ÂºÂ¡ng thÃƒÂ¡i Header khi Ã„â€˜ÃƒÂ£ cuÃ¡Â»â„¢n trang (Scrolled) --- */
+/* --- TrÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i Header khi Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n trang (Scrolled) --- */
 .navbar.scrolled {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-    /* ChÃ¡Â»â€° tÃ„Æ’ng cÃ†Â°Ã¡Â»Âng Ã„â€˜Ã¡Â»â€¢ bÃƒÂ³ng khi cuÃ¡Â»â„¢n */
+    /* ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° tÃƒâ€žÃ†â€™ng cÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ bÃƒÆ’Ã‚Â³ng khi cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n */
 }
 
 .nav-links {
@@ -489,7 +489,7 @@ body > *:not(#header-placeholder) {
     width: 100%;
 }
 
-/* LoÃ¡ÂºÂ¡i bÃ¡Â»Â hiÃ¡Â»â€¡u Ã¡Â»Â©ng gÃ¡ÂºÂ¡ch chÃƒÂ¢n cho cÃƒÂ¡c liÃƒÂªn kÃ¡ÂºÂ¿t bÃƒÂªn trong mega menu */
+/* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng gÃƒÂ¡Ã‚ÂºÃ‚Â¡ch chÃƒÆ’Ã‚Â¢n cho cÃƒÆ’Ã‚Â¡c liÃƒÆ’Ã‚Âªn kÃƒÂ¡Ã‚ÂºÃ‚Â¿t bÃƒÆ’Ã‚Âªn trong mega menu */
 .mega-menu a::after {
     content: none;
 }
@@ -501,13 +501,13 @@ body > *:not(#header-placeholder) {
     cursor: pointer;
     position: relative;
     padding: 0;
-    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â padding mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
+    /* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â padding mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     width: 32px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     height: 32px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     display: flex;
-    /* SÃ¡Â»Â­ dÃ¡Â»Â¥ng flexbox Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n giÃ¡Â»Â¯a nÃ¡Â»â„¢i dung */
+    /* SÃƒÂ¡Ã‚Â»Ã‚Â­ dÃƒÂ¡Ã‚Â»Ã‚Â¥ng flexbox Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ cÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung */
     align-items: center;
     justify-content: center;
     transition: transform 0.2s;
@@ -525,15 +525,15 @@ body > *:not(#header-placeholder) {
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.7);
-    /* NÃ¡Â»Ân trong suÃ¡Â»â€˜t hÃ†Â¡n */
+    /* NÃƒÂ¡Ã‚Â»Ã‚Ân trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt hÃƒâ€ Ã‚Â¡n */
     z-index: 9990;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃ¡ÂºÂ±m trÃƒÂªn hÃ¡ÂºÂ§u hÃ¡ÂºÂ¿t cÃƒÂ¡c lÃ¡Â»â€ºp khÃƒÂ¡c */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn hÃƒÂ¡Ã‚ÂºÃ‚Â§u hÃƒÂ¡Ã‚ÂºÃ‚Â¿t cÃƒÆ’Ã‚Â¡c lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp khÃƒÆ’Ã‚Â¡c */
     display: none;
     align-items: flex-start;
     justify-content: center;
     padding-top: 10vh;
     backdrop-filter: blur(10px);
-    /* GiÃ¡ÂºÂ£m Ã„â€˜Ã¡Â»â„¢ mÃ¡Â»Â Ã„â€˜Ã¡Â»Æ’ trong suÃ¡Â»â€˜t hÃ†Â¡n */
+    /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ mÃƒÂ¡Ã‚Â»Ã‚Â Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt hÃƒâ€ Ã‚Â¡n */
     -webkit-backdrop-filter: blur(10px);
 }
 
@@ -554,9 +554,9 @@ body > *:not(#header-placeholder) {
     gap: 15px;
     border-bottom: 2px solid var(--text-black);
     padding-bottom: 15px;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃ†Â°Ã¡Â»â€ºi */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
     margin-bottom: 20px;
-    /* ThÃƒÂªm khoÃ¡ÂºÂ£ng cÃƒÂ¡ch vÃ¡Â»â€ºi gÃ¡Â»Â£i ÃƒÂ½ */
+    /* ThÃƒÆ’Ã‚Âªm khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi gÃƒÂ¡Ã‚Â»Ã‚Â£i ÃƒÆ’Ã‚Â½ */
 }
 
 .search-input-wrapper input {
@@ -590,10 +590,10 @@ body > *:not(#header-placeholder) {
     animation: suggestionSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 450px;
     overflow-y: auto;
-    /* Cho phÃƒÂ©p cuÃ¡Â»â„¢n nÃ¡ÂºÂ¿u danh sÃƒÂ¡ch dÃƒÂ i */
+    /* Cho phÃƒÆ’Ã‚Â©p cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u danh sÃƒÆ’Ã‚Â¡ch dÃƒÆ’Ã‚Â i */
 }
 
-/* CSS cho tÃ¡Â»Â«ng item trong danh sÃƒÂ¡ch tÃƒÂ¬m kiÃ¡ÂºÂ¿m */
+/* CSS cho tÃƒÂ¡Ã‚Â»Ã‚Â«ng item trong danh sÃƒÆ’Ã‚Â¡ch tÃƒÆ’Ã‚Â¬m kiÃƒÂ¡Ã‚ÂºÃ‚Â¿m */
 .suggestion-item {
     display: flex;
     padding: 15px;
@@ -731,30 +731,30 @@ body > *:not(#header-placeholder) {
     background: #f9f9f9;
 }
 
-/* Cho phÃƒÂ©p Mega Menu trÃƒÂ n toÃƒÂ n mÃƒÂ n hÃƒÂ¬nh */
+/* Cho phÃƒÆ’Ã‚Â©p Mega Menu trÃƒÆ’Ã‚Â n toÃƒÆ’Ã‚Â n mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh */
 .nav-links>li.dropdown {
     position: static;
 }
 
-/* Mega Dropdown cho danh mÃ¡Â»Â¥c lÃ¡Â»â€ºn nhÃ†Â° DÃ¡Â»Â¥ng cÃ¡Â»Â¥ bÃ¡ÂºÂ¿p */
+/* Mega Dropdown cho danh mÃƒÂ¡Ã‚Â»Ã‚Â¥c lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºn nhÃƒâ€ Ã‚Â° DÃƒÂ¡Ã‚Â»Ã‚Â¥ng cÃƒÂ¡Ã‚Â»Ã‚Â¥ bÃƒÂ¡Ã‚ÂºÃ‚Â¿p */
 .mega-menu {
     width: 100% !important;
     left: 0 !important;
     right: 0 !important;
     top: 80px;
-    /* KhÃ¡Â»â€ºp vÃ¡Â»â€ºi chiÃ¡Â»Âu cao cÃ¡Â»Â§a navbar */
+    /* KhÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi chiÃƒÂ¡Ã‚Â»Ã‚Âu cao cÃƒÂ¡Ã‚Â»Ã‚Â§a navbar */
     display: flex;
     padding: 60px 10% !important;
-    /* TÃ„Æ’ng thÃƒÂªm padding Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€œn nÃ¡Â»â„¢i dung vÃƒÂ o giÃ¡Â»Â¯a */
+    /* TÃƒâ€žÃ†â€™ng thÃƒÆ’Ã‚Âªm padding Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ dÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“n nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung vÃƒÆ’Ã‚Â o giÃƒÂ¡Ã‚Â»Ã‚Â¯a */
     gap: 80px;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c cÃ¡Â»â„¢t (tÃ¡Â»Â« 60px lÃƒÂªn 80px) */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t (tÃƒÂ¡Ã‚Â»Ã‚Â« 60px lÃƒÆ’Ã‚Âªn 80px) */
     flex-wrap: wrap;
-    /* Cho phÃƒÂ©p rÃ¡Â»â€ºt dÃƒÂ²ng nÃ¡ÂºÂ¿u quÃƒÂ¡ nhiÃ¡Â»Âu danh mÃ¡Â»Â¥c */
+    /* Cho phÃƒÆ’Ã‚Â©p rÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºt dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u quÃƒÆ’Ã‚Â¡ nhiÃƒÂ¡Ã‚Â»Ã‚Âu danh mÃƒÂ¡Ã‚Â»Ã‚Â¥c */
     transform: translateY(10px) !important;
     justify-content: space-between;
-    /* GiÃƒÂ£n Ã„â€˜Ã¡Â»Âu cÃƒÂ¡c cÃ¡Â»â„¢t ra hÃ¡ÂºÂ¿t chiÃ¡Â»Âu ngang container */
+    /* GiÃƒÆ’Ã‚Â£n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Âu cÃƒÆ’Ã‚Â¡c cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t ra hÃƒÂ¡Ã‚ÂºÃ‚Â¿t chiÃƒÂ¡Ã‚Â»Ã‚Âu ngang container */
     border-radius: 0;
-    /* TrÃƒÂ n ngang thÃ†Â°Ã¡Â»Âng khÃƒÂ´ng Ã„â€˜Ã¡Â»Æ’ bo gÃƒÂ³c */
+    /* TrÃƒÆ’Ã‚Â n ngang thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng khÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ bo gÃƒÆ’Ã‚Â³c */
     border-left: none;
     border-right: none;
 }
@@ -771,18 +771,18 @@ body > *:not(#header-placeholder) {
     flex-wrap: nowrap;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cho mÃƒÂ n hÃƒÂ¬nh laptop nhÃ¡Â»Â (1024px - 1366px) */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch cho mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh laptop nhÃƒÂ¡Ã‚Â»Ã‚Â (1024px - 1366px) */
 @media (min-width: 993px) and (max-width: 1366px) {
     .mega-menu {
         gap: 40px !important;
-        /* GiÃ¡ÂºÂ£m tÃ¡Â»Â« 80px xuÃ¡Â»â€˜ng 40px */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m tÃƒÂ¡Ã‚Â»Ã‚Â« 80px xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng 40px */
         padding: 40px 5% !important;
-        /* Thu hÃ¡ÂºÂ¹p padding hai bÃƒÂªn */
+        /* Thu hÃƒÂ¡Ã‚ÂºÃ‚Â¹p padding hai bÃƒÆ’Ã‚Âªn */
     }
 
     .mega-col {
         width: 160px;
-        /* Thu nhÃ¡Â»Â Ã„â€˜Ã¡Â»â„¢ rÃ¡Â»â„¢ng cÃ¡Â»â„¢t mÃ¡Â»â„¢t chÃƒÂºt */
+        /* Thu nhÃƒÂ¡Ã‚Â»Ã‚Â Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t chÃƒÆ’Ã‚Âºt */
         min-width: 140px;
     }
 }
@@ -799,7 +799,7 @@ body > *:not(#header-placeholder) {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 25px;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃ†Â°Ã¡Â»â€ºi tiÃƒÂªu Ã„â€˜Ã¡Â»Â */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi tiÃƒÆ’Ã‚Âªu Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â */
     color: #888;
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
@@ -807,7 +807,7 @@ body > *:not(#header-placeholder) {
 
 .mega-col a {
     padding: 12px 0 !important;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch dÃƒÂ²ng (tÃ¡Â»Â« 10px lÃƒÂªn 12px) giÃƒÂºp menu "thÃ¡Â»Å¸" hÃ†Â¡n */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch dÃƒÆ’Ã‚Â²ng (tÃƒÂ¡Ã‚Â»Ã‚Â« 10px lÃƒÆ’Ã‚Âªn 12px) giÃƒÆ’Ã‚Âºp menu "thÃƒÂ¡Ã‚Â»Ã…Â¸" hÃƒâ€ Ã‚Â¡n */
     color: var(--text-black) !important;
     opacity: 0.6;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -832,7 +832,7 @@ body > *:not(#header-placeholder) {
     border: none;
     padding: 10px;
     z-index: 4000;
-    /* TÃ„Æ’ng z-index Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ Ã„â€˜ÃƒÂ¨ */
+    /* TÃƒâ€žÃ†â€™ng z-index Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¨ */
     margin-right: 15px;
 }
 
@@ -857,7 +857,7 @@ body > *:not(#header-placeholder) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
-    max-width: 1200px;
+    max-width: 90%;
     margin: 0 auto;
 }
 
@@ -995,18 +995,18 @@ body > *:not(#header-placeholder) {
         background: var(--bg-cream);
         flex-direction: column;
         padding: 70px 20px 20px 20px;
-        /* GiÃ¡ÂºÂ£m padding trÃƒÂªn vÃƒÂ  dÃ†Â°Ã¡Â»â€ºi */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m padding trÃƒÆ’Ã‚Âªn vÃƒÆ’Ã‚Â  dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
         height: 100dvh;
-        /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh theo thanh cÃƒÂ´ng cÃ¡Â»Â¥ trÃƒÂ¬nh duyÃ¡Â»â€¡t mobile */
+        /* TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng Ãƒâ€žÃ¢â‚¬ËœiÃƒÂ¡Ã‚Â»Ã‚Âu chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh theo thanh cÃƒÆ’Ã‚Â´ng cÃƒÂ¡Ã‚Â»Ã‚Â¥ trÃƒÆ’Ã‚Â¬nh duyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t mobile */
         transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 3100;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
         gap: 0.5rem;
-        /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c mÃ¡Â»Â¥c menu chÃƒÂ­nh */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c mÃƒÂ¡Ã‚Â»Ã‚Â¥c menu chÃƒÆ’Ã‚Â­nh */
         overflow-y: auto;
-        /* Cho phÃƒÂ©p cuÃ¡Â»â„¢n nÃ¡ÂºÂ¿u danh mÃ¡Â»Â¥c quÃƒÂ¡ dÃƒÂ i */
+        /* Cho phÃƒÆ’Ã‚Â©p cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u danh mÃƒÂ¡Ã‚Â»Ã‚Â¥c quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i */
         -webkit-overflow-scrolling: touch;
-        /* GiÃƒÂºp cuÃ¡Â»â„¢n mÃ†Â°Ã¡Â»Â£t hÃ†Â¡n trÃƒÂªn iPhone */
+        /* GiÃƒÆ’Ã‚Âºp cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t hÃƒâ€ Ã‚Â¡n trÃƒÆ’Ã‚Âªn iPhone */
     }
 
     .nav-links.active {
@@ -1018,9 +1018,9 @@ body > *:not(#header-placeholder) {
         letter-spacing: 2px;
     }
 
-    /* GiÃ¡Â»Â¯ nguyÃƒÂªn font-size */
+    /* GiÃƒÂ¡Ã‚Â»Ã‚Â¯ nguyÃƒÆ’Ã‚Âªn font-size */
 
-    /* Ãƒâ€°p chÃ¡Â»Â¯ menu sang mÃƒÂ u Ã„â€˜en khi menu mobile mÃ¡Â»Å¸, trÃƒÂ¡nh bÃ¡Â»â€¹ trÃƒÂ¹ng mÃƒÂ u trÃ¡ÂºÂ¯ng khi header Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i transparent */
+    /* ÃƒÆ’Ã¢â‚¬Â°p chÃƒÂ¡Ã‚Â»Ã‚Â¯ menu sang mÃƒÆ’Ã‚Â u Ãƒâ€žÃ¢â‚¬Ëœen khi menu mobile mÃƒÂ¡Ã‚Â»Ã…Â¸, trÃƒÆ’Ã‚Â¡nh bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ trÃƒÆ’Ã‚Â¹ng mÃƒÆ’Ã‚Â u trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng khi header Ãƒâ€žÃ¢â‚¬Ëœang ÃƒÂ¡Ã‚Â»Ã…Â¸ trÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i transparent */
     .nav-links.active a {
         color: var(--text-black) !important;
         text-shadow: none !important;
@@ -1030,9 +1030,9 @@ body > *:not(#header-placeholder) {
         padding: 8px 0;
     }
 
-    /* ThÃƒÂªm padding dÃ¡Â»Âc cho cÃƒÂ¡c mÃ¡Â»Â¥c menu cÃ¡ÂºÂ¥p cao nhÃ¡ÂºÂ¥t */
+    /* ThÃƒÆ’Ã‚Âªm padding dÃƒÂ¡Ã‚Â»Ã‚Âc cho cÃƒÆ’Ã‚Â¡c mÃƒÂ¡Ã‚Â»Ã‚Â¥c menu cÃƒÂ¡Ã‚ÂºÃ‚Â¥p cao nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t */
 
-    /* Overlay khi mÃ¡Â»Å¸ menu */
+    /* Overlay khi mÃƒÂ¡Ã‚Â»Ã…Â¸ menu */
     body.menu-open::after {
         content: '';
         position: fixed;
@@ -1062,20 +1062,20 @@ body > *:not(#header-placeholder) {
         transform: translateY(-7.5px) rotate(-45deg);
     }
 
-    /* TÃ¡Â»â€˜i Ã†Â°u Mega Menu trÃƒÂªn Mobile thÃƒÂ nh dÃ¡ÂºÂ¡ng Accordion */
+    /* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u Mega Menu trÃƒÆ’Ã‚Âªn Mobile thÃƒÆ’Ã‚Â nh dÃƒÂ¡Ã‚ÂºÃ‚Â¡ng Accordion */
     .nav-links li.dropdown .mega-menu {
         position: static !important;
         display: none !important;
-        /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n trÃƒÂªn mobile */
+        /* MÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh ÃƒÂ¡Ã‚ÂºÃ‚Â©n trÃƒÆ’Ã‚Âªn mobile */
         width: 100% !important;
         padding: 8px 0 8px 15px !important;
-        /* GiÃ¡ÂºÂ£m padding cho mega-menu con */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m padding cho mega-menu con */
         background: rgba(0, 0, 0, 0.02) !important;
         box-shadow: none !important;
         transform: none !important;
         flex-direction: column;
         gap: 0.5rem !important;
-        /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a cÃƒÂ¡c cÃ¡Â»â„¢t trong mega-menu */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trong mega-menu */
         border: none !important;
     }
 
@@ -1084,7 +1084,7 @@ body > *:not(#header-placeholder) {
         gap: 0.5rem;
     }
 
-    /* HiÃ¡Â»â€¡n menu con khi cha cÃƒÂ³ class mobile-expanded */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n menu con khi cha cÃƒÆ’Ã‚Â³ class mobile-expanded */
     .nav-links li.dropdown.mobile-expanded .mega-menu {
         display: flex !important;
     }
@@ -1110,7 +1110,7 @@ body > *:not(#header-placeholder) {
         letter-spacing: 0.5px !important;
     }
 
-    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng xoay mÃ…Â©i tÃƒÂªn khi mÃ¡Â»Å¸ rÃ¡Â»â„¢ng */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng xoay mÃƒâ€¦Ã‚Â©i tÃƒÆ’Ã‚Âªn khi mÃƒÂ¡Ã‚Â»Ã…Â¸ rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng */
     li.dropdown>a svg {
         transition: transform 0.3s;
     }
@@ -1130,13 +1130,13 @@ body > *:not(#header-placeholder) {
     justify-content: center;
     text-align: center;
     background: linear-gradient(rgba(235, 234, 230, 0.8), rgba(235, 234, 230, 0.8)), url('../Asset/images/hero-bg.webp') no-repeat center center/cover;
-    /* Ã„ÂÃƒÂ£ Ã„â€˜Ã¡Â»â€¢i sang .webp */
+    /* Ãƒâ€žÃ‚ÂÃƒÆ’Ã‚Â£ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i sang .webp */
     background-attachment: fixed;
-    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng parallax */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng parallax */
     color: var(--text-black);
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o chÃ¡Â»Â¯ rÃƒÂµ rÃƒÂ ng trÃƒÂªn nÃ¡Â»Ân Ã¡ÂºÂ£nh */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o chÃƒÂ¡Ã‚Â»Ã‚Â¯ rÃƒÆ’Ã‚Âµ rÃƒÆ’Ã‚Â ng trÃƒÆ’Ã‚Âªn nÃƒÂ¡Ã‚Â»Ã‚Ân ÃƒÂ¡Ã‚ÂºÃ‚Â£nh */
     position: relative;
-    /* Ã„ÂÃ¡Â»Æ’ dÃƒÂ¹ng cho hiÃ¡Â»â€¡u Ã¡Â»Â©ng */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã†â€™ dÃƒÆ’Ã‚Â¹ng cho hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng */
     width: 100%;
 }
 
@@ -1144,16 +1144,16 @@ body > *:not(#header-placeholder) {
     font-size: 3.5rem;
     margin-bottom: 1rem;
     opacity: 0;
-    /* Ban Ã„â€˜Ã¡ÂºÂ§u Ã¡ÂºÂ©n Ã„â€˜Ã¡Â»Æ’ tÃ¡ÂºÂ¡o hiÃ¡Â»â€¡u Ã¡Â»Â©ng fade-in */
+    /* Ban Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u ÃƒÂ¡Ã‚ÂºÃ‚Â©n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ tÃƒÂ¡Ã‚ÂºÃ‚Â¡o hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng fade-in */
     animation: fadeIn 1s ease-out forwards;
 }
 
 .hero p {
     animation: fadeIn 1.5s ease-out forwards;
-    /* ChÃ¡ÂºÂ­m hÃ†Â¡n h1 */
+    /* ChÃƒÂ¡Ã‚ÂºÃ‚Â­m hÃƒâ€ Ã‚Â¡n h1 */
 }
 
-/* Home Search Bar - NÃ¡ÂºÂ±m trong Hero */
+/* Home Search Bar - NÃƒÂ¡Ã‚ÂºÃ‚Â±m trong Hero */
 .search-container-home {
     max-width: 550px;
     margin: 2.5rem auto 0;
@@ -1244,11 +1244,11 @@ body > *:not(#header-placeholder) {
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng xuÃ¡Â»â€˜ng dÃƒÂ²ng linh hoÃ¡ÂºÂ¡t cho trang chuÃ¡ÂºÂ©n */
+    /* TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng linh hoÃƒÂ¡Ã‚ÂºÃ‚Â¡t cho trang chuÃƒÂ¡Ã‚ÂºÃ‚Â©n */
     gap: 2rem;
     padding: 2rem 5%;
-    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»Â chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
-    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â  lÃ¡Â»Â  chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
+    /* TrÃƒÂ¡Ã‚ÂºÃ‚Â£ vÃƒÂ¡Ã‚Â»Ã‚Â lÃƒÂ¡Ã‚Â»Ã‚Â chuÃƒÂ¡Ã‚ÂºÃ‚Â©n cho cÃƒÆ’Ã‚Â¡c trang */
+    /* TrÃƒÂ¡Ã‚ÂºÃ‚Â£ vÃƒÂ¡Ã‚Â»Ã‚  lÃƒÂ¡Ã‚Â»Ã‚  chuÃƒÂ¡Ã‚ÂºÃ‚Â©n cho cÃƒÆ’Ã‚Â¡c trang */
 }
 
 /* Product Card */
@@ -1419,7 +1419,7 @@ body > *:not(#header-placeholder) {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-black);
-    /* Ã„ÂÃ¡Â»â€œng bÃ¡Â»â„¢ vÃ¡Â»â€ºi mÃƒÂ u chÃ¡Â»Â¯ chÃƒÂ­nh cÃ¡Â»Â§a website */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi mÃƒÆ’Ã‚Â u chÃƒÂ¡Ã‚Â»Ã‚Â¯ chÃƒÆ’Ã‚Â­nh cÃƒÂ¡Ã‚Â»Ã‚Â§a website */
 }
 
 .product-card .price .old-price {
@@ -1445,15 +1445,15 @@ body > *:not(#header-placeholder) {
 
 section {
     padding: 4rem 5%;
-    /* TrÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»Â chuÃ¡ÂºÂ©n cho cÃƒÂ¡c trang */
+    /* TrÃƒÂ¡Ã‚ÂºÃ‚Â£ vÃƒÂ¡Ã‚Â»Ã‚Â lÃƒÂ¡Ã‚Â»Ã‚Â chuÃƒÂ¡Ã‚ÂºÃ‚Â©n cho cÃƒÆ’Ã‚Â¡c trang */
     margin-top: 2rem;
 }
 
 .special-offers {
     display: none;
-    /* Ã¡ÂºÂ¨n mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh, JS sÃ¡ÂºÂ½ hiÃ¡Â»â€¡n khi cÃƒÂ³ data */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh, JS sÃƒÂ¡Ã‚ÂºÃ‚Â½ hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n khi cÃƒÆ’Ã‚Â³ data */
     background-color: #fff9f8;
-    /* NÃ¡Â»Ân hÃ¡Â»â€œng Ã„â€˜Ã¡ÂºÂ¥t nhÃ¡ÂºÂ¡t Ã¡ÂºÂ¥m cÃƒÂºng */
+    /* NÃƒÂ¡Ã‚Â»Ã‚Ân hÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¥t nhÃƒÂ¡Ã‚ÂºÃ‚Â¡t ÃƒÂ¡Ã‚ÂºÃ‚Â¥m cÃƒÆ’Ã‚Âºng */
     padding: 5rem 5%;
     margin-top: 4rem;
     border-top: 1px solid #ffe4e1;
@@ -1507,7 +1507,7 @@ section {
 .fire-icon {
     display: inline-block;
     height: 40px;
-    /* Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh chiÃ¡Â»Âu cao khÃ¡Â»â€ºp vÃ¡Â»â€ºi chÃ¡Â»Â¯ */
+    /* Ãƒâ€žÃ‚ÂiÃƒÂ¡Ã‚Â»Ã‚Âu chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh chiÃƒÂ¡Ã‚Â»Ã‚Âu cao khÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi chÃƒÂ¡Ã‚Â»Ã‚Â¯ */
     width: auto;
     animation: fire-burn 0.8s infinite ease-in-out;
     vertical-align: middle;
@@ -1574,7 +1574,7 @@ h2::after {
 
 @media (max-width: 768px) {
 
-    /* Ãƒâ€°p tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ container chÃƒÂ­nh vÃ¡Â»Â mÃ¡Â»â„¢t chuÃ¡ÂºÂ©n lÃ¡Â»Â ngang duy nhÃ¡ÂºÂ¥t */
+    /* ÃƒÆ’Ã¢â‚¬Â°p tÃƒÂ¡Ã‚ÂºÃ‚Â¥t cÃƒÂ¡Ã‚ÂºÃ‚Â£ container chÃƒÆ’Ã‚Â­nh vÃƒÂ¡Ã‚Â»Ã‚Â mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t chuÃƒÂ¡Ã‚ÂºÃ‚Â©n lÃƒÂ¡Ã‚Â»Ã‚Â ngang duy nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t */
     .navbar,
     section,
     .products-page-container,
@@ -1595,7 +1595,7 @@ h2::after {
     .logo {
         position: relative;
         z-index: 1400;
-        /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o logo luÃƒÂ´n hiÃ¡Â»â€¡n trÃƒÂªn nÃ¡Â»Ân trÃ¡ÂºÂ¯ng cÃ¡Â»Â§a menu mobile */
+        /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o logo luÃƒÆ’Ã‚Â´n hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n trÃƒÆ’Ã‚Âªn nÃƒÂ¡Ã‚Â»Ã‚Ân trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng cÃƒÂ¡Ã‚Â»Ã‚Â§a menu mobile */
     }
 
     h2 {
@@ -1632,24 +1632,24 @@ h2::after {
 
     .menu-toggle {
         display: flex;
-        /* HiÃ¡Â»â€¡n nÃƒÂºt trÃƒÂªn mobile */
+        /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n nÃƒÆ’Ã‚Âºt trÃƒÆ’Ã‚Âªn mobile */
     }
 
     .nav-links {
         position: fixed;
         top: 0;
         left: -100%;
-        /* Ã„ÂÃ¡Â»â€¢i sang trÃ†Â°Ã¡Â»Â£t tÃ¡Â»Â« trÃƒÂ¡i sang Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng Ã„â€˜ÃƒÂ¨ cÃ¡Â»Â¥m icon phÃ¡ÂºÂ£i */
+        /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i sang trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t tÃƒÂ¡Ã‚Â»Ã‚Â« trÃƒÆ’Ã‚Â¡i sang Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¨ cÃƒÂ¡Ã‚Â»Ã‚Â¥m icon phÃƒÂ¡Ã‚ÂºÃ‚Â£i */
         height: 100vh;
         width: 100%;
-        /* HiÃ¡Â»â€¡n full mÃƒÂ n hÃƒÂ¬nh */
+        /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n full mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh */
         background-color: #fff !important;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         gap: 2.5rem;
         z-index: 1300;
-        /* PhÃ¡ÂºÂ£i cao hÃ†Â¡n Navbar (1100) vÃƒÂ  Toggle (1200) */
+        /* PhÃƒÂ¡Ã‚ÂºÃ‚Â£i cao hÃƒâ€ Ã‚Â¡n Navbar (1100) vÃƒÆ’Ã‚Â  Toggle (1200) */
         transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
         gap: 1.2rem;
@@ -1662,7 +1662,7 @@ h2::after {
     .logo,
     .nav-right {
         flex: 0 0 auto;
-        /* TrÃƒÂªn mobile khÃƒÂ´ng cÃ¡ÂºÂ§n chiÃ¡ÂºÂ¿m 1fr */
+        /* TrÃƒÆ’Ã‚Âªn mobile khÃƒÆ’Ã‚Â´ng cÃƒÂ¡Ã‚ÂºÃ‚Â§n chiÃƒÂ¡Ã‚ÂºÃ‚Â¿m 1fr */
         min-width: unset;
     }
 
@@ -1670,10 +1670,10 @@ h2::after {
         gap: 0.8rem;
     }
 
-    /* TÃ¡Â»â€˜i Ã†Â°u nÃƒÂºt Ã„â€˜ÃƒÂ³ng menu (dÃ¡ÂºÂ¥u X phÃ¡Â»Â¥) */
+    /* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u nÃƒÆ’Ã‚Âºt Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â³ng menu (dÃƒÂ¡Ã‚ÂºÃ‚Â¥u X phÃƒÂ¡Ã‚Â»Ã‚Â¥) */
     .btn-close-menu {
         display: none;
-        /* Ã¡ÂºÂ¨n Ã„â€˜i vÃƒÂ¬ nÃƒÂºt Toggle Ã„â€˜ÃƒÂ£ chuyÃ¡Â»Æ’n thÃƒÂ nh dÃ¡ÂºÂ¥u X vÃƒÂ  nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¹ng rÃ¡Â»â€œi */
+        /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n Ãƒâ€žÃ¢â‚¬Ëœi vÃƒÆ’Ã‚Â¬ nÃƒÆ’Ã‚Âºt Toggle Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ chuyÃƒÂ¡Ã‚Â»Ã†â€™n thÃƒÆ’Ã‚Â nh dÃƒÂ¡Ã‚ÂºÃ‚Â¥u X vÃƒÆ’Ã‚Â  nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn cÃƒÆ’Ã‚Â¹ng rÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“i */
         position: absolute;
         top: 20px;
         right: 5%;
@@ -1685,7 +1685,7 @@ h2::after {
         z-index: 1401;
     }
 
-    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng chuyÃ¡Â»Æ’n Hamburger thÃƒÂ nh dÃ¡ÂºÂ¥u X */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng chuyÃƒÂ¡Ã‚Â»Ã†â€™n Hamburger thÃƒÆ’Ã‚Â nh dÃƒÂ¡Ã‚ÂºÃ‚Â¥u X */
     .menu-toggle.active span:nth-child(1) {
         transform: translateY(8px) rotate(45deg);
     }
@@ -1718,7 +1718,7 @@ h2::after {
 
     .grid {
         grid-template-columns: repeat(2, 1fr);
-        /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o luÃƒÂ´n 2 cÃ¡Â»â„¢t trÃƒÂªn mobile */
+        /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o luÃƒÆ’Ã‚Â´n 2 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trÃƒÆ’Ã‚Âªn mobile */
         gap: 12px;
         padding: 1.5rem 0;
     }
@@ -1770,7 +1770,7 @@ h2::after {
     padding: 4rem 5% !important;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u trang Products */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u trang Products */
 .products-page-container {
     padding: 1.5rem 5% 4rem;
 }
@@ -1821,7 +1821,7 @@ h2::after {
     border-color: var(--text-black);
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u trang Cart */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u trang Cart */
 .cart-container {
     padding: 2rem 5%;
 }
@@ -1845,7 +1845,7 @@ h2::after {
     margin-bottom: 1.5rem;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u trang Detail */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u trang Detail */
 .product-detail-container {
     padding: 2rem 5%;
 }
@@ -1872,7 +1872,7 @@ h2::after {
 }
 }
 
-/* Ã¡ÂºÂ¨n nÃƒÂºt Ã„â€˜ÃƒÂ³ng trÃƒÂªn desktop */
+/* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n nÃƒÆ’Ã‚Âºt Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â³ng trÃƒÆ’Ã‚Âªn desktop */
 .btn-close-menu {
     display: none;
 }
@@ -2051,7 +2051,7 @@ h2::after {
     opacity: 1;
 }
 
-/* NÃƒÂºt Ã„â€˜iÃ¡Â»Âu hÃ†Â°Ã¡Â»â€ºng cho Story Slider */
+/* NÃƒÆ’Ã‚Âºt Ãƒâ€žÃ¢â‚¬ËœiÃƒÂ¡Ã‚Â»Ã‚Âu hÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºng cho Story Slider */
 .story-controls {
     position: absolute;
     bottom: 20px;
@@ -2110,16 +2110,16 @@ h2::after {
     transform: scale(1.3);
 }
 
-/* CÃ„Æ’n giÃ¡Â»Â¯a cÃƒÂ¡c nÃƒÂºt btn-dark trong cÃƒÂ¡c section flower, event, story */
+/* CÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt btn-dark trong cÃƒÆ’Ã‚Â¡c section flower, event, story */
 .flower-intro-section .flower-intro-content .btn-dark,
 .event-intro-section .event-intro-content .btn-dark,
 .story-section .story-content .btn-dark {
     display: block;
-    /* BiÃ¡ÂºÂ¿n thÃƒÂ nh phÃ¡ÂºÂ§n tÃ¡Â»Â­ khÃ¡Â»â€˜i */
+    /* BiÃƒÂ¡Ã‚ÂºÃ‚Â¿n thÃƒÆ’Ã‚Â nh phÃƒÂ¡Ã‚ÂºÃ‚Â§n tÃƒÂ¡Ã‚Â»Ã‚Â­ khÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi */
     margin: 1.5rem auto 0 auto;
-    /* CÃ„Æ’n giÃ¡Â»Â¯a theo chiÃ¡Â»Âu ngang, giÃ¡Â»Â¯ margin-top */
+    /* CÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a theo chiÃƒÂ¡Ã‚Â»Ã‚Âu ngang, giÃƒÂ¡Ã‚Â»Ã‚Â¯ margin-top */
     max-width: fit-content;
-    /* GiÃ¡Â»â€ºi hÃ¡ÂºÂ¡n chiÃ¡Â»Âu rÃ¡Â»â„¢ng cÃ¡Â»Â§a nÃƒÂºt Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ trÃƒÂ n */
+    /* GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi hÃƒÂ¡Ã‚ÂºÃ‚Â¡n chiÃƒÂ¡Ã‚Â»Ã‚Âu rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng cÃƒÂ¡Ã‚Â»Ã‚Â§a nÃƒÆ’Ã‚Âºt Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ trÃƒÆ’Ã‚Â n */
 }
 
 @media (max-width: 768px) {
@@ -2136,18 +2136,18 @@ h2::after {
 .reveal-on-scroll {
     opacity: 0;
     transform: translateY(30px);
-    /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh trÃ†Â°Ã¡Â»Â£t lÃƒÂªn cho cÃƒÂ¡c section khÃƒÂ¡c */
+    /* MÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t lÃƒÆ’Ã‚Âªn cho cÃƒÆ’Ã‚Â¡c section khÃƒÆ’Ã‚Â¡c */
     transition: opacity 1s cubic-bezier(0.5, 0, 0, 1), transform 1s cubic-bezier(0.5, 0, 0, 1);
 }
 
 .reveal-on-scroll.reveal-left {
     transform: translateX(-50px);
-    /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch trÃ†Â°Ã¡Â»Â£t Ã„â€˜Ã¡Â»Æ’ an toÃƒÂ n hÃ†Â¡n trÃƒÂªn mobile */
+    /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ an toÃƒÆ’Ã‚Â n hÃƒâ€ Ã‚Â¡n trÃƒÆ’Ã‚Âªn mobile */
 }
 
 .reveal-on-scroll.reveal-right {
     transform: translateX(50px);
-    /* GiÃ¡ÂºÂ£m khoÃ¡ÂºÂ£ng cÃƒÂ¡ch trÃ†Â°Ã¡Â»Â£t Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh trÃƒÂ n lÃ¡Â»Â phÃ¡ÂºÂ£i */
+    /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch trÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trÃƒÆ’Ã‚Â¡nh trÃƒÆ’Ã‚Â n lÃƒÂ¡Ã‚Â»Ã‚Â phÃƒÂ¡Ã‚ÂºÃ‚Â£i */
 }
 
 .reveal-on-scroll.is-visible {
@@ -2472,7 +2472,7 @@ footer {
 
 .collection-banner {
     position: relative;
-    aspect-ratio: 16 / 9; /* Chiều cao thấp lại một chút so với 4/3 */
+    aspect-ratio: 16 / 9; /* Chiá»u cao tháº¥p láº¡i má»™t chÃºt so vá»›i 4/3 */
     height: auto;
     border-radius: 0;
     overflow: hidden;
@@ -2489,13 +2489,13 @@ footer {
 }
 
 .collection-banner:hover img {
-    /* Không zoom theo yêu cầu */
+    /* KhÃ´ng zoom theo yÃªu cáº§u */
 }
 
 .collection-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.6); /* Lớp phủ hơi trắng đi */
+    background: rgba(255, 255, 255, 0.6); /* Lá»›p phá»§ hÆ¡i tráº¯ng Ä‘i */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -2511,13 +2511,13 @@ footer {
 }
 
 .collection-overlay h3 {
-    color: #333; /* Đổi màu chữ sang xám đậm để tương phản tốt với nền trắng */
+    color: #333; /* Äá»•i mÃ u chá»¯ sang xÃ¡m Ä‘áº­m Ä‘á»ƒ tÆ°Æ¡ng pháº£n tá»‘t vá»›i ná»n tráº¯ng */
     font-size: 1.5rem;
-    font-weight: 600; /* Làm chữ đậm lên */
+    font-weight: 600; /* LÃ m chá»¯ Ä‘áº­m lÃªn */
     margin-bottom: 0;
     text-align: center;
     text-transform: lowercase;
-    letter-spacing: 0.5px; /* Giảm khoảng cách chữ cho gần lại */
+    letter-spacing: 0.5px; /* Giáº£m khoáº£ng cÃ¡ch chá»¯ cho gáº§n láº¡i */
     text-shadow: none;
     transform: translateY(10px);
     transition: transform 0.4s ease;
@@ -2532,7 +2532,7 @@ footer {
     display: none;
 }
 
-/* Responsive cho BÃ¡Â»â„¢ sÃ†Â°u tÃ¡ÂºÂ­p trÃƒÂªn Mobile */
+/* Responsive cho BÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ sÃƒâ€ Ã‚Â°u tÃƒÂ¡Ã‚ÂºÃ‚Â­p trÃƒÆ’Ã‚Âªn Mobile */
 @media (max-width: 768px) {
     .collections-section {
         padding-top: 3rem;
@@ -2540,13 +2540,13 @@ footer {
 
     .collection-grid {
         grid-template-columns: repeat(2, 1fr);
-        /* ChuyÃ¡Â»Æ’n vÃ¡Â»Â 1 cÃ¡Â»â„¢t trÃƒÂªn mobile */
+        /* ChuyÃƒÂ¡Ã‚Â»Ã†â€™n vÃƒÂ¡Ã‚Â»Ã‚Â 1 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trÃƒÆ’Ã‚Âªn mobile */
         gap: 15px;
     }
 
     .collection-banner {
         height: auto;
-        /* GiÃ¡ÂºÂ£m chiÃ¡Â»Âu cao trÃƒÂªn mobile Ã„â€˜Ã¡Â»Æ’ cÃƒÂ¢n Ã„â€˜Ã¡Â»â€˜i */
+        /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m chiÃƒÂ¡Ã‚Â»Ã‚Âu cao trÃƒÆ’Ã‚Âªn mobile Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ cÃƒÆ’Ã‚Â¢n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi */
     }
 }
 
@@ -2604,7 +2604,7 @@ footer {
     height: 1.4rem;
 }
 
-/* Skeleton riÃƒÂªng cho trang chi tiÃ¡ÂºÂ¿t */
+/* Skeleton riÃƒÆ’Ã‚Âªng cho trang chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t */
 .skeleton-detail-img {
     width: 100%;
     aspect-ratio: 1/1;
@@ -2635,14 +2635,14 @@ footer {
     }
 }
 
-/* Ã¡ÂºÂ¢nh chÃƒÂ­nh trong trang chi tiÃ¡ÂºÂ¿t - To rÃƒÂµ nÃƒÂ©t */
+/* ÃƒÂ¡Ã‚ÂºÃ‚Â¢nh chÃƒÆ’Ã‚Â­nh trong trang chi tiÃƒÂ¡Ã‚ÂºÃ‚Â¿t - To rÃƒÆ’Ã‚Âµ nÃƒÆ’Ã‚Â©t */
 #main-product-img {
     width: 100% !important;
     height: auto !important;
     object-fit: cover;
     border-radius: 4px;
     cursor: zoom-in;
-    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng trÃ¡Â»Â chuÃ¡Â»â„¢t bÃƒÂ¡o hiÃ¡Â»â€¡u cÃƒÂ³ thÃ¡Â»Æ’ phÃƒÂ³ng to */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng trÃƒÂ¡Ã‚Â»Ã‚Â chuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t bÃƒÆ’Ã‚Â¡o hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u cÃƒÆ’Ã‚Â³ thÃƒÂ¡Ã‚Â»Ã†â€™ phÃƒÆ’Ã‚Â³ng to */
     transition: transform 0.3s ease, opacity 0.3s ease;
     image-rendering: -webkit-optimize-contrast;
 }
@@ -2651,7 +2651,7 @@ footer {
     opacity: 0.9;
 }
 
-/* Modal xem Ã¡ÂºÂ£nh toÃƒÂ n mÃƒÂ n hÃƒÂ¬nh */
+/* Modal xem ÃƒÂ¡Ã‚ÂºÃ‚Â£nh toÃƒÆ’Ã‚Â n mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh */
 .fullscreen-overlay {
     position: fixed;
     top: 0;
@@ -2672,7 +2672,7 @@ footer {
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ†Â°Ã¡Â»Â£t mÃƒÂ  khi hiÃ¡Â»â€¡n nÃ¡Â»â„¢i dung thÃ¡ÂºÂ­t */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  khi hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung thÃƒÂ¡Ã‚ÂºÃ‚Â­t */
 .fade-in-content {
     animation: fadeInEffect 0.6s ease-out forwards;
 }
@@ -2689,7 +2689,7 @@ footer {
     }
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng mÃ¡Â»Â dÃ¡ÂºÂ§n khi Ã„â€˜ang tÃ¡ÂºÂ£i dÃ¡Â»Â¯ liÃ¡Â»â€¡u mÃ¡Â»â€ºi */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng mÃƒÂ¡Ã‚Â»Ã‚Â dÃƒÂ¡Ã‚ÂºÃ‚Â§n khi Ãƒâ€žÃ¢â‚¬Ëœang tÃƒÂ¡Ã‚ÂºÃ‚Â£i dÃƒÂ¡Ã‚Â»Ã‚Â¯ liÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u mÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
 .loading-fade {
     opacity: 0.3;
     filter: blur(1px);
@@ -2700,31 +2700,31 @@ footer {
 /* POS Product Search Suggestions */
 .pos-search-input-wrapper {
     position: relative;
-    /* Quan trÃ¡Â»Âng Ã„â€˜Ã¡Â»Æ’ khÃ¡Â»â€˜i gÃ¡Â»Â£i ÃƒÂ½ Ã„â€˜Ã¡Â»â€¹nh vÃ¡Â»â€¹ tÃ†Â°Ã†Â¡ng Ã„â€˜Ã¡Â»â€˜i */
+    /* Quan trÃƒÂ¡Ã‚Â»Ã‚Âng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi gÃƒÂ¡Ã‚Â»Ã‚Â£i ÃƒÆ’Ã‚Â½ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh vÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ tÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi */
 }
 
 .pos-product-suggestions {
     position: absolute;
     top: 100%;
-    /* Ã„ÂÃ¡Â»â€¹nh vÃ¡Â»â€¹ ngay bÃƒÂªn dÃ†Â°Ã¡Â»â€ºi input */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh vÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ ngay bÃƒÆ’Ã‚Âªn dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi input */
     left: 0;
     right: 0;
     background-color: #fff !important;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¡c phÃ¡ÂºÂ§n tÃ¡Â»Â­ khÃƒÂ¡c */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn cÃƒÆ’Ã‚Â¡c phÃƒÂ¡Ã‚ÂºÃ‚Â§n tÃƒÂ¡Ã‚Â»Ã‚Â­ khÃƒÆ’Ã‚Â¡c */
     display: none;
     overflow: hidden;
     border: 1px solid #eee;
     max-height: 300px;
-    /* GiÃ¡Â»â€ºi hÃ¡ÂºÂ¡n chiÃ¡Â»Âu cao vÃƒÂ  thÃƒÂªm thanh cuÃ¡Â»â„¢n */
+    /* GiÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi hÃƒÂ¡Ã‚ÂºÃ‚Â¡n chiÃƒÂ¡Ã‚Â»Ã‚Âu cao vÃƒÆ’Ã‚Â  thÃƒÆ’Ã‚Âªm thanh cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n */
     overflow-y: auto;
 }
 
 .pos-product-suggestions .suggestion-item {
     padding: 10px 15px;
-    /* Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh padding cho phÃƒÂ¹ hÃ¡Â»Â£p vÃ¡Â»â€ºi ngÃ¡Â»Â¯ cÃ¡ÂºÂ£nh POS */
+    /* Ãƒâ€žÃ‚ÂiÃƒÂ¡Ã‚Â»Ã‚Âu chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh padding cho phÃƒÆ’Ã‚Â¹ hÃƒÂ¡Ã‚Â»Ã‚Â£p vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi ngÃƒÂ¡Ã‚Â»Ã‚Â¯ cÃƒÂ¡Ã‚ÂºÃ‚Â£nh POS */
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -2736,14 +2736,14 @@ footer {
 .pos-product-suggestions .suggestion-item.highlighted {
     background: #f5f3eb;
     padding-left: 20px;
-    /* ThÃ¡Â»Â¥t lÃ¡Â»Â nhÃ¡ÂºÂ¹ khi hover */
+    /* ThÃƒÂ¡Ã‚Â»Ã‚Â¥t lÃƒÂ¡Ã‚Â»Ã‚Â nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ khi hover */
 }
 
 /* Cookie Consent Popup */
 .cookie-consent {
     position: fixed;
     bottom: -150px;
-    /* Ban Ã„â€˜Ã¡ÂºÂ§u Ã¡ÂºÂ©n dÃ†Â°Ã¡Â»â€ºi mÃƒÂ n hÃƒÂ¬nh */
+    /* Ban Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u ÃƒÂ¡Ã‚ÂºÃ‚Â©n dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh */
     left: 15px;
     right: 15px;
     background-color: #fff !important;
@@ -2758,7 +2758,7 @@ footer {
 
 .cookie-consent.show {
     bottom: 20px;
-    /* TrÃ†Â°Ã¡Â»Â£t lÃƒÂªn khi hiÃ¡Â»Æ’n thÃ¡Â»â€¹ */
+    /* TrÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t lÃƒÆ’Ã‚Âªn khi hiÃƒÂ¡Ã‚Â»Ã†â€™n thÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ */
     opacity: 1;
     visibility: visible;
 }
@@ -2841,7 +2841,7 @@ footer {
 .float-btn-left {
     position: fixed;
     z-index: 9999;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o nÃƒÂºt luÃƒÂ´n nÃ¡ÂºÂ±m trÃƒÂªn cÃƒÂ¹ng */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o nÃƒÆ’Ã‚Âºt luÃƒÆ’Ã‚Â´n nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn cÃƒÆ’Ã‚Â¹ng */
     bottom: 30px;
     left: 30px !important;
     right: auto !important;
@@ -2857,10 +2857,10 @@ footer {
 
 #btn-scroll-top {
     display: none;
-    /* Ã¡ÂºÂ¨n mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh, chÃ¡Â»â€° hiÃ¡Â»â€¡n khi cuÃ¡Â»â„¢n xuÃ¡Â»â€˜ng */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh, chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n khi cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng */
     opacity: 0.9;
     background-color: #444;
-    /* MÃƒÂ u nhÃ¡ÂºÂ¡t hÃ†Â¡n mÃ¡Â»â„¢t chÃƒÂºt cho nÃƒÂºt cuÃ¡Â»â„¢n */
+    /* MÃƒÆ’Ã‚Â u nhÃƒÂ¡Ã‚ÂºÃ‚Â¡t hÃƒâ€ Ã‚Â¡n mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t chÃƒÆ’Ã‚Âºt cho nÃƒÆ’Ã‚Âºt cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n */
 }
 
 #btn-scroll-top.show {
@@ -2953,7 +2953,7 @@ footer {
     animation: heartbeat 0.4s ease-in-out;
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng rung nhÃ¡ÂºÂ¹ thu hÃƒÂºt sÃ¡Â»Â± chÃƒÂº ÃƒÂ½ cho nÃƒÂºt liÃƒÂªn hÃ¡Â»â€¡ */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng rung nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ thu hÃƒÆ’Ã‚Âºt sÃƒÂ¡Ã‚Â»Ã‚Â± chÃƒÆ’Ã‚Âº ÃƒÆ’Ã‚Â½ cho nÃƒÆ’Ã‚Âºt liÃƒÆ’Ã‚Âªn hÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡ */
 @keyframes ring-zalo {
     0% {
         transform: scale(1) rotate(0);
@@ -2986,18 +2986,18 @@ footer {
 
 .vibrate-btn {
     animation: ring-zalo 3s infinite;
-    /* Rung mÃ¡Â»â€”i 3 giÃƒÂ¢y mÃ¡Â»â„¢t lÃ¡ÂºÂ§n */
+    /* Rung mÃƒÂ¡Ã‚Â»Ã¢â‚¬â€i 3 giÃƒÆ’Ã‚Â¢y mÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t lÃƒÂ¡Ã‚ÂºÃ‚Â§n */
 }
 
 .vibrate-btn:hover {
     animation: none;
-    /* DÃ¡Â»Â«ng rung khi rÃƒÂª chuÃ¡Â»â„¢t vÃƒÂ o Ã„â€˜Ã¡Â»Æ’ khÃƒÂ¡ch dÃ¡Â»â€¦ nhÃ¡ÂºÂ¥n */
+    /* DÃƒÂ¡Ã‚Â»Ã‚Â«ng rung khi rÃƒÆ’Ã‚Âª chuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t vÃƒÆ’Ã‚Â o Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â¡ch dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦ nhÃƒÂ¡Ã‚ÂºÃ‚Â¥n */
 }
 
 /* Zalo Icon Styling */
 .zalo-icon {
     width: 50px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc phÃƒÂ¹ hÃ¡Â»Â£p vÃ¡Â»â€ºi nÃƒÂºt 50x50px */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc phÃƒÆ’Ã‚Â¹ hÃƒÂ¡Ã‚Â»Ã‚Â£p vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi nÃƒÆ’Ã‚Âºt 50x50px */
     height: 50px;
 }
 
@@ -3012,7 +3012,7 @@ footer {
 .zalo-sub-menu {
     position: absolute;
     bottom: 60px;
-    /* HiÃ¡Â»Æ’n thÃ¡Â»â€¹ phÃƒÂ­a trÃƒÂªn nÃƒÂºt chÃƒÂ­nh */
+    /* HiÃƒÂ¡Ã‚Â»Ã†â€™n thÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ phÃƒÆ’Ã‚Â­a trÃƒÆ’Ã‚Âªn nÃƒÆ’Ã‚Âºt chÃƒÆ’Ã‚Â­nh */
     right: 0;
     display: flex;
     flex-direction: column;
@@ -3026,23 +3026,23 @@ footer {
     z-index: 10000;
 }
 
-/* TÃ¡ÂºÂ¡o mÃ…Â©i tÃƒÂªn trÃ¡Â»Â xuÃ¡Â»â€˜ng cho menu Zalo */
+/* TÃƒÂ¡Ã‚ÂºÃ‚Â¡o mÃƒâ€¦Ã‚Â©i tÃƒÆ’Ã‚Âªn trÃƒÂ¡Ã‚Â»Ã‚Â xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng cho menu Zalo */
 .zalo-sub-menu::after {
     content: '';
     position: absolute;
     bottom: -6px;
-    /* NÃ¡ÂºÂ±m sÃƒÂ¡t cÃ¡ÂºÂ¡nh dÃ†Â°Ã¡Â»â€ºi cÃ¡Â»Â§a menu */
+    /* NÃƒÂ¡Ã‚ÂºÃ‚Â±m sÃƒÆ’Ã‚Â¡t cÃƒÂ¡Ã‚ÂºÃ‚Â¡nh dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÂ¡Ã‚Â»Ã‚Â§a menu */
     right: 19px;
-    /* CÃ„Æ’n giÃ¡Â»Â¯a theo nÃƒÂºt Zalo trÃƒÂ²n 50px */
+    /* CÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a theo nÃƒÆ’Ã‚Âºt Zalo trÃƒÆ’Ã‚Â²n 50px */
     width: 0;
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-top: 6px solid var(--text-black);
-    /* MÃƒÂ u trÃƒÂ¹ng vÃ¡Â»â€ºi background menu item */
+    /* MÃƒÆ’Ã‚Â u trÃƒÆ’Ã‚Â¹ng vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi background menu item */
 }
 
-/* HiÃ¡Â»â€¡n menu khi hover hoÃ¡ÂºÂ·c khi nÃƒÂºt Ã„â€˜Ã†Â°Ã¡Â»Â£c click (focus) */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n menu khi hover hoÃƒÂ¡Ã‚ÂºÃ‚Â·c khi nÃƒÆ’Ã‚Âºt Ãƒâ€žÃ¢â‚¬ËœÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£c click (focus) */
 .zalo-group:hover .zalo-sub-menu,
 .zalo-group:focus-within .zalo-sub-menu {
     opacity: 1;
@@ -3080,7 +3080,7 @@ footer {
     color: #334155;
     /* Slate 700 */
     overflow-x: hidden;
-    /* Ngăn chặn toàn trang bị kéo ngang */
+    /* NgÄƒn cháº·n toÃ n trang bá»‹ kÃ©o ngang */
 }
 
 body.admin-dashboard-layout > * {
@@ -3170,7 +3170,7 @@ body.admin-dashboard-layout > * {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* CÃ¡ÂºÂ¯t chÃ¡Â»Â¯ nÃ¡ÂºÂ¿u tÃƒÂªn menu sidebar quÃƒÂ¡ dÃƒÂ i */
+    /* CÃƒÂ¡Ã‚ÂºÃ‚Â¯t chÃƒÂ¡Ã‚Â»Ã‚Â¯ nÃƒÂ¡Ã‚ÂºÃ‚Â¿u tÃƒÆ’Ã‚Âªn menu sidebar quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i */
 }
 
 .sidebar-badge {
@@ -3347,7 +3347,7 @@ body.admin-dashboard-layout > * {
         max-width: 100%;
         padding: 15px;
         padding-bottom: 80px;
-        /* ChÃ¡Â»Â«a chÃ¡Â»â€” cho bottom nav */
+        /* ChÃƒÂ¡Ã‚Â»Ã‚Â«a chÃƒÂ¡Ã‚Â»Ã¢â‚¬â€ cho bottom nav */
     }
 
     .overview-grid {
@@ -3364,7 +3364,7 @@ body.admin-dashboard-layout > * {
         display: none !important;
     }
 
-    /* Ã¡ÂºÂ¨n nÃƒÂºt 3 gÃ¡ÂºÂ¡ch Ã¡Â»Å¸ header */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n nÃƒÆ’Ã‚Âºt 3 gÃƒÂ¡Ã‚ÂºÃ‚Â¡ch ÃƒÂ¡Ã‚Â»Ã…Â¸ header */
 
     /* Bottom Navigation Admin */
     .admin-bottom-nav {
@@ -3437,7 +3437,7 @@ body.admin-dashboard-layout > * {
         animation: activeNavDot 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
-    /* LÃ¡Â»â€ºp phÃ¡Â»Â§ khi mÃ¡Â»Å¸ sidebar */
+    /* LÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºp phÃƒÂ¡Ã‚Â»Ã‚Â§ khi mÃƒÂ¡Ã‚Â»Ã…Â¸ sidebar */
     .admin-sidebar-overlay {
         position: fixed;
         top: 0;
@@ -3457,7 +3457,7 @@ body.admin-dashboard-layout > * {
         opacity: 1;
     }
 
-    /* TÃ¡Â»â€˜i Ã†Â°u Card chÃ¡Â»â€° sÃ¡Â»â€˜ Mobile */
+    /* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u Card chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Mobile */
     .stat-card {
         padding: 12px;
         gap: 8px;
@@ -3478,7 +3478,7 @@ body.admin-dashboard-layout > * {
         font-size: 1rem;
     }
 
-    /* TÃ¡Â»â€˜i Ã†Â°u Header Mobile */
+    /* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u Header Mobile */
     .content-header {
         padding: 10px 15px;
         margin-bottom: 20px;
@@ -3647,7 +3647,7 @@ body.admin-dashboard-layout > * {
         padding: 10px 0;
         gap: 6px;
         word-break: break-word;
-        /* TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng xuÃ¡Â»â€˜ng hÃƒÂ ng nÃ¡ÂºÂ¿u text quÃƒÂ¡ dÃƒÂ i */
+        /* TÃƒÂ¡Ã‚Â»Ã‚Â± Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng hÃƒÆ’Ã‚Â ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u text quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i */
     }
 
     .admin-table td::before {
@@ -3711,36 +3711,36 @@ body.admin-dashboard-layout > * {
     }
 }
 
-/* XÃ¡Â»Â­ lÃƒÂ½ cuÃ¡Â»â„¢n ngang cho cÃƒÂ¡c nhÃƒÂ³m Tab ngang */
+/* XÃƒÂ¡Ã‚Â»Ã‚Â­ lÃƒÆ’Ã‚Â½ cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n ngang cho cÃƒÆ’Ã‚Â¡c nhÃƒÆ’Ã‚Â³m Tab ngang */
 .admin-tabs {
     display: flex;
     gap: 1.5rem;
     margin-bottom: 2rem;
     border-bottom: 2px solid #eee;
     overflow-x: auto;
-    /* Cho phÃƒÂ©p vuÃ¡Â»â€˜t ngang cÃƒÂ¡c tab */
+    /* Cho phÃƒÆ’Ã‚Â©p vuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt ngang cÃƒÆ’Ã‚Â¡c tab */
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
 
-/* Ã¡ÂºÂ¨n Bottom Nav trÃƒÂªn Desktop */
+/* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n Bottom Nav trÃƒÆ’Ã‚Âªn Desktop */
 @media (min-width: 993px) {
     .admin-bottom-nav {
         display: none !important;
     }
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u Card cho biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ trong section ThÃ¡Â»â€˜ng kÃƒÂª */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u Card cho biÃƒÂ¡Ã‚Â»Ã†â€™u Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ trong section ThÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng kÃƒÆ’Ã‚Âª */
 #stats-section .admin-card {
     padding: 15px;
     margin-bottom: 15px;
     width: 100%;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u chuyÃƒÂªn biÃ¡Â»â€¡t cho Section ThÃ¡Â»â€˜ng kÃƒÂª trÃƒÂªn Mobile */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u chuyÃƒÆ’Ã‚Âªn biÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t cho Section ThÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng kÃƒÆ’Ã‚Âª trÃƒÆ’Ã‚Âªn Mobile */
 #stats-section .overview-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    /* HiÃ¡Â»â€¡n 2 cÃ¡Â»â„¢t cho cÃƒÂ¡c thÃ¡ÂºÂ» chÃ¡Â»â€° sÃ¡Â»â€˜ */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n 2 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t cho cÃƒÆ’Ã‚Â¡c thÃƒÂ¡Ã‚ÂºÃ‚Â» chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ */
     gap: 10px !important;
 }
 
@@ -3766,10 +3766,10 @@ body.admin-dashboard-layout > * {
     font-size: 0.95rem;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u khÃƒÂ´ng gian biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ trÃƒÂªn mobile */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u khÃƒÆ’Ã‚Â´ng gian biÃƒÂ¡Ã‚Â»Ã†â€™u Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ trÃƒÆ’Ã‚Âªn mobile */
 #stats-section .admin-card div[style*="height"] {
     height: 280px !important;
-    /* TÃ„Æ’ng nhÃ¡ÂºÂ¹ lÃƒÂªn 280px Ã„â€˜Ã¡Â»Æ’ biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ khÃƒÂ´ng bÃ¡Â»â€¹ quÃƒÂ¡ bÃ¡ÂºÂ¹t trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh dÃ¡Â»Âc */
+    /* TÃƒâ€žÃ†â€™ng nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ lÃƒÆ’Ã‚Âªn 280px Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ biÃƒÂ¡Ã‚Â»Ã†â€™u Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ quÃƒÆ’Ã‚Â¡ bÃƒÂ¡Ã‚ÂºÃ‚Â¹t trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh dÃƒÂ¡Ã‚Â»Ã‚Âc */
     margin-bottom: 10px;
 }
 
@@ -3785,7 +3785,7 @@ body.admin-dashboard-layout > * {
 
 .admin-tab-btn {
     font-size: 0.85rem !important;
-    /* HÃ¡ÂºÂ¡ font size vÃ¡Â»Â mÃ¡Â»Â©c hÃ¡Â»Â£p lÃƒÂ½ */
+    /* HÃƒÂ¡Ã‚ÂºÃ‚Â¡ font size vÃƒÂ¡Ã‚Â»Ã‚Â mÃƒÂ¡Ã‚Â»Ã‚Â©c hÃƒÂ¡Ã‚Â»Ã‚Â£p lÃƒÆ’Ã‚Â½ */
     padding: 10px 15px !important;
 }
 }
@@ -3806,9 +3806,9 @@ body.admin-dashboard-layout > * {
     grid-template-columns: 1fr 1.5fr;
     gap: 2rem;
     grid-template-columns: 420px 1fr;
-    /* CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»â„¢t form, cho bÃ¡ÂºÂ£ng giÃƒÂ£n rÃ¡Â»â„¢ng tÃ¡Â»â€˜i Ã„â€˜a */
+    /* CÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t form, cho bÃƒÂ¡Ã‚ÂºÃ‚Â£ng giÃƒÆ’Ã‚Â£n rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€žÃ¢â‚¬Ëœa */
     gap: 2.5rem;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a 2 cÃ¡Â»â„¢t Ã„â€˜Ã¡Â»Æ’ bÃ¡Â»â€ºt chÃ¡ÂºÂ­t chÃ¡Â»â„¢i */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a 2 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ bÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºt chÃƒÂ¡Ã‚ÂºÃ‚Â­t chÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i */
 }
 
 @media (max-width: 992px) {
@@ -3990,7 +3990,7 @@ body.admin-dashboard-layout > * {
     justify-content: center;
 }
 
-/* TÃ¡Â»â€˜i Ã†Â°u hÃƒÂ³a thanh tÃƒÂ¬m kiÃ¡ÂºÂ¿m & bÃ¡Â»â„¢ lÃ¡Â»Âc cÃ¡Â»Â§a Tab SÃ¡ÂºÂ£n phÃ¡ÂºÂ©m */
+/* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u hÃƒÆ’Ã‚Â³a thanh tÃƒÆ’Ã‚Â¬m kiÃƒÂ¡Ã‚ÂºÃ‚Â¿m & bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ lÃƒÂ¡Ã‚Â»Ã‚Âc cÃƒÂ¡Ã‚Â»Ã‚Â§a Tab SÃƒÂ¡Ã‚ÂºÃ‚Â£n phÃƒÂ¡Ã‚ÂºÃ‚Â©m */
 .admin-search-filter-row {
     display: flex;
     gap: 1rem;
@@ -4016,7 +4016,7 @@ body.admin-dashboard-layout > * {
 
 @media (max-width: 768px) {
 
-    /* GiÃ¡ÂºÂ£i phÃƒÂ³ng thÃƒÂªm khÃƒÂ´ng gian mÃƒÂ n hÃƒÂ¬nh ngang trÃƒÂªn mobile */
+    /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£i phÃƒÆ’Ã‚Â³ng thÃƒÆ’Ã‚Âªm khÃƒÆ’Ã‚Â´ng gian mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh ngang trÃƒÆ’Ã‚Âªn mobile */
     .admin-main-content {
         padding: 10px !important;
         padding-bottom: 80px !important;
@@ -4028,7 +4028,7 @@ body.admin-dashboard-layout > * {
         border-radius: 12px !important;
     }
 
-    /* Ã„ÂÃ¡Â»â€¹nh hÃƒÂ¬nh lÃ¡ÂºÂ¡i thanh tÃƒÂ¬m kiÃ¡ÂºÂ¿m & lÃ¡Â»Âc trÃƒÂªn mobile */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh hÃƒÆ’Ã‚Â¬nh lÃƒÂ¡Ã‚ÂºÃ‚Â¡i thanh tÃƒÆ’Ã‚Â¬m kiÃƒÂ¡Ã‚ÂºÃ‚Â¿m & lÃƒÂ¡Ã‚Â»Ã‚Âc trÃƒÆ’Ã‚Âªn mobile */
     .admin-search-filter-row {
         gap: 0.8rem;
     }
@@ -4099,7 +4099,7 @@ body.admin-dashboard-layout > * {
    ========================================================================== */
 .product-detail-container {
     max-width: 1900px;
-    /* Thu hÃ¡ÂºÂ¹p lÃ¡ÂºÂ¡i Ã„â€˜Ã¡Â»Æ’ cÃƒÂ¢n Ã„â€˜Ã¡Â»â€˜i hÃ†Â¡n trÃƒÂªn mÃƒÂ n hÃƒÂ¬nh PC siÃƒÂªu rÃ¡Â»â„¢ng */
+    /* Thu hÃƒÂ¡Ã‚ÂºÃ‚Â¹p lÃƒÂ¡Ã‚ÂºÃ‚Â¡i Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ cÃƒÆ’Ã‚Â¢n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi hÃƒâ€ Ã‚Â¡n trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh PC siÃƒÆ’Ã‚Âªu rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng */
     margin: 0 auto;
     padding: 4rem 5%;
     display: block;
@@ -4131,7 +4131,7 @@ body.admin-dashboard-layout > * {
 .product-detail-grid {
     display: grid;
     grid-template-columns: 1.5fr 0.3fr;
-    /* CÃƒÂ¢n bÃ¡ÂºÂ±ng 50/50 cho cÃ¡ÂºÂ£m giÃƒÂ¡c cao cÃ¡ÂºÂ¥p */
+    /* CÃƒÆ’Ã‚Â¢n bÃƒÂ¡Ã‚ÂºÃ‚Â±ng 50/50 cho cÃƒÂ¡Ã‚ÂºÃ‚Â£m giÃƒÆ’Ã‚Â¡c cao cÃƒÂ¡Ã‚ÂºÃ‚Â¥p */
     gap: 3rem;
     align-items: start;
     width: 100%;
@@ -4282,42 +4282,42 @@ body.admin-dashboard-layout > * {
 /* Specific styles for color chips */
 .color-chip {
     width: 40px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh cho swatch mÃƒÂ u */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cho swatch mÃƒÆ’Ã‚Â u */
     height: 40px;
     border-radius: 50%;
-    /* HÃƒÂ¬nh trÃƒÂ²n */
+    /* HÃƒÆ’Ã‚Â¬nh trÃƒÆ’Ã‚Â²n */
     padding: 0;
-    /* BÃ¡Â»Â padding Ã„â€˜Ã¡Â»Æ’ mÃƒÂ u trÃƒÂ n ra */
+    /* BÃƒÂ¡Ã‚Â»Ã‚Â padding Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ mÃƒÆ’Ã‚Â u trÃƒÆ’Ã‚Â n ra */
     border: 2px solid #ddd;
-    /* ViÃ¡Â»Ân mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
+    /* ViÃƒÂ¡Ã‚Â»Ã‚Ân mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     position: relative;
 }
 
 .color-chip.active {
     border-color: var(--text-black);
-    /* ViÃ¡Â»Ân Ã„â€˜Ã¡ÂºÂ­m khi active */
+    /* ViÃƒÂ¡Ã‚Â»Ã‚Ân Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â­m khi active */
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
-    /* ThÃƒÂªm bÃƒÂ³ng Ã„â€˜Ã¡Â»â€¢ nhÃ¡ÂºÂ¹ bÃƒÂªn ngoÃƒÂ i viÃ¡Â»Ân */
+    /* ThÃƒÆ’Ã‚Âªm bÃƒÆ’Ã‚Â³ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ bÃƒÆ’Ã‚Âªn ngoÃƒÆ’Ã‚Â i viÃƒÂ¡Ã‚Â»Ã‚Ân */
     transform: scale(1.05);
-    /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng phÃƒÂ³ng to nhÃ¡ÂºÂ¹ */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng phÃƒÆ’Ã‚Â³ng to nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ */
 }
 
 .color-chip.active::after {
-    content: '✓';
-    /* DÃ¡ÂºÂ¥u tÃƒÂ­ch khi chÃ¡Â»Ân */
+    content: 'âœ“';
+    /* DÃƒÂ¡Ã‚ÂºÃ‚Â¥u tÃƒÆ’Ã‚Â­ch khi chÃƒÂ¡Ã‚Â»Ã‚Ân */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    /* MÃƒÂ u dÃ¡ÂºÂ¥u tÃƒÂ­ch */
+    /* MÃƒÆ’Ã‚Â u dÃƒÂ¡Ã‚ÂºÃ‚Â¥u tÃƒÆ’Ã‚Â­ch */
     font-size: 1.2rem;
     font-weight: bold;
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o dÃ¡ÂºÂ¥u tÃƒÂ­ch hiÃ¡Â»â€¡n rÃƒÂµ trÃƒÂªn mÃƒÂ u sÃƒÂ¡ng */
+/* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o dÃƒÂ¡Ã‚ÂºÃ‚Â¥u tÃƒÆ’Ã‚Â­ch hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n rÃƒÆ’Ã‚Âµ trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â u sÃƒÆ’Ã‚Â¡ng */
 .color-chip[data-color-hex="#FFFFFF"].active::after,
 .color-chip[data-color-hex="#F5F5DC"].active::after,
 /* Beige */
@@ -4383,7 +4383,7 @@ body.admin-dashboard-layout > * {
 
 .product-description p {
     white-space: pre-line;
-    /* GiÃ¡Â»Â¯ cÃƒÂ¡c dÃ¡ÂºÂ¥u xuÃ¡Â»â€˜ng dÃƒÂ²ng trong mÃƒÂ´ tÃ¡ÂºÂ£ */
+    /* GiÃƒÂ¡Ã‚Â»Ã‚Â¯ cÃƒÆ’Ã‚Â¡c dÃƒÂ¡Ã‚ÂºÃ‚Â¥u xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng trong mÃƒÆ’Ã‚Â´ tÃƒÂ¡Ã‚ÂºÃ‚Â£ */
     word-break: break-word;
 }
 
@@ -4397,18 +4397,18 @@ body.admin-dashboard-layout > * {
 }
 
 .purchase-card {
-    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â khung mÃƒÂ u trÃ¡ÂºÂ¯ng */
+    /* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â khung mÃƒÆ’Ã‚Â u trÃƒÂ¡Ã‚ÂºÃ‚Â¯ng */
     background: transparent;
     padding: 1rem 0;
     border: none;
     box-shadow: none;
     display: flex;
     flex-direction: row;
-    /* ChuyÃ¡Â»Æ’n box thÃƒÂ nh hÃƒÂ ng ngang */
+    /* ChuyÃƒÂ¡Ã‚Â»Ã†â€™n box thÃƒÆ’Ã‚Â nh hÃƒÆ’Ã‚Â ng ngang */
     align-items: center;
     gap: 2rem;
     flex-wrap: wrap;
-    /* Cho phÃƒÂ©p xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u khÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ chÃ¡Â»â€”, trÃƒÂ¡nh kÃƒÂ©o ngang */
+    /* Cho phÃƒÆ’Ã‚Â©p xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u khÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§ chÃƒÂ¡Ã‚Â»Ã¢â‚¬â€, trÃƒÆ’Ã‚Â¡nh kÃƒÆ’Ã‚Â©o ngang */
 }
 
 .quantity-box {
@@ -4418,17 +4418,17 @@ body.admin-dashboard-layout > * {
     padding: 0;
     border: none;
     flex-shrink: 0;
-    /* KhÃƒÂ´ng cho bÃ¡Â»â„¢ sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng bÃ¡Â»â€¹ co lÃ¡ÂºÂ¡i */
+    /* KhÃƒÆ’Ã‚Â´ng cho bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ lÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ co lÃƒÂ¡Ã‚ÂºÃ‚Â¡i */
 }
 
 .action-group {
     display: flex;
     gap: 10px;
     flex: 1;
-    /* ChiÃ¡ÂºÂ¿m hÃ¡ÂºÂ¿t phÃ¡ÂºÂ§n cÃƒÂ²n lÃ¡ÂºÂ¡i cÃ¡Â»Â§a box */
+    /* ChiÃƒÂ¡Ã‚ÂºÃ‚Â¿m hÃƒÂ¡Ã‚ÂºÃ‚Â¿t phÃƒÂ¡Ã‚ÂºÃ‚Â§n cÃƒÆ’Ã‚Â²n lÃƒÂ¡Ã‚ÂºÃ‚Â¡i cÃƒÂ¡Ã‚Â»Ã‚Â§a box */
     align-items: center;
     min-width: 0;
-    /* Cho phÃƒÂ©p co giÃƒÂ£n */
+    /* Cho phÃƒÆ’Ã‚Â©p co giÃƒÆ’Ã‚Â£n */
 }
 
 .action-group .btn-dark {
@@ -4502,10 +4502,10 @@ body.admin-dashboard-layout > * {
         font-size: 2rem;
     }
 
-    /* TÃ¡Â»â€˜i Ã†Â°u hÃƒÂ ng nÃƒÂºt bÃ¡ÂºÂ¥m trÃƒÂªn Mobile */
+    /* TÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€ Ã‚Â°u hÃƒÆ’Ã‚Â ng nÃƒÆ’Ã‚Âºt bÃƒÂ¡Ã‚ÂºÃ‚Â¥m trÃƒÆ’Ã‚Âªn Mobile */
     .purchase-card {
         flex-direction: column;
-        /* ChuyÃ¡Â»Æ’n sang cÃ¡Â»â„¢t trÃƒÂªn tablet/mobile Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh trÃƒÂ n */
+        /* ChuyÃƒÂ¡Ã‚Â»Ã†â€™n sang cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trÃƒÆ’Ã‚Âªn tablet/mobile Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trÃƒÆ’Ã‚Â¡nh trÃƒÆ’Ã‚Â n */
         align-items: stretch;
         gap: 1.5rem;
         padding: 0;
@@ -4529,7 +4529,7 @@ body.admin-dashboard-layout > * {
 
     .action-group {
         flex-direction: column;
-        /* TrÃƒÂªn mÃƒÂ n hÃƒÂ¬nh cÃ¡Â»Â±c nhÃ¡Â»Â thÃƒÂ¬ xÃ¡ÂºÂ¿p dÃ¡Â»Âc Ã„â€˜Ã¡Â»Æ’ dÃ¡Â»â€¦ bÃ¡ÂºÂ¥m */
+        /* TrÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh cÃƒÂ¡Ã‚Â»Ã‚Â±c nhÃƒÂ¡Ã‚Â»Ã‚Â thÃƒÆ’Ã‚Â¬ xÃƒÂ¡Ã‚ÂºÃ‚Â¿p dÃƒÂ¡Ã‚Â»Ã‚Âc Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦ bÃƒÂ¡Ã‚ÂºÃ‚Â¥m */
     }
 
     .action-group .btn-dark,
@@ -4540,7 +4540,7 @@ body.admin-dashboard-layout > * {
         flex: none;
         height: 50px;
         white-space: normal;
-        /* Cho phÃƒÂ©p xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u chÃ¡Â»Â¯ quÃƒÂ¡ dÃƒÂ i trÃƒÂªn mÃƒÂ¡y nhÃ¡Â»Â */
+        /* Cho phÃƒÆ’Ã‚Â©p xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u chÃƒÂ¡Ã‚Â»Ã‚Â¯ quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â¡y nhÃƒÂ¡Ã‚Â»Ã‚Â */
     }
 
     .quantity-controls {
@@ -4817,7 +4817,7 @@ body.admin-dashboard-layout > * {
     font-family: inherit;
     font-size: 0.9rem;
     text-transform: uppercase;
-    /* MÃƒÂ£ giÃ¡ÂºÂ£m giÃƒÂ¡ thÃ†Â°Ã¡Â»Âng lÃƒÂ  chÃ¡Â»Â¯ hoa */
+    /* MÃƒÆ’Ã‚Â£ giÃƒÂ¡Ã‚ÂºÃ‚Â£m giÃƒÆ’Ã‚Â¡ thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng lÃƒÆ’Ã‚Â  chÃƒÂ¡Ã‚Â»Ã‚Â¯ hoa */
 }
 
 #coupon-input:focus {
@@ -4912,7 +4912,7 @@ body.admin-dashboard-layout > * {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 30px 15px;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch hÃƒÂ ng lÃƒÂªn 30px vÃƒÂ  giÃ¡Â»Â¯ khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cÃ¡Â»â„¢t 15px */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch hÃƒÆ’Ã‚Â ng lÃƒÆ’Ã‚Âªn 30px vÃƒÆ’Ã‚Â  giÃƒÂ¡Ã‚Â»Ã‚Â¯ khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t 15px */
 }
 
 .category-square-item {
@@ -4925,7 +4925,7 @@ body.admin-dashboard-layout > * {
     aspect-ratio: 1/1;
     overflow: hidden;
     border-radius: 15px;
-    /* TÃ„Æ’ng Ã„â€˜Ã¡Â»â„¢ bo gÃƒÂ³c Ã„â€˜Ã¡Â»Æ’ trÃƒÂ´ng mÃ¡Â»Âm mÃ¡ÂºÂ¡i hÃ†Â¡n */
+    /* TÃƒâ€žÃ†â€™ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ bo gÃƒÆ’Ã‚Â³c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trÃƒÆ’Ã‚Â´ng mÃƒÂ¡Ã‚Â»Ã‚Âm mÃƒÂ¡Ã‚ÂºÃ‚Â¡i hÃƒâ€ Ã‚Â¡n */
 }
 
 .category-square-content img {
@@ -4944,14 +4944,14 @@ body.admin-dashboard-layout > * {
     color: #fff;
     font-weight: 600;
     text-transform: none;
-    /* BÃ¡Â»Â viÃ¡ÂºÂ¿t hoa toÃƒÂ n bÃ¡Â»â„¢ */
+    /* BÃƒÂ¡Ã‚Â»Ã‚Â viÃƒÂ¡Ã‚ÂºÃ‚Â¿t hoa toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ */
     letter-spacing: 0;
-    /* Ã„ÂÃ¡Â»Æ’ chÃ¡Â»Â¯ sÃƒÂ¡t lÃ¡ÂºÂ¡i tÃ¡Â»Â± nhiÃƒÂªn theo font Serif */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã†â€™ chÃƒÂ¡Ã‚Â»Ã‚Â¯ sÃƒÆ’Ã‚Â¡t lÃƒÂ¡Ã‚ÂºÃ‚Â¡i tÃƒÂ¡Ã‚Â»Ã‚Â± nhiÃƒÆ’Ã‚Âªn theo font Serif */
     z-index: 2;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     font-size: 1.1rem;
-    /* TÃ„Æ’ng size vÃƒÂ¬ chÃ¡Â»Â¯ thÃ†Â°Ã¡Â»Âng trÃƒÂ´ng nhÃ¡Â»Â hÃ†Â¡n chÃ¡Â»Â¯ in hoa */
+    /* TÃƒâ€žÃ†â€™ng size vÃƒÆ’Ã‚Â¬ chÃƒÂ¡Ã‚Â»Ã‚Â¯ thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng trÃƒÆ’Ã‚Â´ng nhÃƒÂ¡Ã‚Â»Ã‚Â hÃƒâ€ Ã‚Â¡n chÃƒÂ¡Ã‚Â»Ã‚Â¯ in hoa */
     text-align: center;
     width: 90%;
     transition: transform 0.3s ease;
@@ -5113,13 +5113,13 @@ body.admin-dashboard-layout > * {
 
 .products-content {
     display: block;
-    /* HÃ¡Â»Â§y bÃ¡Â»Â grid layout cÃ…Â© cÃ¡Â»Â§a sidebar */
+    /* HÃƒÂ¡Ã‚Â»Ã‚Â§y bÃƒÂ¡Ã‚Â»Ã‚Â grid layout cÃƒâ€¦Ã‚Â© cÃƒÂ¡Ã‚Â»Ã‚Â§a sidebar */
 }
 
 @media (max-width: 992px) {
     .products-content {
         grid-template-columns: 1fr;
-        /* Sidebar nÃ¡ÂºÂ±m trÃƒÂªn khi mÃƒÂ n hÃƒÂ¬nh nhÃ¡Â»Â */
+        /* Sidebar nÃƒÂ¡Ã‚ÂºÃ‚Â±m trÃƒÆ’Ã‚Âªn khi mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh nhÃƒÂ¡Ã‚Â»Ã‚Â */
     }
 
     .sidebar {
@@ -5247,7 +5247,7 @@ body.admin-dashboard-layout > * {
 
 .filter-group.expanded .filter-list {
     max-height: 1000px;
-    /* GiÃƒÂ¡ trÃ¡Â»â€¹ Ã„â€˜Ã¡Â»Â§ lÃ¡Â»â€ºn Ã„â€˜Ã¡Â»Æ’ chÃ¡Â»Â©a nÃ¡Â»â„¢i dung */
+    /* GiÃƒÆ’Ã‚Â¡ trÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§ lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºn Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ chÃƒÂ¡Ã‚Â»Ã‚Â©a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung */
     opacity: 1;
     transition: max-height 0.4s ease-in, opacity 0.3s ease;
 }
@@ -5305,7 +5305,7 @@ body.admin-dashboard-layout > * {
 
 #no-products-found {
     grid-column: 1 / -1;
-    /* ChiÃ¡ÂºÂ¿m toÃƒÂ n bÃ¡Â»â„¢ chiÃ¡Â»Âu rÃ¡Â»â„¢ng grid */
+    /* ChiÃƒÂ¡Ã‚ÂºÃ‚Â¿m toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ chiÃƒÂ¡Ã‚Â»Ã‚Âu rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng grid */
 }
 
 /* Search Input in Sidebar */
@@ -5344,11 +5344,11 @@ body.admin-dashboard-layout > * {
     cursor: not-allowed;
 }
 
-/* NÃƒÂºt xem thÃƒÂªm chung */
+/* NÃƒÆ’Ã‚Âºt xem thÃƒÆ’Ã‚Âªm chung */
 .btn-dark,
 .btn-outline {
     margin-top: 1.5rem;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khoÃ¡ÂºÂ£ng cÃƒÂ¡ch vÃ¡Â»â€ºi nÃ¡Â»â„¢i dung phÃƒÂ­a trÃƒÂªn */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch vÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung phÃƒÆ’Ã‚Â­a trÃƒÆ’Ã‚Âªn */
 }
 
 /* Flash Sale Page Banner */
@@ -5394,11 +5394,11 @@ body.admin-dashboard-layout > * {
     animation: banner-pulse 2s infinite;
 }
 
-/* Layout riÃƒÂªng khi focus vÃƒÂ o mÃ¡Â»Â©c giÃƒÂ¡ Ã„â€˜Ã¡Â»â€œng giÃƒÂ¡ */
+/* Layout riÃƒÆ’Ã‚Âªng khi focus vÃƒÆ’Ã‚Â o mÃƒÂ¡Ã‚Â»Ã‚Â©c giÃƒÆ’Ã‚Â¡ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng giÃƒÆ’Ã‚Â¡ */
 .flash-sale-banner.price-focused {
     background-color: var(--banner-accent, #000) !important;
     background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) !important;
-    /* LÃƒÂ m tÃ¡Â»â€˜i nhÃ¡ÂºÂ¹ Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â€¢i bÃ¡ÂºÂ­t text */
+    /* LÃƒÆ’Ã‚Â m tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi nhÃƒÂ¡Ã‚ÂºÃ‚Â¹ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ nÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i bÃƒÂ¡Ã‚ÂºÃ‚Â­t text */
     transition: background-color 0.5s ease;
 }
 
@@ -5429,13 +5429,13 @@ body.admin-dashboard-layout > * {
     align-items: start;
     margin-top: 2rem;
     overflow: visible;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khÃƒÂ´ng chÃ¡ÂºÂ·n sticky con */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o khÃƒÆ’Ã‚Â´ng chÃƒÂ¡Ã‚ÂºÃ‚Â·n sticky con */
 }
 
 .price-tabs-sidebar {
     position: sticky;
     top: 120px;
-    /* TÃ„Æ’ng khoÃ¡ÂºÂ£ng cÃƒÂ¡ch cÃƒÂ¡ch Ã„â€˜Ã¡Â»â€°nh Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng bÃ¡Â»â€¹ che bÃ¡Â»Å¸i Navbar */
+    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch cÃƒÆ’Ã‚Â¡ch Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ che bÃƒÂ¡Ã‚Â»Ã…Â¸i Navbar */
     z-index: 10;
 }
 
@@ -5455,9 +5455,9 @@ body.admin-dashboard-layout > * {
 .price-tabs-container {
     display: flex;
     flex-direction: column;
-    /* XÃ¡ÂºÂ¿p dÃ¡Â»Âc cÃƒÂ¡c nÃƒÂºt chÃ¡Â»Ân mÃ¡Â»Â©c giÃƒÂ¡ */
+    /* XÃƒÂ¡Ã‚ÂºÃ‚Â¿p dÃƒÂ¡Ã‚Â»Ã‚Âc cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt chÃƒÂ¡Ã‚Â»Ã‚Ân mÃƒÂ¡Ã‚Â»Ã‚Â©c giÃƒÆ’Ã‚Â¡ */
     align-items: stretch;
-    /* Ã„ÂÃ¡ÂºÂ©y cÃƒÂ¡c nÃƒÂºt rÃ¡Â»â„¢ng bÃ¡ÂºÂ±ng nhau trong sidebar */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â©y cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng bÃƒÂ¡Ã‚ÂºÃ‚Â±ng nhau trong sidebar */
     gap: 10px;
     padding: 0;
 }
@@ -5488,14 +5488,14 @@ body.admin-dashboard-layout > * {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Container cho cÃƒÂ¡c section chÃ†Â°Ã†Â¡ng trÃƒÂ¬nh Sale xÃ¡ÂºÂ¿p dÃ¡Â»Âc */
+/* Container cho cÃƒÆ’Ã‚Â¡c section chÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng trÃƒÆ’Ã‚Â¬nh Sale xÃƒÂ¡Ã‚ÂºÃ‚Â¿p dÃƒÂ¡Ã‚Â»Ã‚Âc */
 .flash-sale-sections-container {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng Loading Spinner */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng Loading Spinner */
 .spinner {
     width: 40px;
     height: 40px;
@@ -5506,7 +5506,7 @@ body.admin-dashboard-layout > * {
     display: inline-block;
 }
 
-/* Spinner nhÃ¡Â»Â cho cÃƒÂ¡c nÃƒÂºt bÃ¡ÂºÂ¥m */
+/* Spinner nhÃƒÂ¡Ã‚Â»Ã‚Â cho cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt bÃƒÂ¡Ã‚ÂºÃ‚Â¥m */
 .spinner-small {
     width: 18px;
     height: 18px;
@@ -5580,7 +5580,7 @@ body.admin-dashboard-layout > * {
 .form-row .form-group {
     flex: 1;
     min-width: 0;
-    /* NgÃ„Æ’n chÃ¡ÂºÂ·n flex item phÃƒÂ¬nh to hÃ†Â¡n container */
+    /* NgÃƒâ€žÃ†â€™n chÃƒÂ¡Ã‚ÂºÃ‚Â·n flex item phÃƒÆ’Ã‚Â¬nh to hÃƒâ€ Ã‚Â¡n container */
 }
 
 .checkout-section {
@@ -5627,14 +5627,14 @@ body.admin-dashboard-layout > * {
 .summary-item-details {
     flex: 1;
     min-width: 0;
-    /* Quan trÃ¡Â»Âng: cho phÃƒÂ©p container co lÃ¡ÂºÂ¡i khi text dÃƒÂ i */
+    /* Quan trÃƒÂ¡Ã‚Â»Ã‚Âng: cho phÃƒÆ’Ã‚Â©p container co lÃƒÂ¡Ã‚ÂºÃ‚Â¡i khi text dÃƒÆ’Ã‚Â i */
 }
 
 .summary-item-details h4 {
     font-size: 0.9rem;
     margin-bottom: 4px;
     word-break: break-word;
-    /* TÃ¡Â»Â± xuÃ¡Â»â€˜ng dÃƒÂ²ng nÃ¡ÂºÂ¿u tÃƒÂªn sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m quÃƒÂ¡ dÃƒÂ i */
+    /* TÃƒÂ¡Ã‚Â»Ã‚Â± xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u tÃƒÆ’Ã‚Âªn sÃƒÂ¡Ã‚ÂºÃ‚Â£n phÃƒÂ¡Ã‚ÂºÃ‚Â©m quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i */
 }
 
 .summary-item-price {
@@ -5806,7 +5806,7 @@ body.admin-dashboard-layout > * {
     }
 }
 
-/* SÃ¡Â»Â­a lÃ¡Â»â€”i trÃƒÂ n mÃƒÂ n hÃƒÂ¬nh cho thiÃ¡ÂºÂ¿t bÃ¡Â»â€¹ cÃ¡Â»Â±c nhÃ¡Â»Â */
+/* SÃƒÂ¡Ã‚Â»Ã‚Â­a lÃƒÂ¡Ã‚Â»Ã¢â‚¬â€i trÃƒÆ’Ã‚Â n mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh cho thiÃƒÂ¡Ã‚ÂºÃ‚Â¿t bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ cÃƒÂ¡Ã‚Â»Ã‚Â±c nhÃƒÂ¡Ã‚Â»Ã‚Â */
 @media (max-width: 480px) {
     .cart-container {
         padding-left: 10px !important;
@@ -5869,7 +5869,7 @@ body.admin-dashboard-layout > * {
     height: 17px;
     border-radius: 50%;
     display: flex !important;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o luÃƒÂ´n sÃ¡Â»Â­ dÃ¡Â»Â¥ng flex Ã„â€˜Ã¡Â»Æ’ cÃ„Æ’n giÃ¡Â»Â¯a sÃ¡Â»â€˜ */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o luÃƒÆ’Ã‚Â´n sÃƒÂ¡Ã‚Â»Ã‚Â­ dÃƒÂ¡Ã‚Â»Ã‚Â¥ng flex Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ cÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a sÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ */
     align-items: center;
     justify-content: center;
     font-weight: bold;
@@ -5907,7 +5907,7 @@ body.admin-dashboard-layout > * {
 /* Product Gallery */
 .product-detail-image {
     position: relative;
-    /* Container chÃƒÂ­nh cho Ã¡ÂºÂ£nh lÃ¡Â»â€ºn vÃƒÂ  nÃƒÂºt bÃ¡ÂºÂ¥m */
+    /* Container chÃƒÆ’Ã‚Â­nh cho ÃƒÂ¡Ã‚ÂºÃ‚Â£nh lÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºn vÃƒÆ’Ã‚Â  nÃƒÆ’Ã‚Âºt bÃƒÂ¡Ã‚ÂºÃ‚Â¥m */
 }
 
 .main-img-container {
@@ -5921,9 +5921,9 @@ body.admin-dashboard-layout > * {
     display: flex;
     align-items: center;
     width: 100%;
-    max-width: 642px; /* Giới hạn chiều rộng khoảng 8 ảnh */
-    margin: 0 auto; /* Căn giữa */
-    padding: 0 30px; /* Tạo khoảng trống cho nút */
+    max-width: 642px; /* Giá»›i háº¡n chiá»u rá»™ng khoáº£ng 8 áº£nh */
+    margin: 0 auto; /* CÄƒn giá»¯a */
+    padding: 0 30px; /* Táº¡o khoáº£ng trá»‘ng cho nÃºt */
 }
 
 .product-image-gallery {
@@ -5933,7 +5933,7 @@ body.admin-dashboard-layout > * {
     gap: 10px;
     padding: 5px 0;
     scroll-behavior: smooth;
-    /* Ẩn thanh cuộn */
+    /* áº¨n thanh cuá»™n */
     -ms-overflow-style: none;
     scrollbar-width: none;
     width: 100%;
@@ -6085,7 +6085,7 @@ body.admin-dashboard-layout > * {
         box-shadow: none;
         background: transparent;
         display: none;
-        /* SÃ¡ÂºÂ½ hiÃ¡Â»â€¡n ra khi hover/click tÃƒÂ¹y theo thiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿ mobile */
+        /* SÃƒÂ¡Ã‚ÂºÃ‚Â½ hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n ra khi hover/click tÃƒÆ’Ã‚Â¹y theo thiÃƒÂ¡Ã‚ÂºÃ‚Â¿t kÃƒÂ¡Ã‚ÂºÃ‚Â¿ mobile */
     }
 
     .dropdown:hover .dropdown-menu {
@@ -6107,13 +6107,13 @@ body.admin-dashboard-layout > * {
     transition: opacity 0.3s ease;
     position: relative;
     padding: 0;
-    /* LoÃ¡ÂºÂ¡i bÃ¡Â»Â padding mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh */
+    /* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â padding mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     width: 32px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     height: 32px;
-    /* KÃƒÂ­ch thÃ†Â°Ã¡Â»â€ºc cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh */
+    /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     justify-content: center;
-    /* CÃ„Æ’n giÃ¡Â»Â¯a nÃ¡Â»â„¢i dung theo chiÃ¡Â»Âu ngang */
+    /* CÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung theo chiÃƒÂ¡Ã‚Â»Ã‚Âu ngang */
 }
 
 .user-icon-link:hover {
@@ -6126,7 +6126,7 @@ body.admin-dashboard-layout > * {
     bottom: -4px;
     right: -4px;
     background: #f1c40f;
-    /* MÃƒÂ u vÃƒÂ ng Ã„â€˜Ã¡ÂºÂ·c trÃ†Â°ng cho Admin */
+    /* MÃƒÆ’Ã‚Â u vÃƒÆ’Ã‚Â ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â·c trÃƒâ€ Ã‚Â°ng cho Admin */
     color: #000;
     width: 14px;
     height: 14px;
@@ -6138,7 +6138,7 @@ body.admin-dashboard-layout > * {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Admin Text Badge (DÃƒÂ¹ng cÃ¡ÂºÂ¡nh tÃƒÂªn) */
+/* Admin Text Badge (DÃƒÆ’Ã‚Â¹ng cÃƒÂ¡Ã‚ÂºÃ‚Â¡nh tÃƒÆ’Ã‚Âªn) */
 .admin-text-badge {
     background: #f1c40f;
     color: #000;
@@ -6432,12 +6432,12 @@ body.admin-dashboard-layout > * {
     font-weight: 600;
 }
 
-/* MÃƒÂ u xanh dÃ†Â°Ã†Â¡ng cho trÃ¡ÂºÂ¡ng thÃƒÂ¡i Ã„â€˜ang giao hÃƒÂ ng */
+/* MÃƒÆ’Ã‚Â u xanh dÃƒâ€ Ã‚Â°Ãƒâ€ Ã‚Â¡ng cho trÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i Ãƒâ€žÃ¢â‚¬Ëœang giao hÃƒÆ’Ã‚Â ng */
 
 /* Cart Page Styles */
 .cart-container {
     padding: 4rem 5%;
-    max-width: 1200px;
+    max-width: 90%;
     margin: 0 auto;
     min-height: 60vh;
 }
@@ -6556,17 +6556,17 @@ body.admin-dashboard-layout > * {
     }
 }
 
-/* CÃ„Æ’n chÃ¡Â»â€°nh khu vÃ¡Â»Â±c Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p/Ã„â€˜Ã„Æ’ng xuÃ¡ÂºÂ¥t */
+/* CÃƒâ€žÃ†â€™n chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â°nh khu vÃƒÂ¡Ã‚Â»Ã‚Â±c Ãƒâ€žÃ¢â‚¬ËœÃƒâ€žÃ†â€™ng nhÃƒÂ¡Ã‚ÂºÃ‚Â­p/Ãƒâ€žÃ¢â‚¬ËœÃƒâ€žÃ†â€™ng xuÃƒÂ¡Ã‚ÂºÃ‚Â¥t */
 #auth-section {
     display: flex;
     align-items: center;
     gap: 1rem;
-    /* TÃ¡ÂºÂ¡o khoÃ¡ÂºÂ£ng cÃƒÂ¡ch giÃ¡Â»Â¯a tÃƒÂªn vÃƒÂ  nÃƒÂºt logout */
+    /* TÃƒÂ¡Ã‚ÂºÃ‚Â¡o khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a tÃƒÆ’Ã‚Âªn vÃƒÆ’Ã‚Â  nÃƒÆ’Ã‚Âºt logout */
     flex-shrink: 0;
-    /* Ã„ÂÃ¡ÂºÂ£m bÃ¡ÂºÂ£o khÃƒÂ´ng bao giÃ¡Â»Â bÃ¡Â»â€¹ co lÃ¡ÂºÂ¡i mÃ¡ÂºÂ¥t nÃƒÂºt */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o khÃƒÆ’Ã‚Â´ng bao giÃƒÂ¡Ã‚Â»Ã‚Â bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ co lÃƒÂ¡Ã‚ÂºÃ‚Â¡i mÃƒÂ¡Ã‚ÂºÃ‚Â¥t nÃƒÆ’Ã‚Âºt */
 }
 
-/* Ã„ÂÃ¡Â»â€œng bÃ¡Â»â„¢ Ã„â€˜Ã¡Â»â„¢ cao cÃƒÂ¡c nÃƒÂºt trong phÃ¡ÂºÂ§n mua hÃƒÂ ng */
+/* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ cao cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt trong phÃƒÂ¡Ã‚ÂºÃ‚Â§n mua hÃƒÆ’Ã‚Â ng */
 .purchase-section .btn-dark {
     height: 40px;
     margin-top: 0;
@@ -6853,7 +6853,7 @@ body.admin-dashboard-layout > * {
     transition: width 1s ease-in-out;
 }
 
-/* MÃƒÂ u sÃ¡ÂºÂ¯c Ã„â€˜Ã¡ÂºÂ·c trÃ†Â°ng cho tÃ¡Â»Â«ng hÃ¡ÂºÂ¡ng */
+/* MÃƒÆ’Ã‚Â u sÃƒÂ¡Ã‚ÂºÃ‚Â¯c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â·c trÃƒâ€ Ã‚Â°ng cho tÃƒÂ¡Ã‚Â»Ã‚Â«ng hÃƒÂ¡Ã‚ÂºÃ‚Â¡ng */
 .tier-null {
     background: linear-gradient(135deg, #bdc3c7, #95a5a6);
 }
@@ -6889,7 +6889,7 @@ body.admin-dashboard-layout > * {
     transform: scale(1.2) rotate(10deg);
 }
 
-/* HiÃ¡Â»â€¡u Ã¡Â»Â©ng hÃƒÂ o quang cho hÃ¡ÂºÂ¡ng VIP */
+/* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng hÃƒÆ’Ã‚Â o quang cho hÃƒÂ¡Ã‚ÂºÃ‚Â¡ng VIP */
 .tier-big-card:has(.medal[style*="#e74c3c"]) .medal {
     animation: vip-glow 2s infinite alternate;
 }
@@ -6944,21 +6944,21 @@ body.admin-dashboard-layout > * {
 }
 
 /* ==========================================================================
-   PRINT STYLES (CÃ¡ÂºÂ¥u hÃƒÂ¬nh in Bill chuyÃƒÂªn nghiÃ¡Â»â€¡p)
+   PRINT STYLES (CÃƒÂ¡Ã‚ÂºÃ‚Â¥u hÃƒÆ’Ã‚Â¬nh in Bill chuyÃƒÆ’Ã‚Âªn nghiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡p)
    ========================================================================== */
 #receipt-print-area {
     display: none;
-    /* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n bill khÃ¡Â»Âi mÃƒÂ n hÃƒÂ¬nh Admin */
+    /* MÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh ÃƒÂ¡Ã‚ÂºÃ‚Â©n bill khÃƒÂ¡Ã‚Â»Ã‚Âi mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh Admin */
 }
 
 @media print {
 
-    /* 1. Ã¡ÂºÂ¨n tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c thÃƒÂ nh phÃ¡ÂºÂ§n giao diÃ¡Â»â€¡n web (sidebar, header, buttons...) */
+    /* 1. ÃƒÂ¡Ã‚ÂºÃ‚Â¨n tÃƒÂ¡Ã‚ÂºÃ‚Â¥t cÃƒÂ¡Ã‚ÂºÃ‚Â£ cÃƒÆ’Ã‚Â¡c thÃƒÆ’Ã‚Â nh phÃƒÂ¡Ã‚ÂºÃ‚Â§n giao diÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n web (sidebar, header, buttons...) */
     body * {
         visibility: hidden;
     }
 
-    /* 2. ChÃ¡Â»â€° hiÃ¡Â»Æ’n thÃ¡Â»â€¹ duy nhÃ¡ÂºÂ¥t khu vÃ¡Â»Â±c in bill */
+    /* 2. ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° hiÃƒÂ¡Ã‚Â»Ã†â€™n thÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ duy nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t khu vÃƒÂ¡Ã‚Â»Ã‚Â±c in bill */
     #receipt-print-area,
     #receipt-print-area * {
         visibility: visible;
@@ -6974,20 +6974,20 @@ body.admin-dashboard-layout > * {
         left: 0;
         top: 0;
         width: 72.1mm !important;
-        /* KhÃ¡Â»â€¢ giÃ¡ÂºÂ¥y chuÃ¡ÂºÂ©n cho mÃƒÂ¡y in nhiÃ¡Â»â€¡t POS */
+        /* KhÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ giÃƒÂ¡Ã‚ÂºÃ‚Â¥y chuÃƒÂ¡Ã‚ÂºÃ‚Â©n cho mÃƒÆ’Ã‚Â¡y in nhiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t POS */
         margin: 0;
         padding: 5mm;
         background-color: #fff !important;
     }
 
-    /* 3. LoÃ¡ÂºÂ¡i bÃ¡Â»Â lÃ¡Â»Â vÃƒÂ  cÃƒÂ¡c thÃƒÂ´ng tin header/footer mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»Â§a trÃƒÂ¬nh duyÃ¡Â»â€¡t */
+    /* 3. LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â lÃƒÂ¡Ã‚Â»Ã‚Â vÃƒÆ’Ã‚Â  cÃƒÆ’Ã‚Â¡c thÃƒÆ’Ã‚Â´ng tin header/footer mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cÃƒÂ¡Ã‚Â»Ã‚Â§a trÃƒÆ’Ã‚Â¬nh duyÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t */
     @page {
         margin: 0;
         size: auto;
     }
 }
 
-/* --- Styling nÃ¡Â»â„¢i dung Bill Ã„â€˜Ã¡Â»Æ’ in ra sÃ¡ÂºÂ¯c nÃƒÂ©t --- */
+/* --- Styling nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung Bill Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ in ra sÃƒÂ¡Ã‚ÂºÃ‚Â¯c nÃƒÆ’Ã‚Â©t --- */
 .receipt-header {
     text-align: center;
     margin-bottom: 10px;
@@ -7067,7 +7067,7 @@ body.admin-dashboard-layout > * {
     font-style: italic;
 }
 
-/* MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh Ã¡ÂºÂ©n trÃƒÂªn Desktop */
+/* MÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh ÃƒÂ¡Ã‚ÂºÃ‚Â©n trÃƒÆ’Ã‚Âªn Desktop */
 .mobile-bottom-nav {
     display: none;
 }
@@ -7077,22 +7077,22 @@ body.admin-dashboard-layout > * {
         gap: 0.5rem;
     }
 
-    /* Ã¡ÂºÂ¨n cÃƒÂ¡c class chÃ¡Â»â€° Ã„â€˜Ã¡Â»â€¹nh trÃƒÂªn mobile */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n cÃƒÆ’Ã‚Â¡c class chÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh trÃƒÆ’Ã‚Âªn mobile */
     .mobile-hide {
         display: none !important;
     }
 
-    /* Ã¡ÂºÂ¨n khu vÃ¡Â»Â±c auth (icon user) trÃƒÂªn header do Ã„â€˜ÃƒÂ£ chuyÃ¡Â»Æ’n xuÃ¡Â»â€˜ng dÃ†Â°Ã¡Â»â€ºi */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n khu vÃƒÂ¡Ã‚Â»Ã‚Â±c auth (icon user) trÃƒÆ’Ã‚Âªn header do Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ chuyÃƒÂ¡Ã‚Â»Ã†â€™n xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
     .header-col-right #auth-section {
         display: none !important;
     }
 
-    /* ChÃ¡Â»Â«a khÃƒÂ´ng gian dÃ†Â°Ã¡Â»â€ºi cÃƒÂ¹ng Ã„â€˜Ã¡Â»Æ’ nÃ¡Â»â„¢i dung khÃƒÂ´ng bÃ¡Â»â€¹ che */
+    /* ChÃƒÂ¡Ã‚Â»Ã‚Â«a khÃƒÆ’Ã‚Â´ng gian dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ che */
     body {
         padding-bottom: 70px !important;
     }
 
-    /* Style cho thanh Ã„â€˜iÃ¡Â»Âu hÃ†Â°Ã¡Â»â€ºng dÃ†Â°Ã¡Â»â€ºi cÃƒÂ¹ng */
+    /* Style cho thanh Ãƒâ€žÃ¢â‚¬ËœiÃƒÂ¡Ã‚Â»Ã‚Âu hÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng */
     .mobile-bottom-nav {
         display: flex !important;
         position: fixed;
@@ -7100,7 +7100,7 @@ body.admin-dashboard-layout > * {
         left: 0;
         width: 100%;
         background-color: rgba(247, 246, 242, 0.85) !important;
-        /* HiÃ¡Â»â€¡u Ã¡Â»Â©ng trong suÃ¡Â»â€˜t giÃ¡Â»â€˜ng header */
+        /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt giÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng header */
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.03);
@@ -7109,32 +7109,32 @@ body.admin-dashboard-layout > * {
         padding: 8px 0;
         border-top: 1px solid rgba(0, 0, 0, 0.05);
         padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
-        /* Fix khoÃ¡ÂºÂ£ng hÃ¡Â»Å¸ triÃ¡Â»â€¡t Ã„â€˜Ã¡Â»Æ’ */
+        /* Fix khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng hÃƒÂ¡Ã‚Â»Ã…Â¸ triÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ */
         margin: 0 !important;
         transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     }
 
-    /* Ã¡ÂºÂ¨n Bottom Nav khi Ã¡Â»Å¸ Ã„â€˜Ã¡ÂºÂ§u trang chÃ¡Â»Â§ Ã„â€˜Ã¡Â»Æ’ xem full banner */
+    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n Bottom Nav khi ÃƒÂ¡Ã‚Â»Ã…Â¸ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â§u trang chÃƒÂ¡Ã‚Â»Ã‚Â§ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ xem full banner */
     body.home-page .mobile-bottom-nav {
         transform: translateY(100%);
         opacity: 0;
         pointer-events: none;
     }
 
-    /* HiÃ¡Â»â€¡n lÃ¡ÂºÂ¡i Bottom Nav khi cuÃ¡Â»â„¢n xuÃ¡Â»â€˜ng */
+    /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n lÃƒÂ¡Ã‚ÂºÃ‚Â¡i Bottom Nav khi cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng */
     body.home-page .mobile-bottom-nav.scrolled-show {
         transform: translateY(0);
         opacity: 1;
         pointer-events: auto;
     }
 
-    /* Ã„ÂÃ¡ÂºÂ©y cÃƒÂ¡c nÃƒÂºt nÃ¡Â»â€¢i lÃƒÂªn Ã„â€˜Ã¡Â»Æ’ khÃƒÂ´ng Ã„â€˜ÃƒÂ¨ lÃƒÂªn thanh Bottom Nav (khoÃ¡ÂºÂ£ng 80px) */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â©y cÃƒÆ’Ã‚Â¡c nÃƒÆ’Ã‚Âºt nÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i lÃƒÆ’Ã‚Âªn Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ khÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â¨ lÃƒÆ’Ã‚Âªn thanh Bottom Nav (khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng 80px) */
     .floating-widgets,
     .float-btn-left {
         bottom: 85px !important;
     }
 
-    /* Ã„ÂÃ¡Â»â€¢i chiÃ¡Â»Âu cao banner (Hero) Ã„â€˜Ã¡Â»Æ’ trÃ¡ÂºÂ£i full mÃƒÂ n hÃƒÂ¬nh trÃƒÂªn trang chÃ¡Â»Â§ khi Bottom Bar bÃ¡Â»â€¹ Ã¡ÂºÂ©n, Ã¡Â»Å¸ trang khÃƒÂ¡c vÃ¡ÂºÂ«n tÃƒÂ­nh toÃƒÂ¡n Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»Â« hao */
+    /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢i chiÃƒÂ¡Ã‚Â»Ã‚Âu cao banner (Hero) Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trÃƒÂ¡Ã‚ÂºÃ‚Â£i full mÃƒÆ’Ã‚Â n hÃƒÆ’Ã‚Â¬nh trÃƒÆ’Ã‚Âªn trang chÃƒÂ¡Ã‚Â»Ã‚Â§ khi Bottom Bar bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ ÃƒÂ¡Ã‚ÂºÃ‚Â©n, ÃƒÂ¡Ã‚Â»Ã…Â¸ trang khÃƒÆ’Ã‚Â¡c vÃƒÂ¡Ã‚ÂºÃ‚Â«n tÃƒÆ’Ã‚Â­nh toÃƒÆ’Ã‚Â¡n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trÃƒÂ¡Ã‚Â»Ã‚Â« hao */
     body:not(.home-page) .hero-carousel {
         height: calc(100vh - 65px - env(safe-area-inset-bottom)) !important;
     }
@@ -7194,7 +7194,7 @@ body.admin-dashboard-layout > * {
         background-color: #e74c3c;
     }
 
-    /* Reset style mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cho button */
+    /* Reset style mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cho button */
     .bottom-nav-item.btn-transparent {
         background: transparent;
         border: none;
@@ -7288,7 +7288,7 @@ body.admin-dashboard-layout > * {
     min-width: 0;
 }
 
-/* Responsive cho voucher ticket trÃƒÂªn mobile nhÃ¡Â»Â */
+/* Responsive cho voucher ticket trÃƒÆ’Ã‚Âªn mobile nhÃƒÂ¡Ã‚Â»Ã‚Â */
 @media (max-width: 480px) {
     .voucher-ticket {
         min-height: 140px;
@@ -7308,7 +7308,7 @@ body.admin-dashboard-layout > * {
     }
 }
 
-/* Responsive grid lÃ¡Â»Âc Ã„â€˜Ã†Â¡n hÃƒÂ ng cÃ¡Â»Â§a Admin */
+/* Responsive grid lÃƒÂ¡Ã‚Â»Ã‚Âc Ãƒâ€žÃ¢â‚¬ËœÃƒâ€ Ã‚Â¡n hÃƒÆ’Ã‚Â ng cÃƒÂ¡Ã‚Â»Ã‚Â§a Admin */
 .admin-order-filters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -8357,7 +8357,7 @@ body { position: static !important; }
     box-shadow: 0 -5px 20px rgba(142, 115, 91, 0.2);
 }
 
-/* Modal Thêm Khách Hàng Additions */
+/* Modal ThÃªm KhÃ¡ch HÃ ng Additions */
 #pos-add-customer-modal .modal-content {
     border-radius: var(--pos-radius-card);
     border: none;
@@ -8409,4 +8409,256 @@ body { position: static !important; }
     background: white;
     border-color: var(--pos-accent) !important;
     box-shadow: 0 4px 15px rgba(142, 115, 91, 0.05);
+}
+
+/* Profile Layout Redesign */
+.profile-layout-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin: 3rem auto;
+    max-width: 90%;
+    padding: 0 1rem;
+}
+
+.profile-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.profile-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.profile-avatar-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.profile-sidebar-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.profile-sidebar-info button {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    padding: 0;
+}
+
+.profile-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-nav li {
+    margin-bottom: 5px;
+}
+
+.profile-nav-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #333;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.profile-nav-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.profile-nav-btn.active {
+    background-color: #e9ecef;
+    font-weight: 600;
+}
+
+.profile-main-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+}
+
+.profile-horizontal-form {
+    margin-bottom: 2rem;
+}
+
+.form-row-3 {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.form-row-3 .form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+@media (max-width: 768px) {
+    .profile-layout-container {
+        flex-direction: column;
+    }
+    .profile-sidebar {
+        width: 100%;
+    }
+}
+
+/* -- UI Tweaks -- */
+.profile-layout-container {
+    max-width: 1300px !important;
+}
+
+/* Fix slow modal */
+.modal {
+    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+}
+.modal-content {
+    transition: transform 0.2s ease !important;
+}
+#order-detail-modal {
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Improve button styles */
+.btn-outline {
+    padding: 8px 20px !important;
+    border: 1px solid #333 !important;
+    background: transparent !important;
+    color: #333 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-outline:hover {
+    background: #333 !important;
+    color: #fff !important;
+}
+
+.btn-minimal {
+    padding: 8px 16px !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: inherit !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    border-radius: 6px !important;
+}
+
+.btn-minimal:hover {
+    background: rgba(0,0,0,0.05) !important;
+}
+
+/* Cancel order button specifically */
+.btn-minimal[onclick^="window.cancelOrder"] {
+    color: #e74c3c !important;
+}
+.btn-minimal[onclick^="window.cancelOrder"]:hover {
+    background: #fdf2f2 !important;
+}
+
+/* -- Mobile Optimization for Profile -- */
+@media (max-width: 768px) {
+    .profile-sidebar-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-nav {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .profile-nav::-webkit-scrollbar {
+        height: 4px;
+    }
+    .profile-nav::-webkit-scrollbar-thumb {
+        background-color: #ccc;
+        border-radius: 4px;
+    }
+    
+    .profile-nav li {
+        margin-bottom: 0;
+        margin-right: 10px;
+    }
+    
+    .profile-nav-btn {
+        padding: 8px 15px !important;
+        text-align: center !important;
+        background-color: #f8f9fa !important;
+        border-radius: 20px !important;
+        font-size: 0.85rem !important;
+        border: 1px solid #eee !important;
+    }
+    
+    .profile-nav-btn.active {
+        background-color: #333 !important;
+        color: #fff !important;
+        border-color: #333 !important;
+    }
+    
+    .profile-layout-container {
+        margin: 1rem auto !important;
+        gap: 1rem !important;
+    }
+
+    .form-row-3 .form-group {
+        min-width: 100% !important;
+    }
+
+    .order-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .order-item {
+        padding: 1rem;
+    }
+
+    /* Stack order buttons on mobile */
+    .order-details > div[style*="display: flex"] {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+    
+    .order-details button {
+        width: 100%;
+        margin: 0 !important;
+    }
 }
