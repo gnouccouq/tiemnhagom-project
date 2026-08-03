@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -2202,12 +2202,12 @@ function renderAdminProductTable() {
             `${createdDate.getDate().toString().padStart(2, '0')}/${(createdDate.getMonth() + 1).toString().padStart(2, '0')}/${createdDate.getFullYear()} ${createdDate.getHours().toString().padStart(2, '0')}:${createdDate.getMinutes().toString().padStart(2, '0')}` : '---';
 
         htmlContent += `
-            <tr>
-                <td style="text-align: center;"><input type="checkbox" class="product-row-checkbox" value="${p.id}"></td>
-                <td style="text-align: center; color: ${p.isFeatured ? '#f1c40f' : '#ccc'}; cursor: pointer;" class="star-toggle" data-id="${p.id}">⭐</td>
+            <tr onclick="editProduct('${p.id}')" style="cursor: pointer;" class="clickable-row">
+                <td style="text-align: center;" onclick="event.stopPropagation();"><input type="checkbox" class="product-row-checkbox" value="${p.id}"></td>
+                <td style="text-align: center; color: ${p.isFeatured ? '#f1c40f' : '#ccc'}; cursor: pointer;" class="star-toggle" data-id="${p.id}" onclick="event.stopPropagation();">&#9733;</td>
                 <td data-label="Ảnh"><img src="${displayImgUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Mã hàng"><small>${p.id}</small></td>
-                <td data-label="Tên hàng">
+                    <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" onclick="event.stopPropagation();" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
                     <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #ffeeba; color: #856404; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Đang ẩn</span>' : ''}
                     ${p.isCombo ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #d0e8ff; color: #0056b3; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Combo</span>' : ''}
@@ -2218,7 +2218,7 @@ function renderAdminProductTable() {
                 <td data-label="Khách đặt">${p.sold || 0}</td>
                 <td data-label="Thời gian tạo">${formattedDate}</td>
                 <td data-label="Sale">${p.sale || 0}%</td>
-                <td data-label="Thao tác">
+                <td data-label="Thao tác" onclick="event.stopPropagation();">
                     <button class="btn-delete" data-id="${p.id}">Xóa</button>
                 </td>
             </tr>`;
@@ -2509,18 +2509,73 @@ function renderOrdersFiltered() {
     if (!orderListTable) return;
 
     // Lấy các giá trị bộ lọc
-    const idVal = document.getElementById('order-filter-id')?.value.trim().toLowerCase() || '';
-    const productVal = document.getElementById('order-filter-product')?.value.trim().toLowerCase() || '';
+    const idVal = document.getElementById('order-search-input')?.value.trim().toLowerCase() || '';
     const statusVal = document.getElementById('order-filter-status')?.value || 'all';
+    
+    const datePreset = document.getElementById('order-filter-date-preset')?.value || 'all';
+    const dateFrom = document.getElementById('order-filter-date-from')?.value;
+    const dateTo = document.getElementById('order-filter-date-to')?.value;
 
     // Lọc đơn hàng
     let filtered = allOrdersCache.filter(order => {
-        const matchesId = !idVal || order.id.toLowerCase().includes(idVal);
-        const matchesProduct = !productVal || order.items.some(item => (item.name || "").toLowerCase().includes(productVal));
+        const matchesId = !idVal || order.id.toLowerCase().includes(idVal) || 
+                          (order.shippingAddress?.phone && order.shippingAddress.phone.includes(idVal)) ||
+                          (order.shippingAddress?.fullName && order.shippingAddress.fullName.toLowerCase().includes(idVal));
+                          
         const matchesStatus = statusVal === 'all' || order.status === statusVal;
         const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
-        return matchesId && matchesProduct && matchesStatus && matchesUserId;
+        
+        let matchesDate = true;
+        const oDate = order.orderDate ? (order.orderDate.toDate ? order.orderDate.toDate() : new Date(order.orderDate)) : null;
+        if (oDate) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if (datePreset === 'today') {
+                matchesDate = oDate >= today;
+            } else if (datePreset === 'yesterday') {
+                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                matchesDate = oDate >= yesterday && oDate < today;
+            } else if (datePreset === 'this_week') {
+                const day = today.getDay() || 7; 
+                const monday = new Date(today); monday.setDate(monday.getDate() - day + 1);
+                matchesDate = oDate >= monday;
+            } else if (datePreset === 'last_week') {
+                const day = today.getDay() || 7;
+                const lastMonday = new Date(today); lastMonday.setDate(lastMonday.getDate() - day - 6);
+                const thisMonday = new Date(today); thisMonday.setDate(thisMonday.getDate() - day + 1);
+                matchesDate = oDate >= lastMonday && oDate < thisMonday;
+            } else if (datePreset === 'this_month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'this_quarter') {
+                const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+                const firstDay = new Date(now.getFullYear(), quarterMonth, 1);
+                matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'this_year') {
+                const firstDay = new Date(now.getFullYear(), 0, 1);
+                matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'custom') {
+                if (dateFrom) {
+                    const from = new Date(dateFrom);
+                    matchesDate = matchesDate && (oDate >= from);
+                }
+                if (dateTo) {
+                    const to = new Date(dateTo);
+                    to.setHours(23, 59, 59, 999);
+                    matchesDate = matchesDate && (oDate <= to);
+                }
+            }
+        }
+        
+        return matchesId && matchesStatus && matchesUserId && matchesDate;
     });
+
+    // Cập nhật tổng tiền ngay lập tức
+    const totalAmountSpan = document.getElementById('order-filtered-total-amount');
+    if (totalAmountSpan) {
+        const sum = filtered.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+        totalAmountSpan.innerText = new Intl.NumberFormat('vi-VN').format(sum) + ' đ';
+    }
 
     // Sắp xếp theo ngày đặt (Date/Timestamp) giảm dần
     filtered.sort((a, b) => {
@@ -2530,7 +2585,8 @@ function renderOrdersFiltered() {
     });
 
     // Phân trang
-    const totalPages = Math.ceil(filtered.length / ORDER_PAGE_SIZE) || 1;
+    window.currentOrderTotalPages = Math.ceil(filtered.length / ORDER_PAGE_SIZE) || 1; 
+    const totalPages = window.currentOrderTotalPages;
     if (currentOrderPage > totalPages) {
         currentOrderPage = totalPages;
     }
@@ -2543,11 +2599,10 @@ function renderOrdersFiltered() {
     renderOrderRows(pageOrders, orderListTable);
 
     // Cập nhật các nút phân trang
-    if (pageInfo) pageInfo.innerText = `Trang ${currentOrderPage} / ${totalPages}`;
+    if (pageInfo) pageInfo.innerText = "Trang " + currentOrderPage + " / " + totalPages;
     if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
     if (nextBtn) nextBtn.disabled = currentOrderPage === totalPages;
 }
-
 function renderOrderRows(ordersList, tableElement) {
     let htmlContent = '';
     ordersList.forEach((order) => {
@@ -2587,8 +2642,9 @@ function renderOrderRows(ordersList, tableElement) {
                     </select>
                 </td>
                 <td data-label="Thao tác">
-                    <button class="btn-minimal" onclick="window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
-                    <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="window.printOrderBill('${orderId}')">In Bill</button>
+                    <button class="btn-minimal" onclick="event.stopPropagation(); window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
+                    <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">In Bill</button>
+                    <button class="btn-delete" style="margin-left: 5px;" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">Xóa</button>
                 </td>
             </tr>
         `;
@@ -2652,7 +2708,7 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
             }
         }
 
-                let trackingLink = "";
+        let trackingLink = "";
         if (newStatus === "Đang giao hàng") {
             trackingLink = prompt("Nhập link theo dõi lộ trình giao hàng (Grab, Ahamove, GHTK...) nếu có (để trống nếu không có):");
             if (trackingLink === null) {
@@ -2681,13 +2737,11 @@ window.printOrderBill = async (orderId) => {
             return;
         }
         const o = docSnap.data();
-        // Chuẩn hóa thông tin khách hàng để khớp với hàm in POS
         const customer = {
             name: o.shippingAddress?.fullName || "Khách vãng lai",
             phone: o.shippingAddress?.phone || "N/A",
             paymentMethod: o.paymentMethod || 'Tiền mặt'
         };
-        // Tính toán lại chiết khấu và phí vận chuyển để in bill đầy đủ thông tin
         const subtotal = o.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
         const shippingFee = o.shippingFee || 0;
         const discountVal = (o.discountAmount || 0) + (o.membershipDiscount || 0);
@@ -2697,7 +2751,6 @@ window.printOrderBill = async (orderId) => {
         showToast("Lỗi khi chuẩn bị in hóa đơn", "error");
     }
 };
-
 window.viewAdminOrderDetail = async (orderId) => {
     try {
         const docSnap = await getDoc(doc(db, "orders", orderId));
@@ -2748,9 +2801,15 @@ window.viewAdminOrderDetail = async (orderId) => {
             <div class="modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
                 <h3>Chi tiết đơn hàng #${orderId}</h3>
-                <button class="btn-dark" style="margin: 15px 0; width: 100%; height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="window.printOrderBill('${orderId}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg> In hóa đơn (Bill)
-                </button>
+                
+                <div style="display: flex; gap: 10px; margin: 15px 0;">
+                    <button class="btn-dark" style="flex: 2; height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="window.printOrderBill('${orderId}')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg> In hóa đơn (Bill)
+                    </button>
+                    <button class="btn-minimal" style="flex: 1; height: 45px; border: 1px solid #1e88e5; color: #1e88e5;" onclick="window.editAdminOrder('${orderId}')">
+                        Sửa đơn hàng
+                    </button>
+                </div>
                 <hr style="margin: 1rem 0;">
                 <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
                 <p><strong>SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
@@ -5170,3 +5229,193 @@ window.printPOSReceipt = window.printPOSReceipt;
 function printPOSReceipt(orderId, customer, items, total, subtotal = 0, discount = 0, shipping = 0) {
     window.printPOSReceipt(orderId, customer, items, total, subtotal, discount, shipping);
 }
+
+window.toggleCustomDateFilter = (value) => {
+    const group = document.getElementById('order-custom-date-group');
+    if (group) {
+        group.style.display = value === 'custom' ? 'flex' : 'none';
+    }
+    currentOrderPage = 1;
+    renderOrdersFiltered();
+};
+
+window.editAdminOrder = async (orderId) => {
+    try {
+        let order = window.allOrdersCache ? window.allOrdersCache.find(o => o.id === orderId) : null;
+        if (!order) {
+            const docSnap = await getDoc(doc(db, "orders", orderId));
+            if (!docSnap.exists()) return;
+            order = { id: docSnap.id, ...docSnap.data() };
+        }
+        
+        let modal = document.getElementById('order-detail-modal');
+        if (!modal) return;
+        
+        window.currentEditingOrderItems = JSON.parse(JSON.stringify(order.items));
+
+        const renderItemsEditor = () => {
+            const container = document.getElementById('edit-order-items-container');
+            if(!container) return;
+            let itemsHtml = '';
+            window.currentEditingOrderItems.forEach((item, index) => {
+                itemsHtml += `
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
+                            <div style="font-size: 0.8rem; color: #666;">${item.variant ? 'Loại: ' + item.variant : ''}</div>
+                        </div>
+                        <input type="number" min="1" value="${item.quantity}" style="width: 60px; padding: 5px;" onchange="window.updateEditOrderItem(${index}, 'quantity', this.value)">
+                        <input type="number" min="0" value="${item.price}" style="width: 100px; padding: 5px;" onchange="window.updateEditOrderItem(${index}, 'price', this.value)">
+                        <button class="btn-delete" style="padding: 5px 10px;" onclick="window.removeEditOrderItem(${index})">Xóa</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = itemsHtml;
+        };
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
+                <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+                <h3>Chỉnh sửa đơn hàng #${orderId}</h3>
+                
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Tên khách hàng</label>
+                    <input type="text" id="edit-order-customer-name" value="${order.shippingAddress?.fullName || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Số điện thoại</label>
+                    <input type="text" id="edit-order-customer-phone" value="${order.shippingAddress?.phone || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Địa chỉ giao hàng</label>
+                    <input type="text" id="edit-order-customer-address" value="${order.shippingAddress?.address || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Trạng thái đơn hàng</label>
+                    <select id="edit-order-status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="Đang xử lý" ${order.status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
+                        <option value="Đã thanh toán" ${order.status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
+                        <option value="Đang giao hàng" ${order.status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
+                        <option value="Đã hoàn thành" ${order.status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                        <option value="Đã hủy" ${order.status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
+                    </select>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Link vận đơn (Tracking)</label>
+                    <input type="text" id="edit-order-tracking" value="${order.trackingLink || ''}" placeholder="Nhập link theo dõi đơn hàng..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Phí vận chuyển (VNĐ)</label>
+                    <input type="number" id="edit-order-shipping" value="${order.shippingFee || 0}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Khuyến mãi giảm (VNĐ)</label>
+                    <input type="number" id="edit-order-discount" value="${order.discountAmount || 0}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Sản phẩm</label>
+                    <div id="edit-order-items-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn-minimal" style="flex: 1;" onclick="window.viewAdminOrderDetail('${orderId}')">Hủy</button>
+                    <button class="btn-dark" style="flex: 1;" onclick="window.saveAdminOrder('${orderId}')">Lưu thay đổi</button>
+                </div>
+            </div>
+        `;
+        renderItemsEditor();
+
+    } catch (e) { console.error(e); }
+};
+
+window.updateEditOrderItem = (index, field, value) => {
+    if(field === 'quantity' || field === 'price') value = Number(value);
+    window.currentEditingOrderItems[index][field] = value;
+};
+
+window.removeEditOrderItem = (index) => {
+    window.currentEditingOrderItems.splice(index, 1);
+    const container = document.getElementById('edit-order-items-container');
+    if (!container) return;
+    let itemsHtml = '';
+    window.currentEditingOrderItems.forEach((item, i) => {
+        itemsHtml += `
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <img src="${item.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
+                </div>
+                <input type="number" min="1" value="${item.quantity}" style="width: 60px; padding: 5px;" onchange="window.updateEditOrderItem(${i}, 'quantity', this.value)">
+                <input type="number" min="0" value="${item.price}" style="width: 100px; padding: 5px;" onchange="window.updateEditOrderItem(${i}, 'price', this.value)">
+                <button class="btn-delete" style="padding: 5px 10px;" onclick="window.removeEditOrderItem(${i})">Xóa</button>
+            </div>
+        `;
+    });
+    container.innerHTML = itemsHtml;
+};
+
+window.saveAdminOrder = async (orderId) => {
+    try {
+        const btn = event.target;
+        btn.textContent = 'Đang lưu...';
+        btn.disabled = true;
+
+        const name = document.getElementById('edit-order-customer-name').value.trim();
+        const phone = document.getElementById('edit-order-customer-phone').value.trim();
+        const address = document.getElementById('edit-order-customer-address').value.trim();
+        const tracking = document.getElementById('edit-order-tracking').value.trim();
+        const status = document.getElementById('edit-order-status').value;
+        const shippingFee = Number(document.getElementById('edit-order-shipping').value) || 0;
+        const discountAmount = Number(document.getElementById('edit-order-discount').value) || 0;
+
+        const items = window.currentEditingOrderItems;
+        let subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        let orderSnap = await getDoc(doc(db, "orders", orderId));
+        let membershipDiscount = 0;
+        if(orderSnap.exists()){
+            membershipDiscount = orderSnap.data().membershipDiscount || 0;
+        }
+        
+        let totalAmount = subtotal + shippingFee - discountAmount - membershipDiscount;
+
+        const updateData = {
+            "shippingAddress.fullName": name,
+            "shippingAddress.phone": phone,
+            "shippingAddress.address": address,
+            trackingLink: tracking,
+            status: status,
+            items: items,
+            shippingFee: shippingFee,
+            discountAmount: discountAmount,
+            totalAmount: totalAmount
+        };
+
+        await updateDoc(doc(db, "orders", orderId), updateData);
+        window.showToast("Cập nhật đơn hàng thành công!", "success");
+        window.viewAdminOrderDetail(orderId);
+    } catch(e) {
+        console.error(e);
+        window.showToast("Lỗi khi lưu đơn hàng", "error");
+    }
+};
+
+window.deleteAdminOrder = async (orderId) => {
+    if (confirm('Bạn có chắc chắn muốn xóa đơn hàng #' + orderId + '? Hành động này không thể hoàn tác.')) {
+        try {
+            await deleteDoc(doc(db, "orders", orderId));
+            window.showToast("Đã xóa đơn hàng thành công!", "success");
+        } catch (e) {
+            console.error(e);
+            window.showToast("Lỗi khi xóa đơn hàng", "error");
+        }
+    }
+};
