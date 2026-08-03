@@ -1,4 +1,4 @@
-import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+﻿import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
@@ -1330,19 +1330,19 @@ export async function loadSharedComponents(pathPrefix = './') {
 
             // Kích hoạt menu mobile sau khi load xong HTML
             const menuToggle = document.getElementById('menu-toggle');
-            const bottomMenuToggle = document.getElementById('mobile-bottom-menu-btn');
+            
             const navLinks = document.getElementById('nav-links');
 
             if (navLinks) {
                 const toggleMenu = () => {
                     const isActive = navLinks.classList.toggle('active');
                     if (menuToggle) menuToggle.classList.toggle('active', isActive);
-                    if (bottomMenuToggle) bottomMenuToggle.classList.toggle('active', isActive);
+                    
                     document.body.classList.toggle('menu-open', isActive);
                 };
 
                 if (menuToggle) menuToggle.onclick = toggleMenu;
-                if (bottomMenuToggle) bottomMenuToggle.onclick = toggleMenu;
+                
 
                 // Đóng menu khi click ra ngoài hoặc vào link
                 document.addEventListener('click', (e) => {

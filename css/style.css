@@ -1,3 +1,4 @@
+﻿.mobile-only { display: none !important; }
 /* css/style.css */
 @font-face {
     font-family: 'Elle Gabor Std Light';
@@ -7083,13 +7084,11 @@ body.admin-dashboard-layout > * {
     }
 
     /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n khu vÃƒÂ¡Ã‚Â»Ã‚Â±c auth (icon user) trÃƒÆ’Ã‚Âªn header do Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ chuyÃƒÂ¡Ã‚Â»Ã†â€™n xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
-    .header-col-right #auth-section {
-        display: none !important;
-    }
+    
 
     /* ChÃƒÂ¡Ã‚Â»Ã‚Â«a khÃƒÆ’Ã‚Â´ng gian dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ che */
     body {
-        padding-bottom: 70px !important;
+
     }
 
     /* Style cho thanh Ãƒâ€žÃ¢â‚¬ËœiÃƒÂ¡Ã‚Â»Ã‚Âu hÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng */
@@ -7108,7 +7107,7 @@ body.admin-dashboard-layout > * {
         justify-content: space-around;
         padding: 8px 0;
         border-top: 1px solid rgba(0, 0, 0, 0.05);
-        padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+
         /* Fix khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng hÃƒÂ¡Ã‚Â»Ã…Â¸ triÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ */
         margin: 0 !important;
         transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -8660,5 +8659,80 @@ body { position: static !important; }
     .order-details button {
         width: 100%;
         margin: 0 !important;
+    }
+}
+
+/* Hides mobile footer on desktop */
+.mobile-menu-footer {
+    display: none;
+}
+
+@media (max-width: 992px) {
+    /* Style for mobile nav menu based on user image */
+    .nav-links {
+        width: 85%;
+        max-width: 400px;
+        background: #fff;
+        padding: 70px 0 20px 0;
+        gap: 0;
+    }
+    
+    .nav-links > li {
+        border-bottom: 1px solid #f0f0f0;
+        width: 100%;
+    }
+    
+    .nav-links > li > a {
+        padding: 16px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px !important;
+        color: #333 !important;
+    }
+    
+    .nav-links > li > a svg {
+        width: 14px;
+        height: 14px;
+        transition: 0.3s;
+    }
+    
+    .nav-links li.dropdown.mobile-expanded > a svg {
+        transform: rotate(180deg);
+    }
+    
+    .mobile-menu-footer {
+        display: flex;
+        border-bottom: none !important;
+        padding: 25px;
+        background: #fff;
+        flex-direction: column;
+        margin-top: auto;
+    }
+    
+    .mobile-menu-footer h4 {
+        font-size: 0.95rem;
+        color: #8893A0;
+        text-transform: capitalize;
+        margin-bottom: 12px;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+    
+    .mobile-contact-info, .mobile-store-info {
+        margin-bottom: 25px;
+    }
+    
+    .mobile-contact-info p, .mobile-store-info p {
+        font-size: 0.85rem;
+        color: #333;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
     }
 }
