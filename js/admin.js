@@ -2207,8 +2207,8 @@ function renderAdminProductTable() {
                 <td style="text-align: center; color: ${p.isFeatured ? '#f1c40f' : '#ccc'}; cursor: pointer;" class="star-toggle" data-id="${p.id}" onclick="event.stopPropagation();">&#9733;</td>
                 <td data-label="Ảnh"><img src="${displayImgUrl}" alt="${p.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
                 <td data-label="Mã hàng"><small>${p.id}</small></td>
+                <td data-label="Tên hàng">
                     <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" onclick="event.stopPropagation();" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
-                    <a href="javascript:void(0)" class="edit-link" data-id="${p.id}" style="color: var(--text-black); font-weight: 600; text-decoration: none;">${p.name}</a>
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #ffeeba; color: #856404; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Đang ẩn</span>' : ''}
                     ${p.isCombo ? '<span style="display:inline-block; margin-left: 8px; padding: 2px 6px; background: #d0e8ff; color: #0056b3; font-size: 0.7rem; border-radius: 4px; font-weight: bold;">Combo</span>' : ''}
                 </td>
