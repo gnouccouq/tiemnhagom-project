@@ -1,4 +1,4 @@
-﻿.mobile-only { display: none !important; }
+.mobile-only { display: none !important; }
 /* css/style.css */
 @font-face {
     font-family: 'Elle Gabor Std Light';
@@ -3804,12 +3804,13 @@ body.admin-dashboard-layout > * {
 
 .admin-grid {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 2rem;
     grid-template-columns: 420px 1fr;
-    /* CÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t form, cho bÃƒÂ¡Ã‚ÂºÃ‚Â£ng giÃƒÆ’Ã‚Â£n rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng tÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœi Ãƒâ€žÃ¢â‚¬Ëœa */
     gap: 2.5rem;
-    /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a 2 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ bÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºt chÃƒÂ¡Ã‚ÂºÃ‚Â­t chÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i */
+}
+
+#news-section .admin-grid {
+    /* Mở rộng cột bên trái (editor) cho thoải mái */
+    grid-template-columns: 1.5fr 1fr;
 }
 
 @media (max-width: 992px) {

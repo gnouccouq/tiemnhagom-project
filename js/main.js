@@ -495,6 +495,141 @@ async function initHeroCarousel() {
     showSlide(0);
 }
 
+// ----------------------------------------------------
+// FETCH HOME BLOG CAROUSEL
+// ----------------------------------------------------
+async function initHomeBlog() {
+    const carousel = document.getElementById('home-blog-carousel');
+    const dotsContainer = document.getElementById('home-blog-dots');
+    if (!carousel || !dotsContainer) return;
+
+    try {
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"), limit(6));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            document.querySelector('.home-blog-section').style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        let dotHtml = '';
+        let index = 0;
+        
+        querySnapshot.forEach(doc => {
+            const article = doc.data();
+            const date = article.createdAt ? new Date(article.createdAt.toDate()).toLocaleDateString('vi-VN') : '';
+            
+            // Create a temporary element to extract text from HTML content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = article.content || '';
+            const textContent = tempDiv.textContent || tempDiv.innerText || '';
+            const excerpt = textContent.length > 100 ? textContent.substring(0, 100) + '...' : textContent;
+
+            html += `
+                <a href="blog/article.html?id=${doc.id}" class="home-blog-card">
+                    <div class="home-blog-img-wrapper">
+                        <img src="${article.imageUrl}" alt="${article.title}" loading="lazy">
+                        <div class="home-blog-overlay">
+                            <div class="home-blog-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-blog-content">
+                        <h3>${article.title}</h3>
+                        <p class="home-blog-excerpt">${excerpt}</p>
+                        <span class="home-blog-meta">${date} | Blog</span>
+                    </div>
+                </a>
+            `;
+            
+            // We'll create one dot per item. In a scroll snap, you can't easily sync dots perfectly
+            // without IntersectionObserver, but since there are 6 items, we can try.
+            dotHtml += `<div class="home-blog-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`;
+            index++;
+        });
+
+        carousel.innerHTML = html;
+        dotsContainer.innerHTML = dotHtml;
+
+        const cards = carousel.querySelectorAll('.home-blog-card');
+        const dots = dotsContainer.querySelectorAll('.home-blog-dot');
+
+        if (cards.length === 0) return;
+
+        // Auto Scroll Logic
+        let currentItem = 0;
+        let autoScrollInterval;
+        
+        const scrollToIndex = (idx) => {
+            if (idx >= cards.length) idx = 0;
+            if (idx < 0) idx = cards.length - 1;
+            currentItem = idx;
+            
+            // scroll behavior
+            const cardWidth = cards[0].offsetWidth + 30; // 30 is the gap
+            carousel.scrollTo({
+                left: cardWidth * currentItem,
+                behavior: 'smooth'
+            });
+            
+            // update dots
+            dots.forEach(d => d.classList.remove('active'));
+            if(dots[currentItem]) dots[currentItem].classList.add('active');
+        };
+
+        const startAutoScroll = () => {
+            autoScrollInterval = setInterval(() => {
+                scrollToIndex(currentItem + 1);
+            }, 5000);
+        };
+        
+        const stopAutoScroll = () => {
+            if(autoScrollInterval) clearInterval(autoScrollInterval);
+        };
+
+        startAutoScroll();
+
+        // Pause on hover
+        carousel.addEventListener('mouseenter', stopAutoScroll);
+        carousel.addEventListener('mouseleave', startAutoScroll);
+
+        // Dot clicks
+        dots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                stopAutoScroll();
+                scrollToIndex(idx);
+                startAutoScroll();
+            });
+        });
+        
+        // Update dots on manual scroll using IntersectionObserver
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const idx = Array.from(cards).indexOf(entry.target);
+                    if (idx !== -1) {
+                        currentItem = idx;
+                        dots.forEach(d => d.classList.remove('active'));
+                        if(dots[currentItem]) dots[currentItem].classList.add('active');
+                    }
+                }
+            });
+        }, {
+            root: carousel,
+            threshold: 0.5
+        });
+        
+        cards.forEach(card => observer.observe(card));
+
+    } catch (error) {
+        console.error("Lỗi khi tải Blog:", error);
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     initHeader('./');
     
@@ -506,6 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFlashSaleSync();
     fetchRecommendations();
     fetchCollections();
+    initHomeBlog();
     
     // Khởi tạo tìm kiếm ở trang chủ
     initAutocomplete('home-search-input', 'home-search-suggestions', './');

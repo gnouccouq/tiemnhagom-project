@@ -1,4 +1,4 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
@@ -4662,10 +4662,68 @@ function renderAdminFlashSaleList() {
 }
 
 // --- Quản lý Tin tức ---
+let quillNewsEditor = null;
+
+function initQuillNewsEditor() {
+    if (!quillNewsEditor && document.getElementById('quill-editor')) {
+        quillNewsEditor = new Quill('#quill-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link', 'image'],
+                        ['clean']
+                    ],
+                    handlers: {
+                        image: function() {
+                            const input = document.createElement('input');
+                            input.setAttribute('type', 'file');
+                            input.setAttribute('accept', 'image/*');
+                            input.click();
+
+                            input.onchange = async () => {
+                                const file = input.files[0];
+                                if (file) {
+                                    const range = quillNewsEditor.getSelection(true) || { index: quillNewsEditor.getLength() };
+                                    quillNewsEditor.insertText(range.index, 'Đang tải ảnh...', 'italic', true);
+                                    
+                                    try {
+                                        const storageRef = ref(storage, `news/content/${Date.now()}_${file.name}`);
+                                        const snapshot = await uploadBytes(storageRef, file);
+                                        const url = await getDownloadURL(snapshot.ref);
+                                        
+                                        quillNewsEditor.deleteText(range.index, 15);
+                                        quillNewsEditor.insertEmbed(range.index, 'image', url);
+                                    } catch (error) {
+                                        console.error("Lỗi upload ảnh:", error);
+                                        quillNewsEditor.deleteText(range.index, 15);
+                                        showToast("Lỗi tải ảnh lên", "error");
+                                    }
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+        });
+
+        quillNewsEditor.on('text-change', function() {
+            document.getElementById('news-content').value = quillNewsEditor.root.innerHTML;
+        });
+    }
+}
+
 function initNewsManagement() {
     const form = document.getElementById('news-form');
     const listContainer = document.getElementById('admin-news-list');
     if (!form || !db) return;
+
+    initQuillNewsEditor();
 
     // Lắng nghe danh sách tin tức
     onSnapshot(query(collection(db, "news"), orderBy("createdAt", "desc")), (snapshot) => {
@@ -4738,6 +4796,10 @@ function initNewsManagement() {
             form.reset();
             document.getElementById('news-id').value = '';
             document.getElementById('news-image-preview').innerHTML = '';
+            if (quillNewsEditor) {
+                quillNewsEditor.setContents([]);
+                document.getElementById('news-content').value = '';
+            }
             delete form.dataset.currentImageUrl;
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
@@ -4756,6 +4818,9 @@ window.editNews = async (id) => {
         document.getElementById('news-title').value = n.title;
         document.getElementById('news-excerpt').value = n.excerpt;
         document.getElementById('news-content').value = n.content;
+        if (quillNewsEditor) {
+            quillNewsEditor.root.innerHTML = n.content || '';
+        }
         document.getElementById('news-author').value = n.author;
         document.getElementById('news-status').value = n.status;
         

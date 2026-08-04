@@ -70,28 +70,45 @@ function renderCategoryGrid() {
 
 async function fetchCategoryCounts() {
     try {
-        const snap = await getCountFromServer(collection(db, "products"));
-        const el = document.getElementById('cat-all');
-        if (el) el.querySelector('.cat-count').textContent = `(${snap.data().count})`;
-    } catch (e) {
-        console.error("Lỗi đếm số lượng tất cả:", e);
-    }
+        const snap = await getDocs(collection(db, "products"));
+        const allDocs = snap.docs.map(d => d.data());
+        const publicDocs = allDocs.filter(p => !p.isHidden);
+        
+        const countCards = (docs) => {
+            let count = 0;
+            docs.forEach(p => {
+                count += 1;
+                if (p.comboVariants && Array.isArray(p.comboVariants)) {
+                    count += p.comboVariants.filter(v => v.showOnProductPage).length;
+                }
+                if (p.colorVariants && Array.isArray(p.colorVariants)) {
+                    count += p.colorVariants.filter(v => v.showOnProductPage).length;
+                }
+                if (p.patternVariants && Array.isArray(p.patternVariants)) {
+                    count += p.patternVariants.filter(v => v.showOnProductPage).length;
+                }
+            });
+            return count;
+        };
 
-    dynamicCategories.forEach(async (group) => {
-        try {
-            let q;
-            if (group.subs && group.subs.length > 0) {
-                q = query(collection(db, "products"), where("category", "in", group.subs));
-            } else {
-                q = query(collection(db, "products"), where("category", "==", group.name));
-            }
-            const snap = await getCountFromServer(q);
+        const elAll = document.getElementById('cat-all');
+        if (elAll) elAll.querySelector('.cat-count').textContent = `(${countCards(publicDocs)})`;
+
+        dynamicCategories.forEach(group => {
             const el = document.getElementById(`cat-${group.name.replace(/\s+/g, '-')}`);
-            if (el) el.querySelector('.cat-count').textContent = `(${snap.data().count})`;
-        } catch (e) {
-            console.error("Lỗi đếm số lượng " + group.name + ":", e);
-        }
-    });
+            if (el) {
+                let catDocs = [];
+                if (group.subs && group.subs.length > 0) {
+                    catDocs = publicDocs.filter(p => group.subs.includes(p.category));
+                } else {
+                    catDocs = publicDocs.filter(p => p.category === group.name);
+                }
+                el.querySelector('.cat-count').textContent = `(${countCards(catDocs)})`;
+            }
+        });
+    } catch (e) {
+        console.error("Lỗi đếm số lượng:", e);
+    }
 }
 
 // Hàm chính để lấy và hiển thị sản phẩm
@@ -230,17 +247,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(FETCH_LIMIT));
         } else {
             finalQuery = query(productsQuery, limit(FETCH_LIMIT));
-            // Reset state
             currentLoadedCount = 0;
-            if (!hasSearchTerm) {
-                try {
-                    const snapCount = await getCountFromServer(productsQuery);
-                    currentTotalCount = snapCount.data().count;
-                } catch (e) {
-                    console.error("Lỗi đếm số lượng:", e);
-                    currentTotalCount = 0;
-                }
-            }
         }
 
         const querySnapshot = await getDocs(finalQuery);
@@ -352,27 +359,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         productGrid.classList.remove('loading-fade');
         
         // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm
-        if (hasSearchTerm) {
-            currentTotalCount = finalResults.length;
-            currentLoadedCount = finalResults.length;
-        } else {
-            currentLoadedCount += finalResults.length;
-        }
-
         if (loadMoreBtn) {
-            const remaining = currentTotalCount - currentLoadedCount;
-            if (remaining > 0 && !hasSearchTerm) { 
-                loadMoreBtn.style.display = 'block';
-                loadMoreBtn.innerHTML = `Xem thêm ${remaining} sản phẩm`;
-                loadMoreBtn.onclick = () => {
-                    loadMoreBtn.innerHTML = '<span class="spinner-small"></span> Đang tải...';
-                    loadMoreBtn.disabled = true;
-                    fetchProducts('load-more').then(() => {
-                        loadMoreBtn.disabled = false;
-                    });
-                };
-            } else if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm) {
-                // Đề phòng lỗi đếm tổng số, nếu vẫn lấy được đủ 10 sản phẩm thì khả năng cao vẫn còn
+            // Hiển thị nút "Xem thêm" nếu số lượng doc trả về bằng FETCH_LIMIT (nghĩa là có thể còn dữ liệu trong DB)
+            if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm) {
                 loadMoreBtn.style.display = 'block';
                 loadMoreBtn.innerHTML = `Xem thêm sản phẩm`;
                 loadMoreBtn.onclick = () => {

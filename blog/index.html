@@ -35,6 +35,87 @@
         .blog-date { font-size: 0.75rem; color: #888; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
         .blog-info h3 { font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 1rem; line-height: 1.3; }
         .blog-info p { color: #666; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+        
+        .blog-header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .breadcrumb {
+            font-size: 0.95rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .breadcrumb a { color: #888; text-decoration: none; transition: 0.2s; }
+        .breadcrumb a:hover { color: #333; }
+        .breadcrumb .separator { color: #ccc; font-size: 0.8rem; }
+        .breadcrumb .current { color: #333; }
+        
+        .blog-search {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+            width: 100%;
+            max-width: 350px;
+        }
+        .blog-search input {
+            border: none;
+            padding: 10px 15px;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+        }
+        .blog-search button {
+            background: none;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .blog-search button:hover { background: #f5f5f5; color: #000; }
+        .blog-search button svg { width: 16px; height: 16px; fill: currentColor; }
+        
+        .blog-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+        .blog-page-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        .blog-page-btn.active {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+        .blog-page-btn:hover:not(.active) {
+            background: #f5f5f5;
+        }
     </style>
 
     <style>
@@ -58,11 +139,27 @@
             <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Tin tức & Chia sẻ</h1>
         </section>
 
-        <div class="products-page-container" style="padding-top: 0;">
+        <div class="products-page-container" style="padding-top: 2rem;">
+            
+            <div class="blog-header-controls">
+                <div class="breadcrumb">
+                    <a href="../index.html">Trang chủ</a> <span class="separator">›</span>
+                    <span class="current">Blog</span>
+                </div>
+                <div class="blog-search">
+                    <input type="text" id="blog-search-input" placeholder="Tìm kiếm bài viết..." />
+                    <button id="blog-search-btn">
+                        <svg viewBox="0 0 512 512"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>
+                    </button>
+                </div>
+            </div>
+
             <div id="blog-list" class="blog-grid">
                 <!-- JS render -->
                 <div style="text-align: center; grid-column: 1/-1;"><span class="spinner"></span></div>
             </div>
+            
+            <div id="blog-pagination" class="blog-pagination"></div>
         </div>
     </main>
     <div id="footer-placeholder"></div>
