@@ -53,6 +53,13 @@
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
+        <url>
+        <loc>https://tiemnhagom.vn/blog/article.html?id=ID_CỦA_BÀI_VIẾT</loc>
+        <lastmod>2026-08-04</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
 
     <!-- Giới thiệu & Liên hệ -->
     <url>

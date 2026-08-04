@@ -1131,17 +1131,21 @@ window.updateDisplayPrice = () => {
 
 // Hàm chia sẻ sản phẩm sử dụng Web Share API hoặc Fallback Copy Link
 window.shareProduct = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pid = urlParams.get('id');
+    const shareUrl = pid ? `https://tiemnhagom-project.web.app/share?type=product&id=${pid}` : window.location.href;
+    
     const shareData = {
         title: document.title,
         text: 'Mời bạn xem sản phẩm gốm sứ thủ công tinh xảo tại Tiệm Nhà Gốm!',
-        url: window.location.href
+        url: shareUrl
     };
     try {
         if (navigator.share) {
             await navigator.share(shareData);
         } else {
-            await navigator.clipboard.writeText(window.location.href);
-            showToast("Đã sao chép liên kết sản phẩm!");
+            await navigator.clipboard.writeText(shareUrl);
+            showToast("Đã sao chép liên kết chia sẻ!");
         }
     } catch (err) {
         if (err.name !== 'AbortError') showToast("Lỗi chia sẻ: " + err.message, "error");

@@ -4780,7 +4780,7 @@ function initNewsManagement() {
                 author,
                 status,
                 imageUrl,
-                slug: title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
+                slug: title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, 'd').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-'),
                 updatedAt: serverTimestamp()
             };
 
@@ -4788,8 +4788,13 @@ function initNewsManagement() {
                 await updateDoc(doc(db, "news", id), newsData);
                 showToast("Đã cập nhật bài viết!");
             } else {
+                let docId = newsData.slug || "bai-viet";
+                const checkSnap = await getDoc(doc(db, "news", docId));
+                if (checkSnap.exists()) {
+                    docId = docId + '-' + Date.now();
+                }
                 newsData.createdAt = serverTimestamp();
-                await addDoc(collection(db, "news"), newsData);
+                await setDoc(doc(db, "news", docId), newsData);
                 showToast("Đã đăng bài viết mới!");
             }
 

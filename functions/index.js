@@ -471,3 +471,75 @@ ${itemsList}
         
         return null;
     });
+
+exports.shareRedirect = onRequest(async (req, res) => {
+    const type = req.query.type;
+    const id = req.query.id;
+
+    if (!type || !id) {
+        return res.status(400).send('Thiếu thông tin type hoặc id');
+    }
+
+    let collectionName = '';
+    let redirectUrl = '';
+    if (type === 'product') {
+        collectionName = 'products';
+        redirectUrl = 'https://tiemnhagom.vn/product/index.html?id=' + id;
+    } else if (type === 'news') {
+        collectionName = 'news';
+        redirectUrl = 'https://tiemnhagom.vn/blog/article.html?id=' + id;
+    } else {
+        return res.status(400).send('Type không hợp lệ');
+    }
+
+    try {
+        const docSnap = await db.collection(collectionName).doc(id).get();
+        if (!docSnap.exists) {
+            return res.status(404).send('Không tìm thấy dữ liệu');
+        }
+
+        const data = docSnap.data();
+        const title = data.name || data.title || 'Tiệm Nhà Gốm';
+        const imageUrl = data.imageUrl || data.image || data.thumbUrl || '';
+        let description = data.excerpt || 'Khám phá tại Tiệm Nhà Gốm';
+        
+        if (data.content && !data.excerpt) {
+            description = data.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...';
+        }
+
+        const html = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${redirectUrl}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${imageUrl}">
+    
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="${redirectUrl}">
+    <meta property="twitter:title" content="${title}">
+    <meta property="twitter:description" content="${description}">
+    <meta property="twitter:image" content="${imageUrl}">
+    
+    <script>
+        window.location.replace('${redirectUrl}');
+    </script>
+</head>
+<body>
+    <p>Đang chuyển hướng...</p>
+    <p><a href="${redirectUrl}">Bấm vào đây nếu trình duyệt không tự chuyển hướng</a></p>
+</body>
+</html>`;
+
+        res.status(200).send(html);
+    } catch (error) {
+        console.error('Lỗi tạo share link:', error);
+        res.status(500).send('Lỗi máy chủ');
+    }
+});

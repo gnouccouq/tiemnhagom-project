@@ -92,12 +92,40 @@ async function fetchArticle() {
 
         const date = n.createdAt ? new Date(n.createdAt.toDate()).toLocaleDateString('vi-VN') : '';
         const author = n.author || 'Tiệm Nhà Gốm';
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlStr = encodeURIComponent(window.location.href);
-        const encodedTitle = encodeURIComponent(n.title);
+        const shareUrl = `https://tiemnhagom-project.web.app/share?type=news&id=${id}`;
+        const urlStr = encodeURIComponent(shareUrl);
+        const encodedTitle = encodeURIComponent(`${n.title} | Tiệm Nhà Gốm`);
 
         document.title = `${n.title} | Tiệm Nhà Gốm`;
 
+        // SEO: Cập nhật thẻ Meta Description, Open Graph, Twitter
+        const excerptText = n.excerpt || (n.content ? n.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '');
+        const updateMeta = (nameAttr, nameVal, content) => {
+            let el = document.querySelector(`meta[${nameAttr}="${nameVal}"]`);
+            if (!el) {
+                el = document.createElement('meta');
+                el.setAttribute(nameAttr, nameVal);
+                document.head.appendChild(el);
+            }
+            el.setAttribute('content', content);
+        };
+        updateMeta('name', 'description', excerptText);
+        updateMeta('property', 'og:title', `${n.title} | Tiệm Nhà Gốm`);
+        updateMeta('property', 'og:description', excerptText);
+        updateMeta('property', 'og:image', n.imageUrl);
+        updateMeta('property', 'og:url', window.location.href);
+        updateMeta('name', 'twitter:title', `${n.title} | Tiệm Nhà Gốm`);
+        updateMeta('name', 'twitter:description', excerptText);
+        updateMeta('name', 'twitter:image', n.imageUrl);
+
+        // Cập nhật Canonical URL
+        let canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (!canonicalEl) {
+            canonicalEl = document.createElement('link');
+            canonicalEl.setAttribute('rel', 'canonical');
+            document.head.appendChild(canonicalEl);
+        }
+        canonicalEl.setAttribute('href', window.location.href.split('?')[0] + '?id=' + id);
         const breadcrumbContainer = document.getElementById('breadcrumb-container');
         if (breadcrumbContainer) {
             breadcrumbContainer.innerHTML = `
@@ -110,8 +138,9 @@ async function fetchArticle() {
         }
 
         window.copyArticleLink = () => {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                alert('Đã sao chép liên kết bài viết!');
+            const shareUrl = `https://tiemnhagom-project.web.app/share?type=news&id=${id}`;
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert('Đã sao chép liên kết chia sẻ!');
             }).catch(e => {
                 console.error('Lỗi sao chép', e);
             });
