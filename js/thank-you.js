@@ -1,9 +1,12 @@
-﻿import { db, auth, initHeader } from "./utils.js";
+import { db, auth, initHeader } from "./utils.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 async function initThankYouPage() {
     const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('id');
+    let txnRef = urlParams.get('vnp_TxnRef');
+    let orderIdFromTxn = txnRef ? txnRef.split('_')[0] : null;
+    const orderId = urlParams.get('id') || orderIdFromTxn;
+    const vnpResponseCode = urlParams.get('vnp_ResponseCode');
     const orderIdDisplay = document.getElementById('order-id-display');
 
     if (!orderId) {
@@ -18,6 +21,28 @@ async function initThankYouPage() {
         if (orderSnap.exists()) {
             const order = orderSnap.data();
             
+            // Xử lý giao diện nếu là kết quả từ VNPay
+            if (vnpResponseCode) {
+                const titleEl = document.querySelector('.page-title');
+                const iconEl = document.querySelector('.checkout-section > div:first-child');
+                const descEl = document.querySelector('.checkout-section > p:nth-of-type(2)');
+                
+                if (vnpResponseCode === '00') {
+                    if (titleEl) titleEl.innerText = 'Thanh toán VNPay thành công!';
+                    if (descEl) descEl.innerText = 'Cảm ơn bạn. Chúng tôi đã nhận được thanh toán và đang tiến hành xử lý đơn hàng.';
+                } else {
+                    if (titleEl) {
+                        titleEl.innerText = 'Thanh toán VNPay thất bại hoặc đã hủy';
+                        titleEl.style.color = '#c0392b';
+                    }
+                    if (iconEl) {
+                        iconEl.innerText = 'X';
+                        iconEl.style.color = '#c0392b';
+                    }
+                    if (descEl) descEl.innerText = 'Đơn hàng của bạn chưa được thanh toán thành công. Nếu bạn đã bị trừ tiền, vui lòng liên hệ Tiệm Nhà Gốm để được hỗ trợ.';
+                }
+            }
+
             // Hiển thị tóm tắt đơn hàng (Sản phẩm, giá, địa chỉ)
             renderOrderSummary(order);
 
@@ -83,7 +108,10 @@ function renderOrderSummary(order) {
             <h5 style="margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; color: #888; letter-spacing: 1px;">Thông tin nhận hàng</h5>
             <p style="font-size: 0.9rem; color: #333; margin: 0;"><strong>${order.shippingAddress.fullName}</strong> | ${order.shippingAddress.phone}</p>
             <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0;">${order.shippingAddress.address}</p>
-            <p style="font-size: 0.85rem; color: #666; margin: 8px 0 0;">Hình thức: <strong>${order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}</strong></p>
+            <p style="font-size: 0.85rem; color: #666; margin: 8px 0 0;">Hình thức: <strong>${
+                order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 
+                (order.paymentMethod === 'vnpay' ? 'Thanh toán qua VNPay' : 'Chuyển khoản ngân hàng')
+            }</strong></p>
         </div>
     `;
 

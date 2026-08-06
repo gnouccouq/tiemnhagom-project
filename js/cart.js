@@ -6,6 +6,7 @@ import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
     query, where, getDocs, limit, orderBy
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
 
 // --- Logic xử lý giỏ hàng ---
 
@@ -333,6 +334,11 @@ async function renderCheckoutForm(container) {
                 </label>
                 <label class="radio-container">Bank transfer | Chuyển khoản
                     <input type="radio" name="payment-method" value="bank_transfer">
+                    <span class="radio-checkmark"></span>
+                </label>
+                <!-- Tạm thời ẩn thanh toán VNPay -->
+                <label class="radio-container" style="display: none;">Thanh toán qua VNPay
+                    <input type="radio" name="payment-method" value="vnpay">
                     <span class="radio-checkmark"></span>
                 </label>
             </div>
@@ -775,6 +781,10 @@ window.placeOrder = async () => {
         note: note || ""
     };
 
+    if (paymentMethod === 'vnpay') {
+        orderData.status = "Chờ thanh toán";
+    }
+
     try {
         const btn = document.querySelector('.btn-place-order');
         btn.disabled = true;
@@ -974,8 +984,37 @@ window.placeOrder = async () => {
                 shipping_address: `${address}, ${wardName}, ${provinceName}`
             });
 
-            showToast("Đặt hàng thành công! Đang chuyển hướng...", "success");
+            showToast("Đặt hàng thành công! Đang xử lý thanh toán...", "success");
             updateCartCount();
+            
+            if (paymentMethod === 'vnpay') {
+                const functions = getFunctions(db.app);
+                const createVNPayUrl = httpsCallable(functions, 'createVNPayUrl');
+                try {
+                    const result = await createVNPayUrl({ 
+                        orderId: orderId, 
+                        amount: finalTotal,
+                        orderInfo: `Thanh toan don hang ${orderId} tai Tiem Nha Gom`
+                    });
+                    
+                    if (result.data && result.data.success && result.data.url) {
+                        window.location.href = result.data.url;
+                        return; // Ngăn không chạy tiếp logic chuyển sang thank-you bình thường
+                    } else {
+                        throw new Error("Không nhận được URL từ VNPay");
+                    }
+                } catch (e) {
+                    console.error("Lỗi tạo VNPay URL:", e);
+                    showToast("Có lỗi khi kết nối VNPay. Vui lòng liên hệ hỗ trợ.", "error");
+                    const btn = document.querySelector('.btn-place-order');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = "Đặt hàng ngay";
+                    }
+                    return;
+                }
+            }
+
             setTimeout(() => {
                 window.location.href = `thank-you.html?id=${orderId}`;
             }, 1500);

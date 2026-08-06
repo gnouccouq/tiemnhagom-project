@@ -3,6 +3,8 @@ const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https")
 const admin = require('firebase-admin');
 const kiotviet = require('./kiotviet');
 const axios = require('axios');
+const crypto = require('crypto');
+const querystring = require('querystring');
 
 // Initialize Firebase Admin SDK if not already initialized
 admin.initializeApp();
@@ -541,5 +543,281 @@ exports.shareRedirect = onRequest(async (req, res) => {
     } catch (error) {
         console.error('Lỗi tạo share link:', error);
         res.status(500).send('Lỗi máy chủ');
+    }
+});
+
+// --- VNPAY INTEGRATION ---
+
+const VNP_TMN_CODE = '0AS8YQYG';
+const VNP_HASH_SECRET = 'UQPWQRISTNFVFCTYTPLBUSYIAOXRESOL';
+const VNP_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+const VNP_RETURN_URL = 'http://127.0.0.1:5500/cart/thank-you.html'; // Đổi sang localhost để test
+
+function sortObject(obj) {
+    let sorted = {};
+    let str = [];
+    let key;
+    for (key in obj){
+        if (obj.hasOwnProperty(key)) {
+            str.push(encodeURIComponent(key));
+        }
+    }
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+        sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, "+");
+    }
+    return sorted;
+}
+
+exports.createVNPayUrl = onCall({ cors: true }, async (request) => {
+    const data = request.data;
+    const { orderId, amount, orderInfo } = data || {};
+
+    if (!orderId || !amount) {
+        throw new HttpsError("invalid-argument", "Thiếu mã đơn hàng hoặc số tiền.");
+    }
+
+    try {
+        let ipAddr = request.rawRequest ? request.rawRequest.headers['x-forwarded-for'] : '127.0.0.1';
+        if (ipAddr && ipAddr.includes(',')) {
+            ipAddr = ipAddr.split(',')[0]; // Lấy IP đầu tiên nếu có nhiều IP
+        }
+
+        const date = new Date();
+        // Format date to YYYYMMDDHHmmss in Vietnam timezone
+        const vnTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        const pad = (n) => String(n).padStart(2, '0');
+        const createDate = `${vnTime.getUTCFullYear()}${pad(vnTime.getUTCMonth() + 1)}${pad(vnTime.getUTCDate())}${pad(vnTime.getUTCHours())}${pad(vnTime.getUTCMinutes())}${pad(vnTime.getUTCSeconds())}`;
+        
+        // Hết hạn sau 15 phút
+        const expireTime = new Date(vnTime.getTime() + (15 * 60 * 1000));
+        const vnp_ExpireDate = `${expireTime.getUTCFullYear()}${pad(expireTime.getUTCMonth() + 1)}${pad(expireTime.getUTCDate())}${pad(expireTime.getUTCHours())}${pad(expireTime.getUTCMinutes())}${pad(expireTime.getUTCSeconds())}`;
+
+        let vnp_Params = {};
+        vnp_Params['vnp_Version'] = '2.1.0';
+        vnp_Params['vnp_Command'] = 'pay';
+        vnp_Params['vnp_TmnCode'] = VNP_TMN_CODE;
+        // Số tiền VNPay yêu cầu nhân 100
+        vnp_Params['vnp_Amount'] = Math.round(amount * 100); 
+        vnp_Params['vnp_CreateDate'] = createDate;
+        vnp_Params['vnp_CurrCode'] = 'VND';
+        vnp_Params['vnp_IpAddr'] = ipAddr;
+        vnp_Params['vnp_Locale'] = 'vn';
+        vnp_Params['vnp_OrderInfo'] = orderInfo || `Thanh toan don hang ${orderId}`;
+        vnp_Params['vnp_OrderType'] = 'other';
+        vnp_Params['vnp_ReturnUrl'] = VNP_RETURN_URL;
+        
+        // Thêm timestamp để tránh lỗi trùng vnp_TxnRef khi thanh toán lại nhiều lần
+        vnp_Params['vnp_TxnRef'] = `${orderId}_${Date.now()}`;
+        vnp_Params['vnp_ExpireDate'] = vnp_ExpireDate;
+
+        vnp_Params = sortObject(vnp_Params);
+
+        const signData = querystring.stringify(vnp_Params, '&', '=', { encodeURIComponent: (str) => str });
+        const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
+        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex"); 
+        vnp_Params['vnp_SecureHash'] = signed;
+
+        const vnpUrl = VNP_URL + '?' + querystring.stringify(vnp_Params, '&', '=', { encodeURIComponent: (str) => str });
+
+        return { success: true, url: vnpUrl };
+    } catch (error) {
+        console.error("Lỗi tạo URL VNPay:", error);
+        throw new HttpsError("internal", error.message);
+    }
+});
+
+exports.vnpayIpn = onRequest(async (req, res) => {
+    try {
+        let vnp_Params = req.query;
+        const secureHash = vnp_Params['vnp_SecureHash'];
+        
+        let txnRef = vnp_Params['vnp_TxnRef'];
+        let orderId = txnRef.split('_')[0]; // Tách lấy mã đơn hàng gốc
+        let rspCode = vnp_Params['vnp_ResponseCode'];
+
+        delete vnp_Params['vnp_SecureHash'];
+        delete vnp_Params['vnp_SecureHashType'];
+
+        vnp_Params = sortObject(vnp_Params);
+        
+        const signData = querystring.stringify(vnp_Params, '&', '=', { encodeURIComponent: (str) => str });
+        const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
+        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");     
+        
+        if (secureHash === signed) {
+            // Lấy đơn hàng từ Firestore
+            const orderRef = db.collection('orders').doc(orderId);
+            const orderSnap = await orderRef.get();
+            
+            if (!orderSnap.exists) {
+                return res.status(200).json({RspCode: '01', Message: 'Order not found'});
+            }
+            
+            const orderData = orderSnap.data();
+            
+            // Kiểm tra số tiền (VNPay gửi số tiền * 100)
+            const checkAmount = Math.round(orderData.totalAmount * 100);
+            if (checkAmount !== parseInt(vnp_Params['vnp_Amount'])) {
+                return res.status(200).json({RspCode: '04', Message: 'Invalid amount'});
+            }
+            
+            // Kiểm tra trạng thái đơn hàng (chỉ xử lý nếu đang chờ thanh toán)
+            if (orderData.status !== 'Chờ thanh toán') {
+                return res.status(200).json({RspCode: '02', Message: 'Order already confirmed'});
+            }
+
+            if (rspCode === '00') {
+                // Thanh toán thành công
+                await orderRef.update({ 
+                    status: 'Đã thanh toán', 
+                    paymentInfo: vnp_Params 
+                });
+                return res.status(200).json({RspCode: '00', Message: 'Confirm Success'});
+            } else {
+                // Thanh toán thất bại hoặc hủy -> Hủy đơn và cộng lại tồn kho
+                await db.runTransaction(async (transaction) => {
+                    const latestOrderSnap = await transaction.get(orderRef);
+                    if (!latestOrderSnap.exists || latestOrderSnap.data().status !== 'Chờ thanh toán') {
+                        return; // Đã xử lý
+                    }
+
+                    // Cập nhật trạng thái
+                    transaction.update(orderRef, { status: 'Đã hủy', cancelReason: 'Thanh toán VNPay thất bại/hủy' });
+
+                    // Trả lại tồn kho
+                    if (orderData.items && Array.isArray(orderData.items)) {
+                        for (const item of orderData.items) {
+                            const productRef = db.collection('products').doc(item.id);
+                            const pSnap = await transaction.get(productRef);
+                            if (!pSnap.exists) continue;
+
+                            const pData = pSnap.data();
+                            let updateData = {
+                                sold: admin.firestore.FieldValue.increment(-item.quantity)
+                            };
+
+                            if (!pData.isCombo) {
+                                updateData.stock = admin.firestore.FieldValue.increment(item.quantity);
+                            }
+
+                            if (item.color && Array.isArray(pData.colorVariants)) {
+                                const updatedColorVariants = pData.colorVariants.map(v => {
+                                    if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                    return v;
+                                });
+                                updateData.colorVariants = updatedColorVariants;
+                            }
+                            if (item.pattern && Array.isArray(pData.patternVariants)) {
+                                const updatedPatternVariants = pData.patternVariants.map(v => {
+                                    if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                    return v;
+                                });
+                                updateData.patternVariants = updatedPatternVariants;
+                            }
+                            
+                            transaction.update(productRef, updateData);
+                        }
+                    }
+                });
+                
+                return res.status(200).json({RspCode: '00', Message: 'Confirm Success'});
+            }
+        } else {
+            return res.status(200).json({RspCode: '97', Message: 'Checksum failed'});
+        }
+    } catch (error) {
+        console.error("Lỗi IPN VNPay:", error);
+        res.status(200).json({RspCode: '99', Message: 'Unknown error'});
+    }
+});
+
+// --- CANCEL ORDER SECURE ---
+exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
+    const data = request.data;
+    const { orderId } = data || {};
+    const uid = request.auth ? request.auth.uid : null;
+
+    if (!orderId || !uid) {
+        throw new HttpsError("invalid-argument", "Thiếu mã đơn hàng hoặc chưa đăng nhập.");
+    }
+
+    try {
+        const result = await db.runTransaction(async (transaction) => {
+            const orderRef = db.collection('orders').doc(orderId);
+            const orderSnap = await transaction.get(orderRef);
+            
+            if (!orderSnap.exists) {
+                throw new HttpsError("not-found", "Không tìm thấy đơn hàng.");
+            }
+            
+            const orderData = orderSnap.data();
+            
+            // Chỉ người tạo đơn hoặc admin mới được hủy
+            const userRef = db.collection('users').doc(uid);
+            const userSnap = await transaction.get(userRef);
+            const isAdmin = userSnap.exists && userSnap.data().role === 'admin';
+            
+            if (orderData.userId !== uid && !isAdmin) {
+                throw new HttpsError("permission-denied", "Không có quyền hủy đơn hàng này.");
+            }
+
+            if (orderData.status === 'Đã hủy') {
+                throw new HttpsError("failed-precondition", "Đơn hàng đã được hủy trước đó.");
+            }
+
+            if (orderData.status === 'Đã hoàn thành') {
+                throw new HttpsError("failed-precondition", "Không thể hủy đơn hàng đã hoàn thành.");
+            }
+
+            // Đổi trạng thái
+            transaction.update(orderRef, { 
+                status: 'Đã hủy', 
+                canceledBy: uid, 
+                canceledAt: new Date().toISOString() 
+            });
+
+            // Cộng lại tồn kho
+            if (orderData.items && Array.isArray(orderData.items)) {
+                for (const item of orderData.items) {
+                    const productRef = db.collection('products').doc(item.id);
+                    const pSnap = await transaction.get(productRef);
+                    if (!pSnap.exists) continue;
+
+                    const pData = pSnap.data();
+                    let updateData = {
+                        sold: admin.firestore.FieldValue.increment(-item.quantity)
+                    };
+
+                    if (!pData.isCombo) {
+                        updateData.stock = admin.firestore.FieldValue.increment(item.quantity);
+                    }
+
+                    if (item.color && Array.isArray(pData.colorVariants)) {
+                        const updatedColorVariants = pData.colorVariants.map(v => {
+                            if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
+                            return v;
+                        });
+                        updateData.colorVariants = updatedColorVariants;
+                    }
+                    if (item.pattern && Array.isArray(pData.patternVariants)) {
+                        const updatedPatternVariants = pData.patternVariants.map(v => {
+                            if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
+                            return v;
+                        });
+                        updateData.patternVariants = updatedPatternVariants;
+                    }
+                    
+                    transaction.update(productRef, updateData);
+                }
+            }
+            
+            return { success: true, message: "Hủy đơn hàng thành công và đã hoàn lại tồn kho." };
+        });
+        
+        return result;
+    } catch (error) {
+        console.error("Lỗi cancelOrderSecure:", error);
+        throw new HttpsError("internal", error.message);
     }
 });

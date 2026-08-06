@@ -10,6 +10,7 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
 
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
@@ -2635,6 +2636,7 @@ function renderOrderRows(ordersList, tableElement) {
                 <td data-label="Trạng thái">
                     <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value, this)">
                         <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
+                        <option value="Chờ thanh toán" ${status === 'Chờ thanh toán' ? 'selected' : ''}>Chờ thanh toán</option>
                         <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
                         <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
                         <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
@@ -2717,15 +2719,22 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
             }
         }
 
-        const updateData = { status: newStatus };
-        if (trackingLink) {
-            updateData.trackingLink = trackingLink.trim();
+        if (newStatus === "Đã hủy") {
+            const functions = getFunctions(db.app);
+            const cancelOrderSecure = httpsCallable(functions, 'cancelOrderSecure');
+            await cancelOrderSecure({ orderId: orderId });
+            showToast(`Đã hủy đơn hàng #${orderId} và hoàn lại tồn kho thành công!`, "success");
+        } else {
+            const updateData = { status: newStatus };
+            if (trackingLink) {
+                updateData.trackingLink = trackingLink.trim();
+            }
+            await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
+            showToast(`Đã cập nhật trạng thái đơn hàng #${orderId} thành: ${newStatus}`);
         }
-
-        await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
-        showToast(`Đã cập nhật trạng thái đơn hàng #${orderId} thành: ${newStatus}`);
     } catch (error) {
         showToast("Lỗi cập nhật: " + error.message, "error");
+        if (selectElement && typeof oldStatus !== 'undefined') selectElement.value = oldStatus;
     }
 };
 

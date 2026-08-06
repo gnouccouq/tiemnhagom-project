@@ -6,6 +6,7 @@ import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordRe
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 // Biến lưu kết quả xác thực OTP
@@ -134,7 +135,10 @@ window.cancelOrder = async (orderId) => {
     }
 
     try {
-        await setDoc(doc(db, "orders", orderId), { status: "Đã hủy", canceledBy: user.uid, canceledAt: new Date().toISOString() }, { merge: true });
+        const functions = getFunctions(db.app);
+        const cancelOrderSecure = httpsCallable(functions, 'cancelOrderSecure');
+        await cancelOrderSecure({ orderId: orderId });
+        
         showToast("Đơn hàng đã được hủy thành công!", "success");
         fetchOrderHistory(user.uid); // Tải lại lịch sử đơn hàng để cập nhật UI
     } catch (error) {
@@ -584,10 +588,16 @@ async function fetchOrderHistory(userId) {
                 const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
                 const status = order.status || 'Đang xử lý';
 
-                const canCancel = status === 'Đang xử lý'; // Chỉ cho phép hủy khi đang xử lý
+                const canCancel = status === 'Đang xử lý' || status === 'Chờ thanh toán'; // Cho phép hủy
                 const cancelBtn = canCancel 
                     ? `<button class="btn-minimal" style="color: #e74c3c; border-color: #e74c3c; margin-top: 1rem;" onclick="window.cancelOrder('${doc.id}')">Hủy đơn hàng</button>` 
                     : '';
+                
+                let repayBtn = '';
+                if (status === 'Chờ thanh toán' && order.paymentMethod === 'vnpay') {
+                    repayBtn = `<button class="btn-dark" style="margin-top: 1rem; margin-right: 10px;" id="repay-btn-${doc.id}" onclick="window.repayVNPay('${doc.id}', ${order.totalAmount})">Thanh toán lại</button>`;
+                }
+
                 const detailBtn = `<button class="btn-outline" style="margin-top: 1rem; margin-right: 10px;" onclick="window.viewOrderDetails('${doc.id}')">Xem chi tiết</button>`;
                 const couponDiscountVal = order.discountAmount || 0;
                 const vipDiscountVal = order.membershipDiscount || 0;
@@ -623,7 +633,7 @@ async function fetchOrderHistory(userId) {
                             </ul>
                             ${discountDetailsHtml}
                             <p style="margin-top: 8px;"><strong>Tổng thanh toán:</strong> ${totalAmount} VND</p>
-                            <div style="display: flex; gap: 10px; margin-top: 1rem;">${detailBtn} ${cancelBtn}</div>
+                            <div style="display: flex; gap: 10px; margin-top: 1rem;">${repayBtn} ${detailBtn} ${cancelBtn}</div>
                         </div>
                     </div>
                 `;
@@ -1009,4 +1019,33 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+
+window.repayVNPay = async (orderId, amount) => {
+    const btn = document.getElementById(`repay-btn-${orderId}`);
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Đang tạo link...';
+    }
+    try {
+        const functions = getFunctions(db.app);
+        const createVNPayUrl = httpsCallable(functions, 'createVNPayUrl');
+        const result = await createVNPayUrl({
+            orderId: orderId,
+            amount: amount,
+            orderInfo: `Thanh toan don hang ${orderId} tai Tiem Nha Gom`
+        });
+        if (result.data && result.data.success && result.data.url) {
+            window.location.href = result.data.url;
+        } else {
+            throw new Error("Không lấy được URL VNPay.");
+        }
+    } catch (e) {
+        console.error("Lỗi khi tạo lại URL thanh toán VNPay:", e);
+        showToast("Có lỗi xảy ra khi tạo link thanh toán.", "error");
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Thanh toán lại';
+        }
+    }
+};
 
