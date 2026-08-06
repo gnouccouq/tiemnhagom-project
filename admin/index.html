@@ -42,8 +42,18 @@
                         Sale</span></button>
                 <button class="admin-tab-btn" data-target="banner-section">🖼️ <span>Banner</span></button>
                 <button class="admin-tab-btn" data-target="pos-section">🛒 <span>POS</span></button>
-                <button class="admin-tab-btn" data-target="order-section">📋 <span>Đơn hàng</span> <span
-                        id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
+                <div class="admin-sidebar-menu-group">
+                    <div class="admin-sidebar-menu-title" onclick="this.parentElement.classList.toggle('open')">
+                        <span>📋 Đơn hàng</span>
+                        <span class="chevron">▼</span>
+                    </div>
+                    <div class="admin-sidebar-menu-items">
+                        <button class="admin-tab-btn" data-target="order-section" style="padding-left: 0;">🛒 <span>Đơn mua hàng</span> <span
+                                id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
+                        <button class="admin-tab-btn" data-target="rental-order-section" style="padding-left: 0;">🛋️ <span>Đơn thuê đồ</span> <span
+                                id="rental-order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
+                    </div>
+                </div>
                 <button class="admin-tab-btn" data-target="coupon-section">🎟️ <span>Mã giảm giá</span></button>
                 <button class="admin-tab-btn" data-target="category-section">📁 <span>Danh mục</span></button>
                 <button class="admin-tab-btn" data-target="user-section">👥 <span>Khách hàng</span></button>
@@ -52,7 +62,16 @@
                 <button class="admin-tab-btn" data-target="stats-section">📈 <span>Thống kê</span></button>
                 <button class="admin-tab-btn" data-target="inventory-log-section">📜 <span>Nhật ký kho</span></button>
                 <button class="admin-tab-btn" data-target="news-section">📰 <span>Tin tức</span></button>
-                <button class="admin-tab-btn" data-target="collections-section">🎨 <span>Bộ sưu tập</span></button>
+                <div class="admin-sidebar-menu-group">
+                    <div class="admin-sidebar-menu-title" onclick="this.parentElement.classList.toggle('open')">
+                        <span>🎨 Hình ảnh / Dự án</span>
+                        <span class="chevron">▼</span>
+                    </div>
+                    <div class="admin-sidebar-menu-items">
+                        <button class="admin-tab-btn" data-target="collections-section" style="padding-left: 0;">🖼️ <span>Bộ sưu tập</span></button>
+                        <button class="admin-tab-btn" data-target="events-section" style="padding-left: 0;">🎉 <span>Dự án sự kiện</span></button>
+                    </div>
+                </div>
                 <button class="admin-tab-btn" data-target="online-users-section">🟢 <span>Online</span></button>
                 <button class="admin-tab-btn" data-target="maintenance-section">🛠️ <span>Bảo trì</span></button>
             </nav>
@@ -535,6 +554,46 @@
                 </div>
             </div>
 
+            <!-- Section Quản lý Dự Án Sự Kiện -->
+            <div id="events-section" class="admin-section">
+                <div class="admin-grid">
+                    <div class="admin-card">
+                        <h3>Thêm/Sửa Dự Án Sự Kiện</h3>
+                        <form id="event-form" class="admin-form">
+                            <input type="hidden" id="event-edit-index" value="-1">
+                            <div class="form-group">
+                                <label>Tên dự án</label>
+                                <input type="text" id="event-name" required placeholder="VD: Tiệc sinh nhật ngoài trời">
+                            </div>
+                            <div class="form-group">
+                                <label>Ảnh Banner (Đại diện)</label>
+                                <input type="file" id="event-image" accept="image/*">
+                                <div id="event-image-preview" style="margin-top: 10px;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Mô tả / Câu chuyện dự án</label>
+                                <textarea id="event-description" rows="4"
+                                    placeholder="Kể về quá trình setup, concept của bữa tiệc..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Ảnh Gallery thực tế (Chọn nhiều ảnh)</label>
+                                <input type="file" id="event-gallery" accept="image/*" multiple>
+                                <div id="event-gallery-preview" class="image-preview-grid"></div>
+                            </div>
+                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu dự án</button>
+                        </form>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3>Danh sách Dự Án hiện có</h3>
+                        <div id="admin-event-list" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- JS render -->
+                            <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section Quản lý Sản phẩm -->
             <div id="product-section" class="admin-section">
 
@@ -837,6 +896,75 @@
                         <span id="order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang
                             1</span>
                         <button id="next-order-page" class="btn-minimal">Trang sau</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Quản lý Đơn thuê đồ -->
+            <div id="rental-order-section" class="admin-section">
+                <div class="admin-card">
+                    <div class="admin-order-filters-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="rental-order-search-input">Tìm kiếm chung</label>
+                            <input type="text" id="rental-order-search-input" placeholder="Mã đơn, Tên Cty, SĐT...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="rental-order-filter-status">Trạng thái</label>
+                            <select id="rental-order-filter-status">
+                                <option value="all">Tất cả</option>
+                                <option value="Yêu cầu mới">Yêu cầu mới</option>
+                                <option value="Đã xác nhận">Đã xác nhận</option>
+                                <option value="Đang setup">Đang setup</option>
+                                <option value="Đã thu hồi">Đã thu hồi</option>
+                                <option value="Đã hủy">Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="rental-order-filter-date">Thời gian</label>
+                            <select id="rental-order-filter-date" onchange="window.toggleCustomDateFilterRental(this.value)">
+                                <option value="all">Tất cả</option>
+                                <option value="this_month">Tháng này</option>
+                                <option value="custom">Tùy chỉnh...</option>
+                            </select>
+                        </div>
+                        <div id="rental-order-custom-date-group" style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label for="rental-order-date-from">Từ ngày</label>
+                                <input type="date" id="rental-order-date-from">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label for="rental-order-date-to">Đến ngày</label>
+                                <input type="date" id="rental-order-date-to">
+                            </div>
+                        </div>
+                        <button id="btn-apply-rental-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp dụng</button>
+                    </div>
+
+                    <h3>Danh sách yêu cầu thuê đồ mới nhất</h3>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã yêu cầu</th>
+                                    <th>Ngày gửi</th>
+                                    <th>Công ty / Khách hàng</th>
+                                    <th>Sự kiện</th>
+                                    <th>Thời gian thuê</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-rental-order-list">
+                                <!-- Dữ liệu load từ Firebase orders collection -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination-container"
+                        style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
+                        <button id="prev-rental-order-page" class="btn-minimal" disabled>Trang trước</button>
+                        <span id="rental-order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang 1</span>
+                        <button id="next-rental-order-page" class="btn-minimal">Trang sau</button>
                     </div>
                 </div>
             </div>
@@ -1274,6 +1402,13 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label>Dự án sự kiện (Chọn nhiều)</label>
+                        <div id="product-events-list"
+                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+                            <!-- JS render checkboxes -->
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;">
                                 <label>Giá bán (VND)</label>
@@ -1282,6 +1417,10 @@
                             <div style="flex: 1;">
                                 <label>Giá vốn (VND)</label>
                                 <input type="text" class="currency-input" id="cost" placeholder="150000">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Giá thuê (VND)</label>
+                                <input type="text" class="currency-input" id="rentalPrice" placeholder="0 (Báo giá)">
                             </div>
                         </div>
                     </div>

@@ -15,6 +15,7 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 // Biến cục bộ để lưu trữ danh mục động
 let adminDynamicCategories = []; // adminDynamicCategories sẽ là một MẢNG các đối tượng nhóm danh mục
 let adminCollections = []; // Mảng chứa danh sách bộ sưu tập
+let adminEvents = []; // Mảng chứa danh sách dự án sự kiện
 let inventoryLogsLocal = []; // Mảng chứa dữ liệu nhật ký kho để lọc nhanh
 let posUsersLocal = []; // Danh sách khách hàng để tìm kiếm nhanh trong POS
 let userOrderCounts = {}; // Lưu trữ số lượng đơn hàng theo userId: { uid: count }
@@ -53,6 +54,7 @@ const ALL_SECTIONS = [
     { id: 'banner-section', label: 'Banner' },
     { id: 'pos-section', label: 'Bán tại shop (POS)' },
     { id: 'order-section', label: 'Đơn hàng' },
+    { id: 'rental-order-section', label: 'Đơn thuê đồ' },
     { id: 'coupon-section', label: 'Mã giảm giá' },
     { id: 'category-section', label: 'Danh mục' },
     { id: 'user-section', label: 'Người dùng' },
@@ -62,6 +64,7 @@ const ALL_SECTIONS = [
     { id: 'inventory-log-section', label: 'Nhật ký kho' },
     { id: 'news-section', label: 'Tin tức' },
     { id: 'collections-section', label: 'Bộ sưu tập' },
+    { id: 'events-section', label: 'Dự án sự kiện' },
     { id: 'online-users-section', label: 'Lượng truy cập' },
     { id: 'maintenance-section', label: 'Bảo trì' }
 ];
@@ -69,7 +72,7 @@ const ALL_SECTIONS = [
 // Cấu hình phân quyền mặc định theo Role (Fallback)
 const ROLE_PERMISSIONS = {
     super_admin: ALL_SECTIONS.map(s => s.id), // Tự động bao gồm tất cả các section cho super_admin
-    staff: ['overview-section', 'pos-section', 'order-section', 'flash-sale-settings-section', 'product-section'] // Thêm mục Sale và Sản phẩm cho Staff
+    staff: ['overview-section', 'pos-section', 'order-section', 'rental-order-section', 'flash-sale-settings-section', 'product-section'] // Thêm mục Sale và Sản phẩm cho Staff
 };
 
 // --- Logic chuyển đổi Tab Admin ---
@@ -137,6 +140,10 @@ function setupAdminTabs() {
 
             if (targetId === 'collections-section') {
                 initCollectionManagement();
+            }
+
+            if (targetId === 'events-section') {
+                initEventManagement();
             }
 
             if (targetId === 'flash-sale-settings-section') {
@@ -1014,6 +1021,142 @@ window.deleteCollection = async (idx) => {
     showToast("Đã xóa bộ sưu tập");
 };
 
+// --- Logic Quản lý Dự Án Sự Kiện ---
+async function initEventManagement() {
+    const listContainer = document.getElementById('admin-event-list');
+    const form = document.getElementById('event-form');
+    if (!listContainer || !form) return;
+
+    onSnapshot(doc(db, "settings", "events"), (snapshot) => {
+        if (snapshot.exists()) {
+            adminEvents = snapshot.data().items || [];
+        } else {
+            adminEvents = [];
+        }
+        renderEventList(listContainer);
+        populateEventCheckboxes();
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('event-name').value.trim();
+        const description = document.getElementById('event-description').value.trim();
+        const file = document.getElementById('event-image').files[0];
+        const galleryFiles = document.getElementById('event-gallery').files;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const editIndex = parseInt(document.getElementById('event-edit-index').value);
+
+        if (!name) return;
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            let imageUrl = form.dataset.currentImageUrl || '';
+            let galleryUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]');
+
+            if (file) {
+                const webpFile = await convertToWebP(file, 1200, false);
+                const storageRef = ref(storage, `events/${Date.now()}_${webpFile.name}`);
+                const snap = await uploadBytes(storageRef, webpFile);
+                imageUrl = await getDownloadURL(snap.ref);
+            }
+
+            if (galleryFiles.length > 0) {
+                const galleryPromises = Array.from(galleryFiles).map(async (f) => {
+                    const webp = await convertToWebP(f, 1200, false);
+                    const gRef = ref(storage, `events/gallery/${Date.now()}_${webp.name}`);
+                    const gSnap = await uploadBytes(gRef, webp);
+                    return await getDownloadURL(gSnap.ref);
+                });
+                const newGalleryUrls = await Promise.all(galleryPromises);
+                galleryUrls = [...galleryUrls, ...newGalleryUrls];
+            }
+
+            if (!imageUrl && editIndex === -1) throw new Error("Vui lòng chọn ảnh cho dự án");
+
+            const eventData = { 
+                name, 
+                imageUrl, 
+                description,
+                galleryUrls,
+                order: editIndex > -1 ? adminEvents[editIndex].order : (adminEvents.length + 1) 
+            };
+            
+            if (editIndex > -1) adminEvents[editIndex] = eventData;
+            else adminEvents.push(eventData);
+
+            await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+            showToast("Đã lưu dự án thành công!");
+            form.reset();
+            document.getElementById('event-edit-index').value = "-1";
+            document.getElementById('event-image-preview').innerHTML = "";
+            document.getElementById('event-gallery-preview').innerHTML = "";
+            delete form.dataset.currentImageUrl;
+            delete form.dataset.currentGalleryUrls;
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Lưu dự án";
+        }
+    };
+}
+
+function renderEventList(container) {
+    container.innerHTML = adminEvents.map((c, idx) => `
+        <div class="admin-card" style="margin-bottom: 10px; padding: 15px; display: flex; gap: 15px; align-items: center;">
+            <img src="${c.imageUrl}" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px;">
+            <div style="flex: 1;">
+                <h4 style="margin: 0;">${c.name}</h4>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-minimal" onclick="window.editEvent(${idx})">Sửa</button>
+                <button class="btn-delete" onclick="window.deleteEvent(${idx})">Xóa</button>
+            </div>
+        </div>
+    `).join('') || '<p style="text-align:center; color:#999;">Chưa có dự án nào.</p>';
+}
+
+window.editEvent = (idx) => {
+    const c = adminEvents[idx];
+    document.getElementById('event-edit-index').value = idx;
+    document.getElementById('event-name').value = c.name;
+    document.getElementById('event-description').value = c.description || '';
+    document.getElementById('event-image-preview').innerHTML = `<img src="${c.imageUrl}" style="width: 150px; border-radius: 4px;">`;
+    
+    const galleryPreview = document.getElementById('event-gallery-preview');
+    galleryPreview.innerHTML = (c.galleryUrls || []).map((url, gIdx) => `
+        <div class="preview-item">
+            <img src="${url}">
+            <button type="button" class="remove-preview" onclick="window.removeEventGalleryImage(${idx}, ${gIdx})">&times;</button>
+        </div>
+    `).join('');
+
+    const form = document.getElementById('event-form');
+    form.dataset.currentImageUrl = c.imageUrl;
+    form.dataset.currentGalleryUrls = JSON.stringify(c.galleryUrls || []);
+    window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+};
+
+window.removeEventGalleryImage = async (eventIdx, imgIdx) => {
+    if(!confirm("Xóa ảnh này khỏi gallery?")) return;
+    const ev = adminEvents[eventIdx];
+    ev.galleryUrls.splice(imgIdx, 1);
+    
+    try {
+        await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+        showToast("Đã xóa ảnh gallery");
+        window.editEvent(eventIdx); 
+    } catch (e) { showToast("Lỗi: " + e.message, "error"); }
+};
+
+window.deleteEvent = async (idx) => {
+    if (!confirm("Xóa dự án này?")) return;
+    adminEvents.splice(idx, 1);
+    await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+    showToast("Đã xóa dự án");
+};
+
 // --- Logic Quản lý Danh mục Động ---
 let categoryUnsubscribe = null;
 
@@ -1024,8 +1167,9 @@ function initCategoryManagement() {
 
     if (!treeContainer || !form || !db) return;
 
-    // Thiết lập lắng nghe bộ sưu tập để hiện checkbox trong form sản phẩm
+    // Thiết lập lắng nghe bộ sưu tập và sự kiện để hiện checkbox trong form sản phẩm
     initCollectionManagement();
+    initEventManagement();
 
     if (!categoryUnsubscribe) {
         categoryUnsubscribe = onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
@@ -1446,6 +1590,18 @@ function populateCollectionCheckboxes() {
     container.innerHTML = adminCollections.map(c => `
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; background: #f5f5f5; padding: 5px 10px; border-radius: 20px;">
             <input type="checkbox" class="collection-checkbox" value="${c.name}">
+            ${c.name}
+        </label>
+    `).join('');
+}
+
+function populateEventCheckboxes() {
+    const container = document.getElementById('product-events-list');
+    if (!container) return;
+    
+    container.innerHTML = adminEvents.map(c => `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; background: #f5f5f5; padding: 5px 10px; border-radius: 20px;">
+            <input type="checkbox" class="event-checkbox" value="${c.name}">
             ${c.name}
         </label>
     `).join('');
@@ -2003,6 +2159,7 @@ productForm.addEventListener('submit', async (e) => {
 
         // Lấy danh sách bộ sưu tập đã chọn
         const collectionsList = Array.from(document.querySelectorAll('.collection-checkbox:checked')).map(cb => cb.value);
+        const eventsList = Array.from(document.querySelectorAll('.event-checkbox:checked')).map(cb => cb.value);
 
         const finalImageUrl = currentMain || 'https://placehold.co/300x300?text=No+Image';
 
@@ -2014,8 +2171,10 @@ productForm.addEventListener('submit', async (e) => {
         name_lowercase: document.getElementById('name').value.toLowerCase(), // Thêm trường này cho tìm kiếm
         category: document.getElementById('category').value,
         collections: collectionsList,
+        events: eventsList,
         price: window.getCurrencyValue('price'), // Base price
         cost: window.getCurrencyValue('cost'),
+        rentalPrice: window.getCurrencyValue('rentalPrice'),
         stock: finalStock,
         sale: Number(document.getElementById('sale').value || 0),
         salePrice: document.getElementById('salePrice').value ? window.getCurrencyValue('salePrice') : null,
@@ -2354,6 +2513,7 @@ async function editProduct(id) {
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = window.formatCurrencyDisplay(p.price);
             document.getElementById('cost').value = window.formatCurrencyDisplay(p.cost || 0);
+            document.getElementById('rentalPrice').value = window.formatCurrencyDisplay(p.rentalPrice || 0);
             document.getElementById('salePrice').value = p.salePrice ? window.formatCurrencyDisplay(p.salePrice) : '';
             document.getElementById('stock').value = p.stock;
             document.getElementById('sale').value = p.sale || 0;
@@ -2394,6 +2554,10 @@ async function editProduct(id) {
             const colCheckboxes = document.querySelectorAll('.collection-checkbox');
             colCheckboxes.forEach(cb => {
                 cb.checked = (p.collections || []).includes(cb.value);
+            });
+            const eventCheckboxes = document.querySelectorAll('.event-checkbox');
+            eventCheckboxes.forEach(cb => {
+                cb.checked = (p.events || []).includes(cb.value);
             });
 
             // Vô hiệu hóa trường tồn kho và checkbox "Nhập thêm" nếu có biến thể
@@ -2493,11 +2657,13 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
         unsubscribeOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
             allOrdersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderOrdersFiltered();
+            if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
         }, (error) => {
             console.error("Order list listener error:", error);
         });
     } else {
         renderOrdersFiltered();
+        if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
     }
 }
 
@@ -2519,6 +2685,8 @@ function renderOrdersFiltered() {
 
     // Lọc đơn hàng
     let filtered = allOrdersCache.filter(order => {
+        if (order.orderType === 'rental') return false;
+
         const matchesId = !idVal || order.id.toLowerCase().includes(idVal) || 
                           (order.shippingAddress?.phone && order.shippingAddress.phone.includes(idVal)) ||
                           (order.shippingAddress?.fullName && order.shippingAddress.fullName.toLowerCase().includes(idVal));
@@ -2652,6 +2820,132 @@ function renderOrderRows(ordersList, tableElement) {
         `;
     });
     tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có đơn hàng nào.</td></tr>';
+}
+
+let currentRentalOrderPage = 1;
+const RENTAL_ORDER_PAGE_SIZE = 10;
+
+window.toggleCustomDateFilterRental = function(val) {
+    const customGroup = document.getElementById('rental-order-custom-date-group');
+    if (customGroup) {
+        customGroup.style.display = val === 'custom' ? 'flex' : 'none';
+    }
+    if (val !== 'custom') {
+        currentRentalOrderPage = 1;
+        renderRentalOrdersFiltered();
+    }
+};
+
+function renderRentalOrdersFiltered() {
+    const orderListTable = document.getElementById('admin-rental-order-list');
+    const prevBtn = document.getElementById('prev-rental-order-page');
+    const nextBtn = document.getElementById('next-rental-order-page');
+    const pageInfo = document.getElementById('rental-order-page-info');
+    
+    if (!orderListTable) return;
+
+    // Lấy các giá trị bộ lọc
+    const idVal = document.getElementById('rental-order-search-input')?.value.trim().toLowerCase() || '';
+    const statusVal = document.getElementById('rental-order-filter-status')?.value || 'all';
+    const datePreset = document.getElementById('rental-order-filter-date')?.value || 'all';
+    const dateFrom = document.getElementById('rental-order-date-from')?.value;
+    const dateTo = document.getElementById('rental-order-date-to')?.value;
+
+    let filtered = allOrdersCache.filter(order => {
+        if (order.orderType !== 'rental') return false;
+
+        const matchesId = !idVal || order.id.toLowerCase().includes(idVal) || 
+                          (order.rentalInfo?.companyName && order.rentalInfo.companyName.toLowerCase().includes(idVal)) ||
+                          (order.rentalInfo?.phone && order.rentalInfo.phone.includes(idVal));
+                          
+        const matchesStatus = statusVal === 'all' || order.status === statusVal;
+        
+        let matchesDate = true;
+        const oDate = order.orderDate ? (order.orderDate.toDate ? order.orderDate.toDate() : new Date(order.orderDate)) : null;
+        if (oDate) {
+            const now = new Date();
+            if (datePreset === 'this_month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'custom') {
+                if (dateFrom) {
+                    const from = new Date(dateFrom);
+                    matchesDate = matchesDate && (oDate >= from);
+                }
+                if (dateTo) {
+                    const to = new Date(dateTo);
+                    to.setHours(23, 59, 59, 999);
+                    matchesDate = matchesDate && (oDate <= to);
+                }
+            }
+        }
+        
+        return matchesId && matchesStatus && matchesDate;
+    });
+
+    filtered.sort((a, b) => {
+        const dateA = a.orderDate ? (a.orderDate.toDate ? a.orderDate.toDate() : new Date(a.orderDate)) : new Date(0);
+        const dateB = b.orderDate ? (b.orderDate.toDate ? b.orderDate.toDate() : new Date(b.orderDate)) : new Date(0);
+        return dateB - dateA;
+    });
+
+    const totalPages = Math.ceil(filtered.length / RENTAL_ORDER_PAGE_SIZE) || 1; 
+    if (currentRentalOrderPage > totalPages) {
+        currentRentalOrderPage = totalPages;
+    }
+
+    const startIndex = (currentRentalOrderPage - 1) * RENTAL_ORDER_PAGE_SIZE;
+    const endIndex = startIndex + RENTAL_ORDER_PAGE_SIZE;
+    const pageOrders = filtered.slice(startIndex, endIndex);
+
+    renderRentalOrderRows(pageOrders, orderListTable);
+
+    if (pageInfo) pageInfo.innerText = "Trang " + currentRentalOrderPage + " / " + totalPages;
+    if (prevBtn) prevBtn.disabled = currentRentalOrderPage === 1;
+    if (nextBtn) nextBtn.disabled = currentRentalOrderPage === totalPages;
+}
+
+function renderRentalOrderRows(ordersList, tableElement) {
+    let htmlContent = '';
+    ordersList.forEach((order) => {
+        const orderId = order.id;
+        const orderDate = order.orderDate 
+            ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN') 
+            : 'N/A';
+        const status = order.status || 'Yêu cầu mới';
+        
+        const companyName = order.rentalInfo?.companyName || 'N/A';
+        const eventDate = order.rentalInfo?.rentalDate ? new Date(order.rentalInfo.rentalDate).toLocaleDateString('vi-VN') : 'N/A';
+
+        htmlContent += `
+            <tr>
+                <td data-label="Mã yêu cầu"><small>${orderId}</small></td>
+                <td data-label="Ngày gửi">${orderDate}</td>
+                <td data-label="Công ty / Khách hàng">
+                    <strong>${companyName}</strong><br>
+                    <small>${order.rentalInfo?.phone || ''}</small>
+                </td>
+                <td data-label="Sự kiện">
+                    ${order.rentalInfo?.address || 'N/A'}
+                </td>
+                <td data-label="Thời gian thuê">${eventDate}</td>
+                <td data-label="Trạng thái">
+                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value, this)">
+                        <option value="Yêu cầu mới" ${status === 'Yêu cầu mới' ? 'selected' : ''}>Yêu cầu mới</option>
+                        <option value="Đã xác nhận" ${status === 'Đã xác nhận' ? 'selected' : ''}>Đã xác nhận</option>
+                        <option value="Đang setup" ${status === 'Đang setup' ? 'selected' : ''}>Đang setup</option>
+                        <option value="Đã thu hồi" ${status === 'Đã thu hồi' ? 'selected' : ''}>Đã thu hồi</option>
+                        <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
+                    </select>
+                </td>
+                <td data-label="Thao tác">
+                    <button class="btn-minimal" onclick="event.stopPropagation(); window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
+                    <button class="btn-delete" style="margin-left: 5px;" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">Xóa</button>
+                </td>
+            </tr>
+        `;
+    });
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có yêu cầu thuê nào.</td></tr>';
 }
 
 async function generateTierUpVoucher(userId, tier) {
@@ -4947,6 +5241,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentOrderPage > 1) {
             currentOrderPage--;
             renderOrdersFiltered();
+        }
+    });
+
+    document.getElementById('rental-order-search-input')?.addEventListener('input', () => {
+        currentRentalOrderPage = 1;
+        if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
+    });
+    document.getElementById('rental-order-filter-status')?.addEventListener('change', () => {
+        currentRentalOrderPage = 1;
+        if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
+    });
+    document.getElementById('btn-apply-rental-order-filters')?.addEventListener('click', () => {
+        currentRentalOrderPage = 1;
+        if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
+    });
+    document.getElementById('prev-rental-order-page')?.addEventListener('click', () => {
+        if (currentRentalOrderPage > 1) {
+            currentRentalOrderPage--;
+            if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
+        }
+    });
+    document.getElementById('next-rental-order-page')?.addEventListener('click', () => {
+        const idVal = document.getElementById('rental-order-search-input')?.value.trim().toLowerCase() || '';
+        const statusVal = document.getElementById('rental-order-filter-status')?.value || 'all';
+        const filtered = allOrdersCache.filter(order => {
+            if (order.orderType !== 'rental') return false;
+            const matchesId = !idVal || order.id.toLowerCase().includes(idVal);
+            const matchesStatus = statusVal === 'all' || order.status === statusVal;
+            return matchesId && matchesStatus;
+        });
+        const totalPages = Math.ceil(filtered.length / RENTAL_ORDER_PAGE_SIZE) || 1;
+        if (currentRentalOrderPage < totalPages) {
+            currentRentalOrderPage++;
+            if (typeof renderRentalOrdersFiltered === 'function') renderRentalOrdersFiltered();
         }
     });
 

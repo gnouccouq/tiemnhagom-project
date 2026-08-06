@@ -437,7 +437,44 @@ exports.sendTelegramOnNewOrder = functions.firestore
         // Tính tạm tính trước khi trừ đi phí ship và giảm giá
         const tempTotal = totalAmount - shippingFee + discountAmount + membershipDiscount;
 
-        const message = `
+        let message = '';
+        if (orderData.orderType === 'rental') {
+            const companyName = orderData.rentalInfo?.companyName || 'Không có';
+            const phone = orderData.rentalInfo?.phone || 'Không có';
+            const email = orderData.rentalInfo?.email || 'Không có';
+            const taxCode = orderData.rentalInfo?.taxCode || 'Không có';
+            const rentalAddress = orderData.rentalInfo?.address || 'Không có';
+            const rentalDate = orderData.rentalInfo?.rentalDate || 'Không có';
+            const returnDate = orderData.rentalInfo?.returnDate || 'Không có';
+            const notes = orderData.rentalInfo?.notes ? `\n📝 <b>Ghi chú:</b> ${orderData.rentalInfo.notes}` : '';
+
+            let rentalItemsList = '';
+            if (orderData.items && Array.isArray(orderData.items)) {
+                orderData.items.forEach((item, index) => {
+                    rentalItemsList += `${index + 1}. ${item.name} (Mã: ${item.id}) - SL: ${item.quantity} - Giá thuê: ${new Intl.NumberFormat('vi-VN').format(item.rentalPrice || 0)}đ\n`;
+                });
+            }
+
+            message = `
+🛋️ <b>CÓ YÊU CẦU THUÊ ĐỒ MỚI</b> 🛋️
+<b>Mã yêu cầu:</b> #${orderId}
+
+👤 <b>Thông tin khách hàng:</b>
+- Tên/Công ty: ${companyName}
+- MST: ${taxCode}
+- SĐT: ${phone}
+- Email: ${email}
+- Địa chỉ setup: ${rentalAddress}${notes}
+
+🕒 <b>Thời gian thuê:</b>
+- Nhận đồ: ${rentalDate}
+- Trả đồ: ${returnDate}
+
+🛒 <b>Sản phẩm cần thuê:</b>
+${rentalItemsList}
+            `.trim();
+        } else {
+            message = `
 📦 <b>CÓ ĐƠN HÀNG MỚI</b> 📦
 <b>Mã đơn:</b> #${orderId}
 
@@ -457,7 +494,8 @@ ${itemsList}
 - <b>Tổng cộng: ${new Intl.NumberFormat('vi-VN').format(totalAmount)}đ</b>
 
 💵 <b>Hình thức:</b> ${orderData.paymentMethod || 'COD'}
-        `.trim();
+            `.trim();
+        }
 
         try {
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;

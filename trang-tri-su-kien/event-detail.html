@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết dự án | Tiệm Nhà Gốm</title>
+    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        #col-hero { 
+            background-attachment: scroll; /* Bỏ fixed để cuộn tự nhiên giống mẫu */
+            background-position: center; 
+            background-size: cover;
+            width: 100%;
+            height: 100vh; /* Ảnh full màn hình ban đầu */
+            margin-top: -80px; /* Bù đắp padding-top của body để ảnh dính sát mép trên */
+        }
+        
+        .split-layout-container {
+            display: flex;
+            gap: 60px;
+            padding: 5rem 5%;
+            max-width: 1600px;
+            margin: 0 auto;
+            align-items: flex-start;
+        }
+
+        .left-album {
+            flex: 1.2; /* Cột trái to hơn một chút */
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .left-album img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .right-products {
+            flex: 1;
+            position: sticky;
+            top: 100px; /* Dính lại khi cuộn */
+        }
+
+        .right-products p.story-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 3rem;
+            line-height: 1.8;
+            font-family: var(--font-serif);
+        }
+
+        .right-products h3.featured-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .product-split-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .album-navigation {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            margin-top: 4rem;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .album-navigation span {
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .album-navigation span:hover {
+            color: #333;
+        }
+
+        @media (max-width: 992px) {
+            .split-layout-container {
+                flex-direction: column;
+            }
+            .right-products {
+                position: static;
+                margin-top: 2rem;
+            }
+            .product-split-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .product-split-grid {
+                grid-template-columns: 1fr;
+            }
+            #col-hero { height: 60vh; }
+        }
+    </style>
+</head>
+<body class="home-page">
+    <div id="header-placeholder"></div>
+
+    <main id="event-detail-page" style="display: none;">
+        <!-- Hero Banner (Ảnh full) -->
+        <section id="col-hero"></section>
+
+        <!-- Split Layout Area -->
+        <section class="split-layout-container">
+            
+            <!-- Cột trái: Ảnh album -->
+            <div class="left-album" id="col-gallery">
+                <!-- JS render ảnh -->
+            </div>
+
+            <!-- Cột phải: Sản phẩm -->
+            <div class="right-products">
+                <p id="col-description" class="story-text">Đang tải mô tả dự án...</p>
+                <h3 class="featured-title">Sản Phẩm Trong Dự Án</h3>
+                
+                <div id="col-product-grid" class="product-split-grid">
+                    <!-- JS render sản phẩm -->
+                    <div style="text-align:center; padding: 2rem; grid-column: 1/-1;"><span class="spinner"></span></div>
+                </div>
+                
+                <div class="album-navigation">
+                    <span onclick="window.location.href='./index.html'">← Quay lại</span>
+                </div>
+            </div>
+            
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { db, initHeader, renderProductCard } from "../js/utils.js";
+        import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initHeader('../');
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventName = urlParams.get('name');
+
+            if (!eventName) { window.location.href = './'; return; }
+
+            try {
+                // 1. Lấy thông tin dự án (mô tả, gallery)
+                const eventSnap = await getDoc(doc(db, "settings", "events"));
+                const eventData = eventSnap.exists() ? eventSnap.data().items.find(e => e.name === eventName) : null;
+
+                if (eventData) {
+                    document.getElementById('col-description').innerText = eventData.description || "Dự án trang trí sự kiện mang đậm dấu ấn phong cách gốm và hoa nghệ thuật.";
+                    document.getElementById('col-hero').style.backgroundImage = `url('${eventData.imageUrl}')`;
+                    
+                    const galleryContainer = document.getElementById('col-gallery');
+                    if (eventData.galleryUrls && eventData.galleryUrls.length > 0) {
+                        galleryContainer.innerHTML = eventData.galleryUrls.map(url => `
+                            <img src="${url}" class="reveal-on-scroll" loading="lazy" style="margin-bottom: 20px;">
+                        `).join('');
+                    } else {
+                        galleryContainer.innerHTML = `<img src="${eventData.imageUrl}" class="reveal-on-scroll" loading="lazy">`;
+                    }
+
+                    // 2. Lấy danh sách sản phẩm (decor, đồ thuê) thuộc dự án này
+                    const q = query(collection(db, "products"), where("events", "array-contains", eventName));
+                    const pSnap = await getDocs(q);
+                    const grid = document.getElementById('col-product-grid');
+                    
+                    let productsHtml = '';
+                    pSnap.forEach(doc => productsHtml += renderProductCard(doc.data(), doc.id, [], '../product/index.html'));
+                    grid.innerHTML = productsHtml || '<p style="grid-column:1/-1; text-align:center;">Chưa có sản phẩm nào được gắn vào dự án này.</p>';
+
+                    document.getElementById('event-detail-page').style.display = 'block';
+                    document.querySelectorAll('.reveal-on-scroll').forEach(el => window.revealObserver?.observe(el));
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>
