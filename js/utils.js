@@ -1,4 +1,4 @@
-﻿import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
+import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
     ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
@@ -525,7 +525,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 // Lọc client-side để tìm kiếm "chữ cái bất kỳ" (substring search)
                 const results = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(val) || p.id.toLowerCase().includes(val)) // Tìm theo tên hoặc mã SKU
+                    .filter(p => !p.isHidden && !p.isOnlyEvent && ((p.name_lowercase || p.name.toLowerCase()).includes(val) || p.id.toLowerCase().includes(val))) // Tìm theo tên hoặc mã SKU
                     .slice(0, 6); // Chỉ hiển thị 6 gợi ý hàng đầu
 
                 if (results.length === 0) {

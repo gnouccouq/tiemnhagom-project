@@ -72,7 +72,7 @@ async function fetchCategoryCounts() {
     try {
         const snap = await getDocs(collection(db, "products"));
         const allDocs = snap.docs.map(d => d.data());
-        const publicDocs = allDocs.filter(p => !p.isHidden);
+        const publicDocs = allDocs.filter(p => !p.isHidden && !p.isOnlyEvent);
         
         const countCards = (docs) => {
             let count = 0;
@@ -274,7 +274,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         }
 
         // Lọc Substring client-side nếu có search term và lọc sản phẩm bị ẩn
-        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden);
+        const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden && !p.isOnlyEvent);
         let finalResults = hasSearchTerm 
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;

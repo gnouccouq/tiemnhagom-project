@@ -70,8 +70,8 @@ service cloud.firestore {
           (request.resource.data.userId == 'guest')
         ) && (
           request.resource.data.totalAmount is number && 
-          request.resource.data.status == "Đang xử lý" &&
-          request.resource.data.totalAmount > 0 &&
+          request.resource.data.totalAmount >= 0 &&
+          (request.resource.data.status == "Đang xử lý" || request.resource.data.status == "Yêu cầu mới") &&
           request.resource.data.items is list &&
           request.resource.data.items.size() > 0 &&
           request.resource.data.orderDate == request.time

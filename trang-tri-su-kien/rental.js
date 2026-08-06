@@ -10,7 +10,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadRentalProducts();
     await loadEvents();
     setupRentalForm();
+    await setupAddressSelects();
 });
+
+let locationData = null;
+async function loadLocationData() {
+    if (locationData) return locationData;
+    try {
+        const response = await fetch("../provinces.json");
+        if (response.ok) {
+            locationData = await response.json();
+            return locationData;
+        }
+    } catch (e) {
+        console.error("Lỗi tải tỉnh thành:", e);
+    }
+    return [];
+}
+
+async function setupAddressSelects() {
+    const provinceSelect = document.getElementById('rental-province');
+    const wardSelect = document.getElementById('rental-ward');
+    if (!provinceSelect || !wardSelect) return;
+
+    provinceSelect.innerHTML = '<option value="">-- Đang tải tỉnh thành --</option>';
+    const data = await loadLocationData();
+    provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh thành --</option>';
+    data.forEach(p => {
+        provinceSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+    });
+
+    if (window.TomSelect) {
+        window.tsRentalProvince = new TomSelect('#rental-province', {
+            create: false,
+            sortField: { field: "text", direction: "asc" }
+        });
+        window.tsRentalWard = new TomSelect('#rental-ward', {
+            create: false,
+            sortField: { field: "text", direction: "asc" }
+        });
+    }
+
+    provinceSelect.addEventListener('change', async (e) => {
+        const provinceId = e.target.value;
+        const selectedProvince = data.find(p => p.code == provinceId);
+        
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+        if (window.TomSelect && window.tsRentalWard) {
+            window.tsRentalWard.clear();
+            window.tsRentalWard.clearOptions();
+        }
+
+        if (selectedProvince && selectedProvince.wards) {
+            wardSelect.disabled = false;
+            if (window.TomSelect && window.tsRentalWard) window.tsRentalWard.enable();
+            
+            selectedProvince.wards.forEach(w => {
+                const opt = new Option(w.name, w.ward_code);
+                wardSelect.add(opt);
+                if (window.TomSelect && window.tsRentalWard) {
+                    window.tsRentalWard.addOption({value: w.ward_code, text: w.name});
+                }
+            });
+        } else {
+            wardSelect.disabled = true;
+            if (window.TomSelect && window.tsRentalWard) window.tsRentalWard.disable();
+        }
+    });
+}
 
 async function loadEvents() {
     const grid = document.getElementById('event-gallery-dynamic-grid');
@@ -83,7 +150,7 @@ async function loadRentalProducts() {
                         </a>
                         <div class="product-price-block" style="flex-direction: column; align-items: stretch; gap: 8px;">
                             <p class="price" style="margin-bottom: 0; color: #e74c3c; font-size: 0.95rem;">${formatCurrencyDisplay(product.rentalPrice)}đ / ngày</p>
-                            <button class="btn-minimal btn-add-rental" data-id="${product.id}" style="width: 100%; border-color: #1e88e5; color: #1e88e5; margin: 0; padding: 8px 0; font-size: 0.85rem;">Chọn Thuê</button>
+                            <button class="btn-add-rental" data-id="${product.id}" style="width: 100%; border: none; background: #e74c3c; color: white; padding: 10px 0; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Chọn Thuê</button>
                         </div>
                     </div>
                 </div>
@@ -145,9 +212,13 @@ function renderRentalCart() {
     }
 
     let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+    let subtotalPerDay = 0;
     keys.forEach(key => {
         const cartItem = rentalCart[key];
         const p = cartItem.item;
+        const itemTotal = p.rentalPrice * cartItem.quantity;
+        subtotalPerDay += itemTotal;
+        
         html += `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 5px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -165,10 +236,32 @@ function renderRentalCart() {
             </div>
         `;
     });
-    html += '</div>';
     
-    // Add instruction to calculate total later based on days
-    html += '<p style="font-size: 0.8rem; color: #666; margin-top: 10px; font-style: italic;">* Tổng chi phí thuê sẽ được báo giá chính xác dựa trên số ngày thuê và số lượng món.</p>';
+    // Calculate rental days
+    let rentalDays = 1;
+    const startDateStr = document.getElementById('rental-start-date')?.value;
+    const endDateStr = document.getElementById('rental-end-date')?.value;
+    if (startDateStr && endDateStr) {
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+        if (end >= start) {
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            rentalDays = diffDays > 0 ? diffDays : 1;
+        }
+    }
+    
+    const finalTotal = subtotalPerDay * rentalDays;
+
+    html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-weight: 600; font-size: 1.1rem; border-top: 1px dashed #ccc; padding-top: 15px;">
+            <span>Tổng tạm tính (${rentalDays} ngày):</span>
+            <span style="color: #d32f2f;">${formatCurrencyDisplay(finalTotal)}đ</span>
+        </div>
+    </div>
+    `;
+    
+    html += '<p style="font-size: 0.8rem; color: #666; margin-top: 10px; font-style: italic;">* Vui lòng chọn Ngày Nhận và Ngày Trả để tính tổng tiền chính xác.</p>';
 
     container.innerHTML = html;
 }
@@ -176,6 +269,12 @@ function renderRentalCart() {
 function setupRentalForm() {
     const form = document.getElementById('rental-request-form');
     if (!form) return;
+
+    // Trigger cart re-render when dates change
+    const startDateInput = document.getElementById('rental-start-date');
+    const endDateInput = document.getElementById('rental-end-date');
+    if (startDateInput) startDateInput.addEventListener('change', renderRentalCart);
+    if (endDateInput) endDateInput.addEventListener('change', renderRentalCart);
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -192,25 +291,58 @@ function setupRentalForm() {
 
         try {
             const companyName = document.getElementById('rental-company-name').value;
+            const contactName = document.getElementById('rental-contact-name').value;
             const taxCode = document.getElementById('rental-tax-code').value;
             const phone = document.getElementById('rental-phone').value;
             const email = document.getElementById('rental-email').value;
             const rentalDate = document.getElementById('rental-start-date').value;
             const returnDate = document.getElementById('rental-end-date').value;
-            const address = document.getElementById('rental-address').value;
+            
+            let provinceName = '';
+            const pSelect = document.getElementById('rental-province');
+            if(pSelect.selectedIndex > -1 && pSelect.options[pSelect.selectedIndex].value) {
+                provinceName = pSelect.options[pSelect.selectedIndex].text;
+            }
+            let wardName = '';
+            const wSelect = document.getElementById('rental-ward');
+            if(wSelect.selectedIndex > -1 && wSelect.options[wSelect.selectedIndex].value) {
+                wardName = wSelect.options[wSelect.selectedIndex].text;
+            }
+            
+            const specificAddress = document.getElementById('rental-address').value;
+            const address = `${specificAddress}, ${wardName}, ${provinceName}`.replace(/, , /g, ', ').replace(/, $/, '');
+            
             const notes = document.getElementById('rental-notes').value;
 
             // Chuyển đổi giỏ hàng sang định dạng order.items
-            const items = keys.map(key => {
+            const orderItems = keys.map(key => {
                 const cartItem = rentalCart[key];
                 return {
                     id: cartItem.item.id,
                     name: cartItem.item.name,
                     image: cartItem.item.imageUrl,
-                    rentalPrice: cartItem.item.rentalPrice,
+                    price: cartItem.item.price || 0,
+                    rentalPrice: cartItem.item.rentalPrice || 0,
                     quantity: cartItem.quantity
                 };
             });
+            
+            // Calculate rental days
+            let rentalDays = 1;
+            if (rentalDate && returnDate) {
+                const start = new Date(rentalDate);
+                const end = new Date(returnDate);
+                if (end >= start) {
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    rentalDays = diffDays > 0 ? diffDays : 1;
+                }
+            }
+            
+            // Calculate final totalAmount
+            let subtotalPerDay = 0;
+            orderItems.forEach(i => { subtotalPerDay += (i.rentalPrice || i.price || 0) * i.quantity; });
+            const totalAmount = subtotalPerDay * rentalDays;
 
             const orderId = generateOrderId();
             
@@ -221,16 +353,18 @@ function setupRentalForm() {
                 userId: 'guest', // Khách vãng lai, có thể nâng cấp thêm tính năng user sau
                 rentalInfo: {
                     companyName,
+                    contactName,
                     taxCode,
                     phone,
                     email,
                     rentalDate,
                     returnDate,
                     address,
-                    notes
+                    notes,
+                    rentalDays
                 },
-                items: items,
-                totalAmount: 0 // Có thể tính tổng tiền tham khảo = tổng rentalPrice * quantity * days, nhưng báo giá thường chốt sau
+                items: orderItems,
+                totalAmount: totalAmount
             };
 
             await setDoc(doc(db, "orders", orderId), rentalOrderData);

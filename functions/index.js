@@ -440,6 +440,7 @@ exports.sendTelegramOnNewOrder = functions.firestore
         let message = '';
         if (orderData.orderType === 'rental') {
             const companyName = orderData.rentalInfo?.companyName || 'Không có';
+            const contactName = orderData.rentalInfo?.contactName || 'Không có';
             const phone = orderData.rentalInfo?.phone || 'Không có';
             const email = orderData.rentalInfo?.email || 'Không có';
             const taxCode = orderData.rentalInfo?.taxCode || 'Không có';
@@ -461,6 +462,7 @@ exports.sendTelegramOnNewOrder = functions.firestore
 
 👤 <b>Thông tin khách hàng:</b>
 - Tên/Công ty: ${companyName}
+- Người liên hệ: ${contactName}
 - MST: ${taxCode}
 - SĐT: ${phone}
 - Email: ${email}

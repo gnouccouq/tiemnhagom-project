@@ -50,7 +50,7 @@ async function fetchFeaturedProducts() {
 
         let count = 0;
         querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden) return;
+            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             if (count >= 14) return;
             htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
@@ -93,7 +93,7 @@ async function fetchBestSellingProducts() {
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden) return;
+            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             if (count >= 10) return;
             htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
@@ -136,7 +136,7 @@ async function fetchComboProducts() {
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden) return;
+            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             if (count >= 10) return;
             htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
@@ -225,7 +225,7 @@ async function fetchSaleProducts() {
         let htmlContent = '';
         let count = 0;
         querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden) return;
+            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             if (count >= 10) return;
             htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
             count++;
@@ -314,7 +314,7 @@ async function fetchRecommendations() {
         const querySnapshot = await getDocs(q);
 
         querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden) return;
+            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             // Không hiện lại sản phẩm đã nằm trong lịch sử xem gần đây
             if (!historyIds.slice(0, 4).includes(doc.id)) {
                 htmlContent += renderProductCardWithVariants(doc.data(), doc.id, [], 'product/index.html');

@@ -131,7 +131,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
 
         querySnapshot.docs.forEach((doc, index) => {
             const p = { id: doc.id, ...doc.data() };
-            if (p.isHidden) return;
+            if (p.isHidden || p.isOnlyEvent) return;
             // Ưu tiên dùng mức đồng giá được lưu
             const currentPrice = (isFsRunning && p.flashSaleGroup) ? p.flashSaleGroup : (p.salePrice || Math.round(p.price * (1 - (p.sale || 0) / 100)));
 
