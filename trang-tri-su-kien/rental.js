@@ -252,11 +252,26 @@ function renderRentalCart() {
     }
     
     const finalTotal = subtotalPerDay * rentalDays;
+    const depositAmount = Math.round(finalTotal * 0.5);
 
     html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-weight: 600; font-size: 1.1rem; border-top: 1px dashed #ccc; padding-top: 15px;">
-            <span>Tổng tạm tính (${rentalDays} ngày):</span>
-            <span style="color: #d32f2f;">${formatCurrencyDisplay(finalTotal)}đ</span>
+        <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #e0e0e0; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; margin-bottom: 6px;">
+                <span>Tổng thuê/ngày:</span>
+                <span>${formatCurrencyDisplay(subtotalPerDay)}đ/ngày</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; margin-bottom: 6px;">
+                <span>Thời gian thuê:</span>
+                <span>${rentalDays} ngày</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-weight: 700; font-size: 1.1rem; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <span style="color: #2b2b2b;">Tổng tiền thuê dự kiến:</span>
+                <span style="color: #d32f2f;">${formatCurrencyDisplay(finalTotal)}đ</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 4px;">
+                <span>Tiền cọc ước tính (50%):</span>
+                <span style="font-weight: 600;">${formatCurrencyDisplay(depositAmount)}đ</span>
+            </div>
         </div>
     </div>
     `;
@@ -264,6 +279,128 @@ function renderRentalCart() {
     html += '<p style="font-size: 0.8rem; color: #666; margin-top: 10px; font-style: italic;">* Vui lòng chọn Ngày Nhận và Ngày Trả để tính tổng tiền chính xác.</p>';
 
     container.innerHTML = html;
+}
+
+function populateContractModal() {
+    const today = new Date();
+    document.getElementById('contract-date-day').textContent = today.getDate().toString().padStart(2, '0');
+    document.getElementById('contract-date-month').textContent = (today.getMonth() + 1).toString().padStart(2, '0');
+    document.getElementById('contract-date-year').textContent = today.getFullYear();
+
+    // Client info
+    const contactName = document.getElementById('rental-contact-name')?.value.trim() || '';
+    const companyName = document.getElementById('rental-company-name')?.value.trim() || '';
+    const taxCode = document.getElementById('rental-tax-code')?.value.trim() || '';
+    const phone = document.getElementById('rental-phone')?.value.trim() || '';
+    const email = document.getElementById('rental-email')?.value.trim() || '';
+    const specificAddress = document.getElementById('rental-address')?.value.trim() || '';
+    const notes = document.getElementById('rental-notes')?.value.trim() || '';
+    
+    let provinceName = '';
+    const pSelect = document.getElementById('rental-province');
+    if (pSelect && pSelect.selectedIndex > -1 && pSelect.options[pSelect.selectedIndex].value) {
+        provinceName = pSelect.options[pSelect.selectedIndex].text;
+    }
+    let wardName = '';
+    const wSelect = document.getElementById('rental-ward');
+    if (wSelect && wSelect.selectedIndex > -1 && wSelect.options[wSelect.selectedIndex].value) {
+        wardName = wSelect.options[wSelect.selectedIndex].text;
+    }
+    
+    const fullAddress = [specificAddress, wardName, provinceName].filter(Boolean).join(', ');
+
+    const placeholder = '...................................................';
+
+    document.getElementById('contract-client-name').textContent = companyName || contactName || placeholder;
+    document.getElementById('contract-client-contact').textContent = contactName || placeholder;
+    document.getElementById('contract-client-tax').textContent = taxCode || placeholder;
+    document.getElementById('contract-client-phone').textContent = phone || placeholder;
+    document.getElementById('contract-client-email').textContent = email || placeholder;
+    document.getElementById('contract-client-address').textContent = fullAddress || placeholder;
+    document.getElementById('contract-sign-client-name').textContent = companyName || contactName || 'Khách hàng';
+
+    // Notes
+    const notesContainer = document.getElementById('contract-notes-container');
+    const notesText = document.getElementById('contract-notes-text');
+    if (notesContainer && notesText) {
+        if (notes) {
+            notesText.textContent = notes;
+            notesContainer.style.display = 'block';
+        } else {
+            notesContainer.style.display = 'none';
+        }
+    }
+
+    // Calculate dates & rental days
+    const startDateStr = document.getElementById('rental-start-date')?.value;
+    const endDateStr = document.getElementById('rental-end-date')?.value;
+    let rentalDays = 1;
+    
+    if (startDateStr && endDateStr) {
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+        if (end >= start) {
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            rentalDays = diffDays > 0 ? diffDays : 1;
+        }
+    }
+
+    const formatDateVN = (dateStr) => {
+        if (!dateStr) return '...';
+        const d = new Date(dateStr);
+        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    };
+
+    document.getElementById('contract-rental-days').textContent = rentalDays;
+    document.getElementById('contract-start-date').textContent = formatDateVN(startDateStr);
+    document.getElementById('contract-end-date').textContent = formatDateVN(endDateStr);
+
+    // Items table & totals
+    const tbody = document.getElementById('contract-items-body');
+    const keys = Object.keys(rentalCart);
+
+    if (keys.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 15px; border: 1px solid #000; color: #777;">Chưa chọn sản phẩm nào trong danh sách thuê.</td></tr>';
+        document.getElementById('contract-total-amount').textContent = '0 VNĐ';
+        document.getElementById('contract-deposit-amount').textContent = '0 VNĐ';
+        return;
+    }
+
+    let subtotalPerDay = 0;
+    let rowsHtml = '';
+    keys.forEach((key, index) => {
+        const cartItem = rentalCart[key];
+        const p = cartItem.item;
+        const lineTotal = p.rentalPrice * cartItem.quantity;
+        subtotalPerDay += lineTotal;
+
+        rowsHtml += `
+            <tr>
+                <td style="text-align: center; border: 1px solid #000; padding: 6px;">${index + 1}</td>
+                <td style="border: 1px solid #000; padding: 6px;">${p.name}</td>
+                <td style="text-align: center; border: 1px solid #000; padding: 6px;">${p.id || ''}</td>
+                <td style="text-align: center; border: 1px solid #000; padding: 6px;">${cartItem.quantity}</td>
+                <td style="text-align: right; border: 1px solid #000; padding: 6px;">${formatCurrencyDisplay(p.rentalPrice)}</td>
+                <td style="text-align: right; border: 1px solid #000; padding: 6px;">${formatCurrencyDisplay(lineTotal)}</td>
+            </tr>
+        `;
+    });
+
+    rowsHtml += `
+        <tr>
+            <td colspan="5" style="text-align: right; font-weight: bold; border: 1px solid #000; padding: 6px;">Tổng cộng (VNĐ/ngày):</td>
+            <td style="text-align: right; font-weight: bold; border: 1px solid #000; padding: 6px;">${formatCurrencyDisplay(subtotalPerDay)}</td>
+        </tr>
+    `;
+
+    tbody.innerHTML = rowsHtml;
+
+    const grandTotal = subtotalPerDay * rentalDays;
+    const deposit = Math.round(grandTotal / 2);
+
+    document.getElementById('contract-total-amount').textContent = `${formatCurrencyDisplay(grandTotal)} VNĐ`;
+    document.getElementById('contract-deposit-amount').textContent = `${formatCurrencyDisplay(deposit)} VNĐ`;
 }
 
 function setupRentalForm() {
@@ -275,6 +412,44 @@ function setupRentalForm() {
     const endDateInput = document.getElementById('rental-end-date');
     if (startDateInput) startDateInput.addEventListener('change', renderRentalCart);
     if (endDateInput) endDateInput.addEventListener('change', renderRentalCart);
+
+    // Modal Contract Handlers
+    const modal = document.getElementById('contract-modal');
+    const btnOpenModal = document.getElementById('btn-open-contract-modal');
+    const btnCloseModal = document.getElementById('btn-close-contract-modal');
+    const btnPrintModal = document.getElementById('btn-print-contract');
+
+    if (btnOpenModal && modal) {
+        btnOpenModal.addEventListener('click', () => {
+            populateContractModal();
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            const wrapper = document.getElementById('contract-modal-body-wrapper');
+            if (wrapper) wrapper.scrollTop = 0;
+        });
+    }
+
+    if (btnCloseModal && modal) {
+        btnCloseModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    if (btnPrintModal) {
+        btnPrintModal.addEventListener('click', () => {
+            window.print();
+        });
+    }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();

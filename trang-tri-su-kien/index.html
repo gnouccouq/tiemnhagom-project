@@ -326,6 +326,11 @@
                     <button type="submit" class="btn-dark"
                         style="width: 100%; margin-top: 1rem; padding: 12px; font-size: 1.1rem;"
                         id="btn-submit-rental">Gửi Yêu Cầu Thuê Đồ & Tư Vấn</button>
+                    
+                    <button type="button" class="btn-outline" id="btn-open-contract-modal"
+                        style="width: 100%; margin-top: 0.75rem; padding: 12px; font-size: 1rem; background: #fff; border: 1.5px solid #2b2b2b; color: #2b2b2b; font-weight: 600; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+                        📄 Xem Bản Hợp Đồng Thuê Mẫu (Có Watermark)
+                    </button>
                 </form>
             </div>
 
@@ -344,6 +349,167 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal Hợp Đồng Mẫu với Watermark Logo (Root body placement for fixed viewport centering) -->
+    <div id="contract-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 999999; align-items: center; justify-content: center; overflow: hidden; padding: 15px; box-sizing: border-box;">
+        <div id="contract-modal-box" style="background: #fff; width: 100%; max-width: 850px; max-height: 90vh; display: flex; flex-direction: column; border-radius: 8px; box-shadow: 0 10px 35px rgba(0,0,0,0.4); overflow: hidden; position: relative;">
+            
+            <!-- Header Bar Modal -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #2b2b2b; color: #fff; padding: 12px 20px; flex-shrink: 0;">
+                <h3 style="margin: 0; font-size: 1.05rem; color: #fff; border: none; font-weight: 500;">Bản Hợp Đồng Thuê Mẫu - Tiệm Nhà Gốm</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="btn-print-contract" style="background: #e74c3c; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">🖨️ In / Tải Hợp Đồng</button>
+                    <button type="button" id="btn-close-contract-modal" style="background: transparent; color: #fff; border: 1px solid #777; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Đóng ✖</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Modal Body -->
+            <div id="contract-modal-body-wrapper" style="flex: 1; overflow-y: auto; position: relative; background: #fff;">
+                
+                <!-- Contract Document Area (with Watermark) -->
+                <div id="printable-contract-content" style="position: relative; padding: 40px; background: #fff; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5;">
+                    
+                    <!-- Watermark Overlay Layer -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; opacity: 0.08;">
+                        <img src="../Asset/images/LOGO_3_BLACK_PNG.png" alt="Watermark Logo Tiệm Nhà Gốm" style="width: 380px; max-width: 85%; transform: rotate(-25deg) scale(1.2); filter: grayscale(100%);">
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #000; letter-spacing: 5px; margin-top: 25px; text-transform: uppercase; transform: rotate(-25deg); white-space: nowrap;">
+                            HỢP ĐỒNG MẪU - SAMPLE CONTRACT
+                        </div>
+                    </div>
+
+                    <!-- Content Document Layer (Exact format as Admin printRentalBill) -->
+                    <div style="position: relative; z-index: 2;">
+                        
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <h3 style="font-weight: bold; margin: 3px 0; font-size: 13pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3>
+                            <h4 style="font-weight: bold; text-decoration: underline; margin: 3px 0; font-size: 12pt;">Độc lập - Tự do - Hạnh phúc</h4>
+                        </div>
+
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <div style="font-weight: bold; font-size: 15pt; margin: 10px 0 5px 0;">HỢP ĐỒNG CHO THUÊ ĐỒ SỰ KIỆN</div>
+                            <p style="margin: 2px 0;">Số: <span id="contract-order-id">SAMPLE-ORDER</span> / HĐTĐ</p>
+                        </div>
+
+                        <p style="text-align: right; font-style: italic; margin-bottom: 15px;">
+                            Hôm nay, ngày <span id="contract-date-day">...</span> tháng <span id="contract-date-month">...</span> năm <span id="contract-date-year">...</span>, tại Tiệm Nhà Gốm, chúng tôi gồm có:
+                        </p>
+
+                        <!-- Bên A -->
+                        <div style="font-weight: bold; margin-top: 15px; font-size: 12pt; text-transform: uppercase;">BÊN CHO THUÊ (BÊN A): HỘ KINH DOANH TIỆM NHÀ GỐM</div>
+                        <p style="margin: 4px 0;">- Địa chỉ: 37 Nguyễn Duy, Phường Gia Định, Tp.Hồ Chí Minh</p>
+                        <p style="margin: 4px 0;">- Điện thoại: 0777709662</p>
+                        <p style="margin: 4px 0;">- Người đại diện: Dương Minh Hiếu &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chức vụ: Chủ hộ kinh doanh</p>
+
+                        <!-- Bên B -->
+                        <div style="font-weight: bold; margin-top: 15px; font-size: 12pt; text-transform: uppercase;">BÊN THUÊ (BÊN B):</div>
+                        <p style="margin: 4px 0;">- Công ty/Cá nhân: <strong id="contract-client-name">...................................................</strong></p>
+                        <p style="margin: 4px 0;">- Người liên hệ: <span id="contract-client-contact">...................................................</span></p>
+                        <p style="margin: 4px 0;">- Mã số thuế: <span id="contract-client-tax">...................................................</span></p>
+                        <p style="margin: 4px 0;">- Điện thoại: <span id="contract-client-phone">...................................................</span></p>
+                        <p style="margin: 4px 0;">- Email: <span id="contract-client-email">...................................................</span></p>
+                        <p style="margin: 4px 0;">- Địa chỉ Setup: <span id="contract-client-address">...................................................</span></p>
+
+                        <p style="margin-top: 15px;">Hai bên thống nhất thỏa thuận ký kết hợp đồng thuê đồ trang trí với các điều khoản sau đây:</p>
+
+                        <!-- Điều 1 -->
+                        <div style="font-weight: bold; margin-top: 15px; font-size: 12pt; text-transform: uppercase;">ĐIỀU 1: NỘI DUNG VÀ CHI PHÍ THUÊ</div>
+                        <p style="margin: 5px 0;">Bên A đồng ý cho Bên B thuê các thiết bị, đồ trang trí phục vụ sự kiện với chi tiết như sau:</p>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11pt;">
+                            <thead>
+                                <tr style="background: #f8f8f8;">
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: center;">STT</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: left;">Tên sản phẩm</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: center;">Mã SP</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: center;">Số lượng</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: right;">Đơn giá (VNĐ/ngày)</th>
+                                    <th style="border: 1px solid #000; padding: 6px; text-align: right;">Thành tiền (VNĐ)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contract-items-body">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 15px; border: 1px solid #000; color: #777;">Chưa chọn sản phẩm nào.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin-top: 10px; margin-bottom: 4px;">- <strong>Thời gian thuê:</strong> <span id="contract-rental-days">1</span> ngày. Từ ngày <strong id="contract-start-date">...</strong> đến ngày <strong id="contract-end-date">...</strong>.</p>
+                        <p style="margin: 4px 0;">- <strong>Tổng giá trị hợp đồng (Tổng phí thuê):</strong> <strong id="contract-total-amount">0 VNĐ</strong></p>
+                        <p style="margin: 4px 0;">- <strong>Tiền đặt cọc (Bên B đặt cọc cho Bên A):</strong> <strong id="contract-deposit-amount">0 VNĐ</strong></p>
+                        <p style="font-style: italic; margin-top: 4px; margin-bottom: 12px; font-size: 10pt;">(Tiền đặt cọc sẽ được hoàn trả lại cho Bên B sau khi Bên A nhận lại đủ đồ và không có hư hại, mất mát).</p>
+
+                        <!-- Điều 2 -->
+                        <div style="font-weight: bold; margin-top: 15px; font-size: 12pt; text-transform: uppercase;">ĐIỀU 2: TRÁCH NHIỆM CỦA CÁC BÊN</div>
+                        <p style="margin: 4px 0;"><strong>1. Trách nhiệm của Bên A:</strong> Giao đồ đúng số lượng, chất lượng và thời gian như đã thỏa thuận.</p>
+                        <p style="margin: 4px 0;"><strong>2. Trách nhiệm của Bên B:</strong><br/>
+                        - Sử dụng đồ đúng mục đích, bảo quản cẩn thận trong suốt thời gian thuê.<br/>
+                        - Hoàn trả đồ đúng thời hạn. Trường hợp quá hạn, Bên B phải thanh toán thêm phí thuê theo ngày phát sinh.<br/>
+                        - Trường hợp làm mất mát, hư hỏng đồ, Bên B phải bồi thường theo giá trị niêm yết hiện hành của sản phẩm hoặc theo thỏa thuận đền bù của Bên A.</p>
+
+                        <!-- Điều 3 -->
+                        <div style="font-weight: bold; margin-top: 15px; font-size: 12pt; text-transform: uppercase;">ĐIỀU 3: ĐIỀU KHOẢN CHUNG</div>
+                        <p style="margin: 4px 0;">Hai bên cam kết thực hiện đúng các điều khoản trong hợp đồng. Mọi phát sinh tranh chấp sẽ được giải quyết trên tinh thần thương lượng. Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
+
+                        <div id="contract-notes-container" style="display: none; margin-top: 10px;">
+                            <p style="margin: 4px 0;"><strong>Ghi chú thêm:</strong> <span id="contract-notes-text"></span></p>
+                        </div>
+
+                        <!-- Chữ ký -->
+                        <div style="display: flex; justify-content: space-around; margin-top: 35px; text-align: center;">
+                            <div style="width: 45%;">
+                                <strong>ĐẠI DIỆN BÊN A</strong><br/>
+                                <em style="font-size: 9.5pt;">(Ký, ghi rõ họ tên)</em><br/>
+                                <br/><br/><br/><br/>
+                                <strong>Tiệm Nhà Gốm</strong>
+                            </div>
+                            <div style="width: 45%;">
+                                <strong>ĐẠI DIỆN BÊN B</strong><br/>
+                                <em style="font-size: 9.5pt;">(Ký, ghi rõ họ tên, đóng dấu nếu có)</em><br/>
+                                <br/><br/><br/><br/>
+                                <strong id="contract-sign-client-name">Khách hàng</strong>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Print CSS Override -->
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #contract-modal, #contract-modal * {
+                visibility: visible;
+            }
+            #contract-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background: none;
+                padding: 0;
+                display: block !important;
+            }
+            #contract-modal-box {
+                max-height: none !important;
+                box-shadow: none !important;
+            }
+            #btn-print-contract, #btn-close-contract-modal {
+                display: none !important;
+            }
+            #printable-contract-content {
+                box-shadow: none;
+                padding: 10px !important;
+            }
+        }
+    </style>
 
     <div id="footer-placeholder"></div>
 
