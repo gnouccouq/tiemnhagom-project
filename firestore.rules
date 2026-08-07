@@ -94,7 +94,7 @@ service cloud.firestore {
            request.resource.data.userId == request.auth.uid &&
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']) &&
            (resource.data.shippingAddress.phone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone ||
-            (resource.data.shippingAddress.phone.startsWith('+84') && '0' + resource.data.shippingAddress.phone.substring(3) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone))
+            resource.data.shippingAddress.phone.matches('.*' + get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone))
           )
         )
       );
@@ -103,10 +103,10 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // 6. Cấu hình hệ thống (Danh mục động)
+    // 6. Cấu hình hệ thống (Danh mục động, Banners, Sự kiện...)
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được sửa cài đặt hệ thống
+      allow write: if isAdmin(); // Cho phép Admin quản lý các cấu hình cài đặt
     }
 
     // 7. Mã giảm giá (coupons)
@@ -182,6 +182,12 @@ service firebase.storage {
 
     // 6. Ảnh Combo (combo_variants)
     match /combo_variants/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 7. Ảnh Sự kiện (events & events/gallery) - Cần thiết cho trang quản lý Dự án sự kiện
+    match /events/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin();
     }

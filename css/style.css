@@ -3281,13 +3281,969 @@ body.admin-dashboard-layout > * {
     cursor: pointer;
 }
 
-/* Main Content Redesign */
-.admin-main-content {
+/* Unified Admin Global Font System */
+body.admin-dashboard-layout,
+body.admin-dashboard-layout * {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+}
+
+/* KiotViet Official Single Royal Blue Header Bar (#0066cc) */
+.kiot-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 42px;
+    background-color: #0066cc; /* Official KiotViet Royal Blue */
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.kiot-topbar-left {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.kiot-brand-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #ffffff;
+    margin-right: 18px;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.kiot-brand-box img {
+    height: 24px;
+    width: auto;
+    border-radius: 3px;
+}
+
+.kiot-brand-box span {
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.kiot-nav-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    overflow: visible;
+}
+
+.kiot-nav-item {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.kiot-nav-btn,
+.kiot-nav-btn span,
+button.kiot-nav-btn,
+button.kiot-nav-btn span {
+    height: 100%;
+    padding: 0 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    transition: all 0.12s ease;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+.kiot-nav-btn:hover,
+.kiot-nav-btn:hover span {
+    color: #ffffff !important;
+    background: #0052a3 !important;
+}
+
+.kiot-nav-btn.active,
+.kiot-nav-btn.active span,
+.kiot-nav-item.active .kiot-nav-btn,
+.kiot-nav-item.active .kiot-nav-btn span {
+    color: #ffffff !important;
+    background: #004e96 !important;
+    font-weight: 600 !important;
+}
+
+.kiot-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    padding: 4px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(3px);
+    transition: all 0.15s ease;
+    z-index: 1010;
+}
+
+.kiot-nav-item:hover .kiot-dropdown-menu,
+.kiot-nav-item.open .kiot-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.kiot-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.12s, color 0.12s;
+}
+
+.kiot-dropdown-item:hover {
+    background: #f0f7ff;
+    color: #0066cc;
+    font-weight: 600;
+}
+
+.kiot-dropdown-item.active {
+    background: #e6f2ff;
+    color: #0066cc;
+    font-weight: 700;
+    border-left: 3px solid #0066cc;
+}
+
+.kiot-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+.kiot-right-link {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.kiot-right-link:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.kiot-icon-btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    cursor: pointer !important;
+    padding: 6px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.15s, color 0.15s !important;
+}
+
+.kiot-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+/* Official KiotViet Overview Layout CSS */
+.kiot-overview-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.kiot-overview-main {
     flex: 1;
-    margin-left: 280px;
-    padding: 30px 40px;
-    max-width: calc(100% - 280px);
-    transition: all 0.3s;
+    min-width: 0;
+}
+
+.kiot-overview-sidebar {
+    width: 310px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+    .kiot-overview-wrapper {
+        flex-direction: column;
+    }
+    .kiot-overview-sidebar {
+        width: 100%;
+    }
+}
+
+.kiot-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.kiot-card-header {
+    margin-bottom: 14px;
+}
+
+.kiot-card-header.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.kiot-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.kiot-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.kiot-total-badge {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0066cc;
+}
+
+.kiot-select-sm {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #475569;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Today metrics grid */
+.kiot-today-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .kiot-today-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.today-metric-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #f1f5f9;
+}
+
+.metric-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.metric-icon.blue { background: #e0f2fe; color: #0284c7; }
+.metric-icon.orange { background: #ffedd5; color: #ea580c; }
+.metric-icon.green { background: #dcfce7; color: #16a34a; }
+.metric-icon.red { background: #fee2e2; color: #dc2626; }
+
+.metric-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-label {
+    font-size: 0.76rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    margin: 2px 0;
+}
+
+.metric-value.green-text { color: #16a34a; }
+.metric-value.red-text { color: #dc2626; }
+
+.metric-subtext {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+/* Tab bar in Net revenue card */
+.kiot-tab-bar {
+    display: flex;
+    gap: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 12px;
+}
+
+.kiot-tab-item {
+    padding: 6px 0;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+
+.kiot-tab-item.active {
+    color: #0066cc;
+    font-weight: 700;
+    border-bottom-color: #0066cc;
+}
+
+/* Two col grid for top products & top customers */
+.kiot-two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .kiot-two-col-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Sidebar Widgets & Recent Activity timeline */
+.kiot-widget-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.kiot-widget-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.kiot-widget-card.warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.widget-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.widget-icon.green { background: #dcfce7; }
+.widget-icon.blue { background: #e0f2fe; }
+.widget-icon.orange { background: #fef3c7; }
+
+.widget-text {
+    flex: 1;
+}
+
+.widget-text strong {
+    font-size: 0.85rem;
+    color: #1e293b;
+    display: block;
+}
+
+.widget-text p {
+    font-size: 0.76rem;
+    color: #64748b;
+    margin: 2px 0 0 0;
+}
+
+.widget-arrow {
+    font-size: 1.1rem;
+    color: #94a3b8;
+}
+
+/* Activity list */
+.kiot-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #f1f5f9;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.activity-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    font-size: 0.8rem;
+    color: #334155;
+    line-height: 1.4;
+}
+
+.activity-content strong {
+    color: #0066cc;
+}
+
+.activity-time {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.kiot-pos-pill-btn:hover {
+    background: #f0f7ff !important;
+    color: #004e96 !important;
+}
+
+/* KiotViet Product Management Layout CSS */
+.kiot-product-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Left Filter Sidebar */
+.kiot-filter-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.filter-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.filter-reset-link {
+    font-size: 0.78rem;
+    color: #0066cc;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.filter-group {
+    margin-bottom: 14px;
+}
+
+.filter-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.kiot-filter-select,
+.kiot-filter-input {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.kiot-filter-select:focus,
+.kiot-filter-input:focus {
+    border-color: #0066cc;
+}
+
+.radio-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.radio-item {
+    font-size: 0.8rem;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pill-options {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 4px;
+}
+
+.pill-btn {
+    flex: 1;
+    padding: 4px 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.pill-btn.active {
+    background: #0066cc;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Right Table Container */
+.kiot-product-main {
+    flex: 1;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    box-sizing: border-box;
+}
+
+.kiot-table-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #f1f5f9;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.kiot-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+/* Pagination Bar CSS matching KiotViet screenshot */
+.kiot-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.pg-left, .pg-center, .pg-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pg-btn {
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.pg-btn:hover {
+    background: #f0f7ff;
+    border-color: #0066cc;
+    color: #0066cc;
+}
+
+.pg-input {
+    width: 42px;
+    text-align: center;
+    padding: 2px 4px;
+    font-size: 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    outline: none;
+}
+
+/* Hide floating FAB button at bottom right */
+#btn-open-add-product,
+.floating-add-btn {
+    display: none !important;
+}
+
+.search-box-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box-wrapper .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.search-box-wrapper input {
+    width: 100%;
+    padding: 6px 10px 6px 32px;
+    font-size: 0.83rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kiot-btn-primary {
+    background: #0066cc !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 4px !important;
+    font-size: 0.83rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kiot-btn-primary:hover {
+    background: #0052a3 !important;
+}
+
+.kiot-btn-outline {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 5px 12px !important;
+    border-radius: 4px !important;
+    font-size: 0.83rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+}
+
+.kiot-btn-outline:hover {
+    background: #f8fafc !important;
+}
+
+/* Product Table */
+.kiot-product-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+}
+
+.kiot-product-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.kiot-product-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.kiot-product-table tr.product-row:hover {
+    background: #f0f7ff;
+}
+
+.kiot-product-table tr.product-row.expanded {
+    background: #e6f0fa;
+}
+
+@keyframes slideDownQuickview {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Quick View Card expandable row */
+.kiot-quickview-card {
+    border: 2px solid #0066cc;
+    border-radius: 6px;
+    background: #ffffff;
+    margin: 8px 0;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.12);
+    overflow: hidden;
+    animation: slideDownQuickview 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.quickview-tabs {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 12px;
+}
+
+.qv-tab-item {
+    padding: 8px 16px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+
+.qv-tab-item.active {
+    color: #0066cc;
+    font-weight: 700;
+    border-bottom-color: #0066cc;
+    background: #ffffff;
+}
+
+.quickview-body {
+    display: flex;
+    gap: 20px;
+    padding: 16px 20px;
+    align-items: flex-start;
+}
+
+.quickview-thumb {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.quickview-info-col {
+    flex: 1;
+}
+
+.quickview-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+}
+
+.quickview-subtags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.qv-tag {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 500;
+}
+
+.qv-tag.warning {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.qv-tag.muted {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.quickview-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 16px;
+}
+
+@media (max-width: 1024px) {
+    .quickview-fields-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.qv-field {
+    font-size: 0.82rem;
+    color: #334155;
+}
+
+.qv-label {
+    color: #64748b;
+    margin-right: 4px;
+}
+
+.quickview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.quickview-footer .left-actions,
+.quickview-footer .right-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qv-btn-text {
+    background: transparent;
+    border: none;
+    font-size: 0.82rem;
+    color: #475569;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.qv-btn-text.red {
+    color: #dc2626;
+}
+
+.qv-btn-text:hover {
+    background: #e2e8f0;
+}
+
+/* Centered Admin Layout matching KiotViet Margins & Container Padding */
+body.admin-dashboard-layout {
+    background-color: #f4f6f9 !important;
+}
+
+.admin-main-content {
+    max-width: 1760px !important;
+    margin: 58px auto 30px auto !important; /* Top margin for 42px topbar + padding */
+    padding: 0 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 /* Overview Dashboard Styles */

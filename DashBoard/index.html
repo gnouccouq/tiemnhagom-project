@@ -29,61 +29,110 @@
     <div id="admin-sidebar-overlay" class="admin-sidebar-overlay"></div>
 
     <div class="admin-wrapper">
-        <!-- Sidebar bên trái -->
-        <aside class="admin-sidebar">
-            <div class="sidebar-brand">
-                <span>TNG Dash</span>
+        <!-- KiotViet-style Official Single Royal Blue Header (#0066cc) -->
+        <header class="kiot-topbar">
+            <div class="kiot-topbar-left">
+                <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
+                    <img src="../Asset/images/logo.webp" alt="Tiệm Nhà Gốm Logo">
+                </a>
+
+                <nav class="kiot-nav-container">
+                    <!-- 1. Tổng quan -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn admin-tab-btn active" data-target="overview-section">
+                            <span>Tổng quan</span>
+                        </button>
+                    </div>
+
+                    <!-- 2. Hàng hóa (Dropdown) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn">
+                            <span>Hàng hóa</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                        </button>
+                        <div class="kiot-dropdown-menu">
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh sách sản phẩm</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh mục sản phẩm</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Đơn hàng (Dropdown) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn">
+                            <span>Đơn hàng</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                        </button>
+                        <div class="kiot-dropdown-menu">
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="order-section">
+                                <span>Đơn mua hàng</span> 
+                                <span id="order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                            </button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="rental-order-section">
+                                <span>Đơn thuê đồ Decor</span> 
+                                <span id="rental-order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4. Khách hàng (Mục riêng) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn admin-tab-btn" data-target="user-section">
+                            <span>Khách hàng</span>
+                        </button>
+                    </div>
+
+                    <!-- 5. Nhân viên (Mục riêng) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn admin-tab-btn" data-target="admin-account-section">
+                            <span>Nhân viên</span>
+                        </button>
+                    </div>
+
+                    <!-- 6. Báo cáo (Dropdown) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn">
+                            <span>Báo cáo</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                        </button>
+                        <div class="kiot-dropdown-menu">
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo doanh thu</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ thống Online</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo trì hệ thống</span></button>
+                        </div>
+                    </div>
+
+                    <!-- 7. Bán online & Web (Dropdown) -->
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn">
+                            <span>Bán online</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                        </button>
+                        <div class="kiot-dropdown-menu">
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner Trang chủ</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ sưu tập</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự kiện</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết & Tin tức</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm giá</span></button>
+                        </div>
+                    </div>
+                </nav>
             </div>
 
-            <nav class="sidebar-nav">
-                <button class="admin-tab-btn active" data-target="overview-section">📊 <span>Tổng quan</span></button>
-                <button class="admin-tab-btn" data-target="product-section">📦 <span>Sản phẩm</span></button>
-                <button class="admin-tab-btn" data-target="flash-sale-settings-section">⚡ <span>Flash
-                        Sale</span></button>
-                <button class="admin-tab-btn" data-target="banner-section">🖼️ <span>Banner</span></button>
-                <button class="admin-tab-btn" data-target="pos-section">🛒 <span>POS</span></button>
-                <div class="admin-sidebar-menu-group">
-                    <div class="admin-sidebar-menu-title" onclick="this.parentElement.classList.toggle('open')">
-                        <span>📋 Đơn hàng</span>
-                        <span class="chevron">▼</span>
-                    </div>
-                    <div class="admin-sidebar-menu-items">
-                        <button class="admin-tab-btn" data-target="order-section" style="padding-left: 0;">🛒 <span>Đơn mua hàng</span> <span
-                                id="order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
-                        <button class="admin-tab-btn" data-target="rental-order-section" style="padding-left: 0;">🛋️ <span>Đơn thuê đồ</span> <span
-                                id="rental-order-count-badge" class="sidebar-badge" style="display: none;">0</span></button>
-                    </div>
-                </div>
-                <button class="admin-tab-btn" data-target="coupon-section">🎟️ <span>Mã giảm giá</span></button>
-                <button class="admin-tab-btn" data-target="category-section">📁 <span>Danh mục</span></button>
-                <button class="admin-tab-btn" data-target="user-section">👥 <span>Khách hàng</span></button>
-                <button class="admin-tab-btn" data-target="admin-account-section">🛡️ <span>Quản trị
-                        viên</span></button>
-                <button class="admin-tab-btn" data-target="stats-section">📈 <span>Thống kê</span></button>
-                <button class="admin-tab-btn" data-target="inventory-log-section">📜 <span>Nhật ký kho</span></button>
-                <button class="admin-tab-btn" data-target="news-section">📰 <span>Tin tức</span></button>
-                <div class="admin-sidebar-menu-group">
-                    <div class="admin-sidebar-menu-title" onclick="this.parentElement.classList.toggle('open')">
-                        <span>🎨 Hình ảnh / Dự án</span>
-                        <span class="chevron">▼</span>
-                    </div>
-                    <div class="admin-sidebar-menu-items">
-                        <button class="admin-tab-btn" data-target="collections-section" style="padding-left: 0;">🖼️ <span>Bộ sưu tập</span></button>
-                        <button class="admin-tab-btn" data-target="events-section" style="padding-left: 0;">🎉 <span>Dự án sự kiện</span></button>
-                    </div>
-                </div>
-                <button class="admin-tab-btn" data-target="online-users-section">🟢 <span>Online</span></button>
-                <button class="admin-tab-btn" data-target="maintenance-section">🛠️ <span>Bảo trì</span></button>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div id="admin-user-info" class="admin-profile-snippet">
-                    <!-- JS render thông tin admin -->
-                </div>
-                <a href="../index.html" class="sidebar-link">🏠 Về trang chủ</a>
-                <button id="btn-logout-admin" class="sidebar-link logout">🚪 Đăng xuất</button>
+            <div class="kiot-topbar-right">
+                <!-- Nút Cài Đặt chỉ gồm 1 ICON BÁNH RĂNG -->
+                <button type="button" class="kiot-icon-btn admin-tab-btn" data-target="maintenance-section" title="Cài đặt hệ thống">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+                <div id="admin-user-info" class="admin-profile-snippet"></div>
+                <a href="../index.html" class="kiot-right-link" title="Về trang chủ Web"><span>Trang chủ</span></a>
+                <button id="btn-logout-admin" class="kiot-right-link logout" title="Đăng xuất"><span>Đăng xuất</span></button>
+                <!-- Nút Bán Hàng POS Trọng Tâm -->
+                <button class="kiot-pos-pill-btn admin-tab-btn" data-target="pos-section" style="margin-left: 4px;">
+                    🛒 <span>Bán hàng</span>
+                </button>
             </div>
-        </aside>
+        </header>
 
         <!-- Thanh điều hướng dưới cùng cho Mobile -->
         <nav class="admin-bottom-nav">
@@ -162,86 +211,143 @@
                 </div>
             </div>
 
-            <!-- Section Tổng quan -->
+            <!-- Section Tổng quan (KiotViet Signature Layout) -->
             <div id="overview-section" class="admin-section active">
-                <div class="overview-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e3f2fd; color: #1976d2;">💰</div>
-                        <div class="stat-info">
-                            <h3>Tổng doanh thu</h3>
-                            <p id="stat-total-revenue">0 VND</p>
-                            <small>Từ các đơn hoàn thành</small>
-                        </div>
-                        <div class="stat-chart"><canvas id="sparkline-revenue"></canvas></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f1f8e9; color: #388e3c;">🛍️</div>
-                        <div class="stat-info">
-                            <h3>Tổng đơn hàng</h3>
-                            <p id="stat-total-orders">0</p>
-                            <small>Tất cả trạng thái</small>
-                        </div>
-                        <div class="stat-chart"><canvas id="sparkline-orders"></canvas></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #fff3e0; color: #f57c00;">📦</div>
-                        <div class="stat-info">
-                            <h3>Sản phẩm</h3>
-                            <p id="stat-total-products">0</p>
-                            <small>Trong danh mục</small>
-                        </div>
-                        <div class="stat-chart"><canvas id="sparkline-products"></canvas></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f3e5f5; color: #7b1fa2;">👥</div>
-                        <div class="stat-info">
-                            <h3>Khách hàng</h3>
-                            <p id="stat-total-users">0</p>
-                            <small>Đã đăng ký</small>
-                        </div>
-                        <div class="stat-chart"><canvas id="sparkline-users"></canvas></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e8f5e9; color: #4caf50;">🟢</div>
-                        <div class="stat-info">
-                            <h3>Đang truy cập</h3>
-                            <p id="stat-online-users">0</p>
-                            <small>Hoạt động lúc này</small>
-                        </div>
-                    </div>
-                </div>
+                <div class="kiot-overview-wrapper">
+                    <!-- Cột Trái: Dashboards & Charts -->
+                    <div class="kiot-overview-main">
+                        
+                        <!-- 1. Kết quả bán hàng hôm nay -->
+                        <div class="kiot-card">
+                            <div class="kiot-card-header">
+                                <h3 class="kiot-card-title">Kết quả bán hàng hôm nay</h3>
+                            </div>
+                            <div class="kiot-today-metrics">
+                                <div class="today-metric-box">
+                                    <div class="metric-icon blue">$</div>
+                                    <div class="metric-body">
+                                        <span class="metric-label">Doanh thu</span>
+                                        <div id="kiot-today-revenue" class="metric-value">0 VND</div>
+                                        <small id="kiot-today-orders-count" class="metric-subtext">0 hóa đơn</small>
+                                    </div>
+                                </div>
 
-                <div class="admin-grid" style="grid-template-columns: 1.5fr 1fr; margin-top: 30px;">
-                    <!-- Đơn hàng mới nhất -->
-                    <div class="admin-card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="margin: 0;">Đơn hàng mới nhất</h3>
-                            <button class="btn-minimal"
-                                onclick="document.querySelector('[data-target=\'order-section\']').click()"
-                                style="font-size: 0.8rem;">Xem tất cả</button>
+                                <div class="today-metric-box">
+                                    <div class="metric-icon orange">↩</div>
+                                    <div class="metric-body">
+                                        <span class="metric-label">Trả hàng</span>
+                                        <div id="kiot-today-returns" class="metric-value">0</div>
+                                        <small class="metric-subtext">0 hóa đơn</small>
+                                    </div>
+                                </div>
+
+                                <div class="today-metric-box">
+                                    <div class="metric-icon green">↑</div>
+                                    <div class="metric-body">
+                                        <span class="metric-label">Doanh thu thuần</span>
+                                        <div id="kiot-revenue-growth-today" class="metric-value green-text">+0%</div>
+                                        <small class="metric-subtext">So với hôm qua</small>
+                                    </div>
+                                </div>
+
+                                <div class="today-metric-box">
+                                    <div class="metric-icon red">↓</div>
+                                    <div class="metric-body">
+                                        <span class="metric-label">Doanh thu thuần</span>
+                                        <div id="kiot-revenue-growth-month" class="metric-value red-text">0%</div>
+                                        <small class="metric-subtext">So với cùng kỳ tháng trước</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="admin-table" style="font-size: 0.85rem;">
-                                <thead>
-                                    <tr>
-                                        <th>Khách hàng</th>
-                                        <th>Tổng tiền</th>
-                                        <th>Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="overview-recent-orders">
-                                    <!-- JS render -->
-                                </tbody>
-                            </table>
+
+                        <!-- 2. Biểu đồ Doanh Thu Thuần -->
+                        <div class="kiot-card" style="margin-top: 16px;">
+                            <div class="kiot-card-header flex-between">
+                                <div class="kiot-title-group">
+                                    <h3 class="kiot-card-title">Doanh thu thuần</h3>
+                                    <span id="kiot-net-revenue-total" class="kiot-total-badge">0 VND</span>
+                                </div>
+                                <div class="kiot-filter-group">
+                                    <select id="kiot-revenue-period-filter" class="kiot-select-sm">
+                                        <option value="month" selected>Tháng này</option>
+                                        <option value="today">Hôm nay</option>
+                                        <option value="week">Tuần này</option>
+                                        <option value="year">Năm nay</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="kiot-tab-bar">
+                                <button class="kiot-tab-item active" data-chart-tab="day">Theo ngày</button>
+                                <button class="kiot-tab-item" data-chart-tab="hour">Theo giờ</button>
+                                <button class="kiot-tab-item" data-chart-tab="weekday">Theo thứ</button>
+                            </div>
+
+                            <div class="kiot-chart-container" style="height: 260px; position: relative;">
+                                <canvas id="overview-net-revenue-chart"></canvas>
+                            </div>
                         </div>
+
+                        <!-- 3. Hàng bán chạy & Top 10 Khách mua nhiều nhất -->
+                        <div class="kiot-two-col-grid" style="margin-top: 16px;">
+                            <!-- Chart A: Top 10 Hàng bán chạy -->
+                            <div class="kiot-card">
+                                <div class="kiot-card-header flex-between">
+                                    <h3 class="kiot-card-title">Top 10 hàng bán chạy</h3>
+                                    <div class="kiot-filter-group">
+                                        <select id="kiot-top-product-period" class="kiot-select-sm">
+                                            <option value="month" selected>Tháng này</option>
+                                            <option value="today">Hôm nay</option>
+                                            <option value="all">Tất cả</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="kiot-chart-container" style="height: 280px; position: relative;">
+                                    <canvas id="overview-top-products-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Chart B: Top 10 Khách mua nhiều nhất -->
+                            <div class="kiot-card">
+                                <div class="kiot-card-header flex-between">
+                                    <h3 class="kiot-card-title">Top 10 khách mua nhiều nhất</h3>
+                                    <div class="kiot-filter-group">
+                                        <select id="kiot-top-customer-period" class="kiot-select-sm">
+                                            <option value="month" selected>Tháng này</option>
+                                            <option value="today">Hôm nay</option>
+                                            <option value="all">Tất cả</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="kiot-chart-container" style="height: 280px; position: relative;">
+                                    <canvas id="overview-top-customers-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- Sản phẩm sắp hết hàng -->
-                    <div class="admin-card">
-                        <h3 style="margin-bottom: 20px;">Sản phẩm sắp hết hàng ⚠️</h3>
-                        <div id="overview-low-stock-list" style="display: flex; flex-direction: column; gap: 12px;">
-                            <!-- JS render -->
+                    <!-- Cột Phải: Sidebar Activity Timeline -->
+                    <div class="kiot-overview-sidebar">
+
+                        <!-- Widget 3: Cảnh báo -->
+                        <div class="kiot-widget-card warning">
+                            <div class="widget-icon orange">🔔</div>
+                            <div class="widget-text">
+                                <p>Có 1 hoạt động đăng nhập hệ thống cần kiểm tra.</p>
+                            </div>
+                            <span class="widget-arrow">›</span>
+                        </div>
+
+                        <!-- Card Hoạt Động Gần Đây -->
+                        <div class="kiot-card" style="margin-top: 16px;">
+                            <div class="kiot-card-header">
+                                <h3 class="kiot-card-title">Hoạt động gần đây</h3>
+                            </div>
+                            <div id="overview-recent-activities" class="kiot-activity-list">
+                                <!-- JS render dynamic live feed -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -594,70 +700,161 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Sản phẩm -->
+            <!-- Section Quản lý Sản phẩm KiotViet Layout -->
             <div id="product-section" class="admin-section">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Hàng hóa</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetProductFilters()">Tạo mới</button>
+                        </div>
 
-                <!-- Danh sách sản phẩm -->
-                <div class="admin-card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0;">Danh sách sản phẩm hiện có</h3>
+                        <!-- Nhóm hàng -->
+                        <div class="filter-group">
+                            <label class="filter-label">Nhóm hàng</label>
+                            <select id="admin-product-category-filter" class="kiot-filter-select">
+                                <option value="all">Chọn nhóm hàng</option>
+                            </select>
+                        </div>
+
+                        <!-- Tồn kho -->
+                        <div class="filter-group">
+                            <label class="filter-label">Tồn kho</label>
+                            <select id="admin-product-stock-filter" class="kiot-filter-select">
+                                <option value="all">Tất cả</option>
+                                <option value="in-stock">Còn hàng trong kho</option>
+                                <option value="out-of-stock">Hết hàng trong kho</option>
+                            </select>
+                        </div>
+
+                        <!-- Dự kiến hết hàng -->
+                        <div class="filter-group">
+                            <label class="filter-label">Dự kiến hết hàng</label>
+                            <div class="radio-options">
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="all" checked> Toàn thời gian</label>
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="custom"> Tùy chỉnh 📅</label>
+                            </div>
+                        </div>
+
+                        <!-- Thời gian tạo -->
+                        <div class="filter-group">
+                            <label class="filter-label">Thời gian tạo</label>
+                            <div class="radio-options">
+                                <label class="radio-item"><input type="radio" name="creation-time" value="all" checked> Toàn thời gian</label>
+                                <label class="radio-item"><input type="radio" name="creation-time" value="custom"> Tùy chỉnh 📅</label>
+                            </div>
+                        </div>
+
+                        <!-- Nhà cung cấp -->
+                        <div class="filter-group">
+                            <label class="filter-label">Nhà cung cấp</label>
+                            <input type="text" class="kiot-filter-input" placeholder="Chọn nhà cung cấp">
+                        </div>
+
+                        <!-- Vị trí -->
+                        <div class="filter-group">
+                            <label class="filter-label">Vị trí</label>
+                            <input type="text" class="kiot-filter-input" placeholder="Chọn vị trí">
+                        </div>
+
+                        <!-- Loại hàng -->
+                        <div class="filter-group">
+                            <label class="filter-label">Loại hàng</label>
+                            <select id="admin-product-type-filter" class="kiot-filter-select">
+                                <option value="all">Chọn loại hàng</option>
+                                <option value="normal">Hàng hóa thường</option>
+                                <option value="combo">Hàng combo</option>
+                            </select>
+                        </div>
+
+                        <!-- Bán trực tiếp -->
+                        <div class="filter-group">
+                            <label class="filter-label">Bán trực tiếp</label>
+                            <div class="pill-options">
+                                <button type="button" class="pill-btn active" data-direct="all">Tất cả</button>
+                                <button type="button" class="pill-btn" data-direct="yes">Có</button>
+                                <button type="button" class="pill-btn" data-direct="no">Không</button>
+                            </div>
+                        </div>
+
+                        <!-- Trạng thái hàng hóa -->
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái hàng hóa</label>
+                            <select id="admin-product-status-filter" class="kiot-filter-select">
+                                <option value="active" selected>Hàng đang kinh doanh</option>
+                                <option value="inactive">Hàng ngừng kinh doanh</option>
+                                <option value="all">Tất cả</option>
+                            </select>
+                        </div>
                     </div>
 
+                    <!-- 2. Cột Phải Main Data Table (Right Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Bar Actions -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="admin-product-search" placeholder="Theo mã, tên hàng...">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="kiot-btn-primary" onclick="window.openProductModal()">+ Tạo mới ▾</button>
+                                <button type="button" class="kiot-btn-outline">📥 Import file</button>
+                                <button type="button" id="btn-export-excel" class="kiot-btn-outline">📤 Xuất file</button>
+                            </div>
+                        </div>
 
+                        <!-- Table Scroll Container (Only Body & Table Scrollable) -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 32px;"><input type="checkbox" id="selectAllProducts"></th>
+                                        <th style="width: 32px;">⭐</th>
+                                        <th style="width: 42px;">Ảnh</th>
+                                        <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="price" style="cursor: pointer;">Giá bán <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Giá vốn <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tồn kho <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Khách đặt <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời gian tạo <span class="sort-icon">↕</span></th>
+                                        <th>Dự kiến hết hàng</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-product-list">
+                                    <!-- Dynamic rows & Quickview card -->
+                                </tbody>
+                            </table>
+                        </div>
 
+                        <!-- KiotViet Footer Pagination Bar -->
+                        <div class="kiot-pagination-bar">
+                            <div class="pg-left">
+                                <span>Hiển thị</span>
+                                <select id="kiot-page-size" class="kiot-select-sm" onchange="window.changePageSize(this.value)">
+                                    <option value="15" selected>15 dòng</option>
+                                    <option value="20">20 dòng</option>
+                                    <option value="30">30 dòng</option>
+                                    <option value="50">50 dòng</option>
+                                    <option value="100">100 dòng</option>
+                                </select>
+                            </div>
 
+                            <div class="pg-center">
+                                <button type="button" class="pg-btn" onclick="window.goToPage(1)" title="Trang đầu">|&lt;</button>
+                                <button type="button" class="pg-btn" onclick="window.changePage(-1)" title="Trang trước">&lt;</button>
+                                <input type="number" id="kiot-page-input" class="pg-input" value="1" min="1" onchange="window.goToPage(this.value)">
+                                <button type="button" class="pg-btn" onclick="window.changePage(1)" title="Trang sau">&gt;</button>
+                                <button type="button" class="pg-btn" id="btn-last-page" onclick="window.goToLastPage()" title="Trang cuối">&gt;|</button>
+                            </div>
 
-                    <!-- Ô tìm kiếm & Lọc sản phẩm trong quản trị -->
-                    <div class="admin-search-filter-row">
-                        <input type="text" id="admin-product-search"
-                            placeholder="Tìm nhanh theo tên hoặc mã sản phẩm..."
-                            style="flex: 2; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
-                        <select id="admin-product-category-filter"
-                            style="flex: 1; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="all">Tất cả danh mục</option>
-                        </select>
-                        <select id="admin-product-stock-filter"
-                            style="flex: 1; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="all">Trạng thái kho</option>
-                            <option value="in-stock">Còn hàng</option>
-                            <option value="out-of-stock">Hết hàng</option>
-                        </select>
-                        <button id="btn-export-excel" class="btn-minimal"
-                            style="padding: 0 15px; height: 40px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-                            📊 Xuất Excel
-                        </button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px; text-align: center;"><input type="checkbox"
-                                            id="selectAllProducts"></th>
-                                    <th style="width: 40px; text-align: center;">⭐</th>
-                                    <th style="width: 60px;">Ảnh</th>
-                                    <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng <span
-                                            class="sort-icon">↕</span></th>
-                                    <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng <span
-                                            class="sort-icon">↕</span></th>
-                                    <th class="sortable-header" data-sort="price" style="cursor: pointer;">Giá bán <span class="sort-icon"> </span></th>
-                                    <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Giá vốn <span class="sort-icon"> </span></th>
-                                    <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tồn kho <span class="sort-icon"> </span></th>
-                                    <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Khách đặt <span class="sort-icon"> </span></th>
-                                    <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời gian
-                                        tạo <span class="sort-icon">↕</span></th>
-                                    <th class="sortable-header" data-sort="isFlashSale" style="cursor: pointer;">Sale <span class="sort-icon"> </span></th>
-                                    <th>Xóa</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-product-list">
-                                <!-- Dữ liệu load từ Firebase -->
-                            </tbody>
-                        </table>
+                            <div class="pg-right">
+                                <span id="kiot-pagination-info">1 - 15 trong 0 hàng hóa</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- Section POS - Bán tại shop -->
@@ -1571,7 +1768,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/admin.js?v=6"></script>
+    <script type="module" src="../js/DashBoard.js?v=6"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

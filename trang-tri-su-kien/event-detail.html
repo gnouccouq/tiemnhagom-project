@@ -125,7 +125,13 @@
             <!-- Cột phải: Sản phẩm -->
             <div class="right-products">
                 <p id="col-description" class="story-text">Đang tải mô tả dự án...</p>
-                <h3 class="featured-title">Sản Phẩm Trong Dự Án</h3>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 12px;">
+                    <h3 class="featured-title" style="margin-bottom: 0;">Sản Phẩm Trong Dự Án</h3>
+                    <button type="button" id="btn-apply-detail-concept" style="background: #2b2b2b; color: #fff; border: 1px solid #2b2b2b; padding: 10px 20px; border-radius: 0px; font-weight: 600; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.25s ease;" onmouseover="this.style.background='#fff'; this.style.color='#2b2b2b';" onmouseout="this.style.background='#2b2b2b'; this.style.color='#fff';">
+                        Thuê Trọn Bộ Theo Dự Án Này
+                    </button>
+                </div>
                 
                 <div id="col-product-grid" class="product-split-grid">
                     <!-- JS render sản phẩm -->
@@ -177,8 +183,46 @@
                     const grid = document.getElementById('col-product-grid');
                     
                     let productsHtml = '';
-                    pSnap.forEach(doc => productsHtml += renderProductCard(doc.data(), doc.id, [], '../product/index.html'));
+                    const productIds = [];
+                    const formatPrice = (num) => (num || 0).toLocaleString('vi-VN');
+
+                    pSnap.forEach(d => {
+                        productIds.push(d.id);
+                        const p = d.data();
+                        const rentalPrice = p.rentalPrice || Math.round((p.price || 0) * 0.2);
+                        
+                        productsHtml += `
+                            <div class="product-card" style="border: 1px solid #eee; border-radius: 6px; padding: 12px; background: #fff; display: flex; flex-direction: column; justify-content: space-between; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+                                <div>
+                                    <a href="../product/index.html?id=${d.id}">
+                                        <img src="${p.imageUrl || ''}" alt="${p.name || ''}" loading="lazy" style="width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 4px; display: block;">
+                                    </a>
+                                    <div style="font-size: 0.75rem; color: #888; margin-top: 8px; margin-bottom: 4px;">Mã: ${d.id}</div>
+                                    <a href="../product/index.html?id=${d.id}" style="color: #2b2b2b; text-decoration: none; font-weight: 600; font-size: 0.9rem; line-height: 1.3; display: block; margin-bottom: 10px; height: 2.6em; overflow: hidden; text-overflow: ellipsis;">
+                                        ${p.name || ''}
+                                    </a>
+                                </div>
+                                <div>
+                                    <p style="margin-bottom: 8px; color: #2b2b2b; font-weight: 700; font-size: 0.95rem;">${formatPrice(rentalPrice)}đ <span style="font-size: 0.8rem; font-weight: 400; color: #777;">/ ngày</span></p>
+                                    <button type="button" onclick="window.location.href='./index.html?concept=${d.id}:1'" style="width: 100%; border: 1px solid #2b2b2b; background: #2b2b2b; color: white; padding: 8px 0; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fff'; this.style.color='#2b2b2b';" onmouseout="this.style.background='#2b2b2b'; this.style.color='#fff';">Chọn Thuê</button>
+                                </div>
+                            </div>
+                        `;
+                    });
                     grid.innerHTML = productsHtml || '<p style="grid-column:1/-1; text-align:center;">Chưa có sản phẩm nào được gắn vào dự án này.</p>';
+
+                    const applyBtn = document.getElementById('btn-apply-detail-concept');
+                    if (applyBtn) {
+                        if (productIds.length > 0) {
+                            applyBtn.style.display = 'inline-flex';
+                            applyBtn.onclick = () => {
+                                const conceptStr = productIds.map(id => `${id}:1`).join(',');
+                                window.location.href = `./index.html?concept=${encodeURIComponent(conceptStr)}`;
+                            };
+                        } else {
+                            applyBtn.style.display = 'none';
+                        }
+                    }
 
                     document.getElementById('event-detail-page').style.display = 'block';
                     document.querySelectorAll('.reveal-on-scroll').forEach(el => window.revealObserver?.observe(el));

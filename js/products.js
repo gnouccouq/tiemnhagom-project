@@ -241,8 +241,15 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         } */
 
         // Thêm logic tải thêm vào Query
+        let localBuffer = [];
         let finalQuery;
-        const FETCH_LIMIT = 50; // Tải dư 50 sản phẩm để phòng hờ trường hợp các sản phẩm đã bị ẩn (cần hiển thị 10)
+        const DISPLAY_BATCH_SIZE = 24;
+        const FETCH_LIMIT = 60; // Tải dư 60 sản phẩm mỗi lần để không bị sót sản phẩm
+
+        if (navigation === 'init') {
+            lastVisible = null;
+        }
+
         if (navigation === 'load-more' && lastVisible) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(FETCH_LIMIT));
         } else {
@@ -279,7 +286,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
             : allDocs;
 
-        // Sắp xếp lại danh sách trả về (tối đa 50) theo giá cuối cùng (đã giảm) nếu user chọn sort giá
+        // Sắp xếp lại danh sách trả về theo giá cuối cùng (đã giảm) nếu user chọn sort giá
         if (currentSort === 'price-asc' || currentSort === 'price-desc') {
             finalResults.sort((a, b) => {
                 const priceA = a.salePrice || Math.round(a.price * (1 - (a.sale || 0) / 100));
@@ -288,16 +295,12 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             });
         }
 
-        // Giới hạn lại số lượng hiển thị thực tế (PAGE_SIZE)
-        finalResults = finalResults.slice(0, PAGE_SIZE);
-
-        // Lưu vết documents để tải lần sau dựa trên phần tử hiển thị cuối cùng
-        if (finalResults.length > 0) {
-            lastVisible = finalResults[finalResults.length - 1]._ref;
-        } else {
-            lastVisible = null;
+        // Lưu vết document cuối cùng để phân trang Firestore
+        if (querySnapshot.docs.length > 0) {
+            lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
         }
 
+        // Hiển thị toàn bộ các sản phẩm đã lọc trong đợt này (không bị cắt xén thủ công gây mất sản phẩm)
         htmlContent = finalResults.map((p) => {
             let cardsHtml = renderProductCard(p, p.id, favs, '../product/index.html');
             
@@ -360,7 +363,6 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         
         // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm
         if (loadMoreBtn) {
-            // Hiển thị nút "Xem thêm" nếu số lượng doc trả về bằng FETCH_LIMIT (nghĩa là có thể còn dữ liệu trong DB)
             if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm) {
                 loadMoreBtn.style.display = 'block';
                 loadMoreBtn.innerHTML = `Xem thêm sản phẩm`;

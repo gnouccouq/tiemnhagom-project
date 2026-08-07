@@ -383,7 +383,7 @@ async function handleProfileAuth(user) {
             if (adminContainer) {
                 adminContainer.innerHTML = `
                     <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
-                    <a href="../admin/" class="btn-dark" style="display: block; text-align: center; margin-top: 0; min-width: 150px; width: auto;">Vào bảng điều khiển Admin</a>
+                    <a href="../DashBoard/" class="btn-dark" style="display: block; text-align: center; margin-top: 0; min-width: 150px; width: auto;">Vào bảng điều khiển Admin</a>
                 `;
                 adminContainer.style.display = 'block';
             }

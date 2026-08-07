@@ -98,10 +98,16 @@ async function loadEvents() {
         }
 
         grid.innerHTML = events.map(ev => `
-            <div class="event-gallery-item" onclick="window.location.href='event-detail.html?name=${encodeURIComponent(ev.name)}'" style="position: relative; cursor: pointer;">
-                <img src="${ev.imageUrl}" alt="${ev.name}">
-                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px; color: #fff;">
-                    <h3 style="margin: 0; font-size: 1.2rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${ev.name}</h3>
+            <div class="event-project-card">
+                <img src="${ev.imageUrl}" alt="${ev.name}" loading="lazy">
+                <div class="event-hover-overlay">
+                    <h3 class="event-hover-title">${ev.name}</h3>
+                    <button type="button" class="btn-event-apply" onclick="event.stopPropagation(); window.applyEventConcept('${ev.name.replace(/'/g, "\\'")}')">
+                        Áp Dụng Concept Thuê
+                    </button>
+                    <a href="event-detail.html?name=${encodeURIComponent(ev.name)}" onclick="event.stopPropagation();" class="event-hover-link">
+                        Xem chi tiết dự án →
+                    </a>
                 </div>
             </div>
         `).join('');
@@ -111,13 +117,152 @@ async function loadEvents() {
     }
 }
 
+let currentRentalCategory = 'all';
+let currentRentalSort = 'newest';
+let currentRentalSearch = '';
+let isRentalFiltersSetup = false;
+
+function setupRentalFilterEvents() {
+    if (isRentalFiltersSetup) return;
+    isRentalFiltersSetup = true;
+
+    const searchInput = document.getElementById('rental-search-name');
+    const sortSelect = document.getElementById('rental-sort-by');
+
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentRentalSearch = e.target.value.trim().toLowerCase();
+                filterAndRenderRentalProducts();
+            }, 250);
+        });
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            currentRentalSort = e.target.value;
+            filterAndRenderRentalProducts();
+        });
+    }
+}
+
+function renderRentalCategories() {
+    const container = document.getElementById('rental-category-display');
+    if (!container) return;
+
+    // Gom nhóm số lượng sản phẩm thuê theo danh mục
+    const catCounts = {};
+    rentalProducts.forEach(p => {
+        const cat = p.category || 'Khác';
+        catCounts[cat] = (catCounts[cat] || 0) + 1;
+    });
+
+    let html = `
+        <a href="javascript:void(0)" class="minimal-cat-item ${currentRentalCategory === 'all' ? 'active' : ''}" data-rental-cat="all">
+            tất cả <span class="cat-count">(${rentalProducts.length})</span>
+        </a>
+    `;
+
+    Object.keys(catCounts).forEach(catName => {
+        const count = catCounts[catName];
+        html += `
+            <a href="javascript:void(0)" class="minimal-cat-item ${currentRentalCategory === catName ? 'active' : ''}" data-rental-cat="${catName}">
+                ${catName.toLowerCase()} <span class="cat-count">(${count})</span>
+            </a>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.minimal-cat-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            container.querySelectorAll('.minimal-cat-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            currentRentalCategory = item.getAttribute('data-rental-cat');
+            filterAndRenderRentalProducts();
+        });
+    });
+}
+
+function filterAndRenderRentalProducts() {
+    const grid = document.getElementById('rental-products-grid');
+    if (!grid) return;
+
+    let items = [...rentalProducts];
+
+    // 1. Lọc theo Danh mục
+    if (currentRentalCategory !== 'all') {
+        items = items.filter(p => (p.category || 'Khác') === currentRentalCategory);
+    }
+
+    // 2. Lọc theo Từ khóa tìm kiếm (tên hoặc mã sản phẩm)
+    if (currentRentalSearch) {
+        items = items.filter(p => {
+            const nameMatch = (p.name || '').toLowerCase().includes(currentRentalSearch);
+            const idMatch = (p.id || '').toLowerCase().includes(currentRentalSearch);
+            return nameMatch || idMatch;
+        });
+    }
+
+    // 3. Sắp xếp danh sách
+    if (currentRentalSort === 'price-asc') {
+        items.sort((a, b) => (a.rentalPrice || 0) - (b.rentalPrice || 0));
+    } else if (currentRentalSort === 'price-desc') {
+        items.sort((a, b) => (b.rentalPrice || 0) - (a.rentalPrice || 0));
+    } else if (currentRentalSort === 'name-asc') {
+        items.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+    } else if (currentRentalSort === 'name-desc') {
+        items.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'vi'));
+    }
+
+    if (items.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 3rem 0;">Không tìm thấy đồ cho thuê nào phù hợp với bộ lọc.</p>';
+        return;
+    }
+
+    let html = '';
+    items.forEach(product => {
+        html += `
+            <div class="product-card">
+                <div class="product-card-image">
+                    <a href="../product/index.html?id=${product.id}">
+                        <img src="${product.imageUrl}" alt="${product.name}" loading="lazy" width="300" height="300">
+                    </a>
+                </div>
+                <div class="product-card-info">
+                    <div class="product-sku" style="font-size: 0.7rem; margin-bottom: 4px; letter-spacing: 1px;">Mã: ${product.id}</div>
+                    <a href="../product/index.html?id=${product.id}" class="product-title-link">
+                        <h3>${product.name}</h3>
+                    </a>
+                    <div class="product-price-block" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                        <p class="price" style="margin-bottom: 0; color: #2b2b2b; font-weight: 700; font-size: 0.95rem;">${formatCurrencyDisplay(product.rentalPrice)}đ <span style="font-size: 0.8rem; font-weight: 400; color: #777;">/ ngày</span></p>
+                        <button class="btn-add-rental" data-id="${product.id}" style="width: 100%; border: 1px solid #2b2b2b; background: #2b2b2b; color: white; padding: 9px 0; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fff'; this.style.color='#2b2b2b';" onmouseout="this.style.background='#2b2b2b'; this.style.color='#fff';">Chọn Thuê</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.btn-add-rental').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id');
+            addToRentalCart(id);
+        });
+    });
+}
+
 async function loadRentalProducts() {
     const grid = document.getElementById('rental-products-grid');
     if (!grid) return;
 
+    setupRentalFilterEvents();
+
     try {
-        // Fetch all products that are not hidden. 
-        // We filter for rentalPrice > 0 on client side to avoid needing composite index just for rentalPrice
         const q = query(collection(db, "products"), where("isHidden", "==", false));
         const snapshot = await getDocs(q);
         
@@ -134,43 +279,139 @@ async function loadRentalProducts() {
             return;
         }
 
-        let html = '';
-        rentalProducts.forEach(product => {
-            html += `
-                <div class="product-card">
-                    <div class="product-card-image">
-                        <a href="../product/index.html?id=${product.id}">
-                            <img src="${product.imageUrl}" alt="${product.name}" loading="lazy" width="300" height="300">
-                        </a>
-                    </div>
-                    <div class="product-card-info">
-                        <div class="product-sku" style="font-size: 0.7rem; margin-bottom: 4px; letter-spacing: 1px;">Mã: ${product.id}</div>
-                        <a href="../product/index.html?id=${product.id}" class="product-title-link">
-                            <h3>${product.name}</h3>
-                        </a>
-                        <div class="product-price-block" style="flex-direction: column; align-items: stretch; gap: 8px;">
-                            <p class="price" style="margin-bottom: 0; color: #e74c3c; font-size: 0.95rem;">${formatCurrencyDisplay(product.rentalPrice)}đ / ngày</p>
-                            <button class="btn-add-rental" data-id="${product.id}" style="width: 100%; border: none; background: #e74c3c; color: white; padding: 10px 0; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">Chọn Thuê</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        grid.innerHTML = html;
-
-        document.querySelectorAll('.btn-add-rental').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                addToRentalCart(id);
-            });
-        });
+        renderRentalCategories();
+        filterAndRenderRentalProducts();
+        loadConceptFromURL();
 
     } catch (error) {
         console.error("Error loading rental products:", error);
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red;">Lỗi tải danh sách sản phẩm.</p>';
     }
 }
+
+function shareRentalConcept() {
+    const keys = Object.keys(rentalCart);
+    if (keys.length === 0) {
+        showToast("Vui lòng chọn ít nhất 1 món đồ để chia sẻ concept!", "error");
+        return;
+    }
+
+    const conceptStr = keys.map(k => `${k}:${rentalCart[k].quantity}`).join(',');
+    const url = new URL(window.location.href);
+    url.searchParams.set('concept', conceptStr);
+
+    const shareUrl = url.toString();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast("Đã sao chép link chia sẻ Concept vào bộ nhớ tạm!", "success");
+        }).catch(() => fallbackCopyUrl(shareUrl));
+    } else {
+        fallbackCopyUrl(shareUrl);
+    }
+}
+
+function fallbackCopyUrl(text) {
+    const tempInput = document.createElement('input');
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    showToast("Đã sao chép link chia sẻ Concept vào bộ nhớ tạm!", "success");
+}
+
+function loadConceptFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const conceptParam = urlParams.get('concept');
+    if (!conceptParam) return;
+
+    const items = conceptParam.split(',');
+    let restoredCount = 0;
+
+    items.forEach(itemStr => {
+        const parts = itemStr.split(':');
+        const id = parts[0];
+        const qty = parseInt(parts[1] || '1', 10);
+        
+        const product = rentalProducts.find(p => p.id === id);
+        if (product) {
+            rentalCart[id] = {
+                item: product,
+                quantity: qty > 0 ? qty : 1
+            };
+            restoredCount++;
+        }
+    });
+
+    if (restoredCount > 0) {
+        renderRentalCart();
+        showToast(`Đã tự động tải Concept gồm ${restoredCount} món đồ từ liên kết!`, "success");
+
+        setTimeout(() => {
+            const consultSection = document.getElementById('consult-section');
+            if (consultSection) {
+                consultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }, 600);
+    }
+}
+
+async function applyEventConcept(eventName) {
+    try {
+        showToast(`Đang quét sản phẩm thuộc dự án "${eventName}"...`, "info");
+        
+        let addedCount = 0;
+        // 1. Tìm các sản phẩm trong rentalProducts có gán eventName trong mảng events
+        const matchingProducts = rentalProducts.filter(p => p.events && Array.isArray(p.events) && p.events.includes(eventName));
+        
+        if (matchingProducts.length > 0) {
+            matchingProducts.forEach(p => {
+                if (!rentalCart[p.id]) {
+                    rentalCart[p.id] = { item: p, quantity: 1 };
+                } else {
+                    rentalCart[p.id].quantity += 1;
+                }
+                addedCount++;
+            });
+        } else {
+            // 2. Nếu chưa gán trực tiếp client-side, truy vấn Firestore theo field events
+            const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
+            const q = query(collection(db, "products"), where("events", "array-contains", eventName));
+            const pSnap = await getDocs(q);
+            
+            pSnap.forEach(d => {
+                const data = { id: d.id, ...d.data() };
+                const rentalPrice = data.rentalPrice || Math.round(data.price * 0.2);
+                const item = { ...data, rentalPrice };
+                if (!rentalCart[d.id]) {
+                    rentalCart[d.id] = { item, quantity: 1 };
+                }
+                addedCount++;
+            });
+        }
+
+        if (addedCount > 0) {
+            renderRentalCart();
+            showToast(`✨ Đã tự động chọn ${addedCount} món đồ từ dự án "${eventName}" vào danh sách thuê!`, "success");
+            
+            setTimeout(() => {
+                const consultSection = document.getElementById('consult-section');
+                if (consultSection) {
+                    consultSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 500);
+        } else {
+            showToast(`Dự án "${eventName}" chưa có sẵn đồ gán thủ công. Bạn có thể tự do chọn đồ từ danh mục bên dưới!`, "info");
+        }
+    } catch (err) {
+        console.error("Lỗi áp dụng concept dự án:", err);
+        showToast("Có lỗi xảy ra khi áp dụng concept dự án.", "error");
+    }
+}
+
+window.shareRentalConcept = shareRentalConcept;
+window.applyEventConcept = applyEventConcept;
 
 function addToRentalCart(productId) {
     const product = rentalProducts.find(p => p.id === productId);
@@ -272,6 +513,9 @@ function renderRentalCart() {
                 <span>Tiền cọc ước tính (50%):</span>
                 <span style="font-weight: 600;">${formatCurrencyDisplay(depositAmount)}đ</span>
             </div>
+            <button type="button" onclick="window.shareRentalConcept()" style="width: 100%; margin-top: 12px; padding: 10px; border: 1px solid #2b2b2b; background: #2b2b2b; color: #fff; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; letter-spacing: 0.5px; transition: all 0.2s;" onmouseover="this.style.background='#444';" onmouseout="this.style.background='#2b2b2b';">
+                🔗 CHIA SẺ CONCEPT NÀY
+            </button>
         </div>
     </div>
     `;
@@ -451,6 +695,30 @@ function setupRentalForm() {
         });
     }
 
+    const btnDownloadPdfModal = document.getElementById('btn-download-pdf-contract');
+    if (btnDownloadPdfModal) {
+        btnDownloadPdfModal.addEventListener('click', async () => {
+            const element = document.getElementById('printable-contract-content');
+            if (typeof html2pdf !== 'undefined' && element) {
+                try {
+                    const opt = {
+                        margin:       [10, 10, 10, 10],
+                        filename:     'HopDongThueDo-TiemNhaGom.pdf',
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    await html2pdf().set(opt).from(element).save();
+                } catch (err) {
+                    console.error("Lỗi xuất PDF:", err);
+                    showToast("Không thể xuất PDF, vui lòng thử lại.", "error");
+                }
+            } else {
+                showToast("Tính năng tải PDF chưa sẵn sàng, vui lòng thử lại sau.", "error");
+            }
+        });
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -521,6 +789,11 @@ function setupRentalForm() {
 
             const orderId = generateOrderId();
             
+            const setupRadio = document.querySelector('input[name="rental-setup-option"]:checked');
+            const setupOptionText = setupRadio?.value === 'full-service' 
+                ? 'Tiệm Nhà Gốm hỗ trợ vận chuyển & setup trọn gói tại tiệc' 
+                : 'Khách tự đến lấy đồ & tự setup';
+
             const rentalOrderData = {
                 orderType: 'rental',
                 status: 'Yêu cầu mới',
@@ -536,7 +809,8 @@ function setupRentalForm() {
                     returnDate,
                     address,
                     notes,
-                    rentalDays
+                    rentalDays,
+                    setupOption: setupOptionText
                 },
                 items: orderItems,
                 totalAmount: totalAmount

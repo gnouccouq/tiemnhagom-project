@@ -456,6 +456,8 @@ exports.sendTelegramOnNewOrder = functions.firestore
                 });
             }
 
+            const setupOption = orderData.rentalInfo?.setupOption || 'Khách tự lấy & setup';
+
             message = `
 🛋️ <b>CÓ YÊU CẦU THUÊ ĐỒ MỚI</b> 🛋️
 <b>Mã yêu cầu:</b> #${orderId}
@@ -468,12 +470,16 @@ exports.sendTelegramOnNewOrder = functions.firestore
 - Email: ${email}
 - Địa chỉ setup: ${rentalAddress}${notes}
 
+🚚 <b>Hình thức Setup:</b> ${setupOption}
+
 🕒 <b>Thời gian thuê:</b>
 - Nhận đồ: ${rentalDate}
-- Trả đồ: ${returnDate}
+- Trả đồ: ${returnDate} (${orderData.rentalInfo?.rentalDays || 1} ngày)
 
 🛒 <b>Sản phẩm cần thuê:</b>
 ${rentalItemsList}
+💰 <b>Tổng tiền thuê dự kiến:</b> ${new Intl.NumberFormat('vi-VN').format(orderData.totalAmount || 0)}đ
+(Tiền cọc ước tính 50%: ${new Intl.NumberFormat('vi-VN').format(Math.round((orderData.totalAmount || 0) / 2))}đ)
             `.trim();
         } else {
             message = `

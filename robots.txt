@@ -4,6 +4,7 @@ User-agent: *
 Allow: /
 
 # Chặn các trang quản trị, giỏ hàng và thông tin cá nhân để tối ưu SEO
+Disallow: /DashBoard/
 Disallow: /admin/
 Disallow: /cart/
 Disallow: /login/

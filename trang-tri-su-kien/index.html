@@ -13,14 +13,14 @@
     <meta property="og:title" content="Trang trí Sự kiện & Decor Không gian Nghệ thuật - Tiệm Nhà Gốm">
     <meta property="og:description"
         content="Biến không gian sự kiện của bạn trở nên ấm cúng và đầy cảm xúc với Tiệm Nhà Gốm.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1200">
+    <meta property="og:image" content="../Asset/images/banner_decor.jpg">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Trang trí Sự kiện & Decor Không gian Nghệ thuật - Tiệm Nhà Gốm">
     <meta name="twitter:description"
         content="Biến không gian sự kiện của bạn trở nên ấm cúng và đầy cảm xúc với Tiệm Nhà Gốm.">
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1200">
+    <meta name="twitter:image" content="../Asset/images/banner_decor.jpg">
 
     <link rel="stylesheet" href="../css/style.css?v=16">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
@@ -51,6 +51,54 @@
     }
     </script>
     <style>
+        /* Category Filter Tags */
+        .minimal-category-list {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .minimal-cat-item {
+            color: #555;
+            text-decoration: none !important;
+            font-size: 0.95rem;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            padding: 8px 18px;
+            border-radius: 25px;
+            background: #f0f0f0;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .minimal-cat-item.active {
+            font-weight: 600;
+            color: #fff !important;
+            background: #2b2b2b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .minimal-cat-item:hover:not(.active) {
+            color: #000;
+            background: #e2e2e2;
+        }
+
+        .cat-count {
+            font-size: 0.85rem;
+            opacity: 0.75;
+        }
+
+        .listing-toolbar input:focus, .listing-toolbar select:focus {
+            outline: none;
+            border-color: #2b2b2b !important;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        }
+
         .step-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -190,7 +238,7 @@
     <main>
         <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
         <section id="col-hero"
-            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('../Asset/images/banner_decor.jpg'); display: flex; align-items: center; justify-content: center; position: relative;">
             <h1 id="hero-banner-title"
                 style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">
                 Trang trí Sự kiện</h1>
@@ -235,6 +283,27 @@
                 <h2 style="text-align: center; margin-bottom: 1rem;">Sản Phẩm Cho Thuê</h2>
                 <p style="text-align: center; color: #666; margin-bottom: 2rem;">Chọn những món đồ bạn cần thuê cho sự
                     kiện. Giá thuê có thể báo giá linh hoạt theo số lượng và ngày.</p>
+                
+                <!-- Danh mục sản phẩm cho thuê -->
+                <div id="rental-category-display" class="minimal-category-list" style="margin-bottom: 2rem;"></div>
+
+                <!-- Toolbar: Tìm kiếm & Sắp xếp -->
+                <div class="listing-toolbar" style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; background: #fafafa; padding: 15px 20px; border-radius: 6px; border: 1px solid #eaeaea;">
+                    <div class="toolbar-left" style="flex: 1; min-width: 250px;">
+                        <input type="text" id="rental-search-name" placeholder="Tìm kiếm đồ cho thuê (theo tên, mã)..." class="search-input" style="width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 0.95rem;">
+                    </div>
+                    <div class="toolbar-right" style="display: flex; align-items: center; gap: 10px;">
+                        <label for="rental-sort-by" style="font-weight: 600; font-size: 0.9rem; color: #555; white-space: nowrap;">Sắp xếp:</label>
+                        <select id="rental-sort-by" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; cursor: pointer; background: #fff; font-size: 0.95rem;">
+                            <option value="newest">Mới nhất</option>
+                            <option value="price-asc">Giá thuê: Thấp đến Cao</option>
+                            <option value="price-desc">Giá thuê: Cao đến Thấp</option>
+                            <option value="name-asc">Tên: A-Z</option>
+                            <option value="name-desc">Tên: Z-A</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div id="rental-products-grid" class="product-grid"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
                     <!-- JS Render -->
@@ -248,8 +317,12 @@
                     setup trọn gói.</p>
                 <form id="rental-request-form" class="admin-form">
 
-                    <h4 style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">1. Đồ Đã Chọn
-                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                        <h4 style="margin: 0;">1. Đồ Đã Chọn</h4>
+                        <button type="button" onclick="window.shareRentalConcept()" style="background: transparent; color: #2b2b2b; border: 1px solid #2b2b2b; padding: 6px 14px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;" onmouseover="this.style.background='#2b2b2b'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#2b2b2b';">
+                            🔗 Chia sẻ Concept
+                        </button>
+                    </div>
                     <div id="rental-selected-items"
                         style="margin-bottom: 2rem; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px dashed #ccc;">
                         <p style="text-align: center; color: #999; margin: 0; font-size: 0.9rem;">Bạn chưa chọn món đồ
@@ -317,6 +390,18 @@
                         <input type="text" id="rental-address" required placeholder="Số nhà, Tên đường...">
                     </div>
 
+                    <h4 style="margin: 1.5rem 0 1rem 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">3. Hình Thức & Dịch Vụ Setup</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #e0e0e0;">
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.9rem; color: #2b2b2b;">
+                            <input type="radio" name="rental-setup-option" value="self" checked style="margin-top: 3px; accent-color: #2b2b2b;">
+                            <span><strong>Khách tự đến lấy đồ & tự setup</strong> <br><small style="color: #777;">Tiệm miễn phí tư vấn cách bài trí. Không tốn phí dịch vụ setup.</small></span>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.9rem; color: #2b2b2b;">
+                            <input type="radio" name="rental-setup-option" value="full-service" style="margin-top: 3px; accent-color: #2b2b2b;">
+                            <span><strong>Tiệm Nhà Gốm hỗ trợ vận chuyển & setup trọn gói tại tiệc</strong> <br><small style="color: #777;">Đội ngũ của Tiệm sẽ trực tiếp vận chuyển, setup và thu dọn sau tiệc (Tiệm sẽ liên hệ báo phí dịch vụ tốt nhất).</small></span>
+                        </label>
+                    </div>
+
                     <div class="form-group">
                         <label>Ghi chú thêm</label>
                         <textarea id="rental-notes" rows="3"
@@ -358,7 +443,8 @@
             <div style="display: flex; justify-content: space-between; align-items: center; background: #2b2b2b; color: #fff; padding: 12px 20px; flex-shrink: 0;">
                 <h3 style="margin: 0; font-size: 1.05rem; color: #fff; border: none; font-weight: 500;">Bản Hợp Đồng Thuê Mẫu - Tiệm Nhà Gốm</h3>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" id="btn-print-contract" style="background: #e74c3c; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">🖨️ In / Tải Hợp Đồng</button>
+                    <button type="button" id="btn-print-contract" style="background: #e74c3c; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">🖨️ In Hợp Đồng</button>
+                    <button type="button" id="btn-download-pdf-contract" style="background: #27ae60; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">⬇️ Tải PDF</button>
                     <button type="button" id="btn-close-contract-modal" style="background: transparent; color: #fff; border: 1px solid #777; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Đóng ✖</button>
                 </div>
             </div>
@@ -508,6 +594,98 @@
                 box-shadow: none;
                 padding: 10px !important;
             }
+        }
+
+        /* Phong cách Hover Thẻ Dự Án chuẩn Collections */
+        .event-project-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            aspect-ratio: 4/3;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+
+        .event-project-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .event-project-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .event-hover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.35s ease;
+        }
+
+        .event-project-card:hover .event-hover-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .event-hover-title {
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-family: var(--font-serif);
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            transform: translateY(12px);
+            transition: transform 0.35s ease;
+        }
+
+        .event-project-card:hover .event-hover-title {
+            transform: translateY(0);
+        }
+
+        .btn-event-apply {
+            background: #ffffff;
+            color: #2b2b2b;
+            border: 1px solid #ffffff;
+            padding: 9px 18px;
+            border-radius: 0px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-event-apply:hover {
+            background: #2b2b2b;
+            color: #ffffff;
+            border-color: #2b2b2b;
+        }
+
+        .event-hover-link {
+            color: #dddddd;
+            font-size: 0.82rem;
+            text-decoration: underline;
+            margin-top: 10px;
+            transition: color 0.2s;
+        }
+
+        .event-hover-link:hover {
+            color: #ffffff;
         }
     </style>
 

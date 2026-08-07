@@ -841,6 +841,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                 if (isMaintenanceActive) {
                     // Nếu đang ở trang bảo trì/admin/login thì không redirect nữa để tránh vòng lặp
                     const isExcludedPage = window.location.pathname.includes('/maintenance/') ||
+                        window.location.pathname.includes('/DashBoard/') ||
                         window.location.pathname.includes('/admin/') ||
                         window.location.pathname.includes('/login/');
                     if (isExcludedPage) return false;
@@ -880,7 +881,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             }));
 
             const profilePath = pathPrefix === './' ? 'profile/' : `${pathPrefix}profile/`;
-            const adminPath = pathPrefix === './' ? 'admin/' : `${pathPrefix}admin/`;
+            const adminPath = pathPrefix === './' ? 'DashBoard/' : `${pathPrefix}DashBoard/`;
             const membershipPath = pathPrefix === './' ? 'membership/' : `${pathPrefix}membership/`;
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'));
 
@@ -1330,7 +1331,7 @@ export async function loadSharedComponents(pathPrefix = './') {
 
             // Kích hoạt menu mobile sau khi load xong HTML
             const menuToggle = document.getElementById('menu-toggle');
-            
+            const bottomMenuToggle = document.getElementById('mobile-bottom-menu-toggle');
             const navLinks = document.getElementById('nav-links');
 
             if (navLinks) {
