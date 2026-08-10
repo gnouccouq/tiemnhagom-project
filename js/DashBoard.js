@@ -809,7 +809,7 @@ function renderRecentActivities(orders) {
             <div class="activity-item" style="cursor: pointer;" onclick="document.querySelector('.admin-tab-btn[data-target=\'${isRental ? 'rental-order-section' : 'order-section'}\']')?.click()" title="Bấm để xem đơn hàng">
                 <div class="activity-avatar">${isRental ? '🛋️' : '🛒'}</div>
                 <div class="activity-content">
-                    <strong style="font-weight: 500;">${customerName}</strong> vừa đặt ${isRental ? 'đơn thuê Decor' : 'đơn mua hàng'} trị giá <strong style="font-weight: 500;">${amountStr}</strong>
+                    <strong>${customerName}</strong> vừa đặt ${isRental ? 'đơn thuê Decor' : 'đơn mua hàng'} trị giá <strong>${amountStr}</strong>
                     <div class="activity-time">${timeAgo}</div>
                 </div>
             </div>
@@ -975,34 +975,79 @@ const productModal = document.getElementById('product-modal');
 const btnOpenProductModal = document.getElementById('btn-open-add-product');
 const btnCloseProductModal = document.getElementById('btn-close-product-modal');
 
+// --- Global Quill Editor Instance ---
+window.quillProductEditor = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const qContainer = document.getElementById('quill-editor-container');
+    if (qContainer && typeof Quill !== 'undefined' && !window.quillProductEditor) {
+        window.quillProductEditor = new Quill('#quill-editor-container', {
+            theme: 'snow',
+            placeholder: 'Nhập mô tả sản phẩm chi tiết, chèn ảnh, câu chuyện thiết kế...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+    }
+});
+
 window.openProductModal = function () {
-    if (productModal) productModal.classList.add('active');
+    if (productModal) {
+        productModal.classList.add('active');
+        productModal.style.display = 'flex';
+        // Activate default first tab (Thông tin)
+        document.querySelectorAll('.product-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.product-tab-pane').forEach(pane => pane.classList.remove('active'));
+        const defaultTabBtn = document.querySelector('.product-tab-btn[data-tab="tab-product-basic"]');
+        const defaultTabPane = document.getElementById('tab-product-basic');
+        if (defaultTabBtn) defaultTabBtn.classList.add('active');
+        if (defaultTabPane) defaultTabPane.classList.add('active');
+    }
 };
 
 window.closeProductModal = function () {
-    if (productModal) productModal.classList.remove('active');
+    if (productModal) {
+        productModal.classList.remove('active');
+        productModal.style.display = 'none';
+    }
     if (productForm) {
         productForm.reset();
         document.getElementById('variant-items-container').innerHTML = '';
         document.getElementById('pattern-variant-items-container').innerHTML = '';
         document.getElementById('image-preview-container').innerHTML = '';
+        if (window.quillProductEditor) window.quillProductEditor.root.innerHTML = '';
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
         delete document.getElementById('productId').dataset.currentThumbUrl;
         document.getElementById('productId').readOnly = false;
 
+        const costInput = document.getElementById('cost');
+        if (costInput) {
+            costInput.disabled = false;
+            costInput.style.background = '#ffffff';
+        }
+
         window.comboVariants = [{ name: 'Mặc định', items: [] }];
         window.currentComboVariantIndex = 0;
 
         const titleEl = document.getElementById('product-modal-title');
-        if (titleEl) titleEl.innerText = 'Thêm/Sửa sản phẩm';
+        if (titleEl) {
+            titleEl.innerText = 'Tạo hàng hóa';
+        }
 
         const additiveCheckbox = document.getElementById('stock-additive');
         const stockInput = document.getElementById('stock');
         if (additiveCheckbox) additiveCheckbox.checked = false;
         if (stockInput) {
             stockInput.disabled = false;
-            stockInput.placeholder = "10";
+            stockInput.placeholder = "0";
         }
         if (additiveCheckbox) additiveCheckbox.disabled = false;
 
@@ -1016,14 +1061,32 @@ window.closeProductModal = function () {
 if (btnOpenProductModal) {
     btnOpenProductModal.addEventListener('click', () => {
         window.closeProductModal(); // clean form
-        const titleEl = document.getElementById('product-modal-title');
-        if (titleEl) titleEl.innerText = 'Thêm sản phẩm mới';
         window.openProductModal();
     });
 }
 if (btnCloseProductModal) {
     btnCloseProductModal.addEventListener('click', window.closeProductModal);
 }
+const btnCloseProductModalFooter = document.getElementById('btn-close-product-modal-footer');
+if (btnCloseProductModalFooter) {
+    btnCloseProductModalFooter.addEventListener('click', window.closeProductModal);
+}
+
+// Xử lý chuyển đổi Tab trong Modal sản phẩm
+document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.product-tab-btn');
+    if (tabBtn) {
+        e.preventDefault();
+        const targetTabId = tabBtn.getAttribute('data-tab');
+        if (targetTabId) {
+            document.querySelectorAll('.product-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.product-tab-pane').forEach(pane => pane.classList.remove('active'));
+            tabBtn.classList.add('active');
+            const targetPane = document.getElementById(targetTabId);
+            if (targetPane) targetPane.classList.add('active');
+        }
+    }
+});
 
 // Logic hiển thị nút Floating Action Button (Thêm sản phẩm) theo Tab
 const productSection = document.getElementById('product-section');
@@ -1048,37 +1111,70 @@ if (productSection && btnOpenProductModal) {
 function renderImagePreviews() {
     const productIdEl = document.getElementById('productId');
     const container = document.getElementById('image-preview-container');
-    container.innerHTML = '';
+    const mainSlot = document.querySelector('.kiot-image-upload-main');
+    const sideSlotsContainer = document.getElementById('kiot-image-side-slots');
+
+    if (container) container.innerHTML = '';
+    if (!productIdEl) return;
 
     const mainUrl = productIdEl.dataset.currentImageUrl;
     const additionalUrls = JSON.parse(productIdEl.dataset.currentAdditionalImages || '[]');
 
-    // Gom tất cả ảnh lại để hiển thị
-    const allUrls = [];
-    if (mainUrl && mainUrl !== 'https://via.placeholder.com/300') allUrls.push({ url: mainUrl, isMain: true });
-    additionalUrls.forEach(url => allUrls.push({ url: url, isMain: false }));
+    // Cập nhật slot ảnh chính
+    if (mainSlot) {
+        if (mainUrl && !mainUrl.includes('placeholder') && !mainUrl.includes('via.')) {
+            mainSlot.innerHTML = `
+                <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <img src="${mainUrl}" alt="Ảnh chính" style="max-width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px;">
+                    <button type="button" onclick="event.stopPropagation(); window.removeMainProductImage();" title="Xóa ảnh chính" style="position: absolute; top: 4px; right: 4px; background: rgba(220,38,38,0.85); color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">&times;</button>
+                </div>`;
+        } else {
+            mainSlot.innerHTML = `
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 4px;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <button type="button" class="kiot-btn-outline" style="padding: 3px 10px; font-size: 0.78rem; pointer-events: none;">Thêm ảnh</button>
+                <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Mỗi ảnh không quá 2 MB</span>
+                <span style="font-size: 0.65rem; color: #cbd5e1;">(Hỗ trợ cả tệp HEIC)</span>`;
+        }
+    }
 
-    allUrls.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'preview-item';
-        div.innerHTML = `
-            <img src="${item.url}" alt="Ảnh xem trước ${index + 1}">
-            <button type="button" class="remove-preview" title="Xóa ảnh này">&times;</button>
-            ${item.isMain ? '<span style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.5); color:#fff; font-size:9px; text-align:center;">Ảnh chính</span>' : ''}
-        `;
-        div.querySelector('.remove-preview').onclick = () => {
-            if (item.isMain) {
-                productIdEl.dataset.currentImageUrl = additionalUrls.length > 0 ? additionalUrls.shift() : '';
-                productIdEl.dataset.currentAdditionalImages = JSON.stringify(additionalUrls);
+    // Cập nhật 4 slot thumbnail phụ đứng bên phải
+    if (sideSlotsContainer) {
+        const slots = sideSlotsContainer.querySelectorAll('.kiot-thumb-slot');
+        slots.forEach((slot, idx) => {
+            if (additionalUrls[idx]) {
+                slot.innerHTML = `
+                    <div style="position: relative; width: 100%; height: 100%;">
+                        <img src="${additionalUrls[idx]}" alt="Thumb ${idx + 1}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <button type="button" onclick="event.stopPropagation(); window.removeAdditionalProductImage(${idx});" title="Xóa ảnh này" style="position: absolute; top: 1px; right: 1px; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;">&times;</button>
+                    </div>`;
             } else {
-                const filtered = additionalUrls.filter(u => u !== item.url);
-                productIdEl.dataset.currentAdditionalImages = JSON.stringify(filtered);
+                slot.innerHTML = `🖼️`;
             }
-            renderImagePreviews();
-        };
-        container.appendChild(div);
-    });
+        });
+    }
 }
+
+window.removeMainProductImage = function () {
+    const productIdEl = document.getElementById('productId');
+    if (productIdEl) {
+        productIdEl.dataset.currentImageUrl = '';
+        renderImagePreviews();
+    }
+};
+
+window.removeAdditionalProductImage = function (index) {
+    const productIdEl = document.getElementById('productId');
+    if (productIdEl) {
+        const additionalUrls = JSON.parse(productIdEl.dataset.currentAdditionalImages || '[]');
+        additionalUrls.splice(index, 1);
+        productIdEl.dataset.currentAdditionalImages = JSON.stringify(additionalUrls);
+        renderImagePreviews();
+    }
+};
 
 // --- Logic Quản lý Biến thể Màu sắc & Ảnh ---
 window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
@@ -2093,15 +2189,20 @@ window.comboVariants = [{ name: 'Mặc định', items: [] }];
 window.currentComboVariantIndex = 0;
 
 window.toggleComboSection = function () {
-    const type = document.querySelector('input[name="product-type"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="product-type"]:checked');
+    const type = checkedRadio ? checkedRadio.value : 'normal';
     const comboSection = document.getElementById('combo-section');
     const stockInput = document.getElementById('stock');
-    if (type === 'combo') {
-        comboSection.style.display = 'block';
-        if (stockInput) stockInput.value = ''; // Combo không quản lý tồn kho trực tiếp ở đây, hoặc nhập tay tùy ý
-        window.renderComboVariantsTabs();
-    } else {
-        comboSection.style.display = 'none';
+    if (comboSection) {
+        if (type === 'combo') {
+            comboSection.style.display = 'block';
+            if (stockInput) stockInput.value = '';
+            if (typeof window.renderComboVariantsTabs === 'function') {
+                window.renderComboVariantsTabs();
+            }
+        } else {
+            comboSection.style.display = 'none';
+        }
     }
 };
 
@@ -2251,7 +2352,7 @@ window.renderComboItems = function () {
             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                 <img src="${item.thumbUrl || item.imageUrl || 'https://placehold.co/50'}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                 <div style="display: flex; flex-direction: column;">
-                    <div style="font-weight: 500; font-size: 0.85rem;">${item.name}</div>
+                    <div style="font-weight: 600; font-size: 0.85rem;">${item.name}</div>
                     <div style="font-size: 0.75rem; color: #666;">Mã: ${item.id}</div>
                     <div style="display: flex; gap: 5px;">
                         ${colorOptions}
@@ -2339,7 +2440,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="suggestion-item" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px;" onclick='window.addComboItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
                         <img src="${p.thumbUrl || p.imageUrl || 'https://placehold.co/40'}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
                         <div>
-                            <div style="font-weight: 500; font-size: 0.85rem;">${p.name}</div>
+                            <div style="font-weight: 600; font-size: 0.85rem;">${p.name}</div>
                             <div style="font-size: 0.75rem; color: #666;">${p.id}</div>
                         </div>
                     </div>
@@ -2365,6 +2466,10 @@ document.addEventListener('DOMContentLoaded', () => {
 if (productForm) {
     productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (window.quillProductEditor) {
+            document.getElementById('description').value = window.quillProductEditor.root.innerHTML;
+        }
 
         const productId = document.getElementById('productId').value.trim();
         const imageFiles = document.getElementById('imageFile').files;
@@ -2507,7 +2612,7 @@ if (productForm) {
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px; color: #666;">
                                 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">${file.name}</span>
-                                <span id="percent-${index}" style="font-weight: 500;">0%</span>
+                                <span id="percent-${index}" style="font-weight: 600;">0%</span>
                             </div>
                             <div style="width: 100%; height: 4px; background: #eee; border-radius: 2px; overflow: hidden;">
                                 <div id="bar-${index}" style="width: 0%; height: 100%; background: #27ae60; transition: width 0.2s;"></div>
@@ -2767,9 +2872,9 @@ window.switchQuickViewTab = function(productId, tabName, btn) {
                     <tbody>
                         <tr>
                             <td style="padding: 6px 10px;">${p.createdAt ? new Date(p.createdAt.toDate ? p.createdAt.toDate() : p.createdAt).toLocaleString('vi-VN') : 'Mới tạo'}</td>
-                            <td style="padding: 6px 10px;"><span style="color: #0066cc; font-weight: 500;">Khởi tạo sản phẩm</span></td>
-                            <td style="padding: 6px 10px; color: #16a34a; font-weight: 600;">+${p.stock || 0}</td>
-                            <td style="padding: 6px 10px; font-weight: 600;">${p.stock || 0}</td>
+                            <td style="padding: 6px 10px;"><span style="color: #0066cc; font-weight: 600;">Khởi tạo sản phẩm</span></td>
+                            <td style="padding: 6px 10px; color: #16a34a; font-weight: 700;">+${p.stock || 0}</td>
+                            <td style="padding: 6px 10px; font-weight: 700;">${p.stock || 0}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -2782,11 +2887,11 @@ window.switchQuickViewTab = function(productId, tabName, btn) {
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div style="background: #f0f7ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 6px;">
                         <span style="color: #64748b; font-size: 0.78rem;">Tổng tồn kho hiện tại:</span>
-                        <div style="font-size: 1.2rem; font-weight: 600; color: #0066cc;">${p.stock || 0} sản phẩm</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #0066cc;">${p.stock || 0} sản phẩm</div>
                     </div>
                     <div style="background: #fcf5e5; border: 1px solid #fde68a; padding: 10px 16px; border-radius: 6px;">
                         <span style="color: #64748b; font-size: 0.78rem;">Khách đã đặt giữ chỗ:</span>
-                        <div style="font-size: 1.2rem; font-weight: 600; color: #d97706;">${p.sold || 0} sản phẩm</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #d97706;">${p.sold || 0} sản phẩm</div>
                     </div>
                 </div>
             </div>
@@ -2800,19 +2905,19 @@ window.switchQuickViewTab = function(productId, tabName, btn) {
             <div class="quickview-info-col">
                 <h2 class="quickview-title">${p.name}</h2>
                 <div class="quickview-subtags">
-                    <span class="qv-tag">Nhóm hàng: <strong style="font-weight: 500;">${p.category || 'Chưa xếp nhóm'}</strong></span>
+                    <span class="qv-tag">Nhóm hàng: <strong>${p.category || 'Chưa xếp nhóm'}</strong></span>
                     <span class="qv-tag">${p.isCombo ? 'Hàng combo' : 'Hàng hóa thường'}</span>
                     <span class="qv-tag warning">Bán trực tiếp</span>
                     <span class="qv-tag muted">Không tích điểm</span>
                 </div>
 
                 <div class="quickview-fields-grid">
-                    <div class="qv-field"><span class="qv-label">Mã hàng:</span> <strong style="font-weight: 500;">${p.id}</strong></div>
+                    <div class="qv-field"><span class="qv-label">Mã hàng:</span> <strong>${p.id}</strong></div>
                     <div class="qv-field"><span class="qv-label">Mã vạch:</span> <span>Chưa có</span></div>
                     <div class="qv-field"><span class="qv-label">Thương hiệu:</span> <span>${p.brand || 'Chưa có'}</span></div>
                     <div class="qv-field"><span class="qv-label">Định mức tồn:</span> <span>0 - 10</span></div>
 
-                    <div class="qv-field"><span class="qv-label">Giá vốn:</span> <strong style="font-weight: 500;">${costPriceStr}</strong></div>
+                    <div class="qv-field"><span class="qv-label">Giá vốn:</span> <strong>${costPriceStr}</strong></div>
                     <div class="qv-field"><span class="qv-label">Giá bán:</span> <strong style="color: #0066cc;">${salePriceStr}</strong></div>
                     <div class="qv-field"><span class="qv-label">Trọng lượng:</span> <span>Chưa có</span></div>
                     <div class="qv-field"><span class="qv-label">Vị trí:</span> <span>Chưa có</span></div>
@@ -2896,19 +3001,19 @@ window.toggleProductQuickView = function(productId, event) {
                     <div class="quickview-info-col">
                         <h2 class="quickview-title">${p.name}</h2>
                         <div class="quickview-subtags">
-                            <span class="qv-tag">Nhóm hàng: <strong style="font-weight: 500;">${p.category || 'Chưa xếp nhóm'}</strong></span>
+                            <span class="qv-tag">Nhóm hàng: <strong>${p.category || 'Chưa xếp nhóm'}</strong></span>
                             <span class="qv-tag">${p.isCombo ? 'Hàng combo' : 'Hàng hóa thường'}</span>
                             <span class="qv-tag warning">Bán trực tiếp</span>
                             <span class="qv-tag muted">Không tích điểm</span>
                         </div>
 
                         <div class="quickview-fields-grid">
-                            <div class="qv-field"><span class="qv-label">Mã hàng:</span> <strong style="font-weight: 500;">${p.id}</strong></div>
+                            <div class="qv-field"><span class="qv-label">Mã hàng:</span> <strong>${p.id}</strong></div>
                             <div class="qv-field"><span class="qv-label">Mã vạch:</span> <span>Chưa có</span></div>
                             <div class="qv-field"><span class="qv-label">Thương hiệu:</span> <span>${p.brand || 'Chưa có'}</span></div>
                             <div class="qv-field"><span class="qv-label">Định mức tồn:</span> <span>0 - 10</span></div>
 
-                            <div class="qv-field"><span class="qv-label">Giá vốn:</span> <strong style="font-weight: 500;">${costPriceStr}</strong></div>
+                            <div class="qv-field"><span class="qv-label">Giá vốn:</span> <strong>${costPriceStr}</strong></div>
                             <div class="qv-field"><span class="qv-label">Giá bán:</span> <strong style="color: #0066cc;">${salePriceStr}</strong></div>
                             <div class="qv-field"><span class="qv-label">Trọng lượng:</span> <span>Chưa có</span></div>
                             <div class="qv-field"><span class="qv-label">Vị trí:</span> <span>Chưa có</span></div>
@@ -3009,7 +3114,7 @@ function renderAdminProductTable() {
     const catValue = categoryFilter ? categoryFilter.value : 'all';
     const stockValue = stockFilter ? stockFilter.value : 'all';
     const typeValue = typeFilter ? typeFilter.value : 'all';
-    const statusValue = statusFilter ? statusFilter.value : 'active';
+    const statusValue = statusFilter ? statusFilter.value : 'all';
     const directPill = document.querySelector('.pill-options .pill-btn.active')?.getAttribute('data-direct') || 'all';
 
     // Lọc sản phẩm
@@ -3031,6 +3136,7 @@ function renderAdminProductTable() {
         let matchesStatus = true;
         if (statusValue === 'active') matchesStatus = !p.isHidden;
         else if (statusValue === 'inactive') matchesStatus = p.isHidden;
+        else if (statusValue === 'all') matchesStatus = true;
 
         let matchesDirect = true;
         if (directPill === 'yes') matchesDirect = !p.isOnlyEvent;
@@ -3106,13 +3212,16 @@ function renderAdminProductTable() {
                 <td style="text-align: center;" onclick="event.stopPropagation();"><input type="checkbox" class="product-row-checkbox" value="${p.id}"></td>
                 <td style="text-align: center; color: ${p.isFeatured ? '#f1c40f' : '#ccc'}; cursor: pointer;" class="star-toggle" data-id="${p.id}" onclick="event.stopPropagation();">&#9733;</td>
                 <td data-label="Ảnh"><img src="${displayImgUrl || 'https://placehold.co/40'}" alt="${p.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td data-label="Mã hàng"><span style="color: #0066cc; font-weight: 500;">${p.id}</span></td>
+                <td data-label="Mã hàng"><span style="color: #0066cc; font-weight: 600;">${p.id}</span></td>
                 <td data-label="Tên hàng">
                     <strong style="color: #1e293b;">${p.name}</strong>
-                    ${p.isFlashSale ? '<span style="display:inline-block; margin-left: 6px; padding: 1px 5px; background: #ffeaa7; color: #d63031; font-size: 0.7rem; border-radius: 4px;">Sale</span>' : ''}
+                    ${p.isCombo ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #f59e0b; color: #ffffff; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Combo</span>' : ''}
+                    ${p.isHidden ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Đã ẩn</span>' : ''}
+                    ${p.isOnlyEvent ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #e0f2fe; color: #0284c7; border: 1px solid #7dd3fc; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sự kiện</span>' : ''}
+                    ${p.isFlashSale ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #ffeaa7; color: #d63031; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sale</span>' : ''}
                 </td>
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
-                <td data-label="Giá vốn">${p.cost ? new Intl.NumberFormat('vi-VN').format(p.cost) : '---'}</td>
+                <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
                 <td data-label="Tồn kho">${p.isCombo ? '-' : stockDisplay}</td>
                 <td data-label="Khách đặt">${p.sold || 0}</td>
                 <td data-label="Thời gian tạo">${formattedDate}</td>
@@ -3219,7 +3328,7 @@ async function exportProductToExcel() {
                             <td class="text">${p.name}</td>
                             <td class="text">${p.category}</td>
                             <td class="number">${p.price}</td>
-                            <td class="number">${p.cost || '---'}</td>
+                            <td class="number">${p.cost || 0}</td>
                             <td class="number">${p.stock}</td>
                             <td class="number">${p.sale || 0}</td>
                             <td class="number">${p.rating || 5}</td>
@@ -3262,7 +3371,7 @@ async function editProduct(id) {
             document.getElementById('name').value = p.name;
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = window.formatCurrencyDisplay(p.price);
-            document.getElementById('cost').value = p.cost ? window.formatCurrencyDisplay(p.cost) : '';
+            document.getElementById('cost').value = window.formatCurrencyDisplay(p.cost || 0);
             document.getElementById('rentalPrice').value = window.formatCurrencyDisplay(p.rentalPrice || 0);
             document.getElementById('salePrice').value = p.salePrice ? window.formatCurrencyDisplay(p.salePrice) : '';
             document.getElementById('stock').value = p.stock;
@@ -3345,6 +3454,9 @@ async function editProduct(id) {
             if (additiveCheckbox) additiveCheckbox.checked = false;
 
             document.getElementById('description').value = p.description || '';
+            if (window.quillProductEditor) {
+                window.quillProductEditor.root.innerHTML = p.description || '';
+            }
             document.getElementById('productId').dataset.currentThumbUrl = p.thumbUrl || ''; // Store thumbUrl for editing
             document.getElementById('seoTitle').value = p.seoTitle || '';
             document.getElementById('seoDescription').value = p.seoDescription || '';
@@ -3543,7 +3655,7 @@ function renderOrderRows(ordersList, tableElement) {
                 <td data-label="Mã đơn"><small>${orderId}</small></td>
                 <td data-label="Ngày đặt">${orderDate}</td>
                 <td data-label="Khách hàng">
-                    <strong style="font-weight: 500;">${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
+                    <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
                     <small>${order.shippingAddress?.phone || ''}</small>
                 </td>
                 <td data-label="Sản phẩm">
@@ -3678,7 +3790,7 @@ function renderRentalOrderRows(ordersList, tableElement) {
                 <td data-label="Mã yêu cầu"><small>${orderId}</small></td>
                 <td data-label="Ngày gửi">${orderDate}</td>
                 <td data-label="Công ty / Khách hàng">
-                    <strong style="font-weight: 500;">${companyName}</strong><br>
+                    <strong>${companyName}</strong><br>
                     <small>${order.rentalInfo?.phone || ''}</small>
                 </td>
                 <td data-label="Sự kiện">
@@ -3847,7 +3959,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                 </div>
             `;
         }
-        if (order.trackingLink) { pricingDetailsHtml += `<div style="font-size: 0.95rem; margin-bottom: 8px; color: #2980b9;"><span><strong style="font-weight: 500;">Lộ trình giao hàng:</strong> <a href="${order.trackingLink}" target="_blank" style="color: #3498db; text-decoration: underline;">Xem (Grab/Ahamove/...)</a></span></div>`; } if (membershipDiscount > 0) {
+        if (order.trackingLink) { pricingDetailsHtml += `<div style="font-size: 0.95rem; margin-bottom: 8px; color: #2980b9;"><span><strong>Lộ trình giao hàng:</strong> <a href="${order.trackingLink}" target="_blank" style="color: #3498db; text-decoration: underline;">Xem (Grab/Ahamove/...)</a></span></div>`; } if (membershipDiscount > 0) {
             pricingDetailsHtml += `
                 <div style="display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; color: #27ae60;">
                     <span>Giảm giá thành viên (VIP):</span>
@@ -3878,22 +3990,22 @@ window.viewAdminOrderDetail = async (orderId) => {
                     <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <h4 style="margin-top: 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px;">Thông tin khách thuê</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem;">
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Công ty / Cá nhân:</strong> ${rInfo.companyName || 'N/A'}</p>
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Mã số thuế:</strong> ${rInfo.taxCode || 'N/A'}</p>
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Người liên hệ:</strong> ${rInfo.contactName || order.shippingAddress?.fullName || 'N/A'}</p>
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">SĐT:</strong> ${rInfo.phone || order.shippingAddress?.phone || 'N/A'}</p>
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Email:</strong> ${rInfo.email || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Công ty / Cá nhân:</strong> ${rInfo.companyName || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Mã số thuế:</strong> ${rInfo.taxCode || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Người liên hệ:</strong> ${rInfo.contactName || order.shippingAddress?.fullName || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>SĐT:</strong> ${rInfo.phone || order.shippingAddress?.phone || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Email:</strong> ${rInfo.email || 'N/A'}</p>
                         </div>
                     </div>
 
                     <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <h4 style="margin-top: 0; color: #0d47a1; border-bottom: 2px solid #bbdefb; padding-bottom: 5px;">Chi tiết sự kiện</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem;">
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Ngày cần đồ:</strong> ${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
-                            <p style="margin: 5px 0;"><strong style="font-weight: 500;">Ngày trả đồ:</strong> ${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
-                            <p style="margin: 5px 0; grid-column: 1 / -1;"><strong style="font-weight: 500;">Địa chỉ setup:</strong> ${rInfo.address || 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Ngày cần đồ:</strong> ${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                            <p style="margin: 5px 0;"><strong>Ngày trả đồ:</strong> ${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                            <p style="margin: 5px 0; grid-column: 1 / -1;"><strong>Địa chỉ setup:</strong> ${rInfo.address || 'N/A'}</p>
                         </div>
-                        ${rInfo.notes ? `<p style="margin: 10px 0 5px 0; font-size: 0.95rem; color: #d35400;"><strong style="font-weight: 500;">Ghi chú:</strong> ${rInfo.notes.replace(/\n/g, '<br>')}</p>` : ''}
+                        ${rInfo.notes ? `<p style="margin: 10px 0 5px 0; font-size: 0.95rem; color: #d35400;"><strong>Ghi chú:</strong> ${rInfo.notes.replace(/\n/g, '<br>')}</p>` : ''}
                     </div>
 
                     <h4 style="margin-top: 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px;">Sản phẩm thuê</h4>
@@ -3902,7 +4014,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                             <li style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px;">
                                 <img src="${i.image}" alt="${i.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                 <div>
-                                    <div style="font-weight: 500;">${i.name}</div>
+                                    <div style="font-weight: 600;">${i.name}</div>
                                     <div style="font-size: 0.8rem; color: #555;">Mã SP: ${i.id}</div>
                                     <div style="font-size: 0.85rem; color: #666;">Số lượng: ${i.quantity} | Giá thuê: ${new Intl.NumberFormat('vi-VN').format(i.rentalPrice || i.price || 0)} VND/ngày</div>
                                 </div>
@@ -3918,7 +4030,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                             <span>Tiền cọc dự kiến (50%):</span>
                             <span>${new Intl.NumberFormat('vi-VN').format(Math.round(subtotal / 2))}đ</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 600; color: #e65100; border-top: 1px solid #ffe0b2; padding-top: 10px; margin-top: 5px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: #e65100; border-top: 1px solid #ffe0b2; padding-top: 10px; margin-top: 5px;">
                             <span>Tổng thanh toán:</span>
                             <span>${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</span>
                         </div>
@@ -3940,16 +4052,16 @@ window.viewAdminOrderDetail = async (orderId) => {
                         </button>
                     </div>
                     <hr style="margin: 1rem 0;">
-                    <p><strong style="font-weight: 500;">Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
-                    <p><strong style="font-weight: 500;">SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
-                    <p><strong style="font-weight: 500;">Địa chỉ:</strong> ${order.shippingAddress?.address || 'N/A'}</p>
-                    <p><strong style="font-weight: 500;">Sản phẩm:</strong></p>
+                    <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
+                    <p><strong>SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
+                    <p><strong>Địa chỉ:</strong> ${order.shippingAddress?.address || 'N/A'}</p>
+                    <p><strong>Sản phẩm:</strong></p>
                     <ul style="list-style: none; padding: 0;">
                         ${order.items.map(i => `
                             <li style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px;">
                                 <img src="${i.image}" alt="${i.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                 <div>
-                                    <div style="font-weight: 500;">${i.name}</div>
+                                    <div style="font-weight: 600;">${i.name}</div>
                                     <div style="font-size: 0.8rem; color: #555;">Mã SP: ${i.id}</div>
                                     ${i.variant ? `<div style="font-size: 0.8rem; color: #e67e22; margin-bottom: 2px;">Phân loại: ${i.variant}</div>` : ''}
                                     <div style="font-size: 0.85rem; color: #666;">Số lượng: ${i.quantity} | Giá: ${new Intl.NumberFormat('vi-VN').format(i.price)} VND</div>
@@ -3958,7 +4070,7 @@ window.viewAdminOrderDetail = async (orderId) => {
                     </ul>
                     <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
                     ${pricingDetailsHtml}
-                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 10px; font-weight: 600; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; border-top: 1px solid #eee; padding-top: 10px; font-weight: 700; margin-top: 10px;">
                         <span>Tổng thanh toán:</span>
                         <span style="color: var(--primary-color, #2c3e50);">${new Intl.NumberFormat('vi-VN').format(order.totalAmount)}đ</span>
                     </div>
@@ -4036,7 +4148,7 @@ function renderAdminUserTable() {
         htmlContent += `
                 <tr>
                     <td data-label="Người dùng">
-                        <strong style="font-weight: 500;">${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
+                        <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
                         <small style="color: #888;">ID: ${u.id}</small>
                     </td>
                     <td data-label="SĐT">${formatPhoneNumber(u.phoneNumber || u.phone) || '---'}</td>
@@ -4082,9 +4194,9 @@ window.viewAdminUserDetail = async (uid) => {
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg>
                 </div>
                 <div>
-                    <div style="font-weight: 600; color: ${tier.color}; font-size: 1.1rem;">${tier.name}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(spent)} VND</strong></div>
-                    <div style="font-size: 0.85rem; color: #666;">Số đơn hoàn thành: <strong style="font-weight: 500;">${count} đơn</strong></div>
+                    <div style="font-weight: 700; color: ${tier.color}; font-size: 1.1rem;">${tier.name}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(spent)} VND</strong></div>
+                    <div style="font-size: 0.85rem; color: #666;">Số đơn hoàn thành: <strong>${count} đơn</strong></div>
                 </div>
             </div>
 
@@ -4257,7 +4369,7 @@ function initAdminAccountListener() {
             return `
                 <tr>
                     <td data-label="Thông tin">
-                        <strong style="font-weight: 500;">${u.displayName || a.email || 'Thành viên mới'}</strong><br>
+                        <strong>${u.displayName || a.email || 'Thành viên mới'}</strong><br>
                         <small style="color: #888;">${a.email || 'Không có email'}</small>
                     </td>
                     <td data-label="Vai trò">
@@ -4404,7 +4516,7 @@ window.editAdminPermissions = async (uid, email) => {
             <div class="modal-content" style="max-width: 450px;">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
                 <h3>Cấu hình chức năng</h3>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Tài khoản: <strong style="font-weight: 500;">${email}</strong></p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Tài khoản: <strong>${email}</strong></p>
                 <form id="perms-edit-form">
                     <div style="display: grid; gap: 12px; margin-bottom: 2rem;">
                         ${ALL_SECTIONS.map(s => `
@@ -4446,7 +4558,7 @@ function initCouponListener() {
             const categoryText = c.category === 'all' || !c.category ? 'Tất cả' : c.category;
             return `
                 <tr>
-                    <td><strong style="font-weight: 500;">${doc.id}</strong></td>
+                    <td><strong>${doc.id}</strong></td>
                     <td>${c.name || 'Chưa đặt tên'}</td>
                     <td>${c.type === 'percent' ? 'Phần trăm' : 'Cố định'}</td>
                     <td>${c.type === 'percent' ? c.value + '%' : new Intl.NumberFormat('vi-VN').format(c.value) + ' VND'}</td>
@@ -5322,7 +5434,7 @@ async function initFullReport() {
                 const growth = ((current - previous) / previous) * 100;
                 const color = growth >= 0 ? '#27ae60' : '#e74c3c';
                 const arrow = growth >= 0 ? '↑' : '↓';
-                return `<span style="color: ${color}; font-weight: 500;">${arrow}${Math.abs(growth).toFixed(1)}%</span>`;
+                return `<span style="color: ${color}; font-weight: 600;">${arrow}${Math.abs(growth).toFixed(1)}%</span>`;
             };
 
             // 3. Cập nhật thẻ Summary
@@ -5449,14 +5561,14 @@ async function initFullReport() {
             const tableBody = document.getElementById('stats-detail-table');
             const rowsHtml = labels.map(l => `
                 <tr>
-                    <td><strong style="font-weight: 500;">${l}</strong></td>
+                    <td><strong>${l}</strong></td>
                     <td>${statsMap[l].count} ĐH</td>
                     <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].net)} VND</td>
                     <td style="color: #e67e22;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat)} VND</td>
                     <td style="color: #d35400;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].tncn)} VND</td>
-                    <td style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat + statsMap[l].tncn)} VND</td>
+                    <td style="font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].vat + statsMap[l].tncn)} VND</td>
                     <td>${new Intl.NumberFormat('vi-VN').format(statsMap[l].rev)} VND</td>
-                    <td style="color: #27ae60; font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)} VND</td>
+                    <td style="color: #27ae60; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(statsMap[l].profit)} VND</td>
                 </tr>
             `).join('');
 
@@ -5600,7 +5712,7 @@ function renderInventoryLogTable() {
         return `
                 <tr>
                     <td><small>${time}</small></td>
-                    <td><strong style="font-weight: 500;">${l.productName}</strong><br><small>${l.productId}</small></td>
+                    <td><strong>${l.productName}</strong><br><small>${l.productId}</small></td>
                     <td style="${changeStyle}">${sign}${l.addedQuantity}</td>
                     <td>${l.previousStock} → ${l.newStock}</td>
                     <td><small>${l.adminEmail}</small></td>
@@ -5782,10 +5894,10 @@ function renderAdminFlashSaleList() {
         return `
             <tr>
                 <td data-label="Ảnh"><img src="${p.imageUrl}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td data-label="Tên"><strong style="font-weight: 500;">${p.name}</strong><br><small style="color:#888;">SKU: ${p.id}</small></td>
+                <td data-label="Tên"><strong>${p.name}</strong><br><small style="color:#888;">SKU: ${p.id}</small></td>
                 <td data-label="Giá gốc">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
-                <td data-label="Giảm" style="color: #c0392b; font-weight: 600;">-${p.sale}%</td>
-                <td data-label="Giá Sale" style="font-weight: 600; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)} VND ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup / 1000}k</small>` : ''}</td>
+                <td data-label="Giảm" style="color: #c0392b; font-weight: 700;">-${p.sale}%</td>
+                <td data-label="Giá Sale" style="font-weight: 700; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)} VND ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup / 1000}k</small>` : ''}</td>
                 <td data-label="Kho" style="${stockClass}">${p.stock}</td>
             </tr>
         `;
@@ -5864,7 +5976,7 @@ function initNewsManagement() {
             return `
                 <tr>
                     <td><img src="${n.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                    <td><strong style="font-weight: 500;">${n.title}</strong><br><small>${n.status === 'draft' ? '[NHÁP]' : ''}</small></td>
+                    <td><strong>${n.title}</strong><br><small>${n.status === 'draft' ? '[NHÁP]' : ''}</small></td>
                     <td>${date}</td>
                     <td>
                         <button class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px;" onclick="window.editNews('${doc.id}')">Sửa</button>
@@ -6137,7 +6249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             initOverview();
             initCategoryManagement(); // Call initCategoryManagement here to ensure initial render
             setupNewOrderNotification();
-            initBellNotifications();
             initUserOrderCountListener();
             initUnprocessedOrderBadge();
             populateCategorySelect();
@@ -6186,7 +6297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return `
                             <div class="suggestion-item" onclick="window.posSelectCustomer('${u.id}', '${(u.displayName || '').replace(/'/g, "\\'")}', '${u.phone || ''}', '${u.email || ''}')">
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 500; font-size: 0.85rem;">${u.displayName || 'Khách không tên'}</div>
+                                    <div style="font-weight: 600; font-size: 0.85rem;">${u.displayName || 'Khách không tên'}</div>
                                     <div style="font-size: 0.7rem; color: #888;">SĐT: ${u.phone || '---'} | Đã mua: <strong style="color:var(--text-black)">${count} đơn</strong></div>
                                 </div>
                             </div>
@@ -6242,9 +6353,9 @@ document.addEventListener('DOMContentLoaded', () => {
                              onclick="window.addToPOSCart('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}')">
                             <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 500; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333;">${p.name}</div>
+                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333;">${p.name}</div>
                                 <div style="font-size: 0.7rem; color: #888;">
-                                    SKU: ${p.id} | Kho: ${p.stock} | <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</strong>
+                                    SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</strong>
                                 </div>
                             </div>
                         </div>`;
@@ -6422,10 +6533,10 @@ window.printPOSReceipt = function (orderId, customer, items, total, subtotal = 0
             <p>SĐT: 0777709662</p>
         </div>
         <div class="receipt-info">
-            <p><strong style="font-weight: 500;">Mã ĐH:</strong> #${orderId}</p>
-            <p><strong style="font-weight: 500;">Ngày:</strong> ${now}</p>
-            <p><strong style="font-weight: 500;">Khách hàng:</strong> ${customer?.name || 'Khách vãng lai'}</p>
-            <p><strong style="font-weight: 500;">SĐT:</strong> ${customer?.phone || ''}</p>
+            <p><strong>Mã ĐH:</strong> #${orderId}</p>
+            <p><strong>Ngày:</strong> ${now}</p>
+            <p><strong>Khách hàng:</strong> ${customer?.name || 'Khách vãng lai'}</p>
+            <p><strong>SĐT:</strong> ${customer?.phone || ''}</p>
         </div>
         <table class="receipt-table">
             <thead>
@@ -6498,7 +6609,7 @@ window.editAdminOrder = async (orderId) => {
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                         <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 500; font-size: 0.9rem;">${item.name}</div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
                             <div style="font-size: 0.8rem; color: #666;">${item.variant ? 'Loại: ' + item.variant : ''}</div>
                         </div>
                         <input type="number" min="1" value="${item.quantity}" style="width: 60px; padding: 5px;" onchange="window.updateEditOrderItem(${index}, 'quantity', this.value)">
@@ -6516,22 +6627,22 @@ window.editAdminOrder = async (orderId) => {
                 <h3>Chỉnh sửa đơn hàng #${orderId}</h3>
                 
                 <div style="margin-top: 15px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Tên khách hàng</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Tên khách hàng</label>
                     <input type="text" id="edit-order-customer-name" value="${order.shippingAddress?.fullName || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 
                 <div style="margin-top: 10px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Số điện thoại</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Số điện thoại</label>
                     <input type="text" id="edit-order-customer-phone" value="${order.shippingAddress?.phone || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 
                 <div style="margin-top: 10px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Địa chỉ giao hàng</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Địa chỉ giao hàng</label>
                     <input type="text" id="edit-order-customer-address" value="${order.shippingAddress?.address || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
                 <div style="margin-top: 10px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Trạng thái đơn hàng</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Trạng thái đơn hàng</label>
                     <select id="edit-order-status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <option value="Đang xử lý" ${order.status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
                         <option value="Đã thanh toán" ${order.status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
@@ -6542,22 +6653,22 @@ window.editAdminOrder = async (orderId) => {
                 </div>
                 
                 <div style="margin-top: 10px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Link vận đơn (Tracking)</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Link vận đơn (Tracking)</label>
                     <input type="text" id="edit-order-tracking" value="${order.trackingLink || ''}" placeholder="Nhập link theo dõi đơn hàng..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
                 <div style="margin-top: 15px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Phí vận chuyển (VNĐ)</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Phí vận chuyển (VNĐ)</label>
                     <input type="number" id="edit-order-shipping" value="${order.shippingFee || 0}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 
                 <div style="margin-top: 10px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Khuyến mãi giảm (VNĐ)</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Khuyến mãi giảm (VNĐ)</label>
                     <input type="number" id="edit-order-discount" value="${order.discountAmount || 0}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
                 <div style="margin-top: 15px;">
-                    <label style="font-weight: 500; font-size: 0.9rem; display: block; margin-bottom: 5px;">Sản phẩm</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 5px;">Sản phẩm</label>
                     <div id="edit-order-items-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;"></div>
                 </div>
 
@@ -6587,7 +6698,7 @@ window.removeEditOrderItem = (index) => {
             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <img src="${item.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; font-size: 0.9rem;">${item.name}</div>
+                    <div style="font-weight: 600; font-size: 0.9rem;">${item.name}</div>
                 </div>
                 <input type="number" min="1" value="${item.quantity}" style="width: 60px; padding: 5px;" onchange="window.updateEditOrderItem(${i}, 'quantity', this.value)">
                 <input type="number" min="0" value="${item.price}" style="width: 100px; padding: 5px;" onchange="window.updateEditOrderItem(${i}, 'price', this.value)">
@@ -6823,7 +6934,7 @@ window.printRentalBill = async (orderId) => {
 <p>- Người đại diện: Dương Minh Hiếu          Chức vụ: Chủ hộ kinh doanh</p>
 
 <div class="section-title">BÊN THUÊ (BÊN B):</div>
-<p>- Công ty/Cá nhân: <strong style="font-weight: 500;">${rInfo.companyName || (o.shippingAddress?.fullName || '...................................................')}</strong></p>
+<p>- Công ty/Cá nhân: <strong>${rInfo.companyName || (o.shippingAddress?.fullName || '...................................................')}</strong></p>
 <p>- Người liên hệ: ${rInfo.contactName || o.shippingAddress?.fullName || '...................................................'}</p>
 <p>- Mã số thuế: ${rInfo.taxCode || '...................................................'}</p>
 <p>- Điện thoại: ${rInfo.phone || o.shippingAddress?.phone || '...................................................'}</p>
@@ -6845,14 +6956,14 @@ window.printRentalBill = async (orderId) => {
     </tbody>
 </table>
 
-<p style="margin-top: 10px;">- <strong style="font-weight: 500;">Thời gian thuê:</strong> ${rentalDays} ngày. Từ ngày <strong style="font-weight: 500;">${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : '...'}</strong> đến ngày <strong style="font-weight: 500;">${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : '...'}</strong>.</p>
-<p>- <strong style="font-weight: 500;">Tổng giá trị hợp đồng (Tổng phí thuê):</strong> <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(totalRentalPrice)} VNĐ</strong></p>
-<p>- <strong style="font-weight: 500;">Tiền đặt cọc (Bên B đặt cọc cho Bên A):</strong> <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(deposit)} VNĐ</strong></p>
+<p style="margin-top: 10px;">- <strong>Thời gian thuê:</strong> ${rentalDays} ngày. Từ ngày <strong>${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : '...'}</strong> đến ngày <strong>${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : '...'}</strong>.</p>
+<p>- <strong>Tổng giá trị hợp đồng (Tổng phí thuê):</strong> <strong>${new Intl.NumberFormat('vi-VN').format(totalRentalPrice)} VNĐ</strong></p>
+<p>- <strong>Tiền đặt cọc (Bên B đặt cọc cho Bên A):</strong> <strong>${new Intl.NumberFormat('vi-VN').format(deposit)} VNĐ</strong></p>
 <p style="font-style: italic;">(Tiền đặt cọc sẽ được hoàn trả lại cho Bên B sau khi Bên A nhận lại đủ đồ và không có hư hại, mất mát).</p>
 
 <div class="section-title">ĐIỀU 2: TRÁCH NHIỆM CỦA CÁC BÊN</div>
-<p><strong style="font-weight: 500;">1. Trách nhiệm của Bên A:</strong> Giao đồ đúng số lượng, chất lượng và thời gian như đã thỏa thuận.</p>
-<p><strong style="font-weight: 500;">2. Trách nhiệm của Bên B:</strong><br/>
+<p><strong>1. Trách nhiệm của Bên A:</strong> Giao đồ đúng số lượng, chất lượng và thời gian như đã thỏa thuận.</p>
+<p><strong>2. Trách nhiệm của Bên B:</strong><br/>
 - Sử dụng đồ đúng mục đích, bảo quản cẩn thận trong suốt thời gian thuê.<br/>
 - Hoàn trả đồ đúng thời hạn. Trường hợp quá hạn, Bên B phải thanh toán thêm phí thuê theo ngày phát sinh.<br/>
 - Trường hợp làm mất mát, hư hỏng đồ, Bên B phải bồi thường theo giá trị niêm yết hiện hành của sản phẩm hoặc theo thỏa thuận đền bù của Bên A.</p>
@@ -6860,20 +6971,20 @@ window.printRentalBill = async (orderId) => {
 <div class="section-title">ĐIỀU 3: ĐIỀU KHOẢN CHUNG</div>
 <p>Hai bên cam kết thực hiện đúng các điều khoản trong hợp đồng. Mọi phát sinh tranh chấp sẽ được giải quyết trên tinh thần thương lượng. Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
 
-${rInfo.notes ? `<p><strong style="font-weight: 500;">Ghi chú thêm:</strong> ${rInfo.notes}</p>` : ''}
+${rInfo.notes ? `<p><strong>Ghi chú thêm:</strong> ${rInfo.notes}</p>` : ''}
 
 <div class="signatures">
     <div style="width: 50%;">
-        <strong style="font-weight: 500;">ĐẠI DIỆN BÊN A</strong><br/>
+        <strong>ĐẠI DIỆN BÊN A</strong><br/>
         <em>(Ký, ghi rõ họ tên)</em><br/>
         <br/><br/><br/><br/>
-        <strong style="font-weight: 500;">Tiệm Nhà Gốm</strong>
+        <strong>Tiệm Nhà Gốm</strong>
     </div>
     <div style="width: 50%;">
-        <strong style="font-weight: 500;">ĐẠI DIỆN BÊN B</strong><br/>
+        <strong>ĐẠI DIỆN BÊN B</strong><br/>
         <em>(Ký, ghi rõ họ tên, đóng dấu nếu có)</em><br/>
         <br/><br/><br/><br/>
-        <strong style="font-weight: 500;">${rInfo.companyName || rInfo.contactName || o.shippingAddress?.fullName || '..........................'}</strong>
+        <strong>${rInfo.companyName || rInfo.contactName || o.shippingAddress?.fullName || '..........................'}</strong>
     </div>
 </div>
 </body></html>`;
@@ -6934,7 +7045,7 @@ window.downloadRentalBillPDF = async (orderId) => {
             <p style="margin: 5px 0;">- Người đại diện: Dương Minh Hiếu          Chức vụ: Chủ hộ kinh doanh</p>
             
             <div style="font-weight: bold; margin-top: 15px; font-size: 13pt; text-transform: uppercase;">BÊN THUÊ (BÊN B):</div>
-            <p style="margin: 5px 0;">- Công ty/Cá nhân: <strong style="font-weight: 500;">${rInfo.companyName || (o.shippingAddress?.fullName || '...................................................')}</strong></p>
+            <p style="margin: 5px 0;">- Công ty/Cá nhân: <strong>${rInfo.companyName || (o.shippingAddress?.fullName || '...................................................')}</strong></p>
             <p style="margin: 5px 0;">- Người liên hệ: ${rInfo.contactName || o.shippingAddress?.fullName || '...................................................'}</p>
             <p style="margin: 5px 0;">- Mã số thuế: ${rInfo.taxCode || '...................................................'}</p>
             <p style="margin: 5px 0;">- Điện thoại: ${rInfo.phone || o.shippingAddress?.phone || '...................................................'}</p>
@@ -6965,14 +7076,14 @@ window.downloadRentalBillPDF = async (orderId) => {
                 </tbody>
             </table>
             
-            <p style="margin: 10px 0 5px 0;">- <strong style="font-weight: 500;">Thời gian thuê:</strong> ${rentalDays} ngày. Từ ngày <strong style="font-weight: 500;">${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : '...'}</strong> đến ngày <strong style="font-weight: 500;">${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : '...'}</strong>.</p>
-            <p style="margin: 5px 0;">- <strong style="font-weight: 500;">Tổng giá trị hợp đồng (Tổng phí thuê):</strong> <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(totalRentalPrice)} VNĐ</strong></p>
-            <p style="margin: 5px 0;">- <strong style="font-weight: 500;">Tiền đặt cọc (Bên B đặt cọc cho Bên A):</strong> <strong style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(deposit)} VNĐ</strong></p>
+            <p style="margin: 10px 0 5px 0;">- <strong>Thời gian thuê:</strong> ${rentalDays} ngày. Từ ngày <strong>${rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : '...'}</strong> đến ngày <strong>${rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : '...'}</strong>.</p>
+            <p style="margin: 5px 0;">- <strong>Tổng giá trị hợp đồng (Tổng phí thuê):</strong> <strong>${new Intl.NumberFormat('vi-VN').format(totalRentalPrice)} VNĐ</strong></p>
+            <p style="margin: 5px 0;">- <strong>Tiền đặt cọc (Bên B đặt cọc cho Bên A):</strong> <strong>${new Intl.NumberFormat('vi-VN').format(deposit)} VNĐ</strong></p>
             <p style="font-style: italic; margin: 5px 0;">(Tiền đặt cọc sẽ được hoàn trả lại cho Bên B sau khi Bên A nhận lại đủ đồ và không có hư hại, mất mát).</p>
             
             <div style="font-weight: bold; margin-top: 15px; font-size: 13pt; text-transform: uppercase;">ĐIỀU 2: TRÁCH NHIỆM CỦA CÁC BÊN</div>
-            <p style="margin: 5px 0;"><strong style="font-weight: 500;">1. Trách nhiệm của Bên A:</strong> Giao đồ đúng số lượng, chất lượng và thời gian như đã thỏa thuận.</p>
-            <p style="margin: 5px 0;"><strong style="font-weight: 500;">2. Trách nhiệm của Bên B:</strong><br/>
+            <p style="margin: 5px 0;"><strong>1. Trách nhiệm của Bên A:</strong> Giao đồ đúng số lượng, chất lượng và thời gian như đã thỏa thuận.</p>
+            <p style="margin: 5px 0;"><strong>2. Trách nhiệm của Bên B:</strong><br/>
             - Sử dụng đồ đúng mục đích, bảo quản cẩn thận trong suốt thời gian thuê.<br/>
             - Hoàn trả đồ đúng thời hạn. Trường hợp quá hạn, Bên B phải thanh toán thêm phí thuê theo ngày phát sinh.<br/>
             - Trường hợp làm mất mát, hư hỏng đồ, Bên B phải bồi thường theo giá trị niêm yết hiện hành của sản phẩm hoặc theo thỏa thuận đền bù của Bên A.</p>
@@ -6980,20 +7091,20 @@ window.downloadRentalBillPDF = async (orderId) => {
             <div style="font-weight: bold; margin-top: 15px; font-size: 13pt; text-transform: uppercase;">ĐIỀU 3: ĐIỀU KHOẢN CHUNG</div>
             <p style="margin: 5px 0;">Hai bên cam kết thực hiện đúng các điều khoản trong hợp đồng. Mọi phát sinh tranh chấp sẽ được giải quyết trên tinh thần thương lượng. Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
             
-            ${rInfo.notes ? `<p style="margin: 5px 0;"><strong style="font-weight: 500;">Ghi chú thêm:</strong> ${rInfo.notes}</p>` : ''}
+            ${rInfo.notes ? `<p style="margin: 5px 0;"><strong>Ghi chú thêm:</strong> ${rInfo.notes}</p>` : ''}
             
             <div style="display: flex; justify-content: space-around; margin-top: 30px; text-align: center;">
                 <div style="width: 50%;">
-                    <strong style="font-weight: 500;">ĐẠI DIỆN BÊN A</strong><br/>
+                    <strong>ĐẠI DIỆN BÊN A</strong><br/>
                     <em>(Ký, ghi rõ họ tên)</em><br/>
                     <br/><br/><br/><br/>
-                    <strong style="font-weight: 500;">Tiệm Nhà Gốm</strong>
+                    <strong>Tiệm Nhà Gốm</strong>
                 </div>
                 <div style="width: 50%;">
-                    <strong style="font-weight: 500;">ĐẠI DIỆN BÊN B</strong><br/>
+                    <strong>ĐẠI DIỆN BÊN B</strong><br/>
                     <em>(Ký, ghi rõ họ tên, đóng dấu nếu có)</em><br/>
                     <br/><br/><br/><br/>
-                    <strong style="font-weight: 500;">${rInfo.companyName || rInfo.contactName || o.shippingAddress?.fullName || '..........................'}</strong>
+                    <strong>${rInfo.companyName || rInfo.contactName || o.shippingAddress?.fullName || '..........................'}</strong>
                 </div>
             </div>
         `;
@@ -7018,160 +7129,3 @@ window.downloadRentalBillPDF = async (orderId) => {
         window.showToast('Lỗi tải hóa đơn PDF', 'error');
     }
 };
-
-
-// --- PRODUCT MODAL UI LOGIC (TABS, ACCORDION, QUILL) ---
-window.switchProductTab = function(btn, targetId) {
-    // Hide all tabs
-    document.querySelectorAll('.admin-modal-tab-content').forEach(tab => {
-        tab.classList.remove('active');
-        tab.style.display = 'none';
-    });
-    // Remove active class from all buttons
-    document.querySelectorAll('.admin-modal-tab-btn').forEach(b => {
-        b.classList.remove('active');
-    });
-    // Show target tab
-    const targetTab = document.getElementById(targetId);
-    if (targetTab) {
-        targetTab.classList.add('active');
-        targetTab.style.display = 'block';
-    }
-    // Add active class to clicked button
-    btn.classList.add('active');
-    
-    // Refresh Quill if switching to description tab
-    if (targetId === 'product-tab-desc' && window.productQuill) {
-        // give it a tiny timeout to ensure display:block is rendered
-        setTimeout(() => {
-            const currentQuillHtml = window.productQuill.root.innerHTML;
-            const descValue = document.getElementById('description').value || '';
-            // Only update if they differ to avoid resetting cursor if they switch back and forth
-            if (currentQuillHtml !== descValue && !(currentQuillHtml === '<p><br></p>' && descValue === '')) {
-                window.productQuill.root.innerHTML = descValue;
-            }
-        }, 10);
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize Quill Editor for Product Description
-    if (document.getElementById('product-quill-editor') && typeof Quill !== 'undefined' && !window.productQuill) {
-        window.productQuill = new Quill('#product-quill-editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'align': [] }],
-                    ['link', 'image', 'video'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Nhập mô tả sản phẩm chi tiết ở đây...'
-        });
-        
-        window.productQuill.on('text-change', function() {
-            document.getElementById('description').value = window.productQuill.root.innerHTML;
-        });
-    }
-
-    // 2. Fixed Bottom Bar logic
-    const btnCancelBottom = document.getElementById('btn-cancel-product-bottom');
-    if (btnCancelBottom) {
-        btnCancelBottom.addEventListener('click', () => {
-            if (window.closeProductModal) window.closeProductModal();
-        });
-    }
-
-    const btnSaveBottom = document.getElementById('btn-save-product-bottom');
-    if (btnSaveBottom) {
-        btnSaveBottom.addEventListener('click', () => {
-            // Trigger standard form submit
-            document.getElementById('submit-product-btn').click();
-        });
-    }
-});
-
-// ======== KIOTVIET BELL NOTIFICATION LOGIC ========
-function initBellNotifications() {
-    const indicator = document.getElementById('notification-indicator');
-    const notifList = document.getElementById('notification-list');
-    if (!indicator || !notifList || typeof db === 'undefined') return;
-
-    function updateNotificationDropdown(ordersData, rentalData) {
-        const allItems = [...ordersData, ...rentalData];
-        // Sort newest first
-        allItems.sort((a, b) => b.timestamp - a.timestamp);
-
-        if (allItems.length > 0) {
-            indicator.style.display = 'block';
-            let html = '';
-            allItems.forEach(item => {
-                const isRental = item.type === 'rental';
-                const icon = isRental ? '🛋️' : '📦';
-                const target = isRental ? 'rental-order-section' : 'order-section';
-                html += `
-                    <div class="notif-item" style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="document.querySelector('.admin-tab-btn[data-target=\'${target}\']')?.click();">
-                        <div style="display: flex; gap: 10px; align-items: start;">
-                            <div style="font-size: 1.2rem;">${icon}</div>
-                            <div>
-                                <div style="font-size: 0.85rem; font-weight: 600; color: #334155;">${isRental ? 'Đơn thuê mới' : 'Đơn hàng mới'}</div>
-                                <div style="font-size: 0.75rem; color: #64748b;">Mã: ${item.id} - ${item.customerName}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            notifList.innerHTML = html;
-        } else {
-            indicator.style.display = 'none';
-            notifList.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: #64748b;">
-                    <svg viewBox="0 0 24 24" width="40" height="40" fill="#e2e8f0" style="margin-bottom: 10px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <div>Không có thông báo</div>
-                </div>
-            `;
-        }
-    }
-
-    let pendingOrders = [];
-    let pendingRentals = [];
-
-    // Listen to pending normal orders
-    const ordersQ = query(collection(db, "orders"), where("status", "==", "chờ duyệt"));
-    onSnapshot(ordersQ, (snapshot) => {
-        pendingOrders = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                type: 'order',
-                customerName: data.customerInfo?.name || data.customerName || 'Khách',
-                timestamp: data.orderDate ? (data.orderDate.seconds || Date.parse(data.orderDate)) : 0
-            };
-        });
-        updateNotificationDropdown(pendingOrders, pendingRentals);
-    });
-
-    // Listen to pending rental orders
-    const rentalsQ = query(collection(db, "rental_orders"), where("status", "==", "chờ duyệt"));
-    onSnapshot(rentalsQ, (snapshot) => {
-        pendingRentals = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                type: 'rental',
-                customerName: data.customerInfo?.name || data.customerName || 'Khách',
-                timestamp: data.createdAt ? (data.createdAt.seconds || Date.parse(data.createdAt)) : 0
-            };
-        });
-        updateNotificationDropdown(pendingOrders, pendingRentals);
-    });
-
-    // Click inside dropdown removes indicator for session
-    document.getElementById('notification-dropdown-wrapper')?.addEventListener('click', function() {
-        indicator.style.display = 'none';
-    });
-}
