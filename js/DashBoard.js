@@ -4736,17 +4736,19 @@ window.currentBillId = null;
 
 window.initPOSBills = () => {
     const saved = localStorage.getItem('posBills');
+    const savedCurrentId = localStorage.getItem('posCurrentBillId');
     if (saved) {
         try {
             window.posBills = JSON.parse(saved);
             if (window.posBills.length > 0) {
-                window.currentBillId = window.posBills[0].id;
+                const found = window.posBills.find(b => b.id === savedCurrentId);
+                window.currentBillId = found ? found.id : window.posBills[0].id;
             }
         } catch (e) {
             window.posBills = [];
         }
     }
-    if (window.posBills.length === 0) {
+    if (!window.posBills || window.posBills.length === 0) {
         window.posCreateNewBill();
     } else {
         renderPOSTabs();
@@ -4755,7 +4757,15 @@ window.initPOSBills = () => {
 };
 
 window.savePOSBills = () => {
+    const noteInput = document.getElementById('pos-order-note');
+    const bill = window.getCurrentBill();
+    if (bill && noteInput) {
+        bill.note = noteInput.value;
+    }
     localStorage.setItem('posBills', JSON.stringify(window.posBills));
+    if (window.currentBillId) {
+        localStorage.setItem('posCurrentBillId', window.currentBillId);
+    }
 };
 
 window.getCurrentBill = () => {
@@ -5308,12 +5318,22 @@ window.createPOSOrder = async () => {
         if (typeof showToast !== 'undefined') showToast("Lỗi POS: " + e.message, "error");
         console.error(e);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = "THANH TOÁN";
+        const checkBtn = document.getElementById('btn-pos-checkout') || document.querySelector('.pos-btn-complete');
+        if (checkBtn) {
+            checkBtn.disabled = false;
+            checkBtn.innerHTML = "THANH TOÁN";
         }
     }
 };
+
+window.posCheckout = window.createPOSOrder;
+window.checkoutPOS = window.createPOSOrder;
+
+window.addEventListener('beforeunload', () => {
+    if (typeof window.savePOSBills === 'function') {
+        window.savePOSBills();
+    }
+});
 
 window.applyQuickDiscount = () => { }; // Obsolete but keep to avoid errors if called elsewhere
 

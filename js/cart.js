@@ -928,6 +928,24 @@ window.placeOrder = async () => {
 
         if (transactionResult && transactionResult.id) {
             const orderId = transactionResult.id;
+
+            // Auto sync phone number to user profile & link past POS in-store orders
+            if (auth.currentUser && formattedPhone) {
+                try {
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    const userSnap = await getDoc(userRef);
+                    const uData = userSnap.exists() ? userSnap.data() : {};
+                    if (!uData.phone || uData.phone !== formattedPhone) {
+                        const p84 = formattedPhone.startsWith('0') ? '+84' + formattedPhone.substring(1) : formattedPhone;
+                        const newIdentifiers = Array.from(new Set([...(uData.identifiers || []), formattedPhone, p84]));
+                        await setDoc(userRef, { phone: formattedPhone, identifiers: newIdentifiers }, { merge: true });
+                    }
+                    if (typeof autoLinkOrdersByPhone === 'function') {
+                        await autoLinkOrdersByPhone(auth.currentUser.uid, formattedPhone);
+                    }
+                } catch (e) { console.error("Checkout phone sync error:", e); }
+            }
+
             // 1.5 Lưu địa chỉ vào sổ địa chỉ nếu khách chọn "Lưu địa chỉ"
             if (auth.currentUser && saveAddressChecked) {
                 const userRef = doc(db, "users", auth.currentUser.uid);
@@ -944,10 +962,9 @@ window.placeOrder = async () => {
                     address: address
                 };
 
-                // Tránh lưu trùng lặp hoàn toàn
                 const isDuplicate = currentAddresses.some(a => a.address === address && a.wardId === wardId);
                 if (!isDuplicate) {
-                    await updateDoc(userRef, { addresses: [newAddress, ...currentAddresses].slice(0, 10) }); // Giữ tối đa 10 địa chỉ
+                    await updateDoc(userRef, { addresses: [newAddress, ...currentAddresses].slice(0, 10) });
                 }
             }
 

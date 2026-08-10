@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bán hàng POS - Tiệm Nhà Gốm</title>
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css?v=18">
+    <style>
+        /* Standalone KiotViet Fullscreen POS Layout */
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #eaedf1;
+            font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+        }
+
+        .kiot-pos-fullscreen-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 1. Top Bar KiotViet Royal Blue */
+        .kiot-pos-topbar {
+            height: 46px;
+            background: #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            flex-shrink: 0;
+            color: #ffffff;
+            gap: 12px;
+        }
+
+        .kiot-pos-top-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .kiot-pos-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border-radius: 4px 0 0 4px;
+            height: 34px;
+            width: 300px;
+            padding: 0 8px;
+        }
+
+        .kiot-pos-search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 0.88rem;
+            color: #1e293b;
+        }
+
+        .kiot-pos-barcode-btn {
+            background: #0052a3;
+            border: none;
+            color: #ffffff;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kiot-pos-tabs-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .kiot-pos-tab-item {
+            background: rgba(255,255,255,0.2);
+            color: #ffffff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .kiot-pos-tab-item.active {
+            background: #ffffff;
+            color: #0066cc;
+            font-weight: 700;
+        }
+
+        .kiot-pos-tab-add {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kiot-pos-top-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+        }
+
+        .kiot-pos-icon-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 4px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 2. Middle Area (Cart Left + Checkout Right) */
+        .kiot-pos-middle-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        .kiot-pos-left-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .kiot-pos-cart-card {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .kiot-pos-note-card {
+            height: 42px;
+            background: #ffffff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .kiot-pos-note-card input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        .kiot-pos-right-container {
+            width: 360px;
+            flex-shrink: 0;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 14px;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .kiot-pos-checkout-btn {
+            background: #0066cc !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 1.15rem !important;
+            height: 48px !important;
+            border-radius: 6px !important;
+            border: none !important;
+            width: 100% !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 102, 204, 0.3) !important;
+            transition: background 0.15s ease !important;
+            margin-top: auto;
+        }
+
+        .kiot-pos-checkout-btn:hover {
+            background: #0052a3 !important;
+        }
+
+        /* 3. Bottom Footer Bar */
+        .kiot-pos-footerbar {
+            height: 36px;
+            background: #f1f5f9;
+            border-top: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            flex-shrink: 0;
+            font-size: 0.82rem;
+        }
+
+        .kiot-pos-footer-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .kiot-pos-foot-tab {
+            background: transparent;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .kiot-pos-foot-tab.active {
+            background: #e0f2fe;
+            color: #0066cc;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body class="admin-dashboard-layout" style="display: block;">
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="kiot-pos-fullscreen-wrapper">
+        <!-- 1. POS Topbar KiotViet Solid Royal Blue (#0066cc) -->
+        <div class="kiot-pos-topbar">
+            <div class="kiot-pos-top-left">
+                <div class="kiot-pos-search-box">
+                    <input type="text" id="pos-product-search" placeholder="🔍 Tìm hàng hóa (F3)" autocomplete="off">
+                    <div id="pos-product-suggestions" class="search-suggestions"></div>
+                </div>
+                <button type="button" class="kiot-pos-barcode-btn" title="Mã vạch">[|||||]</button>
+            </div>
+
+            <!-- Invoice Tabs -->
+            <div class="kiot-pos-tabs-wrapper">
+                <div id="pos-tabs-list" style="display: flex; gap: 4px;"></div>
+                <button type="button" class="kiot-pos-tab-add" onclick="window.posCreateNewBill()" title="Tạo hóa đơn mới">+</button>
+            </div>
+
+            <div class="kiot-pos-top-right">
+                <button type="button" class="kiot-pos-icon-link" title="Bán giữ hàng">👜</button>
+                <button type="button" class="kiot-pos-icon-link" title="Trả hàng">↩</button>
+                <button type="button" class="kiot-pos-icon-link" title="Làm mới" onclick="location.reload()">🔄</button>
+                <button type="button" class="kiot-pos-icon-link" title="In thử" id="btn-connect-bt-printer" onclick="window.printLastOrderBT()">🖨️</button>
+                <span style="font-weight: 600; margin-left: 6px;">0867291612</span>
+                <a href="index.html" class="kiot-pos-icon-link" title="Thoát về trang Quản trị" style="margin-left: 6px;">≡</a>
+            </div>
+        </div>
+
+        <!-- 2. Middle Content -->
+        <div class="kiot-pos-middle-content">
+            <!-- Cart Left -->
+            <div class="kiot-pos-left-container">
+                <div class="kiot-pos-cart-card">
+                    <div id="pos-cart-list"></div>
+                </div>
+                <div class="kiot-pos-note-card">
+                    <input type="text" id="pos-order-note" placeholder="✎ Ghi chú đơn hàng" oninput="window.savePOSBills()">
+                </div>
+            </div>
+
+            <!-- Checkout Right Sidebar -->
+            <div class="kiot-pos-right-container">
+                <!-- Seller & Clock -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #475569; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <strong id="pos-seller-name" style="color: #0f172a;">Nguyễn Tân Quốc... ▾</strong>
+                        <span>🚶 ▾</span>
+                    </div>
+                    <span id="pos-live-clock" style="font-size: 0.8rem; color: #64748b;">10/08/2026 18:28</span>
+                </div>
+
+                <!-- Customer Search -->
+                <div class="pos-customer-section" style="position: relative;">
+                    <div class="pos-customer-search-box" style="display: flex; align-items: center; background: #f1f5f9; border-radius: 6px; padding: 4px 8px;">
+                        <input type="text" id="pos-customer-search" placeholder="🔍 Tìm khách hàng (F4)" style="border: none; background: transparent; outline: none; flex: 1; font-size: 0.85rem;">
+                        <button type="button" style="border: none; background: transparent; color: #0066cc; font-size: 1.2rem; cursor: pointer;" onclick="window.posOpenAddCustomerModal()">+</button>
+                    </div>
+                    <div id="pos-customer-suggestions" class="search-suggestions"></div>
+                    <div id="pos-selected-customer" class="pos-selected-customer" style="display: none; margin-top: 6px;">
+                        <span id="pos-cust-name-display" style="font-weight: 600; font-size: 0.88rem;"></span>
+                        <span id="pos-cust-phone-display" style="font-size: 0.78rem; color: #64748b; margin-left: 5px;"></span>
+                        <button type="button" onclick="window.posClearCustomer()" style="background: none; border: none; color: #ef4444; margin-left: auto; cursor: pointer;">✕</button>
+                    </div>
+                </div>
+
+                <!-- Financial Totals -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #334155;">
+                        <span>Tổng tiền hàng <span id="pos-total-qty" style="color: #64748b;">(0)</span></span>
+                        <span id="pos-subtotal" style="font-weight: 600;">0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #334155;">
+                        <span>Giảm giá</span>
+                        <input type="text" id="pos-bill-discount-input" placeholder="0" onchange="window.updateBillDiscount(this.value)" style="width: 90px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.88rem;">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                        <strong style="font-size: 1.05rem; color: #0f172a;">Khách cần trả</strong>
+                        <strong id="pos-total-amount" style="color: #0066cc; font-size: 1.45rem;">0</strong>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #334155;">
+                        <span>Khách thanh toán</span>
+                        <input type="text" id="pos-cash-given" placeholder="0" oninput="window.calculatePOSChange(this)" class="currency-input" style="width: 110px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.88rem;">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                        <span>Tiền thừa trả khách</span>
+                        <span id="pos-change-amount" style="font-weight: 600; color: #16a34a;">0</span>
+                    </div>
+
+                    <!-- Fast Cash Suggestions Horizontal Row -->
+                    <div id="pos-fast-cash-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px;">
+                        <button type="button" onclick="window.posSetCashGiven(50000)">50,000</button>
+                        <button type="button" onclick="window.posSetCashGiven(100000)">100,000</button>
+                        <button type="button" onclick="window.posSetCashGiven(200000)">200,000</button>
+                        <button type="button" onclick="window.posSetCashGiven(500000)">500,000</button>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="pos-payment-methods" style="display: flex; gap: 10px; font-size: 0.82rem; margin-top: 4px;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="pos-payment" value="Tiền mặt" checked onchange="window.togglePOSCashSection()"> Tiền mặt
+                    </label>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="pos-payment" value="Chuyển khoản" onchange="window.togglePOSCashSection()"> Chuyển khoản
+                    </label>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="radio" name="pos-payment" value="Thẻ" onchange="window.togglePOSCashSection()"> Thẻ
+                    </label>
+                </div>
+
+                <!-- Big Blue Checkout Button -->
+                <button type="button" id="btn-pos-checkout" class="kiot-pos-checkout-btn" onclick="window.posCheckout()">THANH TOÁN</button>
+            </div>
+        </div>
+
+        <!-- 3. Bottom Footer Bar -->
+        <div class="kiot-pos-footerbar">
+            <div class="kiot-pos-footer-tabs">
+                <button type="button" class="kiot-pos-foot-tab active">⚡ Bán nhanh</button>
+                <button type="button" class="kiot-pos-foot-tab">🕒 Bán thường</button>
+                <button type="button" class="kiot-pos-foot-tab">🚚 Bán giao hàng</button>
+            </div>
+            <div>
+                <span style="color: #0066cc; font-weight: 600;">💬 1900 6522</span>
+                <a href="index.html" style="color: #64748b; margin-left: 14px; text-decoration: none; font-weight: 500;">🚪 Thoát POS</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Khách Hàng Nhanh trong POS -->
+    <div id="pos-add-customer-modal" class="modal">
+        <div class="modal-content" style="max-width: 480px; width: 90%;">
+            <div class="modal-header">
+                <h3>Thêm khách hàng mới</h3>
+                <button class="modal-close" onclick="window.posCloseAddCustomerModal()">&times;</button>
+            </div>
+            <form id="pos-add-customer-form" class="admin-form" style="padding: 16px;" onsubmit="event.preventDefault(); window.posSaveNewCustomer();">
+                <input type="hidden" id="pos-new-cust-code" value="">
+                <input type="hidden" id="pos-new-cust-area" value="">
+                <input type="hidden" id="pos-new-cust-ward" value="">
+                <input type="hidden" id="pos-new-cust-email" value="">
+
+                <div class="form-group">
+                    <label>Tên khách hàng *</label>
+                    <input type="text" id="pos-new-cust-name" required placeholder="Nhập họ tên...">
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại *</label>
+                    <input type="tel" id="pos-new-cust-phone" required placeholder="Nhập số điện thoại...">
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input type="text" id="pos-new-cust-address" placeholder="Nhập địa chỉ giao hàng...">
+                </div>
+                <button type="submit" class="btn-kiot-primary" style="width: 100%; margin-top: 10px; height: 40px;">Lưu khách hàng</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Khung chứa hóa đơn in ấn -->
+    <div id="receipt-print-area"></div>
+    <script type="module" src="../js/DashBoard.js?v=8"></script>
+    <script>
+        // Update live clock
+        setInterval(() => {
+            const clockEl = document.getElementById('pos-live-clock');
+            if (clockEl) {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('vi-VN');
+                const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                clockEl.innerText = `${dateStr} ${timeStr}`;
+            }
+        }, 1000);
+
+        // Auto initialize Hóa đơn 1 when POS screen opens
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (typeof window.initPOSBills === 'function') {
+                    window.initPOSBills();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

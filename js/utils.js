@@ -345,17 +345,62 @@ export async function autoLinkOrdersByPhone(userId, phone) {
     try {
         const p0 = formatPhoneNumber(phone);
         const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+        const phoneVariants = [p0, p84];
 
-        // Tìm tất cả đơn hàng có SĐT này
-        const q = query(collection(db, "orders"), where("shippingAddress.phone", "in", [p0, p84]));
-        const snap = await getDocs(q);
+        // 1. Tìm các tài khoản khách hàng cũ tạo trên POS (ghost users e.g. cust_...)
+        const usersRef = collection(db, "users");
+        const oldCustIds = [];
+        try {
+            const qUsers = query(usersRef, where("phone", "in", phoneVariants));
+            const usersSnap = await getDocs(qUsers);
+            usersSnap.forEach(uSnap => {
+                if (uSnap.id !== userId) {
+                    oldCustIds.push(uSnap.id);
+                    const uData = uSnap.data();
+                    if (uData.displayName || uData.address) {
+                        updateDoc(doc(db, "users", userId), {
+                            displayName: uData.displayName || '',
+                            address: uData.address || ''
+                        }, { merge: true }).catch(() => {});
+                    }
+                    updateDoc(uSnap.ref, { isMerged: true, mergedTo: userId }).catch(() => {});
+                }
+            });
+        } catch (e) { }
+
+        // 2. Tìm tất cả đơn hàng theo SĐT (shippingAddress.phone, customerPhone, phone) hoặc oldCustIds
+        const ordersRef = collection(db, "orders");
+        const orderDocsToUpdate = new Map();
+
+        try {
+            const q1 = query(ordersRef, where("shippingAddress.phone", "in", phoneVariants));
+            const s1 = await getDocs(q1);
+            s1.forEach(d => { if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref); });
+        } catch (e) { }
+
+        try {
+            const q2 = query(ordersRef, where("customerPhone", "in", phoneVariants));
+            const s2 = await getDocs(q2);
+            s2.forEach(d => { if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref); });
+        } catch (e) { }
+
+        try {
+            const q3 = query(ordersRef, where("phone", "in", phoneVariants));
+            const s3 = await getDocs(q3);
+            s3.forEach(d => { if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref); });
+        } catch (e) { }
+
+        if (oldCustIds.length > 0) {
+            try {
+                const q4 = query(ordersRef, where("customerId", "in", oldCustIds));
+                const s4 = await getDocs(q4);
+                s4.forEach(d => { if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref); });
+            } catch (e) { }
+        }
 
         const updatePromises = [];
-        snap.forEach(docSnap => {
-            // Nếu đơn hàng chưa thuộc về userId này, tiến hành liên kết
-            if (docSnap.data().userId !== userId) {
-                updatePromises.push(updateDoc(docSnap.ref, { userId: userId }));
-            }
+        orderDocsToUpdate.forEach((ref) => {
+            updatePromises.push(updateDoc(ref, { userId: userId, customerId: userId }));
         });
 
         if (updatePromises.length > 0) await Promise.all(updatePromises);

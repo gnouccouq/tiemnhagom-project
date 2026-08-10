@@ -3076,7 +3076,39 @@ footer {
 .admin-dashboard-layout {
     padding-top: 0 !important;
     background-color: #f1f5f9;
-    /* Slate 100 */
+}
+
+#pos-fast-cash-container,
+.pos-fast-cash {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    padding: 0 !important;
+    margin-top: 6px !important;
+}
+
+#pos-fast-cash-container button,
+.pos-fast-cash button {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 6px 0 !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: #0066cc !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    transition: all 0.15s ease !important;
+    width: 100% !important;
+}
+
+#pos-fast-cash-container button:hover,
+.pos-fast-cash button:hover {
+    background: #e0f2fe !important;
+    border-color: #0066cc !important;
+}
+
+.admin-dashboard-layout {
     font-family: 'Montserrat', sans-serif;
     color: #334155;
     /* Slate 700 */
@@ -3460,6 +3492,95 @@ button.kiot-nav-btn span {
     padding: 4px 8px;
     border-radius: 4px;
     transition: background 0.15s;
+    animation: slideDownQuickview 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#pos-total-amount {
+    background: transparent !important;
+    color: #0066cc !important;
+    font-weight: 700 !important;
+    border: none !important;
+    text-align: right;
+    padding: 0 !important;
+}
+
+/* Modern KiotViet Price Edit Popover */
+.pos-popover {
+    position: absolute;
+    z-index: 99999;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    padding: 16px;
+    width: 290px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pos-popover-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.pos-popover-row label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.pos-popover-row input {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+    text-align: right;
+    outline: none;
+    transition: border 0.15s ease;
+}
+
+.pos-popover-row input:focus {
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+.pos-discount-type {
+    display: inline-flex;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid #cbd5e1;
+}
+
+.pos-discount-type button {
+    border: none;
+    background: transparent;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pos-discount-type button.active {
+    background: #ffffff;
+    color: #0066cc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .kiot-right-link:hover {
@@ -4096,6 +4217,15 @@ button.kiot-nav-btn span {
     box-shadow: 0 4px 12px rgba(0, 102, 204, 0.12);
     overflow: hidden;
     animation: slideDownQuickview 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#pos-total-amount {
+    background: transparent !important;
+    color: #0066cc !important;
+    font-weight: 700 !important;
+    border: none !important;
+    text-align: right;
+    padding: 0 !important;
 }
 
 .quickview-tabs {

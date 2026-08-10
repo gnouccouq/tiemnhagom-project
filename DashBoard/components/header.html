@@ -1,0 +1,156 @@
+<!-- Official KiotViet 2-Tier Shared Header Component -->
+<header class="kiot-header-wrapper">
+    <!-- Tier 1: Top White Bar -->
+    <div class="kiot-tier1">
+        <div class="kiot-t1-left">
+            <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
+                <img src="../Asset/images/logo.webp" alt="Logo">
+                <span>Tiệm Nhà Gốm</span>
+            </a>
+        </div>
+
+        <div class="kiot-t1-right">
+            <!-- Giao hàng pill -->
+            <button type="button" class="kiot-t1-link" title="Giao hàng">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0066cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="3" width="15" height="13"></rect>
+                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+                <span>Giao hàng</span>
+            </button>
+
+            <!-- Tiếng Việt -->
+            <div class="kiot-t1-link">
+                <span>🇻🇳 Tiếng Việt ▾</span>
+            </div>
+
+            <!-- Notification Bell Dropdown -->
+            <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
+                <button type="button" class="kiot-t1-icon-btn" title="Thông báo">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span id="notification-indicator" style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
+                </button>
+                <div class="kiot-user-dropdown" style="min-width: 260px; right: -40px;">
+                    <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ thống</strong></div>
+                    <div class="user-dropdown-divider"></div>
+                    <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
+                        <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">Không có thông báo mới</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Gear -->
+            <a href="index.html#maintenance" class="kiot-t1-icon-btn" title="Cài đặt">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </a>
+
+            <!-- User Circle Avatar -->
+            <div class="kiot-user-dropdown-wrapper">
+                <button type="button" class="kiot-t1-icon-btn" style="background: #e0f2fe; color: #0066cc;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </button>
+                <div class="kiot-user-dropdown">
+                    <div id="admin-user-info" class="user-dropdown-header"></div>
+                    <div class="user-dropdown-divider"></div>
+                    <a href="../index.html" class="user-dropdown-item">🏪 Trang chủ Website</a>
+                    <button id="btn-logout-admin" class="user-dropdown-item text-danger">🚪 Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier 2: Bottom Royal Blue Bar (#0066cc) -->
+    <div class="kiot-tier2">
+        <nav class="kiot-t2-nav">
+            <!-- 1. Tổng quan -->
+            <div class="kiot-nav-item" data-page="overview">
+                <a href="index.html#overview" class="kiot-nav-btn nav-link-btn">
+                    <span>Tổng quan</span>
+                </a>
+            </div>
+
+            <!-- 2. Hàng hóa -->
+            <div class="kiot-nav-item" data-page="products">
+                <a href="index.html#products" class="kiot-nav-btn nav-link-btn">
+                    <span>Hàng hóa</span> <span style="font-size: 0.6rem;">▾</span>
+                </a>
+                <div class="kiot-dropdown-menu">
+                    <a href="index.html#products" class="kiot-dropdown-item"><span>Danh sách sản phẩm</span></a>
+                    <a href="index.html#flash-sale" class="kiot-dropdown-item"><span>Thiết lập Flash Sale</span></a>
+                    <a href="index.html#categories" class="kiot-dropdown-item"><span>Danh mục sản phẩm</span></a>
+                    <a href="index.html#inventory" class="kiot-dropdown-item"><span>Nhật ký kho & Tồn kho</span></a>
+                </div>
+            </div>
+
+            <!-- 3. Đơn hàng -->
+            <div class="kiot-nav-item" data-page="orders">
+                <a href="index.html#orders" class="kiot-nav-btn nav-link-btn">
+                    <span>Đơn hàng</span> <span style="font-size: 0.6rem;">▾</span>
+                </a>
+                <div class="kiot-dropdown-menu">
+                    <a href="index.html#orders" class="kiot-dropdown-item">
+                        <span>Đơn mua hàng</span> 
+                        <span id="order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                    </a>
+                    <a href="index.html#rentals" class="kiot-dropdown-item">
+                        <span>Đơn thuê đồ Decor</span> 
+                        <span id="rental-order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4. Khách hàng -->
+            <div class="kiot-nav-item" data-page="customers">
+                <a href="index.html#customers" class="kiot-nav-btn nav-link-btn">
+                    <span>Khách hàng</span>
+                </a>
+            </div>
+
+            <!-- 5. Nhân viên -->
+            <div class="kiot-nav-item" data-page="employees">
+                <a href="index.html#employees" class="kiot-nav-btn nav-link-btn">
+                    <span>Nhân viên</span>
+                </a>
+            </div>
+
+            <!-- 6. Báo cáo -->
+            <div class="kiot-nav-item" data-page="reports">
+                <a href="index.html#reports" class="kiot-nav-btn nav-link-btn">
+                    <span>Báo cáo</span> <span style="font-size: 0.6rem;">▾</span>
+                </a>
+                <div class="kiot-dropdown-menu">
+                    <a href="index.html#reports" class="kiot-dropdown-item"><span>Báo cáo doanh thu</span></a>
+                    <a href="index.html#online-users" class="kiot-dropdown-item"><span>Hệ thống Online</span></a>
+                    <a href="index.html#maintenance" class="kiot-dropdown-item"><span>Bảo trì hệ thống</span></a>
+                </div>
+            </div>
+
+            <!-- 7. Bán online -->
+            <div class="kiot-nav-item" data-page="online-sales">
+                <a href="index.html#online-sales" class="kiot-nav-btn nav-link-btn">
+                    <span>Bán online</span> <span style="font-size: 0.6rem;">▾</span>
+                </a>
+                <div class="kiot-dropdown-menu">
+                    <a href="index.html#banners" class="kiot-dropdown-item"><span>Banner Trang chủ</span></a>
+                    <a href="index.html#collections" class="kiot-dropdown-item"><span>Bộ sưu tập</span></a>
+                    <a href="index.html#events" class="kiot-dropdown-item"><span>Dự án sự kiện</span></a>
+                    <a href="index.html#news" class="kiot-dropdown-item"><span>Bài viết & Tin tức</span></a>
+                    <a href="index.html#coupons" class="kiot-dropdown-item"><span>Mã giảm giá</span></a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Nút Bán Hàng POS Trọng Tâm Mở Trang pos.html Độc Lập -->
+        <a href="pos.html" class="kiot-pos-pill-btn" target="_blank">
+            🛒 <span>Bán hàng</span>
+        </a>
+    </div>
+</header>
