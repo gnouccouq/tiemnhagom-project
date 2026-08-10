@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Library to handle HEIC images from iPhone -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-    
+
     <!-- Quill JS Library -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
@@ -43,7 +43,8 @@
                 <div class="kiot-t1-right">
                     <!-- Giao hàng pill -->
                     <button type="button" class="kiot-t1-link" title="Giao hàng">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0066cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0066cc" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <rect x="1" y="3" width="15" height="13"></rect>
                             <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
                             <circle cx="5.5" cy="18.5" r="2.5"></circle>
@@ -60,33 +61,44 @@
                     <!-- Notification Bell Dropdown -->
                     <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
                         <button type="button" class="kiot-t1-icon-btn" title="Thông báo">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
-                            <span id="notification-indicator" style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
+                            <span id="notification-indicator"
+                                style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
                         </button>
                         <div class="kiot-user-dropdown" style="min-width: 260px; right: -40px;">
-                            <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ thống</strong></div>
+                            <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ
+                                    thống</strong></div>
                             <div class="user-dropdown-divider"></div>
                             <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
-                                <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">Không có thông báo mới</div>
+                                <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">
+                                    Không có thông báo mới</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Settings Gear -->
-                    <button type="button" class="kiot-t1-icon-btn admin-tab-btn" data-target="maintenance-section" title="Cài đặt">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button type="button" class="kiot-t1-icon-btn admin-tab-btn" data-target="maintenance-section"
+                        title="Cài đặt">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
                         </svg>
                     </button>
 
                     <!-- User Circle Avatar -->
                     <div class="kiot-user-dropdown-wrapper">
                         <button type="button" class="kiot-t1-icon-btn" style="background: #e0f2fe; color: #0066cc;">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
                         </button>
                         <div class="kiot-user-dropdown">
                             <div id="admin-user-info" class="user-dropdown-header"></div>
@@ -114,10 +126,14 @@
                             <span>Hàng hóa</span> <span style="font-size: 0.6rem;">▾</span>
                         </button>
                         <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh sách sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh mục sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh
+                                    sách sản phẩm</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn"
+                                data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh
+                                    mục sản phẩm</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn"
+                                data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
                         </div>
                     </div>
 
@@ -128,12 +144,14 @@
                         </button>
                         <div class="kiot-dropdown-menu">
                             <button class="kiot-dropdown-item admin-tab-btn" data-target="order-section">
-                                <span>Đơn mua hàng</span> 
-                                <span id="order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                                <span>Đơn mua hàng</span>
+                                <span id="order-count-badge" class="sidebar-badge"
+                                    style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
                             </button>
                             <button class="kiot-dropdown-item admin-tab-btn" data-target="rental-order-section">
-                                <span>Đơn thuê đồ Decor</span> 
-                                <span id="rental-order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                                <span>Đơn thuê đồ Decor</span>
+                                <span id="rental-order-count-badge" class="sidebar-badge"
+                                    style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
                             </button>
                         </div>
                     </div>
@@ -158,9 +176,12 @@
                             <span>Báo cáo</span> <span style="font-size: 0.6rem;">▾</span>
                         </button>
                         <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo doanh thu</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ thống Online</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo trì hệ thống</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo
+                                    doanh thu</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ
+                                    thống Online</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo
+                                    trì hệ thống</span></button>
                         </div>
                     </div>
 
@@ -170,11 +191,16 @@
                             <span>Bán online</span> <span style="font-size: 0.6rem;">▾</span>
                         </button>
                         <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner Trang chủ</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ sưu tập</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự kiện</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết & Tin tức</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm giá</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner
+                                    Trang chủ</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ
+                                    sưu tập</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự
+                                    kiện</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết &
+                                    Tin tức</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm
+                                    giá</span></button>
                         </div>
                     </div>
                 </nav>
@@ -253,7 +279,7 @@
                 <div class="kiot-overview-wrapper">
                     <!-- Cột Trái: Dashboards & Charts -->
                     <div class="kiot-overview-main">
-                        
+
                         <!-- 1. Kết quả bán hàng hôm nay -->
                         <div class="kiot-card">
                             <div class="kiot-card-header">
@@ -608,7 +634,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Nội dung bài viết</label>
-                                <div id="quill-editor" style="height: 400px; background: white; margin-bottom: 20px;"></div>
+                                <div id="quill-editor" style="height: 400px; background: white; margin-bottom: 20px;">
+                                </div>
                                 <textarea id="news-content" style="display: none;"></textarea>
                             </div>
                             <div class="form-group">
@@ -744,7 +771,8 @@
                     <div class="kiot-filter-sidebar">
                         <div class="filter-header">
                             <h3 class="filter-title">Hàng hóa</h3>
-                            <button type="button" class="filter-reset-link" onclick="window.resetProductFilters()">Tạo mới</button>
+                            <button type="button" class="filter-reset-link" onclick="window.resetProductFilters()">Tạo
+                                mới</button>
                         </div>
 
                         <!-- Nhóm hàng -->
@@ -769,8 +797,10 @@
                         <div class="filter-group">
                             <label class="filter-label">Dự kiến hết hàng</label>
                             <div class="radio-options">
-                                <label class="radio-item"><input type="radio" name="depletion-time" value="all" checked> Toàn thời gian</label>
-                                <label class="radio-item"><input type="radio" name="depletion-time" value="custom"> Tùy chỉnh 📅</label>
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="all" checked>
+                                    Toàn thời gian</label>
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="custom"> Tùy
+                                    chỉnh 📅</label>
                             </div>
                         </div>
 
@@ -778,8 +808,10 @@
                         <div class="filter-group">
                             <label class="filter-label">Thời gian tạo</label>
                             <div class="radio-options">
-                                <label class="radio-item"><input type="radio" name="creation-time" value="all" checked> Toàn thời gian</label>
-                                <label class="radio-item"><input type="radio" name="creation-time" value="custom"> Tùy chỉnh 📅</label>
+                                <label class="radio-item"><input type="radio" name="creation-time" value="all" checked>
+                                    Toàn thời gian</label>
+                                <label class="radio-item"><input type="radio" name="creation-time" value="custom"> Tùy
+                                    chỉnh 📅</label>
                             </div>
                         </div>
 
@@ -835,9 +867,11 @@
                                 <input type="text" id="admin-product-search" placeholder="Theo mã, tên hàng...">
                             </div>
                             <div class="toolbar-actions">
-                                <button type="button" class="kiot-btn-primary" onclick="window.openProductModal()">+ Tạo mới ▾</button>
+                                <button type="button" class="kiot-btn-primary" onclick="window.openProductModal()">+ Tạo
+                                    mới ▾</button>
                                 <button type="button" class="kiot-btn-outline">📥 Import file</button>
-                                <button type="button" id="btn-export-excel" class="kiot-btn-outline">📤 Xuất file</button>
+                                <button type="button" id="btn-export-excel" class="kiot-btn-outline">📤 Xuất
+                                    file</button>
                             </div>
                         </div>
 
@@ -849,13 +883,20 @@
                                         <th style="width: 32px;"><input type="checkbox" id="selectAllProducts"></th>
                                         <th style="width: 32px;">⭐</th>
                                         <th style="width: 42px;">Ảnh</th>
-                                        <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="price" style="cursor: pointer;">Giá bán <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Giá vốn <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tồn kho <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Khách đặt <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời gian tạo <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng
+                                            <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng
+                                            <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="price" style="cursor: pointer;">Giá bán
+                                            <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Giá
+                                            vốn <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tồn kho
+                                            <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Khách đặt
+                                            <span class="sort-icon">↕</span></th>
+                                        <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời
+                                            gian tạo <span class="sort-icon">↕</span></th>
                                         <th>Dự kiến hết hàng</th>
                                     </tr>
                                 </thead>
@@ -869,7 +910,8 @@
                         <div class="kiot-pagination-bar">
                             <div class="pg-left">
                                 <span>Hiển thị</span>
-                                <select id="kiot-page-size" class="kiot-select-sm" onchange="window.changePageSize(this.value)">
+                                <select id="kiot-page-size" class="kiot-select-sm"
+                                    onchange="window.changePageSize(this.value)">
                                     <option value="15" selected>15 dòng</option>
                                     <option value="20">20 dòng</option>
                                     <option value="30">30 dòng</option>
@@ -879,11 +921,16 @@
                             </div>
 
                             <div class="pg-center">
-                                <button type="button" class="pg-btn" onclick="window.goToPage(1)" title="Trang đầu">|&lt;</button>
-                                <button type="button" class="pg-btn" onclick="window.changePage(-1)" title="Trang trước">&lt;</button>
-                                <input type="number" id="kiot-page-input" class="pg-input" value="1" min="1" onchange="window.goToPage(this.value)">
-                                <button type="button" class="pg-btn" onclick="window.changePage(1)" title="Trang sau">&gt;</button>
-                                <button type="button" class="pg-btn" id="btn-last-page" onclick="window.goToLastPage()" title="Trang cuối">&gt;|</button>
+                                <button type="button" class="pg-btn" onclick="window.goToPage(1)"
+                                    title="Trang đầu">|&lt;</button>
+                                <button type="button" class="pg-btn" onclick="window.changePage(-1)"
+                                    title="Trang trước">&lt;</button>
+                                <input type="number" id="kiot-page-input" class="pg-input" value="1" min="1"
+                                    onchange="window.goToPage(this.value)">
+                                <button type="button" class="pg-btn" onclick="window.changePage(1)"
+                                    title="Trang sau">&gt;</button>
+                                <button type="button" class="pg-btn" id="btn-last-page" onclick="window.goToLastPage()"
+                                    title="Trang cuối">&gt;|</button>
                             </div>
 
                             <div class="pg-right">
@@ -1055,7 +1102,8 @@
             <!-- Section Quản lý Đơn hàng -->
             <div id="order-section" class="admin-section">
                 <div class="admin-card">
-                    <div class="admin-order-filters-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="admin-order-filters-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="order-search-input">Tìm kiếm chung</label>
                             <input type="text" id="order-search-input" placeholder="Mã đơn, Tên, SĐT khách...">
@@ -1086,7 +1134,8 @@
                                 <option value="custom">Tùy chỉnh khoảng ngày...</option>
                             </select>
                         </div>
-                        <div id="order-custom-date-group" style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
+                        <div id="order-custom-date-group"
+                            style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
                                 <label for="order-filter-date-from">Từ ngày</label>
                                 <input type="date" id="order-filter-date-from">
@@ -1096,10 +1145,12 @@
                                 <input type="date" id="order-filter-date-to">
                             </div>
                         </div>
-                        <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp dụng</button>
+                        <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp
+                            dụng</button>
                     </div>
 
-                    <div style="margin: 20px 0; padding: 15px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #0d47a1;">
+                    <div
+                        style="margin: 20px 0; padding: 15px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #0d47a1;">
                         Tổng doanh thu các đơn hàng đang lọc: <span id="order-filtered-total-amount">0 đ</span>
                     </div>
 
@@ -1137,7 +1188,8 @@
             <!-- Section Quản lý Đơn thuê đồ -->
             <div id="rental-order-section" class="admin-section">
                 <div class="admin-card">
-                    <div class="admin-order-filters-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="admin-order-filters-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="rental-order-search-input">Tìm kiếm chung</label>
                             <input type="text" id="rental-order-search-input" placeholder="Mã đơn, Tên Cty, SĐT...">
@@ -1155,13 +1207,15 @@
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="rental-order-filter-date">Thời gian</label>
-                            <select id="rental-order-filter-date" onchange="window.toggleCustomDateFilterRental(this.value)">
+                            <select id="rental-order-filter-date"
+                                onchange="window.toggleCustomDateFilterRental(this.value)">
                                 <option value="all">Tất cả</option>
                                 <option value="this_month">Tháng này</option>
                                 <option value="custom">Tùy chỉnh...</option>
                             </select>
                         </div>
-                        <div id="rental-order-custom-date-group" style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
+                        <div id="rental-order-custom-date-group"
+                            style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
                                 <label for="rental-order-date-from">Từ ngày</label>
                                 <input type="date" id="rental-order-date-from">
@@ -1171,7 +1225,8 @@
                                 <input type="date" id="rental-order-date-to">
                             </div>
                         </div>
-                        <button id="btn-apply-rental-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp dụng</button>
+                        <button id="btn-apply-rental-order-filters" class="btn-dark"
+                            style="height: 40px; margin-top: 22px;">Áp dụng</button>
                     </div>
 
                     <h3>Danh sách yêu cầu thuê đồ mới nhất</h3>
@@ -1197,7 +1252,8 @@
                     <div class="pagination-container"
                         style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
                         <button id="prev-rental-order-page" class="btn-minimal" disabled>Trang trước</button>
-                        <span id="rental-order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang 1</span>
+                        <span id="rental-order-page-info"
+                            style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang 1</span>
                         <button id="next-rental-order-page" class="btn-minimal">Trang sau</button>
                     </div>
                 </div>
@@ -1517,7 +1573,8 @@
             <!-- Modal Header -->
             <div class="product-modal-header">
                 <h3 id="product-modal-title">Tạo hàng hóa</h3>
-                <button type="button" class="modal-close" id="btn-close-product-modal" title="Đóng modal">&times;</button>
+                <button type="button" class="modal-close" id="btn-close-product-modal"
+                    title="Đóng modal">&times;</button>
             </div>
 
             <!-- Modal Tab Navigation Bar (Chỉ 2 Tab: Thông tin & Mô tả) -->
@@ -1527,14 +1584,15 @@
             </div>
 
             <!-- Form bao ngoài toàn bộ Body và Footer -->
-            <form id="product-form" class="product-modal-form-wrapper" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; height: 100%;">
-                
+            <form id="product-form" class="product-modal-form-wrapper"
+                style="display: flex; flex-direction: column; flex: 1; overflow: hidden; height: 100%;">
+
                 <!-- Modal Form Body (Phần duy nhất có thanh cuộn) -->
                 <div class="product-modal-body" style="flex: 1; overflow-y: auto; padding: 20px 24px;">
-                    
+
                     <!-- TAB 1: THÔNG TIN -->
                     <div id="tab-product-basic" class="product-tab-pane active">
-                        
+
                         <!-- Hàng 1: Thông tin cơ bản + Khung Tải ảnh bên phải theo Hình 2 -->
                         <div style="display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start;">
                             <!-- Bên trái 70%: Mã, Tên, Nhóm hàng, Thương hiệu/Bộ sưu tập -->
@@ -1557,9 +1615,13 @@
 
                                 <div class="form-grid-3">
                                     <div class="form-group" style="margin-bottom: 0;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                            <label style="margin: 0;">Nhóm hàng <span style="color: #ef4444;">*</span></label>
-                                            <span style="color: #0066cc; font-size: 0.8rem; cursor: pointer; font-weight: 600;" class="admin-tab-btn" data-target="category-section">+ Tạo mới</span>
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                            <label style="margin: 0;">Nhóm hàng <span
+                                                    style="color: #ef4444;">*</span></label>
+                                            <span
+                                                style="color: #0066cc; font-size: 0.8rem; cursor: pointer; font-weight: 600;"
+                                                class="admin-tab-btn" data-target="category-section">+ Tạo mới</span>
                                         </div>
                                         <select id="category" required>
                                             <option value="">Chọn nhóm hàng (Bắt buộc)</option>
@@ -1567,17 +1629,22 @@
                                     </div>
 
                                     <div class="form-group" style="margin-bottom: 0;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                             <label style="margin: 0;">Bộ sưu tập</label>
-                                            <span style="color: #0066cc; font-size: 0.8rem; cursor: pointer; font-weight: 600;" class="admin-tab-btn" data-target="collections-section">+ Tạo mới</span>
+                                            <span
+                                                style="color: #0066cc; font-size: 0.8rem; cursor: pointer; font-weight: 600;"
+                                                class="admin-tab-btn" data-target="collections-section">+ Tạo mới</span>
                                         </div>
-                                        <div id="product-collections-list" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 70px; overflow-y: auto;">
+                                        <div id="product-collections-list"
+                                            style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 70px; overflow-y: auto;">
                                         </div>
                                     </div>
 
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Dự án sự kiện</label>
-                                        <div id="product-events-list" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 70px; overflow-y: auto;">
+                                        <div id="product-events-list"
+                                            style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 70px; overflow-y: auto;">
                                         </div>
                                     </div>
                                 </div>
@@ -1586,15 +1653,22 @@
                             <!-- Bên phải 30%: Khung Upload Ảnh với 4 Ô Phụ bên phải (Bố cục Hình 2) -->
                             <div style="width: 280px; flex-shrink: 0;">
                                 <label>Hình ảnh sản phẩm</label>
-                                <div class="kiot-image-upload-wrapper" style="height: 165px; max-height: 165px; box-sizing: border-box; overflow: hidden;">
-                                    <div class="kiot-image-upload-main" onclick="document.getElementById('imageFile').click()">
-                                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 4px;">
+                                <div class="kiot-image-upload-wrapper"
+                                    style="height: 165px; max-height: 165px; box-sizing: border-box; overflow: hidden;">
+                                    <div class="kiot-image-upload-main"
+                                        onclick="document.getElementById('imageFile').click()">
+                                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#94a3b8"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                                            style="margin-bottom: 4px;">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                             <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                             <polyline points="21 15 16 10 5 21"></polyline>
                                         </svg>
-                                        <button type="button" class="kiot-btn-outline" style="padding: 3px 10px; font-size: 0.78rem; pointer-events: none;">Thêm ảnh</button>
-                                        <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Mỗi ảnh không quá 2 MB</span>
+                                        <button type="button" class="kiot-btn-outline"
+                                            style="padding: 3px 10px; font-size: 0.78rem; pointer-events: none;">Thêm
+                                            ảnh</button>
+                                        <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Mỗi ảnh không
+                                            quá 2 MB</span>
                                         <span style="font-size: 0.65rem; color: #cbd5e1;">(Hỗ trợ cả tệp HEIC)</span>
                                     </div>
                                     <div class="kiot-image-side-slots" id="kiot-image-side-slots">
@@ -1605,13 +1679,15 @@
                                     </div>
                                 </div>
                                 <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
-                                <div id="image-preview-container" class="image-preview-grid" style="margin-top: 8px; max-height: 60px; overflow-y: auto;"></div>
+                                <div id="image-preview-container" class="image-preview-grid"
+                                    style="margin-top: 8px; max-height: 60px; overflow-y: auto;"></div>
                             </div>
                         </div>
 
                         <!-- Card 1: Giá vốn, giá bán -->
                         <div class="kiot-card">
-                            <div class="kiot-card-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                            <div class="kiot-card-header"
+                                onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
                                 <span>Giá vốn, giá bán</span>
                                 <span>^</span>
                             </div>
@@ -1632,8 +1708,10 @@
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Giảm giá (%) / Giá Sale</label>
                                         <div style="display: flex; gap: 6px;">
-                                            <input type="number" id="sale" min="0" max="100" value="0" style="width: 70px;" placeholder="%">
-                                            <input type="text" class="currency-input" id="salePrice" placeholder="Giá sau giảm">
+                                            <input type="number" id="sale" min="0" max="100" value="0"
+                                                style="width: 70px;" placeholder="%">
+                                            <input type="text" class="currency-input" id="salePrice"
+                                                placeholder="Giá sau giảm">
                                         </div>
                                     </div>
                                 </div>
@@ -1648,10 +1726,12 @@
 
                         <!-- Card 2: Tồn kho (Collapsible) -->
                         <div class="kiot-card">
-                            <div class="kiot-card-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                            <div class="kiot-card-header"
+                                onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
                                 <div>
                                     <span>Tồn kho</span>
-                                    <div class="kiot-card-subtitle">Quản lý số lượng tồn kho và định mức tồn. Khi tồn kho chạm đến định mức, bạn sẽ nhận được cảnh báo từ KiotViet.</div>
+                                    <div class="kiot-card-subtitle">Quản lý số lượng tồn kho và định mức tồn. Khi tồn
+                                        kho chạm đến định mức, bạn sẽ nhận được cảnh báo từ KiotViet.</div>
                                 </div>
                                 <span>^</span>
                             </div>
@@ -1661,8 +1741,10 @@
                                         <label>Tồn kho hiện tại <span style="color: #ef4444;">*</span></label>
                                         <div style="display: flex; gap: 8px; align-items: center;">
                                             <input type="number" id="stock" required placeholder="0" style="flex: 1;">
-                                            <label style="margin: 0; font-size: 0.8rem; cursor: pointer; color: #0066cc; white-space: nowrap;">
-                                                <input type="checkbox" id="stock-additive" style="width: auto;"> Cộng thêm
+                                            <label
+                                                style="margin: 0; font-size: 0.8rem; cursor: pointer; color: #0066cc; white-space: nowrap;">
+                                                <input type="checkbox" id="stock-additive" style="width: auto;"> Cộng
+                                                thêm
                                             </label>
                                         </div>
                                     </div>
@@ -1680,10 +1762,12 @@
 
                         <!-- Card 3: Vị trí, trọng lượng & Kích thước (Collapsible) -->
                         <div class="kiot-card">
-                            <div class="kiot-card-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                            <div class="kiot-card-header"
+                                onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
                                 <div>
                                     <span>Vị trí, trọng lượng & Kích thước</span>
-                                    <div class="kiot-card-subtitle">Quản lý việc sắp xếp kho, vị trí bán hàng hoặc trọng lượng hàng hóa.</div>
+                                    <div class="kiot-card-subtitle">Quản lý việc sắp xếp kho, vị trí bán hàng hoặc trọng
+                                        lượng hàng hóa.</div>
                                 </div>
                                 <span>^</span>
                             </div>
@@ -1710,7 +1794,8 @@
                                 <div class="form-grid-2" style="margin-bottom: 14px;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Chất liệu</label>
-                                        <input type="text" id="material" placeholder="VD: Gốm sứ Bát Tràng, Thủy tinh...">
+                                        <input type="text" id="material"
+                                            placeholder="VD: Gốm sứ Bát Tràng, Thủy tinh...">
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Xuất xứ</label>
@@ -1720,14 +1805,18 @@
 
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label>Tính năng an toàn & Sử dụng</label>
-                                    <div style="display: flex; gap: 20px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                        <label style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
+                                    <div
+                                        style="display: flex; gap: 20px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                        <label
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
                                             <input type="checkbox" id="usage-food-safe"> 🍲 An toàn thực phẩm
                                         </label>
-                                        <label style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
+                                        <label
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
                                             <input type="checkbox" id="usage-oven-safe"> ♨️ Dùng lò nướng
                                         </label>
-                                        <label style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
+                                        <label
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
                                             <input type="checkbox" id="usage-microwave-safe"> 📻 Dùng lò vi sóng
                                         </label>
                                     </div>
@@ -1737,52 +1826,78 @@
 
                         <!-- Card 4: Quản lý theo đơn vị tính, biến thể & combo (Collapsible) -->
                         <div class="kiot-card">
-                            <div class="kiot-card-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                            <div class="kiot-card-header"
+                                onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
                                 <span>Quản lý theo đơn vị tính, biến thể & combo</span>
                                 <span>^</span>
                             </div>
                             <div class="kiot-card-body">
-                                <div class="form-group" style="background: #f0f9ff; padding: 10px 14px; border-radius: 6px; border: 1px solid #bae6fd; margin-bottom: 14px;">
-                                    <label style="margin-bottom: 6px; font-weight: 700; color: #0369a1;">Loại hình sản phẩm:</label>
+                                <div class="form-group"
+                                    style="background: #f0f9ff; padding: 10px 14px; border-radius: 6px; border: 1px solid #bae6fd; margin-bottom: 14px;">
+                                    <label style="margin-bottom: 6px; font-weight: 700; color: #0369a1;">Loại hình sản
+                                        phẩm:</label>
                                     <div style="display: flex; gap: 20px;">
-                                        <label style="margin: 0; cursor: pointer; font-weight: 600; color: #0c4a6e; display: flex; align-items: center; gap: 6px;">
-                                            <input type="radio" name="product-type" value="normal" checked onchange="window.toggleComboSection()"> Sản phẩm thường
+                                        <label
+                                            style="margin: 0; cursor: pointer; font-weight: 600; color: #0c4a6e; display: flex; align-items: center; gap: 6px;">
+                                            <input type="radio" name="product-type" value="normal" checked
+                                                onchange="window.toggleComboSection()"> Sản phẩm thường
                                         </label>
-                                        <label style="margin: 0; cursor: pointer; font-weight: 600; color: #0c4a6e; display: flex; align-items: center; gap: 6px;">
-                                            <input type="radio" name="product-type" value="combo" onchange="window.toggleComboSection()"> Bộ Combo sản phẩm
+                                        <label
+                                            style="margin: 0; cursor: pointer; font-weight: 600; color: #0c4a6e; display: flex; align-items: center; gap: 6px;">
+                                            <input type="radio" name="product-type" value="combo"
+                                                onchange="window.toggleComboSection()"> Bộ Combo sản phẩm
                                         </label>
                                     </div>
                                 </div>
 
                                 <!-- Cấu hình Combo -->
-                                <div id="combo-section" style="display: none; background: #fffdf5; border: 1px dashed #f59e0b; padding: 14px; border-radius: 8px; margin-bottom: 14px;">
-                                    <h4 style="margin-top: 0; margin-bottom: 6px; color: #b45309; font-size: 0.95rem;">Cấu hình Combo</h4>
-                                    <div id="combo-variants-tabs" style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;"></div>
+                                <div id="combo-section"
+                                    style="display: none; background: #fffdf5; border: 1px dashed #f59e0b; padding: 14px; border-radius: 8px; margin-bottom: 14px;">
+                                    <h4 style="margin-top: 0; margin-bottom: 6px; color: #b45309; font-size: 0.95rem;">
+                                        Cấu hình Combo</h4>
+                                    <div id="combo-variants-tabs"
+                                        style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;"></div>
                                     <div id="combo-variant-content" style="display: none;">
                                         <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                                            <input type="text" id="combo-variant-name" placeholder="Tên phân loại" oninput="window.updateCurrentComboVariantName(this.value)" style="flex: 1;">
-                                            <input type="text" id="combo-variant-image" placeholder="URL ảnh..." oninput="window.updateCurrentComboVariantImage(this.value)" style="flex: 1;">
-                                            <button type="button" class="kiot-btn-outline" onclick="window.removeCurrentComboVariant()">Xóa</button>
+                                            <input type="text" id="combo-variant-name" placeholder="Tên phân loại"
+                                                oninput="window.updateCurrentComboVariantName(this.value)"
+                                                style="flex: 1;">
+                                            <input type="text" id="combo-variant-image" placeholder="URL ảnh..."
+                                                oninput="window.updateCurrentComboVariantImage(this.value)"
+                                                style="flex: 1;">
+                                            <button type="button" class="kiot-btn-outline"
+                                                onclick="window.removeCurrentComboVariant()">Xóa</button>
                                         </div>
                                         <div style="position: relative;">
-                                            <input type="text" id="combo-product-search" placeholder="Nhập mã hoặc tên sản phẩm..." autocomplete="off">
-                                            <div id="combo-product-suggestions" class="search-suggestions" style="width: 100%; max-height: 200px; overflow-y: auto;"></div>
+                                            <input type="text" id="combo-product-search"
+                                                placeholder="Nhập mã hoặc tên sản phẩm..." autocomplete="off">
+                                            <div id="combo-product-suggestions" class="search-suggestions"
+                                                style="width: 100%; max-height: 200px; overflow-y: auto;"></div>
                                         </div>
-                                        <div id="combo-items-list" style="margin-top: 8px; min-height: 40px; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;"></div>
+                                        <div id="combo-items-list"
+                                            style="margin-top: 8px; min-height: 40px; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;">
+                                        </div>
                                     </div>
-                                    <button type="button" class="kiot-btn-outline" style="width: 100%; margin-top: 8px;" onclick="window.addComboVariant()">+ Thêm phân loại Combo</button>
+                                    <button type="button" class="kiot-btn-outline" style="width: 100%; margin-top: 8px;"
+                                        onclick="window.addComboVariant()">+ Thêm phân loại Combo</button>
                                 </div>
 
                                 <!-- Biến thể màu sắc & Họa tiết -->
                                 <div class="form-group">
                                     <label>Biến thể màu sắc</label>
-                                    <div id="variant-items-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-                                    <button type="button" id="btn-add-variant" class="kiot-btn-outline" style="width: 100%; font-size: 0.82rem;">+ Thêm biến thể màu sắc</button>
+                                    <div id="variant-items-container"
+                                        style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                                    </div>
+                                    <button type="button" id="btn-add-variant" class="kiot-btn-outline"
+                                        style="width: 100%; font-size: 0.82rem;">+ Thêm biến thể màu sắc</button>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label>Biến thể họa tiết</label>
-                                    <div id="pattern-variant-items-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-                                    <button type="button" id="btn-add-pattern-variant" class="kiot-btn-outline" style="width: 100%; font-size: 0.82rem;">+ Thêm biến thể họa tiết</button>
+                                    <div id="pattern-variant-items-container"
+                                        style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                                    </div>
+                                    <button type="button" id="btn-add-pattern-variant" class="kiot-btn-outline"
+                                        style="width: 100%; font-size: 0.82rem;">+ Thêm biến thể họa tiết</button>
                                 </div>
                             </div>
                         </div>
@@ -1797,7 +1912,8 @@
                             </div>
                             <div class="kiot-card-body">
                                 <!-- Quill Rich Text Editor Container -->
-                                <div id="quill-editor-container" style="height: 240px; background: #ffffff; border-radius: 6px;"></div>
+                                <div id="quill-editor-container"
+                                    style="height: 240px; background: #ffffff; border-radius: 6px;"></div>
                                 <textarea id="description" style="display: none;"></textarea>
                             </div>
                         </div>
@@ -1814,7 +1930,8 @@
 
                                 <div class="form-group">
                                     <label>SEO Description (Mô tả tìm kiếm)</label>
-                                    <textarea id="seoDescription" rows="3" placeholder="Đoạn mô tả ngắn hiển thị dưới tiêu đề Google..."></textarea>
+                                    <textarea id="seoDescription" rows="3"
+                                        placeholder="Đoạn mô tả ngắn hiển thị dưới tiêu đề Google..."></textarea>
                                 </div>
 
                                 <div class="form-group" style="margin-bottom: 0;">
@@ -1843,15 +1960,17 @@
 
                     <!-- Phía phải: Các nút Bỏ qua, Lưu & Tạo thêm hàng, Lưu -->
                     <div class="footer-btn-group">
-                        <button type="button" class="kiot-btn-secondary" id="btn-close-product-modal-footer">Bỏ qua</button>
-                        <button type="submit" class="kiot-btn-outline" id="btn-save-add-another" onclick="window.saveAndAddAnother = true;">Lưu & Tạo thêm hàng ▾</button>
+                        <button type="button" class="kiot-btn-secondary" id="btn-close-product-modal-footer">Bỏ
+                            qua</button>
+                        <button type="submit" class="kiot-btn-outline" id="btn-save-add-another"
+                            onclick="window.saveAndAddAnother = true;">Lưu & Tạo thêm hàng ▾</button>
                         <button type="submit" class="kiot-btn-primary" id="submit-product-btn">Lưu</button>
                     </div>
                 </div>
 
             </form>
-            </div>
         </div>
+    </div>
     </div>
     <!-- Kết thúc Modal -->
     <!-- Kết thúc Modal -->

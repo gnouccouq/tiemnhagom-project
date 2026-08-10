@@ -373,7 +373,7 @@ async function initOverview() {
 
         const standardOrders = orderSnap.docs.map(d => ({ id: d.id, orderType: 'standard', ...d.data() }));
         const rentalOrders = rentalSnap.docs ? rentalSnap.docs.map(d => ({ id: d.id, orderType: 'rental', ...d.data() })) : [];
-        
+
         overviewOrdersData = [...standardOrders, ...rentalOrders];
 
         // 1. Cập nhật chỉ số Kết quả bán hàng hôm nay
@@ -988,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     [{ 'header': [1, 2, 3, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                     [{ 'align': [] }],
                     ['link', 'image'],
                     ['clean']
@@ -2824,7 +2824,7 @@ window.currentSortCol = 'createdAt';
 window.currentSortDir = 'desc';
 
 // Quickview Sub-tab switcher
-window.switchQuickViewTab = function(productId, tabName, btn) {
+window.switchQuickViewTab = function (productId, tabName, btn) {
     const parentCard = btn.closest('.kiot-quickview-card');
     if (!parentCard) return;
 
@@ -2928,7 +2928,7 @@ window.switchQuickViewTab = function(productId, tabName, btn) {
 };
 
 // Sao chép sản phẩm (Clone)
-window.cloneProduct = async function(productId) {
+window.cloneProduct = async function (productId) {
     if (typeof editProduct === 'function') {
         await editProduct(productId);
         const productIdEl = document.getElementById('productId');
@@ -2943,14 +2943,14 @@ window.cloneProduct = async function(productId) {
 };
 
 // In tem mã vạch
-window.printBarcodeLabel = function(productId) {
+window.printBarcodeLabel = function (productId) {
     const p = posProductsLocal.find(item => item.id === productId);
     const pName = p ? p.name : productId;
     showToast(`Đang kết nối máy in để in tem mã vạch cho ${pName}...`, "info");
 };
 
 // Quick view expandable row toggle
-window.toggleProductQuickView = function(productId, event) {
+window.toggleProductQuickView = function (productId, event) {
     if (event) event.stopPropagation();
 
     const existingDetail = document.getElementById(`product-detail-row-${productId}`);
@@ -3042,23 +3042,23 @@ window.currentPage = 1;
 window.pageSize = 15;
 
 // Hàm chuyển trang & đổi kích thước trang
-window.changePageSize = function(size) {
+window.changePageSize = function (size) {
     window.pageSize = parseInt(size) || 15;
     window.currentPage = 1;
     renderAdminProductTable();
 };
 
-window.goToPage = function(page) {
+window.goToPage = function (page) {
     window.currentPage = parseInt(page) || 1;
     renderAdminProductTable();
 };
 
-window.changePage = function(delta) {
+window.changePage = function (delta) {
     window.currentPage += delta;
     renderAdminProductTable();
 };
 
-window.goToLastPage = function() {
+window.goToLastPage = function () {
     const totalItems = posProductsLocal.length;
     const totalPages = Math.ceil(totalItems / window.pageSize) || 1;
     window.currentPage = totalPages;
@@ -3066,7 +3066,7 @@ window.goToLastPage = function() {
 };
 
 // Reset tất cả bộ lọc hàng hóa
-window.resetProductFilters = function() {
+window.resetProductFilters = function () {
     const searchInput = document.getElementById('admin-product-search');
     const catSelect = document.getElementById('admin-product-category-filter');
     const stockSelect = document.getElementById('admin-product-stock-filter');
@@ -3121,7 +3121,7 @@ function renderAdminProductTable() {
     let filtered = posProductsLocal.filter(p => {
         const matchesSearch = (p.name || "").toLowerCase().includes(term) || p.id.toLowerCase().includes(term);
         const matchesCategory = catValue === 'all' || p.category === catValue;
-        
+
         let matchesStock = true;
         const s = Number(p.stock) || 0;
         if (stockValue === 'below-min') matchesStock = s <= 5;
@@ -3180,7 +3180,7 @@ function renderAdminProductTable() {
     // Cập nhật Footer Bar phân trang
     const infoEl = document.getElementById('kiot-pagination-info');
     if (infoEl) {
-        infoEl.innerText = totalItems > 0 
+        infoEl.innerText = totalItems > 0
             ? `${startIndex + 1} - ${endIndex} trong ${totalItems} hàng hóa`
             : `0 - 0 trong 0 hàng hóa`;
     }
@@ -7004,7 +7004,7 @@ window.downloadRentalBillPDF = async (orderId) => {
         if (!docSnap.exists()) return;
         const o = docSnap.data();
         const rInfo = o.rentalInfo || {};
-        
+
         let itemsHtml = '';
         let sub = 0;
         if (o.items && Array.isArray(o.items)) {
@@ -7111,13 +7111,13 @@ window.downloadRentalBillPDF = async (orderId) => {
 
         if (typeof html2pdf !== 'undefined') {
             const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `HopDongThueDo-#${orderId}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin: [10, 10, 10, 10],
+                filename: `HopDongThueDo-#${orderId}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            
+
             await html2pdf().set(opt).from(container).save();
             window.showToast('Đã tải hợp đồng PDF', 'success');
         } else {
