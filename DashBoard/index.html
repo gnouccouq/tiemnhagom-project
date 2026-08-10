@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản trị - Tiệm Nhà Gốm</title>
+    <title>Quß║ún trß╗ï - Tiß╗çm Nh├á Gß╗æm</title>
     <link rel="stylesheet" href="../css/style.css?v=16">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
@@ -25,116 +25,139 @@
 <body class="admin-dashboard-layout" style="display: none;">
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- Lớp phủ cho Sidebar trên Mobile -->
+    <!-- Lß╗¢p phß╗º cho Sidebar tr├¬n Mobile -->
     <div id="admin-sidebar-overlay" class="admin-sidebar-overlay"></div>
 
     <div class="admin-wrapper">
         <!-- KiotViet-style Official Single Royal Blue Header (#0066cc) -->
-        <header class="kiot-topbar">
-            <div class="kiot-topbar-left">
-                <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
-                    <img src="../Asset/images/logo.webp" alt="Tiệm Nhà Gốm Logo">
-                </a>
-
-                <nav class="kiot-nav-container">
-                    <!-- 1. Tổng quan -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn admin-tab-btn active" data-target="overview-section">
-                            <span>Tổng quan</span>
+                <header class="kiot-topbar-2tier">
+            <div class="kiot-tier-1">
+                <div class="kiot-t1-left">
+                    <a href="../index.html" class="kiot-brand-box" title="Tiá»‡m NhÃ  Gá»‘m Admin">
+                        <img src="../Asset/images/logo.webp" alt="Tiá»‡m NhÃ  Gá»‘m Logo">
+                    </a>
+                </div>
+                <div class="kiot-t1-right">
+                    <!-- Notifications Dropdown -->
+                    <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
+                        <button type="button" class="kiot-icon-btn" title="ThÃ´ng bÃ¡o">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            <!-- Yellow dot indicator -->
+                            <span id="notification-indicator" style="display: none; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background-color: #ff9800; border-radius: 50%; border: 2px solid white;"></span>
                         </button>
-                    </div>
-
-                    <!-- 2. Hàng hóa (Dropdown) -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn">
-                            <span>Hàng hóa</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
-                        </button>
-                        <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh sách sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh mục sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
+                        <div class="kiot-user-dropdown" style="min-width: 250px; right: -60px;">
+                            <div class="user-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="font-size: 1rem;">Há»™p thÆ° Ä‘áº¿n</strong>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
+                                <div style="padding: 20px; text-align: center; color: #64748b;">
+                                    <svg viewBox="0 0 24 24" width="40" height="40" fill="#e2e8f0" style="margin-bottom: 10px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                    <div>KhÃ´ng cÃ³ thÃ´ng bÃ¡o</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 3. Đơn hàng (Dropdown) -->
+                    <!-- Settings Button -->
+                    <button type="button" class="kiot-icon-btn admin-tab-btn" data-target="maintenance-section" title="CÃ i Ä‘áº·t há»‡ thá»‘ng">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="kiot-user-dropdown-wrapper">
+                        <button class="kiot-user-avatar-btn" style="background: #e0f2fe; color: #0284c7; padding: 8px; border-radius: 50%; border: none; cursor: pointer; display: flex;">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        </button>
+                        <div class="kiot-user-dropdown">
+                            <div id="admin-user-info" class="user-dropdown-header">
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="../index.html" class="user-dropdown-item">Há»“ sÆ¡ cá»­a hÃ ng</a>
+                            <button id="btn-logout-admin" class="user-dropdown-item text-danger">ÄÄƒng xuáº¥t</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kiot-tier-2">
+                <nav class="kiot-nav-container">
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn admin-tab-btn active" data-target="overview-section">
+                            <span>Tá»•ng quan</span>
+                        </button>
+                    </div>
                     <div class="kiot-nav-item">
                         <button class="kiot-nav-btn">
-                            <span>Đơn hàng</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                            <span>HÃ ng hÃ³a</span> <span style="font-size: 0.6rem; margin-left: 2px;">â–¼</span>
+                        </button>
+                        <div class="kiot-dropdown-menu">
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh sÃ¡ch sáº£n pháº©m</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="flash-sale-settings-section"><span>Thiáº¿t láº­p Flash Sale</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh má»¥c sáº£n pháº©m</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="inventory-log-section"><span>Nháº­t kÃ½ kho & Tá»“n kho</span></button>
+                        </div>
+                    </div>
+                    <div class="kiot-nav-item">
+                        <button class="kiot-nav-btn">
+                            <span>ÄÆ¡n hÃ ng</span> <span style="font-size: 0.6rem; margin-left: 2px;">â–¼</span>
                         </button>
                         <div class="kiot-dropdown-menu">
                             <button class="kiot-dropdown-item admin-tab-btn" data-target="order-section">
-                                <span>Đơn mua hàng</span> 
+                                <span>ÄÆ¡n mua hÃ ng</span> 
                                 <span id="order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
                             </button>
                             <button class="kiot-dropdown-item admin-tab-btn" data-target="rental-order-section">
-                                <span>Đơn thuê đồ Decor</span> 
+                                <span>ÄÆ¡n thuÃª Ä‘á»“ Decor</span> 
                                 <span id="rental-order-count-badge" class="sidebar-badge" style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
                             </button>
                         </div>
                     </div>
-
-                    <!-- 4. Khách hàng (Mục riêng) -->
                     <div class="kiot-nav-item">
                         <button class="kiot-nav-btn admin-tab-btn" data-target="user-section">
-                            <span>Khách hàng</span>
+                            <span>KhÃ¡ch hÃ ng</span>
                         </button>
                     </div>
-
-                    <!-- 5. Nhân viên (Mục riêng) -->
                     <div class="kiot-nav-item">
                         <button class="kiot-nav-btn admin-tab-btn" data-target="admin-account-section">
-                            <span>Nhân viên</span>
+                            <span>NhÃ¢n viÃªn</span>
                         </button>
                     </div>
-
-                    <!-- 6. Báo cáo (Dropdown) -->
                     <div class="kiot-nav-item">
                         <button class="kiot-nav-btn">
-                            <span>Báo cáo</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                            <span>BÃ¡o cÃ¡o</span> <span style="font-size: 0.6rem; margin-left: 2px;">â–¼</span>
                         </button>
                         <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo doanh thu</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ thống Online</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo trì hệ thống</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>BÃ¡o cÃ¡o doanh thu</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Há»‡ thá»‘ng Online</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Báº£o trÃ¬ há»‡ thá»‘ng</span></button>
                         </div>
                     </div>
-
-                    <!-- 7. Bán online & Web (Dropdown) -->
                     <div class="kiot-nav-item">
                         <button class="kiot-nav-btn">
-                            <span>Bán online</span> <span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                            <span>BÃ¡n online</span> <span style="font-size: 0.6rem; margin-left: 2px;">â–¼</span>
                         </button>
                         <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner Trang chủ</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ sưu tập</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự kiện</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết & Tin tức</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm giá</span></button>
+                            <button class="kiot-dropdown-item admin-tab-btn" data-target="reviews-section"><span>Quáº£n lÃ½ Ä‘Ã¡nh giÃ¡</span></button>
                         </div>
                     </div>
                 </nav>
-            </div>
-
-            <div class="kiot-topbar-right">
-                <!-- Nút Cài Đặt chỉ gồm 1 ICON BÁNH RĂNG -->
-                <button type="button" class="kiot-icon-btn admin-tab-btn" data-target="maintenance-section" title="Cài đặt hệ thống">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                </button>
-                <div id="admin-user-info" class="admin-profile-snippet"></div>
-                <a href="../index.html" class="kiot-right-link" title="Về trang chủ Web"><span>Trang chủ</span></a>
-                <button id="btn-logout-admin" class="kiot-right-link logout" title="Đăng xuất"><span>Đăng xuất</span></button>
-                <!-- Nút Bán Hàng POS Trọng Tâm -->
-                <button class="kiot-pos-pill-btn admin-tab-btn" data-target="pos-section" style="margin-left: 4px;">
-                    🛒 <span>Bán hàng</span>
-                </button>
+                <div class="kiot-t2-right">
+                    <button class="kiot-pos-pill-btn admin-tab-btn" data-target="pos-section">
+                        ðŸ›’ <span>BÃ¡n hÃ ng</span>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <!-- Thanh điều hướng dưới cùng cho Mobile -->
+
+        <!-- Thanh ─æiß╗üu h╞░ß╗¢ng d╞░ß╗¢i c├╣ng cho Mobile -->
         <nav class="admin-bottom-nav">
             <button class="bottom-nav-btn active" data-target="overview-section">
                 <span class="icon">
@@ -144,7 +167,7 @@
                         <polyline points="17 6 23 6 23 12"></polyline>
                     </svg>
                 </span>
-                <span class="label">Tổng quan</span>
+                <span class="label">Tß╗òng quan</span>
             </button>
             <button class="bottom-nav-btn" data-target="product-section">
                 <span class="icon">
@@ -154,7 +177,7 @@
                         <path d="M16 7a4 4 0 0 0-8 0"></path>
                     </svg>
                 </span>
-                <span class="label">Sản phẩm</span>
+                <span class="label">Sß║ún phß║⌐m</span>
             </button>
             <button class="bottom-nav-btn" data-target="pos-section">
                 <span class="icon">
@@ -177,14 +200,14 @@
                         <line x1="4" y1="18" x2="12" y2="18"></line>
                     </svg>
                 </span>
-                <span class="label">Thêm</span>
+                <span class="label">Th├¬m</span>
             </button>
         </nav>
 
-        <!-- Nội dung bên phải -->
+        <!-- Nß╗Öi dung b├¬n phß║úi -->
         <main class="admin-main-content">
             <header class="content-header">
-                <h1 id="current-tab-title">Tổng quan</h1>
+                <h1 id="current-tab-title">Tß╗òng quan</h1>
                 <div class="header-actions">
                     <!-- New toggle button for mobile sidebar -->
                     <button id="admin-sidebar-toggle" class="btn-minimal admin-sidebar-toggle">
@@ -202,25 +225,25 @@
             <!-- Section Online Users -->
             <div id="online-users-section" class="admin-section">
                 <div class="admin-card" style="text-align: center; padding: 40px;">
-                    <h2 style="font-family: var(--font-serif); margin-bottom: 20px;">Lượng truy cập trực tuyến</h2>
+                    <h2 style="font-family: var(--font-serif); margin-bottom: 20px;">L╞░ß╗úng truy cß║¡p trß╗▒c tuyß║┐n</h2>
                     <div style="font-size: 5rem; font-weight: bold; color: #4caf50;" id="online-users-count">0</div>
-                    <p style="color: #666; margin-top: 10px;">người dùng đang truy cập</p>
+                    <p style="color: #666; margin-top: 10px;">ng╞░ß╗¥i d├╣ng ─æang truy cß║¡p</p>
                     <div style="margin-top: 20px; color: #999; font-size: 0.85rem;">
-                        Dữ liệu được cập nhật tự động theo thời gian thực (Realtime Database).
+                        Dß╗» liß╗çu ─æ╞░ß╗úc cß║¡p nhß║¡t tß╗▒ ─æß╗Öng theo thß╗¥i gian thß╗▒c (Realtime Database).
                     </div>
                 </div>
             </div>
 
-            <!-- Section Tổng quan (KiotViet Signature Layout) -->
+            <!-- Section Tß╗òng quan (KiotViet Signature Layout) -->
             <div id="overview-section" class="admin-section active">
                 <div class="kiot-overview-wrapper">
-                    <!-- Cột Trái: Dashboards & Charts -->
+                    <!-- Cß╗Öt Tr├íi: Dashboards & Charts -->
                     <div class="kiot-overview-main">
                         
-                        <!-- 1. Kết quả bán hàng hôm nay -->
+                        <!-- 1. Kß║┐t quß║ú b├ín h├áng h├┤m nay -->
                         <div class="kiot-card">
                             <div class="kiot-card-header">
-                                <h3 class="kiot-card-title">Kết quả bán hàng hôm nay</h3>
+                                <h3 class="kiot-card-title">Kß║┐t quß║ú b├ín h├áng h├┤m nay</h3>
                             </div>
                             <div class="kiot-today-metrics">
                                 <div class="today-metric-box">
@@ -228,60 +251,60 @@
                                     <div class="metric-body">
                                         <span class="metric-label">Doanh thu</span>
                                         <div id="kiot-today-revenue" class="metric-value">0 VND</div>
-                                        <small id="kiot-today-orders-count" class="metric-subtext">0 hóa đơn</small>
+                                        <small id="kiot-today-orders-count" class="metric-subtext">0 h├│a ─æ╞ín</small>
                                     </div>
                                 </div>
 
                                 <div class="today-metric-box">
-                                    <div class="metric-icon orange">↩</div>
+                                    <div class="metric-icon orange">Γå⌐</div>
                                     <div class="metric-body">
-                                        <span class="metric-label">Trả hàng</span>
+                                        <span class="metric-label">Trß║ú h├áng</span>
                                         <div id="kiot-today-returns" class="metric-value">0</div>
-                                        <small class="metric-subtext">0 hóa đơn</small>
+                                        <small class="metric-subtext">0 h├│a ─æ╞ín</small>
                                     </div>
                                 </div>
 
                                 <div class="today-metric-box">
-                                    <div class="metric-icon green">↑</div>
+                                    <div class="metric-icon green">Γåæ</div>
                                     <div class="metric-body">
-                                        <span class="metric-label">Doanh thu thuần</span>
+                                        <span class="metric-label">Doanh thu thuß║ºn</span>
                                         <div id="kiot-revenue-growth-today" class="metric-value green-text">+0%</div>
-                                        <small class="metric-subtext">So với hôm qua</small>
+                                        <small class="metric-subtext">So vß╗¢i h├┤m qua</small>
                                     </div>
                                 </div>
 
                                 <div class="today-metric-box">
-                                    <div class="metric-icon red">↓</div>
+                                    <div class="metric-icon red">Γåô</div>
                                     <div class="metric-body">
-                                        <span class="metric-label">Doanh thu thuần</span>
+                                        <span class="metric-label">Doanh thu thuß║ºn</span>
                                         <div id="kiot-revenue-growth-month" class="metric-value red-text">0%</div>
-                                        <small class="metric-subtext">So với cùng kỳ tháng trước</small>
+                                        <small class="metric-subtext">So vß╗¢i c├╣ng kß╗│ th├íng tr╞░ß╗¢c</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 2. Biểu đồ Doanh Thu Thuần -->
+                        <!-- 2. Biß╗âu ─æß╗ô Doanh Thu Thuß║ºn -->
                         <div class="kiot-card" style="margin-top: 16px;">
                             <div class="kiot-card-header flex-between">
                                 <div class="kiot-title-group">
-                                    <h3 class="kiot-card-title">Doanh thu thuần</h3>
+                                    <h3 class="kiot-card-title">Doanh thu thuß║ºn</h3>
                                     <span id="kiot-net-revenue-total" class="kiot-total-badge">0 VND</span>
                                 </div>
                                 <div class="kiot-filter-group">
                                     <select id="kiot-revenue-period-filter" class="kiot-select-sm">
-                                        <option value="month" selected>Tháng này</option>
-                                        <option value="today">Hôm nay</option>
-                                        <option value="week">Tuần này</option>
-                                        <option value="year">Năm nay</option>
+                                        <option value="month" selected>Th├íng n├áy</option>
+                                        <option value="today">H├┤m nay</option>
+                                        <option value="week">Tuß║ºn n├áy</option>
+                                        <option value="year">N─âm nay</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="kiot-tab-bar">
-                                <button class="kiot-tab-item active" data-chart-tab="day">Theo ngày</button>
-                                <button class="kiot-tab-item" data-chart-tab="hour">Theo giờ</button>
-                                <button class="kiot-tab-item" data-chart-tab="weekday">Theo thứ</button>
+                                <button class="kiot-tab-item active" data-chart-tab="day">Theo ng├áy</button>
+                                <button class="kiot-tab-item" data-chart-tab="hour">Theo giß╗¥</button>
+                                <button class="kiot-tab-item" data-chart-tab="weekday">Theo thß╗⌐</button>
                             </div>
 
                             <div class="kiot-chart-container" style="height: 260px; position: relative;">
@@ -289,17 +312,17 @@
                             </div>
                         </div>
 
-                        <!-- 3. Hàng bán chạy & Top 10 Khách mua nhiều nhất -->
+                        <!-- 3. H├áng b├ín chß║íy & Top 10 Kh├ích mua nhiß╗üu nhß║Ñt -->
                         <div class="kiot-two-col-grid" style="margin-top: 16px;">
-                            <!-- Chart A: Top 10 Hàng bán chạy -->
+                            <!-- Chart A: Top 10 H├áng b├ín chß║íy -->
                             <div class="kiot-card">
                                 <div class="kiot-card-header flex-between">
-                                    <h3 class="kiot-card-title">Top 10 hàng bán chạy</h3>
+                                    <h3 class="kiot-card-title">Top 10 h├áng b├ín chß║íy</h3>
                                     <div class="kiot-filter-group">
                                         <select id="kiot-top-product-period" class="kiot-select-sm">
-                                            <option value="month" selected>Tháng này</option>
-                                            <option value="today">Hôm nay</option>
-                                            <option value="all">Tất cả</option>
+                                            <option value="month" selected>Th├íng n├áy</option>
+                                            <option value="today">H├┤m nay</option>
+                                            <option value="all">Tß║Ñt cß║ú</option>
                                         </select>
                                     </div>
                                 </div>
@@ -308,15 +331,15 @@
                                 </div>
                             </div>
 
-                            <!-- Chart B: Top 10 Khách mua nhiều nhất -->
+                            <!-- Chart B: Top 10 Kh├ích mua nhiß╗üu nhß║Ñt -->
                             <div class="kiot-card">
                                 <div class="kiot-card-header flex-between">
-                                    <h3 class="kiot-card-title">Top 10 khách mua nhiều nhất</h3>
+                                    <h3 class="kiot-card-title">Top 10 kh├ích mua nhiß╗üu nhß║Ñt</h3>
                                     <div class="kiot-filter-group">
                                         <select id="kiot-top-customer-period" class="kiot-select-sm">
-                                            <option value="month" selected>Tháng này</option>
-                                            <option value="today">Hôm nay</option>
-                                            <option value="all">Tất cả</option>
+                                            <option value="month" selected>Th├íng n├áy</option>
+                                            <option value="today">H├┤m nay</option>
+                                            <option value="all">Tß║Ñt cß║ú</option>
                                         </select>
                                     </div>
                                 </div>
@@ -328,22 +351,22 @@
 
                     </div>
 
-                    <!-- Cột Phải: Sidebar Activity Timeline -->
+                    <!-- Cß╗Öt Phß║úi: Sidebar Activity Timeline -->
                     <div class="kiot-overview-sidebar">
 
-                        <!-- Widget 3: Cảnh báo -->
+                        <!-- Widget 3: Cß║únh b├ío -->
                         <div class="kiot-widget-card warning">
-                            <div class="widget-icon orange">🔔</div>
+                            <div class="widget-icon orange">≡ƒöö</div>
                             <div class="widget-text">
-                                <p>Có 1 hoạt động đăng nhập hệ thống cần kiểm tra.</p>
+                                <p>C├│ 1 hoß║ít ─æß╗Öng ─æ─âng nhß║¡p hß╗ç thß╗æng cß║ºn kiß╗âm tra.</p>
                             </div>
-                            <span class="widget-arrow">›</span>
+                            <span class="widget-arrow">ΓÇ║</span>
                         </div>
 
-                        <!-- Card Hoạt Động Gần Đây -->
+                        <!-- Card Hoß║ít ─Éß╗Öng Gß║ºn ─É├óy -->
                         <div class="kiot-card" style="margin-top: 16px;">
                             <div class="kiot-card-header">
-                                <h3 class="kiot-card-title">Hoạt động gần đây</h3>
+                                <h3 class="kiot-card-title">Hoß║ít ─æß╗Öng gß║ºn ─æ├óy</h3>
                             </div>
                             <div id="overview-recent-activities" class="kiot-activity-list">
                                 <!-- JS render dynamic live feed -->
@@ -353,14 +376,14 @@
                 </div>
             </div>
 
-            <!-- Section Cài đặt Flash Sale -->
+            <!-- Section C├ái ─æß║╖t Flash Sale -->
             <section id="flash-sale-settings-section" class="admin-section">
                 <div class="admin-card">
-                    <h3>Cấu hình chương trình Flash Sale</h3>
+                    <h3>Cß║Ñu h├¼nh ch╞░╞íng tr├¼nh Flash Sale</h3>
                     <form id="flash-sale-settings-form">
                         <div class="form-group"
                             style="display: flex; align-items: center; gap: 15px; background: #fff9f8; padding: 15px; border-radius: 8px; border: 1px solid #ffe4e1; margin-bottom: 20px;">
-                            <label class="slider-label" style="font-weight: 700; color: #c0392b;">KÍCH HOẠT FLASH
+                            <label class="slider-label" style="font-weight: 700; color: #c0392b;">K├ìCH HOß║áT FLASH
                                 SALE</label>
                             <input type="checkbox" id="fs-active-toggle"
                                 style="width: 25px; height: 25px; cursor: pointer;">
@@ -368,58 +391,58 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Tiêu đề chương trình</label>
-                                <input type="text" id="fs-title" placeholder="VD: Flash Sale Đồng Giá">
+                                <label>Ti├¬u ─æß╗ü ch╞░╞íng tr├¼nh</label>
+                                <input type="text" id="fs-title" placeholder="VD: Flash Sale ─Éß╗ông Gi├í">
                             </div>
                             <div class="form-group">
-                                <label>Phụ đề</label>
-                                <input type="text" id="fs-subtitle" placeholder="VD: Duy nhất trong tuần này">
+                                <label>Phß╗Ñ ─æß╗ü</label>
+                                <input type="text" id="fs-subtitle" placeholder="VD: Duy nhß║Ñt trong tuß║ºn n├áy">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Thời gian bắt đầu</label>
+                                <label>Thß╗¥i gian bß║»t ─æß║ºu</label>
                                 <input type="datetime-local" id="fs-start-time" required>
                             </div>
                             <div class="form-group">
-                                <label>Thời gian kết thúc</label>
+                                <label>Thß╗¥i gian kß║┐t th├║c</label>
                                 <input type="datetime-local" id="fs-end-time" required>
                             </div>
                             <div class="form-group">
-                                <label>Các mức đồng giá (Cách nhau bằng dấu phẩy)</label>
+                                <label>C├íc mß╗⌐c ─æß╗ông gi├í (C├ích nhau bß║▒ng dß║Ñu phß║⌐y)</label>
                                 <input type="text" id="fs-groups" placeholder="39000, 49000, 59000, 99000">
-                                <small style="color: #888;">Hệ thống sẽ tạo các Tab tương ứng dựa trên giá này.</small>
+                                <small style="color: #888;">Hß╗ç thß╗æng sß║╜ tß║ío c├íc Tab t╞░╞íng ß╗⌐ng dß╗▒a tr├¬n gi├í n├áy.</small>
                             </div>
                         </div>
 
                         <button type="submit" class="btn-dark"
-                            style="background: #c0392b; width: 100%; height: 50px;">Lưu cấu hình Flash Sale</button>
+                            style="background: #c0392b; width: 100%; height: 50px;">L╞░u cß║Ñu h├¼nh Flash Sale</button>
                     </form>
                 </div>
 
                 <div class="admin-card" style="margin-top: 2rem;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0;">Sản phẩm đang thiết lập Giảm giá (Flash Sale)</h3>
-                        <small style="color: #666;">Chỉ những sản phẩm có % giảm giá &gt; 0 mới hiện ở đây</small>
+                        <h3 style="margin: 0;">Sß║ún phß║⌐m ─æang thiß║┐t lß║¡p Giß║úm gi├í (Flash Sale)</h3>
+                        <small style="color: #666;">Chß╗ë nhß╗»ng sß║ún phß║⌐m c├│ % giß║úm gi├í &gt; 0 mß╗¢i hiß╗çn ß╗ƒ ─æ├óy</small>
                     </div>
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Ảnh</th>
-                                    <th>Tên sản phẩm</th>
-                                    <th>Giá gốc</th>
-                                    <th>Giảm (%)</th>
-                                    <th>Giá sau giảm</th>
-                                    <th>Tồn kho</th>
+                                    <th>ß║ónh</th>
+                                    <th>T├¬n sß║ún phß║⌐m</th>
+                                    <th>Gi├í gß╗æc</th>
+                                    <th>Giß║úm (%)</th>
+                                    <th>Gi├í sau giß║úm</th>
+                                    <th>Tß╗ôn kho</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-flash-sale-list">
-                                <!-- JS render list sản phẩm đang sale -->
+                                <!-- JS render list sß║ún phß║⌐m ─æang sale -->
                                 <tr>
-                                    <td colspan="6" style="text-align:center; padding: 2rem;">Đang tải danh sách...</td>
+                                    <td colspan="6" style="text-align:center; padding: 2rem;">─Éang tß║úi danh s├ích...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -427,35 +450,35 @@
                 </div>
             </section>
 
-            <!-- Section Quản lý Banner -->
+            <!-- Section Quß║ún l├╜ Banner -->
             <div id="banner-section" class="admin-section">
                 <div class="admin-grid">
                     <div class="admin-card">
-                        <h3>Thêm/Sửa Slide Banner</h3>
+                        <h3>Th├¬m/Sß╗¡a Slide Banner</h3>
                         <form id="banner-form" class="admin-form">
                             <input type="hidden" id="banner-index" value="-1">
 
                             <div class="form-group">
-                                <label>Đường dẫn khi click (Link)</label>
+                                <label>─É╞░ß╗¥ng dß║½n khi click (Link)</label>
                                 <input type="text" id="banner-link" placeholder="products/">
                             </div>
                             <div class="form-group">
-                                <label>Hình ảnh Banner Desktop (1920x1080)</label>
+                                <label>H├¼nh ß║únh Banner Desktop (1920x1080)</label>
                                 <input type="file" id="banner-image" accept="image/*">
                                 <div id="banner-image-preview" style="margin-top: 10px;"></div>
                             </div>
                             <div class="form-group">
-                                <label>Hình ảnh Banner Mobile (Dọc 1080x1920)</label>
+                                <label>H├¼nh ß║únh Banner Mobile (Dß╗ìc 1080x1920)</label>
                                 <input type="file" id="banner-image-mobile" accept="image/*">
                                 <div id="banner-image-mobile-preview" style="margin-top: 10px;"></div>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu Slide</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">L╞░u Slide</button>
                             <button type="button" id="btn-reset-banner-form" class="btn-minimal"
-                                style="width: 100%; margin-top: 10px;">Hủy / Thêm mới</button>
+                                style="width: 100%; margin-top: 10px;">Hß╗ºy / Th├¬m mß╗¢i</button>
                         </form>
                     </div>
                     <div class="admin-card">
-                        <h3>Danh sách Slide hiện tại</h3>
+                        <h3>Danh s├ích Slide hiß╗çn tß║íi</h3>
                         <div id="admin-banner-list" style="display: flex; flex-direction: column; gap: 15px;">
                             <!-- JS render list slides -->
                         </div>
@@ -463,18 +486,18 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Bảo trì -->
+            <!-- Section Quß║ún l├╜ Bß║úo tr├¼ -->
             <div id="maintenance-section" class="admin-section">
                 <div class="admin-card">
-                    <h3>Cài đặt Chế độ Bảo trì / Sắp khai trương</h3>
+                    <h3>C├ái ─æß║╖t Chß║┐ ─æß╗Ö Bß║úo tr├¼ / Sß║»p khai tr╞░╞íng</h3>
                     <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">
-                        Khi bật chế độ này, khách hàng sẽ không thể truy cập các trang khác ngoài trang đếm ngược.
-                        Chỉ Quản trị viên mới có thể truy cập các trang còn lại.
+                        Khi bß║¡t chß║┐ ─æß╗Ö n├áy, kh├ích h├áng sß║╜ kh├┤ng thß╗â truy cß║¡p c├íc trang kh├íc ngo├ái trang ─æß║┐m ng╞░ß╗úc.
+                        Chß╗ë Quß║ún trß╗ï vi├¬n mß╗¢i c├│ thß╗â truy cß║¡p c├íc trang c├▓n lß║íi.
                     </p>
                     <form id="maintenance-settings-form" class="admin-form">
                         <div class="form-group"
                             style="display: flex; align-items: center; gap: 15px; margin-bottom: 2rem;">
-                            <label style="margin-bottom: 0; font-size: 1rem;">Trạng thái:</label>
+                            <label style="margin-bottom: 0; font-size: 1rem;">Trß║íng th├íi:</label>
                             <label class="switch"
                                 style="position: relative; display: inline-block; width: 60px; height: 34px;">
                                 <input type="checkbox" id="maintenance-mode-toggle"
@@ -482,122 +505,122 @@
                                 <span class="slider round"
                                     style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
                             </label>
-                            <span id="maintenance-status-text" style="font-weight: 600; color: #e74c3c;">ĐANG TẮT</span>
+                            <span id="maintenance-status-text" style="font-weight: 600; color: #e74c3c;">─ÉANG Tß║«T</span>
                         </div>
 
                         <div class="form-group">
-                            <label>Tiêu đề trang bảo trì (H1)</label>
-                            <input type="text" id="maintenance-title" placeholder="Ví dụ: Tiệm Nhà Gốm Sắp Ra Mắt!">
+                            <label>Ti├¬u ─æß╗ü trang bß║úo tr├¼ (H1)</label>
+                            <input type="text" id="maintenance-title" placeholder="V├¡ dß╗Ñ: Tiß╗çm Nh├á Gß╗æm Sß║»p Ra Mß║»t!">
                         </div>
                         <div class="form-group">
-                            <label>Nội dung mô tả</label>
+                            <label>Nß╗Öi dung m├┤ tß║ú</label>
                             <textarea id="maintenance-message" rows="3"
-                                placeholder="Ví dụ: Chúng tôi đang gấp rút hoàn thiện..."></textarea>
+                                placeholder="V├¡ dß╗Ñ: Ch├║ng t├┤i ─æang gß║Ñp r├║t ho├án thiß╗çn..."></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Thời gian đếm ngược đến (Ngày & Giờ)</label>
+                            <label>Thß╗¥i gian ─æß║┐m ng╞░ß╗úc ─æß║┐n (Ng├áy & Giß╗¥)</label>
                             <input type="datetime-local" id="maintenance-countdown-date">
                         </div>
-                        <button type="submit" class="btn-dark" style="width: 100%;">Lưu cài đặt</button>
+                        <button type="submit" class="btn-dark" style="width: 100%;">L╞░u c├ái ─æß║╖t</button>
                     </form>
                 </div>
             </div>
 
-            <!-- Section Nhật ký kho -->
+            <!-- Section Nhß║¡t k├╜ kho -->
             <div id="inventory-log-section" class="admin-section">
                 <div class="admin-card">
-                    <h3>Lịch sử biến động tồn kho (Admin)</h3>
-                    <!-- ... (Nội dung cũ của Nhật ký kho) ... -->
+                    <h3>Lß╗ïch sß╗¡ biß║┐n ─æß╗Öng tß╗ôn kho (Admin)</h3>
+                    <!-- ... (Nß╗Öi dung c┼⌐ cß╗ºa Nhß║¡t k├╜ kho) ... -->
                 </div>
             </div>
 
-            <!-- Section Quản lý Danh mục -->
+            <!-- Section Quß║ún l├╜ Danh mß╗Ñc -->
             <div id="category-section" class="admin-section">
                 <div class="admin-grid">
                     <div class="admin-card">
-                        <h3>Thêm Danh mục/Phân loại</h3>
+                        <h3>Th├¬m Danh mß╗Ñc/Ph├ón loß║íi</h3>
                         <form id="category-management-form" class="admin-form">
                             <div class="form-group">
-                                <label>Tên Nhóm (VD: Dining Decor)</label>
+                                <label>T├¬n Nh├│m (VD: Dining Decor)</label>
                                 <input type="text" id="cat-group-name" required list="existing-groups"
-                                    placeholder="Chọn nhóm cũ hoặc nhập nhóm mới">
+                                    placeholder="Chß╗ìn nh├│m c┼⌐ hoß║╖c nhß║¡p nh├│m mß╗¢i">
                                 <datalist id="existing-groups"></datalist>
                             </div>
                             <div class="form-group">
-                                <label>Tên Phân loại con (VD: Bát & Chén)</label>
-                                <input type="text" id="cat-sub-name" required placeholder="Nhập tên phân loại...">
+                                <label>T├¬n Ph├ón loß║íi con (VD: B├ít & Ch├⌐n)</label>
+                                <input type="text" id="cat-sub-name" required placeholder="Nhß║¡p t├¬n ph├ón loß║íi...">
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Thêm vào hệ thống</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">Th├¬m v├áo hß╗ç thß╗æng</button>
                         </form>
                         <div
                             style="margin-top: 2rem; padding: 15px; background: #fffcf5; border-radius: 8px; font-size: 0.85rem;">
-                            <p>💡 <strong>Lưu ý:</strong> Khi bạn xóa một danh mục, các sản phẩm thuộc danh mục đó sẽ
-                                không bị mất nhưng bạn cần cập nhật lại danh mục cho chúng để hiển thị đúng trên
+                            <p>≡ƒÆí <strong>L╞░u ├╜:</strong> Khi bß║ín x├│a mß╗Öt danh mß╗Ñc, c├íc sß║ún phß║⌐m thuß╗Öc danh mß╗Ñc ─æ├│ sß║╜
+                                kh├┤ng bß╗ï mß║Ñt nh╞░ng bß║ín cß║ºn cß║¡p nhß║¡t lß║íi danh mß╗Ñc cho ch├║ng ─æß╗â hiß╗ân thß╗ï ─æ├║ng tr├¬n
                                 website.</p>
                         </div>
                     </div>
 
                     <div class="admin-card">
-                        <h3>Cấu trúc danh mục hiện tại</h3>
+                        <h3>Cß║Ñu tr├║c danh mß╗Ñc hiß╗çn tß║íi</h3>
                         <div id="admin-category-tree" class="category-tree">
-                            <!-- JS render cấu trúc cây -->
+                            <!-- JS render cß║Ñu tr├║c c├óy -->
                             <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Tin tức -->
+            <!-- Section Quß║ún l├╜ Tin tß╗⌐c -->
             <div id="news-section" class="admin-section">
                 <div class="admin-grid">
                     <div class="admin-card">
-                        <h3>Đăng / Sửa bài viết</h3>
+                        <h3>─É─âng / Sß╗¡a b├ái viß║┐t</h3>
                         <form id="news-form" class="admin-form">
                             <input type="hidden" id="news-id">
                             <div class="form-group">
-                                <label>Tiêu đề bài viết</label>
+                                <label>Ti├¬u ─æß╗ü b├ái viß║┐t</label>
                                 <input type="text" id="news-title" required
-                                    placeholder="VD: Cách bảo quản gốm sứ thủ công">
+                                    placeholder="VD: C├ích bß║úo quß║ún gß╗æm sß╗⌐ thß╗º c├┤ng">
                             </div>
                             <div class="form-group">
-                                <label>Ảnh bìa bài viết</label>
+                                <label>ß║ónh b├¼a b├ái viß║┐t</label>
                                 <input type="file" id="news-image" accept="image/*">
                                 <div id="news-image-preview" style="margin-top: 10px;"></div>
                             </div>
                             <div class="form-group">
-                                <label>Mô tả ngắn (Excerpt)</label>
+                                <label>M├┤ tß║ú ngß║»n (Excerpt)</label>
                                 <textarea id="news-excerpt" rows="2"
-                                    placeholder="Tóm tắt bài viết hiện ở trang danh sách..."></textarea>
+                                    placeholder="T├│m tß║»t b├ái viß║┐t hiß╗çn ß╗ƒ trang danh s├ích..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Nội dung bài viết</label>
+                                <label>Nß╗Öi dung b├ái viß║┐t</label>
                                 <div id="quill-editor" style="height: 400px; background: white; margin-bottom: 20px;"></div>
                                 <textarea id="news-content" style="display: none;"></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Tác giả</label>
-                                <input type="text" id="news-author" placeholder="Tiệm Nhà Gốm">
+                                <label>T├íc giß║ú</label>
+                                <input type="text" id="news-author" placeholder="Tiß╗çm Nh├á Gß╗æm">
                             </div>
                             <div class="form-group">
-                                <label>Trạng thái</label>
+                                <label>Trß║íng th├íi</label>
                                 <select id="news-status">
-                                    <option value="published">Xuất bản ngay</option>
-                                    <option value="draft">Bản nháp</option>
+                                    <option value="published">Xuß║Ñt bß║ún ngay</option>
+                                    <option value="draft">Bß║ún nh├íp</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu bài viết</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">L╞░u b├ái viß║┐t</button>
                         </form>
                     </div>
                     <div class="admin-card">
-                        <h3>Danh sách bài viết</h3>
+                        <h3>Danh s├ích b├ái viß║┐t</h3>
                         <div class="table-responsive">
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th>Ảnh</th>
-                                        <th>Tiêu đề</th>
-                                        <th>Ngày đăng</th>
-                                        <th>Thao tác</th>
+                                        <th>ß║ónh</th>
+                                        <th>Ti├¬u ─æß╗ü</th>
+                                        <th>Ng├áy ─æ─âng</th>
+                                        <th>Thao t├íc</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-news-list">
@@ -609,49 +632,49 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Bộ sưu tập -->
+            <!-- Section Quß║ún l├╜ Bß╗Ö s╞░u tß║¡p -->
             <div id="collections-section" class="admin-section">
                 <div class="admin-grid">
                     <div class="admin-card">
-                        <h3>Thêm/Sửa Bộ sưu tập</h3>
+                        <h3>Th├¬m/Sß╗¡a Bß╗Ö s╞░u tß║¡p</h3>
                         <form id="collection-form" class="admin-form">
                             <input type="hidden" id="collection-edit-index" value="-1">
                             <div class="form-group">
-                                <label>Tên bộ sưu tập</label>
-                                <input type="text" id="collection-name" required placeholder="VD: Gốm Tối Giản">
+                                <label>T├¬n bß╗Ö s╞░u tß║¡p</label>
+                                <input type="text" id="collection-name" required placeholder="VD: Gß╗æm Tß╗æi Giß║ún">
                             </div>
                             <div class="form-group">
-                                <label>Ảnh Banner (1200x400)</label>
+                                <label>ß║ónh Banner (1200x400)</label>
                                 <input type="file" id="collection-image" accept="image/*">
                                 <div id="collection-image-preview" style="margin-top: 10px;"></div>
                             </div>
                             <div class="form-group">
-                                <label>Mô tả / Câu chuyện bộ sưu tập</label>
+                                <label>M├┤ tß║ú / C├óu chuyß╗çn bß╗Ö s╞░u tß║¡p</label>
                                 <textarea id="collection-description" rows="4"
-                                    placeholder="Kể câu chuyện về nguồn cảm hứng của bộ sưu tập này..."></textarea>
+                                    placeholder="Kß╗â c├óu chuyß╗çn vß╗ü nguß╗ôn cß║úm hß╗⌐ng cß╗ºa bß╗Ö s╞░u tß║¡p n├áy..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Ảnh Gallery nghệ thuật (Chọn nhiều ảnh)</label>
+                                <label>ß║ónh Gallery nghß╗ç thuß║¡t (Chß╗ìn nhiß╗üu ß║únh)</label>
                                 <input type="file" id="collection-gallery" accept="image/*" multiple>
                                 <div id="collection-gallery-preview" class="image-preview-grid"></div>
                             </div>
                             <div class="form-group"
                                 style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
                                 <input type="checkbox" id="collection-show-home" style="width: auto; cursor: pointer;">
-                                <label for="collection-show-home" style="margin-bottom: 0; cursor: pointer;">Hiển thị ở
-                                    trang chủ (Tối đa 3)</label>
+                                <label for="collection-show-home" style="margin-bottom: 0; cursor: pointer;">Hiß╗ân thß╗ï ß╗ƒ
+                                    trang chß╗º (Tß╗æi ─æa 3)</label>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu bộ sưu tập</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">L╞░u bß╗Ö s╞░u tß║¡p</button>
                         </form>
                         <div
                             style="margin-top: 2rem; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem;">
-                            <p>💡 <strong>Gợi ý:</strong> Bộ sưu tập giúp bạn gom nhóm các sản phẩm theo chủ đề (Tết,
-                                Quà tặng, Minimalist...) để hiển thị nổi bật trên trang chủ.</p>
+                            <p>≡ƒÆí <strong>Gß╗úi ├╜:</strong> Bß╗Ö s╞░u tß║¡p gi├║p bß║ín gom nh├│m c├íc sß║ún phß║⌐m theo chß╗º ─æß╗ü (Tß║┐t,
+                                Qu├á tß║╖ng, Minimalist...) ─æß╗â hiß╗ân thß╗ï nß╗òi bß║¡t tr├¬n trang chß╗º.</p>
                         </div>
                     </div>
 
                     <div class="admin-card">
-                        <h3>Danh sách Bộ sưu tập hiện có</h3>
+                        <h3>Danh s├ích Bß╗Ö s╞░u tß║¡p hiß╗çn c├│</h3>
                         <div id="admin-collection-list" style="display: flex; flex-direction: column; gap: 10px;">
                             <!-- JS render -->
                             <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
@@ -660,38 +683,38 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Dự Án Sự Kiện -->
+            <!-- Section Quß║ún l├╜ Dß╗▒ ├ün Sß╗▒ Kiß╗çn -->
             <div id="events-section" class="admin-section">
                 <div class="admin-grid">
                     <div class="admin-card">
-                        <h3>Thêm/Sửa Dự Án Sự Kiện</h3>
+                        <h3>Th├¬m/Sß╗¡a Dß╗▒ ├ün Sß╗▒ Kiß╗çn</h3>
                         <form id="event-form" class="admin-form">
                             <input type="hidden" id="event-edit-index" value="-1">
                             <div class="form-group">
-                                <label>Tên dự án</label>
-                                <input type="text" id="event-name" required placeholder="VD: Tiệc sinh nhật ngoài trời">
+                                <label>T├¬n dß╗▒ ├ín</label>
+                                <input type="text" id="event-name" required placeholder="VD: Tiß╗çc sinh nhß║¡t ngo├ái trß╗¥i">
                             </div>
                             <div class="form-group">
-                                <label>Ảnh Banner (Đại diện)</label>
+                                <label>ß║ónh Banner (─Éß║íi diß╗çn)</label>
                                 <input type="file" id="event-image" accept="image/*">
                                 <div id="event-image-preview" style="margin-top: 10px;"></div>
                             </div>
                             <div class="form-group">
-                                <label>Mô tả / Câu chuyện dự án</label>
+                                <label>M├┤ tß║ú / C├óu chuyß╗çn dß╗▒ ├ín</label>
                                 <textarea id="event-description" rows="4"
-                                    placeholder="Kể về quá trình setup, concept của bữa tiệc..."></textarea>
+                                    placeholder="Kß╗â vß╗ü qu├í tr├¼nh setup, concept cß╗ºa bß╗»a tiß╗çc..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Ảnh Gallery thực tế (Chọn nhiều ảnh)</label>
+                                <label>ß║ónh Gallery thß╗▒c tß║┐ (Chß╗ìn nhiß╗üu ß║únh)</label>
                                 <input type="file" id="event-gallery" accept="image/*" multiple>
                                 <div id="event-gallery-preview" class="image-preview-grid"></div>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu dự án</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">L╞░u dß╗▒ ├ín</button>
                         </form>
                     </div>
 
                     <div class="admin-card">
-                        <h3>Danh sách Dự Án hiện có</h3>
+                        <h3>Danh s├ích Dß╗▒ ├ün hiß╗çn c├│</h3>
                         <div id="admin-event-list" style="display: flex; flex-direction: column; gap: 10px;">
                             <!-- JS render -->
                             <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
@@ -700,107 +723,107 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Sản phẩm KiotViet Layout -->
+            <!-- Section Quß║ún l├╜ Sß║ún phß║⌐m KiotViet Layout -->
             <div id="product-section" class="admin-section">
                 <div class="kiot-product-layout">
-                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
+                    <!-- 1. Bß╗Ö Lß╗ìc B├¬n Tr├íi (Left Filter Sidebar) -->
                     <div class="kiot-filter-sidebar">
                         <div class="filter-header">
-                            <h3 class="filter-title">Hàng hóa</h3>
-                            <button type="button" class="filter-reset-link" onclick="window.resetProductFilters()">Tạo mới</button>
+                            <h3 class="filter-title">H├áng h├│a</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetProductFilters()">Tß║ío mß╗¢i</button>
                         </div>
 
-                        <!-- Nhóm hàng -->
+                        <!-- Nh├│m h├áng -->
                         <div class="filter-group">
-                            <label class="filter-label">Nhóm hàng</label>
+                            <label class="filter-label">Nh├│m h├áng</label>
                             <select id="admin-product-category-filter" class="kiot-filter-select">
-                                <option value="all">Chọn nhóm hàng</option>
+                                <option value="all">Chß╗ìn nh├│m h├áng</option>
                             </select>
                         </div>
 
-                        <!-- Tồn kho -->
+                        <!-- Tß╗ôn kho -->
                         <div class="filter-group">
-                            <label class="filter-label">Tồn kho</label>
+                            <label class="filter-label">Tß╗ôn kho</label>
                             <select id="admin-product-stock-filter" class="kiot-filter-select">
-                                <option value="all">Tất cả</option>
-                                <option value="in-stock">Còn hàng trong kho</option>
-                                <option value="out-of-stock">Hết hàng trong kho</option>
+                                <option value="all">Tß║Ñt cß║ú</option>
+                                <option value="in-stock">C├▓n h├áng trong kho</option>
+                                <option value="out-of-stock">Hß║┐t h├áng trong kho</option>
                             </select>
                         </div>
 
-                        <!-- Dự kiến hết hàng -->
+                        <!-- Dß╗▒ kiß║┐n hß║┐t h├áng -->
                         <div class="filter-group">
-                            <label class="filter-label">Dự kiến hết hàng</label>
+                            <label class="filter-label">Dß╗▒ kiß║┐n hß║┐t h├áng</label>
                             <div class="radio-options">
-                                <label class="radio-item"><input type="radio" name="depletion-time" value="all" checked> Toàn thời gian</label>
-                                <label class="radio-item"><input type="radio" name="depletion-time" value="custom"> Tùy chỉnh 📅</label>
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="all" checked> To├án thß╗¥i gian</label>
+                                <label class="radio-item"><input type="radio" name="depletion-time" value="custom"> T├╣y chß╗ënh ≡ƒôà</label>
                             </div>
                         </div>
 
-                        <!-- Thời gian tạo -->
+                        <!-- Thß╗¥i gian tß║ío -->
                         <div class="filter-group">
-                            <label class="filter-label">Thời gian tạo</label>
+                            <label class="filter-label">Thß╗¥i gian tß║ío</label>
                             <div class="radio-options">
-                                <label class="radio-item"><input type="radio" name="creation-time" value="all" checked> Toàn thời gian</label>
-                                <label class="radio-item"><input type="radio" name="creation-time" value="custom"> Tùy chỉnh 📅</label>
+                                <label class="radio-item"><input type="radio" name="creation-time" value="all" checked> To├án thß╗¥i gian</label>
+                                <label class="radio-item"><input type="radio" name="creation-time" value="custom"> T├╣y chß╗ënh ≡ƒôà</label>
                             </div>
                         </div>
 
-                        <!-- Nhà cung cấp -->
+                        <!-- Nh├á cung cß║Ñp -->
                         <div class="filter-group">
-                            <label class="filter-label">Nhà cung cấp</label>
-                            <input type="text" class="kiot-filter-input" placeholder="Chọn nhà cung cấp">
+                            <label class="filter-label">Nh├á cung cß║Ñp</label>
+                            <input type="text" class="kiot-filter-input" placeholder="Chß╗ìn nh├á cung cß║Ñp">
                         </div>
 
-                        <!-- Vị trí -->
+                        <!-- Vß╗ï tr├¡ -->
                         <div class="filter-group">
-                            <label class="filter-label">Vị trí</label>
-                            <input type="text" class="kiot-filter-input" placeholder="Chọn vị trí">
+                            <label class="filter-label">Vß╗ï tr├¡</label>
+                            <input type="text" class="kiot-filter-input" placeholder="Chß╗ìn vß╗ï tr├¡">
                         </div>
 
-                        <!-- Loại hàng -->
+                        <!-- Loß║íi h├áng -->
                         <div class="filter-group">
-                            <label class="filter-label">Loại hàng</label>
+                            <label class="filter-label">Loß║íi h├áng</label>
                             <select id="admin-product-type-filter" class="kiot-filter-select">
-                                <option value="all">Chọn loại hàng</option>
-                                <option value="normal">Hàng hóa thường</option>
-                                <option value="combo">Hàng combo</option>
+                                <option value="all">Chß╗ìn loß║íi h├áng</option>
+                                <option value="normal">H├áng h├│a th╞░ß╗¥ng</option>
+                                <option value="combo">H├áng combo</option>
                             </select>
                         </div>
 
-                        <!-- Bán trực tiếp -->
+                        <!-- B├ín trß╗▒c tiß║┐p -->
                         <div class="filter-group">
-                            <label class="filter-label">Bán trực tiếp</label>
+                            <label class="filter-label">B├ín trß╗▒c tiß║┐p</label>
                             <div class="pill-options">
-                                <button type="button" class="pill-btn active" data-direct="all">Tất cả</button>
-                                <button type="button" class="pill-btn" data-direct="yes">Có</button>
-                                <button type="button" class="pill-btn" data-direct="no">Không</button>
+                                <button type="button" class="pill-btn active" data-direct="all">Tß║Ñt cß║ú</button>
+                                <button type="button" class="pill-btn" data-direct="yes">C├│</button>
+                                <button type="button" class="pill-btn" data-direct="no">Kh├┤ng</button>
                             </div>
                         </div>
 
-                        <!-- Trạng thái hàng hóa -->
+                        <!-- Trß║íng th├íi h├áng h├│a -->
                         <div class="filter-group">
-                            <label class="filter-label">Trạng thái hàng hóa</label>
+                            <label class="filter-label">Trß║íng th├íi h├áng h├│a</label>
                             <select id="admin-product-status-filter" class="kiot-filter-select">
-                                <option value="active" selected>Hàng đang kinh doanh</option>
-                                <option value="inactive">Hàng ngừng kinh doanh</option>
-                                <option value="all">Tất cả</option>
+                                <option value="active" selected>H├áng ─æang kinh doanh</option>
+                                <option value="inactive">H├áng ngß╗½ng kinh doanh</option>
+                                <option value="all">Tß║Ñt cß║ú</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- 2. Cột Phải Main Data Table (Right Area) -->
+                    <!-- 2. Cß╗Öt Phß║úi Main Data Table (Right Area) -->
                     <div class="kiot-product-main">
                         <!-- Top Bar Actions -->
                         <div class="kiot-table-toolbar">
                             <div class="search-box-wrapper">
-                                <span class="search-icon">🔍</span>
-                                <input type="text" id="admin-product-search" placeholder="Theo mã, tên hàng...">
+                                <span class="search-icon">≡ƒöì</span>
+                                <input type="text" id="admin-product-search" placeholder="Theo m├ú, t├¬n h├áng...">
                             </div>
                             <div class="toolbar-actions">
-                                <button type="button" class="kiot-btn-primary" onclick="window.openProductModal()">+ Tạo mới ▾</button>
-                                <button type="button" class="kiot-btn-outline">📥 Import file</button>
-                                <button type="button" id="btn-export-excel" class="kiot-btn-outline">📤 Xuất file</button>
+                                <button type="button" class="kiot-btn-primary" onclick="window.openProductModal()">+ Tß║ío mß╗¢i Γû╛</button>
+                                <button type="button" class="kiot-btn-outline">≡ƒôÑ Import file</button>
+                                <button type="button" id="btn-export-excel" class="kiot-btn-outline">≡ƒôñ Xuß║Ñt file</button>
                             </div>
                         </div>
 
@@ -810,16 +833,16 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 32px;"><input type="checkbox" id="selectAllProducts"></th>
-                                        <th style="width: 32px;">⭐</th>
-                                        <th style="width: 42px;">Ảnh</th>
-                                        <th class="sortable-header" data-sort="id" style="cursor: pointer;">Mã hàng <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="name" style="cursor: pointer;">Tên hàng <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="price" style="cursor: pointer;">Giá bán <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Giá vốn <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tồn kho <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Khách đặt <span class="sort-icon">↕</span></th>
-                                        <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thời gian tạo <span class="sort-icon">↕</span></th>
-                                        <th>Dự kiến hết hàng</th>
+                                        <th style="width: 32px;">Γ¡É</th>
+                                        <th style="width: 42px;">ß║ónh</th>
+                                        <th class="sortable-header" data-sort="id" style="cursor: pointer;">M├ú h├áng <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="name" style="cursor: pointer;">T├¬n h├áng <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="price" style="cursor: pointer;">Gi├í b├ín <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="costPrice" style="cursor: pointer;">Gi├í vß╗æn <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="stock" style="cursor: pointer;">Tß╗ôn kho <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="sold" style="cursor: pointer;">Kh├ích ─æß║╖t <span class="sort-icon">Γåò</span></th>
+                                        <th class="sortable-header" data-sort="createdAt" style="cursor: pointer;">Thß╗¥i gian tß║ío <span class="sort-icon">Γåò</span></th>
+                                        <th>Dß╗▒ kiß║┐n hß║┐t h├áng</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-product-list">
@@ -831,33 +854,33 @@
                         <!-- KiotViet Footer Pagination Bar -->
                         <div class="kiot-pagination-bar">
                             <div class="pg-left">
-                                <span>Hiển thị</span>
+                                <span>Hiß╗ân thß╗ï</span>
                                 <select id="kiot-page-size" class="kiot-select-sm" onchange="window.changePageSize(this.value)">
-                                    <option value="15" selected>15 dòng</option>
-                                    <option value="20">20 dòng</option>
-                                    <option value="30">30 dòng</option>
-                                    <option value="50">50 dòng</option>
-                                    <option value="100">100 dòng</option>
+                                    <option value="15" selected>15 d├▓ng</option>
+                                    <option value="20">20 d├▓ng</option>
+                                    <option value="30">30 d├▓ng</option>
+                                    <option value="50">50 d├▓ng</option>
+                                    <option value="100">100 d├▓ng</option>
                                 </select>
                             </div>
 
                             <div class="pg-center">
-                                <button type="button" class="pg-btn" onclick="window.goToPage(1)" title="Trang đầu">|&lt;</button>
-                                <button type="button" class="pg-btn" onclick="window.changePage(-1)" title="Trang trước">&lt;</button>
+                                <button type="button" class="pg-btn" onclick="window.goToPage(1)" title="Trang ─æß║ºu">|&lt;</button>
+                                <button type="button" class="pg-btn" onclick="window.changePage(-1)" title="Trang tr╞░ß╗¢c">&lt;</button>
                                 <input type="number" id="kiot-page-input" class="pg-input" value="1" min="1" onchange="window.goToPage(this.value)">
                                 <button type="button" class="pg-btn" onclick="window.changePage(1)" title="Trang sau">&gt;</button>
-                                <button type="button" class="pg-btn" id="btn-last-page" onclick="window.goToLastPage()" title="Trang cuối">&gt;|</button>
+                                <button type="button" class="pg-btn" id="btn-last-page" onclick="window.goToLastPage()" title="Trang cuß╗æi">&gt;|</button>
                             </div>
 
                             <div class="pg-right">
-                                <span id="kiot-pagination-info">1 - 15 trong 0 hàng hóa</span>
+                                <span id="kiot-pagination-info">1 - 15 trong 0 h├áng h├│a</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section POS - Bán tại shop -->
+            <!-- Section POS - B├ín tß║íi shop -->
             <div id="pos-section" class="admin-section pos-section-new">
                 <!-- POS Header -->
                 <div class="pos-header">
@@ -867,7 +890,7 @@
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" id="pos-product-search" placeholder="Tìm kiếm hoặc quét mã vạch sản phẩm...">
+                        <input type="text" id="pos-product-search" placeholder="T├¼m kiß║┐m hoß║╖c qu├⌐t m├ú vß║ích sß║ún phß║⌐m...">
                         <div id="pos-product-suggestions" class="search-suggestions"></div>
                     </div>
                     <button class="pos-icon-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -877,18 +900,18 @@
 
                     <div class="pos-tabs-container">
                         <div class="pos-tabs" id="pos-tabs-list">
-                            <!-- Tabs sẽ được render bằng JS -->
+                            <!-- Tabs sß║╜ ─æ╞░ß╗úc render bß║▒ng JS -->
                         </div>
                         <button class="pos-tab-add" onclick="window.posCreateNewBill()">+</button>
                     </div>
 
                     <div class="pos-actions">
-                        <button class="pos-icon-btn" title="Làm mới"><svg viewBox="0 0 24 24" width="18" height="18"
+                        <button class="pos-icon-btn" title="L├ám mß╗¢i"><svg viewBox="0 0 24 24" width="18" height="18"
                                 fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="23 4 23 10 17 10"></polyline>
                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                             </svg></button>
-                        <button class="pos-icon-btn" title="In lại qua Bluetooth" id="btn-connect-bt-printer"
+                        <button class="pos-icon-btn" title="In lß║íi qua Bluetooth" id="btn-connect-bt-printer"
                             onclick="window.printLastOrderBT()"><svg viewBox="0 0 24 24" width="18" height="18"
                                 fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -929,7 +952,7 @@
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 </svg>
-                                <input type="text" id="pos-customer-search" placeholder="Tìm khách hàng (SĐT/Tên)">
+                                <input type="text" id="pos-customer-search" placeholder="T├¼m kh├ích h├áng (S─ÉT/T├¬n)">
                                 <button class="pos-icon-btn" style="padding: 4px;"
                                     onclick="window.posOpenAddCustomerModal()"><svg viewBox="0 0 24 24" width="20"
                                         height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -943,35 +966,35 @@
                                 <span id="pos-cust-phone-display"
                                     style="font-size: 0.8rem; color: #666; margin-left: 5px;"></span>
                                 <button onclick="window.posClearCustomer()" class="btn-minimal"
-                                    style="padding: 2px 5px; color: #e74c3c; border: none; margin-left: auto;">✕</button>
+                                    style="padding: 2px 5px; color: #e74c3c; border: none; margin-left: auto;">Γ£ò</button>
                             </div>
                         </div>
 
                         <!-- Summary Section -->
                         <div class="pos-summary-section">
                             <div class="summary-row">
-                                <span>Tổng tiền hàng <span id="pos-total-qty"
+                                <span>Tß╗òng tiß╗ün h├áng <span id="pos-total-qty"
                                         style="color: #666; font-size: 0.9em; margin-left: 5px;">(0)</span></span>
                                 <span id="pos-subtotal">0</span>
                             </div>
                             <div class="summary-row">
-                                <span>Giảm giá</span>
+                                <span>Giß║úm gi├í</span>
                                 <div class="pos-bill-discount">
                                     <input type="text" id="pos-bill-discount-input" placeholder="0"
                                         onchange="window.updateBillDiscount(this.value)">
                                 </div>
                             </div>
                             <div class="summary-row total">
-                                <span style="font-weight: bold;">Khách cần trả</span>
+                                <span style="font-weight: bold;">Kh├ích cß║ºn trß║ú</span>
                                 <span id="pos-total-amount" style="color: #0984e3; font-size: 1.4rem;">0</span>
                             </div>
                             <div class="summary-row payment">
-                                <span style="font-weight: bold;">Khách thanh toán</span>
+                                <span style="font-weight: bold;">Kh├ích thanh to├ín</span>
                                 <input type="text" id="pos-cash-given" placeholder="0"
                                     oninput="window.calculatePOSChange(this)">
                             </div>
                             <div class="summary-row return" id="pos-return-row" style="display: none;">
-                                <span style="font-weight: bold;">Tiền thối lại</span>
+                                <span style="font-weight: bold;">Tiß╗ün thß╗æi lß║íi</span>
                                 <span id="pos-change-amount" style="color: #d63031; font-weight: bold;">0</span>
                             </div>
                         </div>
@@ -979,24 +1002,24 @@
                         <!-- Payment Methods -->
                         <div class="pos-payment-methods">
                             <label class="radio-container">
-                                <input type="radio" name="pos-payment" value="Tiền mặt" checked
+                                <input type="radio" name="pos-payment" value="Tiß╗ün mß║╖t" checked
                                     onchange="window.togglePOSCashSection()">
-                                <span class="radio-checkmark"></span> Tiền mặt
+                                <span class="radio-checkmark"></span> Tiß╗ün mß║╖t
                             </label>
                             <label class="radio-container">
-                                <input type="radio" name="pos-payment" value="Chuyển khoản"
+                                <input type="radio" name="pos-payment" value="Chuyß╗ân khoß║ún"
                                     onchange="window.togglePOSCashSection()">
-                                <span class="radio-checkmark"></span> Chuyển khoản
+                                <span class="radio-checkmark"></span> Chuyß╗ân khoß║ún
                             </label>
                             <label class="radio-container">
-                                <input type="radio" name="pos-payment" value="Thẻ"
+                                <input type="radio" name="pos-payment" value="Thß║╗"
                                     onchange="window.togglePOSCashSection()">
-                                <span class="radio-checkmark"></span> Thẻ
+                                <span class="radio-checkmark"></span> Thß║╗
                             </label>
                             <label class="radio-container">
-                                <input type="radio" name="pos-payment" value="Ví"
+                                <input type="radio" name="pos-payment" value="V├¡"
                                     onchange="window.togglePOSCashSection()">
-                                <span class="radio-checkmark"></span> Ví
+                                <span class="radio-checkmark"></span> V├¡
                             </label>
                         </div>
 
@@ -1009,87 +1032,87 @@
                         </div>
 
                         <!-- Complete Button -->
-                        <button class="pos-btn-complete" onclick="createPOSOrder()">THANH TOÁN</button>
+                        <button class="pos-btn-complete" onclick="createPOSOrder()">THANH TO├üN</button>
                     </div>
                 </div>
             </div>
 
 
-            <!-- Section Quản lý Đơn hàng -->
+            <!-- Section Quß║ún l├╜ ─É╞ín h├áng -->
             <div id="order-section" class="admin-section">
                 <div class="admin-card">
                     <div class="admin-order-filters-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-search-input">Tìm kiếm chung</label>
-                            <input type="text" id="order-search-input" placeholder="Mã đơn, Tên, SĐT khách...">
+                            <label for="order-search-input">T├¼m kiß║┐m chung</label>
+                            <input type="text" id="order-search-input" placeholder="M├ú ─æ╞ín, T├¬n, S─ÉT kh├ích...">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-filter-status">Trạng thái</label>
+                            <label for="order-filter-status">Trß║íng th├íi</label>
                             <select id="order-filter-status">
-                                <option value="all">Tất cả</option>
-                                <option value="Đang xử lý">Đang xử lý</option>
-                                <option value="Chờ thanh toán">Chờ thanh toán</option>
-                                <option value="Đã thanh toán">Đã thanh toán</option>
-                                <option value="Đang giao hàng">Đang giao hàng</option>
-                                <option value="Đã hoàn thành">Đã hoàn thành</option>
-                                <option value="Đã hủy">Đã hủy</option>
+                                <option value="all">Tß║Ñt cß║ú</option>
+                                <option value="─Éang xß╗¡ l├╜">─Éang xß╗¡ l├╜</option>
+                                <option value="Chß╗¥ thanh to├ín">Chß╗¥ thanh to├ín</option>
+                                <option value="─É├ú thanh to├ín">─É├ú thanh to├ín</option>
+                                <option value="─Éang giao h├áng">─Éang giao h├áng</option>
+                                <option value="─É├ú ho├án th├ánh">─É├ú ho├án th├ánh</option>
+                                <option value="─É├ú hß╗ºy">─É├ú hß╗ºy</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-filter-date-preset">Thời gian</label>
+                            <label for="order-filter-date-preset">Thß╗¥i gian</label>
                             <select id="order-filter-date-preset" onchange="window.toggleCustomDateFilter(this.value)">
-                                <option value="all">Tất cả thời gian</option>
-                                <option value="today">Hôm nay</option>
-                                <option value="yesterday">Hôm qua</option>
-                                <option value="this_week">Tuần này</option>
-                                <option value="last_week">Tuần trước</option>
-                                <option value="this_month">Tháng này</option>
-                                <option value="this_quarter">Quý này</option>
-                                <option value="this_year">Năm nay</option>
-                                <option value="custom">Tùy chỉnh khoảng ngày...</option>
+                                <option value="all">Tß║Ñt cß║ú thß╗¥i gian</option>
+                                <option value="today">H├┤m nay</option>
+                                <option value="yesterday">H├┤m qua</option>
+                                <option value="this_week">Tuß║ºn n├áy</option>
+                                <option value="last_week">Tuß║ºn tr╞░ß╗¢c</option>
+                                <option value="this_month">Th├íng n├áy</option>
+                                <option value="this_quarter">Qu├╜ n├áy</option>
+                                <option value="this_year">N─âm nay</option>
+                                <option value="custom">T├╣y chß╗ënh khoß║úng ng├áy...</option>
                             </select>
                         </div>
                         <div id="order-custom-date-group" style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="order-filter-date-from">Từ ngày</label>
+                                <label for="order-filter-date-from">Tß╗½ ng├áy</label>
                                 <input type="date" id="order-filter-date-from">
                             </div>
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="order-filter-date-to">Đến ngày</label>
+                                <label for="order-filter-date-to">─Éß║┐n ng├áy</label>
                                 <input type="date" id="order-filter-date-to">
                             </div>
                         </div>
-                        <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp dụng</button>
+                        <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">├üp dß╗Ñng</button>
                     </div>
 
                     <div style="margin: 20px 0; padding: 15px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #0d47a1;">
-                        Tổng doanh thu các đơn hàng đang lọc: <span id="order-filtered-total-amount">0 đ</span>
+                        Tß╗òng doanh thu c├íc ─æ╞ín h├áng ─æang lß╗ìc: <span id="order-filtered-total-amount">0 ─æ</span>
                     </div>
 
-                    <h3>Danh sách đơn hàng mới nhất</h3>
+                    <h3>Danh s├ích ─æ╞ín h├áng mß╗¢i nhß║Ñt</h3>
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Mã đơn</th>
-                                    <th>Ngày đặt</th>
-                                    <th>Khách hàng</th>
-                                    <th>Sản phẩm</th>
-                                    <th>Tổng tiền</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
+                                    <th>M├ú ─æ╞ín</th>
+                                    <th>Ng├áy ─æß║╖t</th>
+                                    <th>Kh├ích h├áng</th>
+                                    <th>Sß║ún phß║⌐m</th>
+                                    <th>Tß╗òng tiß╗ün</th>
+                                    <th>Trß║íng th├íi</th>
+                                    <th>Thao t├íc</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-order-list">
-                                <!-- Dữ liệu load từ Firebase orders collection -->
+                                <!-- Dß╗» liß╗çu load tß╗½ Firebase orders collection -->
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Bộ điều khiển phân trang đơn hàng -->
+                    <!-- Bß╗Ö ─æiß╗üu khiß╗ân ph├ón trang ─æ╞ín h├áng -->
                     <div class="pagination-container"
                         style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
-                        <button id="prev-order-page" class="btn-minimal" disabled>Trang trước</button>
+                        <button id="prev-order-page" class="btn-minimal" disabled>Trang tr╞░ß╗¢c</button>
                         <span id="order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang
                             1</span>
                         <button id="next-order-page" class="btn-minimal">Trang sau</button>
@@ -1097,154 +1120,154 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Đơn thuê đồ -->
+            <!-- Section Quß║ún l├╜ ─É╞ín thu├¬ ─æß╗ô -->
             <div id="rental-order-section" class="admin-section">
                 <div class="admin-card">
                     <div class="admin-order-filters-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-search-input">Tìm kiếm chung</label>
-                            <input type="text" id="rental-order-search-input" placeholder="Mã đơn, Tên Cty, SĐT...">
+                            <label for="rental-order-search-input">T├¼m kiß║┐m chung</label>
+                            <input type="text" id="rental-order-search-input" placeholder="M├ú ─æ╞ín, T├¬n Cty, S─ÉT...">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-filter-status">Trạng thái</label>
+                            <label for="rental-order-filter-status">Trß║íng th├íi</label>
                             <select id="rental-order-filter-status">
-                                <option value="all">Tất cả</option>
-                                <option value="Yêu cầu mới">Yêu cầu mới</option>
-                                <option value="Đã xác nhận">Đã xác nhận</option>
-                                <option value="Đang setup">Đang setup</option>
-                                <option value="Đã thu hồi">Đã thu hồi</option>
-                                <option value="Đã hủy">Đã hủy</option>
+                                <option value="all">Tß║Ñt cß║ú</option>
+                                <option value="Y├¬u cß║ºu mß╗¢i">Y├¬u cß║ºu mß╗¢i</option>
+                                <option value="─É├ú x├íc nhß║¡n">─É├ú x├íc nhß║¡n</option>
+                                <option value="─Éang setup">─Éang setup</option>
+                                <option value="─É├ú thu hß╗ôi">─É├ú thu hß╗ôi</option>
+                                <option value="─É├ú hß╗ºy">─É├ú hß╗ºy</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-filter-date">Thời gian</label>
+                            <label for="rental-order-filter-date">Thß╗¥i gian</label>
                             <select id="rental-order-filter-date" onchange="window.toggleCustomDateFilterRental(this.value)">
-                                <option value="all">Tất cả</option>
-                                <option value="this_month">Tháng này</option>
-                                <option value="custom">Tùy chỉnh...</option>
+                                <option value="all">Tß║Ñt cß║ú</option>
+                                <option value="this_month">Th├íng n├áy</option>
+                                <option value="custom">T├╣y chß╗ënh...</option>
                             </select>
                         </div>
                         <div id="rental-order-custom-date-group" style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="rental-order-date-from">Từ ngày</label>
+                                <label for="rental-order-date-from">Tß╗½ ng├áy</label>
                                 <input type="date" id="rental-order-date-from">
                             </div>
                             <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="rental-order-date-to">Đến ngày</label>
+                                <label for="rental-order-date-to">─Éß║┐n ng├áy</label>
                                 <input type="date" id="rental-order-date-to">
                             </div>
                         </div>
-                        <button id="btn-apply-rental-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp dụng</button>
+                        <button id="btn-apply-rental-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">├üp dß╗Ñng</button>
                     </div>
 
-                    <h3>Danh sách yêu cầu thuê đồ mới nhất</h3>
+                    <h3>Danh s├ích y├¬u cß║ºu thu├¬ ─æß╗ô mß╗¢i nhß║Ñt</h3>
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Mã yêu cầu</th>
-                                    <th>Ngày gửi</th>
-                                    <th>Công ty / Khách hàng</th>
-                                    <th>Sự kiện</th>
-                                    <th>Thời gian thuê</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
+                                    <th>M├ú y├¬u cß║ºu</th>
+                                    <th>Ng├áy gß╗¡i</th>
+                                    <th>C├┤ng ty / Kh├ích h├áng</th>
+                                    <th>Sß╗▒ kiß╗çn</th>
+                                    <th>Thß╗¥i gian thu├¬</th>
+                                    <th>Trß║íng th├íi</th>
+                                    <th>Thao t├íc</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-rental-order-list">
-                                <!-- Dữ liệu load từ Firebase orders collection -->
+                                <!-- Dß╗» liß╗çu load tß╗½ Firebase orders collection -->
                             </tbody>
                         </table>
                     </div>
 
                     <div class="pagination-container"
                         style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
-                        <button id="prev-rental-order-page" class="btn-minimal" disabled>Trang trước</button>
+                        <button id="prev-rental-order-page" class="btn-minimal" disabled>Trang tr╞░ß╗¢c</button>
                         <span id="rental-order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang 1</span>
                         <button id="next-rental-order-page" class="btn-minimal">Trang sau</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Mã giảm giá -->
+            <!-- Section Quß║ún l├╜ M├ú giß║úm gi├í -->
             <div id="coupon-section" class="admin-section">
                 <section class="admin-grid">
                     <div class="admin-card">
-                        <h3>Thêm mã giảm giá mới</h3>
+                        <h3>Th├¬m m├ú giß║úm gi├í mß╗¢i</h3>
                         <form id="coupon-form" class="admin-form">
                             <div class="form-group">
-                                <label>Mã Coupon (VD: TET2024)</label>
+                                <label>M├ú Coupon (VD: TET2024)</label>
                                 <input type="text" id="coupon-code" required
-                                    placeholder="Nhập mã viết liền không dấu...">
+                                    placeholder="Nhß║¡p m├ú viß║┐t liß╗ün kh├┤ng dß║Ñu...">
                             </div>
                             <div class="form-group">
-                                <label>Tên mã ưu đãi (VD: Siêu Sale Giữa Tháng)</label>
+                                <label>T├¬n m├ú ╞░u ─æ├úi (VD: Si├¬u Sale Giß╗»a Th├íng)</label>
                                 <input type="text" id="coupon-name" required
-                                    placeholder="Nhập tên mã ưu đãi hiển thị...">
+                                    placeholder="Nhß║¡p t├¬n m├ú ╞░u ─æ├úi hiß╗ân thß╗ï...">
                             </div>
                             <div class="form-group">
-                                <label>Loại giảm giá</label>
+                                <label>Loß║íi giß║úm gi├í</label>
                                 <select id="coupon-type" required>
-                                    <option value="percent">Phần trăm (%)</option>
-                                    <option value="fixed">Số tiền cố định (VNĐ)</option>
+                                    <option value="percent">Phß║ºn tr─âm (%)</option>
+                                    <option value="fixed">Sß╗æ tiß╗ün cß╗æ ─æß╗ïnh (VN─É)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Giá trị giảm</label>
+                                <label>Gi├í trß╗ï giß║úm</label>
                                 <input type="text" class="currency-input" id="coupon-value" required
-                                    placeholder="VD: 10 hoặc 50000">
+                                    placeholder="VD: 10 hoß║╖c 50000">
                             </div>
                             <div class="form-group">
-                                <label>Giảm tối đa (VNĐ) (Chỉ cho loại % - 0 = Không giới hạn)</label>
+                                <label>Giß║úm tß╗æi ─æa (VN─É) (Chß╗ë cho loß║íi % - 0 = Kh├┤ng giß╗¢i hß║ín)</label>
                                 <input type="text" class="currency-input" id="coupon-max-discount" value="0"
                                     placeholder="VD: 50000">
                             </div>
                             <div class="form-group">
-                                <label>Đơn hàng tối thiểu (VNĐ)</label>
+                                <label>─É╞ín h├áng tß╗æi thiß╗âu (VN─É)</label>
                                 <input type="number" id="coupon-min-order" value="0">
                             </div>
                             <div class="form-group">
-                                <label>Giới hạn số lần sử dụng (0 = Không giới hạn)</label>
+                                <label>Giß╗¢i hß║ín sß╗æ lß║ºn sß╗¡ dß╗Ñng (0 = Kh├┤ng giß╗¢i hß║ín)</label>
                                 <input type="number" id="coupon-limit" value="0">
                             </div>
                             <div class="form-group">
-                                <label>Ngày hết hạn</label>
+                                <label>Ng├áy hß║┐t hß║ín</label>
                                 <input type="date" id="coupon-expiry">
                             </div>
                             <div class="form-group">
-                                <label>Áp dụng cho danh mục</label>
+                                <label>├üp dß╗Ñng cho danh mß╗Ñc</label>
                                 <select id="coupon-category" required>
-                                    <option value="all">Tất cả danh mục</option>
+                                    <option value="all">Tß║Ñt cß║ú danh mß╗Ñc</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Thể lệ / Điều kiện sử dụng</label>
+                                <label>Thß╗â lß╗ç / ─Éiß╗üu kiß╗çn sß╗¡ dß╗Ñng</label>
                                 <textarea id="coupon-conditions" rows="3"
-                                    placeholder="Ví dụ: Giảm 8% cho đơn tối thiểu 0đ, tối đa 500.000đ. Mỗi khách hàng được dùng 1 lần."></textarea>
+                                    placeholder="V├¡ dß╗Ñ: Giß║úm 8% cho ─æ╞ín tß╗æi thiß╗âu 0─æ, tß╗æi ─æa 500.000─æ. Mß╗ùi kh├ích h├áng ─æ╞░ß╗úc d├╣ng 1 lß║ºn."></textarea>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu mã giảm giá</button>
+                            <button type="submit" class="btn-dark" style="width: 100%;">L╞░u m├ú giß║úm gi├í</button>
                         </form>
                     </div>
                     <div class="admin-card">
-                        <h3>Danh sách mã hiện có</h3>
+                        <h3>Danh s├ích m├ú hiß╗çn c├│</h3>
                         <div class="table-responsive">
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th>Mã</th>
-                                        <th>Tên mã</th>
-                                        <th>Loại</th>
-                                        <th>Giá trị</th>
-                                        <th>Đơn tối thiểu</th>
-                                        <th>Giảm tối đa</th>
-                                        <th>Danh mục</th>
-                                        <th>Đã dùng / Tối đa</th>
-                                        <th>Hết hạn</th>
-                                        <th>Thao tác</th>
+                                        <th>M├ú</th>
+                                        <th>T├¬n m├ú</th>
+                                        <th>Loß║íi</th>
+                                        <th>Gi├í trß╗ï</th>
+                                        <th>─É╞ín tß╗æi thiß╗âu</th>
+                                        <th>Giß║úm tß╗æi ─æa</th>
+                                        <th>Danh mß╗Ñc</th>
+                                        <th>─É├ú d├╣ng / Tß╗æi ─æa</th>
+                                        <th>Hß║┐t hß║ín</th>
+                                        <th>Thao t├íc</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-coupon-list">
-                                    <!-- Load từ Firestore -->
+                                    <!-- Load tß╗½ Firestore -->
                                 </tbody>
                             </table>
                         </div>
@@ -1252,59 +1275,59 @@
                 </section>
             </div>
 
-            <!-- Section Quản lý Người dùng -->
+            <!-- Section Quß║ún l├╜ Ng╞░ß╗¥i d├╣ng -->
             <div id="user-section" class="admin-section">
                 <div class="admin-card">
                     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label for="admin-user-search">Tìm kiếm khách hàng</label>
+                            <label for="admin-user-search">T├¼m kiß║┐m kh├ích h├áng</label>
                             <input type="text" id="admin-user-search"
-                                placeholder="Nhập tên, số điện thoại hoặc email...">
+                                placeholder="Nhß║¡p t├¬n, sß╗æ ─æiß╗çn thoß║íi hoß║╖c email...">
                         </div>
                     </div>
-                    <h3>Danh sách khách hàng</h3>
+                    <h3>Danh s├ích kh├ích h├áng</h3>
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Tên hiển thị</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Giới tính</th>
-                                    <th>Ngày sinh</th>
-                                    <th>Hạng thành viên</th>
-                                    <th>Cập nhật cuối</th>
-                                    <th>Thao tác</th>
+                                    <th>T├¬n hiß╗ân thß╗ï</th>
+                                    <th>Sß╗æ ─æiß╗çn thoß║íi</th>
+                                    <th>Giß╗¢i t├¡nh</th>
+                                    <th>Ng├áy sinh</th>
+                                    <th>Hß║íng th├ánh vi├¬n</th>
+                                    <th>Cß║¡p nhß║¡t cuß╗æi</th>
+                                    <th>Thao t├íc</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-user-list">
-                                <!-- Dữ liệu load từ Firebase users collection -->
+                                <!-- Dß╗» liß╗çu load tß╗½ Firebase users collection -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Tài khoản Nội bộ -->
+            <!-- Section Quß║ún l├╜ T├ái khoß║ún Nß╗Öi bß╗Ö -->
             <div id="admin-account-section" class="admin-section">
                 <header class="content-header">
-                    <h3>Đội ngũ Quản trị & Nhân viên</h3>
+                    <h3>─Éß╗Öi ng┼⌐ Quß║ún trß╗ï & Nh├ón vi├¬n</h3>
                     <div class="header-actions">
-                        <!-- Button '+ Tạo tài khoản nhân viên' will be rendered here by JS -->
+                        <!-- Button '+ Tß║ío t├ái khoß║ún nh├ón vi├¬n' will be rendered here by JS -->
                     </div>
                 </header>
                 <div class="admin-card">
-                    <h3>Đội ngũ Quản trị & Nhân viên</h3>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Danh sách các tài khoản có quyền
-                        truy cập vào hệ thống quản trị.</p>
+                    <h3>─Éß╗Öi ng┼⌐ Quß║ún trß╗ï & Nh├ón vi├¬n</h3>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Danh s├ích c├íc t├ái khoß║ún c├│ quyß╗ün
+                        truy cß║¡p v├áo hß╗ç thß╗æng quß║ún trß╗ï.</p>
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Thông tin</th>
-                                    <th>Vai trò</th>
-                                    <th>Quyền hạn</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
+                                    <th>Th├┤ng tin</th>
+                                    <th>Vai tr├▓</th>
+                                    <th>Quyß╗ün hß║ín</th>
+                                    <th>Trß║íng th├íi</th>
+                                    <th>Thao t├íc</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-staff-list">
@@ -1315,38 +1338,38 @@
                 </div>
             </div>
 
-            <!-- Section Thống kê -->
+            <!-- Section Thß╗æng k├¬ -->
             <div id="stats-section" class="admin-section">
-                <!-- Bộ lọc báo cáo -->
+                <!-- Bß╗Ö lß╗ìc b├ío c├ío -->
                 <div class="admin-card" style="margin-bottom: 2rem;">
                     <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>Năm báo cáo</label>
+                            <label>N─âm b├ío c├ío</label>
                             <select id="stats-year-filter" style="width: 120px;"></select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>Xem theo</label>
                             <select id="stats-period-type" style="width: 180px;">
-                                <option value="monthly">Từng tháng trong năm</option>
-                                <option value="quarterly" selected>Từng quý trong năm</option>
-                                <option value="daily">Từng ngày (Tháng hiện tại)</option>
+                                <option value="monthly">Tß╗½ng th├íng trong n─âm</option>
+                                <option value="quarterly" selected>Tß╗½ng qu├╜ trong n─âm</option>
+                                <option value="daily">Tß╗½ng ng├áy (Th├íng hiß╗çn tß║íi)</option>
                             </select>
                         </div>
                         <button id="btn-refresh-stats" class="btn-dark"
-                            style="height: 40px; margin-top: 0; padding: 0 20px;">📊 Xem báo cáo</button>
+                            style="height: 40px; margin-top: 0; padding: 0 20px;">≡ƒôè Xem b├ío c├ío</button>
                         <button id="btn-export-stats-excel" class="btn-minimal"
                             style="height: 40px; margin-top: 0; padding: 0 15px; display: flex; align-items: center; gap: 8px;">
-                            📊 Xuất báo cáo Excel
+                            ≡ƒôè Xuß║Ñt b├ío c├ío Excel
                         </button>
                     </div>
                 </div>
 
-                <!-- Thẻ tóm tắt trong kỳ -->
+                <!-- Thß║╗ t├│m tß║»t trong kß╗│ -->
                 <div class="overview-grid" style="margin-bottom: 2rem;">
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">💰</div>
+                        <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">≡ƒÆ░</div>
                         <div class="stat-info">
-                            <h3>Doanh thu kỳ này</h3>
+                            <h3>Doanh thu kß╗│ n├áy</h3>
                             <div style="display: flex; align-items: baseline; gap: 8px;">
                                 <p id="period-revenue" style="margin: 0;">0 VND</p>
                                 <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
@@ -1354,39 +1377,39 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #fce4ec; color: #c2185b;">📊</div>
+                        <div class="stat-icon" style="background: #fce4ec; color: #c2185b;">≡ƒôè</div>
                         <div class="stat-info">
-                            <h3>Doanh thu thuần</h3>
+                            <h3>Doanh thu thuß║ºn</h3>
                             <div style="display: flex; align-items: baseline; gap: 8px;">
                                 <p id="period-net-revenue" style="margin: 0;">0 VND</p>
                             </div>
                         </div>
                     </div>
                     <div class="stat-card" style="border: 1px solid #ffe0b2;">
-                        <div class="stat-icon" style="background: #fff3e0; color: #e65100;">🧾</div>
+                        <div class="stat-icon" style="background: #fff3e0; color: #e65100;">≡ƒº╛</div>
                         <div class="stat-info">
-                            <h3>Tổng thuế (1.5%)</h3>
+                            <h3>Tß╗òng thuß║┐ (1.5%)</h3>
                             <p id="period-tax-total" style="margin: 0; color: #e65100;">0 VND</p>
                         </div>
                     </div>
                     <div class="stat-card" style="opacity: 0.8;">
-                        <div class="stat-icon" style="background: #fff8e1; color: #ffa000;">🧾</div>
+                        <div class="stat-icon" style="background: #fff8e1; color: #ffa000;">≡ƒº╛</div>
                         <div class="stat-info">
-                            <h3>Thuế VAT (1%)</h3>
+                            <h3>Thuß║┐ VAT (1%)</h3>
                             <p id="period-vat-total" style="margin: 0;">0 VND</p>
                         </div>
                     </div>
                     <div class="stat-card" style="opacity: 0.8;">
-                        <div class="stat-icon" style="background: #fff3e0; color: #e67e22;">📝</div>
+                        <div class="stat-icon" style="background: #fff3e0; color: #e67e22;">≡ƒô¥</div>
                         <div class="stat-info">
-                            <h3>Thuế TNCN (0.5%)</h3>
+                            <h3>Thuß║┐ TNCN (0.5%)</h3>
                             <p id="period-tncn-total" style="margin: 0;">0 VND</p>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">🛒</div>
+                        <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">≡ƒ¢Æ</div>
                         <div class="stat-info">
-                            <h3>Đơn hàng hoàn thành</h3>
+                            <h3>─É╞ín h├áng ho├án th├ánh</h3>
                             <div style="display: flex; align-items: baseline; gap: 8px;">
                                 <p id="period-orders" style="margin: 0;">0</p>
                                 <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
@@ -1394,9 +1417,9 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;">📈</div>
+                        <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;">≡ƒôê</div>
                         <div class="stat-info">
-                            <h3>Lợi nhuận dự tính</h3>
+                            <h3>Lß╗úi nhuß║¡n dß╗▒ t├¡nh</h3>
                             <div style="display: flex; align-items: baseline; gap: 8px;">
                                 <p id="period-profit" style="margin: 0;">0 VND</p>
                                 <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
@@ -1404,9 +1427,9 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">✨</div>
+                        <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">Γ£¿</div>
                         <div class="stat-info">
-                            <h3>TB đơn hàng</h3>
+                            <h3>TB ─æ╞ín h├áng</h3>
                             <div style="display: flex; align-items: baseline; gap: 8px;">
                                 <p id="period-avg-order" style="margin: 0;">0 VND</p>
                                 <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
@@ -1417,16 +1440,16 @@
 
                 <div class="admin-grid" style="grid-template-columns: 1.5fr 1fr; gap: 2rem;">
                     <div class="admin-card">
-                        <h3>Biểu đồ doanh thu</h3>
+                        <h3>Biß╗âu ─æß╗ô doanh thu</h3>
                         <div style="height: 400px;"><canvas id="revenueMainChart"></canvas></div>
                     </div>
                     <div class="admin-card">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="margin:0">Bán chạy trong kỳ</h3>
+                            <h3 style="margin:0">B├ín chß║íy trong kß╗│</h3>
                             <select id="topSoldType" class="status-select" style="font-size: 0.7rem;">
-                                <option value="bar">Cột</option>
-                                <option value="pie">Tròn</option>
+                                <option value="bar">Cß╗Öt</option>
+                                <option value="pie">Tr├▓n</option>
                             </select>
                         </div>
                         <div style="height: 400px;"><canvas id="topSoldPeriodChart"></canvas></div>
@@ -1434,31 +1457,31 @@
                 </div>
 
                 <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>So sánh doanh thu với năm trước (cùng kỳ 12 tháng)</h3>
+                    <h3>So s├ính doanh thu vß╗¢i n─âm tr╞░ß╗¢c (c├╣ng kß╗│ 12 th├íng)</h3>
                     <div style="height: 400px;"><canvas id="revenueComparisonChart"></canvas></div>
                 </div>
 
                 <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>Phân bổ doanh thu theo phương thức thanh toán</h3>
+                    <h3>Ph├ón bß╗ò doanh thu theo ph╞░╞íng thß╗⌐c thanh to├ín</h3>
                     <div style="height: 300px;"><canvas id="paymentMethodChart"></canvas></div>
                 </div>
 
                 <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>Bảng kê chi tiết theo kỳ</h3>
+                    <h3>Bß║úng k├¬ chi tiß║┐t theo kß╗│</h3>
                     <div class="table-responsive">
                         <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span
-                                class="spinner"></span> Đang tải dữ liệu...</div>
+                                class="spinner"></span> ─Éang tß║úi dß╗» liß╗çu...</div>
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Thời gian</th>
-                                    <th>Số đơn</th>
-                                    <th>DT Thuần (Net)</th>
+                                    <th>Thß╗¥i gian</th>
+                                    <th>Sß╗æ ─æ╞ín</th>
+                                    <th>DT Thuß║ºn (Net)</th>
                                     <th>VAT (1%)</th>
                                     <th>TNCN (0.5%)</th>
-                                    <th>Tổng Thuế</th>
-                                    <th>Tổng DT (Gross)</th>
-                                    <th>Lợi nhuận (Est)</th>
+                                    <th>Tß╗òng Thuß║┐</th>
+                                    <th>Tß╗òng DT (Gross)</th>
+                                    <th>Lß╗úi nhuß║¡n (Est)</th>
                                 </tr>
                             </thead>
                             <tbody id="stats-detail-table"></tbody>
@@ -1469,7 +1492,7 @@
         </main>
     </div>
 
-    <!-- Nút Thêm sản phẩm dạng Floating -->
+    <!-- N├║t Th├¬m sß║ún phß║⌐m dß║íng Floating -->
     <button id="btn-open-add-product" class="btn-dark"
         style="display: none; position: fixed; bottom: 90px; right: 30px; z-index: 999; border-radius: 50px; padding: 15px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 1rem; align-items: center; gap: 8px;">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
@@ -1477,38 +1500,38 @@
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        Thêm sản phẩm
+        Th├¬m sß║ún phß║⌐m
     </button>
 
-    <!-- Modal Thêm/Sửa Sản phẩm -->
+    <!-- Modal Th├¬m/Sß╗¡a Sß║ún phß║⌐m -->
     <div id="product-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="product-modal-title">Thêm/Sửa sản phẩm</h3>
+                <h3 id="product-modal-title">ThÃªm/Sá»­a sáº£n pháº©m</h3>
                 <button type="button" class="modal-close" id="btn-close-product-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="product-form" class="admin-form">
                     <div class="form-group">
-                        <label>Mã sản phẩm (ID tự đặt)</label>
+                        <label>M├ú sß║ún phß║⌐m (ID tß╗▒ ─æß║╖t)</label>
                         <input type="text" id="productId" required placeholder="VD: CHEN-001">
                     </div>
                     <div class="form-group">
-                        <label>Tên sản phẩm</label>
-                        <input type="text" id="name" required placeholder="Tên sản phẩm...">
+                        <label>T├¬n sß║ún phß║⌐m</label>
+                        <input type="text" id="name" required placeholder="T├¬n sß║ún phß║⌐m...">
                     </div>
                     <div class="form-group">
-                        <label>Phân loại</label>
+                        <label>Ph├ón loß║íi</label>
                         <select id="category" required>
-                            <option value="">-- Chọn danh mục --</option>
-                            <!-- Danh mục sẽ được nạp động từ Firestore -->
+                            <option value="">-- Chß╗ìn danh mß╗Ñc --</option>
+                            <!-- Danh mß╗Ñc sß║╜ ─æ╞░ß╗úc nß║íp ─æß╗Öng tß╗½ Firestore -->
                         </select>
                     </div>
 
                     <div class="form-group"
                         style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; background: #f0f8ff; padding: 10px; border-radius: 4px; border: 1px solid #d0e8ff;">
-                        <label style="margin-bottom: 0; font-weight: bold;">Loại sản phẩm:</label>
-                        <label class="radio-container" style="margin-bottom: 0;">Sản phẩm thường
+                        <label style="margin-bottom: 0; font-weight: bold;">Loß║íi sß║ún phß║⌐m:</label>
+                        <label class="radio-container" style="margin-bottom: 0;">Sß║ún phß║⌐m th╞░ß╗¥ng
                             <input type="radio" name="product-type" value="normal" checked
                                 onchange="window.toggleComboSection()">
                             <span class="radio-checkmark"></span>
@@ -1522,32 +1545,32 @@
 
                     <div id="combo-section"
                         style="display: none; background: #fffdf5; border: 1px dashed #f1c40f; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                        <h4 style="margin-top: 0; margin-bottom: 5px; color: #d35400;">Cấu hình Phân loại Combo</h4>
-                        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Tạo nhiều phân loại (VD: Set
-                            Xanh, Set Đỏ) để khách hàng chọn giống như chọn màu sắc. Mỗi phân loại sẽ có danh sách các
-                            món đồ riêng.</p>
+                        <h4 style="margin-top: 0; margin-bottom: 5px; color: #d35400;">Cß║Ñu h├¼nh Ph├ón loß║íi Combo</h4>
+                        <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Tß║ío nhiß╗üu ph├ón loß║íi (VD: Set
+                            Xanh, Set ─Éß╗Å) ─æß╗â kh├ích h├áng chß╗ìn giß╗æng nh╞░ chß╗ìn m├áu sß║»c. Mß╗ùi ph├ón loß║íi sß║╜ c├│ danh s├ích c├íc
+                            m├│n ─æß╗ô ri├¬ng.</p>
 
                         <div id="combo-variants-tabs"
                             style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-                            <!-- Tabs được render bằng JS -->
+                            <!-- Tabs ─æ╞░ß╗úc render bß║▒ng JS -->
                         </div>
 
                         <div id="combo-variant-content" style="display: none;">
                             <div
                                 style="display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 150px;">
-                                    <label>Tên phân loại (VD: Set Mùa Xuân)</label>
-                                    <input type="text" id="combo-variant-name" placeholder="Tên phân loại đang chọn"
+                                    <label>T├¬n ph├ón loß║íi (VD: Set M├╣a Xu├ón)</label>
+                                    <input type="text" id="combo-variant-name" placeholder="T├¬n ph├ón loß║íi ─æang chß╗ìn"
                                         oninput="window.updateCurrentComboVariantName(this.value)">
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
-                                    <label>Ảnh phân loại (URL hoặc Tải lên)</label>
+                                    <label>ß║ónh ph├ón loß║íi (URL hoß║╖c Tß║úi l├¬n)</label>
                                     <div style="display: flex; gap: 5px;">
-                                        <input type="text" id="combo-variant-image" placeholder="URL ảnh..."
+                                        <input type="text" id="combo-variant-image" placeholder="URL ß║únh..."
                                             oninput="window.updateCurrentComboVariantImage(this.value)">
                                         <button type="button" class="btn-outline"
                                             onclick="document.getElementById('combo-variant-image-file').click()"
-                                            style="margin: 0; padding: 0 10px;" title="Tải ảnh lên">
+                                            style="margin: 0; padding: 0 10px;" title="Tß║úi ß║únh l├¬n">
                                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor"
                                                 stroke-width="2" fill="none" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -1561,45 +1584,45 @@
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;"
-                                    title="Hiện độc lập trên trang Danh sách sản phẩm">
+                                    title="Hiß╗çn ─æß╗Öc lß║¡p tr├¬n trang Danh s├ích sß║ún phß║⌐m">
                                     <input type="checkbox" id="combo-variant-show-independent"
                                         onchange="window.updateCurrentComboVariantShowOnCard(this.checked)"
                                         style="cursor: pointer;">
                                     <label for="combo-variant-show-independent"
-                                        style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+                                        style="font-size: 0.75rem; cursor: pointer; color: #555;">─Éß╗Öc lß║¡p</label>
                                 </div>
                                 <button type="button" class="btn-outline"
                                     style="margin-bottom: 0; border-color: #e74c3c; color: #e74c3c;"
-                                    onclick="window.removeCurrentComboVariant()">Xóa</button>
+                                    onclick="window.removeCurrentComboVariant()">X├│a</button>
                             </div>
 
                             <div class="form-group" style="position: relative;">
-                                <label>Tìm và thêm sản phẩm vào phân loại này</label>
-                                <input type="text" id="combo-product-search" placeholder="Nhập mã hoặc tên sản phẩm..."
+                                <label>T├¼m v├á th├¬m sß║ún phß║⌐m v├áo ph├ón loß║íi n├áy</label>
+                                <input type="text" id="combo-product-search" placeholder="Nhß║¡p m├ú hoß║╖c t├¬n sß║ún phß║⌐m..."
                                     autocomplete="off">
                                 <div id="combo-product-suggestions" class="search-suggestions"
                                     style="width: 100%; max-height: 200px; overflow-y: auto; z-index: 100;"></div>
                             </div>
                             <div id="combo-items-list"
                                 style="margin-top: 10px; min-height: 50px; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
-                                <div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Chưa
-                                    chọn sản phẩm nào cho combo.</div>
+                                <div style="text-align: center; color: #999; font-size: 0.85rem; padding: 10px;">Ch╞░a
+                                    chß╗ìn sß║ún phß║⌐m n├áo cho combo.</div>
                             </div>
                         </div>
 
                         <button type="button" class="btn-minimal"
                             style="width: 100%; margin-top: 10px; border: 1px dashed #ccc;"
-                            onclick="window.addComboVariant()">+ Thêm phân loại Combo</button>
+                            onclick="window.addComboVariant()">+ Th├¬m ph├ón loß║íi Combo</button>
                     </div>
                     <div class="form-group">
-                        <label>Bộ sưu tập (Chọn nhiều)</label>
+                        <label>Bß╗Ö s╞░u tß║¡p (Chß╗ìn nhiß╗üu)</label>
                         <div id="product-collections-list"
                             style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
                             <!-- JS render checkboxes -->
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Dự án sự kiện (Chọn nhiều)</label>
+                        <label>Dß╗▒ ├ín sß╗▒ kiß╗çn (Chß╗ìn nhiß╗üu)</label>
                         <div id="product-events-list"
                             style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
                             <!-- JS render checkboxes -->
@@ -1608,188 +1631,188 @@
                     <div class="form-group">
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;">
-                                <label>Giá bán (VND)</label>
+                                <label>Gi├í b├ín (VND)</label>
                                 <input type="text" class="currency-input" id="price" required placeholder="250000">
                             </div>
                             <div style="flex: 1;">
-                                <label>Giá vốn (VND)</label>
+                                <label>Gi├í vß╗æn (VND)</label>
                                 <input type="text" class="currency-input" id="cost" placeholder="150000">
                             </div>
                             <div style="flex: 1;">
-                                <label>Giá thuê (VND)</label>
-                                <input type="text" class="currency-input" id="rentalPrice" placeholder="0 (Báo giá)">
+                                <label>Gi├í thu├¬ (VND)</label>
+                                <input type="text" class="currency-input" id="rentalPrice" placeholder="0 (B├ío gi├í)">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Tồn kho</label>
+                        <label>Tß╗ôn kho</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <input type="number" id="stock" required placeholder="10" style="flex: 1;">
                             <label
                                 style="margin-bottom: 0; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; white-space: nowrap; cursor: pointer;">
-                                <input type="checkbox" id="stock-additive" style="width: auto;"> Nhập thêm
+                                <input type="checkbox" id="stock-additive" style="width: auto;"> Nhß║¡p th├¬m
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;">
-                                <label>Giảm giá (%)</label>
+                                <label>Giß║úm gi├í (%)</label>
                                 <input type="number" id="sale" min="0" max="100" value="0">
                             </div>
                             <div style="flex: 1;">
-                                <label>Giá bán giảm (VND)</label>
+                                <label>Gi├í b├ín giß║úm (VND)</label>
                                 <input type="text" class="currency-input" id="salePrice" placeholder="VD: 199000">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Tham gia Chương trình Đồng giá</label>
+                        <label>Tham gia Ch╞░╞íng tr├¼nh ─Éß╗ông gi├í</label>
                         <select id="flash-sale-group-select">
-                            <option value="">-- Không tham gia --</option>
-                            <!-- JS render các mức giá 39k, 49k... từ cấu hình -->
+                            <option value="">-- Kh├┤ng tham gia --</option>
+                            <!-- JS render c├íc mß╗⌐c gi├í 39k, 49k... tß╗½ cß║Ñu h├¼nh -->
                         </select>
-                        <small style="color: #666;">* Khi chọn, hệ thống sẽ tự tính % giảm giá về mức này.</small>
+                        <small style="color: #666;">* Khi chß╗ìn, hß╗ç thß╗æng sß║╜ tß╗▒ t├¡nh % giß║úm gi├í vß╗ü mß╗⌐c n├áy.</small>
                     </div>
                     <div class="form-group">
-                        <label>Hình ảnh sản phẩm (Chọn nhiều ảnh)</label>
+                        <label>H├¼nh ß║únh sß║ún phß║⌐m (Chß╗ìn nhiß╗üu ß║únh)</label>
                         <input type="file" id="imageFile" accept="image/*" multiple>
                         <div id="image-preview-container" class="image-preview-grid">
-                            <!-- Ảnh hiện có sẽ hiện ở đây khi nhấn Sửa -->
+                            <!-- ß║ónh hiß╗çn c├│ sß║╜ hiß╗çn ß╗ƒ ─æ├óy khi nhß║Ñn Sß╗¡a -->
                         </div>
-                        <small style="color: #666;">* Chọn file mới để thêm ảnh. Nhấn dấu X trên ảnh để xóa ảnh
-                            cũ.</small>
+                        <small style="color: #666;">* Chß╗ìn file mß╗¢i ─æß╗â th├¬m ß║únh. Nhß║Ñn dß║Ñu X tr├¬n ß║únh ─æß╗â x├│a ß║únh
+                            c┼⌐.</small>
                     </div>
                     <div class="form-group">
-                        <label>Kích thước (cm) - Dài x Rộng x Cao</label>
+                        <label>K├¡ch th╞░ß╗¢c (cm) - D├ái x Rß╗Öng x Cao</label>
                         <div style="display: flex; gap: 10px;">
-                            <input type="number" id="dim-length" step="0.1" placeholder="Dài">
-                            <input type="number" id="dim-width" step="0.1" placeholder="Rộng">
+                            <input type="number" id="dim-length" step="0.1" placeholder="D├ái">
+                            <input type="number" id="dim-width" step="0.1" placeholder="Rß╗Öng">
                             <input type="number" id="dim-height" step="0.1" placeholder="Cao">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Trọng lượng (gram)</label>
+                        <label>Trß╗ìng l╞░ß╗úng (gram)</label>
                         <input type="number" id="weight" step="0.1" placeholder="VD: 250 (gram)">
                     </div>
                     <div class="form-group">
-                        <label>Dung tích (ml)</label>
+                        <label>Dung t├¡ch (ml)</label>
                         <input type="number" id="capacity" step="0.1" placeholder="VD: 300 (ml)">
                     </div>
                     <div class="form-group">
-                        <label>Đặc tính sản phẩm</label>
+                        <label>─Éß║╖c t├¡nh sß║ún phß║⌐m</label>
                         <div
                             style="display: flex; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;">
-                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">An toàn thực
-                                phẩm
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">An to├án thß╗▒c
+                                phß║⌐m
                                 <input type="checkbox" id="usage-food-safe">
                                 <span class="checkmark"></span>
                             </label>
-                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò
-                                nướng
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">D├╣ng ─æ╞░ß╗úc l├▓
+                                n╞░ß╗¢ng
                                 <input type="checkbox" id="usage-oven-safe">
                                 <span class="checkmark"></span>
                             </label>
-                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">Dùng được lò
-                                vi sóng
+                            <label class="checkbox-container" style="margin-bottom: 0; font-size: 0.8rem;">D├╣ng ─æ╞░ß╗úc l├▓
+                                vi s├│ng
                                 <input type="checkbox" id="usage-microwave-safe">
                                 <span class="checkmark"></span>
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Chất liệu</label>
-                        <input type="text" id="material" placeholder="VD: Gốm sứ, Gỗ, Thủy tinh...">
+                        <label>Chß║Ñt liß╗çu</label>
+                        <input type="text" id="material" placeholder="VD: Gß╗æm sß╗⌐, Gß╗ù, Thß╗ºy tinh...">
                     </div>
                     <div class="form-group">
-                        <label>Xuất xứ</label>
-                        <input type="text" id="origin" placeholder="VD: Việt Nam, Nhật Bản, Trung Quốc...">
+                        <label>Xuß║Ñt xß╗⌐</label>
+                        <input type="text" id="origin" placeholder="VD: Viß╗çt Nam, Nhß║¡t Bß║ún, Trung Quß╗æc...">
                     </div>
                     <div class="form-group">
-                        <label>Mô tả</label>
-                        <textarea id="description" rows="3" placeholder="Thông tin chi tiết..."></textarea>
+                        <label>M├┤ tß║ú</label>
+                        <textarea id="description" rows="3" placeholder="Th├┤ng tin chi tiß║┐t..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Biến thể màu sắc (Màu & Ảnh riêng)</label>
+                        <label>Biß║┐n thß╗â m├áu sß║»c (M├áu & ß║ónh ri├¬ng)</label>
                         <div id="variant-items-container"
                             style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                            <!-- Biến thể màu sắc sẽ được render bằng JS -->
+                            <!-- Biß║┐n thß╗â m├áu sß║»c sß║╜ ─æ╞░ß╗úc render bß║▒ng JS -->
                         </div>
                         <button type="button" id="btn-add-variant" class="btn-minimal"
-                            style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm màu mới</button>
+                            style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Th├¬m m├áu mß╗¢i</button>
                     </div>
                     <div class="form-group">
-                        <label>Biến thể họa tiết (Họa tiết & Ảnh riêng)</label>
+                        <label>Biß║┐n thß╗â hß╗ìa tiß║┐t (Hß╗ìa tiß║┐t & ß║ónh ri├¬ng)</label>
                         <div id="pattern-variant-items-container"
                             style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                            <!-- Biến thể họa tiết sẽ được render bằng JS -->
+                            <!-- Biß║┐n thß╗â hß╗ìa tiß║┐t sß║╜ ─æ╞░ß╗úc render bß║▒ng JS -->
                         </div>
                         <button type="button" id="btn-add-pattern-variant" class="btn-minimal"
-                            style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Thêm họa tiết mới</button>
+                            style="width: 100%; font-size: 0.8rem; margin-top: 5px;">+ Th├¬m hß╗ìa tiß║┐t mß╗¢i</button>
                     </div>
                     <hr style="margin: 2rem 0; border-top: 1px dashed #ddd;">
-                    <h4 style="margin-bottom: 1rem; font-family: var(--font-serif);">Tối ưu SEO</h4>
+                    <h4 style="margin-bottom: 1rem; font-family: var(--font-serif);">Tß╗æi ╞░u SEO</h4>
                     <div class="form-group">
-                        <label>SEO Title (Tiêu đề Google)</label>
-                        <input type="text" id="seoTitle" placeholder="Để trống nếu dùng tên sản phẩm...">
-                        <small style="color: #888;">Nên dưới 60 ký tự.</small>
+                        <label>SEO Title (Ti├¬u ─æß╗ü Google)</label>
+                        <input type="text" id="seoTitle" placeholder="─Éß╗â trß╗æng nß║┐u d├╣ng t├¬n sß║ún phß║⌐m...">
+                        <small style="color: #888;">N├¬n d╞░ß╗¢i 60 k├╜ tß╗▒.</small>
                     </div>
                     <div class="form-group">
-                        <label>SEO Description (Mô tả Google)</label>
+                        <label>SEO Description (M├┤ tß║ú Google)</label>
                         <textarea id="seoDescription" rows="2"
-                            placeholder="Mô tả ngắn gọn thu hút khách hàng click..."></textarea>
-                        <small style="color: #888;">Nên từ 150-160 ký tự.</small>
+                            placeholder="M├┤ tß║ú ngß║»n gß╗ìn thu h├║t kh├ích h├áng click..."></textarea>
+                        <small style="color: #888;">N├¬n tß╗½ 150-160 k├╜ tß╗▒.</small>
                     </div>
                     <div class="form-group">
-                        <label>Slug (URL thân thiện - Không dấu, gạch ngang)</label>
+                        <label>Slug (URL th├ón thiß╗çn - Kh├┤ng dß║Ñu, gß║ích ngang)</label>
                         <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
                     </div>
                     <div class="form-group"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px;">
                         <input type="checkbox" id="product-is-hidden" style="width: auto;">
                         <label for="product-is-hidden"
-                            style="margin: 0; font-weight: bold; color: #856404; cursor: pointer;">Ẩn sản phẩm này khỏi
-                            cửa hàng</label>
+                            style="margin: 0; font-weight: bold; color: #856404; cursor: pointer;">ß║¿n sß║ún phß║⌐m n├áy khß╗Åi
+                            cß╗¡a h├áng</label>
                     </div>
 
                     <div class="form-group"
                         style="display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; padding: 10px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 4px;">
                         <input type="checkbox" id="product-only-event" style="width: auto;">
                         <label for="product-only-event"
-                            style="margin: 0; font-weight: bold; color: #0d47a1; cursor: pointer;">Ẩn khỏi cửa hàng, nhưng hiện ở Sự kiện</label>
+                            style="margin: 0; font-weight: bold; color: #0d47a1; cursor: pointer;">ß║¿n khß╗Åi cß╗¡a h├áng, nh╞░ng hiß╗çn ß╗ƒ Sß╗▒ kiß╗çn</label>
                     </div>
-                    <button type="submit" id="submit-product-btn" class="btn-dark" style="width: 100%;">Lưu sản
-                        phẩm</button>
+                    <button type="submit" id="submit-product-btn" class="btn-dark" style="width: 100%;">L╞░u sß║ún
+                        phß║⌐m</button>
                 </form>
             </div>
         </div>
     </div>
-    <!-- Kết thúc Modal -->
+    <!-- Kß║┐t th├║c Modal -->
 
-    <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
+    <!-- Khung chß╗⌐a h├│a ─æ╞ín in ß║Ñn (Chß╗ë hiß╗çn khi in) -->
     <div id="receipt-print-area"></div>
     <script type="module" src="../js/DashBoard.js?v=6"></script>
-    <!-- Modal Thêm khách hàng POS -->
+    <!-- Modal Th├¬m kh├ích h├áng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
             <div
                 style="padding: 15px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: #333;">Thêm khách hàng <span
-                        style="font-weight: normal; color: #888; font-size: 0.9rem;">| Chi nhánh tạo: Chi nhánh trung
-                        tâm</span></h3>
+                <h3 style="margin: 0; font-size: 1.1rem; color: #333;">Th├¬m kh├ích h├áng <span
+                        style="font-weight: normal; color: #888; font-size: 0.9rem;">| Chi nh├ính tß║ío: Chi nh├ính trung
+                        t├óm</span></h3>
                 <span class="close-modal" onclick="window.posCloseAddCustomerModal()">&times;</span>
             </div>
 
             <div style="padding: 0 20px; border-bottom: 1px solid #ddd; display: flex; gap: 20px;">
                 <button class="pos-tab-btn active"
-                    style="padding: 10px 0; border: none; background: none; border-bottom: 2px solid #1e88e5; color: #1e88e5; font-weight: 500;">Thông
+                    style="padding: 10px 0; border: none; background: none; border-bottom: 2px solid #1e88e5; color: #1e88e5; font-weight: 500;">Th├┤ng
                     tin chung</button>
-                <button class="pos-tab-btn" style="padding: 10px 0; border: none; background: none; color: #666;">Thông
-                    tin xuất hóa đơn</button>
+                <button class="pos-tab-btn" style="padding: 10px 0; border: none; background: none; color: #666;">Th├┤ng
+                    tin xuß║Ñt h├│a ─æ╞ín</button>
             </div>
 
             <div style="padding: 20px; display: flex; gap: 30px;">
-                <!-- Cột trái: Avatar -->
+                <!-- Cß╗Öt tr├íi: Avatar -->
                 <div style="width: 120px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                     <div
                         style="width: 100px; height: 100px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
@@ -1799,53 +1822,53 @@
                         </svg>
                     </div>
                     <button class="btn-minimal"
-                        style="border: 1px solid #1e88e5; color: #1e88e5; padding: 6px 12px; border-radius: 4px; background: white;">Chọn
-                        ảnh</button>
+                        style="border: 1px solid #1e88e5; color: #1e88e5; padding: 6px 12px; border-radius: 4px; background: white;">Chß╗ìn
+                        ß║únh</button>
                 </div>
 
-                <!-- Cột giữa -->
+                <!-- Cß╗Öt giß╗»a -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Mã khách hàng</label>
-                        <input type="text" id="pos-new-cust-code" placeholder="Mã mặc định"
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">M├ú kh├ích h├áng</label>
+                        <input type="text" id="pos-new-cust-code" placeholder="M├ú mß║╖c ─æß╗ïnh"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Tên khách hàng</label>
-                        <input type="text" id="pos-new-cust-name" placeholder="Bắt buộc"
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">T├¬n kh├ích h├áng</label>
+                        <input type="text" id="pos-new-cust-name" placeholder="Bß║»t buß╗Öc"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Điện thoại</label>
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">─Éiß╗çn thoß║íi</label>
                         <input type="text" id="pos-new-cust-phone"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Địa chỉ</label>
-                        <input type="text" id="pos-new-cust-address" placeholder="Số nhà, tòa nhà, ngõ, đường"
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">─Éß╗ïa chß╗ë</label>
+                        <input type="text" id="pos-new-cust-address" placeholder="Sß╗æ nh├á, t├▓a nh├á, ng├╡, ─æ╞░ß╗¥ng"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Khu vực</label>
-                        <input type="text" id="pos-new-cust-area" placeholder="Chọn Tỉnh/TP - Quận/Huyện"
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Khu vß╗▒c</label>
+                        <input type="text" id="pos-new-cust-area" placeholder="Chß╗ìn Tß╗ënh/TP - Quß║¡n/Huyß╗çn"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Phường xã</label>
-                        <input type="text" id="pos-new-cust-ward" placeholder="Chọn Phường/Xã"
+                        <label style="width: 120px; font-weight: 500; font-size: 0.9rem;">Ph╞░ß╗¥ng x├ú</label>
+                        <input type="text" id="pos-new-cust-ward" placeholder="Chß╗ìn Ph╞░ß╗¥ng/X├ú"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                 </div>
 
-                <!-- Cột phải -->
+                <!-- Cß╗Öt phß║úi -->
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Nhóm</label>
+                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Nh├│m</label>
                         <input type="text"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Ngày sinh</label>
+                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Ng├áy sinh</label>
                         <div
                             style="flex: 1; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                             <input type="date"
@@ -1853,7 +1876,7 @@
                             <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem;"><input
                                     type="radio" name="pos-cust-gender" value="nam"> Nam</label>
                             <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem;"><input
-                                    type="radio" name="pos-cust-gender" value="nu"> Nữ</label>
+                                    type="radio" name="pos-cust-gender" value="nu"> Nß╗»</label>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center;">
@@ -1867,7 +1890,7 @@
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
                     <div style="display: flex; align-items: center;">
-                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Ghi chú</label>
+                        <label style="width: 100px; font-weight: 500; font-size: 0.9rem;">Ghi ch├║</label>
                         <input type="text"
                             style="flex: 1; border: none; border-bottom: 1px solid #ddd; padding: 8px 0; outline: none;">
                     </div>
@@ -1878,10 +1901,10 @@
                 style="padding: 15px 20px; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-minimal"
                     style="padding: 8px 20px; border: 1px solid #1e88e5; color: #1e88e5; border-radius: 4px; font-weight: 500; background: white;"
-                    onclick="window.posCloseAddCustomerModal()">Bỏ qua</button>
+                    onclick="window.posCloseAddCustomerModal()">Bß╗Å qua</button>
                 <button class="btn-dark"
                     style="padding: 8px 25px; border: none; border-radius: 4px; font-weight: 500; background-color: #1e88e5; color: white;"
-                    onclick="window.posSaveNewCustomer()">Lưu</button>
+                    onclick="window.posSaveNewCustomer()">L╞░u</button>
             </div>
         </div>
     </div>

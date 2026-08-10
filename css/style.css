@@ -9740,3 +9740,258 @@ body { position: static !important; }
         font-weight: 500;
     }
 }
+
+/* ---- ADMIN DASHBOARD FLEX LAYOUT FIX ---- */
+body.admin-dashboard-layout {
+    overflow: hidden !important; /* NEVER SCROLL THE WINDOW */
+}
+
+.admin-main-content {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - 42px) !important;
+    margin: 42px auto 0 auto !important;
+    padding: 10px 20px !important;
+    box-sizing: border-box !important;
+}
+
+.admin-section {
+    flex: 1 !important;
+    min-height: 0 !important; /* crucial for flex scroll */
+    overflow-y: auto; /* allow other sections to scroll normally */
+}
+
+.admin-section.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Specific for product section: we don't want the section itself to scroll, 
+   we want its left and right inner panels to scroll */
+#product-section {
+    overflow-y: hidden !important;
+}
+
+.kiot-product-layout {
+    display: flex !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}
+
+.kiot-filter-sidebar,
+.kiot-product-main {
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.kiot-table-scroll-container {
+    flex: 1 !important;
+    min-height: 0 !important;
+}
+
+/* Remove bottom padding from main content on mobile so it doesn't leave a gap */
+@media (max-width: 768px) {
+    .admin-main-content {
+        height: calc(100vh - 42px) !important;
+        padding-bottom: 10px !important;
+    }
+}
+
+/* ---- FIX: Add scroll to left filter sidebar ---- */
+.kiot-filter-sidebar {
+    overflow-y: auto !important;
+    padding-bottom: 20px !important; /* give some bottom breathing room */
+}
+/* NEW 2-TIER HEADER KIOTVIET STYLE */
+.kiot-topbar-2tier {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+}
+
+/* Tier 1: White background, Logo and User Info */
+.kiot-tier-1 {
+    background: #ffffff;
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.kiot-t1-left .kiot-brand-box img {
+    height: 28px;
+    vertical-align: middle;
+}
+
+.kiot-t1-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.kiot-t1-right .kiot-icon-btn {
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.kiot-t1-right .kiot-icon-btn:hover {
+    background: #f1f5f9;
+}
+
+/* User Avatar Dropdown */
+.kiot-user-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.kiot-user-avatar-btn {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.kiot-user-dropdown {
+    display: none;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background: white;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    z-index: 1001;
+}
+
+.kiot-user-dropdown-wrapper:hover .kiot-user-dropdown {
+    display: block;
+}
+
+.user-dropdown-header {
+    padding: 12px 15px;
+    background: #f8fafc;
+    color: #333;
+}
+
+.user-dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.user-dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    border: none;
+    background: white;
+    color: #334155;
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.user-dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.user-dropdown-item.text-danger {
+    color: #ef4444;
+}
+
+/* Tier 2: Blue background, Navigation */
+.kiot-tier-2 {
+    background: #0066cc;
+    height: 42px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+}
+
+/* Adjust navigation for Tier 2 */
+.kiot-tier-2 .kiot-nav-container {
+    display: flex;
+    height: 100%;
+}
+
+.kiot-tier-2 .kiot-nav-item {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.kiot-tier-2 .kiot-nav-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0 15px;
+    height: 100%;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.kiot-tier-2 .kiot-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.kiot-tier-2 .kiot-nav-btn.active {
+    background: #005bb5;
+    font-weight: 600;
+}
+
+.kiot-tier-2 .kiot-dropdown-menu {
+    top: 42px; /* Dropdown appears exactly below the 42px tier 2 */
+}
+
+/* Adjust main content margin since header is now 90px (48 + 42) */
+.admin-main-content {
+    margin: 90px auto 0 auto !important;
+}
+.kiot-product-layout {
+    height: calc(100vh - 90px) !important;
+}
+/* NEW 2-TIER HEADER ICONS */
+.kiot-icon-btn {
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+}
+.kiot-icon-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}

@@ -449,6 +449,13 @@ function renderRentalCart() {
     const keys = Object.keys(rentalCart);
     if (keys.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: #999; margin: 0; font-size: 0.9rem;">Bạn chưa chọn món đồ nào.</p>';
+        const floatItemCount = document.getElementById('float-item-count');
+        const floatTotalAmount = document.getElementById('float-total-amount');
+        if (floatItemCount && floatTotalAmount) {
+            floatItemCount.textContent = '0';
+            floatTotalAmount.textContent = '0đ';
+        }
+        if (window.checkFloatingBarVisibility) window.checkFloatingBarVisibility();
         return;
     }
 
@@ -523,6 +530,20 @@ function renderRentalCart() {
     html += '<p style="font-size: 0.8rem; color: #666; margin-top: 10px; font-style: italic;">* Vui lòng chọn Ngày Nhận và Ngày Trả để tính tổng tiền chính xác.</p>';
 
     container.innerHTML = html;
+
+    // Update floating bar
+    const floatItemCount = document.getElementById('float-item-count');
+    const floatTotalAmount = document.getElementById('float-total-amount');
+    if (floatItemCount && floatTotalAmount) {
+        let totalItems = 0;
+        keys.forEach(k => { totalItems += rentalCart[k].quantity; });
+        floatItemCount.textContent = totalItems;
+        floatTotalAmount.textContent = formatCurrencyDisplay(finalTotal) + 'đ';
+    }
+    
+    if (window.checkFloatingBarVisibility) {
+        window.checkFloatingBarVisibility();
+    }
 }
 
 function populateContractModal() {
@@ -650,6 +671,42 @@ function populateContractModal() {
 function setupRentalForm() {
     const form = document.getElementById('rental-request-form');
     if (!form) return;
+
+    // Floating bar setup
+    const floatingBar = document.getElementById('floating-rental-bar');
+    const consultSection = document.getElementById('consult-section');
+    const btnFloatContract = document.getElementById('btn-float-contract');
+    const btnFloatSubmit = document.getElementById('btn-float-submit');
+    
+    if (btnFloatContract) {
+        btnFloatContract.addEventListener('click', () => {
+            document.getElementById('btn-open-contract-modal')?.click();
+        });
+    }
+    
+    if (btnFloatSubmit) {
+        btnFloatSubmit.addEventListener('click', () => {
+            consultSection?.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+    
+    window.checkFloatingBarVisibility = () => {
+        if (!floatingBar || !consultSection) return;
+        const rect = consultSection.getBoundingClientRect();
+        // The form is considered visible if its top is within viewport, we add an offset to hide floating bar a bit earlier
+        const isFormVisible = rect.top < window.innerHeight - 100 && rect.bottom >= 0;
+        const hasItems = Object.keys(rentalCart).length > 0;
+        
+        if (hasItems && !isFormVisible) {
+            floatingBar.style.transform = 'translateY(0)';
+        } else {
+            floatingBar.style.transform = 'translateY(100%)';
+        }
+    };
+    
+    window.addEventListener('scroll', () => {
+        if (window.checkFloatingBarVisibility) window.checkFloatingBarVisibility();
+    });
 
     // Trigger cart re-render when dates change
     const startDateInput = document.getElementById('rental-start-date');

@@ -689,6 +689,18 @@
         }
     </style>
 
+    <!-- Floating Rental Summary Bar -->
+    <div id="floating-rental-bar" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: transform 0.3s ease; transform: translateY(100%);">
+        <div style="display: flex; flex-direction: column;">
+            <span style="font-size: 0.9rem; color: #555;">Đã chọn: <strong id="float-item-count">0</strong> món</span>
+            <span style="font-size: 1rem; color: #d32f2f; font-weight: 700;">Tạm tính: <span id="float-total-amount">0đ</span></span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-float-contract" style="background: #fff; border: 1px solid #2b2b2b; color: #2b2b2b; padding: 8px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">📄 Xem Hợp Đồng</button>
+            <button type="button" id="btn-float-submit" style="background: #2b2b2b; border: 1px solid #2b2b2b; color: #fff; padding: 8px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">🚀 Gửi Yêu Cầu</button>
+        </div>
+    </div>
+
     <div id="footer-placeholder"></div>
 
     <script type="module">

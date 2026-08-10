@@ -63,6 +63,10 @@ service cloud.firestore {
     }
 
     // 5. Đơn hàng (orders)
+    match /rental_orders/{orderId} {
+      allow read, write: if isAdmin();
+    }
+
     match /orders/{orderId} {
       allow create: if isAdmin() || (
         (
@@ -204,3 +208,4 @@ service firebase.storage {
     }
   }
 }
+

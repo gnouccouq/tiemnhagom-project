@@ -538,9 +538,17 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                     const currentPrice = hasSale ? (p.salePrice || Math.round(p.price * (1 - p.sale / 100))) : p.price;
                     const safeName = escapeHTML(p.name);
                     const isOutOfStock = (p.stock || 0) <= 0;
+                    
+                    let displayImg = p.imageUrl;
+                    if (!displayImg || displayImg.includes('placehold.co') || displayImg === 'https://placehold.co/400?text=No+Image') {
+                        if (p.colorVariants && p.colorVariants[0] && p.colorVariants[0].imageUrl) displayImg = p.colorVariants[0].imageUrl;
+                        else if (p.patternVariants && p.patternVariants[0] && p.patternVariants[0].imageUrl) displayImg = p.patternVariants[0].imageUrl;
+                        else displayImg = 'https://placehold.co/100?text=No+Image';
+                    }
+
                     return `
                         <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
-                            <img src="${p.imageUrl}" alt="${p.name}">
+                            <img src="${displayImg}" alt="${p.name}">
                             <div class="suggestion-info">
                                 <h5>${safeName}</h5>
                                 <div style="display: flex; gap: 10px; font-size: 0.7rem; margin-bottom: 2px;">
