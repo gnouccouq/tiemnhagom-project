@@ -3504,25 +3504,25 @@ button.kiot-nav-btn span {
     padding: 0 !important;
 }
 
-/* Modern KiotViet Price Edit Popover */
+/* Soft & Modern KiotViet Price Edit Popover */
 .pos-popover {
     position: absolute;
     z-index: 99999;
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
-    padding: 16px;
-    width: 290px;
+    border-radius: 16px;
+    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    padding: 18px 20px;
+    width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     font-family: var(--font-sans), system-ui, sans-serif;
-    animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes popoverFadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .pos-popover-row {
@@ -3535,52 +3535,57 @@ button.kiot-nav-btn span {
 .pos-popover-row label {
     font-size: 0.88rem;
     font-weight: 600;
-    color: #334155;
+    color: #475569;
     white-space: nowrap;
-    min-width: 70px;
+    min-width: 65px;
 }
 
-.pos-popover-row input {
+.pos-popover-row input,
+.pos-pop-input {
     border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.92rem;
     font-weight: 600;
     color: #0f172a;
     text-align: right;
     outline: none;
-    transition: border 0.15s ease;
+    width: 125px;
+    background: #f8fafc;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pos-popover-row input:focus {
+.pos-popover-row input:focus,
+.pos-pop-input:focus {
     border-color: #0066cc;
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+    background: #ffffff;
+    box-shadow: 0 0 0 3.5px rgba(0, 102, 204, 0.15);
 }
 
 .pos-discount-type {
     display: inline-flex;
     background: #f1f5f9;
-    border-radius: 6px;
-    padding: 2px;
+    border-radius: 20px;
+    padding: 3px;
     border: 1px solid #cbd5e1;
 }
 
 .pos-discount-type button {
     border: none;
     background: transparent;
-    padding: 3px 8px;
+    padding: 4px 10px;
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #64748b;
-    border-radius: 4px;
+    border-radius: 16px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
 }
 
 .pos-discount-type button.active {
     background: #ffffff;
     color: #0066cc;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .kiot-right-link:hover {
@@ -3917,6 +3922,9 @@ button.kiot-nav-btn span {
     border-radius: 6px;
     padding: 14px 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    position: relative;
+    z-index: 1000 !important;
+    overflow: visible !important;
 }
 
 .filter-header {
@@ -3995,6 +4003,130 @@ button.kiot-nav-btn span {
     background: #f1f5f9;
     padding: 3px;
     border-radius: 4px;
+}
+
+/* KiotViet Sidebar Radio & Checkbox Filters */
+.filter-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.filter-radio-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 0.8rem;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-radio-btn:hover {
+    border-color: #0066cc;
+    background: #f0f7ff;
+}
+
+.filter-radio-btn.active {
+    border-color: #0066cc;
+    background: #e6f0fa;
+    color: #0066cc;
+    font-weight: 600;
+}
+
+.filter-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 2px;
+}
+
+.kiot-chk-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+}
+
+.kiot-chk-item input[type="checkbox"] {
+    accent-color: #0066cc;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* Time Preset Popover Modals matching KiotViet screenshot */
+.kiot-time-popover {
+    position: fixed !important;
+    z-index: 999999 !important;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    padding: 16px 20px;
+    width: 580px;
+    display: none;
+    margin: 0 !important;
+    transform: none !important;
+}
+
+.kiot-time-popover.show {
+    display: block !important;
+}
+
+@keyframes fadeInPopover {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popover-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.popover-col-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.popover-pill {
+    display: block;
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.popover-pill:hover {
+    background: #e0f2fe;
+    color: #0066cc;
+    border-color: #0066cc;
+}
+
+.popover-pill.active {
+    background: #0066cc !important;
+    color: #ffffff !important;
+    border-color: #0066cc !important;
+    font-weight: 600 !important;
 }
 
 .pill-btn {
@@ -4169,24 +4301,27 @@ button.kiot-nav-btn span {
 .kiot-product-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.83rem;
+    font-size: 0.74rem;
+    table-layout: auto;
 }
 
 .kiot-product-table th {
     background: #f8fafc;
     color: #475569;
     font-weight: 600;
-    padding: 8px 10px;
+    padding: 5px 6px;
     text-align: left;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
+    font-size: 0.74rem;
 }
 
 .kiot-product-table td {
-    padding: 10px;
+    padding: 5px 6px;
     border-bottom: 1px solid #f1f5f9;
     color: #1e293b;
     vertical-align: middle;
+    font-size: 0.74rem;
 }
 
 .kiot-product-table tr.product-row:hover {
@@ -10144,10 +10279,19 @@ body.admin-dashboard-layout {
     height: 42px;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
+    width: 100%;
+}
+
+.kiot-tier-inner {
+    width: 100%;
+    max-width: 1450px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    box-sizing: border-box;
 }
 
 .kiot-t1-left {
@@ -10222,10 +10366,7 @@ body.admin-dashboard-layout {
     height: 42px;
     background: #0066cc;
     color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
+    width: 100%;
 }
 
 .kiot-t2-nav {
@@ -10830,14 +10971,17 @@ body.admin-dashboard-layout {
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     background: #f1f5f9 !important;
+    width: 100% !important;
 }
 
 .admin-section {
     display: none !important;
     flex: 1 !important;
+    width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
     overflow-y: auto !important; /* Chỉ cuộn nội dung bên trong mỗi tab / section */
@@ -10848,4 +10992,97 @@ body.admin-dashboard-layout {
 .admin-section.active {
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.admin-section > *,
+.kiot-overview-wrapper,
+.kiot-product-layout,
+.admin-card {
+    width: 100% !important;
+    max-width: 1450px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   Global Smooth Auto-Hiding Scrollbars System
+   Scrollbars stay hidden/invisible by default and smoothly appear on hover/scroll
+   ========================================================================== */
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+*:hover {
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+/* Chrome, Edge, Safari, Opera (WebKit) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.65);
+}
+
+/* Target specific scroll containers to guarantee hidden scrollbars until hover */
+.sidebar-nav::-webkit-scrollbar-thumb,
+.kiot-filter-sidebar::-webkit-scrollbar-thumb,
+.kiot-sidebar-filter::-webkit-scrollbar-thumb,
+.kiot-table-container::-webkit-scrollbar-thumb,
+.kiot-table-wrapper::-webkit-scrollbar-thumb,
+.kiot-product-layout::-webkit-scrollbar-thumb,
+.kiot-overview-wrapper::-webkit-scrollbar-thumb,
+.admin-sidebar::-webkit-scrollbar-thumb,
+.admin-main-content::-webkit-scrollbar-thumb,
+.admin-section::-webkit-scrollbar-thumb,
+.kiot-pos-cart-card::-webkit-scrollbar-thumb,
+.kiot-pos-right-container::-webkit-scrollbar-thumb,
+.kiot-pos-tabs-wrapper::-webkit-scrollbar-thumb,
+.search-suggestions::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+.sidebar-nav:hover::-webkit-scrollbar-thumb,
+.kiot-filter-sidebar:hover::-webkit-scrollbar-thumb,
+.kiot-sidebar-filter:hover::-webkit-scrollbar-thumb,
+.kiot-table-container:hover::-webkit-scrollbar-thumb,
+.kiot-table-wrapper:hover::-webkit-scrollbar-thumb,
+.kiot-product-layout:hover::-webkit-scrollbar-thumb,
+.kiot-overview-wrapper:hover::-webkit-scrollbar-thumb,
+.admin-sidebar:hover::-webkit-scrollbar-thumb,
+.admin-main-content:hover::-webkit-scrollbar-thumb,
+.admin-section:hover::-webkit-scrollbar-thumb,
+.kiot-pos-cart-card:hover::-webkit-scrollbar-thumb,
+.kiot-pos-right-container:hover::-webkit-scrollbar-thumb,
+.kiot-pos-tabs-wrapper:hover::-webkit-scrollbar-thumb,
+.search-suggestions:hover::-webkit-scrollbar-thumb,
+.modal-content:hover::-webkit-scrollbar-thumb,
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
 }

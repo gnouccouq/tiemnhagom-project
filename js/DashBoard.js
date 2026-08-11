@@ -113,7 +113,7 @@ function setupAdminTabs() {
             if (targetSection) {
                 targetSection.classList.add('active');
                 // Cập nhật tiêu đề trang tương ứng với Tab
-                titleEl.innerText = tab.innerText.replace(/[^\w\sÀ-ỹ]/g, '').trim();
+                if (titleEl) titleEl.innerText = tab.innerText.replace(/[^\w\sÀ-ỹ]/g, '').trim();
             }
 
             if (targetId === 'overview-section') {
@@ -3535,19 +3535,172 @@ function initOrderListener(productNameFilter = '', statusFilter = 'all', navigat
     }
 }
 
-function renderOrdersFiltered() {
+window.currentOrderPage = 1;
+window.currentOrderPageSize = 15;
+
+window.changeOrderPageSize = function (size) {
+    window.currentOrderPageSize = parseInt(size, 10) || 15;
+    window.currentOrderPage = 1;
+    renderOrdersFiltered();
+};
+
+window.goOrderPage = function (page) {
+    const totalPages = window.currentOrderTotalPages || 1;
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    window.currentOrderPage = page;
+    renderOrdersFiltered();
+};
+
+window.selectedDatePreset = 'all';
+
+window.toggleTimePresetPopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('time-preset-popover');
+    const customPop = document.getElementById('custom-date-popover');
+    const btn = document.getElementById('btn-radio-time-preset');
+
+    if (customPop) customPop.classList.remove('show');
+
+    if (presetPop) {
+        const willShow = !presetPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            presetPop.style.top = Math.max(10, rect.top) + 'px';
+            presetPop.style.left = (rect.right + 4) + 'px';
+        }
+        presetPop.classList.toggle('show');
+    }
+};
+
+window.toggleCustomDatePopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('time-preset-popover');
+    const customPop = document.getElementById('custom-date-popover');
+    const btn = document.getElementById('btn-radio-time-custom');
+
+    if (presetPop) presetPop.classList.remove('show');
+
+    if (customPop) {
+        const willShow = !customPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            customPop.style.top = Math.max(10, rect.top) + 'px';
+            customPop.style.left = (rect.right + 4) + 'px';
+        }
+        customPop.classList.toggle('show');
+    }
+};
+
+window.selectTimePreset = function (presetKey, presetName, btnElem) {
+    window.selectedDatePreset = presetKey;
+    const label = document.getElementById('order-time-preset-label');
+    if (label) label.innerText = '🔵 ' + presetName;
+
+    const btnPreset = document.getElementById('btn-radio-time-preset');
+    const btnCustom = document.getElementById('btn-radio-time-custom');
+    if (btnPreset) btnPreset.classList.add('active');
+    if (btnCustom) btnCustom.classList.remove('active');
+
+    const presetPop = document.getElementById('time-preset-popover');
+    if (presetPop) {
+        presetPop.querySelectorAll('.popover-pill').forEach(p => p.classList.remove('active'));
+        if (btnElem) btnElem.classList.add('active');
+        presetPop.classList.remove('show');
+    }
+
+    window.currentOrderPage = 1;
+    renderOrdersFiltered();
+};
+
+window.closeCustomDatePopover = function () {
+    const customPop = document.getElementById('custom-date-popover');
+    if (customPop) customPop.classList.remove('show');
+};
+
+window.setTodayDateRange = function () {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const fromInput = document.getElementById('order-filter-date-from');
+    const toInput = document.getElementById('order-filter-date-to');
+    if (fromInput) fromInput.value = todayStr;
+    if (toInput) toInput.value = todayStr;
+};
+
+window.applyCustomDateRange = function () {
+    window.selectedDatePreset = 'custom';
+    const label = document.getElementById('order-time-custom-label');
+    const fromInput = document.getElementById('order-filter-date-from')?.value;
+    const toInput = document.getElementById('order-filter-date-to')?.value;
+
+    if (label && fromInput && toInput) {
+        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+    }
+
+    const btnPreset = document.getElementById('btn-radio-time-preset');
+    const btnCustom = document.getElementById('btn-radio-time-custom');
+    if (btnCustom) btnCustom.classList.add('active');
+    if (btnPreset) btnPreset.classList.remove('active');
+
+    window.closeCustomDatePopover();
+    window.currentOrderPage = 1;
+    renderOrdersFiltered();
+};
+
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('#time-preset-popover') && !e.target.closest('#btn-radio-time-preset')) {
+        const pop = document.getElementById('time-preset-popover');
+        if (pop) pop.classList.remove('show');
+    }
+    if (!e.target.closest('#custom-date-popover') && !e.target.closest('#btn-radio-time-custom')) {
+        const pop = document.getElementById('custom-date-popover');
+        if (pop) pop.classList.remove('show');
+    }
+});
+
+window.resetOrderFilters = function () {
+    const search = document.getElementById('order-search-input');
+    if (search) search.value = '';
+
+    document.querySelectorAll('.filter-status-chk').forEach(chk => {
+        chk.checked = chk.value === 'Đang xử lý' || chk.value === 'Đã hoàn thành';
+    });
+
+    document.querySelectorAll('.filter-type-chk').forEach(chk => chk.checked = true);
+
+    ['order-filter-delivery-status', 'order-filter-carrier', 'order-filter-payment', 'order-filter-creator', 'order-filter-seller', 'order-filter-pricelist', 'order-filter-channel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'all';
+    });
+
+    window.selectTimePreset('this_month', 'Tháng này', null);
+};
+
+window.renderOrdersFiltered = function renderOrdersFiltered() {
     const orderListTable = document.getElementById('admin-order-list');
     const prevBtn = document.getElementById('prev-order-page');
     const nextBtn = document.getElementById('next-order-page');
+    const firstBtn = document.getElementById('first-order-page');
+    const lastBtn = document.getElementById('last-order-page');
     const pageInfo = document.getElementById('order-page-info');
+    const countInfo = document.getElementById('order-pagination-count');
 
     if (!orderListTable) return;
 
     // Lấy các giá trị bộ lọc
     const idVal = document.getElementById('order-search-input')?.value.trim().toLowerCase() || '';
-    const statusVal = document.getElementById('order-filter-status')?.value || 'all';
 
-    const datePreset = document.getElementById('order-filter-date-preset')?.value || 'all';
+    const checkedStatuses = Array.from(document.querySelectorAll('.filter-status-chk:checked')).map(c => c.value);
+    const checkedTypes = Array.from(document.querySelectorAll('.filter-type-chk:checked')).map(c => c.value);
+
+    const deliveryStatusVal = document.getElementById('order-filter-delivery-status')?.value || 'all';
+    const carrierVal = document.getElementById('order-filter-carrier')?.value || 'all';
+    const paymentVal = document.getElementById('order-filter-payment')?.value || 'all';
+    const creatorVal = document.getElementById('order-filter-creator')?.value || 'all';
+    const sellerVal = document.getElementById('order-filter-seller')?.value || 'all';
+    const pricelistVal = document.getElementById('order-filter-pricelist')?.value || 'all';
+    const channelVal = document.getElementById('order-filter-channel')?.value || 'all';
+
+    const datePreset = window.selectedDatePreset || 'this_month';
     const dateFrom = document.getElementById('order-filter-date-from')?.value;
     const dateTo = document.getElementById('order-filter-date-to')?.value;
 
@@ -3557,9 +3710,40 @@ function renderOrdersFiltered() {
 
         const matchesId = !idVal || order.id.toLowerCase().includes(idVal) ||
             (order.shippingAddress?.phone && order.shippingAddress.phone.includes(idVal)) ||
-            (order.shippingAddress?.fullName && order.shippingAddress.fullName.toLowerCase().includes(idVal));
+            (order.customerPhone && order.customerPhone.includes(idVal)) ||
+            (order.shippingAddress?.fullName && order.shippingAddress.fullName.toLowerCase().includes(idVal)) ||
+            (order.customerName && order.customerName.toLowerCase().includes(idVal));
 
-        const matchesStatus = statusVal === 'all' || order.status === statusVal;
+        // Checkbox status filter (Đang xử lý, Hoàn thành, Không giao được, Đã hủy)
+        const orderStatus = order.status || 'Đang xử lý';
+        const matchesStatus = checkedStatuses.length === 0 ? false : checkedStatuses.includes(orderStatus);
+
+        // Checkbox type filter (Không giao hàng / Giao hàng)
+        const isDelivery = (order.shippingMethod && order.shippingMethod !== 'pickup') || order.deliveryStatus;
+        const orderTypeCategory = isDelivery ? 'delivery' : 'pickup';
+        const matchesType = checkedTypes.length === 0 ? false : checkedTypes.includes(orderTypeCategory);
+
+        // Select dropdown filters
+        const orderDeliveryStat = order.deliveryStatus || (isDelivery ? 'Chờ giao' : '');
+        const matchesDeliveryStatus = deliveryStatusVal === 'all' || orderDeliveryStat === deliveryStatusVal;
+
+        const orderCarrier = order.carrier || order.shippingCarrier || '';
+        const matchesCarrier = carrierVal === 'all' || orderCarrier === carrierVal;
+
+        const orderPayment = order.paymentMethod || 'Tiền mặt';
+        const matchesPayment = paymentVal === 'all' || orderPayment === paymentVal || (paymentVal === 'COD' && orderPayment.toUpperCase().includes('COD'));
+
+        const orderCreator = order.creatorName || order.sellerName || 'Nguyễn Tân Quốc Cường';
+        const matchesCreator = creatorVal === 'all' || orderCreator === creatorVal;
+
+        const orderSeller = order.sellerName || 'Nguyễn Tân Quốc Cường';
+        const matchesSeller = sellerVal === 'all' || orderSeller === sellerVal;
+
+        const orderPricelist = order.pricelist || 'Bảng giá chung';
+        const matchesPricelist = pricelistVal === 'all' || orderPricelist === pricelistVal;
+
+        const orderChannel = order.channel || (order.id.startsWith('POS') ? 'POS' : 'Website');
+        const matchesChannel = channelVal === 'all' || orderChannel === channelVal;
         const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
 
         let matchesDate = true;
@@ -3581,16 +3765,35 @@ function renderOrdersFiltered() {
                 const lastMonday = new Date(today); lastMonday.setDate(lastMonday.getDate() - day - 6);
                 const thisMonday = new Date(today); thisMonday.setDate(thisMonday.getDate() - day + 1);
                 matchesDate = oDate >= lastMonday && oDate < thisMonday;
+            } else if (datePreset === 'last_7_days') {
+                const d7 = new Date(today); d7.setDate(d7.getDate() - 7);
+                matchesDate = oDate >= d7;
             } else if (datePreset === 'this_month') {
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
                 matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'last_month') {
+                const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                matchesDate = oDate >= firstDayLastMonth && oDate <= lastDayLastMonth;
+            } else if (datePreset === 'last_30_days') {
+                const d30 = new Date(today); d30.setDate(d30.getDate() - 30);
+                matchesDate = oDate >= d30;
             } else if (datePreset === 'this_quarter') {
                 const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
                 const firstDay = new Date(now.getFullYear(), quarterMonth, 1);
                 matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'last_quarter') {
+                const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+                const firstDayThisQ = new Date(now.getFullYear(), quarterMonth, 1);
+                const firstDayLastQ = new Date(now.getFullYear(), quarterMonth - 3, 1);
+                matchesDate = oDate >= firstDayLastQ && oDate < firstDayThisQ;
             } else if (datePreset === 'this_year') {
                 const firstDay = new Date(now.getFullYear(), 0, 1);
                 matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'last_year') {
+                const firstDayLastYear = new Date(now.getFullYear() - 1, 0, 1);
+                const lastDayLastYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+                matchesDate = oDate >= firstDayLastYear && oDate <= lastDayLastYear;
             } else if (datePreset === 'custom') {
                 if (dateFrom) {
                     const from = new Date(dateFrom);
@@ -3604,17 +3807,40 @@ function renderOrdersFiltered() {
             }
         }
 
-        return matchesId && matchesStatus && matchesUserId && matchesDate;
+        return matchesId && matchesStatus && matchesType && matchesDeliveryStatus && matchesCarrier && matchesPayment && matchesCreator && matchesSeller && matchesPricelist && matchesChannel && matchesUserId && matchesDate;
     });
 
-    // Cập nhật tổng tiền ngay lập tức
-    const totalAmountSpan = document.getElementById('order-filtered-total-amount');
-    if (totalAmountSpan) {
-        const sum = filtered.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
-        totalAmountSpan.innerText = new Intl.NumberFormat('vi-VN').format(sum) + ' đ';
-    }
+    // Cập nhật dòng tổng cộng chuẩn KiotViet
+    const sumSubtotal = filtered.reduce((acc, cur) => {
+        const items = cur.items || [];
+        const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (cur.totalAmount || 0);
+        return acc + sub;
+    }, 0);
 
-    // Sắp xếp theo ngày đặt (Date/Timestamp) giảm dần
+    const sumDiscount = filtered.reduce((acc, cur) => acc + (cur.discountAmount || cur.discountVal || 0), 0);
+
+    const sumPaid = filtered.reduce((acc, cur) => {
+        const items = cur.items || [];
+        const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (cur.totalAmount || 0);
+        const ship = cur.shippingFee || 0;
+        const disc = cur.discountAmount || cur.discountVal || 0;
+        const mem = cur.membershipDiscount || 0;
+        const finalT = cur.totalAmount || Math.max(0, sub + ship - disc - mem);
+        const paid = cur.cashGiven ? Math.max(finalT, cur.cashGiven) : finalT;
+        return acc + paid;
+    }, 0);
+
+    const summarySubtotalElem = document.getElementById('summary-subtotal');
+    const summaryDiscountElem = document.getElementById('summary-discount');
+    const summaryPaidElem = document.getElementById('summary-paid');
+    const totalAmountSpan = document.getElementById('order-filtered-total-amount');
+
+    if (summarySubtotalElem) summarySubtotalElem.innerText = formatVND(sumSubtotal);
+    if (summaryDiscountElem) summaryDiscountElem.innerText = sumDiscount > 0 ? formatVND(sumDiscount) : '0';
+    if (summaryPaidElem) summaryPaidElem.innerText = formatVND(sumPaid);
+    if (totalAmountSpan) totalAmountSpan.innerText = formatVND(sumPaid) + ' đ';
+
+    // Sắp xếp theo ngày đặt giảm dần
     filtered.sort((a, b) => {
         const dateA = a.orderDate ? (a.orderDate.toDate ? a.orderDate.toDate() : new Date(a.orderDate)) : new Date(0);
         const dateB = b.orderDate ? (b.orderDate.toDate ? b.orderDate.toDate() : new Date(b.orderDate)) : new Date(0);
@@ -3622,24 +3848,29 @@ function renderOrdersFiltered() {
     });
 
     // Phân trang
-    window.currentOrderTotalPages = Math.ceil(filtered.length / ORDER_PAGE_SIZE) || 1;
+    const pageSize = window.currentOrderPageSize || 15;
+    window.currentOrderTotalPages = Math.ceil(filtered.length / pageSize) || 1;
     const totalPages = window.currentOrderTotalPages;
-    if (currentOrderPage > totalPages) {
-        currentOrderPage = totalPages;
+    if (window.currentOrderPage > totalPages) {
+        window.currentOrderPage = totalPages;
     }
 
-    const startIndex = (currentOrderPage - 1) * ORDER_PAGE_SIZE;
-    const endIndex = startIndex + ORDER_PAGE_SIZE;
-    const pageOrders = filtered.slice(startIndex, endIndex);
+    const startIndex = (window.currentOrderPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filtered.length);
+    const pageOrders = filtered.slice(startIndex, startIndex + pageSize);
 
     // Hiển thị các dòng đơn hàng
     renderOrderRows(pageOrders, orderListTable);
 
     // Cập nhật các nút phân trang
-    if (pageInfo) pageInfo.innerText = "Trang " + currentOrderPage + " / " + totalPages;
-    if (prevBtn) prevBtn.disabled = currentOrderPage === 1;
-    if (nextBtn) nextBtn.disabled = currentOrderPage === totalPages;
+    if (pageInfo) pageInfo.innerText = window.currentOrderPage;
+    if (countInfo) countInfo.innerText = filtered.length > 0 ? `${startIndex + 1} - ${endIndex} trong ${filtered.length} hóa đơn` : '0 - 0 trong 0 hóa đơn';
+    if (prevBtn) prevBtn.disabled = window.currentOrderPage === 1;
+    if (firstBtn) firstBtn.disabled = window.currentOrderPage === 1;
+    if (nextBtn) nextBtn.disabled = window.currentOrderPage === totalPages;
+    if (lastBtn) lastBtn.disabled = window.currentOrderPage === totalPages;
 }
+
 function renderOrderRows(ordersList, tableElement) {
     let htmlContent = '';
     ordersList.forEach((order) => {
@@ -3647,48 +3878,560 @@ function renderOrderRows(ordersList, tableElement) {
         const orderDate = order.orderDate
             ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
             : 'N/A';
-        const totalAmount = new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0);
+        
+        const items = order.items || [];
+        const subtotal = items.length > 0 ? items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0) : (order.totalAmount || 0);
+        const discount = order.discountVal || 0;
+        const finalTotal = order.totalAmount || Math.max(0, subtotal - discount);
+        const paidAmount = order.cashGiven ? Math.max(finalTotal, order.cashGiven) : finalTotal;
+        
+        const custName = order.shippingAddress?.fullName || order.customerName || 'Khách mua tại shop';
+        const custPhone = order.shippingAddress?.phone || order.customerPhone || '';
+        const custCode = order.userId || order.customerId || 'Khách vãng lai';
         const status = order.status || 'Đang xử lý';
 
+        let tagClass = 'warning';
+        if (status === 'Đã hoàn thành') tagClass = 'success';
+        else if (status === 'Đã hủy') tagClass = 'danger';
+
         htmlContent += `
-            <tr>
-                <td data-label="Mã đơn"><small>${orderId}</small></td>
-                <td data-label="Ngày đặt">${orderDate}</td>
-                <td data-label="Khách hàng">
-                    <strong>${order.shippingAddress?.fullName || 'Khách vãng lai'}</strong><br>
-                    <small>${order.shippingAddress?.phone || ''}</small>
+            <tr class="product-row order-row" data-order-id="${orderId}" onclick="window.toggleOrderQuickView('${orderId}', event)" style="cursor: pointer;">
+                <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="order-chk" value="${orderId}"></td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="white-space: nowrap;"><strong style="color: #0066cc; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${orderId}">${orderId}</strong></td>
+                <td style="color: #475569; font-size: 0.71rem; white-space: nowrap;">${orderDate}</td>
+                <td style="color: #64748b; font-size: 0.71rem; white-space: nowrap;"><span style="max-width: 100px; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${custCode}">${custCode}</span></td>
+                <td>
+                    <strong style="color: #0f172a; font-size: 0.74rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${custName}">${custName}</strong>
+                    ${custPhone ? `<small style="color: #64748b; font-size: 0.70rem; display: block;">${custPhone}</small>` : ''}
                 </td>
-                <td data-label="Sản phẩm">
-                    <div style="display: flex; flex-direction: column; gap: 5px;">
-                        ${order.items.map(i => `
-                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem;">
-                                <img src="${i.image}" alt="${i.name}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
-                                <span title="${i.name}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${i.name} x${i.quantity}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </td>
-                <td data-label="Tổng tiền">${totalAmount} VND</td>
-                <td data-label="Trạng thái">
-                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value, this)">
-                        <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
-                        <option value="Chờ thanh toán" ${status === 'Chờ thanh toán' ? 'selected' : ''}>Chờ thanh toán</option>
-                        <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
-                        <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
-                        <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
-                        <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
-                    </select>
-                </td>
-                <td data-label="Thao tác">
-                    <button class="btn-minimal" onclick="event.stopPropagation(); window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
-                    <button class="btn-minimal" style="border-color: #2c3e50; color: #2c3e50;" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">In Bill</button>
-                    <button class="btn-delete" style="margin-left: 5px;" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">Xóa</button>
+                <td style="text-align: right; font-weight: 600; font-size: 0.74rem; white-space: nowrap;">${formatVND(subtotal)}</td>
+                <td style="text-align: right; color: #64748b; font-size: 0.74rem; white-space: nowrap;">${discount > 0 ? formatVND(discount) : '0'}</td>
+                <td style="text-align: right; font-weight: 700; color: #0f172a; font-size: 0.74rem; white-space: nowrap;">${formatVND(paidAmount)}</td>
+                <td style="text-align: center; white-space: nowrap;">
+                    <span class="qv-tag ${tagClass}" style="padding: 2px 5px; font-weight: 600; border-radius: 4px; font-size: 0.68rem;">${status}</span>
                 </td>
             </tr>
         `;
     });
-    tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có đơn hàng nào.</td></tr>';
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="10" style="text-align:center; padding: 2rem; color: #94a3b8;">Chưa có hóa đơn nào.</td></tr>';
 }
+
+window.toggleOrderQuickView = function (orderId, event) {
+    if (event) event.stopPropagation();
+
+    const existingDetail = document.getElementById(`order-detail-row-${orderId}`);
+    const targetRow = document.querySelector(`tr[data-order-id="${orderId}"]`);
+
+    if (existingDetail) {
+        existingDetail.remove();
+        if (targetRow) targetRow.classList.remove('expanded');
+        return;
+    }
+
+    // Remove any currently open order detail rows
+    document.querySelectorAll('.kiot-detail-row').forEach(row => row.remove());
+    document.querySelectorAll('.order-row').forEach(row => row.classList.remove('expanded'));
+
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order || !targetRow) return;
+
+    targetRow.classList.add('expanded');
+
+    const orderDate = order.orderDate
+        ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
+        : 'N/A';
+
+    const items = order.items || [];
+    const subtotal = items.length > 0 ? items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0) : (order.totalAmount || 0);
+    const shippingFee = order.shippingFee || 0;
+    const discountVal = order.discountAmount || order.discountVal || 0;
+    const couponCode = order.couponCode || order.voucherCode || '';
+    const memberDiscount = order.membershipDiscount || 0;
+
+    const finalTotal = order.totalAmount || Math.max(0, subtotal + shippingFee - discountVal - memberDiscount);
+    const cashPaid = order.cashGiven ? Math.max(finalTotal, order.cashGiven) : finalTotal;
+    const totalQty = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+
+    const custName = order.shippingAddress?.fullName || order.customerName || 'Khách mua tại shop';
+    const custPhone = order.shippingAddress?.phone || order.customerPhone || 'Chưa có SĐT';
+    const custAddress = order.shippingAddress?.address || 'Bán trực tiếp tại cửa hàng';
+    const custCode = order.userId || order.customerId || 'Khách vãng lai';
+    const channelName = order.channel || (order.id.startsWith('POS') ? 'Bán trực tiếp (POS)' : 'Website');
+    const sellerName = order.sellerName || 'Nguyễn Tân Quốc Cường';
+    const status = order.status || 'Đang xử lý';
+
+    let tagClass = 'warning';
+    if (status === 'Đã hoàn thành') tagClass = 'success';
+    else if (status === 'Đã hủy') tagClass = 'danger';
+
+    const detailRow = document.createElement('tr');
+    detailRow.id = `order-detail-row-${orderId}`;
+    detailRow.className = 'kiot-detail-row';
+    detailRow.innerHTML = `
+        <td colspan="10" style="padding: 0; background: #ffffff;">
+            <div class="kiot-quickview-card" style="border: 2px solid #0066cc; margin: 8px 0; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 102, 204, 0.12);">
+                <!-- Tabs Header -->
+                <div class="quickview-tabs">
+                    <button type="button" class="qv-tab-item active" onclick="window.switchOrderQuickViewTab('${orderId}', 'info', this)">Thông tin</button>
+                    <button type="button" class="qv-tab-item" onclick="window.switchOrderQuickViewTab('${orderId}', 'history', this)">Lịch sử thanh toán</button>
+                </div>
+
+                <div class="quickview-body order-qv-info-body" style="flex-direction: column; gap: 14px; padding: 16px 20px;">
+                    <!-- Order Header Info Row -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <strong style="font-size: 1.05rem; color: #0066cc;">${custCode} - ${custName}</strong>
+                            <span style="font-size: 0.85rem; color: #64748b;">📝 ${orderId}</span>
+                            <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b;">Chi nhánh trung tâm</div>
+                    </div>
+
+                    <!-- Metadata Grid -->
+                    <div class="quickview-fields-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; font-size: 0.85rem; color: #334155;">
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Người tạo:</span> <strong>${sellerName}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Người bán:</span> <span style="font-weight: 600; color: #0f172a;">${sellerName}</span></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Ngày bán:</span> <strong>${orderDate}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Kênh bán:</span> <span style="font-weight: 600; color: #0f172a;">${channelName}</span></div>
+                        
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Phí giao hàng:</span> <strong style="color: #0284c7;">${shippingFee > 0 ? formatVND(shippingFee) + ' đ' : '0 đ (Miễn phí)'}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Mã giảm giá:</span> <strong style="color: #dc2626;">${couponCode ? `${couponCode} (-${formatVND(discountVal)} đ)` : (discountVal > 0 ? `-${formatVND(discountVal)} đ` : 'Không có')}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Giảm giá TV:</span> <strong style="color: #16a34a;">${memberDiscount > 0 ? `-${formatVND(memberDiscount)} đ` : '0 đ'}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Giao đến:</span> <span>${custAddress} (${custPhone})</span></div>
+                    </div>
+
+                    <!-- Items List Table -->
+                    <div style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 4px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
+                            <thead>
+                                <tr style="background: #f8fafc; color: #475569; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 8px 10px; text-align: left;">Mã hàng</th>
+                                    <th style="padding: 8px 10px; text-align: left;">Tên hàng</th>
+                                    <th style="padding: 8px 10px; text-align: center;">Số lượng</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Đơn giá</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Giảm giá</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Giá bán</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.map(item => {
+                                    const itemPrice = item.price || 0;
+                                    const itemDiscount = item.discount || 0;
+                                    const itemSellingPrice = itemPrice - itemDiscount;
+                                    const itemLineTotal = itemSellingPrice * (item.quantity || 1);
+
+                                    return `
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td style="padding: 8px 10px; color: #0066cc; font-weight: 600;">${item.id || 'SP'}</td>
+                                        <td style="padding: 8px 10px; font-weight: 500;">
+                                            <strong style="color: #0f172a; display: block; font-size: 0.84rem;">${item.name || 'Sản phẩm gốm'}</strong>
+                                            <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #475569; margin-top: 3px; flex-wrap: wrap;">
+                                                ${item.color ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">🎨 Màu: <strong style="color: #334155;">${item.color}</strong></span>` : ''}
+                                                ${(item.pattern || item.texture || item.patternName) ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">✨ Họa tiết: <strong style="color: #334155;">${item.pattern || item.texture || item.patternName}</strong></span>` : ''}
+                                                ${(item.combo || item.comboName || item.isCombo) ? `<span style="background: #e0f2fe; color: #0066cc; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #bae6fd;">🎁 Combo: ${item.combo || item.comboName || 'Bộ gốm sứ'}</span>` : ''}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 8px 10px; text-align: center; font-weight: 600;">${item.quantity || 1}</td>
+                                        <td style="padding: 8px 10px; text-align: right;">${formatVND(itemPrice)}</td>
+                                        <td style="padding: 8px 10px; text-align: right; color: #64748b;">${itemDiscount > 0 ? formatVND(itemDiscount) : '0'}</td>
+                                        <td style="padding: 8px 10px; text-align: right; font-weight: 600;">${formatVND(itemSellingPrice)}</td>
+                                        <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a;">${formatVND(itemLineTotal)}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bottom Note & Totals Summary Row -->
+                    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; width: 100%; align-items: flex-start; margin-top: 4px;">
+                        <div>
+                            <textarea placeholder="Ghi chú đơn hàng..." style="width: 100%; height: 95px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; font-size: 0.85rem; font-family: inherit; outline: none; resize: vertical;" onchange="window.updateOrderNote('${orderId}', this.value)">${order.note || ''}</textarea>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: #334155; background: #f8fafc; padding: 12px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tổng tiền hàng (${totalQty}):</span>
+                                <strong style="color: #0f172a;">${formatVND(subtotal)}</strong>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Phí vận chuyển (Ship):</span>
+                                <strong style="color: #0284c7;">+${formatVND(shippingFee)}</strong>
+                            </div>
+
+                            ${discountVal > 0 ? `
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Mã giảm giá ${couponCode ? `(${couponCode})` : ''}:</span>
+                                <strong style="color: #dc2626;">-${formatVND(discountVal)}</strong>
+                            </div>` : ''}
+
+                            ${memberDiscount > 0 ? `
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Giảm giá thành viên:</span>
+                                <strong style="color: #16a34a;">-${formatVND(memberDiscount)}</strong>
+                            </div>` : ''}
+
+                            <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 2px;">
+                                <strong style="color: #0f172a;">Khách cần trả:</strong>
+                                <strong style="color: #0066cc; font-size: 1.1rem;">${formatVND(finalTotal)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong style="color: #0f172a;">Khách đã trả:</strong>
+                                <strong style="color: #0f172a; font-size: 1.1rem;">${formatVND(cashPaid)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quickview-body order-qv-history-body" style="display: none; padding: 16px 20px;">
+                    <div style="font-size: 0.88rem; color: #475569; width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 8px;">Mã GD</th>
+                                    <th style="padding: 8px;">Thời gian</th>
+                                    <th style="padding: 8px;">Phương thức</th>
+                                    <th style="padding: 8px; text-align: right;">Tiền thanh toán</th>
+                                    <th style="padding: 8px; text-align: center;">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 8px; color: #0066cc; font-weight: 600;">TT_${orderId.slice(-6)}</td>
+                                    <td style="padding: 8px;">${orderDate}</td>
+                                    <td style="padding: 8px;">${order.paymentMethod || 'Tiền mặt'}</td>
+                                    <td style="padding: 8px; text-align: right; font-weight: 700;">${formatVND(cashPaid)}</td>
+                                    <td style="padding: 8px; text-align: center;"><span class="qv-tag success">Thành công</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer Actions Row -->
+                <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="left-actions" style="display: flex; gap: 10px;">
+                        <button type="button" class="qv-btn-text" style="color: #0066cc; font-weight: 600;" onclick="event.stopPropagation(); window.openEditOrderModal('${orderId}')">✏️ Chỉnh sửa</button>
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">🗑️ Hủy đơn</button>
+                        <button type="button" class="qv-btn-text" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">📋 Sao chép</button>
+                        <button type="button" class="qv-btn-text" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">📥 Xuất file</button>
+                    </div>
+                    <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
+                        <select class="status-select" style="padding: 6px 12px; border: 1px solid #0066cc; color: #0066cc; border-radius: 6px; font-weight: 600; background: #fff; cursor: pointer;" onchange="event.stopPropagation(); window.updateOrderStatus('${orderId}', this.value, this)">
+                            <option value="Đang xử lý" ${status === 'Đang xử lý' ? 'selected' : ''}>Đang xử lý</option>
+                            <option value="Chờ thanh toán" ${status === 'Chờ thanh toán' ? 'selected' : ''}>Chờ thanh toán</option>
+                            <option value="Đã thanh toán" ${status === 'Đã thanh toán' ? 'selected' : ''}>Đã thanh toán</option>
+                            <option value="Đang giao hàng" ${status === 'Đang giao hàng' ? 'selected' : ''}>Đang giao hàng</option>
+                            <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                            <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
+                        </select>
+                        <button type="button" class="kiot-btn-primary" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">🖨️ In bill</button>
+                    </div>
+                </div>
+            </div>
+        </td>
+    `;
+
+    targetRow.parentNode.insertBefore(detailRow, targetRow.nextSibling);
+};
+
+window.currentEditOrderItems = [];
+
+window.openEditOrderModal = function (orderId) {
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order) {
+        showToast("Không tìm thấy thông tin đơn hàng", "error");
+        return;
+    }
+
+    const modalTitle = document.getElementById('edit-order-modal-title');
+    if (modalTitle) modalTitle.innerText = `✏️ Chỉnh sửa đơn hàng ${orderId}`;
+
+    const hiddenId = document.getElementById('edit-order-id-hidden');
+    if (hiddenId) hiddenId.value = orderId;
+
+    const nameInput = document.getElementById('edit-order-cust-name');
+    if (nameInput) nameInput.value = order.shippingAddress?.fullName || order.customerName || '';
+
+    const phoneInput = document.getElementById('edit-order-cust-phone');
+    if (phoneInput) phoneInput.value = order.shippingAddress?.phone || order.customerPhone || '';
+
+    const addrInput = document.getElementById('edit-order-cust-address');
+    if (addrInput) addrInput.value = order.shippingAddress?.address || '';
+
+    const statusSel = document.getElementById('edit-order-status');
+    if (statusSel) statusSel.value = order.status || 'Đang xử lý';
+
+    const paySel = document.getElementById('edit-order-payment');
+    if (paySel) paySel.value = order.paymentMethod || 'Tiền mặt';
+
+    const chanSel = document.getElementById('edit-order-channel');
+    if (chanSel) chanSel.value = order.channel || (order.id.startsWith('POS') ? 'POS' : 'Website');
+
+    const shipInput = document.getElementById('edit-order-shipping-fee');
+    if (shipInput) shipInput.value = order.shippingFee || 0;
+
+    const discInput = document.getElementById('edit-order-discount');
+    if (discInput) discInput.value = order.discountAmount || order.discountVal || 0;
+
+    const couponInput = document.getElementById('edit-order-coupon');
+    if (couponInput) couponInput.value = order.couponCode || order.voucherCode || '';
+
+    const noteInput = document.getElementById('edit-order-note');
+    if (noteInput) noteInput.value = order.note || '';
+
+    // Clone items array for editing
+    window.currentEditOrderItems = JSON.parse(JSON.stringify(order.items || []));
+    window.renderEditOrderItemsTable();
+
+    const modal = document.getElementById('edit-order-modal');
+    if (modal) modal.style.display = 'block';
+};
+
+window.renderEditOrderItemsTable = function () {
+    const tbody = document.getElementById('edit-order-items-tbody');
+    if (!tbody) return;
+
+    if (!window.currentEditOrderItems || window.currentEditOrderItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 16px; color: #94a3b8;">Đơn hàng chưa có sản phẩm nào. Bấm nút "+ Thêm món mới" bên trên.</td></tr>`;
+        window.recalculateEditOrderTotal();
+        return;
+    }
+
+    let html = '';
+    window.currentEditOrderItems.forEach((item, index) => {
+        const qty = item.quantity || 1;
+        const price = item.price || 0;
+        const total = price * qty;
+        const color = item.color || '';
+        const pattern = item.pattern || item.texture || item.patternName || '';
+        const combo = item.combo || item.comboName || '';
+
+        html += `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 10px;">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: #0066cc; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index+1)}</strong>
+                        <input type="text" value="${item.name || ''}" placeholder="Tên sản phẩm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600; outline: none;" onchange="window.changeEditItemField(${index}, 'name', this.value)">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
+                        <input type="text" value="${color}" placeholder="🎨 Màu sắc..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'color', this.value)">
+                        <input type="text" value="${pattern}" placeholder="✨ Họa tiết..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'pattern', this.value)">
+                        <input type="text" value="${combo}" placeholder="🎁 Combo / Bộ..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'combo', this.value)">
+                    </div>
+                </td>
+                <td style="padding: 8px 10px; text-align: center; vertical-align: top;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px;">
+                        <button type="button" style="width: 24px; height: 24px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="window.updateEditItemQty(${index}, -1)">-</button>
+                        <input type="number" min="1" value="${qty}" style="width: 45px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 4px; font-size: 0.82rem;" onchange="window.changeEditItemQty(${index}, this.value)">
+                        <button type="button" style="width: 24px; height: 24px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="window.updateEditItemQty(${index}, 1)">+</button>
+                    </div>
+                </td>
+                <td style="padding: 8px 10px; text-align: right; vertical-align: top;">
+                    <input type="number" value="${price}" style="width: 95px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; margin-top: 4px;" onchange="window.changeEditItemPrice(${index}, this.value)">
+                </td>
+                <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a; vertical-align: top; padding-top: 12px;">
+                    ${formatVND(total)}
+                </td>
+                <td style="padding: 8px 10px; text-align: center; vertical-align: top; padding-top: 10px;">
+                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditItem(${index})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    window.recalculateEditOrderTotal();
+};
+
+window.changeEditItemField = function (index, field, val) {
+    if (!window.currentEditOrderItems[index]) return;
+    window.currentEditOrderItems[index][field] = val.trim();
+};
+
+window.updateEditItemQty = function (index, delta) {
+    if (!window.currentEditOrderItems[index]) return;
+    let currentQty = window.currentEditOrderItems[index].quantity || 1;
+    currentQty += delta;
+    if (currentQty < 1) currentQty = 1;
+    window.currentEditOrderItems[index].quantity = currentQty;
+    window.renderEditOrderItemsTable();
+};
+
+window.changeEditItemQty = function (index, val) {
+    if (!window.currentEditOrderItems[index]) return;
+    let num = parseInt(val) || 1;
+    if (num < 1) num = 1;
+    window.currentEditOrderItems[index].quantity = num;
+    window.renderEditOrderItemsTable();
+};
+
+window.changeEditItemPrice = function (index, val) {
+    if (!window.currentEditOrderItems[index]) return;
+    let price = parseFloat(val) || 0;
+    if (price < 0) price = 0;
+    window.currentEditOrderItems[index].price = price;
+    window.renderEditOrderItemsTable();
+};
+
+window.removeEditItem = function (index) {
+    if (!window.currentEditOrderItems[index]) return;
+    window.currentEditOrderItems.splice(index, 1);
+    window.renderEditOrderItemsTable();
+};
+
+window.addEditOrderItemPrompt = function () {
+    const prodName = prompt("Nhập tên sản phẩm mới:");
+    if (!prodName) return;
+    const colorStr = prompt("Nhập màu sắc (ví dụ: Men hỏa biến, Trắng ngà...):", "") || "";
+    const patternStr = prompt("Nhập họa tiết (ví dụ: Hoa sen chìm, Vẽ tay...):", "") || "";
+    const comboStr = prompt("Nhập Combo / Bộ (ví dụ: Bộ 6 chén + 1 tô...):", "") || "";
+    const priceStr = prompt("Nhập đơn giá sản phẩm (VNĐ):", "100000");
+    const price = parseFloat(priceStr) || 0;
+    const qtyStr = prompt("Nhập số lượng:", "1");
+    const qty = parseInt(qtyStr) || 1;
+
+    const newItem = {
+        id: "SP" + Math.floor(100000 + Math.random() * 900000),
+        name: prodName,
+        color: colorStr,
+        pattern: patternStr,
+        combo: comboStr,
+        price: price,
+        quantity: qty
+    };
+
+    window.currentEditOrderItems.push(newItem);
+    window.renderEditOrderItemsTable();
+};
+
+window.recalculateEditOrderTotal = function () {
+    const items = window.currentEditOrderItems || [];
+    const subtotal = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+    const shippingFee = parseFloat(document.getElementById('edit-order-shipping-fee')?.value || 0) || 0;
+    const discountAmount = parseFloat(document.getElementById('edit-order-discount')?.value || 0) || 0;
+
+    const finalTotal = Math.max(0, subtotal + shippingFee - discountAmount);
+
+    const subtotalElem = document.getElementById('edit-order-calc-subtotal');
+    const totalElem = document.getElementById('edit-order-calc-total');
+
+    if (subtotalElem) subtotalElem.innerText = formatVND(subtotal) + ' đ';
+    if (totalElem) totalElem.innerText = formatVND(finalTotal) + ' đ';
+};
+
+window.closeEditOrderModal = function () {
+    const modal = document.getElementById('edit-order-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.saveEditedOrder = async function () {
+    const orderId = document.getElementById('edit-order-id-hidden')?.value;
+    if (!orderId) return;
+
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order) return;
+
+    const custName = document.getElementById('edit-order-cust-name')?.value.trim() || order.customerName;
+    const custPhone = document.getElementById('edit-order-cust-phone')?.value.trim() || order.customerPhone;
+    const custAddress = document.getElementById('edit-order-cust-address')?.value.trim() || '';
+    const status = document.getElementById('edit-order-status')?.value || order.status;
+    const paymentMethod = document.getElementById('edit-order-payment')?.value || order.paymentMethod;
+    const channel = document.getElementById('edit-order-channel')?.value || order.channel;
+    const shippingFee = parseFloat(document.getElementById('edit-order-shipping-fee')?.value || 0) || 0;
+    const discountAmount = parseFloat(document.getElementById('edit-order-discount')?.value || 0) || 0;
+    const couponCode = document.getElementById('edit-order-coupon')?.value.trim() || '';
+    const note = document.getElementById('edit-order-note')?.value.trim() || '';
+
+    // Calculate subtotal and total from updated items
+    const items = window.currentEditOrderItems || [];
+    const subtotal = items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0);
+    const memberDiscount = order.membershipDiscount || 0;
+    const newTotalAmount = Math.max(0, subtotal + shippingFee - discountAmount - memberDiscount);
+
+    try {
+        const orderRef = doc(db, 'orders', orderId);
+        const updatePayload = {
+            customerName: custName,
+            customerPhone: custPhone,
+            'shippingAddress.fullName': custName,
+            'shippingAddress.phone': custPhone,
+            'shippingAddress.address': custAddress,
+            status: status,
+            paymentMethod: paymentMethod,
+            channel: channel,
+            shippingFee: shippingFee,
+            discountAmount: discountAmount,
+            discountVal: discountAmount,
+            couponCode: couponCode,
+            note: note,
+            items: items,
+            totalAmount: newTotalAmount
+        };
+
+        await updateDoc(orderRef, updatePayload);
+
+        // Update local object
+        order.customerName = custName;
+        order.customerPhone = custPhone;
+        if (!order.shippingAddress) order.shippingAddress = {};
+        order.shippingAddress.fullName = custName;
+        order.shippingAddress.phone = custPhone;
+        order.shippingAddress.address = custAddress;
+        order.status = status;
+        order.paymentMethod = paymentMethod;
+        order.channel = channel;
+        order.shippingFee = shippingFee;
+        order.discountAmount = discountAmount;
+        order.discountVal = discountAmount;
+        order.couponCode = couponCode;
+        order.note = note;
+        order.items = items;
+        order.totalAmount = newTotalAmount;
+
+        showToast(`Đã cập nhật đơn hàng ${orderId} thành công!`, "success");
+        window.closeEditOrderModal();
+        renderOrdersFiltered();
+    } catch (err) {
+        console.error("Lỗi cập nhật đơn hàng:", err);
+        showToast("Không thể cập nhật đơn hàng: " + err.message, "error");
+    }
+};
+
+window.switchOrderQuickViewTab = function (orderId, tab, btn) {
+    const card = btn.closest('.kiot-quickview-card');
+    if (!card) return;
+    card.querySelectorAll('.qv-tab-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const infoBody = card.querySelector('.order-qv-info-body');
+    const historyBody = card.querySelector('.order-qv-history-body');
+
+    if (tab === 'history') {
+        if (infoBody) infoBody.style.display = 'none';
+        if (historyBody) historyBody.style.display = 'block';
+    } else {
+        if (infoBody) infoBody.style.display = 'flex';
+        if (historyBody) historyBody.style.display = 'none';
+    }
+};
+
+window.updateOrderNote = async function (orderId, noteVal) {
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (order) {
+        order.note = noteVal;
+        try {
+            if (typeof doc !== 'undefined' && typeof setDoc !== 'undefined' && db) {
+                const orderRef = doc(db, "orders", orderId);
+                await setDoc(orderRef, { note: noteVal }, { merge: true });
+            }
+            if (typeof showToast !== 'undefined') showToast("Đã cập nhật ghi chú đơn hàng");
+        } catch (e) {
+            console.error("Error updating order note:", e);
+        }
+    }
+};
 
 let currentRentalOrderPage = 1;
 const RENTAL_ORDER_PAGE_SIZE = 10;
@@ -3704,18 +4447,150 @@ window.toggleCustomDateFilterRental = function (val) {
     }
 };
 
-function renderRentalOrdersFiltered() {
+window.selectedRentalDatePreset = 'all';
+window.currentRentalOrderPage = 1;
+window.currentRentalOrderPageSize = 15;
+
+window.toggleRentalTimePresetPopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('rental-time-preset-popover');
+    const customPop = document.getElementById('rental-custom-date-popover');
+    const btn = document.getElementById('btn-radio-rental-time-preset');
+
+    if (customPop) customPop.classList.remove('show');
+
+    if (presetPop) {
+        const willShow = !presetPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            presetPop.style.top = Math.max(10, rect.top) + 'px';
+            presetPop.style.left = (rect.right + 4) + 'px';
+        }
+        presetPop.classList.toggle('show');
+    }
+};
+
+window.toggleRentalCustomDatePopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('rental-time-preset-popover');
+    const customPop = document.getElementById('rental-custom-date-popover');
+    const btn = document.getElementById('btn-radio-rental-time-custom');
+
+    if (presetPop) presetPop.classList.remove('show');
+
+    if (customPop) {
+        const willShow = !customPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            customPop.style.top = Math.max(10, rect.top) + 'px';
+            customPop.style.left = (rect.right + 4) + 'px';
+        }
+        customPop.classList.toggle('show');
+    }
+};
+
+window.selectRentalTimePreset = function (presetKey, presetName, btnElem) {
+    window.selectedRentalDatePreset = presetKey;
+    const label = document.getElementById('rental-order-time-preset-label');
+    if (label) label.innerText = '🔵 ' + presetName;
+
+    const btnPreset = document.getElementById('btn-radio-rental-time-preset');
+    const btnCustom = document.getElementById('btn-radio-rental-time-custom');
+    if (btnPreset) btnPreset.classList.add('active');
+    if (btnCustom) btnCustom.classList.remove('active');
+
+    const presetPop = document.getElementById('rental-time-preset-popover');
+    if (presetPop) {
+        presetPop.querySelectorAll('.popover-pill').forEach(p => p.classList.remove('active'));
+        if (btnElem) btnElem.classList.add('active');
+        presetPop.classList.remove('show');
+    }
+
+    window.currentRentalOrderPage = 1;
+    window.renderRentalOrdersFiltered();
+};
+
+window.closeRentalCustomDatePopover = function () {
+    const customPop = document.getElementById('rental-custom-date-popover');
+    if (customPop) customPop.classList.remove('show');
+};
+
+window.setRentalTodayDateRange = function () {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const fromInput = document.getElementById('rental-order-date-from');
+    const toInput = document.getElementById('rental-order-date-to');
+    if (fromInput) fromInput.value = todayStr;
+    if (toInput) toInput.value = todayStr;
+};
+
+window.applyRentalCustomDateRange = function () {
+    window.selectedRentalDatePreset = 'custom';
+    const label = document.getElementById('rental-order-time-custom-label');
+    const fromInput = document.getElementById('rental-order-date-from')?.value;
+    const toInput = document.getElementById('rental-order-date-to')?.value;
+
+    if (label && fromInput && toInput) {
+        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+    }
+
+    const btnPreset = document.getElementById('btn-radio-rental-time-preset');
+    const btnCustom = document.getElementById('btn-radio-rental-time-custom');
+    if (btnCustom) btnCustom.classList.add('active');
+    if (btnPreset) btnPreset.classList.remove('active');
+
+    window.closeRentalCustomDatePopover();
+    window.currentRentalOrderPage = 1;
+    window.renderRentalOrdersFiltered();
+};
+
+window.resetRentalOrderFilters = function () {
+    const search = document.getElementById('rental-order-search-input');
+    if (search) search.value = '';
+
+    document.querySelectorAll('.filter-rental-status-chk').forEach(chk => {
+        chk.checked = true;
+    });
+
+    ['rental-filter-event-type', 'rental-filter-payment'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'all';
+    });
+
+    window.selectRentalTimePreset('all', 'Tất cả thời gian', null);
+};
+
+window.changeRentalOrderPageSize = function (size) {
+    window.currentRentalOrderPageSize = parseInt(size) || 15;
+    window.currentRentalOrderPage = 1;
+    window.renderRentalOrdersFiltered();
+};
+
+window.goRentalOrderPage = function (page) {
+    const totalPages = window.currentRentalTotalPages || 1;
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    window.currentRentalOrderPage = page;
+    window.renderRentalOrdersFiltered();
+};
+
+window.renderRentalOrdersFiltered = function () {
     const orderListTable = document.getElementById('admin-rental-order-list');
     const prevBtn = document.getElementById('prev-rental-order-page');
     const nextBtn = document.getElementById('next-rental-order-page');
+    const firstBtn = document.getElementById('first-rental-page');
+    const lastBtn = document.getElementById('last-rental-page');
     const pageInfo = document.getElementById('rental-order-page-info');
+    const countInfo = document.getElementById('rental-pagination-count');
 
     if (!orderListTable) return;
 
     // Lấy các giá trị bộ lọc
     const idVal = document.getElementById('rental-order-search-input')?.value.trim().toLowerCase() || '';
-    const statusVal = document.getElementById('rental-order-filter-status')?.value || 'all';
-    const datePreset = document.getElementById('rental-order-filter-date')?.value || 'all';
+    const checkedStatuses = Array.from(document.querySelectorAll('.filter-rental-status-chk:checked')).map(c => c.value);
+    const eventTypeVal = document.getElementById('rental-filter-event-type')?.value || 'all';
+    const paymentVal = document.getElementById('rental-filter-payment')?.value || 'all';
+
+    const datePreset = window.selectedRentalDatePreset || 'all';
     const dateFrom = document.getElementById('rental-order-date-from')?.value;
     const dateTo = document.getElementById('rental-order-date-to')?.value;
 
@@ -3724,17 +4599,39 @@ function renderRentalOrdersFiltered() {
 
         const matchesId = !idVal || order.id.toLowerCase().includes(idVal) ||
             (order.rentalInfo?.companyName && order.rentalInfo.companyName.toLowerCase().includes(idVal)) ||
-            (order.rentalInfo?.phone && order.rentalInfo.phone.includes(idVal));
+            (order.rentalInfo?.phone && order.rentalInfo.phone.includes(idVal)) ||
+            (order.customerName && order.customerName.toLowerCase().includes(idVal));
 
-        const matchesStatus = statusVal === 'all' || order.status === statusVal;
+        const orderStatus = order.status || 'Yêu cầu mới';
+        const matchesStatus = checkedStatuses.length === 0 ? false : checkedStatuses.includes(orderStatus);
+
+        const orderEvent = order.rentalInfo?.eventName || order.rentalInfo?.eventType || '';
+        const matchesEvent = eventTypeVal === 'all' || orderEvent.includes(eventTypeVal);
+
+        const orderPayment = order.paymentMethod || 'Tiền mặt';
+        const matchesPayment = paymentVal === 'all' || orderPayment === paymentVal;
 
         let matchesDate = true;
         const oDate = order.orderDate ? (order.orderDate.toDate ? order.orderDate.toDate() : new Date(order.orderDate)) : null;
-        if (oDate) {
+        if (oDate && datePreset !== 'all') {
             const now = new Date();
-            if (datePreset === 'this_month') {
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if (datePreset === 'today') {
+                matchesDate = oDate >= today;
+            } else if (datePreset === 'yesterday') {
+                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                matchesDate = oDate >= yesterday && oDate < today;
+            } else if (datePreset === 'this_week') {
+                const day = today.getDay() || 7;
+                const monday = new Date(today); monday.setDate(monday.getDate() - day + 1);
+                matchesDate = oDate >= monday;
+            } else if (datePreset === 'this_month') {
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
                 matchesDate = oDate >= firstDay;
+            } else if (datePreset === 'last_month') {
+                const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                matchesDate = oDate >= firstDayLastMonth && oDate <= lastDayLastMonth;
             } else if (datePreset === 'custom') {
                 if (dateFrom) {
                     const from = new Date(dateFrom);
@@ -3748,7 +4645,7 @@ function renderRentalOrdersFiltered() {
             }
         }
 
-        return matchesId && matchesStatus && matchesDate;
+        return matchesId && matchesStatus && matchesEvent && matchesPayment && matchesDate;
     });
 
     filtered.sort((a, b) => {
@@ -3757,21 +4654,38 @@ function renderRentalOrdersFiltered() {
         return dateB - dateA;
     });
 
-    const totalPages = Math.ceil(filtered.length / RENTAL_ORDER_PAGE_SIZE) || 1;
-    if (currentRentalOrderPage > totalPages) {
-        currentRentalOrderPage = totalPages;
-    }
+    // Tính tổng doanh thu và tiền cọc
+    const sumTotalRental = filtered.reduce((acc, cur) => acc + (cur.totalAmount || cur.rentalInfo?.totalPrice || 0), 0);
+    const sumDeposit = filtered.reduce((acc, cur) => acc + (cur.rentalInfo?.depositAmount || cur.deposit || 0), 0);
 
-    const startIndex = (currentRentalOrderPage - 1) * RENTAL_ORDER_PAGE_SIZE;
-    const endIndex = startIndex + RENTAL_ORDER_PAGE_SIZE;
+    const filteredTotalElem = document.getElementById('rental-filtered-total-amount');
+    const summaryTotalElem = document.getElementById('rental-summary-total');
+    const summaryDepositElem = document.getElementById('rental-summary-deposit');
+
+    if (filteredTotalElem) filteredTotalElem.innerText = formatVND(sumTotalRental) + ' đ';
+    if (summaryTotalElem) summaryTotalElem.innerText = formatVND(sumTotalRental);
+    if (summaryDepositElem) summaryDepositElem.innerText = formatVND(sumDeposit);
+
+    const pageSize = window.currentRentalOrderPageSize || 15;
+    const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+    window.currentRentalTotalPages = totalPages;
+
+    if (window.currentRentalOrderPage > totalPages) window.currentRentalOrderPage = totalPages;
+
+    const startIndex = (window.currentRentalOrderPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filtered.length);
     const pageOrders = filtered.slice(startIndex, endIndex);
 
     renderRentalOrderRows(pageOrders, orderListTable);
 
-    if (pageInfo) pageInfo.innerText = "Trang " + currentRentalOrderPage + " / " + totalPages;
-    if (prevBtn) prevBtn.disabled = currentRentalOrderPage === 1;
-    if (nextBtn) nextBtn.disabled = currentRentalOrderPage === totalPages;
-}
+    if (pageInfo) pageInfo.innerText = `${window.currentRentalOrderPage} / ${totalPages}`;
+    if (countInfo) countInfo.innerText = filtered.length > 0 ? `${startIndex + 1} - ${endIndex} trong ${filtered.length} đơn thuê` : '0 đơn thuê';
+
+    if (prevBtn) prevBtn.disabled = window.currentRentalOrderPage <= 1;
+    if (firstBtn) firstBtn.disabled = window.currentRentalOrderPage <= 1;
+    if (nextBtn) nextBtn.disabled = window.currentRentalOrderPage >= totalPages;
+    if (lastBtn) lastBtn.disabled = window.currentRentalOrderPage >= totalPages;
+};
 
 function renderRentalOrderRows(ordersList, tableElement) {
     let htmlContent = '';
@@ -3780,41 +4694,453 @@ function renderRentalOrderRows(ordersList, tableElement) {
         const orderDate = order.orderDate
             ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
             : 'N/A';
+        
+        const rInfo = order.rentalInfo || {};
+        const items = order.items || [];
+        const rentalDays = rInfo.rentalDays || 1;
+        const totalRentalPrice = order.totalAmount || (items.reduce((s, i) => s + ((i.rentalPrice || i.price || 0) * (i.quantity || 1)), 0) * rentalDays);
+        const depositAmount = rInfo.depositAmount || order.deposit || 0;
+
+        const custName = rInfo.companyName || order.customerName || 'Khách thuê sự kiện';
+        const custPhone = rInfo.phone || order.customerPhone || '';
+        const custCode = order.userId || 'Khách vãng lai';
+        const eventName = rInfo.eventName || rInfo.address || 'Trang trí Sự kiện / Decor';
         const status = order.status || 'Yêu cầu mới';
 
-        const companyName = order.rentalInfo?.companyName || 'N/A';
-        const eventDate = order.rentalInfo?.rentalDate ? new Date(order.rentalInfo.rentalDate).toLocaleDateString('vi-VN') : 'N/A';
+        let tagClass = 'warning';
+        if (status === 'Đã thu hồi' || status === 'Hoàn thành') tagClass = 'success';
+        else if (status === 'Đã xác nhận' || status === 'Đang setup') tagClass = 'info';
+        else if (status === 'Đã hủy') tagClass = 'danger';
 
         htmlContent += `
-            <tr>
-                <td data-label="Mã yêu cầu"><small>${orderId}</small></td>
-                <td data-label="Ngày gửi">${orderDate}</td>
-                <td data-label="Công ty / Khách hàng">
-                    <strong>${companyName}</strong><br>
-                    <small>${order.rentalInfo?.phone || ''}</small>
+            <tr class="product-row rental-order-row" data-rental-id="${orderId}" onclick="window.toggleRentalQuickView('${orderId}', event)" style="cursor: pointer;">
+                <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="rental-chk" value="${orderId}"></td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="white-space: nowrap;"><strong style="color: #166534; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${orderId}">${orderId}</strong></td>
+                <td style="color: #475569; font-size: 0.71rem; white-space: nowrap;">${orderDate}</td>
+                <td style="color: #64748b; font-size: 0.71rem; white-space: nowrap;"><span style="max-width: 100px; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${custCode}">${custCode}</span></td>
+                <td>
+                    <strong style="color: #0f172a; font-size: 0.74rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${custName}">${custName}</strong>
+                    ${custPhone ? `<small style="color: #64748b; font-size: 0.70rem; display: block;">${custPhone}</small>` : ''}
                 </td>
-                <td data-label="Sự kiện">
-                    ${order.rentalInfo?.address || 'N/A'}
+                <td style="color: #334155; font-size: 0.72rem;">
+                    <span style="display: block; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;" title="${eventName}">${eventName}</span>
                 </td>
-                <td data-label="Thời gian thuê">${eventDate}</td>
-                <td data-label="Trạng thái">
-                    <select class="status-select" onchange="window.updateOrderStatus('${orderId}', this.value, this)">
-                        <option value="Yêu cầu mới" ${status === 'Yêu cầu mới' ? 'selected' : ''}>Yêu cầu mới</option>
-                        <option value="Đã xác nhận" ${status === 'Đã xác nhận' ? 'selected' : ''}>Đã xác nhận</option>
-                        <option value="Đang setup" ${status === 'Đang setup' ? 'selected' : ''}>Đang setup</option>
-                        <option value="Đã thu hồi" ${status === 'Đã thu hồi' ? 'selected' : ''}>Đã thu hồi</option>
-                        <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
-                    </select>
-                </td>
-                <td data-label="Thao tác">
-                    <button class="btn-minimal" onclick="event.stopPropagation(); window.viewAdminOrderDetail('${orderId}')">Chi tiết</button>
-                    <button class="btn-delete" style="margin-left: 5px;" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">Xóa</button>
+                <td style="text-align: right; font-weight: 700; color: #16a34a; font-size: 0.74rem; white-space: nowrap;">${formatVND(totalRentalPrice)}</td>
+                <td style="text-align: right; font-weight: 600; color: #0284c7; font-size: 0.74rem; white-space: nowrap;">${formatVND(depositAmount)}</td>
+                <td style="text-align: center; white-space: nowrap;">
+                    <span class="qv-tag ${tagClass}" style="padding: 2px 5px; font-weight: 600; border-radius: 4px; font-size: 0.68rem;">${status}</span>
                 </td>
             </tr>
         `;
     });
-    tableElement.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Chưa có yêu cầu thuê nào.</td></tr>';
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="10" style="text-align:center; padding: 2rem; color: #94a3b8;">Chưa có yêu cầu thuê đồ nào.</td></tr>';
 }
+
+window.toggleRentalQuickView = function (orderId, event) {
+    if (event) event.stopPropagation();
+
+    const existingDetail = document.getElementById(`rental-detail-row-${orderId}`);
+    const targetRow = document.querySelector(`tr[data-rental-id="${orderId}"]`);
+
+    if (existingDetail) {
+        existingDetail.remove();
+        if (targetRow) targetRow.classList.remove('expanded');
+        return;
+    }
+
+    document.querySelectorAll('.kiot-detail-row').forEach(row => row.remove());
+    document.querySelectorAll('.rental-order-row').forEach(row => row.classList.remove('expanded'));
+
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order || !targetRow) return;
+
+    targetRow.classList.add('expanded');
+
+    const rInfo = order.rentalInfo || {};
+    const orderDate = order.orderDate
+        ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
+        : 'N/A';
+
+    const items = order.items || [];
+    const rentalDays = rInfo.rentalDays || 1;
+    const subtotalDaily = items.reduce((s, i) => s + ((i.rentalPrice || i.price || 0) * (i.quantity || 1)), 0);
+    const totalRentalPrice = order.totalAmount || (subtotalDaily * rentalDays);
+    const depositAmount = rInfo.depositAmount || order.deposit || 0;
+    const totalQty = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+
+    const custName = rInfo.companyName || order.customerName || 'Khách thuê sự kiện';
+    const custPhone = rInfo.phone || order.customerPhone || 'Chưa có SĐT';
+    const custAddress = rInfo.address || 'Địa điểm setup theo hợp đồng';
+    const eventDateStr = rInfo.rentalDate ? new Date(rInfo.rentalDate).toLocaleDateString('vi-VN') : 'Chưa định ngày';
+    const returnDateStr = rInfo.returnDate ? new Date(rInfo.returnDate).toLocaleDateString('vi-VN') : 'Chưa định ngày';
+    const custCode = order.userId || 'Khách vãng lai';
+    const status = order.status || 'Yêu cầu mới';
+
+    let tagClass = 'warning';
+    if (status === 'Đã thu hồi' || status === 'Hoàn thành') tagClass = 'success';
+    else if (status === 'Đã xác nhận' || status === 'Đang setup') tagClass = 'info';
+    else if (status === 'Đã hủy') tagClass = 'danger';
+
+    const detailRow = document.createElement('tr');
+    detailRow.id = `rental-detail-row-${orderId}`;
+    detailRow.className = 'kiot-detail-row';
+    detailRow.innerHTML = `
+        <td colspan="10" style="padding: 0; background: #ffffff;">
+            <div class="kiot-quickview-card" style="border: 2px solid #166534; margin: 8px 0; border-radius: 8px; box-shadow: 0 4px 15px rgba(22, 101, 52, 0.12);">
+                <div class="quickview-tabs">
+                    <button type="button" class="qv-tab-item active">Chi tiết hợp đồng thuê</button>
+                </div>
+
+                <div class="quickview-body order-qv-info-body" style="flex-direction: column; gap: 14px; padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <strong style="font-size: 1.05rem; color: #166534;">${custCode} - ${custName}</strong>
+                            <span style="font-size: 0.85rem; color: #64748b;">🏺 ${orderId}</span>
+                            <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b;">Sự kiện: <strong>${rInfo.eventName || 'Trang trí Sự kiện'}</strong></div>
+                    </div>
+
+                    <div class="quickview-fields-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; font-size: 0.85rem; color: #334155;">
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Số điện thoại:</span> <strong>${custPhone}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Địa điểm setup:</span> <span style="font-weight: 600; color: #0f172a;">${custAddress}</span></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Ngày giao đồ:</span> <strong style="color: #0284c7;">${eventDateStr}</strong></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Ngày trả đồ:</span> <strong style="color: #dc2626;">${returnDateStr} (${rentalDays} ngày)</strong></div>
+                    </div>
+
+                    <!-- Items List Table -->
+                    <div style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 4px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
+                            <thead>
+                                <tr style="background: #f8fafc; color: #475569; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 8px 10px; text-align: left;">Mã hàng</th>
+                                    <th style="padding: 8px 10px; text-align: left;">Tên món đồ gốm</th>
+                                    <th style="padding: 8px 10px; text-align: center;">Số lượng</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Giá thuê/ngày</th>
+                                    <th style="padding: 8px 10px; text-align: right;">Thành tiền/ngày</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.map(item => {
+                                    const uPrice = item.rentalPrice || item.price || 0;
+                                    const lineTotal = uPrice * (item.quantity || 1);
+
+                                    return `
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td style="padding: 8px 10px; color: #166534; font-weight: 600;">${item.id || 'SP'}</td>
+                                        <td style="padding: 8px 10px; font-weight: 500;">
+                                            <strong style="color: #0f172a; display: block;">${item.name}</strong>
+                                            <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #64748b; margin-top: 2px;">
+                                                ${item.color ? `<span>🎨 Màu: ${item.color}</span>` : ''}
+                                                ${(item.pattern || item.texture) ? `<span>✨ Họa tiết: ${item.pattern || item.texture}</span>` : ''}
+                                                ${(item.combo || item.comboName) ? `<span style="color: #0066cc;">🎁 Combo: ${item.combo || item.comboName}</span>` : ''}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 8px 10px; text-align: center; font-weight: 600;">${item.quantity || 1}</td>
+                                        <td style="padding: 8px 10px; text-align: right;">${formatVND(uPrice)}</td>
+                                        <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a;">${formatVND(lineTotal)}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; width: 100%; align-items: flex-start; margin-top: 4px;">
+                        <div>
+                            <textarea placeholder="Ghi chú & Yêu cầu setup..." style="width: 100%; height: 85px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; font-size: 0.85rem; font-family: inherit; outline: none;" onchange="window.updateOrderNote('${orderId}', this.value)">${order.note || ''}</textarea>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; color: #334155; background: #f0fdf4; padding: 12px 14px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Giá thuê 1 ngày (${totalQty} món):</span>
+                                <strong style="color: #0f172a;">${formatVND(subtotalDaily)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Số ngày thuê:</span>
+                                <strong style="color: #0284c7;">${rentalDays} ngày</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; border-top: 1px solid #bbf7d0; padding-top: 6px;">
+                                <strong style="color: #0f172a;">Tổng tiền thuê:</strong>
+                                <strong style="color: #16a34a; font-size: 1.1rem;">${formatVND(totalRentalPrice)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong style="color: #0f172a;">Đã cọc trước:</strong>
+                                <strong style="color: #0284c7; font-size: 1.05rem;">${formatVND(depositAmount)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="left-actions" style="display: flex; gap: 10px;">
+                        <button type="button" class="qv-btn-text" style="color: #166534; font-weight: 600;" onclick="event.stopPropagation(); window.openEditRentalOrderModal('${orderId}')">✏️ Chỉnh sửa đơn thuê</button>
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">🗑️ Hủy đơn</button>
+                    </div>
+                    <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
+                        <select class="status-select" style="padding: 6px 12px; border: 1px solid #166534; color: #166534; border-radius: 6px; font-weight: 600; background: #fff; cursor: pointer;" onchange="event.stopPropagation(); window.updateOrderStatus('${orderId}', this.value, this)">
+                            <option value="Yêu cầu mới" ${status === 'Yêu cầu mới' ? 'selected' : ''}>Yêu cầu mới</option>
+                            <option value="Đã xác nhận" ${status === 'Đã xác nhận' ? 'selected' : ''}>Đã xác nhận</option>
+                            <option value="Đang setup" ${status === 'Đang setup' ? 'selected' : ''}>Đang setup</option>
+                            <option value="Đã thu hồi" ${status === 'Đã thu hồi' ? 'selected' : ''}>Đã thu hồi</option>
+                            <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
+                        </select>
+                        <button type="button" class="kiot-btn-primary" style="background: #166534;" onclick="event.stopPropagation(); window.printRentalOrderBill('${orderId}')">🖨️ In hợp đồng thuê</button>
+                    </div>
+                </div>
+            </div>
+        </td>
+    `;
+
+    targetRow.parentNode.insertBefore(detailRow, targetRow.nextSibling);
+};
+
+window.currentEditRentalItems = [];
+
+window.openEditRentalOrderModal = function (orderId) {
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order) {
+        showToast("Không tìm thấy thông tin đơn thuê", "error");
+        return;
+    }
+
+    const rInfo = order.rentalInfo || {};
+    const modalTitle = document.getElementById('edit-rental-modal-title');
+    if (modalTitle) modalTitle.innerText = `✏️ Chỉnh sửa đơn thuê ${orderId}`;
+
+    const hiddenId = document.getElementById('edit-rental-id-hidden');
+    if (hiddenId) hiddenId.value = orderId;
+
+    const nameInput = document.getElementById('edit-rental-cust-name');
+    if (nameInput) nameInput.value = rInfo.companyName || order.customerName || '';
+
+    const phoneInput = document.getElementById('edit-rental-cust-phone');
+    if (phoneInput) phoneInput.value = rInfo.phone || order.customerPhone || '';
+
+    const eventInput = document.getElementById('edit-rental-event-name');
+    if (eventInput) eventInput.value = rInfo.eventName || '';
+
+    const addrInput = document.getElementById('edit-rental-address');
+    if (addrInput) addrInput.value = rInfo.address || '';
+
+    const dateInput = document.getElementById('edit-rental-date');
+    if (dateInput) dateInput.value = rInfo.rentalDate ? rInfo.rentalDate.split('T')[0] : '';
+
+    const returnInput = document.getElementById('edit-rental-return-date');
+    if (returnInput) returnInput.value = rInfo.returnDate ? rInfo.returnDate.split('T')[0] : '';
+
+    const statusSel = document.getElementById('edit-rental-status');
+    if (statusSel) statusSel.value = order.status || 'Yêu cầu mới';
+
+    const depInput = document.getElementById('edit-rental-deposit');
+    if (depInput) depInput.value = rInfo.depositAmount || order.deposit || 0;
+
+    const daysInput = document.getElementById('edit-rental-days');
+    if (daysInput) daysInput.value = rInfo.rentalDays || 1;
+
+    const paySel = document.getElementById('edit-rental-payment');
+    if (paySel) paySel.value = order.paymentMethod || 'Tiền mặt';
+
+    const noteInput = document.getElementById('edit-rental-note');
+    if (noteInput) noteInput.value = order.note || '';
+
+    window.currentEditRentalItems = JSON.parse(JSON.stringify(order.items || []));
+    window.renderEditRentalOrderItemsTable();
+
+    const modal = document.getElementById('edit-rental-order-modal');
+    if (modal) modal.style.display = 'block';
+};
+
+window.renderEditRentalOrderItemsTable = function () {
+    const tbody = document.getElementById('edit-rental-items-tbody');
+    if (!tbody) return;
+
+    if (!window.currentEditRentalItems || window.currentEditRentalItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 16px; color: #94a3b8;">Đơn thuê chưa có món nào. Bấm nút "+ Thêm món thuê mới".</td></tr>`;
+        window.recalculateEditRentalTotal();
+        return;
+    }
+
+    let html = '';
+    window.currentEditRentalItems.forEach((item, index) => {
+        const qty = item.quantity || 1;
+        const price = item.rentalPrice || item.price || 0;
+        const total = price * qty;
+
+        html += `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 10px;">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: #166534; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index+1)}</strong>
+                        <input type="text" value="${item.name || ''}" placeholder="Tên món gốm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600;" onchange="window.changeEditRentalItemField(${index}, 'name', this.value)">
+                    </div>
+                </td>
+                <td style="padding: 8px 10px; text-align: center; vertical-align: top;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px;">
+                        <button type="button" style="width: 24px; height: 24px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="window.updateEditRentalItemQty(${index}, -1)">-</button>
+                        <input type="number" min="1" value="${qty}" style="width: 45px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 4px; font-size: 0.82rem;" onchange="window.changeEditRentalItemQty(${index}, this.value)">
+                        <button type="button" style="width: 24px; height: 24px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; font-weight: bold; cursor: pointer;" onclick="window.updateEditRentalItemQty(${index}, 1)">+</button>
+                    </div>
+                </td>
+                <td style="padding: 8px 10px; text-align: right; vertical-align: top;">
+                    <input type="number" value="${price}" style="width: 95px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; margin-top: 4px;" onchange="window.changeEditRentalItemPrice(${index}, this.value)">
+                </td>
+                <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a; vertical-align: top; padding-top: 12px;">
+                    ${formatVND(total)}
+                </td>
+                <td style="padding: 8px 10px; text-align: center; vertical-align: top; padding-top: 10px;">
+                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditRentalItem(${index})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    window.recalculateEditRentalTotal();
+};
+
+window.changeEditRentalItemField = function (index, field, val) {
+    if (!window.currentEditRentalItems[index]) return;
+    window.currentEditRentalItems[index][field] = val.trim();
+};
+
+window.updateEditRentalItemQty = function (index, delta) {
+    if (!window.currentEditRentalItems[index]) return;
+    let currentQty = window.currentEditRentalItems[index].quantity || 1;
+    currentQty += delta;
+    if (currentQty < 1) currentQty = 1;
+    window.currentEditRentalItems[index].quantity = currentQty;
+    window.renderEditRentalOrderItemsTable();
+};
+
+window.changeEditRentalItemQty = function (index, val) {
+    if (!window.currentEditRentalItems[index]) return;
+    let num = parseInt(val) || 1;
+    if (num < 1) num = 1;
+    window.currentEditRentalItems[index].quantity = num;
+    window.renderEditRentalOrderItemsTable();
+};
+
+window.changeEditRentalItemPrice = function (index, val) {
+    if (!window.currentEditRentalItems[index]) return;
+    let price = parseFloat(val) || 0;
+    if (price < 0) price = 0;
+    window.currentEditRentalItems[index].rentalPrice = price;
+    window.currentEditRentalItems[index].price = price;
+    window.renderEditRentalOrderItemsTable();
+};
+
+window.removeEditRentalItem = function (index) {
+    if (!window.currentEditRentalItems[index]) return;
+    window.currentEditRentalItems.splice(index, 1);
+    window.renderEditRentalOrderItemsTable();
+};
+
+window.addEditRentalItemPrompt = function () {
+    const prodName = prompt("Nhập tên sản phẩm thuê mới:");
+    if (!prodName) return;
+    const priceStr = prompt("Nhập giá thuê/ngày (VNĐ):", "50000");
+    const price = parseFloat(priceStr) || 0;
+    const qtyStr = prompt("Nhập số lượng:", "1");
+    const qty = parseInt(qtyStr) || 1;
+
+    const newItem = {
+        id: "THUE" + Math.floor(100000 + Math.random() * 900000),
+        name: prodName,
+        price: price,
+        rentalPrice: price,
+        quantity: qty
+    };
+
+    window.currentEditRentalItems.push(newItem);
+    window.renderEditRentalOrderItemsTable();
+};
+
+window.recalculateEditRentalTotal = function () {
+    const items = window.currentEditRentalItems || [];
+    const subtotalDaily = items.reduce((sum, item) => sum + ((item.rentalPrice || item.price || 0) * (item.quantity || 1)), 0);
+    const rentalDays = parseInt(document.getElementById('edit-rental-days')?.value || 1) || 1;
+    const finalTotal = subtotalDaily * rentalDays;
+
+    const subtotalElem = document.getElementById('edit-rental-calc-subtotal');
+    const totalElem = document.getElementById('edit-rental-calc-total');
+
+    if (subtotalElem) subtotalElem.innerText = formatVND(subtotalDaily) + ' đ';
+    if (totalElem) totalElem.innerText = formatVND(finalTotal) + ' đ';
+};
+
+window.closeEditRentalOrderModal = function () {
+    const modal = document.getElementById('edit-rental-order-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.saveEditedRentalOrder = async function () {
+    const orderId = document.getElementById('edit-rental-id-hidden')?.value;
+    if (!orderId) return;
+
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order) return;
+
+    const companyName = document.getElementById('edit-rental-cust-name')?.value.trim() || '';
+    const phone = document.getElementById('edit-rental-cust-phone')?.value.trim() || '';
+    const eventName = document.getElementById('edit-rental-event-name')?.value.trim() || '';
+    const address = document.getElementById('edit-rental-address')?.value.trim() || '';
+    const rentalDate = document.getElementById('edit-rental-date')?.value || '';
+    const returnDate = document.getElementById('edit-rental-return-date')?.value || '';
+    const status = document.getElementById('edit-rental-status')?.value || order.status;
+    const depositAmount = parseFloat(document.getElementById('edit-rental-deposit')?.value || 0) || 0;
+    const rentalDays = parseInt(document.getElementById('edit-rental-days')?.value || 1) || 1;
+    const paymentMethod = document.getElementById('edit-rental-payment')?.value || 'Tiền mặt';
+    const note = document.getElementById('edit-rental-note')?.value.trim() || '';
+
+    const items = window.currentEditRentalItems || [];
+    const subtotalDaily = items.reduce((s, i) => s + ((i.rentalPrice || i.price || 0) * (i.quantity || 1)), 0);
+    const newTotalAmount = subtotalDaily * rentalDays;
+
+    try {
+        const orderRef = doc(db, 'orders', orderId);
+        const updatePayload = {
+            status: status,
+            paymentMethod: paymentMethod,
+            note: note,
+            items: items,
+            totalAmount: newTotalAmount,
+            'rentalInfo.companyName': companyName,
+            'rentalInfo.phone': phone,
+            'rentalInfo.eventName': eventName,
+            'rentalInfo.address': address,
+            'rentalInfo.rentalDate': rentalDate,
+            'rentalInfo.returnDate': returnDate,
+            'rentalInfo.depositAmount': depositAmount,
+            'rentalInfo.rentalDays': rentalDays,
+            'rentalInfo.totalPrice': newTotalAmount
+        };
+
+        await updateDoc(orderRef, updatePayload);
+
+        // Update local cache object
+        order.status = status;
+        order.paymentMethod = paymentMethod;
+        order.note = note;
+        order.items = items;
+        order.totalAmount = newTotalAmount;
+        if (!order.rentalInfo) order.rentalInfo = {};
+        order.rentalInfo.companyName = companyName;
+        order.rentalInfo.phone = phone;
+        order.rentalInfo.eventName = eventName;
+        order.rentalInfo.address = address;
+        order.rentalInfo.rentalDate = rentalDate;
+        order.rentalInfo.returnDate = returnDate;
+        order.rentalInfo.depositAmount = depositAmount;
+        order.rentalInfo.rentalDays = rentalDays;
+
+        showToast(`Đã cập nhật đơn thuê ${orderId} thành công!`, "success");
+        window.closeEditRentalOrderModal();
+        window.renderRentalOrdersFiltered();
+    } catch (err) {
+        console.error("Lỗi cập nhật đơn thuê:", err);
+        showToast("Không thể cập nhật đơn thuê: " + err.message, "error");
+    }
+};
 
 async function generateTierUpVoucher(userId, tier) {
     if (!tier || tier.tierUpVoucher <= 0) return;
@@ -4099,73 +5425,459 @@ function initUserListener() {
     });
 }
 
-function renderAdminUserTable() {
+window.selectedUserDatePreset = 'all';
+window.selectedUserType = 'all';
+window.selectedUserGender = 'all';
+window.currentAdminUserPage = 1;
+window.currentAdminUserPageSize = 15;
+
+window.toggleUserTimePresetPopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('user-time-preset-popover');
+    const customPop = document.getElementById('user-custom-date-popover');
+    const btn = document.getElementById('btn-radio-user-time-preset');
+
+    if (customPop) customPop.classList.remove('show');
+
+    if (presetPop) {
+        const willShow = !presetPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            presetPop.style.top = Math.max(10, rect.top) + 'px';
+            presetPop.style.left = (rect.right + 4) + 'px';
+        }
+        presetPop.classList.toggle('show');
+    }
+};
+
+window.toggleUserCustomDatePopover = function (event) {
+    if (event) event.stopPropagation();
+    const presetPop = document.getElementById('user-time-preset-popover');
+    const customPop = document.getElementById('user-custom-date-popover');
+    const btn = document.getElementById('btn-radio-user-time-custom');
+
+    if (presetPop) presetPop.classList.remove('show');
+
+    if (customPop) {
+        const willShow = !customPop.classList.contains('show');
+        if (willShow && btn) {
+            const rect = btn.getBoundingClientRect();
+            customPop.style.top = Math.max(10, rect.top) + 'px';
+            customPop.style.left = (rect.right + 4) + 'px';
+        }
+        customPop.classList.toggle('show');
+    }
+};
+
+window.selectUserTimePreset = function (presetKey, presetName, btnElem) {
+    window.selectedUserDatePreset = presetKey;
+    const label = document.getElementById('user-order-time-preset-label');
+    if (label) label.innerText = '🔵 ' + presetName;
+
+    const btnPreset = document.getElementById('btn-radio-user-time-preset');
+    const btnCustom = document.getElementById('btn-radio-user-time-custom');
+    if (btnPreset) btnPreset.classList.add('active');
+    if (btnCustom) btnCustom.classList.remove('active');
+
+    const presetPop = document.getElementById('user-time-preset-popover');
+    if (presetPop) {
+        presetPop.querySelectorAll('.popover-pill').forEach(p => p.classList.remove('active'));
+        if (btnElem) btnElem.classList.add('active');
+        presetPop.classList.remove('show');
+    }
+
+    window.currentAdminUserPage = 1;
+    window.renderAdminUserTable();
+};
+
+window.closeUserCustomDatePopover = function () {
+    const customPop = document.getElementById('user-custom-date-popover');
+    if (customPop) customPop.classList.remove('show');
+};
+
+window.setUserTodayDateRange = function () {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const fromInput = document.getElementById('user-date-from');
+    const toInput = document.getElementById('user-date-to');
+    if (fromInput) fromInput.value = todayStr;
+    if (toInput) toInput.value = todayStr;
+};
+
+window.applyUserCustomDateRange = function () {
+    window.selectedUserDatePreset = 'custom';
+    const label = document.getElementById('user-order-time-custom-label');
+    const fromInput = document.getElementById('user-date-from')?.value;
+    const toInput = document.getElementById('user-date-to')?.value;
+
+    if (label && fromInput && toInput) {
+        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+    }
+
+    const btnPreset = document.getElementById('btn-radio-user-time-preset');
+    const btnCustom = document.getElementById('btn-radio-user-time-custom');
+    if (btnCustom) btnCustom.classList.add('active');
+    if (btnPreset) btnPreset.classList.remove('active');
+
+    window.closeUserCustomDatePopover();
+    window.currentAdminUserPage = 1;
+    window.renderAdminUserTable();
+};
+
+window.selectUserTypeFilter = function (type, btn) {
+    window.selectedUserType = type;
+    document.querySelectorAll('.user-type-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    window.currentAdminUserPage = 1;
+    window.renderAdminUserTable();
+};
+
+window.selectUserGenderFilter = function (gender, btn) {
+    window.selectedUserGender = gender;
+    document.querySelectorAll('.user-gender-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    window.currentAdminUserPage = 1;
+    window.renderAdminUserTable();
+};
+
+window.resetUserFilters = function () {
+    const search = document.getElementById('admin-user-search');
+    if (search) search.value = '';
+
+    const groupSel = document.getElementById('user-filter-group');
+    if (groupSel) groupSel.value = 'all';
+
+    ['user-filter-spent-from', 'user-filter-spent-to', 'user-filter-debt-from', 'user-filter-debt-to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    window.selectedUserType = 'all';
+    window.selectedUserGender = 'all';
+    document.querySelectorAll('.user-type-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
+    document.querySelectorAll('.user-gender-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
+
+    window.selectUserTimePreset('all', 'Tất cả thời gian', null);
+};
+
+window.changeUserPageSize = function (size) {
+    window.currentAdminUserPageSize = parseInt(size) || 15;
+    window.currentAdminUserPage = 1;
+    window.renderAdminUserTable();
+};
+
+window.goUserPage = function (page) {
+    const totalPages = window.currentAdminUserTotalPages || 1;
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    window.currentAdminUserPage = page;
+    window.renderAdminUserTable();
+};
+
+function getAllCustomersCombined() {
+    const userMap = new Map();
+
+    // 1. Dữ liệu tài khoản trong collection `users`
+    (posUsersLocal || []).forEach(u => {
+        userMap.set(u.id, {
+            id: u.id,
+            displayName: u.displayName || u.fullName || u.email || 'Khách hàng',
+            phone: u.phoneNumber || u.phone || '',
+            email: u.email || '',
+            address: u.address || (u.shippingAddress ? u.shippingAddress.address : ''),
+            gender: u.gender || '',
+            birthday: u.birthday || '',
+            createdAt: u.createdAt || null,
+            isCompany: u.isCompany || false,
+            totalSpent: userTotalSpentLocal[u.id] || u.totalSpent || 0,
+            debt: u.debt || 0,
+            points: u.points || 0
+        });
+    });
+
+    // 2. Tự động hợp nhất thêm các khách hàng mua từ collection `orders`
+    (allOrdersCache || []).forEach(order => {
+        const phone = order.customerPhone || order.shippingAddress?.phone || order.rentalInfo?.phone || '';
+        const name = order.customerName || order.shippingAddress?.fullName || order.rentalInfo?.companyName || 'Khách vãng lai';
+        const userId = order.userId || (phone ? 'KH_' + phone : order.id);
+
+        const spent = userTotalSpentLocal[userId] || 0;
+
+        if (!userMap.has(userId)) {
+            userMap.set(userId, {
+                id: userId,
+                displayName: name,
+                phone: phone,
+                email: order.customerEmail || '',
+                address: order.shippingAddress?.address || order.rentalInfo?.address || '',
+                gender: '',
+                birthday: '',
+                createdAt: order.orderDate || null,
+                isCompany: !!(order.rentalInfo?.companyName),
+                totalSpent: spent,
+                debt: 0,
+                points: Math.floor(spent / 100000)
+            });
+        } else {
+            const existing = userMap.get(userId);
+            if (!existing.phone && phone) existing.phone = phone;
+            if ((!existing.displayName || existing.displayName === 'Khách hàng') && name) existing.displayName = name;
+            if (!existing.address && (order.shippingAddress?.address || order.rentalInfo?.address)) {
+                existing.address = order.shippingAddress?.address || order.rentalInfo?.address;
+            }
+        }
+    });
+
+    return Array.from(userMap.values());
+}
+
+window.renderAdminUserTable = function renderAdminUserTable() {
     const userListTable = document.getElementById('admin-user-list');
     const searchInput = document.getElementById('admin-user-search');
+    const prevBtn = document.getElementById('prev-user-page');
+    const nextBtn = document.getElementById('next-user-page');
+    const firstBtn = document.getElementById('first-user-page');
+    const lastBtn = document.getElementById('last-user-page');
+    const pageInfo = document.getElementById('user-page-info');
+    const countInfo = document.getElementById('user-pagination-count');
+
     if (!userListTable) return;
 
-    const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
-    const adminDataMap = window.adminDataMapLocal || new Map();
+    const allCustomers = getAllCustomersCombined();
 
-    const filtered = posUsersLocal.filter(u => {
-        return (u.displayName || "").toLowerCase().includes(term) ||
+    const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const groupVal = document.getElementById('user-filter-group')?.value || 'all';
+    const spentFrom = parseFloat(document.getElementById('user-filter-spent-from')?.value || 0) || 0;
+    const spentTo = parseFloat(document.getElementById('user-filter-spent-to')?.value || 0) || 0;
+    const debtFrom = parseFloat(document.getElementById('user-filter-debt-from')?.value || 0) || 0;
+    const debtTo = parseFloat(document.getElementById('user-filter-debt-to')?.value || 0) || 0;
+
+    const datePreset = window.selectedUserDatePreset || 'all';
+    const dateFrom = document.getElementById('user-date-from')?.value;
+    const dateTo = document.getElementById('user-date-to')?.value;
+
+    const filtered = allCustomers.filter(u => {
+        const matchesTerm = !term || (u.displayName || "").toLowerCase().includes(term) ||
             (u.phone || "").includes(term) ||
             (u.email || "").toLowerCase().includes(term) ||
-            (u.identifiers || []).some(id => id.toLowerCase().includes(term));
-    });
+            (u.id || "").toLowerCase().includes(term);
 
-    let htmlContent = '';
-    filtered.forEach((u) => {
-        const updatedAt = u.updatedAt ? new Date(u.updatedAt).toLocaleDateString('vi-VN') : 'N/A';
-        const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'N/A';
-        const adminData = adminDataMap.get(u.id);
-        const isAdminUser = !!adminData;
-
-        let adminBadge = '';
-        if (isAdminUser) adminBadge = `<span class="admin-text-badge" style="font-size: 0.55rem;">Admin</span>`;
-
-        // Tính toán hạng thành viên dựa trên tổng chi tiêu đã được tổng hợp
-        const spent = userTotalSpentLocal[u.id] || 0;
+        const spent = userTotalSpentLocal[u.id] || u.totalSpent || 0;
         const tier = getMembershipTier(spent);
-        const tierBadge = `<span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; text-transform:none; padding: 2px 8px; border-radius: 20px;">${tier.name}</span>`;
+        const matchesGroup = groupVal === 'all' || tier.name.toLowerCase().includes(groupVal.toLowerCase()) || (groupVal === 'Mới' && spent === 0);
 
-        let adminActionBtn = '';
-        if (currentAdminRole === 'super_admin') {
-            const isLocked = adminData?.isLocked || false;
-            const lockBtn = isAdminUser ? `
-                    <button class="btn-minimal" style="font-size: 0.7rem; border-color: ${isLocked ? '#27ae60' : '#f39c12'}; color: ${isLocked ? '#27ae60' : '#f39c12'}; margin-left: 5px;" 
-                        onclick="window.toggleAccountLock('${u.id}', ${!isLocked})">
-                        ${isLocked ? 'Mở khóa' : 'Khóa'}
-                    </button>` : ''; // Note: Các nút này vẫn để ở user list để gán quyền nhanh
+        const isCompany = u.isCompany || (u.displayName && u.displayName.toLowerCase().includes('công ty'));
+        let matchesType = true;
+        if (window.selectedUserType === 'personal') matchesType = !isCompany;
+        else if (window.selectedUserType === 'company') matchesType = isCompany;
 
-            adminActionBtn = isAdminUser
-                ? `<button class="btn-delete" style="text-decoration:none; color:#e74c3c; font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${u.id}', false)">Gỡ Admin</button>`
-                + `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db; margin:0 5px;" onclick="window.editAdminPermissions('${u.id}', '${u.email || u.displayName || ''}')">Quyền</button>`
-                + lockBtn
-                : `<button class="btn-minimal" style="font-size: 0.7rem; border-color: #27ae60; color: #27ae60;" onclick="window.toggleAdminPrivilege('${u.id}', true, '${u.email || u.displayName || ''}')">Gán Admin</button>`;
+        const gender = u.gender || '';
+        let matchesGender = true;
+        if (window.selectedUserGender !== 'all') {
+            matchesGender = (gender.toLowerCase() === window.selectedUserGender.toLowerCase());
         }
 
-        htmlContent += `
-                <tr>
-                    <td data-label="Người dùng">
-                        <strong>${u.displayName || u.email || u.phoneNumber || 'Khách vãng lai'} ${adminBadge}</strong><br>
-                        <small style="color: #888;">ID: ${u.id}</small>
-                    </td>
-                    <td data-label="SĐT">${formatPhoneNumber(u.phoneNumber || u.phone) || '---'}</td>
-                    <td data-label="Giới tính">${u.gender || '---'}</td>
-                    <td data-label="Ngày sinh">${birthday}</td>
-                    <td data-label="Hạng thẻ">${tierBadge}</td>
-                    <td data-label="Cập nhật">${updatedAt}</td>
-                    <td data-label="Thao tác" style="display: flex; gap: 5px; justify-content: flex-end;">
-                        ${adminActionBtn}
-                        <button class="btn-minimal" style="border-color:var(--text-black); color:var(--text-black);" onclick="window.viewAdminUserDetail('${u.id}')">Chi tiết</button>
-                        <button class="btn-minimal" onclick="window.viewUserOrders('${u.id}')">Đơn hàng</button>
-                    </td>
-                </tr>
-            `;
+        let matchesSpent = true;
+        if (spentFrom > 0) matchesSpent = matchesSpent && (spent >= spentFrom);
+        if (spentTo > 0) matchesSpent = matchesSpent && (spent <= spentTo);
+
+        const debt = u.debt || 0;
+        let matchesDebt = true;
+        if (debtFrom > 0) matchesDebt = matchesDebt && (debt >= debtFrom);
+        if (debtTo > 0) matchesDebt = matchesDebt && (debt <= debtTo);
+
+        let matchesDate = true;
+        const uDate = u.createdAt ? (u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
+        if (uDate && datePreset !== 'all') {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if (datePreset === 'today') {
+                matchesDate = uDate >= today;
+            } else if (datePreset === 'yesterday') {
+                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                matchesDate = uDate >= yesterday && uDate < today;
+            } else if (datePreset === 'this_month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                matchesDate = uDate >= firstDay;
+            } else if (datePreset === 'custom') {
+                if (dateFrom) {
+                    const from = new Date(dateFrom);
+                    matchesDate = matchesDate && (uDate >= from);
+                }
+                if (dateTo) {
+                    const to = new Date(dateTo);
+                    to.setHours(23, 59, 59, 999);
+                    matchesDate = matchesDate && (uDate <= to);
+                }
+            }
+        }
+
+        return matchesTerm && matchesGroup && matchesType && matchesGender && matchesSpent && matchesDebt && matchesDate;
     });
-    userListTable.innerHTML = htmlContent || '<tr><td colspan="7" style="text-align:center;">Không tìm thấy khách hàng phù hợp.</td></tr>';
+
+    // Calculate sum totals
+    const sumDebt = filtered.reduce((acc, cur) => acc + (cur.debt || 0), 0);
+    const sumSpent = filtered.reduce((acc, cur) => acc + (userTotalSpentLocal[cur.id] || cur.totalSpent || 0), 0);
+
+    const countElem = document.getElementById('user-filtered-count');
+    const totalSpentElem = document.getElementById('user-filtered-total-spent');
+    const summaryDebtElem = document.getElementById('user-summary-debt');
+    const summarySpentElem = document.getElementById('user-summary-spent');
+
+    if (countElem) countElem.innerText = filtered.length;
+    if (totalSpentElem) totalSpentElem.innerText = formatVND(sumSpent) + ' đ';
+    if (summaryDebtElem) summaryDebtElem.innerText = formatVND(sumDebt);
+    if (summarySpentElem) summarySpentElem.innerText = formatVND(sumSpent);
+
+    const pageSize = window.currentAdminUserPageSize || 15;
+    const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+    window.currentAdminUserTotalPages = totalPages;
+
+    if (window.currentAdminUserPage > totalPages) window.currentAdminUserPage = totalPages;
+
+    const startIndex = (window.currentAdminUserPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filtered.length);
+    const pageUsers = filtered.slice(startIndex, endIndex);
+
+    renderAdminUserRows(pageUsers, userListTable);
+
+    if (pageInfo) pageInfo.innerText = `${window.currentAdminUserPage} / ${totalPages}`;
+    if (countInfo) countInfo.innerText = filtered.length > 0 ? `${startIndex + 1} - ${endIndex} trong ${filtered.length} khách hàng` : '0 khách hàng';
+
+    if (prevBtn) prevBtn.disabled = window.currentAdminUserPage <= 1;
+    if (firstBtn) firstBtn.disabled = window.currentAdminUserPage <= 1;
+    if (nextBtn) nextBtn.disabled = window.currentAdminUserPage >= totalPages;
+    if (lastBtn) lastBtn.disabled = window.currentAdminUserPage >= totalPages;
+};
+
+function renderAdminUserRows(usersList, tableElement) {
+    let htmlContent = '';
+    usersList.forEach((u) => {
+        const spent = userTotalSpentLocal[u.id] || u.totalSpent || 0;
+        const points = u.points || Math.floor(spent / 100000);
+        const tier = getMembershipTier(spent);
+        const debt = u.debt || 0;
+
+        const custCode = u.id || 'N/A';
+        const custName = u.displayName || u.fullName || u.email || 'Khách vãng lai';
+        const phone = formatPhoneNumber(u.phoneNumber || u.phone) || '---';
+
+        const tierBadge = `<span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-size: 0.70rem;">${tier.name}</span>`;
+
+        htmlContent += `
+            <tr class="product-row user-row" data-user-id="${u.id}" onclick="window.toggleUserQuickView('${u.id}', event)" style="cursor: pointer;">
+                <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="user-chk" value="${u.id}"></td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="white-space: nowrap;"><strong style="color: #0066cc; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${u.id}">${custCode}</strong></td>
+                <td>
+                    <strong style="color: #0f172a; font-size: 0.76rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;" title="${custName}">${custName}</strong>
+                </td>
+                <td style="color: #475569; font-size: 0.72rem; white-space: nowrap;">${phone}</td>
+                <td style="white-space: nowrap;">${tierBadge}</td>
+                <td style="text-align: center; font-weight: 700; color: #0284c7; font-size: 0.74rem; white-space: nowrap;">💎 ${points} điểm</td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626; font-size: 0.74rem; white-space: nowrap;">${formatVND(debt)}</td>
+                <td style="text-align: right; font-weight: 700; color: #0066cc; font-size: 0.74rem; white-space: nowrap;">${formatVND(spent)}</td>
+            </tr>
+        `;
+    });
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="9" style="text-align:center; padding: 2rem; color: #94a3b8;">Không tìm thấy khách hàng nào.</td></tr>';
 }
+
+window.toggleUserQuickView = function (userId, event) {
+    if (event) event.stopPropagation();
+
+    const existingDetail = document.getElementById(`user-detail-row-${userId}`);
+    const targetRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+
+    if (existingDetail) {
+        existingDetail.remove();
+        if (targetRow) targetRow.classList.remove('expanded');
+        return;
+    }
+
+    document.querySelectorAll('.kiot-detail-row').forEach(row => row.remove());
+    document.querySelectorAll('.user-row').forEach(row => row.classList.remove('expanded'));
+
+    const u = posUsersLocal.find(user => user.id === userId);
+    if (!u || !targetRow) return;
+
+    targetRow.classList.add('expanded');
+
+    const spent = userTotalSpentLocal[userId] || u.totalSpent || 0;
+    const points = u.points || Math.floor(spent / 100000);
+    const tier = getMembershipTier(spent);
+    const orderCount = userOrderCounts[userId] || 0;
+
+    const custCode = u.id || 'N/A';
+    const custName = u.displayName || u.fullName || u.email || 'Khách vãng lai';
+    const phone = formatPhoneNumber(u.phoneNumber || u.phone) || 'Chưa có SĐT';
+    const email = u.email || 'Chưa có email';
+    const address = u.address || (u.shippingAddress ? u.shippingAddress.address : 'Chưa có địa chỉ');
+    const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'Chưa có';
+    const gender = u.gender || 'Chưa có';
+    const createdAt = u.createdAt ? (u.createdAt.toDate ? new Date(u.createdAt.toDate()).toLocaleDateString('vi-VN') : new Date(u.createdAt).toLocaleDateString('vi-VN')) : '07/08/2026';
+
+    const detailRow = document.createElement('tr');
+    detailRow.id = `user-detail-row-${userId}`;
+    detailRow.className = 'kiot-detail-row';
+    detailRow.innerHTML = `
+        <td colspan="9" style="padding: 0; background: #ffffff;">
+            <div class="kiot-quickview-card" style="border: 2px solid #0066cc; margin: 8px 0; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 102, 204, 0.12);">
+                <div class="quickview-tabs">
+                    <button type="button" class="qv-tab-item active">Thông tin khách hàng</button>
+                </div>
+
+                <div class="quickview-body order-qv-info-body" style="padding: 20px; display: grid; grid-template-columns: 100px 1fr; gap: 20px; align-items: flex-start;">
+                    <!-- Left Avatar & Rank Badge -->
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: ${tier.color}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            ${custName.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; padding: 3px 10px; border-radius: 20px; font-weight: 700; font-size: 0.75rem;">${tier.name}</span>
+                    </div>
+
+                    <!-- Right Metadata -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem; color: #334155;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                            <div>
+                                <strong style="font-size: 1.1rem; color: #0066cc;">${custName}</strong>
+                                <span style="font-size: 0.85rem; color: #64748b; margin-left: 10px;">${custCode}</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: #64748b;">Tạo ngày: <strong>${createdAt}</strong></div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div><span style="color: #64748b;">Điện thoại:</span> <strong>${phone}</strong></div>
+                            <div><span style="color: #64748b;">Sinh nhật:</span> <strong>${birthday}</strong></div>
+                            <div><span style="color: #64748b;">Giới tính:</span> <strong>${gender}</strong></div>
+                            <div><span style="color: #64748b;">Email:</span> <strong>${email}</strong></div>
+                            <div><span style="color: #64748b;">Địa chỉ:</span> <strong>${address}</strong></div>
+                            <div><span style="color: #64748b;">Facebook:</span> <span>Chưa có</span></div>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 10px 14px; border-radius: 6px; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span>🏆 Hạng Membership: <strong style="color: ${tier.color}; font-size: 0.95rem;">${tier.name}</strong></span>
+                            <span>💎 Điểm tích lũy: <strong style="color: #0284c7; font-size: 0.95rem;">${points} điểm</strong></span>
+                            <span>🛍️ Đã mua: <strong style="color: #0f172a; font-size: 0.95rem;">${orderCount} đơn</strong></span>
+                            <span>💰 Tổng chi tiêu: <strong style="color: #0066cc; font-size: 1rem;">${formatVND(spent)} đ</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="left-actions" style="display: flex; gap: 10px;">
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteUser('${userId}')">🗑️ Xóa khách hàng</button>
+                    </div>
+                    <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" class="kiot-btn-primary" onclick="event.stopPropagation(); window.viewAdminUserDetail('${userId}')">✏️ Chỉnh sửa hồ sơ</button>
+                        <button type="button" class="kiot-btn-outline" onclick="event.stopPropagation(); window.viewUserOrders('${userId}')">📜 Xem đơn hàng (${orderCount})</button>
+                    </div>
+                </div>
+            </div>
+        </td>
+    `;
+
+    targetRow.parentNode.insertBefore(detailRow, targetRow.nextSibling);
+};
 
 // Hàm xem chi tiết và sửa thông tin người dùng
 window.viewAdminUserDetail = async (uid) => {
@@ -4822,13 +6534,24 @@ window.posClearCustomer = () => {
     }
 };
 
+function formatVND(num) {
+    if (!num || isNaN(num)) return '0';
+    return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+}
+
+function parseVND(str) {
+    if (!str) return 0;
+    const raw = String(str).replace(/,/g, '').replace(/\./g, '').replace(/[^\d]/g, '');
+    return parseFloat(raw) || 0;
+}
+
 function renderPOSTabs() {
     const container = document.getElementById('pos-tabs-list');
     if (!container) return;
     container.innerHTML = window.posBills.map(bill => `
         <button class="pos-tab ${bill.id === window.currentBillId ? 'active' : ''}" onclick="window.posSwitchBill('${bill.id}')">
-            ${bill.name}
-            <span class="close-btn" onclick="window.posCloseBill('${bill.id}', event)">&times;</span>
+            <span>⇄ ${bill.name}</span>
+            <span class="close-btn" onclick="window.posCloseBill('${bill.id}', event)" title="Đóng hóa đơn">&times;</span>
         </button>
     `).join('');
 }
@@ -4844,25 +6567,34 @@ function renderPOSCart() {
             list.innerHTML = '<p style="color: #999; font-size: 0.9rem; text-align: center; margin-top: 2rem;">Chưa có sản phẩm nào được chọn.</p>';
         } else {
             list.innerHTML = bill.cart.map((item, index) => {
-                const lineTotal = (item.price - (item.discount || 0)) * item.quantity;
-                const origPriceText = new Intl.NumberFormat('vi-VN').format(item.price);
-                const isDiscounted = item.discount > 0;
+                const sellingPrice = item.price - (item.discount || 0);
+                const lineTotal = sellingPrice * item.quantity;
+                const origPriceText = formatVND(item.price);
+                const isDiscounted = (item.discount || 0) > 0;
 
                 return `
-                <div class="pos-item-row">
-                    <div class="pos-item-idx">${index + 1}</div>
-                    <button class="pos-item-del" onclick="window.removePOSItem(${index})"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-                    <div class="pos-item-sku">${item.id}</div>
-                    <div class="pos-item-name">${item.name} ${item.color ? `(${item.color})` : ''}</div>
-                    <div class="pos-item-qty">
-                        <input type="number" value="${item.quantity}" min="1" onchange="window.changePOSQtyInput(${index}, this.value)" style="width: 100%; border: none; text-align: center; outline: none;">
+                <div class="pos-item-row" style="display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px dashed #e2e8f0; font-size: 0.88rem;">
+                    <div class="pos-item-idx" style="width: 20px; color: #64748b; font-size: 0.8rem; text-align: center;">${index + 1}</div>
+                    <button class="pos-item-del" onclick="window.removePOSItem(${index})" style="border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 2px;" title="Xóa"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <div class="pos-item-sku" style="color: #0066cc; font-weight: 600; font-size: 0.8rem; width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.id}</div>
+                    <div class="pos-item-name" style="flex: 1; font-weight: 500; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name} ${item.color ? `(${item.color})` : ''}</div>
+                    
+                    <!-- Stepper +- cho số lượng dạng pill mềm mại -->
+                    <div class="pos-item-qty-stepper" style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 20px; background: #f8fafc; height: 28px; padding: 0 2px; transition: all 0.15s ease;">
+                        <button type="button" class="qty-btn minus" onclick="event.stopPropagation(); window.stepPOSQty(${index}, -1)" style="border: none; background: #ffffff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.15s ease;">-</button>
+                        <input type="number" value="${item.quantity}" min="1" onchange="window.changePOSQtyInput(${index}, this.value)" style="width: 32px; border: none; background: transparent; text-align: center; outline: none; font-size: 0.88rem; font-weight: 700; color: #0f172a; -moz-appearance: textfield;">
+                        <button type="button" class="qty-btn plus" onclick="event.stopPropagation(); window.stepPOSQty(${index}, 1)" style="border: none; background: #ffffff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: bold; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.15s ease;">+</button>
                     </div>
-                    <div class="pos-item-price" onclick="window.posShowDiscountPopover(${index}, this, event)">
-                        ${isDiscounted ? `<span style="text-decoration: line-through; color: #999; font-size: 0.8rem; display: block;">${origPriceText}</span>` : ''}
-                        <span>${new Intl.NumberFormat('vi-VN').format(item.price - (item.discount || 0))}</span>
+
+                    <!-- Giá bán & giảm giá -->
+                    <div class="pos-item-price" onclick="window.posShowDiscountPopover(${index}, this, event)" style="cursor: pointer; text-align: right; min-width: 85px; padding: 3px 6px; border-radius: 6px; transition: background 0.15s ease;" title="Bấm để sửa đơn giá / giảm giá / giá bán">
+                        ${isDiscounted ? `<span style="text-decoration: line-through; color: #94a3b8; font-size: 0.75rem; display: block;">${origPriceText}</span><span style="color: #dc2626; background: #fef2f2; border-radius: 4px; padding: 1px 4px; font-size: 0.72rem; font-weight: 600; display: inline-block; margin-bottom: 2px;">-${formatVND(item.discount)}</span>` : ''}
+                        <span style="font-weight: 700; color: #0f172a; display: block;">${formatVND(sellingPrice)}</span>
                     </div>
-                    <div class="pos-item-total">${new Intl.NumberFormat('vi-VN').format(lineTotal)}</div>
-                    <div><button class="pos-icon-btn" style="color: #666; padding: 0;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></div>
+
+                    <!-- Thành tiền -->
+                    <div class="pos-item-total" style="font-weight: 700; color: #0f172a; text-align: right; min-width: 90px;">${formatVND(lineTotal)}</div>
+                    <div><button class="pos-icon-btn" onclick="window.posShowDiscountPopover(${index}, this, event)" style="color: #64748b; background: none; border: none; cursor: pointer; padding: 2px;" title="Chỉnh sửa đơn giá / giảm giá"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></button></div>
                 </div>`;
             }).join('');
         }
@@ -4890,12 +6622,12 @@ function renderPOSCart() {
     const finalTotal = Math.max(0, subtotal - discountVal);
 
     document.getElementById('pos-total-qty').innerText = `(${totalQty})`;
-    document.getElementById('pos-subtotal').innerText = new Intl.NumberFormat('vi-VN').format(subtotal);
-    document.getElementById('pos-bill-discount-input').value = discountVal > 0 ? new Intl.NumberFormat('vi-VN').format(discountVal) : '';
+    document.getElementById('pos-subtotal').innerText = formatVND(subtotal);
+    document.getElementById('pos-bill-discount-input').value = discountVal > 0 ? formatVND(discountVal) : '';
 
     const totalEl = document.getElementById('pos-total-amount');
     if (totalEl) {
-        totalEl.innerText = new Intl.NumberFormat('vi-VN').format(finalTotal);
+        totalEl.innerText = formatVND(finalTotal);
         totalEl.dataset.val = finalTotal;
     }
 
@@ -4906,11 +6638,22 @@ function renderPOSCart() {
 
     const cashGivenInput = document.getElementById('pos-cash-given');
     if (cashGivenInput) {
-        cashGivenInput.value = bill.cashGiven ? new Intl.NumberFormat('vi-VN').format(bill.cashGiven) : '';
+        cashGivenInput.value = bill.cashGiven ? formatVND(bill.cashGiven) : '';
     }
 
     window.togglePOSCashSection();
 }
+
+window.stepPOSQty = (index, delta) => {
+    const bill = window.getCurrentBill();
+    if (bill && bill.cart[index]) {
+        let newQty = (bill.cart[index].quantity || 1) + delta;
+        if (newQty < 1) newQty = 1;
+        bill.cart[index].quantity = newQty;
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
 
 window.changePOSQtyInput = (index, value) => {
     const bill = window.getCurrentBill();
@@ -4935,8 +6678,7 @@ window.removePOSItem = (index) => {
 window.updateBillDiscount = (val) => {
     const bill = window.getCurrentBill();
     if (bill) {
-        let raw = val.replace(/,/g, '').replace(/[^\d]/g, '');
-        bill.discountVal = parseFloat(raw) || 0;
+        bill.discountVal = parseVND(val);
         window.savePOSBills();
         renderPOSCart();
     }
@@ -4987,9 +6729,9 @@ window.calculatePOSChange = (inputElem) => {
     const input = inputElem || document.getElementById('pos-cash-given');
     if (!input) return;
 
-    let rawValue = input.value.replace(/,/g, '').replace(/[^\d]/g, '');
+    let rawValue = input.value.replace(/,/g, '').replace(/\./g, '').replace(/[^\d]/g, '');
     if (rawValue && inputElem) {
-        input.value = new Intl.NumberFormat('vi-VN').format(rawValue);
+        input.value = formatVND(rawValue);
     } else if (!rawValue && inputElem) {
         input.value = '';
     }
@@ -5007,7 +6749,7 @@ window.calculatePOSChange = (inputElem) => {
     if (changeInput && returnRow) {
         if (bill.cashGiven >= total && total > 0) {
             returnRow.style.display = 'flex';
-            changeInput.innerText = new Intl.NumberFormat('vi-VN').format(bill.cashGiven - total);
+            changeInput.innerText = formatVND(bill.cashGiven - total);
         } else {
             returnRow.style.display = 'none';
         }
@@ -5018,7 +6760,7 @@ window.calculatePOSChange = (inputElem) => {
 let currentPopoverIndex = -1;
 
 window.posShowDiscountPopover = (index, element, event) => {
-    event.stopPropagation();
+    if (event) event.stopPropagation();
     const bill = window.getCurrentBill();
     if (!bill || !bill.cart[index]) return;
 
@@ -5033,12 +6775,12 @@ window.posShowDiscountPopover = (index, element, event) => {
         popover.innerHTML = `
             <div class="pos-popover-row">
                 <label>Đơn giá</label>
-                <span id="pos-popover-price" style="font-weight: 500;">0</span>
+                <input type="text" id="pos-popover-price-input" class="pos-pop-input" oninput="window.posOnUnitPriceChange(this.value)">
             </div>
             <div class="pos-popover-row">
                 <label>Giảm giá</label>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="text" id="pos-popover-discount" oninput="window.posUpdatePopoverDiscount(this.value)">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="text" id="pos-popover-discount" class="pos-pop-input" oninput="window.posOnDiscountChange(this.value)">
                     <div class="pos-discount-type">
                         <button id="pos-type-vnd" class="active" onclick="window.posSetDiscountType('VND')">VND</button>
                         <button id="pos-type-pct" onclick="window.posSetDiscountType('%')">%</button>
@@ -5047,33 +6789,44 @@ window.posShowDiscountPopover = (index, element, event) => {
             </div>
             <div class="pos-popover-row">
                 <label>Giá bán</label>
-                <span id="pos-popover-final" style="font-weight: bold; color: #1e88e5;">0</span>
+                <input type="text" id="pos-popover-final-input" class="pos-pop-input" style="font-weight: 700; color: #0066cc;" oninput="window.posOnSellingPriceChange(this.value)">
+            </div>
+            <div id="pos-popover-cost-warning" style="display: none; color: #dc2626; font-size: 0.78rem; margin-top: 4px; font-weight: 600; text-align: right;">
+                ⚠️ Giá bán đang nhỏ hơn giá vốn
             </div>
         `;
         document.body.appendChild(popover);
 
         // Click outside to close
         document.addEventListener('click', (e) => {
-            if (popover && !popover.contains(e.target)) {
+            if (popover && !popover.contains(e.target) && !e.target.closest('.pos-item-price') && !e.target.closest('.pos-icon-btn')) {
                 popover.style.display = 'none';
             }
         });
     }
 
     const rect = element.getBoundingClientRect();
-    popover.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-    popover.style.left = (rect.left + window.scrollX - 250 + rect.width) + 'px';
-    popover.style.display = 'block';
+    popover.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    popover.style.left = Math.max(10, (rect.left + window.scrollX - 220 + rect.width)) + 'px';
+    popover.style.display = 'flex';
 
     popover.dataset.type = 'VND';
     document.getElementById('pos-type-vnd').classList.add('active');
     document.getElementById('pos-type-pct').classList.remove('active');
 
-    document.getElementById('pos-popover-price').innerText = new Intl.NumberFormat('vi-VN').format(item.price);
-    const input = document.getElementById('pos-popover-discount');
-    input.value = item.discount ? new Intl.NumberFormat('vi-VN').format(item.discount) : '';
-    window.posUpdatePopoverDiscount(input.value);
-    input.focus();
+    const priceInput = document.getElementById('pos-popover-price-input');
+    const discountInput = document.getElementById('pos-popover-discount');
+    const finalInput = document.getElementById('pos-popover-final-input');
+
+    const sellingPrice = item.price - (item.discount || 0);
+
+    priceInput.value = formatVND(item.price);
+    discountInput.value = item.discount > 0 ? formatVND(item.discount) : '';
+    finalInput.value = formatVND(sellingPrice);
+
+    window.posCheckCostWarning(item, sellingPrice);
+
+    discountInput.focus();
 };
 
 window.posSetDiscountType = (type) => {
@@ -5082,36 +6835,128 @@ window.posSetDiscountType = (type) => {
     popover.dataset.type = type;
     document.getElementById('pos-type-vnd').classList.toggle('active', type === 'VND');
     document.getElementById('pos-type-pct').classList.toggle('active', type === '%');
-    window.posUpdatePopoverDiscount(document.getElementById('pos-popover-discount').value);
+
+    if (currentPopoverIndex !== -1) {
+        const bill = window.getCurrentBill();
+        const item = bill.cart[currentPopoverIndex];
+        if (item) {
+            const discountInput = document.getElementById('pos-popover-discount');
+            if (type === '%') {
+                const pct = item.price > 0 ? Math.round(((item.discount || 0) / item.price) * 100) : 0;
+                discountInput.value = pct > 0 ? pct : '';
+            } else {
+                discountInput.value = item.discount > 0 ? formatVND(item.discount) : '';
+            }
+        }
+    }
 };
 
-window.posUpdatePopoverDiscount = (val) => {
+window.posOnUnitPriceChange = (val) => {
     if (currentPopoverIndex === -1) return;
     const bill = window.getCurrentBill();
     const item = bill.cart[currentPopoverIndex];
+    if (!item) return;
+
+    let unitPrice = parseVND(val);
+    item.price = unitPrice;
+    document.getElementById('pos-popover-price-input').value = unitPrice > 0 ? formatVND(unitPrice) : '';
+
     const popover = document.getElementById('pos-discount-popover');
     const type = popover.dataset.type;
+    const discountInput = document.getElementById('pos-popover-discount');
+    const discountVal = parseVND(discountInput.value);
 
-    let raw = val.replace(/,/g, '').replace(/[^\d]/g, '');
-    let num = parseFloat(raw) || 0;
     let finalDiscount = 0;
+    if (type === '%') {
+        let pct = discountVal > 100 ? 100 : discountVal;
+        finalDiscount = Math.round(unitPrice * (pct / 100));
+    } else {
+        finalDiscount = Math.min(unitPrice, discountVal);
+    }
 
+    item.discount = finalDiscount;
+    const sellingPrice = Math.max(0, unitPrice - finalDiscount);
+    document.getElementById('pos-popover-final-input').value = formatVND(sellingPrice);
+
+    window.posCheckCostWarning(item, sellingPrice);
+    window.savePOSBills();
+    renderPOSCart();
+};
+
+window.posOnDiscountChange = (val) => {
+    if (currentPopoverIndex === -1) return;
+    const bill = window.getCurrentBill();
+    const item = bill.cart[currentPopoverIndex];
+    if (!item) return;
+
+    const popover = document.getElementById('pos-discount-popover');
+    const type = popover.dataset.type;
+    let num = parseVND(val);
+
+    let finalDiscount = 0;
     if (type === '%') {
         if (num > 100) num = 100;
-        document.getElementById('pos-popover-discount').value = num;
+        document.getElementById('pos-popover-discount').value = num > 0 ? num : '';
         finalDiscount = Math.round(item.price * (num / 100));
     } else {
         if (num > item.price) num = item.price;
-        document.getElementById('pos-popover-discount').value = num > 0 ? new Intl.NumberFormat('vi-VN').format(num) : '';
+        document.getElementById('pos-popover-discount').value = num > 0 ? formatVND(num) : '';
         finalDiscount = num;
     }
 
-    const finalPrice = item.price - finalDiscount;
-    document.getElementById('pos-popover-final').innerText = new Intl.NumberFormat('vi-VN').format(finalPrice);
-
     item.discount = finalDiscount;
+    const sellingPrice = Math.max(0, item.price - finalDiscount);
+    document.getElementById('pos-popover-final-input').value = formatVND(sellingPrice);
+
+    window.posCheckCostWarning(item, sellingPrice);
     window.savePOSBills();
-    renderPOSCart(); // Re-render cart in background
+    renderPOSCart();
+};
+
+window.posOnSellingPriceChange = (val) => {
+    if (currentPopoverIndex === -1) return;
+    const bill = window.getCurrentBill();
+    const item = bill.cart[currentPopoverIndex];
+    if (!item) return;
+
+    let sellingPrice = parseVND(val);
+    document.getElementById('pos-popover-final-input').value = sellingPrice > 0 ? formatVND(sellingPrice) : '';
+
+    const popover = document.getElementById('pos-discount-popover');
+    const type = popover.dataset.type;
+
+    if (sellingPrice < item.price) {
+        const discountVND = item.price - sellingPrice;
+        item.discount = discountVND;
+
+        const discountInput = document.getElementById('pos-popover-discount');
+        if (type === '%') {
+            const pct = Math.round((discountVND / item.price) * 100);
+            discountInput.value = pct > 0 ? pct : '';
+        } else {
+            discountInput.value = formatVND(discountVND);
+        }
+    } else {
+        item.price = sellingPrice;
+        item.discount = 0;
+        document.getElementById('pos-popover-price-input').value = formatVND(sellingPrice);
+        document.getElementById('pos-popover-discount').value = '';
+    }
+
+    window.posCheckCostWarning(item, sellingPrice);
+    window.savePOSBills();
+    renderPOSCart();
+};
+
+window.posCheckCostWarning = (item, sellingPrice) => {
+    const warningEl = document.getElementById('pos-popover-cost-warning');
+    if (warningEl) {
+        if (item.cost && item.cost > 0 && sellingPrice < item.cost) {
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
+        }
+    }
 };
 
 window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null) => {

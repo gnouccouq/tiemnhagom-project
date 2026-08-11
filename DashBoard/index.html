@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Tiệm Nhà Gốm</title>
-    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="stylesheet" href="../css/style.css?v=46">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <!-- Google Fonts -->
@@ -33,78 +33,80 @@
         <header class="kiot-header-wrapper">
             <!-- Tier 1: Top White Bar -->
             <div class="kiot-tier1">
-                <div class="kiot-t1-left">
-                    <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
-                        <img src="../Asset/images/logo.webp" alt="Logo">
-                        <span>Tiệm Nhà Gốm</span>
-                    </a>
-                </div>
-
-                <div class="kiot-t1-right">
-                    <!-- Giao hàng pill -->
-                    <button type="button" class="kiot-t1-link" title="Giao hàng">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0066cc" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="1" y="3" width="15" height="13"></rect>
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                        </svg>
-                        <span>Giao hàng</span>
-                    </button>
-
-                    <!-- Tiếng Việt -->
-                    <div class="kiot-t1-link">
-                        <span>🇻🇳 Tiếng Việt ▾</span>
+                <div class="kiot-tier-inner">
+                    <div class="kiot-t1-left">
+                        <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
+                            <img src="../Asset/images/logo.webp" alt="Logo">
+                            <span>Tiệm Nhà Gốm</span>
+                        </a>
                     </div>
 
-                    <!-- Notification Bell Dropdown -->
-                    <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
-                        <button type="button" class="kiot-t1-icon-btn" title="Thông báo">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    <div class="kiot-t1-right">
+                        <!-- Giao hàng pill -->
+                        <button type="button" class="kiot-t1-link" title="Giao hàng">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0066cc" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="3" width="15" height="13"></rect>
+                                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                <circle cx="18.5" cy="18.5" r="2.5"></circle>
                             </svg>
-                            <span id="notification-indicator"
-                                style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
+                            <span>Giao hàng</span>
                         </button>
-                        <div class="kiot-user-dropdown" style="min-width: 260px; right: -40px;">
-                            <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ
-                                    thống</strong></div>
-                            <div class="user-dropdown-divider"></div>
-                            <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
-                                <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">
-                                    Không có thông báo mới</div>
+
+                        <!-- Tiếng Việt -->
+                        <div class="kiot-t1-link">
+                            <span>🇻🇳 Tiếng Việt ▾</span>
+                        </div>
+
+                        <!-- Notification Bell Dropdown -->
+                        <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
+                            <button type="button" class="kiot-t1-icon-btn" title="Thông báo">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <span id="notification-indicator"
+                                    style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
+                            </button>
+                            <div class="kiot-user-dropdown" style="min-width: 260px; right: -40px;">
+                                <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ
+                                        thống</strong></div>
+                                <div class="user-dropdown-divider"></div>
+                                <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
+                                    <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">
+                                        Không có thông báo mới</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Settings Gear -->
-                    <button type="button" class="kiot-t1-icon-btn admin-tab-btn" data-target="maintenance-section"
-                        title="Cài đặt">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                            </path>
-                        </svg>
-                    </button>
-
-                    <!-- User Circle Avatar -->
-                    <div class="kiot-user-dropdown-wrapper">
-                        <button type="button" class="kiot-t1-icon-btn" style="background: #e0f2fe; color: #0066cc;">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <!-- Settings Gear -->
+                        <button type="button" class="kiot-t1-icon-btn admin-tab-btn" data-target="maintenance-section"
+                            title="Cài đặt">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
                                 <path
-                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                </path>
                             </svg>
                         </button>
-                        <div class="kiot-user-dropdown">
-                            <div id="admin-user-info" class="user-dropdown-header"></div>
-                            <div class="user-dropdown-divider"></div>
-                            <a href="../index.html" class="user-dropdown-item">🏪 Trang chủ Website</a>
-                            <button id="btn-logout-admin" class="user-dropdown-item text-danger">🚪 Đăng xuất</button>
+
+                        <!-- User Circle Avatar -->
+                        <div class="kiot-user-dropdown-wrapper">
+                            <button type="button" class="kiot-t1-icon-btn" style="background: #e0f2fe; color: #0066cc;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path
+                                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                </svg>
+                            </button>
+                            <div class="kiot-user-dropdown">
+                                <div id="admin-user-info" class="user-dropdown-header"></div>
+                                <div class="user-dropdown-divider"></div>
+                                <a href="../index.html" class="user-dropdown-item">🏪 Trang chủ Website</a>
+                                <button id="btn-logout-admin" class="user-dropdown-item text-danger">🚪 Đăng xuất</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -112,103 +114,105 @@
 
             <!-- Tier 2: Bottom Royal Blue Bar (#0066cc) -->
             <div class="kiot-tier2">
-                <nav class="kiot-t2-nav">
-                    <!-- 1. Tổng quan -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn admin-tab-btn active" data-target="overview-section">
-                            <span>Tổng quan</span>
-                        </button>
-                    </div>
-
-                    <!-- 2. Hàng hóa -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn">
-                            <span>Hàng hóa</span> <span style="font-size: 0.6rem;">▾</span>
-                        </button>
-                        <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh
-                                    sách sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn"
-                                data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh
-                                    mục sản phẩm</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn"
-                                data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
-                        </div>
-                    </div>
-
-                    <!-- 3. Đơn hàng -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn">
-                            <span>Đơn hàng</span> <span style="font-size: 0.6rem;">▾</span>
-                        </button>
-                        <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="order-section">
-                                <span>Đơn mua hàng</span>
-                                <span id="order-count-badge" class="sidebar-badge"
-                                    style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
-                            </button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="rental-order-section">
-                                <span>Đơn thuê đồ Decor</span>
-                                <span id="rental-order-count-badge" class="sidebar-badge"
-                                    style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                <div class="kiot-tier-inner">
+                    <nav class="kiot-t2-nav">
+                        <!-- 1. Tổng quan -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn admin-tab-btn active" data-target="overview-section">
+                                <span>Tổng quan</span>
                             </button>
                         </div>
-                    </div>
 
-                    <!-- 4. Khách hàng -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn admin-tab-btn" data-target="user-section">
-                            <span>Khách hàng</span>
-                        </button>
-                    </div>
-
-                    <!-- 5. Nhân viên -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn admin-tab-btn" data-target="admin-account-section">
-                            <span>Nhân viên</span>
-                        </button>
-                    </div>
-
-                    <!-- 6. Báo cáo -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn">
-                            <span>Báo cáo</span> <span style="font-size: 0.6rem;">▾</span>
-                        </button>
-                        <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo
-                                    doanh thu</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ
-                                    thống Online</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo
-                                    trì hệ thống</span></button>
+                        <!-- 2. Hàng hóa -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn">
+                                <span>Hàng hóa</span> <span style="font-size: 0.6rem;">▾</span>
+                            </button>
+                            <div class="kiot-dropdown-menu">
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh
+                                        sách sản phẩm</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn"
+                                    data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh
+                                        mục sản phẩm</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn"
+                                    data-target="inventory-log-section"><span>Nhật ký kho & Tồn kho</span></button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- 7. Bán online -->
-                    <div class="kiot-nav-item">
-                        <button class="kiot-nav-btn">
-                            <span>Bán online</span> <span style="font-size: 0.6rem;">▾</span>
-                        </button>
-                        <div class="kiot-dropdown-menu">
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner
-                                    Trang chủ</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ
-                                    sưu tập</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự
-                                    kiện</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết &
-                                    Tin tức</span></button>
-                            <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm
-                                    giá</span></button>
+                        <!-- 3. Đơn hàng -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn">
+                                <span>Đơn hàng</span> <span style="font-size: 0.6rem;">▾</span>
+                            </button>
+                            <div class="kiot-dropdown-menu">
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="order-section">
+                                    <span>Đơn mua hàng</span>
+                                    <span id="order-count-badge" class="sidebar-badge"
+                                        style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                                </button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="rental-order-section">
+                                    <span>Đơn thuê đồ Decor</span>
+                                    <span id="rental-order-count-badge" class="sidebar-badge"
+                                        style="display: none; background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </nav>
 
-                <!-- Nút Bán Hàng POS Trọng Tâm Mở Trang pos.html Độc Lập Không Header -->
-                <a href="pos.html" class="kiot-pos-pill-btn" target="_blank" style="text-decoration: none;">
-                    🛒 <span>Bán hàng</span>
-                </a>
+                        <!-- 4. Khách hàng -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn admin-tab-btn" data-target="user-section">
+                                <span>Khách hàng</span>
+                            </button>
+                        </div>
+
+                        <!-- 5. Nhân viên -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn admin-tab-btn" data-target="admin-account-section">
+                                <span>Nhân viên</span>
+                            </button>
+                        </div>
+
+                        <!-- 6. Báo cáo -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn">
+                                <span>Báo cáo</span> <span style="font-size: 0.6rem;">▾</span>
+                            </button>
+                            <div class="kiot-dropdown-menu">
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo
+                                        doanh thu</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ
+                                        thống Online</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo
+                                        trì hệ thống</span></button>
+                            </div>
+                        </div>
+
+                        <!-- 7. Bán online -->
+                        <div class="kiot-nav-item">
+                            <button class="kiot-nav-btn">
+                                <span>Bán online</span> <span style="font-size: 0.6rem;">▾</span>
+                            </button>
+                            <div class="kiot-dropdown-menu">
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner
+                                        Trang chủ</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="collections-section"><span>Bộ
+                                        sưu tập</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự án sự
+                                        kiện</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết &
+                                        Tin tức</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm
+                                        giá</span></button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Nút Bán Hàng POS Trọng Tâm Mở Trang pos.html Độc Lập Không Header -->
+                    <a href="pos.html" class="kiot-pos-pill-btn" target="_blank" style="text-decoration: none;">
+                        🛒 <span>Bán hàng</span>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -1099,162 +1103,458 @@
             </div>
 
 
-            <!-- Section Quản lý Đơn hàng -->
+            <!-- Section Quản lý Đơn hàng (Hóa đơn) KiotViet Layout -->
             <div id="order-section" class="admin-section">
-                <div class="admin-card">
-                    <div class="admin-order-filters-grid"
-                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-search-input">Tìm kiếm chung</label>
-                            <input type="text" id="order-search-input" placeholder="Mã đơn, Tên, SĐT khách...">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="position: relative;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Hóa đơn</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetOrderFilters()">Xóa bộ lọc</button>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-filter-status">Trạng thái</label>
-                            <select id="order-filter-status">
-                                <option value="all">Tất cả</option>
-                                <option value="Đang xử lý">Đang xử lý</option>
-                                <option value="Chờ thanh toán">Chờ thanh toán</option>
-                                <option value="Đã thanh toán">Đã thanh toán</option>
-                                <option value="Đang giao hàng">Đang giao hàng</option>
-                                <option value="Đã hoàn thành">Đã hoàn thành</option>
-                                <option value="Đã hủy">Đã hủy</option>
+
+                        <!-- 1. Thời gian với Popover -->
+                        <div class="filter-group" style="position: relative;">
+                            <label class="filter-label">Thời gian</label>
+                            <div class="filter-radio-group">
+                                <div class="filter-radio-btn active" id="btn-radio-time-preset" onclick="window.toggleTimePresetPopover(event)">
+                                    <span id="order-time-preset-label">🔵 Tháng này</span>
+                                    <span style="font-size: 0.7rem; color: #64748b;">❯</span>
+                                </div>
+                                <div class="filter-radio-btn" id="btn-radio-time-custom" onclick="window.toggleCustomDatePopover(event)">
+                                    <span id="order-time-custom-label">⚪ Tùy chỉnh</span>
+                                    <span style="font-size: 0.85rem;">📅</span>
+                                </div>
+                            </div>
+
+                            <!-- Popover Preset Ngày Tháng (Khớp ảnh 1) -->
+                            <div id="time-preset-popover" class="kiot-time-popover">
+                                <div style="margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                    <button type="button" class="popover-pill active" style="width: auto; padding: 5px 14px; font-weight: bold;" onclick="window.selectTimePreset('all', 'Tất cả thời gian', this)">🌐 Tất cả thời gian</button>
+                                </div>
+                                <div class="popover-grid">
+                                    <div>
+                                        <div class="popover-col-title">Theo ngày</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('today', 'Hôm nay', this)">Hôm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('yesterday', 'Hôm qua', this)">Hôm qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tuần</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('this_week', 'Tuần này', this)">Tuần này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_week', 'Tuần trước', this)">Tuần trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_7_days', '7 ngày qua', this)">7 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tháng</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('this_month', 'Tháng này', this)">Tháng này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_month', 'Tháng trước', this)">Tháng trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_30_days', '30 ngày qua', this)">30 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo quý</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('this_quarter', 'Quý này', this)">Quý này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_quarter', 'Quý trước', this)">Quý trước</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo năm</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('this_year', 'Năm nay', this)">Năm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectTimePreset('last_year', 'Năm trước', this)">Năm trước</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Popover Tùy Chỉnh Ngày (Khớp ảnh 2) -->
+                            <div id="custom-date-popover" class="kiot-time-popover" style="width: 380px;">
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;">Khoảng thời gian tùy chỉnh:</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label class="filter-label">Từ ngày</label>
+                                            <input type="date" id="order-filter-date-from" class="kiot-filter-input">
+                                        </div>
+                                        <div>
+                                            <label class="filter-label">Đến ngày</label>
+                                            <input type="date" id="order-filter-date-to" class="kiot-filter-input">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 4px;">
+                                        <button type="button" style="border: none; background: none; color: #0066cc; font-weight: 600; font-size: 0.8rem; cursor: pointer;" onclick="window.setTodayDateRange()">Hôm nay</button>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="kiot-btn-outline" onclick="window.closeCustomDatePopover()">Bỏ qua</button>
+                                            <button type="button" class="kiot-btn-primary" onclick="window.applyCustomDateRange()">Áp dụng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Loại hóa đơn -->
+                        <div class="filter-group">
+                            <label class="filter-label">Loại hóa đơn</label>
+                            <div class="filter-checkbox-list">
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-type-chk" value="pickup" checked onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Không giao hàng</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-type-chk" value="delivery" checked onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Giao hàng</span></label>
+                            </div>
+                        </div>
+
+                        <!-- 3. Trạng thái hóa đơn -->
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái hóa đơn</label>
+                            <div class="filter-checkbox-list">
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-status-chk" value="Đang xử lý" checked onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Đang xử lý</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-status-chk" value="Đã hoàn thành" checked onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Hoàn thành</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-status-chk" value="Không giao được" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Không giao được</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-status-chk" value="Đã hủy" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()"> <span>Đã hủy</span></label>
+                            </div>
+                        </div>
+
+                        <!-- 4. Trạng thái giao hàng -->
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái giao hàng</label>
+                            <select id="order-filter-delivery-status" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn trạng thái</option>
+                                <option value="Chờ giao">Chờ giao</option>
+                                <option value="Đang giao">Đang giao</option>
+                                <option value="Đã giao">Đã giao</option>
                             </select>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="order-filter-date-preset">Thời gian</label>
-                            <select id="order-filter-date-preset" onchange="window.toggleCustomDateFilter(this.value)">
-                                <option value="all">Tất cả thời gian</option>
-                                <option value="today">Hôm nay</option>
-                                <option value="yesterday">Hôm qua</option>
-                                <option value="this_week">Tuần này</option>
-                                <option value="last_week">Tuần trước</option>
-                                <option value="this_month">Tháng này</option>
-                                <option value="this_quarter">Quý này</option>
-                                <option value="this_year">Năm nay</option>
-                                <option value="custom">Tùy chỉnh khoảng ngày...</option>
+
+                        <!-- 5. Đối tác giao hàng -->
+                        <div class="filter-group">
+                            <label class="filter-label">Đối tác giao hàng</label>
+                            <select id="order-filter-carrier" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn đối tác giao hàng</option>
+                                <option value="GHN">Giao Hàng Nhanh (GHN)</option>
+                                <option value="GHTK">Giao Hàng Tiết Kiệm</option>
+                                <option value="ViettelPost">Viettel Post</option>
+                                <option value="GrabExpress">GrabExpress</option>
                             </select>
                         </div>
-                        <div id="order-custom-date-group"
-                            style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="order-filter-date-from">Từ ngày</label>
-                                <input type="date" id="order-filter-date-from">
+
+                        <!-- 6. Phương thức thanh toán -->
+                        <div class="filter-group">
+                            <label class="filter-label">Phương thức thanh toán</label>
+                            <select id="order-filter-payment" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn phương thức thanh toán...</option>
+                                <option value="Tiền mặt">Tiền mặt</option>
+                                <option value="Chuyển khoản">Chuyển khoản / QR</option>
+                                <option value="Thẻ">Thẻ ATM / Visa</option>
+                                <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                            </select>
+                        </div>
+
+                        <!-- 7. Người tạo -->
+                        <div class="filter-group">
+                            <label class="filter-label">Người tạo</label>
+                            <select id="order-filter-creator" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn người tạo</option>
+                                <option value="Nguyễn Tân Quốc Cường">Nguyễn Tân Quốc Cường</option>
+                                <option value="Admin System">Admin System</option>
+                            </select>
+                        </div>
+
+                        <!-- 8. Người bán -->
+                        <div class="filter-group">
+                            <label class="filter-label">Người bán</label>
+                            <select id="order-filter-seller" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn người bán</option>
+                                <option value="Nguyễn Tân Quốc Cường">Nguyễn Tân Quốc Cường</option>
+                                <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
+                            </select>
+                        </div>
+
+                        <!-- 9. Bảng giá -->
+                        <div class="filter-group">
+                            <label class="filter-label">Bảng giá</label>
+                            <select id="order-filter-pricelist" class="kiot-filter-select" onchange="if(typeof window.renderOrdersFiltered==='function') window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn bảng giá</option>
+                                <option value="Bảng giá chung">Bảng giá chung</option>
+                                <option value="Bảng giá sỉ">Bảng giá sỉ</option>
+                            </select>
+                        </div>
+
+                        <!-- 10. Kênh bán -->
+                        <div class="filter-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label class="filter-label" style="margin-bottom: 0;">Kênh bán</label>
+                                <a href="javascript:void(0)" style="font-size: 0.76rem; color: #0066cc; text-decoration: none;" onclick="if(typeof showToast!=='undefined') showToast('Thêm kênh bán mới');">Tạo mới</a>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="order-filter-date-to">Đến ngày</label>
-                                <input type="date" id="order-filter-date-to">
+                            <select id="order-filter-channel" class="kiot-filter-select" onchange="window.renderOrdersFiltered()">
+                                <option value="all" selected>Chọn kênh bán</option>
+                                <option value="POS">Bán trực tiếp (POS)</option>
+                                <option value="Website">Website</option>
+                                <option value="Shopee">Shopee</option>
+                                <option value="TikTok">TikTok Shop</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Bảng Hóa đơn Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="order-search-input" placeholder="Theo mã hóa đơn, tên KH, SĐT..." onkeyup="window.renderOrdersFiltered()">
+                            </div>
+                            <div class="toolbar-actions">
+                                <a href="pos.html" class="kiot-btn-primary" style="text-decoration: none;">+ Tạo mới hóa đơn</a>
+                                <button type="button" class="kiot-btn-outline" onclick="window.exportOrdersExcel()">📤 Xuất file</button>
                             </div>
                         </div>
-                        <button id="btn-apply-order-filters" class="btn-dark" style="height: 40px; margin-top: 22px;">Áp
-                            dụng</button>
-                    </div>
 
-                    <div
-                        style="margin: 20px 0; padding: 15px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #0d47a1;">
-                        Tổng doanh thu các đơn hàng đang lọc: <span id="order-filtered-total-amount">0 đ</span>
-                    </div>
+                        <!-- Revenue Summary Banner -->
+                        <div style="padding: 8px 12px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; font-weight: 600; font-size: 0.88rem; color: #0284c7; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Tổng doanh thu các đơn hàng đang lọc:</span>
+                            <span id="order-filtered-total-amount" style="font-size: 1.05rem; font-weight: 700; color: #0066cc;">0 đ</span>
+                        </div>
 
-                    <h3>Danh sách đơn hàng mới nhất</h3>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Mã đơn</th>
-                                    <th>Ngày đặt</th>
-                                    <th>Khách hàng</th>
-                                    <th>Sản phẩm</th>
-                                    <th>Tổng tiền</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-order-list">
-                                <!-- Dữ liệu load từ Firebase orders collection -->
-                            </tbody>
-                        </table>
-                    </div>
+                        <!-- Table Scroll Wrapper -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 26px; text-align: center;"><input type="checkbox" id="check-all-orders"></th>
+                                        <th style="width: 20px;">⭐</th>
+                                        <th style="width: 140px;">Mã hóa đơn</th>
+                                        <th style="width: 90px;">Thời gian</th>
+                                        <th style="width: 100px;">ID Tài khoản</th>
+                                        <th style="width: 120px;">Khách hàng</th>
+                                        <th style="text-align: right; width: 100px;">Tổng tiền hàng</th>
+                                        <th style="text-align: right; width: 70px;">Giảm giá</th>
+                                        <th style="text-align: right; width: 100px;">Khách đã trả</th>
+                                        <th style="text-align: center; width: 90px;">Trạng thái</th>
+                                    </tr>
+                                    <tr id="order-table-summary-row" style="background: #f0f7ff; font-size: 0.76rem; border-bottom: 2px solid #cbd5e1;">
+                                        <td colspan="6" style="padding: 6px 8px;"></td>
+                                        <td id="summary-subtotal" style="text-align: right; font-weight: 700; color: #0f172a; padding: 6px 8px;">0</td>
+                                        <td id="summary-discount" style="text-align: right; font-weight: 700; color: #64748b; padding: 6px 8px;">0</td>
+                                        <td id="summary-paid" style="text-align: right; font-weight: 700; color: #0066cc; padding: 6px 8px;">0</td>
+                                        <td style="padding: 6px 8px;"></td>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-order-list">
+                                    <!-- Dynamic rows loaded from Firebase -->
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <!-- Bộ điều khiển phân trang đơn hàng -->
-                    <div class="pagination-container"
-                        style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
-                        <button id="prev-order-page" class="btn-minimal" disabled>Trang trước</button>
-                        <span id="order-page-info" style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang
-                            1</span>
-                        <button id="next-order-page" class="btn-minimal">Trang sau</button>
+                        <!-- KiotViet Pagination Footer -->
+                        <div class="kiot-pagination-bar">
+                            <div class="pg-left">
+                                <span>Hiển thị</span>
+                                <select id="order-page-size-select" onchange="window.changeOrderPageSize(this.value)" style="padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                    <option value="15" selected>15 dòng</option>
+                                    <option value="30">30 dòng</option>
+                                    <option value="50">50 dòng</option>
+                                </select>
+                            </div>
+                            <div class="pg-center">
+                                <button type="button" class="pg-btn" id="first-order-page" onclick="window.goOrderPage(1)">|&lt;</button>
+                                <button type="button" class="pg-btn" id="prev-order-page" onclick="window.goOrderPage(window.currentOrderPage - 1)">&lt;</button>
+                                <span id="order-page-info" style="font-weight: 600;">1</span>
+                                <button type="button" class="pg-btn" id="next-order-page" onclick="window.goOrderPage(window.currentOrderPage + 1)">&gt;</button>
+                                <button type="button" class="pg-btn" id="last-order-page" onclick="window.goOrderPage(window.currentOrderTotalPages || 1)">&gt;|</button>
+                            </div>
+                            <div class="pg-right">
+                                <span id="order-pagination-count">1 - 15 trong 0 hóa đơn</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Đơn thuê đồ -->
+            <!-- Section Quản lý Đơn thuê đồ (Hóa đơn thuê) KiotViet Layout -->
             <div id="rental-order-section" class="admin-section">
-                <div class="admin-card">
-                    <div class="admin-order-filters-grid"
-                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-search-input">Tìm kiếm chung</label>
-                            <input type="text" id="rental-order-search-input" placeholder="Mã đơn, Tên Cty, SĐT...">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar - Đơn thuê) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Hóa đơn thuê</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetRentalOrderFilters()">Xóa bộ lọc</button>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-filter-status">Trạng thái</label>
-                            <select id="rental-order-filter-status">
-                                <option value="all">Tất cả</option>
-                                <option value="Yêu cầu mới">Yêu cầu mới</option>
-                                <option value="Đã xác nhận">Đã xác nhận</option>
-                                <option value="Đang setup">Đang setup</option>
-                                <option value="Đã thu hồi">Đã thu hồi</option>
-                                <option value="Đã hủy">Đã hủy</option>
+
+                        <!-- 1. Thời gian với Popover -->
+                        <div class="filter-group">
+                            <label class="filter-label">Thời gian</label>
+                            <div class="filter-radio-group">
+                                <div class="filter-radio-btn active" id="btn-radio-rental-time-preset" onclick="window.toggleRentalTimePresetPopover(event)">
+                                    <span id="rental-order-time-preset-label">🔵 Tất cả thời gian</span>
+                                    <span style="font-size: 0.7rem; color: #64748b;">❯</span>
+                                </div>
+                                <div class="filter-radio-btn" id="btn-radio-rental-time-custom" onclick="window.toggleRentalCustomDatePopover(event)">
+                                    <span id="rental-order-time-custom-label">⚪ Tùy chỉnh</span>
+                                    <span style="font-size: 0.85rem;">📅</span>
+                                </div>
+                            </div>
+
+                            <!-- Popover Preset Ngày Tháng Đơn thuê -->
+                            <div id="rental-time-preset-popover" class="kiot-time-popover">
+                                <div style="margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                    <button type="button" class="popover-pill active" style="width: auto; padding: 5px 14px; font-weight: bold;" onclick="window.selectRentalTimePreset('all', 'Tất cả thời gian', this)">🌐 Tất cả thời gian</button>
+                                </div>
+                                <div class="popover-grid">
+                                    <div>
+                                        <div class="popover-col-title">Theo ngày</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('today', 'Hôm nay', this)">Hôm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('yesterday', 'Hôm qua', this)">Hôm qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tuần</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('this_week', 'Tuần này', this)">Tuần này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_week', 'Tuần trước', this)">Tuần trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_7_days', '7 ngày qua', this)">7 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tháng</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('this_month', 'Tháng này', this)">Tháng này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_month', 'Tháng trước', this)">Tháng trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_30_days', '30 ngày qua', this)">30 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo quý</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('this_quarter', 'Quý này', this)">Quý này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_quarter', 'Quý trước', this)">Quý trước</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo năm</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('this_year', 'Năm nay', this)">Năm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectRentalTimePreset('last_year', 'Năm trước', this)">Năm trước</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Popover Tùy Chỉnh Ngày Đơn thuê -->
+                            <div id="rental-custom-date-popover" class="kiot-time-popover" style="width: 380px;">
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;">Khoảng thời gian tùy chỉnh:</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label class="filter-label">Từ ngày</label>
+                                            <input type="date" id="rental-order-date-from" class="kiot-filter-input">
+                                        </div>
+                                        <div>
+                                            <label class="filter-label">Đến ngày</label>
+                                            <input type="date" id="rental-order-date-to" class="kiot-filter-input">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 4px;">
+                                        <button type="button" style="border: none; background: none; color: #0066cc; font-weight: 600; font-size: 0.8rem; cursor: pointer;" onclick="window.setRentalTodayDateRange()">Hôm nay</button>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="kiot-btn-outline" onclick="window.closeRentalCustomDatePopover()">Bỏ qua</button>
+                                            <button type="button" class="kiot-btn-primary" onclick="window.applyRentalCustomDateRange()">Áp dụng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Trạng thái đơn thuê -->
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái đơn thuê</label>
+                            <div class="filter-checkbox-list">
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-rental-status-chk" value="Yêu cầu mới" checked onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()"> <span>Yêu cầu mới</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-rental-status-chk" value="Đã xác nhận" checked onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()"> <span>Đã xác nhận</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-rental-status-chk" value="Đang setup" checked onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()"> <span>Đang setup</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-rental-status-chk" value="Đã thu hồi" checked onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()"> <span>Đã thu hồi</span></label>
+                                <label class="kiot-chk-item"><input type="checkbox" class="filter-rental-status-chk" value="Đã hủy" onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()"> <span>Đã hủy</span></label>
+                            </div>
+                        </div>
+
+                        <!-- 3. Gói dịch vụ / Sự kiện -->
+                        <div class="filter-group">
+                            <label class="filter-label">Loại sự kiện</label>
+                            <select id="rental-filter-event-type" class="kiot-filter-select" onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()">
+                                <option value="all" selected>Tất cả sự kiện</option>
+                                <option value="Tiệc cưới">Tiệc cưới / Đám hỏi</option>
+                                <option value="Hội nghị">Hội nghị / Sự kiện doanh nghiệp</option>
+                                <option value="Sinh nhật">Sinh nhật / Thượng thọ</option>
+                                <option value="Trang trí Gốm">Trang trí Gốm nghệ thuật</option>
                             </select>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="rental-order-filter-date">Thời gian</label>
-                            <select id="rental-order-filter-date"
-                                onchange="window.toggleCustomDateFilterRental(this.value)">
-                                <option value="all">Tất cả</option>
-                                <option value="this_month">Tháng này</option>
-                                <option value="custom">Tùy chỉnh...</option>
+
+                        <!-- 4. Phương thức thanh toán -->
+                        <div class="filter-group">
+                            <label class="filter-label">Phương thức thanh toán</label>
+                            <select id="rental-filter-payment" class="kiot-filter-select" onchange="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()">
+                                <option value="all" selected>Chọn phương thức thanh toán...</option>
+                                <option value="Tiền mặt">Tiền mặt</option>
+                                <option value="Chuyển khoản">Chuyển khoản / QR</option>
+                                <option value="Thẻ">Thẻ ATM / Visa</option>
                             </select>
                         </div>
-                        <div id="rental-order-custom-date-group"
-                            style="display: none; grid-column: 1 / -1; gap: 15px; margin-top: 10px;">
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="rental-order-date-from">Từ ngày</label>
-                                <input type="date" id="rental-order-date-from">
+                    </div>
+
+                    <!-- 2. Bảng Hóa đơn Thuê Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="rental-order-search-input" placeholder="Theo mã đơn thuê, tên KH, công ty, SĐT..." onkeyup="if(typeof window.renderRentalOrdersFiltered==='function') window.renderRentalOrdersFiltered()">
                             </div>
-                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                <label for="rental-order-date-to">Đến ngày</label>
-                                <input type="date" id="rental-order-date-to">
+                            <div class="toolbar-actions">
+                                <a href="../trang-tri-su-kien/index.html" target="_blank" class="kiot-btn-primary" style="text-decoration: none;">+ Tạo mới đơn thuê</a>
+                                <button type="button" class="kiot-btn-outline" onclick="window.exportRentalOrdersExcel()">📤 Xuất file</button>
                             </div>
                         </div>
-                        <button id="btn-apply-rental-order-filters" class="btn-dark"
-                            style="height: 40px; margin-top: 22px;">Áp dụng</button>
-                    </div>
 
-                    <h3>Danh sách yêu cầu thuê đồ mới nhất</h3>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Mã yêu cầu</th>
-                                    <th>Ngày gửi</th>
-                                    <th>Công ty / Khách hàng</th>
-                                    <th>Sự kiện</th>
-                                    <th>Thời gian thuê</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-rental-order-list">
-                                <!-- Dữ liệu load từ Firebase orders collection -->
-                            </tbody>
-                        </table>
-                    </div>
+                        <!-- Revenue Summary Banner -->
+                        <div style="padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: 600; font-size: 0.88rem; color: #166534; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Tổng giá trị các đơn thuê đang lọc:</span>
+                            <span id="rental-filtered-total-amount" style="font-size: 1.05rem; font-weight: 700; color: #16a34a;">0 đ</span>
+                        </div>
 
-                    <div class="pagination-container"
-                        style="margin-top: 2rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
-                        <button id="prev-rental-order-page" class="btn-minimal" disabled>Trang trước</button>
-                        <span id="rental-order-page-info"
-                            style="font-weight: 600; font-size: 0.9rem; color: #666;">Trang 1</span>
-                        <button id="next-rental-order-page" class="btn-minimal">Trang sau</button>
+                        <!-- Table Scroll Wrapper -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 26px; text-align: center;"><input type="checkbox" id="check-all-rental-orders"></th>
+                                        <th style="width: 20px;">⭐</th>
+                                        <th style="width: 140px;">Mã đơn thuê</th>
+                                        <th style="width: 90px;">Ngày gửi</th>
+                                        <th style="width: 100px;">ID Tài khoản</th>
+                                        <th style="width: 120px;">Công ty / KH</th>
+                                        <th style="width: 130px;">Sự kiện & Địa điểm</th>
+                                        <th style="text-align: right; width: 100px;">Tổng tiền thuê</th>
+                                        <th style="text-align: right; width: 90px;">Đã cọc</th>
+                                        <th style="text-align: center; width: 95px;">Trạng thái</th>
+                                    </tr>
+                                    <tr id="rental-table-summary-row" style="background: #f0fdf4; font-size: 0.76rem; border-bottom: 2px solid #bbf7d0;">
+                                        <td colspan="7" style="padding: 6px 8px;"></td>
+                                        <td id="rental-summary-total" style="text-align: right; font-weight: 700; color: #16a34a; padding: 6px 8px;">0</td>
+                                        <td id="rental-summary-deposit" style="text-align: right; font-weight: 700; color: #0284c7; padding: 6px 8px;">0</td>
+                                        <td style="padding: 6px 8px;"></td>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-rental-order-list">
+                                    <!-- Dynamic rows loaded from Firebase -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- KiotViet Pagination Footer -->
+                        <div class="kiot-pagination-bar">
+                            <div class="pg-left">
+                                <span>Hiển thị</span>
+                                <select id="rental-page-size-select" onchange="window.changeRentalOrderPageSize(this.value)" style="padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                    <option value="15" selected>15 dòng</option>
+                                    <option value="30">30 dòng</option>
+                                    <option value="50">50 dòng</option>
+                                </select>
+                            </div>
+                            <div class="pg-center">
+                                <button type="button" class="pg-btn" id="first-rental-page" onclick="window.goRentalOrderPage(1)">|&lt;</button>
+                                <button type="button" class="pg-btn" id="prev-rental-order-page" onclick="window.goRentalOrderPage(window.currentRentalOrderPage - 1)">&lt;</button>
+                                <span id="rental-order-page-info" style="font-weight: 600;">1</span>
+                                <button type="button" class="pg-btn" id="next-rental-order-page" onclick="window.goRentalOrderPage(window.currentRentalOrderPage + 1)">&gt;</button>
+                                <button type="button" class="pg-btn" id="last-rental-page" onclick="window.goRentalOrderPage(window.currentRentalTotalPages || 1)">&gt;|</button>
+                            </div>
+                            <div class="pg-right">
+                                <span id="rental-pagination-count">1 - 15 trong 0 đơn thuê</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1345,34 +1645,211 @@
                 </section>
             </div>
 
-            <!-- Section Quản lý Người dùng -->
+            <!-- Section Quản lý Khách hàng (KiotViet Layout) -->
             <div id="user-section" class="admin-section">
-                <div class="admin-card">
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label for="admin-user-search">Tìm kiếm khách hàng</label>
-                            <input type="text" id="admin-user-search"
-                                placeholder="Nhập tên, số điện thoại hoặc email...">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar - Khách hàng) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Khách hàng</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetUserFilters()">Xóa bộ lọc</button>
+                        </div>
+
+                        <!-- 1. Nhóm khách hàng / Hạng Membership -->
+                        <div class="filter-group">
+                            <label class="filter-label">Hạng Gốm Membership</label>
+                            <select id="user-filter-group" class="kiot-filter-select" onchange="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                                <option value="all" selected>Tất cả các nhóm / Hạng</option>
+                                <option value="Kim Cương">💎 Kim Cương (Kim Cương Membership)</option>
+                                <option value="Vàng">🥇 Vàng (Gold Membership)</option>
+                                <option value="Bạc">🥈 Bạc (Silver Membership)</option>
+                                <option value="Đồng">🥉 Đồng (Bronze Membership)</option>
+                                <option value="Mới">🌱 Khách hàng mới</option>
+                            </select>
+                        </div>
+
+                        <!-- 2. Thời gian với Popover (Ngày tạo) -->
+                        <div class="filter-group">
+                            <label class="filter-label">Ngày tạo tài khoản</label>
+                            <div class="filter-radio-group">
+                                <div class="filter-radio-btn active" id="btn-radio-user-time-preset" onclick="window.toggleUserTimePresetPopover(event)">
+                                    <span id="user-order-time-preset-label">🔵 Tất cả thời gian</span>
+                                    <span style="font-size: 0.7rem; color: #64748b;">❯</span>
+                                </div>
+                                <div class="filter-radio-btn" id="btn-radio-user-time-custom" onclick="window.toggleUserCustomDatePopover(event)">
+                                    <span id="user-order-time-custom-label">⚪ Tùy chỉnh</span>
+                                    <span style="font-size: 0.85rem;">📅</span>
+                                </div>
+                            </div>
+
+                            <!-- Popover Preset Ngày Tháng Khách hàng -->
+                            <div id="user-time-preset-popover" class="kiot-time-popover">
+                                <div style="margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                    <button type="button" class="popover-pill active" style="width: auto; padding: 5px 14px; font-weight: bold;" onclick="window.selectUserTimePreset('all', 'Tất cả thời gian', this)">🌐 Tất cả thời gian</button>
+                                </div>
+                                <div class="popover-grid">
+                                    <div>
+                                        <div class="popover-col-title">Theo ngày</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('today', 'Hôm nay', this)">Hôm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('yesterday', 'Hôm qua', this)">Hôm qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tuần</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('this_week', 'Tuần này', this)">Tuần này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_week', 'Tuần trước', this)">Tuần trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_7_days', '7 ngày qua', this)">7 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo tháng</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('this_month', 'Tháng này', this)">Tháng này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_month', 'Tháng trước', this)">Tháng trước</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_30_days', '30 ngày qua', this)">30 ngày qua</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo quý</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('this_quarter', 'Quý này', this)">Quý này</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_quarter', 'Quý trước', this)">Quý trước</button>
+                                    </div>
+                                    <div>
+                                        <div class="popover-col-title">Theo năm</div>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('this_year', 'Năm nay', this)">Năm nay</button>
+                                        <button type="button" class="popover-pill" onclick="window.selectUserTimePreset('last_year', 'Năm trước', this)">Năm trước</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Popover Tùy Chỉnh Ngày Khách hàng -->
+                            <div id="user-custom-date-popover" class="kiot-time-popover" style="width: 380px;">
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;">Khoảng thời gian tùy chỉnh:</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label class="filter-label">Từ ngày</label>
+                                            <input type="date" id="user-date-from" class="kiot-filter-input">
+                                        </div>
+                                        <div>
+                                            <label class="filter-label">Đến ngày</label>
+                                            <input type="date" id="user-date-to" class="kiot-filter-input">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 4px;">
+                                        <button type="button" style="border: none; background: none; color: #0066cc; font-weight: 600; font-size: 0.8rem; cursor: pointer;" onclick="window.setUserTodayDateRange()">Hôm nay</button>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="kiot-btn-outline" onclick="window.closeUserCustomDatePopover()">Bỏ qua</button>
+                                            <button type="button" class="kiot-btn-primary" onclick="window.applyUserCustomDateRange()">Áp dụng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Loại khách hàng (Pill Buttons) -->
+                        <div class="filter-group">
+                            <label class="filter-label">Loại khách hàng</label>
+                            <div class="filter-radio-group">
+                                <button type="button" class="filter-radio-btn active user-type-pill" data-type="all" onclick="window.selectUserTypeFilter('all', this)">Tất cả</button>
+                                <button type="button" class="filter-radio-btn user-type-pill" data-type="personal" onclick="window.selectUserTypeFilter('personal', this)">Cá nhân</button>
+                                <button type="button" class="filter-radio-btn user-type-pill" data-type="company" onclick="window.selectUserTypeFilter('company', this)">Công ty</button>
+                            </div>
+                        </div>
+
+                        <!-- 4. Giới tính (Pill Buttons) -->
+                        <div class="filter-group">
+                            <label class="filter-label">Giới tính</label>
+                            <div class="filter-radio-group">
+                                <button type="button" class="filter-radio-btn active user-gender-pill" data-gender="all" onclick="window.selectUserGenderFilter('all', this)">Tất cả</button>
+                                <button type="button" class="filter-radio-btn user-gender-pill" data-gender="Nam" onclick="window.selectUserGenderFilter('Nam', this)">Nam</button>
+                                <button type="button" class="filter-radio-btn user-gender-pill" data-gender="Nữ" onclick="window.selectUserGenderFilter('Nữ', this)">Nữ</button>
+                            </div>
+                        </div>
+
+                        <!-- 5. Khoảng Tổng bán (VNĐ) -->
+                        <div class="filter-group">
+                            <label class="filter-label">Tổng chi tiêu (Tổng bán)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <input type="number" id="user-filter-spent-from" placeholder="Từ..." class="kiot-filter-input" oninput="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                                <input type="number" id="user-filter-spent-to" placeholder="Tới..." class="kiot-filter-input" oninput="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                            </div>
+                        </div>
+
+                        <!-- 6. Khoảng Nợ hiện tại (VNĐ) -->
+                        <div class="filter-group">
+                            <label class="filter-label">Nợ hiện tại</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <input type="number" id="user-filter-debt-from" placeholder="Từ nợ..." class="kiot-filter-input" oninput="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                                <input type="number" id="user-filter-debt-to" placeholder="Tới nợ..." class="kiot-filter-input" oninput="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                            </div>
                         </div>
                     </div>
-                    <h3>Danh sách khách hàng</h3>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Tên hiển thị</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Giới tính</th>
-                                    <th>Ngày sinh</th>
-                                    <th>Hạng thành viên</th>
-                                    <th>Cập nhật cuối</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-user-list">
-                                <!-- Dữ liệu load từ Firebase users collection -->
-                            </tbody>
-                        </table>
+
+                    <!-- 2. Bảng Danh Sách Khách Hàng Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="admin-user-search" placeholder="Theo mã KH, tên khách hàng, SĐT, email..." onkeyup="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="kiot-btn-primary" onclick="window.openAddCustomerModal()">+ Khách hàng</button>
+                                <button type="button" class="kiot-btn-outline" onclick="window.exportUsersExcel()">📤 Xuất file</button>
+                            </div>
+                        </div>
+
+                        <!-- Summary Banner -->
+                        <div style="padding: 8px 12px; background: #f0f7ff; border: 1px solid #bae6fd; border-radius: 6px; font-weight: 600; font-size: 0.88rem; color: #0369a1; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Tổng số khách hàng đang lọc: <strong id="user-filtered-count" style="color: #0066cc;">0</strong></span>
+                            <span>Tổng tiền đã chi tiêu: <strong id="user-filtered-total-spent" style="font-size: 1.05rem; font-weight: 700; color: #0066cc;">0 đ</strong></span>
+                        </div>
+
+                        <!-- Table Scroll Wrapper -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 26px; text-align: center;"><input type="checkbox" id="check-all-users"></th>
+                                        <th style="width: 20px;">⭐</th>
+                                        <th style="width: 120px;">Mã KH (ID)</th>
+                                        <th style="width: 150px;">Tên khách hàng</th>
+                                        <th style="width: 110px;">Điện thoại</th>
+                                        <th style="width: 130px;">Hạng Membership</th>
+                                        <th style="text-align: center; width: 90px;">Điểm tích lũy</th>
+                                        <th style="text-align: right; width: 100px;">Nợ hiện tại</th>
+                                        <th style="text-align: right; width: 120px;">Tổng bán (Chi tiêu)</th>
+                                    </tr>
+                                    <tr id="user-table-summary-row" style="background: #f0f7ff; font-size: 0.76rem; border-bottom: 2px solid #cbd5e1;">
+                                        <td colspan="7" style="padding: 6px 8px;"></td>
+                                        <td id="user-summary-debt" style="text-align: right; font-weight: 700; color: #dc2626; padding: 6px 8px;">0</td>
+                                        <td id="user-summary-spent" style="text-align: right; font-weight: 700; color: #0066cc; padding: 6px 8px;">0</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-user-list">
+                                    <!-- Dynamic rows loaded from Firebase -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- KiotViet Pagination Footer -->
+                        <div class="kiot-pagination-bar">
+                            <div class="pg-left">
+                                <span>Hiển thị</span>
+                                <select id="user-page-size-select" onchange="window.changeUserPageSize(this.value)" style="padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                    <option value="15" selected>15 dòng</option>
+                                    <option value="30">30 dòng</option>
+                                    <option value="50">50 dòng</option>
+                                </select>
+                            </div>
+                            <div class="pg-center">
+                                <button type="button" class="pg-btn" id="first-user-page" onclick="window.goUserPage(1)">|&lt;</button>
+                                <button type="button" class="pg-btn" id="prev-user-page" onclick="window.goUserPage(window.currentAdminUserPage - 1)">&lt;</button>
+                                <span id="user-page-info" style="font-weight: 600;">1</span>
+                                <button type="button" class="pg-btn" id="next-user-page" onclick="window.goUserPage(window.currentAdminUserPage + 1)">&gt;</button>
+                                <button type="button" class="pg-btn" id="last-user-page" onclick="window.goUserPage(window.currentAdminUserTotalPages || 1)">&gt;|</button>
+                            </div>
+                            <div class="pg-right">
+                                <span id="user-pagination-count">1 - 15 trong 0 khách hàng</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1976,9 +2453,236 @@
     <!-- Kết thúc Modal -->
     <!-- Kết thúc Modal -->
 
+    <!-- Modal Chỉnh sửa đơn hàng Admin (KiotViet) -->
+    <div id="edit-order-modal" class="modal">
+        <div class="modal-content" style="max-width: 750px; padding: 0; border-radius: 10px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
+            <div style="background: #0066cc; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.05rem;" id="edit-order-modal-title">✏️ Chỉnh sửa đơn hàng</h3>
+                <span class="close" onclick="window.closeEditOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</span>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 78vh; overflow-y: auto;">
+                <input type="hidden" id="edit-order-id-hidden">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Tên khách hàng</label>
+                        <input type="text" id="edit-order-cust-name" class="kiot-filter-input">
+                    </div>
+                    <div>
+                        <label class="filter-label">Số điện thoại</label>
+                        <input type="text" id="edit-order-cust-phone" class="kiot-filter-input">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="filter-label">Địa chỉ giao hàng</label>
+                    <input type="text" id="edit-order-cust-address" class="kiot-filter-input">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Trạng thái đơn hàng</label>
+                        <select id="edit-order-status" class="kiot-filter-select">
+                            <option value="Đang xử lý">Đang xử lý</option>
+                            <option value="Chờ thanh toán">Chờ thanh toán</option>
+                            <option value="Đã thanh toán">Đã thanh toán</option>
+                            <option value="Đang giao hàng">Đang giao hàng</option>
+                            <option value="Đã hoàn thành">Đã hoàn thành</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="filter-label">Phương thức thanh toán</label>
+                        <select id="edit-order-payment" class="kiot-filter-select">
+                            <option value="Tiền mặt">Tiền mặt</option>
+                            <option value="Chuyển khoản">Chuyển khoản / QR</option>
+                            <option value="Thẻ">Thẻ ATM / Visa</option>
+                            <option value="COD">COD (Thanh toán khi nhận)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="filter-label">Kênh bán</label>
+                        <select id="edit-order-channel" class="kiot-filter-select">
+                            <option value="POS">Bán trực tiếp (POS)</option>
+                            <option value="Website">Website</option>
+                            <option value="Shopee">Shopee</option>
+                            <option value="TikTok">TikTok Shop</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- BẢNG CHỈNH SỬA SẢN PHẨM & SỐ LƯỢNG -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-top: 4px; background: #ffffff;">
+                    <div style="background: #f0f7ff; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #0066cc; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1;">
+                        <span>🛍️ Danh sách sản phẩm & Số lượng</span>
+                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff;" onclick="window.addEditOrderItemPrompt()">+ Thêm món mới</button>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; color: #475569; text-align: left; border-bottom: 1px solid #cbd5e1;">
+                                <th style="padding: 8px 10px;">Mã / Tên sản phẩm</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 130px;">Số lượng (+/-)</th>
+                                <th style="padding: 8px 10px; text-align: right; width: 120px;">Đơn giá (đ)</th>
+                                <th style="padding: 8px 10px; text-align: right; width: 120px;">Thành tiền</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 45px;">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="edit-order-items-tbody">
+                            <!-- Dynamic items loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Phí vận chuyển (VNĐ)</label>
+                        <input type="number" id="edit-order-shipping-fee" class="kiot-filter-input" value="0" oninput="window.recalculateEditOrderTotal()">
+                    </div>
+                    <div>
+                        <label class="filter-label">Giảm giá / Chiết khấu (VNĐ)</label>
+                        <input type="number" id="edit-order-discount" class="kiot-filter-input" value="0" oninput="window.recalculateEditOrderTotal()">
+                    </div>
+                    <div>
+                        <label class="filter-label">Mã giảm giá</label>
+                        <input type="text" id="edit-order-coupon" class="kiot-filter-input">
+                    </div>
+                </div>
+
+                <!-- Total Preview Row -->
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <span>Tổng tiền hàng: <strong id="edit-order-calc-subtotal" style="color: #0f172a;">0 đ</strong></span>
+                    <span style="font-size: 1rem; font-weight: 700; color: #0066cc;">Khách cần trả: <strong id="edit-order-calc-total">0 đ</strong></span>
+                </div>
+
+                <div>
+                    <label class="filter-label">Ghi chú đơn hàng</label>
+                    <textarea id="edit-order-note" class="kiot-filter-input" style="height: 60px; resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="kiot-btn-outline" onclick="window.closeEditOrderModal()">Bỏ qua</button>
+                <button type="button" class="kiot-btn-primary" onclick="window.saveEditedOrder()">💾 Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chỉnh sửa đơn thuê đồ Decor Admin (KiotViet) -->
+    <div id="edit-rental-order-modal" class="modal">
+        <div class="modal-content" style="max-width: 750px; padding: 0; border-radius: 10px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
+            <div style="background: #166534; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.05rem;" id="edit-rental-modal-title">✏️ Chỉnh sửa đơn thuê đồ Decor</h3>
+                <span class="close" onclick="window.closeEditRentalOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</span>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 78vh; overflow-y: auto;">
+                <input type="hidden" id="edit-rental-id-hidden">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Tên công ty / Khách hàng</label>
+                        <input type="text" id="edit-rental-cust-name" class="kiot-filter-input">
+                    </div>
+                    <div>
+                        <label class="filter-label">Số điện thoại</label>
+                        <input type="text" id="edit-rental-cust-phone" class="kiot-filter-input">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Tên sự kiện / Dịch vụ</label>
+                        <input type="text" id="edit-rental-event-name" class="kiot-filter-input">
+                    </div>
+                    <div>
+                        <label class="filter-label">Địa điểm setup / Địa chỉ</label>
+                        <input type="text" id="edit-rental-address" class="kiot-filter-input">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Ngày cần đồ (Setup)</label>
+                        <input type="date" id="edit-rental-date" class="kiot-filter-input">
+                    </div>
+                    <div>
+                        <label class="filter-label">Ngày thu hồi (Trả)</label>
+                        <input type="date" id="edit-rental-return-date" class="kiot-filter-input">
+                    </div>
+                    <div>
+                        <label class="filter-label">Trạng thái đơn thuê</label>
+                        <select id="edit-rental-status" class="kiot-filter-select">
+                            <option value="Yêu cầu mới">Yêu cầu mới</option>
+                            <option value="Đã xác nhận">Đã xác nhận</option>
+                            <option value="Đang setup">Đang setup</option>
+                            <option value="Đã thu hồi">Đã thu hồi</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- BẢNG CHỈNH SỬA SẢN PHẨM THUÊ & SỐ LƯỢNG -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-top: 4px; background: #ffffff;">
+                    <div style="background: #f0fdf4; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #166534; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #bbf7d0;">
+                        <span>🏺 Danh sách sản phẩm thuê & Giá theo ngày</span>
+                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff;" onclick="window.addEditRentalItemPrompt()">+ Thêm món thuê mới</button>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; color: #475569; text-align: left; border-bottom: 1px solid #cbd5e1;">
+                                <th style="padding: 8px 10px;">Mã / Tên món gốm</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 130px;">Số lượng (+/-)</th>
+                                <th style="padding: 8px 10px; text-align: right; width: 120px;">Giá thuê/ngày (đ)</th>
+                                <th style="padding: 8px 10px; text-align: right; width: 120px;">Thành tiền</th>
+                                <th style="padding: 8px 10px; text-align: center; width: 45px;">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="edit-rental-items-tbody">
+                            <!-- Dynamic items loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="filter-label">Số tiền đặt cọc (VNĐ)</label>
+                        <input type="number" id="edit-rental-deposit" class="kiot-filter-input" value="0" oninput="window.recalculateEditRentalTotal()">
+                    </div>
+                    <div>
+                        <label class="filter-label">Số ngày thuê</label>
+                        <input type="number" id="edit-rental-days" class="kiot-filter-input" value="1" min="1" oninput="window.recalculateEditRentalTotal()">
+                    </div>
+                    <div>
+                        <label class="filter-label">Phương thức thanh toán</label>
+                        <select id="edit-rental-payment" class="kiot-filter-select">
+                            <option value="Tiền mặt">Tiền mặt</option>
+                            <option value="Chuyển khoản">Chuyển khoản / QR</option>
+                            <option value="Thẻ">Thẻ ATM / Visa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Total Preview Row -->
+                <div style="background: #f0fdf4; padding: 10px 14px; border-radius: 6px; border: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <span>Tiền thuê hàng/ngày: <strong id="edit-rental-calc-subtotal" style="color: #0f172a;">0 đ</strong></span>
+                    <span style="font-size: 1rem; font-weight: 700; color: #166534;">Tổng cộng đơn thuê: <strong id="edit-rental-calc-total">0 đ</strong></span>
+                </div>
+
+                <div>
+                    <label class="filter-label">Ghi chú & Yêu cầu đặc biệt</label>
+                    <textarea id="edit-rental-note" class="kiot-filter-input" style="height: 60px; resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="kiot-btn-outline" onclick="window.closeEditRentalOrderModal()">Bỏ qua</button>
+                <button type="button" class="kiot-btn-primary" style="background: #166534;" onclick="window.saveEditedRentalOrder()">💾 Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=6"></script>
+    <script type="module" src="../js/DashBoard.js?v=46"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
