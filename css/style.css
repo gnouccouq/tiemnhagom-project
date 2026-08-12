@@ -4987,12 +4987,11 @@ body.admin-dashboard-layout {
     margin-bottom: 2rem;
     border-bottom: 2px solid #eee;
     overflow-x: auto;
-    /* Cho phÃƒÆ’Ã‚Â©p vuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt ngang cÃƒÆ’Ã‚Â¡c tab */
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
 
-/* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n Bottom Nav trÃƒÆ’Ã‚Âªn Desktop */
+/* Ẩn Bottom Nav trên Desktop */
 @media (min-width: 993px) {
     .admin-bottom-nav {
         display: none !important;
@@ -5574,7 +5573,7 @@ body.admin-dashboard-layout {
 }
 
 .color-chip.active::after {
-    content: 'âœ“';
+    content: '\2713';
     /* DÃƒÂ¡Ã‚ÂºÃ‚Â¥u tÃƒÆ’Ã‚Â­ch khi chÃƒÂ¡Ã‚Â»Ã‚Ân */
     position: absolute;
     top: 50%;
