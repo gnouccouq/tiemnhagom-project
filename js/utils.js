@@ -1,7 +1,7 @@
 import { db, auth, analytics, storage, googleProvider, rtdb } from './config.js';
 export { db, auth, analytics, storage, googleProvider, rtdb };
 import {
-    ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, serverTimestamp as rtdbServerTimestamp
+    ref as rtdbRef, onValue as rtdbOnValue, onDisconnect, set as rtdbSet, update as rtdbUpdate, serverTimestamp as rtdbServerTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp,
@@ -1554,29 +1554,232 @@ export function getOtpValue(containerId) {
     return Array.from(container.querySelectorAll('.otp-digit')).map(i => i.value).join('');
 }
 
-// 14. Logic: Realtime Presence
+// 14. Logic: Realtime Presence & Page View Tracking
+function detectDeviceInfo() {
+    const ua = navigator.userAgent || '';
+    
+    // OS Detection
+    let os = 'Khác';
+    if (/android/i.test(ua)) os = 'Android';
+    else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+    else if (/win/i.test(ua)) os = 'Windows';
+    else if (/mac/i.test(ua)) os = 'macOS';
+    else if (/linux/i.test(ua)) os = 'Linux';
+
+    // Device Type
+    let deviceType = 'Desktop';
+    if (/mobile/i.test(ua) || /android/i.test(ua) || /iphone/i.test(ua)) {
+        deviceType = 'Mobile';
+    } else if (/tablet|ipad/i.test(ua)) {
+        deviceType = 'Tablet';
+    }
+
+    // Browser Detection
+    let browser = 'Trình duyệt khác';
+    if (/zalo/i.test(ua)) browser = 'Zalo App';
+    else if (/fbav|fban|instagram/i.test(ua)) browser = 'Facebook App';
+    else if (/edg/i.test(ua)) browser = 'MS Edge';
+    else if (/coc_coc|coc-coc/i.test(ua)) browser = 'Cốc Cốc';
+    else if (/opr|opera/i.test(ua)) browser = 'Opera';
+    else if (/crios|chrome/i.test(ua)) browser = 'Google Chrome';
+    else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) browser = 'Safari';
+    else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+
+    return { os, deviceType, browser };
+}
+
+function getCleanPageTitle() {
+    let title = document.title || 'Trang web';
+    title = title.replace(/\s*[-|]\s*Tiệm Nhà Gốm.*$/i, '').trim();
+    return title || 'Trang chủ';
+}
+
+async function fetchUserLocation() {
+    let cached = sessionStorage.getItem('tng_user_location');
+    if (cached) return cached;
+
+    try {
+        const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+                const loc = `${data.city || data.region || ''}, ${data.country_code || ''}`.replace(/^,\s*/, '').trim();
+                if (loc) {
+                    sessionStorage.setItem('tng_user_location', loc);
+                    return loc;
+                }
+            }
+        }
+    } catch (e) {}
+
+    try {
+        const res2 = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+        if (res2.ok) {
+            const data2 = await res2.json();
+            const loc2 = `${data2.city || data2.region || ''}, ${data2.country_code || ''}`.replace(/^,\s*/, '').trim();
+            if (loc2) {
+                sessionStorage.setItem('tng_user_location', loc2);
+                return loc2;
+            }
+        }
+    } catch (e) {}
+
+    return 'Việt Nam';
+}
+
+function getLiveCartInfo() {
+    try {
+        const raw = localStorage.getItem('cart');
+        if (!raw) return { cartCount: 0, cartTotal: 0 };
+        const items = JSON.parse(raw);
+        if (!Array.isArray(items)) return { cartCount: 0, cartTotal: 0 };
+        let count = 0;
+        let total = 0;
+        items.forEach(item => {
+            const qty = Number(item.quantity) || 1;
+            const price = Number(item.price) || 0;
+            count += qty;
+            total += (price * qty);
+        });
+        return { cartCount: count, cartTotal: total };
+    } catch (e) {
+        return { cartCount: 0, cartTotal: 0 };
+    }
+}
+
+function getUtmInfo() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        let source = params.get('utm_source');
+        let medium = params.get('utm_medium');
+        let campaign = params.get('utm_campaign');
+
+        if (source || campaign) {
+            const utmData = {
+                source: source || 'Direct',
+                medium: medium || '',
+                campaign: campaign || ''
+            };
+            sessionStorage.setItem('tng_utm_data', JSON.stringify(utmData));
+            return utmData;
+        }
+
+        const saved = sessionStorage.getItem('tng_utm_data');
+        if (saved) return JSON.parse(saved);
+    } catch (e) {}
+
+    return { source: null, medium: null, campaign: null };
+}
+
+function updateJourneyHistory(pageTitle) {
+    try {
+        let history = JSON.parse(sessionStorage.getItem('tng_session_history') || '[]');
+        if (!Array.isArray(history)) history = [];
+        if (history.length === 0 || history[history.length - 1] !== pageTitle) {
+            history.push(pageTitle);
+            if (history.length > 5) history.shift();
+            sessionStorage.setItem('tng_session_history', JSON.stringify(history));
+        }
+        return history;
+    } catch (e) {
+        return [pageTitle];
+    }
+}
+
 export function initPresence() {
     if (!rtdb) return;
     const connectedRef = rtdbRef(rtdb, '.info/connected');
 
-    // Tạo sessionId duy nhất cho mỗi tab/trình duyệt
     let sessionId = sessionStorage.getItem('tng_session_id');
     if (!sessionId) {
-        sessionId = 'session_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        sessionId = 'session_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
         sessionStorage.setItem('tng_session_id', sessionId);
     }
     const myConnectionsRef = rtdbRef(rtdb, `presence/${sessionId}`);
 
+    const deviceInfo = detectDeviceInfo();
+    const pageTitle = getCleanPageTitle();
+    const pageUrl = window.location.pathname + window.location.search;
+    const utmInfo = getUtmInfo();
+    const journeyHistory = updateJourneyHistory(pageTitle);
+
+    let referrerHost = 'Trực tiếp';
+    if (document.referrer) {
+        try {
+            referrerHost = new URL(document.referrer).hostname.replace('www.', '');
+        } catch (e) {
+            referrerHost = document.referrer;
+        }
+    }
+
+    const updatePresenceData = () => {
+        const user = auth.currentUser;
+        const currentLocation = sessionStorage.getItem('tng_user_location') || 'Đang xác định...';
+        const cartInfo = getLiveCartInfo();
+
+        const data = {
+            online: true,
+            sessionId: sessionId,
+            pageTitle: pageTitle,
+            pageUrl: pageUrl,
+            os: deviceInfo.os,
+            deviceType: deviceInfo.deviceType,
+            browser: deviceInfo.browser,
+            referrer: referrerHost,
+            location: currentLocation,
+            cartCount: cartInfo.cartCount,
+            cartTotal: cartInfo.cartTotal,
+            utmSource: utmInfo.source,
+            utmCampaign: utmInfo.campaign,
+            journeyHistory: journeyHistory,
+            lastChanged: rtdbServerTimestamp(),
+            startTime: Number(sessionStorage.getItem('tng_session_start')) || Date.now(),
+            userId: user ? user.uid : null,
+            userName: user ? (user.displayName || user.email.split('@')[0]) : 'Khách vãng lai',
+            userEmail: user ? user.email : null,
+            isGuest: !user
+        };
+
+        if (!sessionStorage.getItem('tng_session_start')) {
+            sessionStorage.setItem('tng_session_start', Date.now().toString());
+            data.startTime = Date.now();
+        }
+
+        rtdbSet(myConnectionsRef, data);
+
+        // Lấy vị trí địa lý bất đồng bộ và cập nhật lại
+        fetchUserLocation().then(loc => {
+            if (loc && loc !== sessionStorage.getItem('tng_user_location_synced')) {
+                sessionStorage.setItem('tng_user_location_synced', loc);
+                rtdbUpdate(myConnectionsRef, { location: loc });
+            }
+        });
+    };
+
+    // Lắng nghe sự kiện giỏ hàng thay đổi trên cùng trình duyệt
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'cart') {
+            const cInfo = getLiveCartInfo();
+            rtdbUpdate(myConnectionsRef, {
+                cartCount: cInfo.cartCount,
+                cartTotal: cInfo.cartTotal,
+                lastChanged: rtdbServerTimestamp()
+            });
+        }
+    });
+
     rtdbOnValue(connectedRef, (snap) => {
         if (snap.val() === true) {
-            // Khi kết nối, đăng ký xoá khi mất kết nối
             onDisconnect(myConnectionsRef).remove().then(() => {
-                // Sau khi đăng ký onDisconnect thành công, mới ghi dữ liệu online
-                rtdbSet(myConnectionsRef, {
-                    online: true,
-                    lastChanged: rtdbServerTimestamp()
-                });
+                updatePresenceData();
             });
+        }
+    });
+
+    // Cập nhật khi Auth thay đổi (Đăng nhập / Đăng xuất)
+    onAuthStateChanged(auth, () => {
+        if (sessionStorage.getItem('tng_session_id')) {
+            updatePresenceData();
         }
     });
 }

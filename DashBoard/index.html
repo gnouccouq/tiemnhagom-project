@@ -268,12 +268,99 @@
 
             <!-- Section Online Users -->
             <div id="online-users-section" class="admin-section">
-                <div class="admin-card" style="text-align: center; padding: 40px;">
-                    <h2 style="font-family: var(--font-serif); margin-bottom: 20px;">Lượng truy cập trực tuyến</h2>
-                    <div style="font-size: 5rem; font-weight: bold; color: #4caf50;" id="online-users-count">0</div>
-                    <p style="color: #666; margin-top: 10px;">người dùng đang truy cập</p>
-                    <div style="margin-top: 20px; color: #999; font-size: 0.85rem;">
-                        Dữ liệu được cập nhật tự động theo thời gian thực (Realtime Database).
+                <style>
+                    @keyframes pulse-green {
+                        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
+                        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(46, 125, 50, 0); }
+                        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+                    }
+                </style>
+                <div class="kiot-card" style="margin-bottom: 20px;">
+                    <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 class="kiot-card-title" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                <span style="display: inline-block; width: 10px; height: 10px; background-color: #2e7d32; border-radius: 50%; animation: pulse-green 2s infinite;"></span>
+                                Lượng truy cập trực tuyến (Realtime)
+                            </h3>
+                            <p style="color: #666; font-size: 0.85rem; margin: 4px 0 0 0;">Theo dõi chi tiết trang người dùng đang xem, loại thiết bị và nguồn truy cập theo thời gian thực</p>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #2e7d32; background: #e8f5e9; font-weight: bold; padding: 6px 14px; border-radius: 20px; border: 1px solid #c8e6c9;">
+                            ⚡ Đồng bộ tức thì (Realtime DB)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thống kê tổng quan -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="kiot-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #e8f5e9; color: #2e7d32; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;">
+                            👥
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #666;">Đang truy cập</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #2e7d32;" id="online-users-count">0</div>
+                        </div>
+                    </div>
+
+                    <div class="kiot-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #e3f2fd; color: #1565c0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            📱
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #666;">Mobile / Tablet</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #1565c0;" id="online-mobile-count">0</div>
+                        </div>
+                    </div>
+
+                    <div class="kiot-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #f3e5f5; color: #7b1fa2; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            💻
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #666;">Máy tính (Desktop)</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #7b1fa2;" id="online-desktop-count">0</div>
+                        </div>
+                    </div>
+
+                    <div class="kiot-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #fff3e0; color: #e65100; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            🔐
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #666;">Đã đăng nhập</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #e65100;" id="online-member-count">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách chi tiết người dùng online -->
+                <div class="kiot-card" style="padding: 20px;">
+                    <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; font-size: 1rem; color: #333; font-weight: 600;">Danh sách người dùng đang hoạt động</h4>
+                        <span id="online-last-updated" style="font-size: 0.8rem; color: #888;">Cập nhật: Vừa xong</span>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="kiot-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; border-bottom: 2px solid #eee; color: #555; font-size: 0.85rem;">
+                                    <th style="padding: 12px 10px;">Người dùng</th>
+                                    <th style="padding: 12px 10px;">Trang đang xem & Hành trình</th>
+                                    <th style="padding: 12px 10px;">🛒 Giỏ hàng</th>
+                                    <th style="padding: 12px 10px;">Hệ điều hành & Trình duyệt</th>
+                                    <th style="padding: 12px 10px;">Nguồn & Chiến dịch (UTM)</th>
+                                    <th style="padding: 12px 10px;">Vị trí (Tỉnh/Thành)</th>
+                                    <th style="padding: 12px 10px;">Thời gian vào</th>
+                                    <th style="padding: 12px 10px; text-align: center;">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="online-users-table-body">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 30px; color: #888;">
+                                        Đang kết nối Realtime Database...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -2682,7 +2769,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=46"></script>
+    <script type="module" src="../js/DashBoard.js?v=49"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

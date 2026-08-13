@@ -26,23 +26,204 @@ let bluetoothDevice = null;
 let btCharacteristic = null;
 let lastCreatedOrderId = null; // Lưu ID đơn vừa tạo để in lại nhanh
 
-// Lắng nghe dữ liệu người dùng trực tuyến
+// Lắng nghe dữ liệu người dùng trực tuyến (Realtime Presence & Page View Tracking)
 function listenToOnlineUsers() {
     if (!rtdb) return;
     const presenceRef = dbRef(rtdb, 'presence');
     onValue(presenceRef, (snap) => {
-        let count = 0;
-        if (snap.exists()) {
-            count = Object.keys(snap.val()).length;
-        }
-        const countEl = document.getElementById('online-users-count');
-        if (countEl) countEl.innerText = count;
+        let totalCount = 0;
+        let mobileCount = 0;
+        let desktopCount = 0;
+        let memberCount = 0;
+        let usersList = [];
 
-        // Cập nhật thẻ stat nếu có (đã bị xóa, hoặc tồn tại ở dashboard)
+        if (snap.exists()) {
+            const data = snap.val();
+            const keys = Object.keys(data);
+            totalCount = keys.length;
+
+            usersList = keys.map(key => {
+                const item = data[key] || {};
+                const device = item.deviceType || 'Desktop';
+                if (device === 'Mobile' || device === 'Tablet') {
+                    mobileCount++;
+                } else {
+                    desktopCount++;
+                }
+
+                if (item.isGuest === false || item.userEmail) {
+                    memberCount++;
+                }
+
+                return {
+                    id: key,
+                    userName: item.userName || 'Khách vãng lai',
+                    userEmail: item.userEmail || null,
+                    isGuest: item.isGuest !== false,
+                    pageTitle: item.pageTitle || 'Đang duyệt web',
+                    pageUrl: item.pageUrl || '/',
+                    os: item.os || 'Khác',
+                    browser: item.browser || 'Trình duyệt',
+                    deviceType: item.deviceType || 'Desktop',
+                    referrer: item.referrer || 'Trực tiếp',
+                    location: item.location || 'Chưa rõ',
+                    cartCount: Number(item.cartCount) || 0,
+                    cartTotal: Number(item.cartTotal) || 0,
+                    utmSource: item.utmSource || null,
+                    utmCampaign: item.utmCampaign || null,
+                    journeyHistory: Array.isArray(item.journeyHistory) ? item.journeyHistory : [item.pageTitle || 'Trang chủ'],
+                    startTime: item.startTime || item.lastChanged || Date.now(),
+                    lastChanged: item.lastChanged || Date.now()
+                };
+            });
+        }
+
+        // Cập nhật các con số thống kê
+        const countEl = document.getElementById('online-users-count');
+        if (countEl) countEl.innerText = totalCount;
+
+        const mobileEl = document.getElementById('online-mobile-count');
+        if (mobileEl) mobileEl.innerText = mobileCount;
+
+        const desktopEl = document.getElementById('online-desktop-count');
+        if (desktopEl) desktopEl.innerText = desktopCount;
+
+        const memberEl = document.getElementById('online-member-count');
+        if (memberEl) memberEl.innerText = memberCount;
+
+        const updatedEl = document.getElementById('online-last-updated');
+        if (updatedEl) {
+            const now = new Date();
+            updatedEl.innerText = `Cập nhật: ${now.toLocaleTimeString('vi-VN')}`;
+        }
+
         const statEl = document.getElementById('stat-online-users');
-        if (statEl) statEl.innerText = count;
+        if (statEl) statEl.innerText = totalCount;
+
+        // Render bảng chi tiết
+        renderOnlineUsersTable(usersList);
     });
 }
+
+function safeHtmlStr(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatOnlineTimeAgo(timestamp) {
+    if (!timestamp) return 'Vừa xong';
+    const diff = Math.floor((Date.now() - timestamp) / 1000);
+    if (diff < 10) return 'Vừa xong';
+    if (diff < 60) return `${diff} giây trước`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+    return `${Math.floor(diff / 3600)} giờ trước`;
+}
+
+function renderOnlineUsersTable(usersList) {
+    const tbody = document.getElementById('online-users-table-body');
+    if (!tbody) return;
+
+    if (usersList.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #888;">
+                    Chưa có người dùng nào đang trực tuyến.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Sắp xếp người mới vào hoặc mới tương tác lên đầu
+    usersList.sort((a, b) => b.startTime - a.startTime);
+
+    tbody.innerHTML = usersList.map(u => {
+        const timeAgo = formatOnlineTimeAgo(u.startTime);
+        const deviceIcon = u.deviceType === 'Mobile' ? '📱' : (u.deviceType === 'Tablet' ? '📟' : '💻');
+        const userAvatar = u.isGuest ? '👤' : '⭐';
+        const userBadge = u.isGuest 
+            ? `<span style="font-size:0.75rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:4px;">Khách</span>`
+            : `<span style="font-size:0.75rem; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:4px; font-weight:600;">Thành viên</span>`;
+
+        let osColor = '#555';
+        if (u.os === 'iOS' || u.os === 'macOS') osColor = '#111';
+        else if (u.os === 'Android') osColor = '#2e7d32';
+        else if (u.os === 'Windows') osColor = '#0277bd';
+
+        const cartBadge = u.cartCount > 0
+            ? `<span style="background:#e8f5e9; color:#2e7d32; padding:4px 10px; border-radius:6px; font-weight:600; font-size:0.82rem; border:1px solid #c8e6c9; display:inline-block;">🛒 ${u.cartCount} món (${u.cartTotal.toLocaleString('vi-VN')}đ)</span>`
+            : `<span style="color:#aaa; font-size:0.8rem;">Trống (0đ)</span>`;
+
+        const journeyStr = u.journeyHistory.map(p => safeHtmlStr(p)).join(' ➔ ');
+
+        const utmDisplay = u.utmSource
+            ? `<div style="font-size:0.78rem; color:#e65100; font-weight:600; margin-bottom:2px;">🎯 QC: ${safeHtmlStr(u.utmSource)} ${u.utmCampaign ? `(${safeHtmlStr(u.utmCampaign)})` : ''}</div>`
+            : '';
+
+        return `
+            <tr style="border-bottom: 1px solid #f0f0f0; font-size: 0.88rem;">
+                <td style="padding: 12px 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.3rem;">${userAvatar}</span>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">${safeHtmlStr(u.userName)}</div>
+                            <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
+                                ${userBadge}
+                                ${u.userEmail ? `<span style="font-size: 0.75rem; color: #666;">${safeHtmlStr(u.userEmail)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 12px 10px; max-width: 250px;">
+                    <div style="font-weight: 600; color: #2e7d32; display: flex; align-items: center; gap: 4px;">
+                        <span>📄</span> <span>${safeHtmlStr(u.pageTitle)}</span>
+                    </div>
+                    <a href="${safeHtmlStr(u.pageUrl)}" target="_blank" style="font-size: 0.75rem; color: #1976d2; text-decoration: none; word-break: break-all; display: inline-block; margin-top: 2px;">
+                        ${safeHtmlStr(u.pageUrl)} ↗
+                    </a>
+                    ${u.journeyHistory.length > 1 ? `<div style="font-size:0.73rem; color:#777; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${journeyStr}">🗺️ ${journeyStr}</div>` : ''}
+                </td>
+                <td style="padding: 12px 10px;">
+                    ${cartBadge}
+                </td>
+                <td style="padding: 12px 10px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 1.1rem;">${deviceIcon}</span>
+                        <div>
+                            <span style="font-weight: 600; color: ${osColor};">${safeHtmlStr(u.os)}</span>
+                            <span style="color: #666; font-size: 0.8rem;"> • ${safeHtmlStr(u.browser)}</span>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 12px 10px;">
+                    ${utmDisplay}
+                    <span style="background: #f5f5f5; color: #444; padding: 3px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid #eee; display: inline-block;">
+                        🌐 ${safeHtmlStr(u.referrer)}
+                    </span>
+                </td>
+                <td style="padding: 12px 10px;">
+                    <span style="color: #333; font-weight: 500; font-size: 0.83rem;">
+                        📍 ${safeHtmlStr(u.location)}
+                    </span>
+                </td>
+                <td style="padding: 12px 10px; color: #666; font-size: 0.82rem;">
+                    ${timeAgo}
+                </td>
+                <td style="padding: 12px 10px; text-align: center;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; color: #2e7d32; font-weight: 600; font-size: 0.8rem; background: #e8f5e9; padding: 4px 10px; border-radius: 12px; border: 1px solid #c8e6c9;">
+                        <span style="width: 6px; height: 6px; background: #2e7d32; border-radius: 50%;"></span> Online
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
 listenToOnlineUsers();
 
 let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
