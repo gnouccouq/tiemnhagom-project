@@ -1207,6 +1207,7 @@ window.closeProductModal = function () {
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
         delete document.getElementById('productId').dataset.currentThumbUrl;
+        delete document.getElementById('productId').dataset.originalId;
         document.getElementById('productId').readOnly = false;
 
         const costInput = document.getElementById('cost');
@@ -2694,9 +2695,28 @@ if (productForm) {
         submitBtn.innerHTML = '<span class="spinner-small"></span> Đang nén ảnh...';
 
         try {
+            const originalId = document.getElementById('productId').dataset.originalId || '';
+            const isEdit = !!originalId;
+
+            // Kiểm tra trùng mã sản phẩm khi tạo mới hoặc khi sửa đổi sang mã khác
+            if (!isEdit) {
+                const existingSnap = await getDoc(doc(db, "products", productId));
+                if (existingSnap.exists()) {
+                    showToast(`Mã sản phẩm "${productId}" đã tồn tại! Không được phép trùng mã hay tạo đè.`, "error");
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
+                }
+            } else if (productId !== originalId) {
+                const existingSnap = await getDoc(doc(db, "products", productId));
+                if (existingSnap.exists()) {
+                    showToast(`Mã sản phẩm "${productId}" đã tồn tại trong hệ thống! Không được phép đổi thành mã trùng.`, "error");
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
+                }
+            }
+
             const productRef = doc(db, "products", productId);
-            const existingSnap = await getDoc(productRef);
-            const isEdit = existingSnap.exists();
+            const existingSnap = isEdit ? await getDoc(doc(db, "products", originalId)) : await getDoc(productRef);
 
             // Lấy các nút và input liên quan đến tồn kho
             const stockInput = document.getElementById('stock');
@@ -2946,7 +2966,12 @@ if (productForm) {
 
 
             await setDoc(productRef, productData);
-            showToast(`Đã lưu sản phẩm ${productId} thành công!`);
+            if (isEdit && productId !== originalId) {
+                await deleteDoc(doc(db, "products", originalId));
+                showToast(`Đã cập nhật mã sản phẩm từ "${originalId}" sang "${productId}"!`);
+            } else {
+                showToast(`Đã lưu sản phẩm ${productId} thành công!`);
+            }
 
             if (progressContainer) progressContainer.style.display = 'none';
 
@@ -3548,7 +3573,8 @@ async function editProduct(id) {
 
             // Điền dữ liệu vào form
             document.getElementById('productId').value = id;
-            document.getElementById('productId').readOnly = true;
+            document.getElementById('productId').readOnly = false;
+            document.getElementById('productId').dataset.originalId = id;
             document.getElementById('name').value = p.name;
             document.getElementById('category').value = p.category;
             document.getElementById('price').value = window.formatCurrencyDisplay(p.price);
@@ -3856,6 +3882,21 @@ window.resetOrderFilters = function () {
     window.selectTimePreset('this_month', 'Tháng này', null);
 };
 
+window.currentOrderSortCol = 'time';
+window.currentOrderSortDir = 'desc';
+
+window.sortOrders = function (sortCol) {
+    if (window.currentOrderSortCol === sortCol) {
+        window.currentOrderSortDir = window.currentOrderSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.currentOrderSortCol = sortCol;
+        window.currentOrderSortDir = (sortCol === 'time' || sortCol === 'totalAmount') ? 'desc' : 'asc';
+    }
+    if (typeof window.renderOrdersFiltered === 'function') {
+        window.renderOrdersFiltered();
+    }
+};
+
 window.renderOrdersFiltered = function renderOrdersFiltered() {
     const orderListTable = document.getElementById('admin-order-list');
     const prevBtn = document.getElementById('prev-order-page');
@@ -4021,11 +4062,51 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
     if (summaryPaidElem) summaryPaidElem.innerText = formatVND(sumPaid);
     if (totalAmountSpan) totalAmountSpan.innerText = formatVND(sumPaid) + ' đ';
 
-    // Sắp xếp theo ngày đặt giảm dần
+    // Sắp xếp đơn hàng theo cấu hình
     filtered.sort((a, b) => {
-        const dateA = a.orderDate ? (a.orderDate.toDate ? a.orderDate.toDate() : new Date(a.orderDate)) : new Date(0);
-        const dateB = b.orderDate ? (b.orderDate.toDate ? b.orderDate.toDate() : new Date(b.orderDate)) : new Date(0);
-        return dateB - dateA;
+        const col = window.currentOrderSortCol || 'time';
+        const dir = window.currentOrderSortDir || 'desc';
+        let cmp = 0;
+
+        if (col === 'id') {
+            cmp = (a.id || '').localeCompare(b.id || '', 'vi', { numeric: true, sensitivity: 'base' });
+        } else if (col === 'time') {
+            const dateA = a.orderDate ? (a.orderDate.toDate ? a.orderDate.toDate() : new Date(a.orderDate)) : new Date(0);
+            const dateB = b.orderDate ? (b.orderDate.toDate ? b.orderDate.toDate() : new Date(b.orderDate)) : new Date(0);
+            cmp = dateA - dateB;
+        } else if (col === 'customerId') {
+            const idA = a.userId || a.shippingAddress?.phone || a.customerPhone || '';
+            const idB = b.userId || b.shippingAddress?.phone || b.customerPhone || '';
+            cmp = idA.localeCompare(idB, 'vi', { numeric: true, sensitivity: 'base' });
+        } else if (col === 'customerName') {
+            const nameA = a.shippingAddress?.fullName || a.customerName || '';
+            const nameB = b.shippingAddress?.fullName || b.customerName || '';
+            cmp = nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        } else if (col === 'totalAmount') {
+            const itemsA = a.items || [];
+            const subA = itemsA.length > 0 ? itemsA.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (a.totalAmount || 0);
+            const totalA = a.totalAmount || subA;
+
+            const itemsB = b.items || [];
+            const subB = itemsB.length > 0 ? itemsB.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (b.totalAmount || 0);
+            const totalB = b.totalAmount || subB;
+
+            cmp = totalA - totalB;
+        }
+
+        return dir === 'asc' ? cmp : -cmp;
+    });
+
+    // Update sort icons trong tiêu đề bảng đơn hàng
+    document.querySelectorAll('.order-sortable-header').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (icon) {
+            if (th.getAttribute('data-order-sort') === window.currentOrderSortCol) {
+                icon.textContent = window.currentOrderSortDir === 'asc' ? '↑' : '↓';
+            } else {
+                icon.textContent = '↕';
+            }
+        }
     });
 
     // Phân trang
@@ -5811,6 +5892,21 @@ function getAllCustomersCombined() {
     return Array.from(userMap.values());
 }
 
+window.currentCustomerSortCol = 'spent';
+window.currentCustomerSortDir = 'desc';
+
+window.sortUsers = function (sortCol) {
+    if (window.currentCustomerSortCol === sortCol) {
+        window.currentCustomerSortDir = window.currentCustomerSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.currentCustomerSortCol = sortCol;
+        window.currentCustomerSortDir = (sortCol === 'spent' || sortCol === 'points' || sortCol === 'debt' || sortCol === 'createdAt') ? 'desc' : 'asc';
+    }
+    if (typeof window.renderAdminUserTable === 'function') {
+        window.renderAdminUserTable();
+    }
+};
+
 window.renderAdminUserTable = function renderAdminUserTable() {
     const userListTable = document.getElementById('admin-user-list');
     const searchInput = document.getElementById('admin-user-search');
@@ -5908,6 +6004,51 @@ window.renderAdminUserTable = function renderAdminUserTable() {
     if (totalSpentElem) totalSpentElem.innerText = formatVND(sumSpent) + ' đ';
     if (summaryDebtElem) summaryDebtElem.innerText = formatVND(sumDebt);
     if (summarySpentElem) summarySpentElem.innerText = formatVND(sumSpent);
+
+    // Sắp xếp danh sách khách hàng theo cấu hình
+    filtered.sort((a, b) => {
+        const col = window.currentCustomerSortCol || 'spent';
+        const dir = window.currentCustomerSortDir || 'desc';
+        let cmp = 0;
+
+        if (col === 'id') {
+            cmp = (a.id || '').localeCompare(b.id || '', 'vi', { numeric: true, sensitivity: 'base' });
+        } else if (col === 'name') {
+            const nameA = a.displayName || a.fullName || a.email || '';
+            const nameB = b.displayName || b.fullName || b.email || '';
+            cmp = nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        } else if (col === 'phone') {
+            const pA = a.phoneNumber || a.phone || '';
+            const pB = b.phoneNumber || b.phone || '';
+            cmp = pA.localeCompare(pB, 'vi');
+        } else if (col === 'points') {
+            cmp = (a.points || 0) - (b.points || 0);
+        } else if (col === 'debt') {
+            cmp = (a.debt || 0) - (b.debt || 0);
+        } else if (col === 'spent') {
+            const sA = userTotalSpentLocal[a.id] || a.totalSpent || 0;
+            const sB = userTotalSpentLocal[b.id] || b.totalSpent || 0;
+            cmp = sA - sB;
+        } else if (col === 'createdAt') {
+            const dateA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : new Date(0);
+            const dateB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : new Date(0);
+            cmp = dateA - dateB;
+        }
+
+        return dir === 'asc' ? cmp : -cmp;
+    });
+
+    // Update sort icons cho tiêu đề bảng khách hàng
+    document.querySelectorAll('.user-sortable-header').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (icon) {
+            if (th.getAttribute('data-user-sort') === window.currentCustomerSortCol) {
+                icon.textContent = window.currentCustomerSortDir === 'asc' ? '↑' : '↓';
+            } else {
+                icon.textContent = '↕';
+            }
+        }
+    });
 
     const pageSize = window.currentAdminUserPageSize || 15;
     const totalPages = Math.ceil(filtered.length / pageSize) || 1;
@@ -6058,6 +6199,26 @@ window.toggleUserQuickView = function (userId, event) {
     `;
 
     targetRow.parentNode.insertBefore(detailRow, targetRow.nextSibling);
+};
+
+window.deleteUser = async function (userId) {
+    if (!userId) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa khách hàng "${userId}"? Hành động này không thể hoàn tác.`)) return;
+    try {
+        await deleteDoc(doc(db, "users", userId));
+        showToast(`Đã xóa khách hàng ${userId} thành công!`, "success");
+        const detailRow = document.getElementById(`user-detail-row-${userId}`);
+        if (detailRow) detailRow.remove();
+        posUsersLocal = (posUsersLocal || []).filter(u => u.id !== userId);
+        if (userTotalSpentLocal[userId]) delete userTotalSpentLocal[userId];
+        if (userOrderCounts[userId]) delete userOrderCounts[userId];
+        if (typeof window.renderAdminUserTable === 'function') {
+            window.renderAdminUserTable();
+        }
+    } catch (err) {
+        console.error("Lỗi khi xóa khách hàng:", err);
+        showToast("Lỗi khi xóa khách hàng: " + err.message, "error");
+    }
 };
 
 // Hàm xem chi tiết và sửa thông tin người dùng

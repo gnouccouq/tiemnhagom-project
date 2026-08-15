@@ -1403,11 +1403,11 @@
                                     <tr>
                                         <th style="width: 26px; text-align: center;"><input type="checkbox" id="check-all-orders"></th>
                                         <th style="width: 20px;">⭐</th>
-                                        <th style="width: 140px;">Mã hóa đơn</th>
-                                        <th style="width: 90px;">Thời gian</th>
-                                        <th style="width: 100px;">ID Tài khoản</th>
-                                        <th style="width: 120px;">Khách hàng</th>
-                                        <th style="text-align: right; width: 100px;">Tổng tiền hàng</th>
+                                        <th class="order-sortable-header" data-order-sort="id" style="width: 140px; cursor: pointer;" onclick="window.sortOrders('id')" title="Click để sắp xếp">Mã hóa đơn <span class="sort-icon">↕</span></th>
+                                        <th class="order-sortable-header" data-order-sort="time" style="width: 90px; cursor: pointer;" onclick="window.sortOrders('time')" title="Click để sắp xếp">Thời gian <span class="sort-icon">▼</span></th>
+                                        <th class="order-sortable-header" data-order-sort="customerId" style="width: 100px; cursor: pointer;" onclick="window.sortOrders('customerId')" title="Click để sắp xếp">ID Tài khoản <span class="sort-icon">↕</span></th>
+                                        <th class="order-sortable-header" data-order-sort="customerName" style="width: 120px; cursor: pointer;" onclick="window.sortOrders('customerName')" title="Click để sắp xếp">Khách hàng <span class="sort-icon">↕</span></th>
+                                        <th class="order-sortable-header" data-order-sort="totalAmount" style="text-align: right; width: 100px; cursor: pointer;" onclick="window.sortOrders('totalAmount')" title="Click để sắp xếp">Tổng tiền hàng <span class="sort-icon">↕</span></th>
                                         <th style="text-align: right; width: 70px;">Giảm giá</th>
                                         <th style="text-align: right; width: 100px;">Khách đã trả</th>
                                         <th style="text-align: center; width: 90px;">Trạng thái</th>
@@ -1896,13 +1896,13 @@
                                     <tr>
                                         <th style="width: 26px; text-align: center;"><input type="checkbox" id="check-all-users"></th>
                                         <th style="width: 20px;">⭐</th>
-                                        <th style="width: 120px;">Mã KH (ID)</th>
-                                        <th style="width: 150px;">Tên khách hàng</th>
-                                        <th style="width: 110px;">Điện thoại</th>
+                                        <th class="user-sortable-header" data-user-sort="id" style="width: 120px; cursor: pointer;" onclick="window.sortUsers('id')" title="Click để sắp xếp">Mã KH (ID) <span class="sort-icon">↕</span></th>
+                                        <th class="user-sortable-header" data-user-sort="name" style="width: 150px; cursor: pointer;" onclick="window.sortUsers('name')" title="Click để sắp xếp">Tên khách hàng <span class="sort-icon">↕</span></th>
+                                        <th class="user-sortable-header" data-user-sort="phone" style="width: 110px; cursor: pointer;" onclick="window.sortUsers('phone')" title="Click để sắp xếp">Điện thoại <span class="sort-icon">↕</span></th>
                                         <th style="width: 130px;">Hạng Membership</th>
-                                        <th style="text-align: center; width: 90px;">Điểm tích lũy</th>
-                                        <th style="text-align: right; width: 100px;">Nợ hiện tại</th>
-                                        <th style="text-align: right; width: 120px;">Tổng bán (Chi tiêu)</th>
+                                        <th class="user-sortable-header" data-user-sort="points" style="text-align: center; width: 90px; cursor: pointer;" onclick="window.sortUsers('points')" title="Click để sắp xếp">Điểm tích lũy <span class="sort-icon">↕</span></th>
+                                        <th class="user-sortable-header" data-user-sort="debt" style="text-align: right; width: 100px; cursor: pointer;" onclick="window.sortUsers('debt')" title="Click để sắp xếp">Nợ hiện tại <span class="sort-icon">↕</span></th>
+                                        <th class="user-sortable-header" data-user-sort="spent" style="text-align: right; width: 120px; cursor: pointer;" onclick="window.sortUsers('spent')" title="Click để sắp xếp">Tổng bán (Chi tiêu) <span class="sort-icon">▼</span></th>
                                     </tr>
                                     <tr id="user-table-summary-row" style="background: #f0f7ff; font-size: 0.76rem; border-bottom: 2px solid #cbd5e1;">
                                         <td colspan="7" style="padding: 6px 8px;"></td>
