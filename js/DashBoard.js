@@ -3429,7 +3429,7 @@ function renderAdminProductTable() {
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
                 <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
                 <td data-label="Tồn kho">${p.isCombo ? '-' : stockDisplay}</td>
-                <td data-label="Khách đặt">${p.sold || 0}</td>
+                <td data-label="Đã bán">${p.sold || 0}</td>
                 <td data-label="Thời gian tạo">${formattedDate}</td>
                 <td data-label="Dự kiến hết hàng">---</td>
             </tr>`;
@@ -3560,6 +3560,50 @@ async function exportProductToExcel() {
 
     showToast("Đã xuất file thành công!");
 }
+
+window.syncAllProductsSoldCount = async () => {
+    if (!confirm("Bạn có muốn tự động tổng hợp lại số lượng ĐÃ BÁN của tất cả sản phẩm từ trước tới nay dựa trên các đơn hàng không bị hủy?")) return;
+
+    try {
+        if (typeof showToast !== 'undefined') showToast("Đang tính toán lại dữ liệu đã bán...", "info");
+
+        // 1. Quét tất cả đơn hàng từ bộ sưu tập orders
+        const ordersSnap = await getDocs(collection(db, "orders"));
+        const productSoldMap = {};
+
+        ordersSnap.forEach(docSnap => {
+            const order = docSnap.data();
+            // Bỏ qua đơn hàng đã hủy
+            if (order.status === "Đã hủy") return;
+
+            if (Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    if (item.id && item.quantity > 0) {
+                        const qty = Number(item.quantity) || 0;
+                        productSoldMap[item.id] = (productSoldMap[item.id] || 0) + qty;
+                    }
+                });
+            }
+        });
+
+        // 2. Cập nhật lại số lượng sold vào từng sản phẩm trong Firestore
+        const productsSnap = await getDocs(collection(db, "products"));
+        let updatedCount = 0;
+        const updatePromises = productsSnap.docs.map(docSnap => {
+            const pId = docSnap.id;
+            const actualSold = productSoldMap[pId] || 0;
+            updatedCount++;
+            return updateDoc(doc(db, "products", pId), { sold: actualSold });
+        });
+
+        await Promise.all(updatePromises);
+
+        if (typeof showToast !== 'undefined') showToast(`Đã đồng bộ xong lượt Đã bán cho ${updatedCount} sản phẩm!`, "success");
+    } catch (e) {
+        console.error("Lỗi khi đồng bộ lượt Đã bán:", e);
+        if (typeof showToast !== 'undefined') showToast("Lỗi đồng bộ: " + e.message, "error");
+    }
+};
 
 async function editProduct(id) {
     try {
@@ -7459,7 +7503,12 @@ window.createPOSOrder = async () => {
                 if (!pSnap.exists()) return;
 
                 const pData = pSnap.data();
-                const updateData = { stock: increment(-item.quantity) };
+                const updateData = {
+                    sold: increment(item.quantity)
+                };
+                if (!pData.isCombo) {
+                    updateData.stock = increment(-item.quantity);
+                }
 
                 // Color variant inventory
                 if (item.color && pData.colorVariants) {
