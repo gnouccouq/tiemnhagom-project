@@ -332,7 +332,7 @@ async function handleProfileAuth(user) {
         if (editName) editName.value = user.displayName || '';
         if (editPhone) editPhone.value = userData.phone || '';
         if (editEmail) editEmail.value = user.email || '';
-        if (editDob) editDob.value = userData.dob || '';
+        if (editDob) editDob.value = userData.dob || userData.birthday || '';
         if (editGender) editGender.value = userData.gender || '';
         if (editJoinDate) {
             const joinDateStr = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') : 'Không rõ';
@@ -495,6 +495,7 @@ async function handleProfileAuth(user) {
                     await setDoc(userRef, {
                         phone: newPhone,
                         dob: newDob,
+                        birthday: newDob,
                         gender: newGender,
                         identifiers: identifiers,
                         updatedAt: new Date().toISOString()
@@ -712,11 +713,18 @@ async function generateAutomaticVouchers(userId, currentTier) {
         if (!userData) return;
 
         // 1. Voucher sinh nhật
-        if (currentTier.birthdayVoucher > 0 && userData.birthday) {
+        const userBday = userData.birthday || userData.dob;
+        if (currentTier.birthdayVoucher > 0 && userBday) {
             const today = new Date();
-            const birthDate = new Date(userData.birthday);
+            let birthMonth = -1;
+            if (typeof userBday === 'string' && userBday.includes('-')) {
+                const parts = userBday.split('-');
+                if (parts.length >= 2) birthMonth = parseInt(parts[1], 10) - 1;
+            } else {
+                birthMonth = new Date(userBday).getMonth();
+            }
             
-            if (today.getMonth() === birthDate.getMonth()) {
+            if (today.getMonth() === birthMonth) {
                 const yearStr = today.getFullYear().toString();
                 const bdayCode = `BDAY${yearStr}${userId.substring(0, 5).toUpperCase()}`;
                 

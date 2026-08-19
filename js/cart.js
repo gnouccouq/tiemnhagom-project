@@ -440,6 +440,8 @@ async function fetchAvailableCoupons() {
             if (data.expiryDate && new Date(data.expiryDate) < today) return;
             // Kiểm tra lượt dùng
             if (data.limit > 0 && (data.usedCount || 0) >= data.limit) return;
+            // Kiểm tra mã gán riêng cho tài khoản khác
+            if (data.assignedTo && (!auth.currentUser || data.assignedTo !== auth.currentUser.uid)) return;
 
             validCoupons.push({ id, ...data });
         });
@@ -554,6 +556,14 @@ window.applyCoupon = async () => {
             // Bắt buộc đăng nhập để sử dụng mã ưu đãi
             if (!auth.currentUser) {
                 showToast("Vui lòng đăng nhập để sử dụng mã ưu đãi này.", "error");
+                appliedCoupon = null;
+                renderCart();
+                return;
+            }
+
+            // Kiểm tra mã ưu đãi dành riêng cho cá nhân
+            if (data.assignedTo && data.assignedTo !== auth.currentUser.uid) {
+                showToast("Mã ưu đãi này dành riêng cho tài khoản khác.", "error");
                 appliedCoupon = null;
                 renderCart();
                 return;
