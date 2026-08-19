@@ -2505,6 +2505,24 @@ window.renderComboItems = function () {
     }
 
     list.innerHTML = currentVariant.items.map((item, idx) => {
+        // Tìm ảnh biến thể tương ứng nếu đã chọn màu sắc hoặc họa tiết
+        let displayImg = item.thumbUrl || item.imageUrl || 'https://placehold.co/50';
+
+        if (item.selectedColor && Array.isArray(item.colorVariants)) {
+            const colorMatch = item.colorVariants.find(v => v.name === item.selectedColor);
+            if (colorMatch && (colorMatch.thumbUrl || colorMatch.imageUrl || colorMatch.image)) {
+                displayImg = colorMatch.thumbUrl || colorMatch.imageUrl || colorMatch.image;
+            }
+        }
+
+        let availablePatterns = (item.patternVariants && item.patternVariants.length > 0) ? item.patternVariants : (item.patterns || []);
+        if (item.selectedPattern && availablePatterns.length > 0) {
+            const patternMatch = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === item.selectedPattern);
+            if (patternMatch && typeof patternMatch === 'object' && (patternMatch.thumbUrl || patternMatch.imageUrl || patternMatch.image)) {
+                displayImg = patternMatch.thumbUrl || patternMatch.imageUrl || patternMatch.image;
+            }
+        }
+
         let colorOptions = '';
         if (item.colorVariants && item.colorVariants.length > 0) {
             colorOptions = `
@@ -2516,7 +2534,6 @@ window.renderComboItems = function () {
         }
 
         let patternOptions = '';
-        let availablePatterns = (item.patternVariants && item.patternVariants.length > 0) ? item.patternVariants : (item.patterns || []);
         if (availablePatterns.length > 0) {
             patternOptions = `
                 <select style="margin-top:4px; padding: 2px 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem;" onchange="window.updateComboItemVariant(${idx}, 'pattern', this.value)">
@@ -2530,11 +2547,11 @@ window.renderComboItems = function () {
         }
 
         return `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px; background: #fff;">
             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                <img src="${item.thumbUrl || item.imageUrl || 'https://placehold.co/50'}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                <img src="${displayImg}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;" title="${item.selectedColor || item.selectedPattern || item.name}">
                 <div style="display: flex; flex-direction: column;">
-                    <div style="font-weight: 600; font-size: 0.85rem;">${item.name}</div>
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #0f172a;">${item.name}</div>
                     <div style="font-size: 0.75rem; color: #666;">Mã: ${item.id}</div>
                     <div style="display: flex; gap: 5px;">
                         ${colorOptions}
@@ -2584,6 +2601,7 @@ window.updateComboItemVariant = function (idx, type, value) {
     if (currentVariant && currentVariant.items[idx]) {
         if (type === 'color') currentVariant.items[idx].selectedColor = value;
         if (type === 'pattern') currentVariant.items[idx].selectedPattern = value;
+        window.renderComboItems(); // Tự động đổi hình ảnh hiển thị theo biến thể được chọn
     }
 };
 
@@ -2618,15 +2636,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const results = posProductsLocal.filter(p => !p.isCombo && ((p.name && p.name.toLowerCase().includes(val)) || (p.id && p.id.toLowerCase().includes(val)))).slice(0, 10);
             if (results.length > 0) {
-                suggs.innerHTML = results.map(p => `
+                suggs.innerHTML = results.map(p => {
+                    let variantBadges = '';
+                    if (Array.isArray(p.colorVariants) && p.colorVariants.length > 0) {
+                        variantBadges = `<div style="display: flex; gap: 3px; margin-top: 3px;">${p.colorVariants.slice(0, 5).map(v => (v.thumbUrl || v.imageUrl || v.image) ? `<img src="${v.thumbUrl || v.imageUrl || v.image}" title="${v.name}" style="width:20px; height:20px; object-fit:cover; border-radius:3px; border: 1px solid #cbd5e1;">` : `<span style="font-size:0.68rem; background:#f1f5f9; padding:1px 4px; border-radius:3px; color:#475569;">${v.name}</span>`).join('')}</div>`;
+                    } else if (Array.isArray(p.patternVariants) && p.patternVariants.length > 0) {
+                        variantBadges = `<div style="display: flex; gap: 3px; margin-top: 3px;">${p.patternVariants.slice(0, 5).map(v => (v.thumbUrl || v.imageUrl || v.image) ? `<img src="${v.thumbUrl || v.imageUrl || v.image}" title="${v.name || v}" style="width:20px; height:20px; object-fit:cover; border-radius:3px; border: 1px solid #cbd5e1;">` : `<span style="font-size:0.68rem; background:#f1f5f9; padding:1px 4px; border-radius:3px; color:#475569;">${v.name || v}</span>`).join('')}</div>`;
+                    }
+                    return `
                     <div class="suggestion-item" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px;" onclick='window.addComboItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
-                        <img src="${p.thumbUrl || p.imageUrl || 'https://placehold.co/40'}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
-                        <div>
+                        <img src="${p.thumbUrl || p.imageUrl || 'https://placehold.co/40'}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">
+                        <div style="flex:1;">
                             <div style="font-weight: 600; font-size: 0.85rem;">${p.name}</div>
-                            <div style="font-size: 0.75rem; color: #666;">${p.id}</div>
+                            <div style="font-size: 0.75rem; color: #666;">SKU: ${p.id}</div>
+                            ${variantBadges}
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
                 suggs.style.display = 'block';
             } else {
                 suggs.innerHTML = '<div style="padding: 8px; font-size: 0.85rem; color: #999;">Không tìm thấy sản phẩm phù hợp.</div>';
@@ -6867,7 +6893,10 @@ window.savePOSBills = () => {
 };
 
 window.getCurrentBill = () => {
-    return window.posBills.find(b => b.id === window.currentBillId);
+    if (!window.posBills || window.posBills.length === 0) {
+        if (typeof window.initPOSBills === 'function') window.initPOSBills();
+    }
+    return window.posBills.find(b => b.id === window.currentBillId) || (window.posBills && window.posBills.length > 0 ? window.posBills[0] : null);
 };
 
 window.posCreateNewBill = () => {
@@ -6958,12 +6987,27 @@ function renderPOSCart() {
                 const origPriceText = formatVND(item.price);
                 const isDiscounted = (item.discount || 0) > 0;
 
+                const itemImg = item.image || 'https://placehold.co/40';
+                const pLocal = posProductsLocal.find(p => String(p.id).trim() === String(item.id).trim());
+                const hasVariants = pLocal && ((Array.isArray(pLocal.colorVariants) && pLocal.colorVariants.length > 0) || (Array.isArray(pLocal.patternVariants) && pLocal.patternVariants.length > 0) || (Array.isArray(pLocal.patterns) && pLocal.patterns.length > 0));
+
+                let variantBadge = '';
+                if (item.color || item.pattern) {
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi màu sắc / họa tiết"><span>🎨 ${item.color || ''}${item.pattern ? (item.color ? ' / ' : '') + item.pattern : ''}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
+                } else if (hasVariants) {
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
+                }
+
                 return `
                 <div class="pos-item-row" style="display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px dashed #e2e8f0; font-size: 0.88rem;">
                     <div class="pos-item-idx" style="width: 20px; color: #64748b; font-size: 0.8rem; text-align: center;">${index + 1}</div>
                     <button class="pos-item-del" onclick="window.removePOSItem(${index})" style="border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 2px;" title="Xóa"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <img src="${itemImg}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.posOpenVariantModal('${item.id}', ${index})" title="Đổi biến thể">
                     <div class="pos-item-sku" style="color: #0066cc; font-weight: 600; font-size: 0.8rem; width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.id}</div>
-                    <div class="pos-item-name" style="flex: 1; font-weight: 500; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name} ${item.color ? `(${item.color})` : ''}</div>
+                    <div class="pos-item-name" style="flex: 1; font-weight: 500; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div>${item.name}</div>
+                        ${variantBadge}
+                    </div>
                     
                     <!-- Stepper +- cho số lượng dạng pill mềm mại -->
                     <div class="pos-item-qty-stepper" style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 20px; background: #f8fafc; height: 28px; padding: 0 2px; transition: all 0.15s ease;">
@@ -7345,8 +7389,261 @@ window.posCheckCostWarning = (item, sellingPrice) => {
     }
 };
 
-window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null) => {
+// --- Modal chọn biến thể Màu sắc & Họa tiết khi bán hàng POS ---
+let currentPOSVariantProduct = null;
+let currentPOSVariantCartIndex = -1;
+let selectedPOSColor = null;
+let selectedPOSPattern = null;
+
+window.posOpenVariantModal = (productId, cartIndex = -1) => {
     const bill = window.getCurrentBill();
+    let currentCartItem = null;
+    if (cartIndex >= 0 && bill && bill.cart && bill.cart[cartIndex]) {
+        currentCartItem = bill.cart[cartIndex];
+    }
+
+    const p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
+    if (!p) {
+        console.error("Không tìm thấy sản phẩm POS:", productId);
+        return;
+    }
+
+    // Ẩn bảng gợi ý tìm kiếm & reset ô tìm kiếm
+    const suggs = document.getElementById('pos-product-suggestions');
+    if (suggs) suggs.style.display = 'none';
+    const searchInput = document.getElementById('pos-product-search');
+    if (searchInput) searchInput.value = '';
+
+    const colorVariants = Array.isArray(p.colorVariants) ? p.colorVariants : [];
+    let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0 
+        ? p.patternVariants 
+        : (Array.isArray(p.patterns) ? p.patterns : []);
+
+    currentPOSVariantCartIndex = cartIndex;
+    currentPOSVariantProduct = p;
+    selectedPOSColor = currentCartItem ? (currentCartItem.color || null) : null;
+    selectedPOSPattern = currentCartItem ? (currentCartItem.pattern || null) : null;
+
+    const modal = document.getElementById('pos-variant-modal');
+    if (!modal) return;
+
+    const fsSettings = globalFlashSaleSettings;
+    const currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    const imgEl = document.getElementById('pos-modal-prod-img');
+    const nameEl = document.getElementById('pos-modal-prod-name');
+    const skuEl = document.getElementById('pos-modal-prod-sku');
+    const priceEl = document.getElementById('pos-modal-prod-price');
+
+    if (imgEl) imgEl.src = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl || 'https://placehold.co/60';
+    if (nameEl) nameEl.innerText = p.name || '';
+    if (skuEl) skuEl.innerText = p.id || '';
+    if (priceEl) priceEl.innerText = formatVND(currentPrice);
+
+    // Color section
+    const colorSec = document.getElementById('pos-modal-color-section');
+    const colorList = document.getElementById('pos-modal-color-list');
+    if (colorVariants.length > 0) {
+        colorSec.style.display = 'block';
+        colorList.innerHTML = colorVariants.map(v => {
+            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+            const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+            const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
+            return `
+            <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
+                    <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vName}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal}</div>
+                    </div>
+                </div>
+                <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+            </div>`;
+        }).join('');
+    } else {
+        colorSec.style.display = 'none';
+    }
+
+    // Pattern section
+    const patternSec = document.getElementById('pos-modal-pattern-section');
+    const patternList = document.getElementById('pos-modal-pattern-list');
+    if (availablePatterns.length > 0) {
+        patternSec.style.display = 'block';
+        patternList.innerHTML = availablePatterns.map(v => {
+            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+            const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+            const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
+            return `
+            <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; pointer-events: none;">
+                    <img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vName}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal}</div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } else {
+        patternSec.style.display = 'none';
+    }
+
+    // Active color/pattern selection highlight
+    if (selectedPOSColor) {
+        const colCard = Array.from(colorList.querySelectorAll('.pos-color-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSColor);
+        if (colCard) window.posOnColorCardClick(colCard);
+    } else if (colorVariants.length > 0) {
+        const firstColCard = colorList.querySelector('.pos-color-card');
+        if (firstColCard) window.posOnColorCardClick(firstColCard);
+    }
+
+    if (selectedPOSPattern) {
+        const patCard = Array.from(patternList.querySelectorAll('.pos-pattern-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSPattern);
+        if (patCard) window.posOnPatternCardClick(patCard);
+    } else if (availablePatterns.length > 0) {
+        const firstPatCard = patternList.querySelector('.pos-pattern-card');
+        if (firstPatCard) window.posOnPatternCardClick(firstPatCard);
+    }
+
+    const confirmBtn = document.getElementById('pos-btn-confirm-variant');
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            const fsSettings = globalFlashSaleSettings;
+            const currentPrice = getProductCurrentPrice(p, fsSettings);
+
+            let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl;
+            if (selectedPOSColor && colorVariants.length > 0) {
+                const cv = colorVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSColor);
+                if (cv && typeof cv === 'object' && (cv.thumbUrl || cv.imageUrl || cv.image)) {
+                    variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
+                }
+            }
+            if (selectedPOSPattern && availablePatterns.length > 0) {
+                const pv = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSPattern);
+                if (pv && typeof pv === 'object' && (pv.thumbUrl || pv.imageUrl || pv.image)) {
+                    if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
+                        variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
+                    }
+                }
+            }
+
+            if (currentPOSVariantCartIndex >= 0) {
+                window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, variantImg);
+            } else {
+                window.addToPOSCart(p.id, p.name, currentPrice, variantImg, p.category || 'khac', selectedPOSColor || null, selectedPOSPattern || null);
+            }
+            window.posCloseVariantModal();
+        };
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.updatePOSCartItemVariant = (index, color, pattern, image) => {
+    const bill = window.getCurrentBill();
+    if (!bill || !bill.cart || !bill.cart[index]) return;
+
+    const item = bill.cart[index];
+    item.color = color;
+    item.pattern = pattern;
+    if (image) item.image = image;
+
+    window.savePOSBills();
+    renderPOSCart();
+    if (typeof showToast !== 'undefined') showToast(`Đã cập nhật biến thể cho ${item.name}`);
+};
+
+window.posCloseVariantModal = () => {
+    const modal = document.getElementById('pos-variant-modal');
+    if (modal) modal.style.display = 'none';
+    currentPOSVariantProduct = null;
+};
+
+window.posOnColorCardClick = (el) => {
+    if (!el) return;
+    const name = decodeURIComponent(el.getAttribute('data-variant-name') || '');
+    const img = decodeURIComponent(el.getAttribute('data-variant-img') || '');
+    selectedPOSColor = name;
+
+    document.querySelectorAll('.pos-color-card').forEach(card => {
+        const isSel = card === el;
+        card.style.borderColor = isSel ? '#0066cc' : '#cbd5e1';
+        card.style.background = isSel ? '#f0f9ff' : '#fff';
+        card.style.boxShadow = isSel ? '0 0 0 2px rgba(0,102,204,0.2)' : 'none';
+    });
+    if (img) {
+        const modalImg = document.getElementById('pos-modal-prod-img');
+        if (modalImg) modalImg.src = img;
+    }
+};
+
+window.posOnPatternCardClick = (el) => {
+    if (!el) return;
+    const name = decodeURIComponent(el.getAttribute('data-variant-name') || '');
+    const img = decodeURIComponent(el.getAttribute('data-variant-img') || '');
+    selectedPOSPattern = name;
+
+    document.querySelectorAll('.pos-pattern-card').forEach(card => {
+        const isSel = card === el;
+        card.style.borderColor = isSel ? '#0066cc' : '#cbd5e1';
+        card.style.background = isSel ? '#f0f9ff' : '#fff';
+        card.style.boxShadow = isSel ? '0 0 0 2px rgba(0,102,204,0.2)' : 'none';
+    });
+    if (img && !selectedPOSColor) {
+        const modalImg = document.getElementById('pos-modal-prod-img');
+        if (modalImg) modalImg.src = img;
+    }
+};
+
+window.posSelectAndAddColor = (encName, encImg) => {
+    if (!currentPOSVariantProduct) return;
+    const p = currentPOSVariantProduct;
+    const name = decodeURIComponent(encName);
+    const img = decodeURIComponent(encImg) || p.imageUrl;
+    const fsSettings = globalFlashSaleSettings;
+    const currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', name, selectedPOSPattern || null);
+    window.posCloseVariantModal();
+};
+
+window.posSelectAndAddPattern = (encName, encImg) => {
+    if (!currentPOSVariantProduct) return;
+    const p = currentPOSVariantProduct;
+    const name = decodeURIComponent(encName);
+    const img = decodeURIComponent(encImg) || p.imageUrl;
+    const fsSettings = globalFlashSaleSettings;
+    const currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', selectedPOSColor || null, name);
+    window.posCloseVariantModal();
+};
+
+window.posQuickAddVariant = (productId, encColor, encPattern, encImg) => {
+    const p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
+    if (!p) return;
+
+    const color = encColor ? decodeURIComponent(encColor) : null;
+    const pattern = encPattern ? decodeURIComponent(encPattern) : null;
+    const img = encImg ? decodeURIComponent(encImg) : p.imageUrl;
+    const fsSettings = globalFlashSaleSettings;
+    const currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', color, pattern);
+
+    const suggs = document.getElementById('pos-product-suggestions');
+    if (suggs) suggs.style.display = 'none';
+    const searchInput = document.getElementById('pos-product-search');
+    if (searchInput) searchInput.value = '';
+};
+
+window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null) => {
+    let bill = window.getCurrentBill();
+    if (!bill) {
+        if (typeof window.initPOSBills === 'function') window.initPOSBills();
+        bill = window.getCurrentBill();
+    }
     if (!bill) return;
 
     if (typeof showToast !== 'undefined') showToast(`Đã thêm ${name} vào đơn hàng`);
@@ -7364,11 +7661,15 @@ window.addToPOSCart = async (id, name, price, image, category = 'khac', color = 
         }
     } catch (e) { }
 
-    const existing = bill.cart.find(i => i.id === id && i.color === color && i.pattern === pattern);
+    const normColor = color || null;
+    const normPattern = pattern || null;
+
+    const existing = bill.cart.find(i => i.id === id && (i.color || null) === normColor && (i.pattern || null) === normPattern);
     if (existing) {
         existing.quantity += 1;
+        if (image) existing.image = image;
     } else {
-        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color, pattern, discount: 0 });
+        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color: normColor, pattern: normPattern, discount: 0 });
     }
 
     window.savePOSBills();
@@ -8604,12 +8905,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (results.length > 0) {
                     posSuggestions.innerHTML = results.map((p, idx) => {
                         const currentPrice = getProductCurrentPrice(p, fsSettings);
+                        const hasVars = (Array.isArray(p.colorVariants) && p.colorVariants.length > 0) || 
+                                         (Array.isArray(p.patternVariants) && p.patternVariants.length > 0) || 
+                                         (Array.isArray(p.patterns) && p.patterns.length > 0);
+
+                        const clickRowAction = `window.addToPOSCart('${p.id.replace(/'/g, "\\'")}', '${(p.name || '').replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}', '${p.category || 'khac'}')`;
+
                         return `
-                        <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" 
-                             onclick="window.addToPOSCart('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}')">
-                            <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;">
+                        <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" onclick="${clickRowAction}">
+                            <img src="${p.imageUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333;">${p.name}</div>
+                                <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333;">
+                                    ${p.name}
+                                    ${hasVars ? '<span style="font-size: 0.68rem; color: #0284c7; background: #e0f2fe; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: 600;">Có biến thể</span>' : ''}
+                                </div>
                                 <div style="font-size: 0.7rem; color: #888;">
                                     SKU: ${p.id} | Kho: ${p.stock} | <strong>${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</strong>
                                 </div>
