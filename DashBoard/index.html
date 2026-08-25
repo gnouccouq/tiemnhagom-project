@@ -2344,6 +2344,7 @@
                                                 thêm
                                             </label>
                                         </div>
+                                        <div id="stock-help-note" style="display: none; font-size: 0.78rem; color: #0284c7; margin-top: 4px; font-weight: 500;"></div>
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Định mức tồn thấp nhất</label>
@@ -2802,7 +2803,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=49"></script>
+    <script type="module" src="../js/DashBoard.js?v=50"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
@@ -2916,6 +2917,94 @@
                 <button class="btn-dark"
                     style="padding: 8px 25px; border: none; border-radius: 4px; font-weight: 500; background-color: #1e88e5; color: white;"
                     onclick="window.posSaveNewCustomer()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Điều chỉnh tồn kho nhanh -->
+    <div id="quick-stock-modal" class="modal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+        <div class="modal-content" style="max-width: 580px; width: 92%; padding: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); background: #ffffff;">
+            <div style="padding: 16px 20px; background: #0066cc; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.25rem;">📦</span>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: white;">Điều chỉnh tồn kho nhanh</h3>
+                </div>
+                <span class="close-modal" onclick="window.closeQuickStockModal()" style="color: white; font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</span>
+            </div>
+
+            <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+                <!-- Thông tin sản phẩm vắn tắt -->
+                <div id="qs-product-info-box" style="display: flex; gap: 14px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 14px; border-radius: 8px; margin-bottom: 18px;">
+                    <img id="qs-product-img" src="https://placehold.co/60" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.8rem; color: #0066cc; font-weight: 600;" id="qs-product-sku">SKU</div>
+                        <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="qs-product-name">Tên sản phẩm</div>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
+                            Tồn kho hiện tại: <strong id="qs-product-current-stock" style="color: #0284c7; font-size: 0.9rem;">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chế độ sản phẩm thường (Không có biến thể) -->
+                <div id="qs-single-container" style="display: none;">
+                    <div style="margin-bottom: 14px;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Phương thức điều chỉnh</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem; background: #ffffff;">
+                                <input type="radio" name="qs-mode" value="set" checked onchange="window.updateQuickStockCalc()"> Đặt lại (=)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem; background: #ffffff;">
+                                <input type="radio" name="qs-mode" value="add" onchange="window.updateQuickStockCalc()"> Nhập thêm (+)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem; background: #ffffff;">
+                                <input type="radio" name="qs-mode" value="sub" onchange="window.updateQuickStockCalc()"> Xuất bớt (-)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label id="qs-qty-label" style="font-weight: 600; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Số lượng</label>
+                        <input type="number" id="qs-qty-input" min="0" placeholder="Nhập số lượng..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; font-weight: 600; color: #0f172a;" oninput="window.updateQuickStockCalc()">
+                    </div>
+
+                    <div id="qs-calc-preview" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.85rem; color: #166534; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Tồn kho sau khi lưu:</span>
+                        <strong id="qs-new-stock-preview" style="font-size: 1.1rem; color: #15803d;">0</strong>
+                    </div>
+                </div>
+
+                <!-- Chế độ sản phẩm có Biến thể -->
+                <div id="qs-variants-container" style="display: none;">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 8px;">
+                        Điều chỉnh từng biến thể (Tổng tồn kho sẽ tự động cộng dồn):
+                    </label>
+                    <div id="qs-variants-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; max-height: 240px; overflow-y: auto;">
+                        <!-- Rendered dynamically -->
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Tổng tồn kho tất cả biến thể:</span>
+                        <strong id="qs-variants-total-preview" style="font-size: 1.1rem; color: #1d4ed8;">0</strong>
+                    </div>
+                </div>
+
+                <!-- Lý do điều chỉnh -->
+                <div style="margin-bottom: 10px;">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #334155; display: block; margin-bottom: 6px;">Lý do điều chỉnh (Ghi vào Nhật ký kho)</label>
+                    <select id="qs-reason-select" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; color: #334155; margin-bottom: 6px;" onchange="document.getElementById('qs-reason-custom').style.display = this.value === 'custom' ? 'block' : 'none'">
+                        <option value="Kiểm kê kho định kỳ">Kiểm kê kho định kỳ</option>
+                        <option value="Nhập hàng mới từ xưởng sản xuất">Nhập hàng mới từ xưởng sản xuất</option>
+                        <option value="Xuất hàng mẫu / Trưng bày sự kiện">Xuất hàng mẫu / Trưng bày sự kiện</option>
+                        <option value="Hàng lỗi / Vỡ / Hao hụt trong kho">Hàng lỗi / Vỡ / Hao hụt trong kho</option>
+                        <option value="Điều chỉnh số liệu sai sót">Điều chỉnh số liệu sai sót</option>
+                        <option value="custom">Lý do khác (tự nhập)...</option>
+                    </select>
+                    <input type="text" id="qs-reason-custom" placeholder="Nhập lý do cụ thể..." style="display: none; width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; margin-top: 6px;">
+                </div>
+            </div>
+
+            <div style="padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-minimal" style="padding: 8px 18px; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; font-weight: 500; background: white; cursor: pointer;" onclick="window.closeQuickStockModal()">Bỏ qua</button>
+                <button type="button" id="qs-save-btn" class="kiot-btn-primary" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="window.saveQuickStock()">💾 Lưu tồn kho</button>
             </div>
         </div>
     </div>
