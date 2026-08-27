@@ -682,7 +682,9 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'color',
                     name: v.name,
                     imageUrl: v.imageUrl,
-                    price: v.price
+                    price: v.price,
+                    stock: v.stock,
+                    isOutOfStock: v.isOutOfStock
                 });
             }
         });
@@ -696,7 +698,9 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'pattern',
                     name: v.name,
                     imageUrl: v.imageUrl,
-                    price: v.price
+                    price: v.price,
+                    stock: v.stock,
+                    isOutOfStock: v.isOutOfStock
                 });
             }
         });
@@ -710,7 +714,9 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'combo',
                     name: v.name,
                     imageUrl: v.imageUrl || v.thumbUrl,
-                    price: v.price
+                    price: v.price,
+                    stock: v.stock,
+                    isOutOfStock: v.isOutOfStock
                 });
             }
         });

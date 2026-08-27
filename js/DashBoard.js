@@ -2417,6 +2417,12 @@ window.renderComboVariantsTabs = function () {
     const nameInput = document.getElementById('combo-variant-name');
     if (nameInput) nameInput.value = currentVariant.name || '';
 
+    const stockInput = document.getElementById('combo-variant-stock');
+    if (stockInput) stockInput.value = currentVariant.stock !== undefined && currentVariant.stock !== null ? currentVariant.stock : '';
+
+    const outOfStockCb = document.getElementById('combo-variant-out-of-stock');
+    if (outOfStockCb) outOfStockCb.checked = currentVariant.isOutOfStock || false;
+
     const imageInput = document.getElementById('combo-variant-image');
     if (imageInput) imageInput.value = currentVariant.imageUrl || '';
 
@@ -2427,7 +2433,7 @@ window.renderComboVariantsTabs = function () {
 };
 
 window.addComboVariant = function () {
-    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], showOnProductPage: false });
+    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], stock: 10, isOutOfStock: false, showOnProductPage: false });
     window.currentComboVariantIndex = window.comboVariants.length - 1;
     window.renderComboVariantsTabs();
 };
@@ -2446,6 +2452,18 @@ window.updateCurrentComboVariantName = function (name) {
         if (input) {
             input.focus();
         }
+    }
+};
+
+window.updateCurrentComboVariantStock = function (val) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].stock = val === '' ? 0 : parseInt(val, 10) || 0;
+    }
+};
+
+window.updateCurrentComboVariantOutOfStock = function (checked) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].isOutOfStock = checked;
     }
 };
 

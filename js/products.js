@@ -312,7 +312,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                             type: 'color',
                             name: v.name,
                             imageUrl: v.imageUrl,
-                            price: v.price
+                            price: v.price,
+                            stock: v.stock,
+                            isOutOfStock: v.isOutOfStock
                         });
                     }
                 });
@@ -326,7 +328,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                             type: 'pattern',
                             name: v.name,
                             imageUrl: v.imageUrl,
-                            price: v.price
+                            price: v.price,
+                            stock: v.stock,
+                            isOutOfStock: v.isOutOfStock
                         });
                     }
                 });
@@ -339,7 +343,10 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                         cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
                             type: 'combo',
                             name: v.name,
-                            imageUrl: v.imageUrl || v.thumbUrl
+                            imageUrl: v.imageUrl || v.thumbUrl,
+                            price: v.price,
+                            stock: v.stock,
+                            isOutOfStock: v.isOutOfStock
                         });
                     }
                 });

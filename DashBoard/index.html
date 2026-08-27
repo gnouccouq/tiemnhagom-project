@@ -2455,13 +2455,20 @@
                                     <div id="combo-variants-tabs"
                                         style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;"></div>
                                     <div id="combo-variant-content" style="display: none;">
-                                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
                                             <input type="text" id="combo-variant-name" placeholder="Tên phân loại"
                                                 oninput="window.updateCurrentComboVariantName(this.value)"
-                                                style="flex: 1;">
+                                                style="flex: 2; min-width: 140px;">
+                                            <input type="number" id="combo-variant-stock" placeholder="Tồn kho" min="0"
+                                                oninput="window.updateCurrentComboVariantStock(this.value)"
+                                                style="width: 90px;">
+                                            <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #dc2626; cursor: pointer; white-space: nowrap;">
+                                                <input type="checkbox" id="combo-variant-out-of-stock"
+                                                    onchange="window.updateCurrentComboVariantOutOfStock(this.checked)"> Báo hết hàng
+                                            </label>
                                             <input type="text" id="combo-variant-image" placeholder="URL ảnh..."
                                                 oninput="window.updateCurrentComboVariantImage(this.value)"
-                                                style="flex: 1;">
+                                                style="flex: 2; min-width: 140px;">
                                             <button type="button" class="kiot-btn-outline"
                                                 onclick="window.removeCurrentComboVariant()">Xóa</button>
                                         </div>
