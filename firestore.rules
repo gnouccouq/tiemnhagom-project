@@ -136,6 +136,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 10. Nhật ký kho (inventory_logs)
+    match /inventory_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

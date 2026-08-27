@@ -1229,13 +1229,26 @@ window.closeProductModal = function () {
         if (additiveCheckbox) additiveCheckbox.checked = false;
         if (stockInput) {
             stockInput.disabled = false;
+            stockInput.readOnly = false;
+            stockInput.style.backgroundColor = '#ffffff';
+            stockInput.style.cursor = 'text';
             stockInput.placeholder = "0";
         }
         if (additiveCheckbox) additiveCheckbox.disabled = false;
 
+        // Reset thông báo trợ giúp tồn kho
+        const helpNote = document.getElementById('stock-help-note');
+        if (helpNote) {
+            helpNote.style.display = 'none';
+            helpNote.innerHTML = '';
+        }
+
         // Reset luôn giao diện combo
         if (typeof window.toggleComboSection === 'function') {
             window.toggleComboSection();
+        }
+        if (typeof window.syncStockWithVariants === 'function') {
+            window.syncStockWithVariants();
         }
     }
 };
@@ -1359,6 +1372,52 @@ window.removeAdditionalProductImage = function (index) {
 };
 
 // --- Logic Quản lý Biến thể Màu sắc & Ảnh ---
+window.syncStockWithVariants = function () {
+    const stockInput = document.getElementById('stock');
+    const additiveCheckbox = document.getElementById('stock-additive');
+    const helpNote = document.getElementById('stock-help-note');
+    if (!stockInput) return;
+
+    const variantRows = Array.from(document.querySelectorAll('.variant-row, .pattern-variant-row'));
+    if (variantRows.length > 0) {
+        let totalVariantStock = 0;
+        variantRows.forEach(row => {
+            const val = parseInt(row.querySelector('.variant-stock')?.value) || 0;
+            totalVariantStock += Math.max(0, val);
+        });
+
+        stockInput.value = totalVariantStock;
+        stockInput.readOnly = true;
+        stockInput.style.backgroundColor = '#f1f5f9';
+        stockInput.style.cursor = 'not-allowed';
+        stockInput.title = 'Tồn kho được tính tự động từ tổng các biến thể bên dưới';
+
+        if (additiveCheckbox) {
+            additiveCheckbox.checked = false;
+            additiveCheckbox.disabled = true;
+        }
+
+        if (helpNote) {
+            helpNote.style.display = 'block';
+            helpNote.innerHTML = `💡 Đang có <strong>${variantRows.length}</strong> biến thể. Tồn kho tự động tính từ tổng các biến thể (<strong>${totalVariantStock}</strong> sản phẩm).`;
+        }
+    } else {
+        stockInput.readOnly = false;
+        stockInput.style.backgroundColor = '#ffffff';
+        stockInput.style.cursor = 'text';
+        stockInput.title = '';
+
+        if (additiveCheckbox) {
+            additiveCheckbox.disabled = false;
+        }
+
+        if (helpNote) {
+            helpNote.style.display = 'none';
+            helpNote.innerHTML = '';
+        }
+    }
+};
+
 window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
@@ -1386,7 +1445,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
             <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="width: 70px;">
-            <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
@@ -1412,8 +1471,18 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
         }
     };
 
-    row.querySelector('.btn-delete-variant').onclick = () => row.remove();
+    const stockInp = row.querySelector('.variant-stock');
+    if (stockInp) {
+        stockInp.addEventListener('input', window.syncStockWithVariants);
+    }
+
+    row.querySelector('.btn-delete-variant').onclick = () => {
+        row.remove();
+        window.syncStockWithVariants();
+    };
+
     container.appendChild(row);
+    window.syncStockWithVariants();
 };
 
 window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
@@ -1433,7 +1502,7 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
             <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="width: 70px;">
-            <input type="number" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
         </div>
         <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
@@ -1459,8 +1528,18 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
         }
     };
 
-    row.querySelector('.btn-delete-variant').onclick = () => row.remove();
+    const stockInp = row.querySelector('.variant-stock');
+    if (stockInp) {
+        stockInp.addEventListener('input', window.syncStockWithVariants);
+    }
+
+    row.querySelector('.btn-delete-variant').onclick = () => {
+        row.remove();
+        window.syncStockWithVariants();
+    };
+
     container.appendChild(row);
+    window.syncStockWithVariants();
 };
 
 // --- Logic Quản lý Banner ---
@@ -3002,12 +3081,42 @@ if (productForm) {
                 productData.sold = oldData.sold || 0;
             }
 
-            // Ghi log tồn kho chỉ khi không có biến thể hoặc khi tổng tồn kho thay đổi đáng kể
-            if (!hasVariants || (isEdit && existingSnap.data().stock !== productData.stock)) {
-                // Log tồn kho
-                // ... (existing inventory log logic)
+            // Ghi nhật ký kho (inventory_logs)
+            if (isEdit && existingSnap.exists()) {
+                const oldStock = Number(existingSnap.data().stock || 0);
+                const newStock = Number(productData.stock || 0);
+                if (oldStock !== newStock) {
+                    try {
+                        await addDoc(collection(db, "inventory_logs"), {
+                            productId: productId,
+                            productName: productData.name || productId,
+                            previousStock: oldStock,
+                            newStock: newStock,
+                            addedQuantity: newStock - oldStock,
+                            reason: "Chỉnh sửa sản phẩm",
+                            adminEmail: auth?.currentUser?.email || "Admin",
+                            timestamp: serverTimestamp()
+                        });
+                    } catch (logErr) {
+                        console.warn("Lỗi ghi nhật ký kho:", logErr);
+                    }
+                }
+            } else if (!isEdit) {
+                try {
+                    await addDoc(collection(db, "inventory_logs"), {
+                        productId: productId,
+                        productName: productData.name || productId,
+                        previousStock: 0,
+                        newStock: Number(productData.stock || 0),
+                        addedQuantity: Number(productData.stock || 0),
+                        reason: "Khởi tạo sản phẩm mới",
+                        adminEmail: auth?.currentUser?.email || "Admin",
+                        timestamp: serverTimestamp()
+                    });
+                } catch (logErr) {
+                    console.warn("Lỗi ghi nhật ký kho:", logErr);
+                }
             }
-
 
             await setDoc(productRef, productData);
             if (isEdit && productId !== originalId) {
@@ -3107,43 +3216,142 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
             </div>
         `;
     } else if (tabName === 'card') {
+        const productLogs = (inventoryLogsLocal || []).filter(l => l.productId === p.id);
+        let logRowsHtml = '';
+        if (productLogs.length > 0) {
+            logRowsHtml = productLogs.map(l => {
+                const time = l.timestamp ? new Date(l.timestamp.toDate ? l.timestamp.toDate() : l.timestamp).toLocaleString('vi-VN') : '...';
+                const sign = (l.addedQuantity || 0) > 0 ? '+' : '';
+                const changeColor = (l.addedQuantity || 0) > 0 ? '#16a34a' : '#dc2626';
+                return `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 6px 10px;">${time}</td>
+                        <td style="padding: 6px 10px;"><span style="color: #0066cc; font-weight: 600;">${l.reason || 'Điều chỉnh kho'}</span></td>
+                        <td style="padding: 6px 10px; color: ${changeColor}; font-weight: 700;">${sign}${l.addedQuantity || 0}</td>
+                        <td style="padding: 6px 10px; font-weight: 700;">${l.newStock !== undefined ? l.newStock : '---'}</td>
+                        <td style="padding: 6px 10px; color: #64748b; font-size: 0.75rem;">${l.adminEmail || 'Admin'}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            logRowsHtml = `
+                <tr>
+                    <td style="padding: 6px 10px;">${p.createdAt ? new Date(p.createdAt.toDate ? p.createdAt.toDate() : p.createdAt).toLocaleString('vi-VN') : 'Mới tạo'}</td>
+                    <td style="padding: 6px 10px;"><span style="color: #0066cc; font-weight: 600;">Khởi tạo sản phẩm</span></td>
+                    <td style="padding: 6px 10px; color: #16a34a; font-weight: 700;">+${p.stock || 0}</td>
+                    <td style="padding: 6px 10px; font-weight: 700;">${p.stock || 0}</td>
+                    <td style="padding: 6px 10px; color: #64748b; font-size: 0.75rem;">Hệ thống</td>
+                </tr>
+            `;
+        }
+
         bodyEl.innerHTML = `
             <div style="flex: 1; padding: 10px; font-size: 0.83rem;">
-                <h4 style="margin: 0 0 8px 0; color: #0f172a;">Thẻ kho - Lịch sử xuất nhập hàng</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h4 style="margin: 0; color: #0f172a;">Thẻ kho - Lịch sử xuất nhập hàng</h4>
+                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 4px 10px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')">⚡ Điều chỉnh kho ngay</button>
+                </div>
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
                         <tr style="background: #f1f5f9; color: #475569;">
                             <th style="padding: 6px 10px;">Thời gian</th>
-                            <th style="padding: 6px 10px;">Loại chứng từ</th>
+                            <th style="padding: 6px 10px;">Loại chứng từ / Lý do</th>
                             <th style="padding: 6px 10px;">Thay đổi</th>
                             <th style="padding: 6px 10px;">Tồn cuối</th>
+                            <th style="padding: 6px 10px;">Thực hiện</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style="padding: 6px 10px;">${p.createdAt ? new Date(p.createdAt.toDate ? p.createdAt.toDate() : p.createdAt).toLocaleString('vi-VN') : 'Mới tạo'}</td>
-                            <td style="padding: 6px 10px;"><span style="color: #0066cc; font-weight: 600;">Khởi tạo sản phẩm</span></td>
-                            <td style="padding: 6px 10px; color: #16a34a; font-weight: 700;">+${p.stock || 0}</td>
-                            <td style="padding: 6px 10px; font-weight: 700;">${p.stock || 0}</td>
-                        </tr>
+                        ${logRowsHtml}
                     </tbody>
                 </table>
             </div>
         `;
     } else if (tabName === 'stock') {
+        const hasColor = p.colorVariants && p.colorVariants.length > 0;
+        const hasPattern = p.patternVariants && p.patternVariants.length > 0;
+        const hasVariants = hasColor || hasPattern;
+        const inventoryValue = (p.stock || 0) * (p.cost || p.price || 0);
+
+        let variantListHtml = '';
+        if (hasVariants) {
+            let varRows = '';
+            if (hasColor) {
+                p.colorVariants.forEach(v => {
+                    varRows += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 8px 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">🎨</span>`}
+                                    <strong>${v.name}</strong>
+                                </div>
+                            </td>
+                            <td style="padding: 8px 10px; color: #64748b;">Màu sắc</td>
+                            <td style="padding: 8px 10px;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + ' đ' : 'Giá gốc'}</td>
+                            <td style="padding: 8px 10px; font-weight: 700; color: ${v.stock > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
+                        </tr>
+                    `;
+                });
+            }
+            if (hasPattern) {
+                p.patternVariants.forEach(v => {
+                    varRows += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 8px 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">✨</span>`}
+                                    <strong>${v.name}</strong>
+                                </div>
+                            </td>
+                            <td style="padding: 8px 10px; color: #64748b;">Họa tiết</td>
+                            <td style="padding: 8px 10px;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + ' đ' : 'Giá gốc'}</td>
+                            <td style="padding: 8px 10px; font-weight: 700; color: ${v.stock > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            variantListHtml = `
+                <div style="margin-top: 14px;">
+                    <h5 style="margin: 0 0 6px 0; color: #334155; font-size: 0.83rem;">Chi tiết tồn kho từng biến thể:</h5>
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; font-size: 0.82rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; color: #475569; border-bottom: 1px solid #e2e8f0;">
+                                <th style="padding: 6px 10px;">Biến thể</th>
+                                <th style="padding: 6px 10px;">Phân loại</th>
+                                <th style="padding: 6px 10px;">Giá bán riêng</th>
+                                <th style="padding: 6px 10px;">Tồn kho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${varRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         bodyEl.innerHTML = `
             <div style="flex: 1; padding: 10px; font-size: 0.83rem;">
-                <h4 style="margin: 0 0 8px 0; color: #0f172a;">Tồn kho chi tiết theo biến thể / Chi nhánh</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="margin: 0; color: #0f172a;">Quản lý tồn kho & Kiểm kê</h4>
+                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 5px 14px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')">⚡ Điều chỉnh tồn kho ngay</button>
+                </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <div style="background: #f0f7ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 6px;">
+                    <div style="background: #f0f7ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
                         <span style="color: #64748b; font-size: 0.78rem;">Tổng tồn kho hiện tại:</span>
                         <div style="font-size: 1.2rem; font-weight: 700; color: #0066cc;">${p.stock || 0} sản phẩm</div>
                     </div>
-                    <div style="background: #fcf5e5; border: 1px solid #fde68a; padding: 10px 16px; border-radius: 6px;">
-                        <span style="color: #64748b; font-size: 0.78rem;">Khách đã đặt giữ chỗ:</span>
+                    <div style="background: #fcf5e5; border: 1px solid #fde68a; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
+                        <span style="color: #64748b; font-size: 0.78rem;">Khách đã đặt / Đã bán:</span>
                         <div style="font-size: 1.2rem; font-weight: 700; color: #d97706;">${p.sold || 0} sản phẩm</div>
                     </div>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
+                        <span style="color: #64748b; font-size: 0.78rem;">Giá trị vốn hàng tồn:</span>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #16a34a;">${new Intl.NumberFormat('vi-VN').format(inventoryValue)} đ</div>
+                    </div>
                 </div>
+                ${variantListHtml}
             </div>
         `;
     } else {
@@ -3472,7 +3680,12 @@ function renderAdminProductTable() {
                 </td>
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
                 <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
-                <td data-label="Tồn kho">${p.isCombo ? '-' : stockDisplay}</td>
+                <td data-label="Tồn kho">${p.isCombo ? '-' : `
+                    <div style="display: flex; align-items: center; gap: 6px; justify-content: flex-start;">
+                        <span>${stockDisplay}</span>
+                        <button type="button" class="btn-quick-stock" onclick="event.stopPropagation(); window.openQuickStockModal('${p.id}')" title="Chỉnh sửa tồn kho nhanh" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 0.75rem; color: #0066cc; line-height: 1; display: inline-flex; align-items: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#0066cc'; this.style.background='#e0f2fe';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';">✏️</button>
+                    </div>
+                `}</td>
                 <td data-label="Đã bán">${p.sold || 0}</td>
                 <td data-label="Thời gian tạo">${formattedDate}</td>
                 <td data-label="Dự kiến hết hàng">---</td>
@@ -3719,10 +3932,6 @@ async function editProduct(id) {
                 cb.checked = (p.events || []).includes(cb.value);
             });
 
-            // Vô hiệu hóa trường tồn kho và checkbox "Nhập thêm" nếu có biến thể
-            const hasVariants = (p.colorVariants && p.colorVariants.length > 0) || (p.patternVariants && p.patternVariants.length > 0);
-            toggleStockInputState(hasVariants);
-
             // Xóa và nạp lại các hàng biến thể màu sắc
             const variantContainer = document.getElementById('variant-items-container');
             if (variantContainer) {
@@ -3742,6 +3951,11 @@ async function editProduct(id) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
                     p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, ''));
                 }
+            }
+
+            // Đồng bộ trạng thái tồn kho & biến thể
+            if (typeof window.syncStockWithVariants === 'function') {
+                window.syncStockWithVariants();
             }
 
             // Reset checkbox nhập thêm khi load dữ liệu sửa sản phẩm khác
@@ -3776,13 +3990,276 @@ async function editProduct(id) {
 }
 window.editProduct = editProduct;
 
-// Hàm điều khiển trạng thái của input tồn kho và checkbox "Nhập thêm"
+// Hàm điều khiển trạng thái của input tồn kho và checkbox "Nhập thêm" (Tương thích ngược)
 function toggleStockInputState(disable) {
-    const stockInput = document.getElementById('stock');
-    const additiveCheckbox = document.getElementById('stock-additive');
-    if (stockInput) stockInput.disabled = disable;
-    if (additiveCheckbox) additiveCheckbox.disabled = disable;
+    if (typeof window.syncStockWithVariants === 'function') {
+        window.syncStockWithVariants();
+    }
 }
+
+// --- Logic Điều Chỉnh Tồn Kho Nhanh (Quick Stock Adjustment) ---
+window.currentQuickStockProduct = null;
+
+window.openQuickStockModal = async function (productId) {
+    const p = posProductsLocal.find(item => item.id === productId);
+    if (!p) {
+        if (typeof showToast !== 'undefined') showToast("Không tìm thấy sản phẩm!", "error");
+        return;
+    }
+
+    window.currentQuickStockProduct = p;
+    const modal = document.getElementById('quick-stock-modal');
+    if (!modal) return;
+
+    // Đổ thông tin cơ bản của sản phẩm
+    const skuEl = document.getElementById('qs-product-sku');
+    const nameEl = document.getElementById('qs-product-name');
+    const curStockEl = document.getElementById('qs-product-current-stock');
+    const imgEl = document.getElementById('qs-product-img');
+
+    if (skuEl) skuEl.innerText = `Mã SKU: ${p.id}`;
+    if (nameEl) nameEl.innerText = p.name || 'Sản phẩm không tên';
+    if (curStockEl) curStockEl.innerText = `${p.stock || 0} sản phẩm`;
+
+    let displayImgUrl = p.thumbUrl || p.imageUrl;
+    if (!displayImgUrl || displayImgUrl.includes('placehold.co')) {
+        if (p.patternVariants && p.patternVariants.length > 0 && p.patternVariants[0].imageUrl) {
+            displayImgUrl = p.patternVariants[0].imageUrl;
+        } else if (p.colorVariants && p.colorVariants.length > 0 && p.colorVariants[0].imageUrl) {
+            displayImgUrl = p.colorVariants[0].imageUrl;
+        }
+    }
+    if (imgEl) imgEl.src = displayImgUrl || 'https://placehold.co/60';
+
+    const hasColorVariants = p.colorVariants && p.colorVariants.length > 0;
+    const hasPatternVariants = p.patternVariants && p.patternVariants.length > 0;
+    const hasVariants = hasColorVariants || hasPatternVariants;
+
+    const singleContainer = document.getElementById('qs-single-container');
+    const variantsContainer = document.getElementById('qs-variants-container');
+    const reasonSelect = document.getElementById('qs-reason-select');
+    const reasonCustom = document.getElementById('qs-reason-custom');
+
+    if (reasonSelect) reasonSelect.value = 'Kiểm kê kho định kỳ';
+    if (reasonCustom) {
+        reasonCustom.value = '';
+        reasonCustom.style.display = 'none';
+    }
+
+    if (hasVariants) {
+        if (singleContainer) singleContainer.style.display = 'none';
+        if (variantsContainer) variantsContainer.style.display = 'block';
+
+        const variantsListEl = document.getElementById('qs-variants-list');
+        let variantHtml = '';
+
+        if (hasColorVariants) {
+            p.colorVariants.forEach((v, idx) => {
+                variantHtml += `
+                    <div class="qs-variant-row" data-type="color" data-index="${idx}" style="display: flex; gap: 10px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px;">
+                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">🎨</div>`}
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 0.85rem; color: #1e293b;">Màu: ${v.name}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Hiện tại: <strong>${v.stock || 0}</strong></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 0.78rem; color: #475569;">Kho mới:</label>
+                            <input type="number" min="0" class="qs-var-stock-input" value="${v.stock || 0}" style="width: 75px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-weight: 600;" oninput="window.updateQuickStockCalc()">
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        if (hasPatternVariants) {
+            p.patternVariants.forEach((v, idx) => {
+                variantHtml += `
+                    <div class="qs-variant-row" data-type="pattern" data-index="${idx}" style="display: flex; gap: 10px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px;">
+                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">✨</div>`}
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 0.85rem; color: #1e293b;">Họa tiết: ${v.name}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Hiện tại: <strong>${v.stock || 0}</strong></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 0.78rem; color: #475569;">Kho mới:</label>
+                            <input type="number" min="0" class="qs-var-stock-input" value="${v.stock || 0}" style="width: 75px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-weight: 600;" oninput="window.updateQuickStockCalc()">
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        if (variantsListEl) variantsListEl.innerHTML = variantHtml;
+    } else {
+        if (singleContainer) singleContainer.style.display = 'block';
+        if (variantsContainer) variantsContainer.style.display = 'none';
+
+        const modeRadio = document.querySelector('input[name="qs-mode"][value="set"]');
+        if (modeRadio) modeRadio.checked = true;
+
+        const qtyInput = document.getElementById('qs-qty-input');
+        if (qtyInput) qtyInput.value = p.stock || 0;
+    }
+
+    window.updateQuickStockCalc();
+    modal.style.display = 'flex';
+};
+
+window.closeQuickStockModal = function () {
+    const modal = document.getElementById('quick-stock-modal');
+    if (modal) modal.style.display = 'none';
+    window.currentQuickStockProduct = null;
+};
+
+window.updateQuickStockCalc = function () {
+    const p = window.currentQuickStockProduct;
+    if (!p) return;
+
+    const hasColorVariants = p.colorVariants && p.colorVariants.length > 0;
+    const hasPatternVariants = p.patternVariants && p.patternVariants.length > 0;
+    const hasVariants = hasColorVariants || hasPatternVariants;
+
+    if (hasVariants) {
+        let total = 0;
+        document.querySelectorAll('.qs-var-stock-input').forEach(inp => {
+            total += Math.max(0, parseInt(inp.value) || 0);
+        });
+        const totalEl = document.getElementById('qs-variants-total-preview');
+        if (totalEl) totalEl.innerText = `${total} sản phẩm`;
+    } else {
+        const mode = document.querySelector('input[name="qs-mode"]:checked')?.value || 'set';
+        const qty = parseInt(document.getElementById('qs-qty-input')?.value) || 0;
+        const curStock = p.stock || 0;
+        let newStock = curStock;
+
+        if (mode === 'set') {
+            newStock = Math.max(0, qty);
+        } else if (mode === 'add') {
+            newStock = curStock + Math.max(0, qty);
+        } else if (mode === 'sub') {
+            newStock = Math.max(0, curStock - Math.max(0, qty));
+        }
+
+        const previewEl = document.getElementById('qs-new-stock-preview');
+        if (previewEl) previewEl.innerText = `${newStock} sản phẩm`;
+    }
+};
+
+window.saveQuickStock = async function () {
+    const p = window.currentQuickStockProduct;
+    if (!p) return;
+
+    const saveBtn = document.getElementById('qs-save-btn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Đang lưu...';
+    }
+
+    try {
+        const hasColorVariants = p.colorVariants && p.colorVariants.length > 0;
+        const hasPatternVariants = p.patternVariants && p.patternVariants.length > 0;
+        const hasVariants = hasColorVariants || hasPatternVariants;
+
+        let newStock = 0;
+        let updatedColorVariants = p.colorVariants ? JSON.parse(JSON.stringify(p.colorVariants)) : [];
+        let updatedPatternVariants = p.patternVariants ? JSON.parse(JSON.stringify(p.patternVariants)) : [];
+
+        if (hasVariants) {
+            document.querySelectorAll('.qs-variant-row').forEach(row => {
+                const type = row.dataset.type;
+                const idx = parseInt(row.dataset.index);
+                const stockVal = Math.max(0, parseInt(row.querySelector('.qs-var-stock-input')?.value) || 0);
+
+                if (type === 'color' && updatedColorVariants[idx]) {
+                    updatedColorVariants[idx].stock = stockVal;
+                    newStock += stockVal;
+                } else if (type === 'pattern' && updatedPatternVariants[idx]) {
+                    updatedPatternVariants[idx].stock = stockVal;
+                    newStock += stockVal;
+                }
+            });
+        } else {
+            const mode = document.querySelector('input[name="qs-mode"]:checked')?.value || 'set';
+            const qty = parseInt(document.getElementById('qs-qty-input')?.value) || 0;
+            const curStock = p.stock || 0;
+
+            if (mode === 'set') {
+                newStock = Math.max(0, qty);
+            } else if (mode === 'add') {
+                newStock = curStock + Math.max(0, qty);
+            } else if (mode === 'sub') {
+                newStock = Math.max(0, curStock - Math.max(0, qty));
+            }
+        }
+
+        // Xác định lý do điều chỉnh
+        const reasonSelect = document.getElementById('qs-reason-select');
+        let reasonText = reasonSelect ? reasonSelect.value : 'Kiểm kê kho định kỳ';
+        if (reasonText === 'custom') {
+            reasonText = document.getElementById('qs-reason-custom')?.value.trim() || 'Điều chỉnh tồn kho';
+        }
+
+        const prevStock = Number(p.stock || 0);
+        const changeQty = newStock - prevStock;
+
+        // Cập nhật lên Firestore
+        const updatePayload = {
+            stock: newStock,
+            updatedAt: new Date().toISOString()
+        };
+        if (hasColorVariants) updatePayload.colorVariants = updatedColorVariants;
+        if (hasPatternVariants) updatePayload.patternVariants = updatedPatternVariants;
+
+        await updateDoc(doc(db, "products", p.id), updatePayload);
+
+        // Ghi nhật ký kho
+        try {
+            await addDoc(collection(db, "inventory_logs"), {
+                productId: p.id,
+                productName: p.name || p.id,
+                previousStock: prevStock,
+                newStock: newStock,
+                addedQuantity: changeQty,
+                reason: reasonText,
+                adminEmail: auth?.currentUser?.email || "Admin",
+                timestamp: serverTimestamp()
+            });
+        } catch (logErr) {
+            console.warn("Lỗi ghi nhật ký kho:", logErr);
+        }
+
+        // Cập nhật bộ nhớ local
+        p.stock = newStock;
+        if (hasColorVariants) p.colorVariants = updatedColorVariants;
+        if (hasPatternVariants) p.patternVariants = updatedPatternVariants;
+
+        showToast(`✅ Đã cập nhật tồn kho cho "${p.name || p.id}" thành công: ${newStock} sp!`, "success");
+        window.closeQuickStockModal();
+
+        // Cập nhật lại giao diện bảng sản phẩm
+        renderAdminProductTable();
+
+        // Cập nhật lại Quickview nếu đang mở
+        const detailRow = document.getElementById(`product-detail-row-${p.id}`);
+        if (detailRow) {
+            const activeTabBtn = detailRow.querySelector('.qv-tab-item.active');
+            const tabName = activeTabBtn ? activeTabBtn.textContent.trim() : '';
+            if (tabName === 'Tồn kho') {
+                window.switchQuickViewTab(p.id, 'stock', activeTabBtn);
+            } else if (tabName === 'Thẻ kho') {
+                window.switchQuickViewTab(p.id, 'card', activeTabBtn);
+            }
+        }
+    } catch (err) {
+        console.error("Lỗi cập nhật tồn kho:", err);
+        showToast("Lỗi khi cập nhật tồn kho: " + err.message, "error");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = "💾 Lưu tồn kho";
+        }
+    }
+};
 
 async function deleteProduct(id) {
     if (confirm(`Bạn có chắc muốn xóa vĩnh viễn sản phẩm ${id}?`)) {
