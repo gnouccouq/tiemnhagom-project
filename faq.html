@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Câu hỏi thường gặp (FAQ) - Tiệm Nhà Gốm | Giải đáp thắc mắc</title>
+    <meta name="description" content="Giải đáp thắc mắc thường gặp về cách sử dụng, vệ sinh đồ gốm, chính sách vận chuyển đền bù bể vỡ 100%, đổi trả và dịch vụ tại Tiệm Nhà Gốm.">
+    <link rel="canonical" href="https://tiemnhagom.vn/faq.html">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tiemnhagom.vn/faq.html">
+    <meta property="og:title" content="Câu hỏi thường gặp (FAQ) - Tiệm Nhà Gốm">
+    <meta property="og:description" content="Giải đáp thắc mắc thường gặp về cách sử dụng, bảo quản đồ gốm và chính sách vận chuyển tại Tiệm Nhà Gốm.">
+    <meta property="og:image" content="https://tiemnhagom.vn/Asset/images/hero-bg.jpg">
+    <meta property="og:locale" content="vi_VN">
+
+    <link rel="stylesheet" href="./css/style.css?v=16">
+    <link rel="icon" type="image/png" href="./Asset/icons/favicon.png">
+    <link rel="apple-touch-icon" href="./Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Schema FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Đồ gốm của Tiệm có dùng được trong lò vi sóng và lò nướng không?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Phần lớn các sản phẩm gốm nung ở nhiệt độ cao (trên 1200°C) tại Tiệm đều an toàn tuyệt đối khi sử dụng trong lò vi sóng, lò nướng và máy rửa bát. Bạn có thể kiểm tra icon thông số chi tiết ở từng trang sản phẩm."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Nếu hàng bị vỡ nứt trong lúc vận chuyển thì Tiệm xử lý thế nào?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tiệm có chính sách Bảo hiểm bể vỡ 100%. Nếu sản phẩm bị nứt vỡ khi mở hộp, bạn chỉ cần chụp ảnh hoặc quay video ngắn gửi qua Hotline/Zalo 0777709662, Tiệm sẽ gửi bù sản phẩm mới miễn phí 100% hoặc hoàn tiền ngay trong 24h."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Thời gian giao hàng mất bao lâu?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nội thành TP.HCM: 1-2 ngày làm việc (có hỗ trợ giao hỏa tốc trong ngày). Các tỉnh thành khác: 2-4 ngày làm việc."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Tiệm có hỗ trợ gói quà và viết thiệp tay không?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Có. Tiệm luôn có dịch vụ đóng hộp quà trang nhã và viết thiệp tay miễn phí kèm theo thông điệp yêu thương mà bạn gửi gắm."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 30vh;
+            min-height: 260px;
+            margin-top: -80px;
+            margin-bottom: 3rem;
+        }
+
+        .faq-wrapper {
+            max-width: 900px;
+            margin: 0 auto 5rem;
+            padding: 0 20px;
+        }
+
+        .faq-category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+
+        .faq-tab-btn {
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #4a5568;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .faq-tab-btn.active, .faq-tab-btn:hover {
+            background: #2c3e50;
+            color: #fff;
+            border-color: #2c3e50;
+        }
+
+        .faq-item {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #edf2f7;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .faq-question {
+            padding: 18px 22px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.98rem;
+            color: #2d3748;
+            user-select: none;
+        }
+
+        .faq-question svg {
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 15px;
+            color: #718096;
+        }
+
+        .faq-item.open .faq-question svg {
+            transform: rotate(180deg);
+            color: #2c3e50;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            padding: 0 22px;
+            color: #4a5568;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            background: #fafafa;
+            border-top: 1px solid transparent;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 400px;
+            padding: 16px 22px 20px;
+            border-top-color: #edf2f7;
+        }
+
+        .faq-support-box {
+            margin-top: 3.5rem;
+            background: #f7f6f2;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px dashed #cbd5e1;
+        }
+    </style>
+</head>
+<body class="home-page">
+    <div id="header-placeholder"></div>
+
+    <main>
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <div style="text-align: center; z-index: 10;">
+                <h1 style="color: #fff; font-size: 1.8rem; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px;">Câu hỏi thường gặp (FAQ)</h1>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.95rem; margin: 0;">Giải đáp các thắc mắc phổ biến về gốm sứ và dịch vụ tại Tiệm Nhà Gốm</p>
+            </div>
+        </section>
+
+        <div class="faq-wrapper">
+            <div class="faq-category-tabs">
+                <button class="faq-tab-btn active" onclick="filterFaq('all')">Tất cả câu hỏi</button>
+                <button class="faq-tab-btn" onclick="filterFaq('usage')">Chất lượng & Sử dụng</button>
+                <button class="faq-tab-btn" onclick="filterFaq('shipping')">Đóng gói & Vận chuyển</button>
+                <button class="faq-tab-btn" onclick="filterFaq('order')">Đặt hàng & Thanh toán</button>
+                <button class="faq-tab-btn" onclick="filterFaq('service')">Hoa & Decor Sự Kiện</button>
+            </div>
+
+            <div id="faq-list">
+                <!-- Group 1: Chất lượng & Sử dụng -->
+                <div class="faq-item" data-cat="usage">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Đồ gốm của Tiệm có dùng được trong lò vi sóng, lò nướng và máy rửa bát không?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Các sản phẩm chén, đĩa, tô, ly của Tiệm được nung ở nhiệt độ cao trên 1200°C nên có độ bền cơ học cao và an toàn tuyệt đối với lò vi sóng, lò nướng và máy rửa bát. Một số sản phẩm trang trí có dát vàng kim hoặc men đặc biệt sẽ được Tiệm ghi chú rõ "Không đút lò" trên thông số sản phẩm.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-cat="usage">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Cách làm sạch vết ố trà hoặc cà phê bám trên men gốm?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Bạn chỉ cần dùng một ít baking soda hoặc lát chanh tươi chà nhẹ cùng nước ấm lên bề mặt bị ố, sau đó rửa lại bằng nước sạch là lớp men gốm sẽ sáng bóng như mới mà không làm xước men.
+                    </div>
+                </div>
+
+                <!-- Group 2: Đóng gói & Vận chuyển -->
+                <div class="faq-item" data-cat="shipping">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Nếu hàng bị nứt vỡ trong quá trình vận chuyển thì Tiệm xử lý như thế nào?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Tiệm áp dụng <strong>Bảo hiểm bể vỡ 100%</strong>. Quy trình đóng gói của Tiệm gồm 5 lớp (chống sốc, xốp định hình và hộp carton cứng). Nếu không may xảy ra nứt vỡ, bạn chỉ cần chụp ảnh hoặc quay clip gửi qua Zalo/Hotline <strong>0777709662</strong>, Tiệm sẽ gửi lại sản phẩm mới hoàn toàn miễn phí hoặc hoàn tiền ngay trong 24h.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-cat="shipping">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Thời gian giao hàng mất bao lâu và phí ship tính thế nào?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        - <strong>Nội thành TP.HCM:</strong> 1-2 ngày làm việc (có dịch vụ giao hỏa tốc nhận trong 2 giờ).<br>
+                        - <strong>Các tỉnh thành khác:</strong> 2-4 ngày làm việc.<br>
+                        - Phí vận chuyển được tính tự động khi bạn nhập địa chỉ ở bước thanh toán. Tiệm thường xuyên có mã miễn phí vận chuyển cho đơn từ 500.000đ.
+                    </div>
+                </div>
+
+                <!-- Group 3: Đặt hàng & Thanh toán -->
+                <div class="faq-item" data-cat="order">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Tiệm có hỗ trợ kiểm tra hàng trước khi thanh toán (Đồng kiểm) không?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Có. Bạn hoàn toàn được mở hộp kiểm tra số lượng và tính nguyên vẹn của sản phẩm trước khi thanh toán tiền cho nhân viên giao hàng (áp dụng cho cả đơn ship COD và chuyển khoản).
+                    </div>
+                </div>
+
+                <div class="faq-item" data-cat="order">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Tiệm có hỗ trợ gói quà và ghi thiệp tay cho người nhận không?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Có! Bạn chỉ cần để lại ghi chú nội dung lời chúc trong ô "Ghi chú đơn hàng" lúc thanh toán hoặc nhắn tin trực tiếp qua Zalo/Fanpage, Tiệm sẽ gói hộp quà chỉnh chu kèm thiệp viết tay nắn nót trao gửi đến người thương của bạn.
+                    </div>
+                </div>
+
+                <div class="faq-item" data-cat="order">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Tôi có thể tra cứu đơn hàng của mình bằng cách nào?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        Bạn có thể truy cập trang <a href="tra-cuu-don-hang.html" style="color: #2c3e50; font-weight: 600; text-decoration: underline;">Tra cứu đơn hàng</a>, nhập Số điện thoại hoặc Mã đơn hàng để theo dõi chi tiết tình trạng đơn hàng mọi lúc.
+                    </div>
+                </div>
+
+                <!-- Group 4: Hoa & Decor -->
+                <div class="faq-item" data-cat="service">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Dịch vụ Hoa tươi và Trang trí sự kiện cần đặt trước bao lâu?</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="faq-answer">
+                        - <strong>Bó hoa / Giỏ hoa thiết kế:</strong> Quý khách nên đặt trước 1 ngày để Tiệm chuẩn bị hoa tươi mới nhất từ Đà Lạt.<br>
+                        - <strong>Decor sự kiện / Workshop:</strong> Quý khách vui lòng liên hệ trước từ 3 - 7 ngày để đội ngũ Tiệm khảo sát không gian và lên bản vẽ thiết kế phù hợp.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-support-box">
+                <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 1.2rem; color: #2c3e50;">Bạn vẫn còn câu hỏi khác?</h3>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.2rem;">Đừng ngần ngại liên hệ trực tiếp với Tiệm để được giải đáp tận tình nhất nhé!</p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://zalo.me/0777709662" target="_blank" class="btn-dark" style="padding: 8px 20px; font-size: 0.9rem;">Chat qua Zalo</a>
+                    <a href="tel:0777709662" class="btn-outline" style="padding: 8px 20px; font-size: 0.9rem;">Gọi Hotline: 0777709662</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { initHeader } from "./js/utils.js";
+        initHeader('./');
+    </script>
+
+    <script>
+        function toggleFaq(el) {
+            const item = el.parentElement;
+            const isOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            if (!isOpen) {
+                item.classList.add('open');
+            }
+        }
+
+        function filterFaq(cat) {
+            document.querySelectorAll('.faq-tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const items = document.querySelectorAll('.faq-item');
+            items.forEach(item => {
+                if (cat === 'all' || item.dataset.cat === cat) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

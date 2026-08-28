@@ -141,6 +141,18 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 11. Đăng ký nhận tin khi có hàng lại (restock_alerts)
+    match /restock_alerts/{alertId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 12. Tin nhắn liên hệ (contact_messages)
+    match /contact_messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

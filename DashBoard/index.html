@@ -132,6 +132,8 @@
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="product-section"><span>Danh
                                         sách sản phẩm</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn"
+                                    data-target="restock-alerts-section"><span>Yêu cầu báo có hàng</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn"
                                     data-target="flash-sale-settings-section"><span>Thiết lập Flash Sale</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="category-section"><span>Danh
                                         mục sản phẩm</span></button>
@@ -654,6 +656,41 @@
                         </div>
                         <button type="submit" class="btn-dark" style="width: 100%;">Lưu cài đặt</button>
                     </form>
+                </div>
+            </div>
+
+            <!-- Section Quản lý Yêu cầu báo có hàng -->
+            <div id="restock-alerts-section" class="admin-section">
+                <div class="admin-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Danh sách yêu cầu thông báo khi có hàng</h3>
+                            <p style="margin: 4px 0 0; color: #64748b; font-size: 0.85rem;">Khách hàng đăng ký nhận tin khi sản phẩm hoặc biến thể hết hàng về đợt mới</p>
+                        </div>
+                        <button type="button" class="btn-minimal" onclick="window.fetchRestockAlertsAdmin()" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.85rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            Làm mới danh sách
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Khách hàng</th>
+                                    <th>SĐT / Zalo</th>
+                                    <th>Email</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Phân loại</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="restock-alerts-tbody">
+                                <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

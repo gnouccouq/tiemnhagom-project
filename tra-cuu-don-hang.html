@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra cứu đơn hàng - Tiệm Nhà Gốm | Theo dõi tiến trình giao hàng</title>
+    <meta name="description" content="Tra cứu tình trạng xử lý và tiến trình vận chuyển đơn hàng tại Tiệm Nhà Gốm bằng Số điện thoại hoặc Mã đơn hàng.">
+    <link rel="canonical" href="https://tiemnhagom.vn/tra-cuu-don-hang.html">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tiemnhagom.vn/tra-cuu-don-hang.html">
+    <meta property="og:title" content="Tra cứu đơn hàng - Tiệm Nhà Gốm">
+    <meta property="og:description" content="Theo dõi tiến trình xử lý và vận chuyển đơn hàng tại Tiệm Nhà Gốm.">
+    <meta property="og:image" content="https://tiemnhagom.vn/Asset/images/hero-bg.jpg">
+    <meta property="og:locale" content="vi_VN">
+
+    <link rel="stylesheet" href="./css/style.css?v=16">
+    <link rel="icon" type="image/png" href="./Asset/icons/favicon.png">
+    <link rel="apple-touch-icon" href="./Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        #col-hero {
+            background-attachment: scroll;
+            background-position: center;
+            background-size: cover;
+            width: 100%;
+            height: 28vh;
+            min-height: 240px;
+            margin-top: -80px;
+            margin-bottom: 2.5rem;
+        }
+
+        .tracking-container {
+            max-width: 850px;
+            margin: 0 auto 5rem;
+            padding: 0 20px;
+        }
+
+        .tracking-search-box {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+
+        .tracking-timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 2rem 0 2.5rem;
+        }
+
+        .tracking-timeline::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            right: 30px;
+            height: 3px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .timeline-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+
+        .timeline-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            color: #94a3b8;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .timeline-step.active .timeline-icon {
+            border-color: #2c3e50;
+            background: #2c3e50;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(44, 62, 80, 0.15);
+        }
+
+        .timeline-step.completed .timeline-icon {
+            border-color: #10b981;
+            background: #10b981;
+            color: #fff;
+        }
+
+        .timeline-step .timeline-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .timeline-step.active .timeline-label {
+            color: #2c3e50;
+        }
+
+        .order-result-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .order-item-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .order-item-row:last-child {
+            border-bottom: none;
+        }
+        .tracking-search-group {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .tracking-input {
+            flex: 1;
+            min-width: 240px;
+            height: 50px;
+            padding: 0 16px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            margin: 0 !important;
+            background: #fff;
+        }
+
+        .tracking-input:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .tracking-btn {
+            height: 50px;
+            padding: 0 24px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            white-space: nowrap;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 !important;
+            border: none;
+            box-sizing: border-box;
+            background: #000;
+            color: #fff;
+            font-weight: 500;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .tracking-btn:hover {
+            background: #2c3e50;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 600px) {
+            .tracking-search-group {
+                flex-direction: column;
+            }
+            .tracking-input, .tracking-btn {
+                width: 100%;
+                height: 48px;
+            }
+        }
+    </style>
+</head>
+<body class="home-page">
+    <div id="header-placeholder"></div>
+
+    <main>
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
+            <div style="text-align: center; z-index: 10;">
+                <h1 style="color: #fff; font-size: 1.8rem; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px;">Tra cứu đơn hàng</h1>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.95rem; margin: 0;">Theo dõi tiến trình xử lý và vận chuyển đơn hàng của bạn</p>
+            </div>
+        </section>
+
+        <div class="tracking-container">
+            <div class="tracking-search-box">
+                <form id="tracking-form" onsubmit="handleOrderSearch(event)">
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.9rem; color: #1e293b; margin-bottom: 8px;">
+                            Số điện thoại đặt hàng hoặc Mã đơn hàng
+                        </label>
+                        <div class="tracking-search-group">
+                            <input type="text" id="lookup-input" class="tracking-input" placeholder="Ví dụ: 0777709662 hoặc TNG28082026..." required>
+                            <button type="submit" id="btn-search-order" class="tracking-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                Tra cứu ngay
+                            </button>
+                        </div>
+                        <small style="color: #64748b; font-size: 0.8rem; display: block; margin-top: 8px;">
+                            💡 Bạn có thể nhập <strong>Số điện thoại</strong> để xem tất cả các đơn hàng, hoặc <strong>Mã đơn hàng</strong> (gửi trong tin nhắn/email xác nhận).
+                        </small>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Vùng hiển thị kết quả -->
+            <div id="tracking-result-area" style="display: none;">
+                <!-- Render bằng JS -->
+            </div>
+
+            <!-- Vùng thông báo khi không tìm thấy -->
+            <div id="tracking-not-found" style="display: none; background: #fff; border-radius: 12px; padding: 3rem 2rem; text-align: center; border: 1px solid #e2e8f0;">
+                <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+                <h3 style="margin: 0 0 8px; font-size: 1.2rem; color: #1e293b; font-family: var(--font-serif);">Không tìm thấy đơn hàng phù hợp</h3>
+                <p style="color: #64748b; font-size: 0.9rem; max-width: 500px; margin: 0 auto 1.5rem;">
+                    Vui lòng kiểm tra lại Số điện thoại hoặc Mã đơn hàng đã nhập. Nếu bạn cần hỗ trợ nhanh, hãy liên hệ với Tiệm nhé!
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://zalo.me/0777709662" target="_blank" class="btn-dark" style="padding: 8px 20px; font-size: 0.9rem;">Chat Zalo: 0777709662</a>
+                    <a href="tel:0777709662" class="btn-outline" style="padding: 8px 20px; font-size: 0.9rem;">Gọi Hotline</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { db, initHeader, formatPhoneNumber, escapeHTML } from "./js/utils.js";
+        import { collection, query, where, getDocs, doc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        initHeader('./');
+
+        // Tự động tìm kiếm nếu có param trên URL (?q=... hoặc ?phone=... hoặc ?id=...)
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryParam = urlParams.get('q') || urlParams.get('phone') || urlParams.get('id');
+            if (queryParam) {
+                const input = document.getElementById('lookup-input');
+                if (input) {
+                    input.value = queryParam;
+                    document.getElementById('btn-search-order').click();
+                }
+            }
+        });
+
+        window.handleOrderSearch = async (e) => {
+            e.preventDefault();
+            const inputVal = document.getElementById('lookup-input').value.trim();
+            const btn = document.getElementById('btn-search-order');
+            const resultArea = document.getElementById('tracking-result-area');
+            const notFoundArea = document.getElementById('tracking-not-found');
+
+            if (!inputVal) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Đang tra cứu...';
+            resultArea.style.display = 'none';
+            notFoundArea.style.display = 'none';
+
+            try {
+                let ordersFound = [];
+
+                // 1. Kiểm tra xem có phải là mã đơn hàng (TNG... hoặc doc ID trực tiếp)
+                if (inputVal.toUpperCase().startsWith('TNG') || inputVal.length >= 15) {
+                    try {
+                        const orderDocSnap = await getDoc(doc(db, "orders", inputVal));
+                        if (orderDocSnap.exists()) {
+                            ordersFound.push({ id: orderDocSnap.id, ...orderDocSnap.data() });
+                        }
+                    } catch (e) { }
+                }
+
+                // 2. Nếu chưa tìm thấy theo ID trực tiếp, tìm theo SĐT hoặc mã đơn trong query
+                if (ordersFound.length === 0) {
+                    const cleanedPhone = formatPhoneNumber(inputVal);
+                    const p84 = cleanedPhone.startsWith('0') ? '+84' + cleanedPhone.substring(1) : cleanedPhone;
+                    const phoneList = [inputVal, cleanedPhone, p84].filter(Boolean);
+
+                    const ordersRef = collection(db, "orders");
+
+                    // Query theo shippingAddress.phone
+                    try {
+                        const q1 = query(ordersRef, where("shippingAddress.phone", "in", phoneList));
+                        const s1 = await getDocs(q1);
+                        s1.forEach(d => {
+                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                        });
+                    } catch (e) { }
+
+                    // Query theo customerPhone
+                    try {
+                        const q2 = query(ordersRef, where("customerPhone", "in", phoneList));
+                        const s2 = await getDocs(q2);
+                        s2.forEach(d => {
+                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                        });
+                    } catch (e) { }
+
+                    // Query theo phone
+                    try {
+                        const q3 = query(ordersRef, where("phone", "in", phoneList));
+                        const s3 = await getDocs(q3);
+                        s3.forEach(d => {
+                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                        });
+                    } catch (e) { }
+                }
+
+                // Sắp xếp đơn mới nhất lên đầu
+                ordersFound.sort((a, b) => {
+                    const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.orderDate?.toDate ? a.orderDate.toDate().getTime() : 0);
+                    const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.orderDate?.toDate ? b.orderDate.toDate().getTime() : 0);
+                    return timeB - timeA;
+                });
+
+                if (ordersFound.length > 0) {
+                    renderTrackingResults(ordersFound);
+                    resultArea.style.display = 'block';
+                } else {
+                    notFoundArea.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Lỗi tra cứu đơn:", error);
+                notFoundArea.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Tra cứu ngay
+                `;
+            }
+        };
+
+        function renderTrackingResults(orders) {
+            const container = document.getElementById('tracking-result-area');
+            
+            const html = orders.map((order, idx) => {
+                const status = order.status || 'Đang xử lý';
+                let step1 = 'completed', step2 = '', step3 = '', step4 = '';
+
+                if (status === 'Đã xác nhận' || status === 'Đang đóng gói') {
+                    step1 = 'completed'; step2 = 'active';
+                } else if (status === 'Đang giao' || status === 'Đang vận chuyển') {
+                    step1 = 'completed'; step2 = 'completed'; step3 = 'active';
+                } else if (status === 'Hoàn thành' || status === 'Đã giao' || status === 'Đã nhận') {
+                    step1 = 'completed'; step2 = 'completed'; step3 = 'completed'; step4 = 'completed active';
+                } else if (status === 'Đã hủy') {
+                    step1 = 'completed'; step2 = ''; step3 = ''; step4 = '';
+                } else {
+                    step1 = 'active';
+                }
+
+                const orderDate = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('vi-VN') : 
+                                 (order.orderDate?.toDate ? order.orderDate.toDate().toLocaleString('vi-VN') : 'Mới đặt gần đây');
+
+                const items = order.items || [];
+                const shipping = order.shippingAddress || {};
+                const maskPhone = (p) => p ? p.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2') : '';
+
+                return `
+                    <div class="order-result-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                            <div>
+                                <span style="font-size: 0.8rem; color: #64748b;">MÃ ĐƠN HÀNG</span>
+                                <div style="font-weight: 700; font-size: 1.05rem; color: #2c3e50; font-family: monospace;">${escapeHTML(order.id)}</div>
+                                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Ngày đặt: ${orderDate}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.8rem; color: #64748b;">TRẠNG THÁI</span>
+                                <div>
+                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; ${status === 'Đã hủy' ? 'background:#fee2e2; color:#b91c1c;' : (status === 'Hoàn thành' ? 'background:#dcfce7; color:#15803d;' : 'background:#e0f2fe; color:#0369a1;')}">
+                                        ${escapeHTML(status)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${status !== 'Đã hủy' ? `
+                            <!-- Timeline tiến trình -->
+                            <div class="tracking-timeline">
+                                <div class="timeline-step ${step1}">
+                                    <div class="timeline-icon">1</div>
+                                    <div class="timeline-label">Tiếp nhận</div>
+                                </div>
+                                <div class="timeline-step ${step2}">
+                                    <div class="timeline-icon">2</div>
+                                    <div class="timeline-label">Đóng gói</div>
+                                </div>
+                                <div class="timeline-step ${step3}">
+                                    <div class="timeline-icon">3</div>
+                                    <div class="timeline-label">Đang giao</div>
+                                </div>
+                                <div class="timeline-step ${step4}">
+                                    <div class="timeline-icon">4</div>
+                                    <div class="timeline-label">Đã nhận</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="padding: 10px 14px; background: #fef2f2; border-radius: 6px; color: #991b1b; font-size: 0.88rem; margin-bottom: 15px;">
+                                ⚠️ Đơn hàng này đã được hủy. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline để được hỗ trợ.
+                            </div>
+                        `}
+
+                        <!-- Danh sách sản phẩm -->
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 10px; font-size: 0.9rem; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Sản phẩm (${items.length})</h4>
+                            <div style="background: #fafafa; border-radius: 8px; padding: 8px 12px; border: 1px solid #f1f5f9;">
+                                ${items.map(it => `
+                                    <div class="order-item-row">
+                                        <img src="${it.image || it.imageUrl || 'https://placehold.co/50'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">${escapeHTML(it.name || '')}</div>
+                                            ${it.variant || it.color || it.pattern ? `<div style="font-size: 0.78rem; color: #64748b;">Phân loại: <strong>${escapeHTML(it.variant || [it.color, it.pattern].filter(Boolean).join(' / '))}</strong></div>` : ''}
+                                            <div style="font-size: 0.8rem; color: #64748b; display: flex; justify-content: space-between; margin-top: 2px;">
+                                                <span>SL: <strong>x${it.quantity || 1}</strong></span>
+                                                <span style="font-weight: 600; color: #0f172a;">${new Intl.NumberFormat('vi-VN').format(it.price || 0)}đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Thông tin giao hàng & Chi phí -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; font-size: 0.85rem; background: #f8fafc; padding: 12px 16px; border-radius: 8px;">
+                            <div>
+                                <strong style="color: #1e293b; display: block; margin-bottom: 4px;">Địa chỉ nhận hàng:</strong>
+                                <div>${escapeHTML(shipping.fullName || order.customerName || 'Quý khách')} - ${maskPhone(shipping.phone || order.phone || '')}</div>
+                                <div style="color: #64748b; margin-top: 2px;">${escapeHTML(shipping.address || 'Tại cửa hàng')}</div>
+                            </div>
+                            <div style="border-left: 1px solid #e2e8f0; padding-left: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                    <span style="color: #64748b;">Tạm tính:</span>
+                                    <span>${new Intl.NumberFormat('vi-VN').format(order.subtotal || order.totalAmount || 0)}đ</span>
+                                </div>
+                                ${order.discountAmount ? `
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px; color: #16a34a;">
+                                        <span>Ưu đãi:</span>
+                                        <span>-${new Intl.NumberFormat('vi-VN').format(order.discountAmount)}đ</span>
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 1rem; font-weight: 700; color: #e74c3c;">
+                                    <span>Tổng thanh toán:</span>
+                                    <span>${new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0)}đ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 1.2rem; font-size: 1.2rem; color: #1e293b; font-family: var(--font-serif);">Kết quả tìm kiếm (${orders.length} đơn hàng)</h3>
+                ${html}
+            `;
+        }
+    </script>
+</body>
+</html>

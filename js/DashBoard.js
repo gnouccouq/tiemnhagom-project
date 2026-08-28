@@ -314,6 +314,10 @@ function setupAdminTabs() {
                 initFullReport();
             }
 
+            if (targetId === 'restock-alerts-section') {
+                window.fetchRestockAlertsAdmin();
+            }
+
             if (targetId === 'maintenance-section') {
                 initMaintenanceSettings();
             }
@@ -10187,5 +10191,89 @@ window.downloadRentalBillPDF = async (orderId) => {
     } catch (e) {
         console.error(e);
         window.showToast('Lỗi tải hóa đơn PDF', 'error');
+    }
+};
+
+// --- Quản lý Yêu cầu báo có hàng (Restock Alerts) ---
+window.fetchRestockAlertsAdmin = async () => {
+    const tbody = document.getElementById('restock-alerts-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;"><span class="spinner"></span></td></tr>';
+
+    try {
+        const q = query(collection(db, "restock_alerts"), orderBy("createdAt", "desc"), limit(100));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">Chưa có yêu cầu thông báo có hàng nào.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = querySnapshot.docs.map(docSnap => {
+            const alert = docSnap.data();
+            const dateStr = alert.createdAt?.toDate ? alert.createdAt.toDate().toLocaleString('vi-VN') : 'Mới';
+            const isNotified = alert.status === 'notified';
+
+            return `
+                <tr>
+                    <td style="font-size: 0.8rem; color: #64748b;">${dateStr}</td>
+                    <td><strong>${escapeHTML(alert.customerName || 'Khách')}</strong></td>
+                    <td><a href="tel:${alert.phone}" style="color: #0066cc; font-weight: 600;">${escapeHTML(alert.phone || '')}</a></td>
+                    <td>${alert.email ? `<a href="mailto:${alert.email}" style="color: #555;">${escapeHTML(alert.email)}</a>` : '<span style="color: #aaa;">-</span>'}</td>
+                    <td>
+                        <a href="../product/?id=${alert.productId}" target="_blank" style="font-weight: 600; color: #2c3e50; text-decoration: underline;">
+                            ${escapeHTML(alert.productName || alert.productId || 'Sản phẩm')}
+                        </a>
+                    </td>
+                    <td><span style="font-size: 0.85rem; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${escapeHTML(alert.variant || 'Tiêu chuẩn')}</span></td>
+                    <td>
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 600; ${isNotified ? 'background: #dcfce7; color: #15803d;' : 'background: #fef3c7; color: #b45309;'}">
+                            ${isNotified ? 'Đã liên hệ' : 'Chờ có hàng'}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn-minimal" style="padding: 3px 8px; font-size: 0.75rem;" onclick="window.toggleRestockStatus('${docSnap.id}', '${alert.status || 'pending'}')">
+                                ${isNotified ? 'Đánh dấu Chưa' : 'Đã báo khách'}
+                            </button>
+                            <button type="button" class="btn-minimal text-danger" style="padding: 3px 6px; font-size: 0.75rem;" onclick="window.deleteRestockAlert('${docSnap.id}')" title="Xóa">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Lỗi lấy danh sách restock alerts:", err);
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">Lỗi khi tải dữ liệu. Vui lòng thử lại!</td></tr>';
+    }
+};
+
+window.toggleRestockStatus = async (id, currentStatus) => {
+    try {
+        const newStatus = currentStatus === 'notified' ? 'pending' : 'notified';
+        await updateDoc(doc(db, "restock_alerts", id), {
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        });
+        showToast("Đã cập nhật trạng thái yêu cầu");
+        window.fetchRestockAlertsAdmin();
+    } catch (e) {
+        console.error("Lỗi cập nhật trạng thái:", e);
+        showToast("Lỗi khi cập nhật trạng thái", "error");
+    }
+};
+
+window.deleteRestockAlert = async (id) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu thông báo này không?")) return;
+    try {
+        await deleteDoc(doc(db, "restock_alerts", id));
+        showToast("Đã xóa yêu cầu");
+        window.fetchRestockAlertsAdmin();
+    } catch (e) {
+        console.error("Lỗi xóa yêu cầu:", e);
+        showToast("Lỗi khi xóa yêu cầu", "error");
     }
 };

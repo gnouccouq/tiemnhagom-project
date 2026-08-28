@@ -73,6 +73,10 @@ function updateOutOfStockBadge(isOut) {
     if (badge) {
         badge.style.display = isOut ? 'flex' : 'none';
     }
+    const restockBtn = document.getElementById('btn-notify-restock');
+    if (restockBtn) {
+        restockBtn.style.display = isOut ? 'flex' : 'none';
+    }
 }
 window.updateOutOfStockBadge = updateOutOfStockBadge;
 
@@ -527,6 +531,30 @@ async function fetchProductDetail() {
                                 <button class="detail-share-btn" onclick="window.shareProduct()" style="border-radius:8px" title="Chia sẻ sản phẩm">
                                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
                                 </button>
+                            </div>
+
+                            <button id="btn-notify-restock" class="btn-notify-restock" onclick="window.openRestockModal()" style="display: ${isOutOfStock ? 'flex' : 'none'}; width: 100%; margin-top: 10px; padding: 10px 14px; background: #faf5eb; border: 1px dashed #d97706; color: #b45309; border-radius: 8px; font-weight: 600; font-size: 0.88rem; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                Nhận thông báo khi có hàng lại
+                            </button>
+                        </div>
+
+                        <!-- Safe Delivery & Packaging Guarantee Badge -->
+                        <div class="safe-delivery-badge" style="margin-top: 1.2rem; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8rem; color: #334155;">
+                            <div style="font-weight: 600; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                Cam kết an tâm khi nhận hàng tại Tiệm
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span>📦 <strong>Đóng gói 5 lớp chuẩn gốm:</strong> Màng bóng khí & xốp định hình dày</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span>🛡️ <strong>Bảo hiểm 100% vỡ nứt:</strong> Đổi mới ngay lập tức không phụ phí</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span>🔍 <strong>Đồng kiểm khi nhận:</strong> Mở hộp kiểm tra trước khi thanh toán</span>
+                                </div>
                             </div>
                         </div>
 
@@ -1270,6 +1298,110 @@ window.openFullScreen = (src) => {
     const img = overlay.querySelector('img');
     img.src = src;
     overlay.style.display = 'flex';
+};
+
+// Modal Đăng ký nhận tin khi có hàng lại (Back in Stock Alert)
+window.openRestockModal = () => {
+    if (!currentProductData) return;
+    let modal = document.getElementById('restock-alert-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'restock-alert-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const pid = urlParams.get('id');
+    const selectedVariantName = [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / ') || 'Tiêu chuẩn';
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 440px; border-radius: 12px; padding: 25px; text-align: left; background: #fff;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                    <h4 style="margin: 0 0 4px; font-size: 1.15rem; color: #2c3e50; font-family: var(--font-serif);">Nhận thông báo khi có hàng</h4>
+                    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Tiệm sẽ nhắn bạn ngay khi sản phẩm này về đợt mới nhé!</p>
+                </div>
+                <span class="modal-close" style="cursor: pointer; font-size: 1.5rem; line-height: 1; color: #94a3b8;" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
+            </div>
+
+            <div style="padding: 10px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 15px; border: 1px solid #edf2f7; font-size: 0.85rem;">
+                <div style="font-weight: 600; color: #1e293b;">${escapeHTML(currentProductData.name)}</div>
+                <div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">Phân loại: <strong style="color: #0f172a;">${escapeHTML(selectedVariantName)}</strong></div>
+            </div>
+
+            <form id="restock-form" onsubmit="window.submitRestockAlert(event)">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Họ và tên</label>
+                    <input type="text" id="restock-name" placeholder="Tên của bạn..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Số điện thoại / Zalo <span style="color: #ef4444;">*</span></label>
+                    <input type="tel" id="restock-phone" required placeholder="Số điện thoại nhận tin..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Email (tùy chọn)</label>
+                    <input type="email" id="restock-email" placeholder="Địa chỉ email nhận thông báo..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;">
+                </div>
+
+                <button type="submit" id="btn-submit-restock" class="btn-dark" style="width: 100%; padding: 10px; font-weight: 600; font-size: 0.9rem; border-radius: 6px;">Đăng ký nhận thông báo</button>
+            </form>
+        </div>
+    `;
+    modal.classList.add('active');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+};
+
+window.submitRestockAlert = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-restock');
+    const name = document.getElementById('restock-name').value.trim();
+    const phone = document.getElementById('restock-phone').value.trim();
+    const email = document.getElementById('restock-email').value.trim();
+
+    if (!phone) {
+        showToast("Vui lòng nhập số điện thoại hoặc Zalo để Tiệm thông báo!", "error");
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const pid = urlParams.get('id');
+    const selectedVariantName = [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / ') || 'Tiêu chuẩn';
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-small"></span> Đang gửi...';
+        }
+
+        await addDoc(collection(db, "restock_alerts"), {
+            productId: pid,
+            productName: currentProductData.name,
+            variant: selectedVariantName,
+            color: selectedColor || null,
+            pattern: selectedPattern || null,
+            combo: selectedComboVariant || null,
+            customerName: name || 'Khách hàng',
+            phone: phone,
+            email: email || null,
+            createdAt: serverTimestamp(),
+            status: "pending"
+        });
+
+        showToast("Đã ghi nhận! Tiệm sẽ liên hệ bạn ngay khi có hàng đợt mới nhé.");
+        const modal = document.getElementById('restock-alert-modal');
+        if (modal) modal.classList.remove('active');
+    } catch (err) {
+        console.error("Lỗi gửi thông báo restock:", err);
+        showToast("Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại!", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "Đăng ký nhận thông báo";
+        }
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
