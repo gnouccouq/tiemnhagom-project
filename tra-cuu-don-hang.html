@@ -53,18 +53,29 @@
             display: flex;
             justify-content: space-between;
             position: relative;
-            margin: 2rem 0 2.5rem;
+            margin: 2.2rem 0 2.5rem;
         }
 
-        .tracking-timeline::before {
-            content: '';
+        .tracking-timeline-line-bg {
             position: absolute;
             top: 20px;
             left: 30px;
             right: 30px;
-            height: 3px;
+            height: 4px;
             background: #e2e8f0;
+            border-radius: 2px;
             z-index: 1;
+        }
+
+        .tracking-timeline-line-fill {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            height: 4px;
+            background: #10b981;
+            border-radius: 2px;
+            z-index: 1;
+            transition: width 0.5s ease;
         }
 
         .timeline-step {
@@ -85,7 +96,8 @@
             justify-content: center;
             margin: 0 auto 8px;
             color: #94a3b8;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.95rem;
             transition: all 0.3s;
         }
 
@@ -106,10 +118,15 @@
             font-size: 0.82rem;
             font-weight: 600;
             color: #64748b;
+            transition: color 0.3s;
         }
 
         .timeline-step.active .timeline-label {
             color: #2c3e50;
+        }
+
+        .timeline-step.completed .timeline-label {
+            color: #0f172a;
         }
 
         .order-result-card {
@@ -360,19 +377,64 @@
             const container = document.getElementById('tracking-result-area');
             
             const html = orders.map((order, idx) => {
-                const status = order.status || 'Đang xử lý';
-                let step1 = 'completed', step2 = '', step3 = '', step4 = '';
+                const rawStatus = (order.status || 'Đang xử lý').trim();
+                const statusLower = rawStatus.toLowerCase();
 
-                if (status === 'Đã xác nhận' || status === 'Đang đóng gói') {
-                    step1 = 'completed'; step2 = 'active';
-                } else if (status === 'Đang giao' || status === 'Đang vận chuyển') {
-                    step1 = 'completed'; step2 = 'completed'; step3 = 'active';
-                } else if (status === 'Hoàn thành' || status === 'Đã giao' || status === 'Đã nhận') {
-                    step1 = 'completed'; step2 = 'completed'; step3 = 'completed'; step4 = 'completed active';
-                } else if (status === 'Đã hủy') {
-                    step1 = 'completed'; step2 = ''; step3 = ''; step4 = '';
+                let currentStep = 1; // 1: Tiếp nhận, 2: Đóng gói, 3: Đang giao, 4: Đã nhận
+                let isCancelled = false;
+
+                if (statusLower.includes('hủy') || statusLower.includes('cancel')) {
+                    isCancelled = true;
+                    currentStep = 0;
+                } else if (
+                    statusLower.includes('hoàn thành') || 
+                    statusLower.includes('đã nhận') || 
+                    statusLower.includes('đã giao') || 
+                    statusLower.includes('thành công') || 
+                    statusLower.includes('completed') || 
+                    statusLower.includes('success')
+                ) {
+                    currentStep = 4;
+                } else if (
+                    statusLower.includes('đang giao') || 
+                    statusLower.includes('vận chuyển') || 
+                    statusLower.includes('shipping') || 
+                    statusLower.includes('delivering')
+                ) {
+                    currentStep = 3;
+                } else if (
+                    statusLower.includes('xác nhận') || 
+                    statusLower.includes('đóng gói') || 
+                    statusLower.includes('đã thanh toán') || 
+                    statusLower.includes('processing')
+                ) {
+                    currentStep = 2;
                 } else {
-                    step1 = 'active';
+                    currentStep = 1;
+                }
+
+                const checkIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+                const step1Class = currentStep >= 1 ? (currentStep === 1 ? 'active' : 'completed') : '';
+                const step2Class = currentStep >= 2 ? (currentStep === 2 ? 'active' : 'completed') : '';
+                const step3Class = currentStep >= 3 ? (currentStep === 3 ? 'active' : 'completed') : '';
+                const step4Class = currentStep >= 4 ? 'completed active' : '';
+
+                const step1Icon = currentStep > 1 ? checkIcon : '1';
+                const step2Icon = currentStep > 2 ? checkIcon : '2';
+                const step3Icon = currentStep > 3 ? checkIcon : '3';
+                const step4Icon = currentStep >= 4 ? checkIcon : '4';
+
+                let progressWidth = '0%';
+                if (currentStep === 2) progressWidth = 'calc((100% - 60px) * 0.33)';
+                else if (currentStep === 3) progressWidth = 'calc((100% - 60px) * 0.66)';
+                else if (currentStep === 4) progressWidth = 'calc(100% - 60px)';
+
+                let badgeBg = '#e0f2fe', badgeColor = '#0369a1';
+                if (isCancelled) {
+                    badgeBg = '#fee2e2'; badgeColor = '#b91c1c';
+                } else if (currentStep === 4) {
+                    badgeBg = '#dcfce7'; badgeColor = '#15803d';
                 }
 
                 const orderDate = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('vi-VN') : 
@@ -393,30 +455,32 @@
                             <div style="text-align: right;">
                                 <span style="font-size: 0.8rem; color: #64748b;">TRẠNG THÁI</span>
                                 <div>
-                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; ${status === 'Đã hủy' ? 'background:#fee2e2; color:#b91c1c;' : (status === 'Hoàn thành' ? 'background:#dcfce7; color:#15803d;' : 'background:#e0f2fe; color:#0369a1;')}">
-                                        ${escapeHTML(status)}
+                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: ${badgeBg}; color: ${badgeColor};">
+                                        ${escapeHTML(rawStatus)}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        ${status !== 'Đã hủy' ? `
+                        ${!isCancelled ? `
                             <!-- Timeline tiến trình -->
                             <div class="tracking-timeline">
-                                <div class="timeline-step ${step1}">
-                                    <div class="timeline-icon">1</div>
+                                <div class="tracking-timeline-line-bg"></div>
+                                <div class="tracking-timeline-line-fill" style="width: ${progressWidth};"></div>
+                                <div class="timeline-step ${step1Class}">
+                                    <div class="timeline-icon">${step1Icon}</div>
                                     <div class="timeline-label">Tiếp nhận</div>
                                 </div>
-                                <div class="timeline-step ${step2}">
-                                    <div class="timeline-icon">2</div>
+                                <div class="timeline-step ${step2Class}">
+                                    <div class="timeline-icon">${step2Icon}</div>
                                     <div class="timeline-label">Đóng gói</div>
                                 </div>
-                                <div class="timeline-step ${step3}">
-                                    <div class="timeline-icon">3</div>
+                                <div class="timeline-step ${step3Class}">
+                                    <div class="timeline-icon">${step3Icon}</div>
                                     <div class="timeline-label">Đang giao</div>
                                 </div>
-                                <div class="timeline-step ${step4}">
-                                    <div class="timeline-icon">4</div>
+                                <div class="timeline-step ${step4Class}">
+                                    <div class="timeline-icon">${step4Icon}</div>
                                     <div class="timeline-label">Đã nhận</div>
                                 </div>
                             </div>
@@ -446,25 +510,56 @@
                             </div>
                         </div>
 
+                        <!-- Lộ trình giao hàng thông minh nếu có -->
+                        ${(order.trackingLink || order.trackingUrl) ? `
+                            <div style="margin-bottom: 15px; padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px; color: #1e40af; font-size: 0.88rem;">
+                                    <span style="font-size: 1.3rem;">🚚</span>
+                                    <div>
+                                        <strong style="display: block;">Đơn hàng có link theo dõi trực tiếp</strong>
+                                        <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển trên bản đồ</span>
+                                    </div>
+                                </div>
+                                <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600; transition: opacity 0.2s;">
+                                    Xem lộ trình shipper ➔
+                                </a>
+                            </div>
+                        ` : ''}
+
                         <!-- Thông tin giao hàng & Chi phí -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; font-size: 0.85rem; background: #f8fafc; padding: 12px 16px; border-radius: 8px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; font-size: 0.85rem; background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid #f1f5f9;">
                             <div>
                                 <strong style="color: #1e293b; display: block; margin-bottom: 4px;">Địa chỉ nhận hàng:</strong>
-                                <div>${escapeHTML(shipping.fullName || order.customerName || 'Quý khách')} - ${maskPhone(shipping.phone || order.phone || '')}</div>
+                                <div style="font-weight: 600; color: #334155;">${escapeHTML(shipping.fullName || order.customerName || 'Quý khách')} - ${maskPhone(shipping.phone || order.phone || '')}</div>
                                 <div style="color: #64748b; margin-top: 2px;">${escapeHTML(shipping.address || 'Tại cửa hàng')}</div>
+                                ${order.paymentMethod ? `
+                                    <div style="margin-top: 8px; font-size: 0.8rem; color: #64748b;">
+                                        Hình thức thanh toán: <strong>${order.paymentMethod.toUpperCase() === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : (order.paymentMethod.toUpperCase() === 'VNPAY' ? 'VNPAY' : 'Chuyển khoản / Trực tiếp')}</strong>
+                                    </div>
+                                ` : ''}
                             </div>
                             <div style="border-left: 1px solid #e2e8f0; padding-left: 15px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                                    <span style="color: #64748b;">Tạm tính:</span>
-                                    <span>${new Intl.NumberFormat('vi-VN').format(order.subtotal || order.totalAmount || 0)}đ</span>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="color: #64748b;">Tạm tính (${items.length} món):</span>
+                                    <span style="font-weight: 500;">${new Intl.NumberFormat('vi-VN').format(order.subtotal || items.reduce((s, it) => s + ((it.price || 0) * (it.quantity || 1)), 0))}đ</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="color: #64748b;">Phí vận chuyển:</span>
+                                    <span>${(order.shippingFee && order.shippingFee > 0) ? `+${new Intl.NumberFormat('vi-VN').format(order.shippingFee)}đ` : '<span style="color: #16a34a; font-weight: 600;">0đ (Miễn phí)</span>'}</span>
                                 </div>
                                 ${order.discountAmount ? `
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px; color: #16a34a;">
-                                        <span>Ưu đãi:</span>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ea580c;">
+                                        <span>Mã ưu đãi ${order.couponCode ? `(${escapeHTML(order.couponCode)})` : ''}:</span>
                                         <span>-${new Intl.NumberFormat('vi-VN').format(order.discountAmount)}đ</span>
                                     </div>
                                 ` : ''}
-                                <div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 1rem; font-weight: 700; color: #e74c3c;">
+                                ${order.membershipDiscount ? `
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #16a34a;">
+                                        <span>Ưu đãi thành viên:</span>
+                                        <span>-${new Intl.NumberFormat('vi-VN').format(order.membershipDiscount)}đ</span>
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 1.05rem; font-weight: 700; color: #e74c3c;">
                                     <span>Tổng thanh toán:</span>
                                     <span>${new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0)}đ</span>
                                 </div>
