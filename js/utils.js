@@ -750,7 +750,14 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const currentPrice = getProductCurrentPrice(mockProduct);
     const displaySale = getProductEffectiveSale(mockProduct);
     const hasSale = displaySale > 0;
-    const isOutOfStock = (product.stock || 0) <= 0;
+    let isOutOfStock = (product.stock || 0) <= 0;
+    if (variantOverride) {
+        if (variantOverride.isOutOfStock !== undefined && variantOverride.isOutOfStock !== null) {
+            isOutOfStock = Boolean(variantOverride.isOutOfStock) || (variantOverride.stock !== undefined && variantOverride.stock !== null && variantOverride.stock <= 0);
+        } else if (variantOverride.stock !== undefined && variantOverride.stock !== null) {
+            isOutOfStock = variantOverride.stock <= 0;
+        }
+    }
     const soldCount = product.sold || 0;
     const priceHtml = hasSale
         ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`

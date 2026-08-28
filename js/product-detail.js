@@ -68,6 +68,14 @@ window.toggleFavoriteDetail = async (productId) => {
     fetchProductDetail(); // Reload UI
 };
 
+function updateOutOfStockBadge(isOut) {
+    const badge = document.getElementById('detail-out-of-stock-badge');
+    if (badge) {
+        badge.style.display = isOut ? 'flex' : 'none';
+    }
+}
+window.updateOutOfStockBadge = updateOutOfStockBadge;
+
 // Hàm đổi ảnh chính khi nhấn vào thumbnail
 window.changeMainImage = (src, index, isUserAction = true) => {
     const mainImg = document.getElementById('main-product-img');
@@ -94,6 +102,25 @@ window.changeMainImage = (src, index, isUserAction = true) => {
             gallery.scrollTo({ left: scrollLeft, behavior: 'smooth' });
         }
     });
+
+    if (currentProductData) {
+        let matchedVariantIsOut = null;
+        if (currentProductData.comboVariants) {
+            const cv = currentProductData.comboVariants.find(v => (v && (v.imageUrl === src || v.thumbUrl === src)));
+            if (cv) matchedVariantIsOut = cv.isOutOfStock || (cv.stock !== undefined && cv.stock !== null && cv.stock <= 0);
+        }
+        if (matchedVariantIsOut === null && currentProductData.colorVariants) {
+            const cv = currentProductData.colorVariants.find(v => v && v.imageUrl === src);
+            if (cv) matchedVariantIsOut = cv.isOutOfStock || (cv.stock !== undefined && cv.stock !== null && cv.stock <= 0);
+        }
+        if (matchedVariantIsOut === null && currentProductData.patternVariants) {
+            const pv = currentProductData.patternVariants.find(v => v && v.imageUrl === src);
+            if (pv) matchedVariantIsOut = pv.isOutOfStock || (pv.stock !== undefined && pv.stock !== null && pv.stock <= 0);
+        }
+        if (matchedVariantIsOut !== null) {
+            updateOutOfStockBadge(matchedVariantIsOut);
+        }
+    }
 };
 
 // Hàm bấm nút qua lại trên ảnh lớn
@@ -212,7 +239,7 @@ async function fetchProductDetail() {
             if (colorVariants.length > 0) {
                 selectedColor = colorVariants[0].name;
                 // Cập nhật isOutOfStock dựa trên biến thể mặc định
-                if ((colorVariants[0].stock || 0) <= 0) isOutOfStock = true;
+                if ((colorVariants[0].stock || 0) <= 0 || colorVariants[0].isOutOfStock) isOutOfStock = true;
             }
 
             // Ưu tiên lấy pattern từ patternVariants mới, nếu không có thì fallback sang patterns cũ
@@ -221,22 +248,23 @@ async function fetchProductDetail() {
                 const firstPattern = patternsToUse[0];
                 selectedPattern = typeof firstPattern === 'string' ? firstPattern : firstPattern.name;
                 // Cập nhật isOutOfStock dựa trên biến thể mặc định
-                if (typeof firstPattern !== 'string' && (firstPattern.stock || 0) <= 0) isOutOfStock = true;
-            }
-
-            // Nếu có biến thể và biến thể mặc định hết hàng, thì sản phẩm coi như hết hàng
-            if ((colorVariants.length > 0 || patternsToUse.length > 0) && isOutOfStock) {
-                isOutOfStock = true;
+                if (typeof firstPattern !== 'string' && ((firstPattern.stock || 0) <= 0 || firstPattern.isOutOfStock)) isOutOfStock = true;
             }
 
             // Thiết lập combo mặc định nếu có
             if (p.isCombo) {
                 if (p.comboVariants && p.comboVariants.length > 0) {
                     selectedComboVariant = p.comboVariants[0].name || 'Phân loại 1';
+                    if ((p.comboVariants[0].stock || 0) <= 0 || p.comboVariants[0].isOutOfStock) isOutOfStock = true;
                 } else if (p.comboItems && p.comboItems.length > 0) {
                     selectedComboVariant = 'Mặc định';
                     p.comboVariants = [{ name: 'Mặc định', items: p.comboItems }]; // Chuẩn hóa data cũ
                 }
+            }
+
+            // Nếu có biến thể và biến thể mặc định hết hàng, thì sản phẩm coi như hết hàng
+            if ((colorVariants.length > 0 || patternsToUse.length > 0 || (p.isCombo && p.comboVariants && p.comboVariants.length > 0)) && isOutOfStock) {
+                isOutOfStock = true;
             }
 
             window.renderComboItemsHTML = (items) => {
@@ -428,6 +456,7 @@ async function fetchProductDetail() {
                                 <button class="gallery-nav-btn right" onclick="window.moveImage(1)" aria-label="Ảnh sau">&#10095;</button>
                             ` : ''}
                             <img id="main-product-img" src="${p.imageUrl}" alt="${p.name}" fetchpriority="high" onclick="window.openFullScreen(this.src)">
+                            <div id="detail-out-of-stock-badge" class="out-of-stock-badge" style="display: ${isOutOfStock ? 'flex' : 'none'};">Hết hàng</div>
                         </div>
                         ${galleryHtml}
                     </div>
@@ -988,6 +1017,8 @@ window.selectComboVariant = (idx) => {
     if (stockSpan) stockSpan.innerText = isOut ? 'Rất tiếc, phân loại combo này đã hết hàng' : `Trong kho: ${stock} sản phẩm (${selectedComboVariant})`;
     if (stockDiv) stockDiv.classList.toggle('out', isOut);
 
+    updateOutOfStockBadge(isOut);
+
     const isDisabled = isOut;
     if (qtyInput) {
         qtyInput.value = 1;
@@ -1038,6 +1069,8 @@ window.selectColor = (colorName, imageUrl) => {
 
     if (stockSpan) stockSpan.innerText = isOut ? 'Rất tiếc, màu này đã hết hàng' : `Trong kho: ${stock} sản phẩm (màu ${colorName})`;
     if (stockDiv) stockDiv.classList.toggle('out', isOut);
+
+    updateOutOfStockBadge(isOut);
 
     const isDisabled = isOut;
     if (qtyInput) {
@@ -1097,6 +1130,8 @@ window.selectPattern = (patternName, imageUrl) => {
 
     if (stockSpan) stockSpan.innerText = isOut ? 'Rất tiếc, họa tiết này đã hết hàng' : `Trong kho: ${stock} sản phẩm (họa tiết ${patternName})`;
     if (stockDiv) stockDiv.classList.toggle('out', isOut);
+
+    updateOutOfStockBadge(isOut);
 
     const isDisabled = isOut;
     if (qtyInput) {
