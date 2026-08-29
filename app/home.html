@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tiệm Nhà Gốm - Khám Phá</title>
+    <meta name="theme-color" content="#141413">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="stylesheet" href="./app.css?v=2.0">
+    <style>
+        @font-face {
+            font-family: 'Elle Gabor Std Light';
+            src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        * {
+            font-family: 'Elle Gabor Std Light', 'Montserrat', -apple-system, sans-serif !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="mobile-app-shell" id="app-shell">
+        <!-- MINIMAL WHITE LOGO LOADING CIRCLE SPLASH SCREEN -->
+        <div class="app-splash-screen" id="app-splash-screen">
+            <div class="splash-logo-container">
+                <div class="splash-spinner-ring"></div>
+                <img class="splash-logo-img" src="../Asset/icons/favicon.png" alt="Tiệm Nhà Gốm Logo">
+            </div>
+        </div>
+
+        <!-- TOP APP BAR WITH NOTIFICATION BELL -->
+        <header class="app-top-bar" style="justify-content: flex-end;">
+
+
+
+            <div class="app-top-actions">
+                <button class="icon-btn-pill" id="btn-notifications" aria-label="Thông báo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- FULL-SCREEN VERTICAL SCROLL CONTAINER (CUỘN TRANG XUỐNG XEM BLOG FULL SCREEN) -->
+        <div class="home-scroll-container" id="home-vertical-scroll">
+            <!-- 1. FULL-SCREEN HERO CAROUSEL SECTION -->
+            <section class="home-hero-section">
+                <!-- CAROUSEL DOTS -->
+                <div class="carousel-dots" id="carousel-dots">
+                    <div class="carousel-dot active"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                    <div class="carousel-dot"></div>
+                </div>
+
+                <!-- CAROUSEL TRACK -->
+                <div class="carousel-viewport" id="carousel-viewport">
+                    <div class="carousel-track" id="carousel-track">
+                        <!-- Slides loaded dynamically from Firebase -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. FULL-SCREEN NEWS & EVENTS FEED SECTION -->
+            <section class="home-feed-section" id="news-events-feed">
+                <div class="feed-section-header">
+                    <h3 class="feed-section-title">news & events</h3>
+                    <a href="../blog/" class="feed-see-all-link" target="_blank">see all</a>
+                </div>
+
+                <div class="feed-cards-list" id="feed-cards-container">
+                    <!-- Cards will be populated dynamically or fallback to default -->
+                </div>
+            </section>
+        </div>
+
+        <!-- GLASSMORPHISM BOTTOM STACK (CHEVRON MŨI TÊN + USER PILL + 3-TAB DOCK CỐ ĐỊNH Ở ĐÁY) -->
+        <div class="app-bottom-stack">
+            <!-- CHEVRON ARROW: NẰM NGAY TRÊN ĐỈNH USER PILL (BẤM SẼ TỰ ĐỘNG CUỘN TRƯỢT XUỐNG BLOG) -->
+            <div class="hero-scroll-up-indicator" id="btn-toggle-news-drawer" title="Cuộn xem tin tức & sự kiện">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+
+            <!-- 1. USER STATUS PILL -->
+            <a href="./membership.html" class="user-glass-pill" id="home-user-pill">
+                <div class="user-glass-left">
+                    <img class="user-glass-avatar" id="app-user-avatar" src="../Asset/images/default-avatar.png" alt="Avatar">
+                    <div class="user-glass-text">
+                        <h4 id="greeting-text">good evening, user!</h4>
+                        <div class="user-glass-meta">
+                            <span>dots <b id="bar-points-val">0</b></span>
+                            <span>vouchers <b id="bar-rewards-val">0</b></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-glass-right-icon" title="Mã tích điểm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- 2. 3-TAB FLOATING DOCK -->
+            <nav class="floating-dock-nav" id="app-floating-dock">
+                <a href="./home.html" class="dock-tab-item active" id="tab-home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                    <span>home</span>
+                </a>
+                <a href="./membership.html" class="dock-tab-item" id="tab-profile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>profile</span>
+                </a>
+                <a href="./settings.html" class="dock-tab-item" id="tab-setting">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    <span>setting</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- TOAST -->
+        <div class="app-toast" id="app-toast">Thông báo</div>
+    </div>
+
+    <script type="module" src="./home.js?v=1.7"></script>
+</body>
+</html>

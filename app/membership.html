@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Thẻ Thành Viên - Tiệm Nhà Gốm</title>
+    <meta name="theme-color" content="#141413">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="stylesheet" href="./app.css?v=2.0">
+    <style>
+        @font-face {
+            font-family: 'Elle Gabor Std Light';
+            src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        * {
+            font-family: 'Elle Gabor Std Light', 'Montserrat', -apple-system, sans-serif !important;
+        }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+
+    <div class="mobile-app-shell" style="background: #ffffff; display: flex; flex-direction: column;">
+        <!-- MINIMAL WHITE LOGO LOADING CIRCLE SPLASH SCREEN -->
+        <div class="app-splash-screen" id="app-splash-screen">
+            <div class="splash-logo-container">
+                <div class="splash-spinner-ring"></div>
+                <img class="splash-logo-img" src="../Asset/icons/favicon.png" alt="Tiệm Nhà Gốm Logo">
+            </div>
+        </div>
+
+        <!-- 1. TOP HEADER: PROFILE -->
+        <header class="app-profile-header">
+
+
+
+            <h1 class="app-profile-title" data-i18n="profile_title">profile</h1>
+        </header>
+
+        <!-- 2. SCROLLABLE PROFILE CONTENT -->
+        <main class="membership-page-body">
+            <!-- USER EMAIL / ID GLASS PILL -->
+            <div class="profile-user-pill" id="profile-open-qr">
+                <div class="profile-user-left">
+                    <img class="profile-avatar-img" id="profile-user-avatar" src="../Asset/images/default-avatar.png" alt="Avatar">
+                    <span class="profile-user-email" id="profile-user-email">cuongnguyenc.n1612@gmail.com</span>
+                </div>
+                <div class="profile-qr-shortcut" title="Mở mã tích điểm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 1. TIER MEMBERSHIP CARD (TIỆM NHÀ GỐM OFFICIAL WEB DESIGN) -->
+            <div class="profile-tier-card" id="web-loyalty-card">
+                <div class="profile-tier-card-header">
+                    <div>
+                        <div class="profile-tier-type" id="profile-tier-type" data-i18n="profile_tier_loyalty">Hội Viên Thân Thiết</div>
+                        <div class="profile-tier-name" id="profile-tier-name">Gốm Mộc</div>
+                    </div>
+                    <div class="profile-tier-discount-badge" id="profile-tier-discount">Ưu đãi 0%</div>
+                </div>
+                
+                <div class="profile-tier-hint" id="profile-tier-hint">Chi thêm 1.000.000đ để thăng hạng Gốm Nung</div>
+                
+                <div class="profile-tier-progress-track">
+                    <div class="profile-tier-progress-fill" id="profile-progress-fill" style="width: 5%;"></div>
+                    <div class="profile-tier-progress-thumb" id="profile-progress-thumb"></div>
+                </div>
+
+                <div class="profile-tier-meta-row">
+                    <span><span data-i18n="profile_spent_total">Tổng chi tiêu</span>: <b id="profile-spent-total">0đ</b></span>
+                    <span><span data-i18n="profile_accumulated_points">Tích lũy</span>: <b id="profile-points-badge">0 Dots</b></span>
+                </div>
+            </div>
+
+            <!-- VIEW MY BENEFITS LINK -->
+            <div class="profile-benefits-row">
+                <a href="#benefits" class="profile-benefits-link" id="btn-view-benefits" data-i18n="profile_view_benefits">view my benefits &gt;</a>
+            </div>
+
+            <!-- 2. USER PROFILE INFO SECTION (THÔNG TIN TÀI KHOẢN NẰM DƯỚI HỘI VIÊN) -->
+            <div class="profile-info-card-section">
+                <div class="profile-orders-header">
+                    <h4 class="profile-section-heading" data-i18n="profile_account_info">thông tin tài khoản</h4>
+                </div>
+                <div class="profile-info-card">
+                    <div class="profile-info-item">
+                        <span class="info-item-label" data-i18n="lbl_name">Họ và tên</span>
+                        <span class="info-item-val" id="profile-detail-name">Chưa cập nhật</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-item-label" data-i18n="lbl_email">Email</span>
+                        <span class="info-item-val" id="profile-detail-email">Chưa cập nhật</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-item-label" data-i18n="lbl_phone">Số điện thoại</span>
+                        <span class="info-item-val" id="profile-detail-phone">Chưa cập nhật</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-item-label" data-i18n="lbl_dob">Ngày sinh</span>
+                        <span class="info-item-val" id="profile-detail-dob">Chưa cập nhật</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-item-label" data-i18n="lbl_gender">Giới tính</span>
+                        <span class="info-item-val" id="profile-detail-gender">Chưa cập nhật</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-item-label">Ngày tham gia</span>
+                        <span class="info-item-val" id="profile-detail-joined">Chưa cập nhật</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. MY WALLET SECTION -->
+            <div class="profile-wallet-section">
+                <h4 class="profile-section-heading" data-i18n="profile_my_wallet">my wallet</h4>
+                <div class="profile-wallet-grid">
+                    <!-- DOTS PILL -->
+                    <div class="profile-wallet-card" id="card-wallet-dots">
+                        <div class="wallet-card-header">
+                            <span class="wallet-card-label" data-i18n="profile_dots">dots</span>
+                            <div class="wallet-card-circle-icon"></div>
+                        </div>
+                        <div class="wallet-card-value" id="wallet-dots-val">0</div>
+                    </div>
+
+                    <!-- VOUCHERS PILL -->
+                    <div class="profile-wallet-card" id="card-wallet-vouchers">
+                        <div class="wallet-card-header">
+                            <span class="wallet-card-label" data-i18n="profile_vouchers">vouchers</span>
+                            <svg class="wallet-card-voucher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                                <line x1="8" y1="4" x2="8" y2="8"></line>
+                                <line x1="16" y1="4" x2="16" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="wallet-card-value" id="wallet-vouchers-val">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. ORDER HISTORY SECTION (LỊCH SỬ MUA HÀNG) -->
+            <div class="profile-orders-section">
+                <div class="profile-orders-header">
+                    <h4 class="profile-section-heading" data-i18n="profile_order_history">lịch sử mua hàng</h4>
+                    <span class="profile-orders-count-badge" id="profile-orders-count">0 đơn</span>
+                </div>
+                <div class="profile-orders-list" id="profile-orders-list">
+                    <!-- Orders will be rendered here dynamically -->
+                    <div style="text-align: center; padding: 24px 16px; color: #888; font-size: 0.82rem;" data-i18n="loading">
+                        Đang tải lịch sử đơn hàng...
+                    </div>
+                </div>
+                <!-- LOAD MORE ORDERS BUTTON -->
+                <button class="btn-load-more-orders" id="btn-load-more-orders" style="display: none;" data-i18n="profile_order_load_more">
+                    Xem thêm đơn hàng
+                </button>
+            </div>
+
+        </main>
+
+
+
+
+        <!-- 3-TAB FLOATING BOTTOM DOCK -->
+        <nav class="floating-dock-nav" id="app-floating-dock">
+            <a href="./home.html" class="dock-tab-item" id="tab-home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                </svg>
+                <span>home</span>
+            </a>
+            <a href="./membership.html" class="dock-tab-item active" id="tab-profile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>profile</span>
+            </a>
+            <a href="./settings.html" class="dock-tab-item" id="tab-setting">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>setting</span>
+            </a>
+        </nav>
+
+        <!-- QR / BARCODE POPUP MODAL -->
+        <div class="app-sheet-overlay" id="qr-modal-overlay"></div>
+        <div class="app-bottom-sheet" id="qr-bottom-sheet">
+            <div class="sheet-handle-bar"></div>
+            <div class="sheet-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #1a1a19;">Mã Tích Điểm Hội Viên</h3>
+                <button class="sheet-close-btn" id="btn-close-qr-sheet">✕</button>
+            </div>
+            <div class="sheet-body" style="text-align: center; padding: 20px 16px 40px;">
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 16px;">Đưa mã QR hoặc Barcode cho nhân viên tại quầy khi thanh toán</p>
+                <div class="qr-code-wrapper" style="margin: 0 auto 16px; width: 180px; height: 180px; background: #fff; padding: 8px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                    <canvas id="qr-canvas"></canvas>
+                </div>
+                <div class="barcode-wrapper" style="margin: 0 auto 12px; max-width: 260px;">
+                    <svg id="barcode-svg"></svg>
+                </div>
+                <p style="font-size: 0.9rem; font-weight: 700; color: #1a1a19; letter-spacing: 0.5px;" id="qr-member-code">TNG-000000</p>
+            </div>
+        </div>
+
+        <!-- BENEFITS MODAL SHEET (CHUẨN DỮ LIỆU ĐẶC QUYỀN HỘI VIÊN TỪ WEB) -->
+        <div class="app-sheet-overlay" id="benefits-modal-overlay"></div>
+        <div class="app-bottom-sheet" id="benefits-bottom-sheet" style="max-height: 85vh;">
+            <div class="sheet-handle-bar"></div>
+            <div class="sheet-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #1a1a19;">Đặc Quyền Hội Viên</h3>
+                <button class="sheet-close-btn" id="btn-close-benefits-sheet">✕</button>
+            </div>
+            <div class="sheet-body" style="padding: 16px 16px 40px;">
+                <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.86rem; color: #444;">
+                    
+                    <!-- 1. GỐM MỘC -->
+                    <div style="background: #fbfbf9; padding: 16px; border-radius: 18px; border: 1px solid rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <b style="color: #666666; font-size: 0.95rem;">🪵 Gốm Mộc</b>
+                            <span style="font-size: 0.74rem; background: #eee; padding: 3px 8px; border-radius: 12px; font-weight: 600;">Từ 0đ</span>
+                        </div>
+                        <ul style="margin: 0; padding-left: 18px; line-height: 1.6; color: #666; font-size: 0.82rem;">
+                            <li>Hạng khởi đầu dành cho mọi khách hàng tạo tài khoản.</li>
+                            <li>Tích lũy chi tiêu trên từng đơn hàng để thăng hạng tự động.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 2. GỐM NUNG -->
+                    <div style="background: #f0f7fd; padding: 16px; border-radius: 18px; border: 1px solid rgba(52, 152, 219, 0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <b style="color: #2980b9; font-size: 0.95rem;">🔥 Gốm Nung</b>
+                            <span style="font-size: 0.74rem; background: #e1f0fa; color: #2980b9; padding: 3px 8px; border-radius: 12px; font-weight: 600;">Từ 1.000.000đ</span>
+                        </div>
+                        <ul style="margin: 0; padding-left: 18px; line-height: 1.6; color: #444; font-size: 0.82rem;">
+                            <li>Giảm giá trực tiếp <b>1%</b> trên toàn bộ đơn hàng.</li>
+                            <li>Tặng voucher <b>50.000đ</b> khi lên hạng.</li>
+                            <li>Tặng voucher sinh nhật <b>50.000đ</b>.</li>
+                            <li>Giảm thêm 0.5% - 1% các nhóm hàng KitchenWare & HomeDecor.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 3. GỐM MEN -->
+                    <div style="background: #fefbf0; padding: 16px; border-radius: 18px; border: 1px solid rgba(241, 196, 15, 0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <b style="color: #b78a02; font-size: 0.95rem;">✨ Gốm Men</b>
+                            <span style="font-size: 0.74rem; background: #fdf5d6; color: #b78a02; padding: 3px 8px; border-radius: 12px; font-weight: 600;">Từ 5.000.000đ</span>
+                        </div>
+                        <ul style="margin: 0; padding-left: 18px; line-height: 1.6; color: #444; font-size: 0.82rem;">
+                            <li>Giảm giá trực tiếp <b>3%</b> trên toàn bộ đơn hàng.</li>
+                            <li><b>Miễn phí vận chuyển</b> toàn quốc cho mọi đơn hàng.</li>
+                            <li>Tặng voucher <b>100.000đ</b> khi lên hạng.</li>
+                            <li>Tặng phiếu sinh nhật trị giá <b>200.000đ</b>.</li>
+                            <li>Tặng voucher 10% (tối đa 150k) cho người thân, bạn bè.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 4. GỐM ĐỘC BẢN -->
+                    <div style="background: #fdf2f2; padding: 16px; border-radius: 18px; border: 1px solid rgba(231, 76, 60, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <b style="color: #c0392b; font-size: 0.95rem;">👑 Gốm Độc Bản</b>
+                            <span style="font-size: 0.74rem; background: #fbdada; color: #c0392b; padding: 3px 8px; border-radius: 12px; font-weight: 600;">Từ 10.000.000đ</span>
+                        </div>
+                        <ul style="margin: 0; padding-left: 18px; line-height: 1.6; color: #444; font-size: 0.82rem;">
+                            <li>Giảm giá trực tiếp <b>5%</b> vĩnh viễn trên mọi đơn hàng.</li>
+                            <li><b>Miễn phí giao hàng</b> toàn quốc.</li>
+                            <li>Tặng voucher <b>300.000đ</b> khi lên hạng.</li>
+                            <li>Ưu đãi sinh nhật: Tặng phiếu quà tặng <b>500.000đ</b>.</li>
+                            <li>Ưu tiên đặt trước các tác phẩm gốm mộc độc bản số lượng giới hạn.</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. VOUCHERS MODAL SHEET (HOÀN TOÀN ĐỘC LẬP) -->
+        <div class="app-sheet-overlay" id="vouchers-modal-overlay"></div>
+        <div class="app-bottom-sheet" id="vouchers-bottom-sheet" style="max-height: 82vh;">
+            <div class="sheet-handle-bar"></div>
+            <div class="sheet-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #1a1a19;">Ví Voucher Của Tôi</h3>
+                <button class="sheet-close-btn" id="btn-close-vouchers-sheet">✕</button>
+            </div>
+            <div class="sheet-body" style="padding: 16px 16px 40px;">
+                <div id="vouchers-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Vouchers will be rendered dynamically from Firestore / user data -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ORDER DETAIL MODAL SHEET (CHI TIẾT ĐƠN HÀNG TƯƠNG TỰ WEB) -->
+        <div class="app-sheet-overlay" id="order-detail-modal-overlay"></div>
+        <div class="app-bottom-sheet" id="order-detail-bottom-sheet" style="max-height: 88vh;">
+            <div class="sheet-handle-bar"></div>
+            <div class="sheet-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #1a1a19;" id="order-detail-header-title">Chi Tiết Đơn Hàng</h3>
+                <button class="sheet-close-btn" id="btn-close-order-detail-sheet">✕</button>
+            </div>
+            <div class="sheet-body" id="order-detail-body-content" style="padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Dynamically filled with order products, address, price breakdown -->
+            </div>
+        </div>
+
+
+        <!-- TOAST -->
+        <div class="app-toast" id="app-toast">Thông báo</div>
+    </div>
+
+
+
+    <script type="module" src="./membership.js?v=1.1"></script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>News & Events - Tiệm Nhà Gốm</title>
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="stylesheet" href="./app.css?v=1.4">
+    <style>
+        .article-top-bar {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 50;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .article-back-btn,
+        .article-home-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a19;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .article-back-btn:active,
+        .article-home-btn:active {
+            transform: scale(0.9);
+        }
+
+        .article-top-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #1a1a19;
+            letter-spacing: -0.2px;
+            text-align: center;
+            max-width: 230px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .article-body-scroll {
+            padding: 16px 18px calc(var(--safe-bottom) + 30px);
+            overflow-y: auto;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+            background: #ffffff;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .article-body-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .article-hero-image-wrap {
+            width: 100%;
+            max-height: 280px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #f0ede6;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .article-hero-image-wrap img {
+            width: 100%;
+            height: 100%;
+            max-height: 280px;
+            display: block;
+            object-fit: cover;
+        }
+
+        .article-title-heading {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #1a1a19;
+            line-height: 1.35;
+            margin-bottom: 16px;
+            letter-spacing: -0.3px;
+        }
+
+        .article-rich-content {
+            font-size: 0.88rem;
+            color: #4a4a48;
+            line-height: 1.68;
+            letter-spacing: 0.1px;
+        }
+
+        .article-rich-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            border-radius: 16px;
+            margin: 14px 0;
+            display: block;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .article-rich-content p {
+            margin-bottom: 16px;
+        }
+
+        .article-rich-content a {
+            color: #3f685c;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body style="background: #ffffff;">
+
+    <div class="mobile-app-shell" id="app-shell" style="background: #ffffff; display: flex; flex-direction: column;">
+        <!-- HEADER CỐ ĐỊNH: BACK < | TIÊU ĐỀ BÀI VIẾT | HOME ICON -->
+        <header class="article-top-bar">
+            <a href="javascript:history.back()" class="article-back-btn" aria-label="Quay lại">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+
+            <span class="article-top-title" id="article-header-title">Đang tải...</span>
+
+            <a href="./home.html" class="article-home-btn" aria-label="Về trang chủ">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                </svg>
+            </a>
+        </header>
+
+        <!-- NỘI DUNG BÀI VIẾT CUỘN MƯỢT MÀ -->
+        <main class="article-body-scroll" id="article-scroll-container">
+            <div class="article-hero-image-wrap" id="article-hero-wrap">
+                <img id="article-img" src="../Asset/images/hero-bg.webp" alt="Bài viết">
+            </div>
+
+            <h1 class="article-title-heading" id="article-title">Đang tải...</h1>
+
+            <div class="article-rich-content" id="article-content">
+                <p>Đang tải nội dung bài viết từ Tiệm Nhà Gốm...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPT LOAD DATA TỪ FIRESTORE HOẶC FALLBACK EXACT DESIGN -->
+    <script type="module">
+        import { db } from "../js/config.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('id');
+
+            const headerTitleEl = document.getElementById('article-header-title');
+            const titleEl = document.getElementById('article-title');
+            const imgEl = document.getElementById('article-img');
+            const heroWrap = document.getElementById('article-hero-wrap');
+            const contentEl = document.getElementById('article-content');
+
+
+            // Bài viết mẫu chuẩn thiết kế mẫu
+            const mockArticles = {
+                "item-1": {
+                    title: "Enjoy 10% off all items",
+                    imageUrl: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?q=80&w=800",
+                    content: `
+                        <p>Starting this week, enjoy 10% discount across all handcrafted ceramic collections at Tiệm Nhà Gốm stores and online channels for orders from 1,000,000 VND.</p>
+                        <p>Each parcel will also be shipped with our signature complimentary gift and free standard shipping nation-wide.</p>
+                        <p>Explore now: <a href="https://tiemnhagom.vn" target="_blank">tiemnhagom.vn/promotions</a></p>
+                    `
+                },
+                "item-2": {
+                    title: "a better price tag",
+                    imageUrl: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=800",
+                    content: `
+                        <p>The past years have been a period of quiet transformation at Tiệm Nhà Gốm, we have continuously optimized every stage of our operations while preserving the same product quality, materials and design philosophy as from the early days.</p>
+                        <p>Today, those efforts have reached an important milestone, allowing us to share the results with our customers through a more attainable pricing policy.</p>
+                        <p>Starting July 25, 2026, our new pricing policy will be available on our official website, membership app, and at all ceramic stores.</p>
+                        <p>Explore now: <a href="https://tiemnhagom.vn" target="_blank">tiemnhagom.vn/ordinary</a></p>
+                    `
+                },
+                "item-3": {
+                    title: "la mer napkin",
+                    imageUrl: "https://images.unsplash.com/photo-1520408222757-6f9f95d87d5d?q=80&w=800",
+                    content: `
+                        <p>Introducing the new La Mer Napkin collection — handmade linen with minimal oceanic patterns tailored specifically to accompany daily dining pottery sets.</p>
+                        <p>Available now at all Tiệm Nhà Gốm locations and mobile app catalog.</p>
+                        <p>Explore now: <a href="https://tiemnhagom.vn" target="_blank">tiemnhagom.vn/napkins</a></p>
+                    `
+                }
+            };
+
+            if (articleId && mockArticles[articleId]) {
+                const item = mockArticles[articleId];
+                if (headerTitleEl) headerTitleEl.innerText = item.title;
+                titleEl.innerText = item.title;
+                imgEl.src = item.imageUrl;
+                contentEl.innerHTML = item.content;
+                return;
+            }
+
+            if (articleId) {
+                try {
+                    const snap = await getDoc(doc(db, "news", articleId));
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const artTitle = data.title || "Tin tức";
+                        if (headerTitleEl) headerTitleEl.innerText = artTitle;
+                        titleEl.innerText = artTitle;
+                        if (data.imageUrl) imgEl.src = data.imageUrl;
+                        else if (heroWrap) heroWrap.style.display = 'none';
+                        contentEl.innerHTML = data.content || `<p>${data.description || ''}</p>`;
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Lỗi tải chi tiết tin tức:", e);
+                }
+            }
+
+            // Mặc định hiển thị bài "a better price tag" như trong ảnh chụp
+            const defaultItem = mockArticles["item-2"];
+            if (headerTitleEl) headerTitleEl.innerText = defaultItem.title;
+            titleEl.innerText = defaultItem.title;
+            imgEl.src = defaultItem.imageUrl;
+            contentEl.innerHTML = defaultItem.content;
+        });
+    </script>
+</body>
+</html>
+

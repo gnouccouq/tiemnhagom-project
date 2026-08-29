@@ -1,0 +1,9 @@
+{
+  "appId": "vn.tiemnhagom.loyalty",
+  "appName": "Tiệm Nhà Gốm",
+  "webDir": "app",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

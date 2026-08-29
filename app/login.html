@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Đăng nhập - Tiệm Nhà Gốm</title>
+    <meta name="theme-color" content="#141413">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="stylesheet" href="./app.css?v=1.2">
+    <style>
+        @font-face {
+            font-family: 'Elle Gabor Std Light';
+            src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        * {
+            font-family: 'Elle Gabor Std Light', 'Montserrat', -apple-system, sans-serif !important;
+        }
+        .login-page-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+        }
+        .login-page-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .login-page-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+        }
+        .auth-sheet-standalone {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-app-shell">
+        <!-- BACKGROUND IMAGE -->
+        <div class="login-page-bg">
+            <img id="login-bg-img" src="../Asset/images/hero-bg.webp" alt="Banner Tiệm Nhà Gốm">
+        </div>
+
+        <!-- AUTH CARD (BOTTOM EMBEDDED) -->
+        <div class="auth-sheet-standalone">
+            <div class="auth-modal-card" style="transform: none;">
+                <div class="auth-modal-header">
+                    <div class="auth-modal-title">
+                        <h3 id="auth-title-text">
+                            <span id="auth-main-title" data-i18n="auth_welcome_title">welcome back,</span><br>
+                            <span id="auth-sub-title" data-i18n="auth_welcome_sub">we've missed you!</span>
+                        </h3>
+                    </div>
+                    <div class="auth-header-right">
+                        <span class="auth-toggle-link" id="btn-toggle-auth-mode" data-i18n="auth_sign_up">sign up</span>
+                    </div>
+                </div>
+
+                <form id="app-auth-form">
+                    <div class="auth-input-group" id="group-name-field" style="display: none;">
+                        <input type="text" id="auth-input-name" class="auth-input" placeholder="full name" data-i18n-placeholder="auth_fullname_placeholder">
+                    </div>
+
+                    <div class="auth-input-group">
+                        <input type="email" id="auth-input-email" class="auth-input" placeholder="email" data-i18n-placeholder="auth_email_placeholder" required>
+                    </div>
+
+                    <div class="auth-input-group">
+                        <input type="password" id="auth-input-password" class="auth-input" placeholder="password" data-i18n-placeholder="auth_password_placeholder" required>
+                        <button type="button" class="auth-password-toggle" id="btn-toggle-password-visibility">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn-auth-submit" id="btn-auth-submit-label" data-i18n="auth_sign_in">sign in</button>
+                </form>
+
+                <!-- GOOGLE LOGIN BUTTON -->
+                <button type="button" class="btn-google-auth" id="btn-google-auth-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span id="google-btn-text" data-i18n="auth_continue_google">continue with google</span>
+                </button>
+
+                <!-- FORGOT PASSWORD -->
+                <div class="auth-footer-links" style="margin-top: 14px; text-align: center;">
+                    <button type="button" class="btn-forgot-password" id="btn-forgot-password" data-i18n="auth_forgot_password" style="background: none; border: none; font-size: 0.76rem; color: #888; cursor: pointer; text-decoration: underline;">
+                        forgot password?
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST MESSAGE -->
+        <div class="app-toast" id="app-toast">Thông báo</div>
+    </div>
+
+    <script type="module" src="./login.js?v=2.0"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
-    showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification
+    showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification, escapeHTML
 } from "./utils.js";
 import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
@@ -11,6 +11,8 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://w
 
 // Biến lưu kết quả xác thực OTP
 let confirmationResult = null;
+
+
 
 // Khởi tạo reCAPTCHA ẩn cho trang Profile
 const setupRecaptcha = () => {

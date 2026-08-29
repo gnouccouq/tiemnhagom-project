@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tiệm Nhà Gốm - Ceramics & Decor</title>
+    <meta name="theme-color" content="#141413">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="stylesheet" href="./app.css?v=2.1">
+</head>
+<body style="background: #ffffff;">
+
+    <!-- 1. MINIMAL WHITE LOGO LOADING CIRCLE SPLASH SCREEN -->
+    <div class="app-splash-screen" id="app-splash-screen">
+        <div class="splash-logo-container">
+            <div class="splash-spinner-ring"></div>
+            <img class="splash-logo-img" src="../Asset/icons/favicon.png" alt="Tiệm Nhà Gốm Logo">
+        </div>
+    </div>
+
+
+    <!-- 2. ROUTING LOGIC & REDIRECT -->
+    <script type="module">
+        import { auth } from '../js/config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        // Delay 1.2s để tạo hiệu ứng vòng xoay logo loading tuyệt đẹp khi mở app
+        setTimeout(() => {
+            onAuthStateChanged(auth, (user) => {
+                const splash = document.getElementById('app-splash-screen');
+                if (splash) splash.classList.add('fade-out');
+
+                setTimeout(() => {
+                    if (user) {
+                        window.location.href = "./home.html";
+                    } else {
+                        window.location.href = "./login.html";
+                    }
+                }, 300);
+            });
+        }, 1200);
+    </script>
+</body>
+</html>
