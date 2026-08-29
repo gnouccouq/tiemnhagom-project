@@ -5,8 +5,14 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "tiemnhagom-app/**"
+      "tiemnhagom-app/**",
+      "android/**",
+      "ios/**",
+      "*.apk",
+      "*.log"
     ],
+
+
     "rewrites": [
       {
         "source": "/share",

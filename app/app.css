@@ -20,8 +20,8 @@
     --app-gold: #D4AF37;
     --app-glass-border: rgba(255, 255, 255, 0.25);
     --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-    --safe-bottom: env(safe-area-inset-bottom, 20px);
-    --safe-top: env(safe-area-inset-top, 20px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
     --font-serif: 'Elle Gabor Std Light', Georgia, serif;
     --font-sans: 'Elle Gabor Std Light', 'Montserrat', sans-serif;
 }
@@ -39,25 +39,24 @@
 html, body {
     width: 100%;
     height: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
     overflow: hidden;
-    background-color: #0e0e0e;
+    background-color: #141413;
     font-family: 'Elle Gabor Std Light', 'Montserrat', sans-serif;
     color: var(--app-text-main);
 }
 
-
-
-/* GLOBAL APP SPLASH SCREEN (CHUẨN MINIMAL WHITE THEO MẪU CỦA BẠN) */
+/* GLOBAL MINIMAL SPLASH LOADING SCREEN (KHÔNG BAO GIỜ BỊ PHÓNG TO CHE MÀN HÌNH) */
 .app-splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    bottom: calc(var(--safe-bottom) + 80px); /* Để hở thanh Dock bên dưới không bị che */
-    z-index: 80;
+    bottom: 0;
+    z-index: 9999;
     background: #ffffff;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     transition: opacity 0.4s ease, visibility 0.4s ease;
@@ -69,32 +68,43 @@ html, body {
     pointer-events: none;
 }
 
-
 .splash-logo-container {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 60px !important;
+    height: 60px !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: auto;
 }
 
 .splash-logo-img {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 36px !important;
+    height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
     z-index: 2;
+    display: block;
 }
 
 .splash-spinner-ring {
     position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 1.5px solid #f0eee9;
-    border-top-color: #a39e93;
-    animation: spinRing 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    top: 0;
+    left: 0;
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    border: 1.5px solid #eceae4 !important;
+    border-top-color: #9c978c !important;
+    animation: spinRing 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     z-index: 1;
+    box-sizing: border-box;
 }
 
 @keyframes spinRing {
@@ -102,12 +112,13 @@ html, body {
     100% { transform: rotate(360deg); }
 }
 
-
 /* KHUNG VIEWPORT MOBILE (Cố định chuẩn tỷ lệ iPhone trên PC hoặc full màn hình trên Mobile) */
 
 .mobile-app-shell {
     width: 100%;
     height: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
     max-width: 430px;
     margin: 0 auto;
     background-color: #1a1a19;
@@ -115,7 +126,6 @@ html, body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
 }
 
 @media (min-width: 481px) {
@@ -134,6 +144,7 @@ html, body {
         box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7), inset 0 0 4px rgba(255, 255, 255, 0.1);
     }
 }
+
 
 
 /* TOP STATUS / HEADER */
@@ -187,9 +198,20 @@ html, body {
 }
 
 /* HERO SLIDER CAROUSEL FULL-HEIGHT */
+.home-hero-section {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: #141413;
+}
+
 .carousel-viewport {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 10;
     overflow: hidden;
 }
@@ -202,23 +224,29 @@ html, body {
 }
 
 .carousel-slide {
+    flex: 0 0 100%;
+    width: 100%;
     min-width: 100%;
     height: 100%;
     position: relative;
+    overflow: hidden;
 }
 
 .carousel-slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
+    display: block;
 }
 
 .carousel-slide::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.7) 100%);
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.02) 40%, rgba(0,0,0,0.65) 100%);
 }
+
 
 .slide-caption {
     position: absolute;

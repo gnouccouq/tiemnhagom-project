@@ -233,8 +233,8 @@ function initCarousel(totalSlides) {
 
     let isDragging = false;
     let startX = 0;
-    let currentTranslate = -currentSlide * viewport.offsetWidth;
-    let prevTranslate = currentTranslate;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
     let animationId = null;
 
     function getPositionX(e) {
@@ -242,7 +242,8 @@ function initCarousel(totalSlides) {
     }
 
     function setPositionByIndex() {
-        currentTranslate = -currentSlide * viewport.offsetWidth;
+        const slideWidth = viewport.getBoundingClientRect().width || window.innerWidth;
+        currentTranslate = -currentSlide * slideWidth;
         prevTranslate = currentTranslate;
         track.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
         track.style.transform = `translateX(${currentTranslate}px)`;
@@ -258,11 +259,22 @@ function initCarousel(totalSlides) {
 
     function startAutoSlide() {
         clearInterval(slideInterval);
-        slideInterval = setInterval(() => {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            setPositionByIndex();
-        }, 4500);
+        if (totalSlides > 1) {
+            slideInterval = setInterval(() => {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                setPositionByIndex();
+            }, 4500);
+        }
     }
+
+    // Xử lý khi xoay màn hình hoặc resize viewport
+    window.addEventListener('resize', () => {
+        setPositionByIndex();
+    }, { passive: true });
+
+    setPositionByIndex();
+    startAutoSlide();
+
 
     // Touch & Mouse Event Handlers
     function touchStart(e) {
