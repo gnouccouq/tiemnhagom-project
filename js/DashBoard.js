@@ -5,7 +5,7 @@ import {
 } from "./utils.js";
 import {
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy,
-    limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment
+    limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
@@ -6039,9 +6039,69 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
         }
 
         if (newStatus === "Đã hủy") {
-            const functions = getFunctions(db.app);
-            const cancelOrderSecure = httpsCallable(functions, 'cancelOrderSecure');
-            await cancelOrderSecure({ orderId: orderId });
+            try {
+                const functions = getFunctions(db.app);
+                const cancelOrderSecure = httpsCallable(functions, 'cancelOrderSecure');
+                await cancelOrderSecure({ orderId: orderId });
+            } catch (fnErr) {
+                console.warn("Cloud function cancelOrderSecure thất bại, thực hiện hủy trực tiếp qua Firestore:", fnErr);
+                // Fallback: Xử lý trực tiếp qua Firestore Transaction với quyền Admin
+                await runTransaction(db, async (transaction) => {
+                    const orderRef = doc(db, "orders", orderId);
+                    const orderSnap = await transaction.get(orderRef);
+                    if (!orderSnap.exists()) {
+                        throw new Error("Không tìm thấy đơn hàng.");
+                    }
+                    const orderData = orderSnap.data();
+
+                    // Cập nhật trạng thái đơn hàng
+                    transaction.update(orderRef, {
+                        status: 'Đã hủy',
+                        canceledBy: auth.currentUser ? auth.currentUser.uid : 'admin',
+                        canceledAt: new Date().toISOString()
+                    });
+
+                    // Hoàn lại tồn kho cho các sản phẩm
+                    if (orderData.items && Array.isArray(orderData.items)) {
+                        for (const item of orderData.items) {
+                            if (!item.id) continue;
+                            const productRef = doc(db, "products", item.id);
+                            const pSnap = await transaction.get(productRef);
+                            if (!pSnap.exists()) continue;
+
+                            const pData = pSnap.data();
+                            const itemQty = Number(item.quantity) || 1;
+                            let pUpdate = {
+                                sold: increment(-itemQty)
+                            };
+
+                            if (!pData.isCombo) {
+                                pUpdate.stock = increment(itemQty);
+                            }
+
+                            if (item.color && Array.isArray(pData.colorVariants)) {
+                                pUpdate.colorVariants = pData.colorVariants.map(v => {
+                                    if (v.name === item.color) {
+                                        return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                                    }
+                                    return v;
+                                });
+                            }
+
+                            if (item.pattern && Array.isArray(pData.patternVariants)) {
+                                pUpdate.patternVariants = pData.patternVariants.map(v => {
+                                    if (v.name === item.pattern) {
+                                        return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                                    }
+                                    return v;
+                                });
+                            }
+
+                            transaction.update(productRef, pUpdate);
+                        }
+                    }
+                });
+            }
             showToast(`Đã hủy đơn hàng #${orderId} và hoàn lại tồn kho thành công!`, "success");
         } else {
             const updateData = { status: newStatus };
