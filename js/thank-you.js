@@ -67,18 +67,20 @@ function renderOrderSummary(order) {
     // Style trực tiếp để đồng bộ với theme
     summaryDiv.style = "max-width: 600px; margin: 2rem auto; text-align: left; background: #fff; padding: 2rem; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 5px 15px rgba(0,0,0,0.02);";
 
-    const itemsHtml = order.items.map(item => `
+    const itemsHtml = order.items.map(item => {
+        const vText = [item.comboVariant, item.color, item.pattern, item.variant].filter(Boolean).join(' / ') || 'Mặc định';
+        return `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f9f9f9;">
             <div style="display: flex; align-items: center; gap: 15px; min-width: 0;">
                 <img src="${item.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">
                 <div style="min-width: 0;">
                     <h5 style="margin: 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</h5>
-                    <p style="margin: 0; font-size: 0.8rem; color: #888;">${item.variant || 'Mặc định'} x ${item.quantity}</p>
+                    <p style="margin: 0; font-size: 0.8rem; color: #888;">Phân loại: ${vText} x ${item.quantity}</p>
                 </div>
             </div>
             <span style="font-weight: 600; white-space: nowrap; margin-left: 10px;">${new Intl.NumberFormat('vi-VN').format(item.price * item.quantity)}đ</span>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
     summaryDiv.innerHTML = `
         <h4 style="margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; font-family: var(--font-serif);">Tóm tắt đơn hàng</h4>

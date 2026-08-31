@@ -300,7 +300,10 @@ window.viewOrderDetails = async (orderId) => {
                                         <img src="${item.image || item.imageUrl || 'https://placehold.co/45'}" alt="${item.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
                                         <div>
                                             <div style="font-weight: 600; color: #1e293b;">${escapeHTML(item.name || '')}</div>
-                                            ${item.variant ? `<div style="font-size: 0.75rem; color: #64748b;">Phân loại: ${escapeHTML(item.variant)}</div>` : ''}
+                                            ${(() => {
+                                                const vStr = [item.comboVariant, item.color, item.pattern, item.variant].filter(Boolean).join(' / ');
+                                                return vStr ? `<div style="font-size: 0.75rem; color: #64748b;">Phân loại: ${escapeHTML(vStr)}</div>` : '';
+                                            })()}
                                             <div style="font-size: 0.78rem; color: #64748b;">SL: x${item.quantity || 1}</div>
                                         </div>
                                     </div>
@@ -839,7 +842,10 @@ async function fetchOrderHistory(userId) {
                                         <img src="${it.image || it.imageUrl || 'https://placehold.co/45'}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
                                         <div style="flex: 1;">
                                             <div style="font-weight: 600; font-size: 0.88rem; color: #1e293b;">${escapeHTML(it.name || '')}</div>
-                                            ${it.variant ? `<div style="font-size: 0.75rem; color: #64748b;">Phân loại: ${escapeHTML(it.variant)}</div>` : ''}
+                                            ${(() => {
+                                                const vStr = [it.comboVariant, it.color, it.pattern, it.variant].filter(Boolean).join(' / ');
+                                                return vStr ? `<div style="font-size: 0.75rem; color: #64748b;">Phân loại: ${escapeHTML(vStr)}</div>` : '';
+                                            })()}
                                             <div style="font-size: 0.78rem; color: #64748b; display: flex; justify-content: space-between; margin-top: 2px;">
                                                 <span>SL: <strong>x${it.quantity || 1}</strong></span>
                                                 <span style="font-weight: 600; color: #0f172a;">${new Intl.NumberFormat('vi-VN').format(it.price || 0)}đ</span>

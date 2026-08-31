@@ -7721,16 +7721,16 @@ function renderPOSCart() {
                     if (item.color) labelParts.push(item.color);
                     if (item.pattern) labelParts.push(item.pattern);
                     const labelText = labelParts.join(' / ');
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
                 } else if (hasVariants) {
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / combo / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / combo / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
                 }
 
                 return `
                 <div class="pos-item-row" style="display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px dashed #e2e8f0; font-size: 0.88rem;">
                     <div class="pos-item-idx" style="width: 20px; color: #64748b; font-size: 0.8rem; text-align: center;">${index + 1}</div>
                     <button class="pos-item-del" onclick="window.removePOSItem(${index})" style="border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 2px;" title="Xóa"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-                    <img src="${itemImg}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.posOpenVariantModal('${item.id}', ${index})" title="Đổi biến thể">
+                    <img src="${itemImg}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.posOpenVariantModal(${index})" title="Đổi biến thể">
                     <div class="pos-item-sku" style="color: #0066cc; font-weight: 600; font-size: 0.8rem; width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.id}</div>
                     <div class="pos-item-name" style="flex: 1; font-weight: 500; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         <div>${item.name}</div>
@@ -8184,251 +8184,338 @@ window.getPOSVariantSalesCounts = (productId, pData = null) => {
     return stats;
 };
 
-window.posOpenVariantModal = async (productId, cartIndex = -1) => {
+// Hàm tự động khởi tạo HTML cho Modal biến thể POS nếu chưa có trong DOM
+function ensurePOSVariantModal() {
+    let modal = document.getElementById('pos-variant-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'pos-variant-modal';
+        modal.className = 'modal';
+        modal.style.cssText = 'display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; backdrop-filter: blur(2px);';
+        modal.innerHTML = `
+            <div class="modal-content" style="background: #fff; border-radius: 12px; max-width: 520px; width: 92%; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto;">
+                <span class="modal-close" onclick="window.posCloseVariantModal()" style="position: absolute; right: 15px; top: 12px; font-size: 1.5rem; cursor: pointer; color: #64748b; line-height: 1;">&times;</span>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                    <img id="pos-modal-prod-img" src="" style="width: 65px; height: 65px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <div>
+                        <h3 id="pos-modal-prod-name" style="margin: 0 0 4px 0; font-size: 1rem; color: #0f172a; font-weight: 700;"></h3>
+                        <div style="font-size: 0.8rem; color: #64748b;">Mã: <span id="pos-modal-prod-sku" style="color: #0284c7; font-weight: 600;"></span> | Giá: <strong id="pos-modal-prod-price" style="color: #d97706;"></strong></div>
+                    </div>
+                </div>
+
+                <!-- Section chọn Phân loại / Combo -->
+                <div id="pos-modal-combo-section" style="margin-bottom: 15px; display: none;">
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎁 Chọn phân loại Combo / Biến thể:</label>
+                    <div id="pos-modal-combo-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
+                </div>
+
+                <!-- Section chọn Màu sắc -->
+                <div id="pos-modal-color-section" style="margin-bottom: 15px; display: none;">
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎨 Chọn màu sắc:</label>
+                    <div id="pos-modal-color-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
+                </div>
+
+                <!-- Section chọn Họa tiết -->
+                <div id="pos-modal-pattern-section" style="margin-bottom: 15px; display: none;">
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">✨ Chọn họa tiết:</label>
+                    <div id="pos-modal-pattern-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                    <button type="button" onclick="window.posCloseVariantModal()" style="height: 40px; padding: 0 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">Hủy</button>
+                    <button type="button" id="pos-btn-confirm-variant" style="height: 40px; padding: 0 22px; border-radius: 8px; border: none; background: #0284c7; color: #ffffff; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 2px 4px rgba(2,132,199,0.25); transition: all 0.15s ease;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">Thêm vào đơn hàng</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    return modal;
+}
+
+window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
+    let productId = productIdOrIndex;
+    let actualCartIndex = cartIndex;
+
     const bill = window.getCurrentBill();
+
+    if (typeof productIdOrIndex === 'number' && actualCartIndex === -1) {
+        actualCartIndex = productIdOrIndex;
+        if (bill && bill.cart && bill.cart[actualCartIndex]) {
+            productId = bill.cart[actualCartIndex].id;
+        }
+    }
+
     let currentCartItem = null;
-    if (cartIndex >= 0 && bill && bill.cart && bill.cart[cartIndex]) {
-        currentCartItem = bill.cart[cartIndex];
+    if (actualCartIndex >= 0 && bill && bill.cart && bill.cart[actualCartIndex]) {
+        currentCartItem = bill.cart[actualCartIndex];
+        if (!productId) productId = currentCartItem.id;
     }
 
-    let p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
-    if (!p && typeof doc !== 'undefined' && typeof getDoc !== 'undefined' && db) {
-        try {
-            const snap = await getDoc(doc(db, "products", productId));
-            if (snap.exists()) {
-                p = { id: snap.id, ...snap.data() };
-            }
-        } catch (e) {
-            console.error("Lỗi tải thông tin sản phẩm POS:", e);
-        }
-    }
+    const modal = ensurePOSVariantModal();
 
-    if (!p) {
-        console.error("Không tìm thấy sản phẩm POS:", productId);
-        if (typeof showToast !== 'undefined') showToast("Không tìm thấy sản phẩm!", "error");
-        return;
-    }
+    // Hiển thị modal ngay lập tức
+    modal.style.display = 'flex';
 
-    // Ẩn bảng gợi ý tìm kiếm & reset ô tìm kiếm
-    const suggs = document.getElementById('pos-product-suggestions');
-    if (suggs) suggs.style.display = 'none';
-    const searchInput = document.getElementById('pos-product-search');
-    if (searchInput) searchInput.value = '';
-
-    const comboVariants = Array.isArray(p.comboVariants) ? p.comboVariants : [];
-    const colorVariants = Array.isArray(p.colorVariants) ? p.colorVariants : [];
-    let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0 
-        ? p.patternVariants 
-        : (Array.isArray(p.patterns) ? p.patterns : []);
-
-    currentPOSVariantCartIndex = cartIndex;
-    currentPOSVariantProduct = p;
-    selectedPOSComboVariant = currentCartItem ? (currentCartItem.comboVariant || null) : null;
-    selectedPOSColor = currentCartItem ? (currentCartItem.color || null) : null;
-    selectedPOSPattern = currentCartItem ? (currentCartItem.pattern || null) : null;
-
-    const modal = document.getElementById('pos-variant-modal');
-    if (!modal) return;
-
-    const fsSettings = globalFlashSaleSettings;
-    const currentPrice = getProductCurrentPrice(p, fsSettings);
-
-    const imgEl = document.getElementById('pos-modal-prod-img');
-    const nameEl = document.getElementById('pos-modal-prod-name');
-    const skuEl = document.getElementById('pos-modal-prod-sku');
-    const priceEl = document.getElementById('pos-modal-prod-price');
-
-    if (imgEl) imgEl.src = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl || 'https://placehold.co/60';
-    if (nameEl) nameEl.innerText = p.name || '';
-    if (skuEl) skuEl.innerText = p.id || '';
-    if (priceEl) priceEl.innerText = formatVND(currentPrice);
-
-    // Tính thống kê bán chạy của từng loại biến thể
-    const salesStats = window.getPOSVariantSalesCounts(p.id, p);
-
-    // Helper kiểm tra Best Seller
-    const getHotMap = (variants, statsMap) => {
-        const counts = {};
-        let maxCount = 0;
-        variants.forEach(v => {
-            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
-            const cnt = statsMap[vName] || 0;
-            counts[vName] = cnt;
-            if (cnt > maxCount) maxCount = cnt;
-        });
-        return { counts, maxCount };
-    };
-
-    // 1. Combo section
-    const comboSec = document.getElementById('pos-modal-combo-section');
-    const comboList = document.getElementById('pos-modal-combo-list');
-    if (comboSec && comboList) {
-        if (comboVariants.length > 0) {
-            comboSec.style.display = 'block';
-            const { counts: comboCounts, maxCount: maxComboCount } = getHotMap(comboVariants, salesStats.combo);
-            comboList.innerHTML = comboVariants.map(v => {
-                const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
-                const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
-                const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
-                const vPrice = typeof v === 'object' && v.price ? v.price : currentPrice;
-                const soldCount = comboCounts[vName] || 0;
-                const isHot = maxComboCount > 0 && soldCount === maxComboCount;
-
-                return `
-                <div class="pos-variant-card pos-combo-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vPrice}" onclick="window.posOnComboCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
-                        <img src="${vImg}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <span>${vName}</span>
-                                ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
-                            </div>
-                            <div style="font-size: 0.72rem; color: #64748b;">
-                                Giá: <strong style="color: #d97706;">${formatVND(vPrice)}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
-                </div>`;
-            }).join('');
-        } else {
-            comboSec.style.display = 'none';
-        }
-    }
-
-    // 2. Color section
-    const colorSec = document.getElementById('pos-modal-color-section');
-    const colorList = document.getElementById('pos-modal-color-list');
-    if (colorVariants.length > 0) {
-        colorSec.style.display = 'block';
-        const { counts: colorCounts, maxCount: maxColorCount } = getHotMap(colorVariants, salesStats.color);
-        colorList.innerHTML = colorVariants.map(v => {
-            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
-            const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
-            const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
-            const soldCount = colorCounts[vName] || 0;
-            const isHot = maxColorCount > 0 && soldCount === maxColorCount;
-            const vHex = (typeof v === 'object' && v.hex) ? v.hex : (typeof getColorHex === 'function' ? getColorHex(vName, null) : COLOR_MAP[vName]);
-
-            return `
-            <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
-                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
-                    <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background-color: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
-                            <span>${vName}</span>
-                            ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
-                        </div>
-                        <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
-                    </div>
-                </div>
-                <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
-            </div>`;
-        }).join('');
-    } else {
-        colorSec.style.display = 'none';
-    }
-
-    // 3. Pattern section
-    const patternSec = document.getElementById('pos-modal-pattern-section');
-    const patternList = document.getElementById('pos-modal-pattern-list');
-    if (availablePatterns.length > 0) {
-        patternSec.style.display = 'block';
-        const { counts: patternCounts, maxCount: maxPatternCount } = getHotMap(availablePatterns, salesStats.pattern);
-        patternList.innerHTML = availablePatterns.map(v => {
-            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
-            const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
-            const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
-            const soldCount = patternCounts[vName] || 0;
-            const isHot = maxPatternCount > 0 && soldCount === maxPatternCount;
-
-            return `
-            <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
-                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; pointer-events: none;">
-                    <img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            <span>${vName}</span>
-                            ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
-                        </div>
-                        <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
-                    </div>
-                </div>
-                <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
-            </div>`;
-        }).join('');
-    } else {
-        patternSec.style.display = 'none';
-    }
-
-    // Active combo / color / pattern selection highlight
-    if (selectedPOSComboVariant && comboList) {
-        const comboCard = Array.from(comboList.querySelectorAll('.pos-combo-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSComboVariant);
-        if (comboCard) window.posOnComboCardClick(comboCard);
-    } else if (comboVariants.length > 0 && comboList) {
-        const firstComboCard = comboList.querySelector('.pos-combo-card');
-        if (firstComboCard) window.posOnComboCardClick(firstComboCard);
-    }
-
-    if (selectedPOSColor && colorList) {
-        const colCard = Array.from(colorList.querySelectorAll('.pos-color-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSColor);
-        if (colCard) window.posOnColorCardClick(colCard);
-    } else if (colorVariants.length > 0 && colorList) {
-        const firstColCard = colorList.querySelector('.pos-color-card');
-        if (firstColCard) window.posOnColorCardClick(firstColCard);
-    }
-
-    if (selectedPOSPattern && patternList) {
-        const patCard = Array.from(patternList.querySelectorAll('.pos-pattern-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSPattern);
-        if (patCard) window.posOnPatternCardClick(patCard);
-    } else if (availablePatterns.length > 0 && patternList) {
-        const firstPatCard = patternList.querySelector('.pos-pattern-card');
-        if (firstPatCard) window.posOnPatternCardClick(firstPatCard);
-    }
-
-    const confirmBtn = document.getElementById('pos-btn-confirm-variant');
-    if (confirmBtn) {
-        confirmBtn.onclick = () => {
-            const fsSettings = globalFlashSaleSettings;
-            let finalPrice = getProductCurrentPrice(p, fsSettings);
-
-            let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl;
-
-            if (selectedPOSComboVariant && comboVariants.length > 0) {
-                const cv = comboVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSComboVariant);
-                if (cv && typeof cv === 'object') {
-                    if (cv.price) finalPrice = cv.price;
-                    if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
+    try {
+        let p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
+        if (!p && typeof doc !== 'undefined' && typeof getDoc !== 'undefined' && db && productId) {
+            try {
+                const snap = await getDoc(doc(db, "products", String(productId).trim()));
+                if (snap.exists()) {
+                    p = { id: snap.id, ...snap.data() };
                 }
+            } catch (e) {
+                console.error("Lỗi tải thông tin sản phẩm POS:", e);
             }
+        }
 
-            if (selectedPOSColor && colorVariants.length > 0) {
-                const cv = colorVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSColor);
-                if (cv && typeof cv === 'object' && (cv.thumbUrl || cv.imageUrl || cv.image)) {
-                    variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
-                }
+        if (!p && currentCartItem) {
+            p = {
+                id: currentCartItem.id,
+                name: currentCartItem.name,
+                price: currentCartItem.price,
+                imageUrl: currentCartItem.image,
+                colorVariants: currentCartItem.colorVariants || [],
+                patternVariants: currentCartItem.patternVariants || [],
+                comboVariants: currentCartItem.comboVariants || []
+            };
+        }
+
+        if (!p) {
+            if (typeof showToast !== 'undefined') showToast("Không tìm thấy thông tin sản phẩm!", "error");
+            return;
+        }
+
+        // Ẩn bảng gợi ý tìm kiếm & reset ô tìm kiếm
+        const suggs = document.getElementById('pos-product-suggestions');
+        if (suggs) suggs.style.display = 'none';
+        const searchInput = document.getElementById('pos-product-search');
+        if (searchInput) searchInput.value = '';
+
+        const comboVariants = Array.isArray(p.comboVariants) ? p.comboVariants : [];
+        const colorVariants = Array.isArray(p.colorVariants) ? p.colorVariants : [];
+        let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0 
+            ? p.patternVariants 
+            : (Array.isArray(p.patterns) ? p.patterns : []);
+
+        currentPOSVariantCartIndex = actualCartIndex;
+        currentPOSVariantProduct = p;
+        selectedPOSComboVariant = currentCartItem ? (currentCartItem.comboVariant || null) : null;
+        selectedPOSColor = currentCartItem ? (currentCartItem.color || null) : null;
+        selectedPOSPattern = currentCartItem ? (currentCartItem.pattern || null) : null;
+
+        const fsSettings = globalFlashSaleSettings || {};
+        const currentPrice = typeof getProductCurrentPrice === 'function' ? getProductCurrentPrice(p, fsSettings) : (p.price || 0);
+
+        const imgEl = document.getElementById('pos-modal-prod-img');
+        const nameEl = document.getElementById('pos-modal-prod-name');
+        const skuEl = document.getElementById('pos-modal-prod-sku');
+        const priceEl = document.getElementById('pos-modal-prod-price');
+
+        if (imgEl) imgEl.src = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl || 'https://placehold.co/60';
+        if (nameEl) nameEl.innerText = p.name || '';
+        if (skuEl) skuEl.innerText = p.id || '';
+        if (priceEl) priceEl.innerText = typeof formatVND === 'function' ? formatVND(currentPrice) : (currentPrice + 'đ');
+
+        // Thống kê số lượng bán
+        let salesStats = { color: {}, pattern: {}, combo: {} };
+        if (typeof window.getPOSVariantSalesCounts === 'function') {
+            try {
+                salesStats = window.getPOSVariantSalesCounts(p.id, p);
+            } catch (errStats) {
+                console.warn("Lỗi tính thống kê bán biến thể:", errStats);
             }
+        }
 
-            if (selectedPOSPattern && availablePatterns.length > 0) {
-                const pv = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSPattern);
-                if (pv && typeof pv === 'object' && (pv.thumbUrl || pv.imageUrl || pv.image)) {
-                    if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
-                        variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
+        const getHotMap = (variants, statsMap) => {
+            const counts = {};
+            let maxCount = 0;
+            if (Array.isArray(variants)) {
+                variants.forEach(v => {
+                    const vName = typeof v === 'string' ? v : (v ? v.name || 'Mặc định' : 'Mặc định');
+                    const cnt = (statsMap && statsMap[vName]) || 0;
+                    counts[vName] = cnt;
+                    if (cnt > maxCount) maxCount = cnt;
+                });
+            }
+            return { counts, maxCount };
+        };
+
+        // 1. Combo section
+        const comboSec = document.getElementById('pos-modal-combo-section');
+        const comboList = document.getElementById('pos-modal-combo-list');
+        if (comboSec && comboList) {
+            if (comboVariants.length > 0) {
+                comboSec.style.display = 'block';
+                const { counts: comboCounts, maxCount: maxComboCount } = getHotMap(comboVariants, salesStats.combo);
+                comboList.innerHTML = comboVariants.map(v => {
+                    const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+                    const vImg = (typeof v === 'object' && v && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+                    const stockVal = typeof v === 'object' && v && v.stock !== undefined ? v.stock : (p.stock || 0);
+                    const vPrice = typeof v === 'object' && v && v.price ? v.price : currentPrice;
+                    const soldCount = comboCounts[vName] || 0;
+                    const isHot = maxComboCount > 0 && soldCount === maxComboCount;
+
+                    return `
+                    <div class="pos-variant-card pos-combo-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vPrice}" onclick="window.posOnComboCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
+                            <img src="${vImg}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <span>${vName}</span>
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.72rem; color: #64748b;">
+                                    Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vPrice) : vPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                    </div>`;
+                }).join('');
+            } else {
+                comboSec.style.display = 'none';
+            }
+        }
+
+        // 2. Color section
+        const colorSec = document.getElementById('pos-modal-color-section');
+        const colorList = document.getElementById('pos-modal-color-list');
+        if (colorSec && colorList) {
+            if (colorVariants.length > 0) {
+                colorSec.style.display = 'block';
+                const { counts: colorCounts, maxCount: maxColorCount } = getHotMap(colorVariants, salesStats.color);
+                colorList.innerHTML = colorVariants.map(v => {
+                    const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+                    const vImg = (typeof v === 'object' && v && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+                    const stockVal = typeof v === 'object' && v && v.stock !== undefined ? v.stock : (p.stock || 0);
+                    const soldCount = colorCounts[vName] || 0;
+                    const isHot = maxColorCount > 0 && soldCount === maxColorCount;
+                    const vHex = (typeof v === 'object' && v && v.hex) ? v.hex : (typeof getColorHex === 'function' ? getColorHex(vName, null) : (typeof COLOR_MAP !== 'undefined' ? COLOR_MAP[vName] : null));
+
+                    return `
+                    <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
+                            <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background-color: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
+                                    <span>${vName}</span>
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
+                            </div>
+                        </div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                    </div>`;
+                }).join('');
+            } else {
+                colorSec.style.display = 'none';
+            }
+        }
+
+        // 3. Pattern section
+        const patternSec = document.getElementById('pos-modal-pattern-section');
+        const patternList = document.getElementById('pos-modal-pattern-list');
+        if (patternSec && patternList) {
+            if (availablePatterns.length > 0) {
+                patternSec.style.display = 'block';
+                const { counts: patternCounts, maxCount: maxPatternCount } = getHotMap(availablePatterns, salesStats.pattern);
+                patternList.innerHTML = availablePatterns.map(v => {
+                    const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+                    const vImg = (typeof v === 'object' && v && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+                    const stockVal = typeof v === 'object' && v && v.stock !== undefined ? v.stock : (p.stock || 0);
+                    const soldCount = patternCounts[vName] || 0;
+                    const isHot = maxPatternCount > 0 && soldCount === maxPatternCount;
+
+                    return `
+                    <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; pointer-events: none;">
+                            <img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <span>${vName}</span>
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
+                            </div>
+                        </div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                    </div>`;
+                }).join('');
+            } else {
+                patternSec.style.display = 'none';
+            }
+        }
+
+        // Active combo / color / pattern selection highlight
+        if (selectedPOSComboVariant && comboList) {
+            const comboCard = Array.from(comboList.querySelectorAll('.pos-combo-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSComboVariant);
+            if (comboCard) window.posOnComboCardClick(comboCard);
+        } else if (comboVariants.length > 0 && comboList) {
+            const firstComboCard = comboList.querySelector('.pos-combo-card');
+            if (firstComboCard) window.posOnComboCardClick(firstComboCard);
+        }
+
+        if (selectedPOSColor && colorList) {
+            const colCard = Array.from(colorList.querySelectorAll('.pos-color-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSColor);
+            if (colCard) window.posOnColorCardClick(colCard);
+        } else if (colorVariants.length > 0 && colorList) {
+            const firstColCard = colorList.querySelector('.pos-color-card');
+            if (firstColCard) window.posOnColorCardClick(firstColCard);
+        }
+
+        if (selectedPOSPattern && patternList) {
+            const patCard = Array.from(patternList.querySelectorAll('.pos-pattern-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSPattern);
+            if (patCard) window.posOnPatternCardClick(patCard);
+        } else if (availablePatterns.length > 0 && patternList) {
+            const firstPatCard = patternList.querySelector('.pos-pattern-card');
+            if (firstPatCard) window.posOnPatternCardClick(firstPatCard);
+        }
+
+        const confirmBtn = document.getElementById('pos-btn-confirm-variant');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                let finalPrice = currentPrice;
+
+                let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl;
+
+                if (selectedPOSComboVariant && comboVariants.length > 0) {
+                    const cv = comboVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSComboVariant);
+                    if (cv && typeof cv === 'object') {
+                        if (cv.price) finalPrice = cv.price;
+                        if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                     }
                 }
-            }
 
-            if (currentPOSVariantCartIndex >= 0) {
-                window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null, variantImg, finalPrice);
-            } else {
-                window.addToPOSCart(p.id, p.name, finalPrice, variantImg, p.category || 'khac', selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null);
-            }
-            window.posCloseVariantModal();
-        };
+                if (selectedPOSColor && colorVariants.length > 0) {
+                    const cv = colorVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSColor);
+                    if (cv && typeof cv === 'object' && (cv.thumbUrl || cv.imageUrl || cv.image)) {
+                        variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
+                    }
+                }
+
+                if (selectedPOSPattern && availablePatterns.length > 0) {
+                    const pv = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSPattern);
+                    if (pv && typeof pv === 'object' && (pv.thumbUrl || pv.imageUrl || pv.image)) {
+                        if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
+                            variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
+                        }
+                    }
+                }
+
+                if (currentPOSVariantCartIndex >= 0) {
+                    window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null, variantImg, finalPrice);
+                } else {
+                    window.addToPOSCart(p.id, p.name, finalPrice, variantImg, p.category || 'khac', selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null);
+                }
+                window.posCloseVariantModal();
+            };
+        }
+    } catch (errModal) {
+        console.error("Lỗi khi hiển thị Modal chọn biến thể POS:", errModal);
     }
-
-    modal.style.display = 'flex';
 };
 
 window.updatePOSCartItemVariant = (index, color, pattern, comboVariant, image, price = null) => {
@@ -10039,14 +10126,16 @@ window.printPOSReceipt = function (orderId, customer, items, total, subtotal = 0
                 </tr>
             </thead>
             <tbody>
-                ${items.map(i => `
+                ${items.map(i => {
+                    const variantStr = [i.comboVariant, i.color, i.pattern].filter(Boolean).join(' / ');
+                    return `
                     <tr>
-                        <td>${i.name} ${i.color ? `(${i.color})` : ''} ${i.pattern ? `(${i.pattern})` : ''}</td>
+                        <td>${i.name} ${variantStr ? `<br><small style="color: #555;">(${variantStr})</small>` : ''}</td>
                         <td>${i.quantity}</td>
                         <td>${new Intl.NumberFormat('vi-VN').format(i.price)}</td>
                         <td>${new Intl.NumberFormat('vi-VN').format(i.price * i.quantity)}</td>
-                    </tr>
-                `).join('')}
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
         ${discount > 0 ? `<div class="receipt-discount" style="text-align: right;">Giảm giá: -${new Intl.NumberFormat('vi-VN').format(discount)}đ</div>` : ''}
