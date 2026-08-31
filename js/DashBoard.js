@@ -2838,12 +2838,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Hàm tự động xử lý & chuyển đổi các ảnh base64 dán vào mô tả sản phẩm sang Firebase Storage để tránh lỗi vượt quá 1MB của Firestore
+async function processDescriptionImages(htmlContent, productId) {
+    if (!htmlContent) return '';
+
+    // Trích xuất tất cả các chuỗi data:image/...;base64,...
+    const base64Regex = /src=["'](data:image\/[a-zA-Z]+;base64,[^"']+)["']/g;
+    let match;
+    const matches = [];
+
+    while ((match = base64Regex.exec(htmlContent)) !== null) {
+        matches.push(match[1]);
+    }
+
+    let updatedHtml = htmlContent;
+
+    if (matches.length > 0) {
+        if (typeof showToast !== 'undefined') {
+            showToast(`Đang tự động nén & tải lên ${matches.length} ảnh trong nội dung mô tả...`, "info");
+        }
+
+        for (let i = 0; i < matches.length; i++) {
+            const dataUrl = matches[i];
+            try {
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+
+                // Lưu ảnh gốc nguyên bản 100%, giữ nguyên tỷ lệ và độ nét ban đầu không qua bất kỳ bước cắt ghép nào
+                const mimeType = blob.type || 'image/jpeg';
+                const ext = mimeType.includes('png') ? 'png' : (mimeType.includes('webp') ? 'webp' : 'jpg');
+                const descImgRef = ref(storage, `products/${productId}/description/${Date.now()}_img_${i}.${ext}`);
+                const snap = await uploadBytes(descImgRef, blob);
+                const downloadUrl = await getDownloadURL(snap.ref);
+
+                updatedHtml = updatedHtml.replaceAll(dataUrl, downloadUrl);
+            } catch (err) {
+                console.error("Lỗi tự động tải ảnh trong mô tả:", err);
+            }
+        }
+    }
+
+    // Đảm bảo dung lượng mô tả luôn an toàn dưới hạn mức 1,048,487 bytes của Firestore (~950,000 ký tự)
+    if (updatedHtml.length > 950000) {
+        updatedHtml = updatedHtml.substring(0, 950000);
+        if (typeof showToast !== 'undefined') {
+            showToast("Nội dung mô tả quá lớn, đã tự động rút gọn bớt để đảm bảo lưu dữ liệu thành công!", "warning");
+        }
+    }
+
+    return updatedHtml;
+}
+
 // Hàm lưu/cập nhật sản phẩm
 if (productForm) {
     productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (window.quillProductEditor) {
+        if (window.quillProductEditor && window.quillProductEditor.root) {
             document.getElementById('description').value = window.quillProductEditor.root.innerHTML;
         }
 
@@ -3085,6 +3136,12 @@ if (productForm) {
 
             const isCombo = document.querySelector('input[name="product-type"]:checked').value === 'combo';
 
+            let rawDesc = document.getElementById('description') ? document.getElementById('description').value : '';
+            if (window.quillProductEditor && window.quillProductEditor.root) {
+                rawDesc = window.quillProductEditor.root.innerHTML;
+            }
+            const safeDescription = await processDescriptionImages(rawDesc, productId);
+
             // 2. Lưu thông tin vào Firestore
             const productData = {
                 name: document.getElementById('name').value,
@@ -3120,7 +3177,7 @@ if (productForm) {
                 imageUrl: finalImageUrl,
                 thumbUrl: currentThumb, // Add thumbUrl to productData
                 additionalImages: currentAdditionals,
-                description: document.getElementById('description').value,
+                description: safeDescription,
                 colorVariants: colorVariantsResult,
                 patternVariants: patternVariantsResult,
                 patterns: patternVariantsResult.map(v => v.name), // Giữ lại patterns dạng string để tương thích ngược

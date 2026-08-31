@@ -5695,8 +5695,32 @@ body.admin-dashboard-layout {
 
 .product-description p {
     white-space: pre-line;
-    /* GiÃƒÂ¡Ã‚Â»Ã‚Â¯ cÃƒÆ’Ã‚Â¡c dÃƒÂ¡Ã‚ÂºÃ‚Â¥u xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng trong mÃƒÆ’Ã‚Â´ tÃƒÂ¡Ã‚ÂºÃ‚Â£ */
     word-break: break-word;
+}
+
+.product-description img,
+.product-description p img,
+.product-description div img,
+.product-description-content img,
+.qv-desc-tab img {
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 520px !important;
+    display: block !important;
+    margin: 16px auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+    .product-description img,
+    .product-description p img,
+    .product-description div img,
+    .product-description-content img,
+    .qv-desc-tab img {
+        max-height: 360px !important;
+        margin: 12px auto !important;
+    }
 }
 
 .product-description h4 {

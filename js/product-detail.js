@@ -618,7 +618,7 @@ async function fetchProductDetail() {
 
                         <div class="product-description">
                             <h4>Mô tả sản phẩm</h4>
-                            <p>${p.description ? p.description : 'Hiện tại chưa có thông tin.'}</p>
+                            <div class="product-description-content">${p.description ? p.description : 'Hiện tại chưa có thông tin.'}</div>
                         </div>
                     </div>
                 </div>

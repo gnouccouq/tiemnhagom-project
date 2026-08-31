@@ -1653,8 +1653,13 @@ async function fetchUserLocation() {
     let cached = sessionStorage.getItem('tng_user_location');
     if (cached) return cached;
 
+    if (sessionStorage.getItem('tng_user_location_failed')) {
+        return 'Việt Nam';
+    }
+
     try {
-        const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3000) });
+        const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(2500) });
+        if (res.status === 429) throw new Error('429');
         if (res.ok) {
             const data = await res.json();
             if (data && data.success) {
@@ -1668,10 +1673,10 @@ async function fetchUserLocation() {
     } catch (e) {}
 
     try {
-        const res2 = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+        const res2 = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(2500) });
         if (res2.ok) {
             const data2 = await res2.json();
-            const loc2 = `${data2.city || data2.region || ''}, ${data2.country_code || ''}`.replace(/^,\s*/, '').trim();
+            const loc2 = `${data2.city || data2.region || ''}, ${data2.country_code || data2.country || ''}`.replace(/^,\s*/, '').trim();
             if (loc2) {
                 sessionStorage.setItem('tng_user_location', loc2);
                 return loc2;
@@ -1679,6 +1684,22 @@ async function fetchUserLocation() {
         }
     } catch (e) {}
 
+    try {
+        const res3 = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(2500) });
+        if (res3.status === 429) throw new Error('429');
+        if (res3.ok) {
+            const data3 = await res3.json();
+            const loc3 = `${data3.city || data3.region || ''}, ${data3.country_code || ''}`.replace(/^,\s*/, '').trim();
+            if (loc3) {
+                sessionStorage.setItem('tng_user_location', loc3);
+                return loc3;
+            }
+        }
+    } catch (e) {}
+
+    // Lưu 'Việt Nam' vào sessionStorage để không tiếp tục gửi request khi bị 429 Rate Limit
+    sessionStorage.setItem('tng_user_location', 'Việt Nam');
+    sessionStorage.setItem('tng_user_location_failed', '1');
     return 'Việt Nam';
 }
 
