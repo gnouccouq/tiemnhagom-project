@@ -1,7 +1,7 @@
 import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, renderProductCardWithVariants, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
-    fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, COLOR_MAP
+    fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, COLOR_MAP, getColorHex
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
@@ -938,8 +938,8 @@ function renderVariantSelectors(product) {
                 <div class="variant-title">Màu sắc: <span id="selected-color-display" style="font-weight: 500; color: var(--text-black);">${selectedColor || product.colorVariants[0].name}</span></div>
                 <div class="variant-options">
                     ${product.colorVariants.map(variant => {
-            const colorHex = COLOR_MAP[variant.name] || '#ccc';
-            const isLightColor = ["#FFFFFF", "#FFFDD0", "#F5F5DC"].includes(colorHex.toUpperCase());
+            const colorHex = variant.hex || (typeof getColorHex === 'function' ? getColorHex(variant.name, '#CCCCCC') : (COLOR_MAP[variant.name] || '#CCCCCC'));
+            const isLightColor = ["#FFFFFF", "#FFFDD0", "#F5F5DC", "#FAFAFA", "#F8FAFC"].includes(colorHex.toUpperCase()) || colorHex.toLowerCase() === '#ffffff';
             const isOut = variant.isOutOfStock || (variant.stock !== undefined && variant.stock !== null && variant.stock <= 0);
             return `
                             <div class="color-chip ${variant.name === selectedColor ? 'active' : ''} ${isOut ? 'disabled-variant' : ''}"
