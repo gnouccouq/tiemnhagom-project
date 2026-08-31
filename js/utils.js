@@ -63,7 +63,49 @@ export const COLOR_MAP = {
     "Xanh rêu đậm": "#2E4D36",
     "Xám rêu": "#6E6D68",
     "Đỏ rượu": "#6C292E",
+    "Nâu Đất": "#77563D",
+    "Xanh Men Ngọc": "#B0E6AC",
+    "Đỏ Ruby": "#A51C1C",
+    "Vàng Cam": "#FFA500",
+    "Xanh Cốm": "#9ACD32",
+    "Xám Đậm": "#4A4A4A",
+    "Kem Sữa": "#FFF8DC",
+    "San Hô": "#FF7F50",
+    "Xanh Lục": "#2E8B57",
+    "Xanh Pastel": "#AEC6CF",
+    "Hồng Pastel": "#FFB7B2",
+    "Vàng Pastel": "#FFFFB3",
+    "Tím Pastel": "#C3B1E1",
+    "Xanh Dương": "#1E90FF",
+    "Xanh Ngọc": "#00CED1",
+    "Cam Đất": "#D35400",
+    "Nâu Tây": "#8B5A2B",
+    "Nâu Cafe": "#4A2C2A",
+    "Bạc": "#C0C0C0",
+    "Vàng Đồng": "#B8860B"
 };
+
+export function getColorHex(colorName, fallback = '#CCCCCC') {
+    if (!colorName) return fallback;
+    const nameTrim = colorName.trim();
+    if (COLOR_MAP[nameTrim]) return COLOR_MAP[nameTrim];
+
+    const lower = nameTrim.toLowerCase();
+    for (const [key, hex] of Object.entries(COLOR_MAP)) {
+        if (key.toLowerCase() === lower) return hex;
+    }
+
+    if (/^#([0-9A-F]{3}){1,2}$/i.test(nameTrim)) {
+        return nameTrim;
+    }
+    return fallback;
+}
+
+export function addCustomColorHex(colorName, hexCode) {
+    if (colorName && hexCode) {
+        COLOR_MAP[colorName.trim()] = hexCode.trim();
+    }
+}
 
 // 1.1 Cấu hình hạng thành viên (Membership Tiers)
 export const MEMBERSHIP_TIERS = [

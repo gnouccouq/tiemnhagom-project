@@ -1422,7 +1422,7 @@ window.syncStockWithVariants = function () {
     }
 };
 
-window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
 
@@ -1431,36 +1431,103 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     if (!datalist) {
         datalist = document.createElement('datalist');
         datalist.id = 'color-suggestions';
-        const colorOptions = Object.keys(COLOR_MAP).map(colorName => `<option value="${colorName}">`).join('');
-        datalist.innerHTML = colorOptions;
         document.body.appendChild(datalist);
     }
+    const colorOptions = Object.keys(COLOR_MAP).map(colorName => `<option value="${colorName}">`).join('');
+    datalist.innerHTML = colorOptions;
+
+    const initialHex = customHex || (typeof getColorHex === 'function' ? getColorHex(name, '#3498db') : (COLOR_MAP[name] || '#3498db'));
 
     const row = document.createElement('div');
     row.className = 'variant-row';
-    row.style = 'display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;';
+    row.style = 'display: flex; gap: 8px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 8px; transition: all 0.15s ease;';
     row.dataset.currentUrl = imageUrl;
 
     row.innerHTML = `
-        <div style="flex: 1;">
-            <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Trắng)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+        <div style="display: flex; align-items: center; gap: 6px; flex: 1.5; min-width: 0;">
+            <!-- Color Swatch Circle Preview -->
+            <div class="variant-color-swatch" style="width: 24px; height: 24px; border-radius: 50%; background-color: ${initialHex}; border: 2px solid #cbd5e1; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); cursor: pointer;" title="Xem trước màu sắc"></div>
+            
+            <!-- Color Name Input -->
+            <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Đỏ rượu)" style="padding: 7px 10px; border: 1px solid #cbd5e1; flex: 1; min-width: 0; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
+            
+            <!-- Color Picker Toggle -->
+            <input type="color" class="variant-color-picker" value="${initialHex.length === 7 ? initialHex : '#3498db'}" style="width: 28px; height: 28px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: transparent; flex-shrink: 0;" title="Chọn màu bằng bảng màu (Color Picker)">
+            
+            <!-- Hex Code Input -->
+            <input type="text" class="variant-hex-input" value="${initialHex}" placeholder="#HEX" style="width: 72px; padding: 6px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem; text-align: center; text-transform: uppercase; font-family: monospace; flex-shrink: 0;" title="Nhập mã màu Hex">
         </div>
-        <div style="width: 90px;">
-            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+
+        <div style="width: 85px; flex-shrink: 0;">
+            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 7px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
         </div>
-        <div style="width: 70px;">
-            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+
+        <div style="width: 65px; flex-shrink: 0;">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 7px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
         </div>
-        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+
+        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
-            <label style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+            <label style="font-size: 0.75rem; cursor: pointer; color: #475569;">Độc lập</label>
         </div>
-        <div class="variant-img-preview" style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho màu này">
-            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:20px; color:#999;">+</div>'}
+
+        <div class="variant-img-preview" style="width: 36px; height: 36px; background: #eee; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho màu này">
+            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:18px; color:#94a3b8;">+</div>'}
         </div>
+
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
-        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.5rem; line-height: 1; padding: 0 5px;">&times;</button>
+        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.4rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa màu này">&times;</button>
     `;
+
+    const nameInput = row.querySelector('.variant-name');
+    const colorPicker = row.querySelector('.variant-color-picker');
+    const hexInput = row.querySelector('.variant-hex-input');
+    const swatch = row.querySelector('.variant-color-swatch');
+
+    // Sync function to update swatch and inputs
+    const updateSwatch = (hexVal) => {
+        if (!hexVal) return;
+        let formattedHex = hexVal.trim();
+        if (!formattedHex.startsWith('#') && /^[0-9A-F]{3,6}$/i.test(formattedHex)) {
+            formattedHex = '#' + formattedHex;
+        }
+        swatch.style.backgroundColor = formattedHex;
+        if (/^#([0-9A-F]{3}){1,2}$/i.test(formattedHex)) {
+            const hex7 = formattedHex.length === 4 ? '#' + formattedHex[1] + formattedHex[1] + formattedHex[2] + formattedHex[2] + formattedHex[3] + formattedHex[3] : formattedHex;
+            colorPicker.value = hex7;
+        }
+    };
+
+    // Event: Typoing Color Name -> Lookup Hex from COLOR_MAP
+    nameInput.oninput = (e) => {
+        const val = e.target.value;
+        const foundHex = typeof getColorHex === 'function' ? getColorHex(val, null) : COLOR_MAP[val];
+        if (foundHex) {
+            hexInput.value = foundHex;
+            updateSwatch(foundHex);
+        }
+    };
+
+    // Event: Color Picker change
+    colorPicker.oninput = (e) => {
+        const hex = e.target.value;
+        hexInput.value = hex.toUpperCase();
+        updateSwatch(hex);
+        if (nameInput.value.trim() && typeof addCustomColorHex === 'function') {
+            addCustomColorHex(nameInput.value.trim(), hex);
+        }
+    };
+
+    // Event: Manual Hex Input
+    hexInput.oninput = (e) => {
+        const hex = e.target.value.toUpperCase();
+        updateSwatch(hex);
+        if (nameInput.value.trim() && /^#([0-9A-F]{3}){1,2}$/i.test(hex) && typeof addCustomColorHex === 'function') {
+            addCustomColorHex(nameInput.value.trim(), hex);
+        }
+    };
+
+    swatch.onclick = () => colorPicker.click();
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
@@ -2890,7 +2957,9 @@ if (productForm) {
                 }
                 const priceInput = row.querySelector('.variant-price');
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
-                return { name, imageUrl: variantUrl, stock, showOnProductPage, price };
+                const hexInput = row.querySelector('.variant-hex-input');
+                const hex = hexInput && hexInput.value ? hexInput.value.trim() : null;
+                return { name, imageUrl: variantUrl, stock, showOnProductPage, price, hex };
             });
             const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
             if (colorVariantsResult.length > 0) hasVariants = true;
@@ -3941,7 +4010,7 @@ async function editProduct(id) {
             if (variantContainer) {
                 variantContainer.innerHTML = '';
                 if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || ''));
+                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || '', v.hex || ''));
                 }
             }
 
@@ -7579,13 +7648,25 @@ function renderPOSCart() {
 
                 const itemImg = item.image || 'https://placehold.co/40';
                 const pLocal = posProductsLocal.find(p => String(p.id).trim() === String(item.id).trim());
-                const hasVariants = pLocal && ((Array.isArray(pLocal.colorVariants) && pLocal.colorVariants.length > 0) || (Array.isArray(pLocal.patternVariants) && pLocal.patternVariants.length > 0) || (Array.isArray(pLocal.patterns) && pLocal.patterns.length > 0));
+                const hasVariants = pLocal && (
+                    (Array.isArray(pLocal.colorVariants) && pLocal.colorVariants.length > 0) ||
+                    (Array.isArray(pLocal.patternVariants) && pLocal.patternVariants.length > 0) ||
+                    (Array.isArray(pLocal.patterns) && pLocal.patterns.length > 0) ||
+                    (Array.isArray(pLocal.comboVariants) && pLocal.comboVariants.length > 0) ||
+                    (pLocal.isCombo && Array.isArray(pLocal.comboItems) && pLocal.comboItems.length > 0)
+                );
 
                 let variantBadge = '';
-                if (item.color || item.pattern) {
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi màu sắc / họa tiết"><span>🎨 ${item.color || ''}${item.pattern ? (item.color ? ' / ' : '') + item.pattern : ''}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
+                const isVariantSelected = item.color || item.pattern || item.comboVariant;
+                if (isVariantSelected) {
+                    const labelParts = [];
+                    if (item.comboVariant) labelParts.push(item.comboVariant);
+                    if (item.color) labelParts.push(item.color);
+                    if (item.pattern) labelParts.push(item.pattern);
+                    const labelText = labelParts.join(' / ');
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
                 } else if (hasVariants) {
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal('${item.id}', ${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / combo / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
                 }
 
                 return `
@@ -7979,22 +8060,95 @@ window.posCheckCostWarning = (item, sellingPrice) => {
     }
 };
 
-// --- Modal chọn biến thể Màu sắc & Họa tiết khi bán hàng POS ---
+// --- Modal chọn biến thể Màu sắc & Họa tiết & Combo khi bán hàng POS ---
 let currentPOSVariantProduct = null;
 let currentPOSVariantCartIndex = -1;
 let selectedPOSColor = null;
 let selectedPOSPattern = null;
+let selectedPOSComboVariant = null;
 
-window.posOpenVariantModal = (productId, cartIndex = -1) => {
+// Hàm tính số lượng bán của từng biến thể theo dữ liệu đơn hàng & sản phẩm
+window.getPOSVariantSalesCounts = (productId, pData = null) => {
+    const stats = {
+        color: {},
+        pattern: {},
+        combo: {}
+    };
+
+    // 1. Thống kê từ dữ liệu đơn hàng (overviewOrdersData)
+    const orders = window.overviewOrdersData || [];
+    orders.forEach(o => {
+        if (!Array.isArray(o.items)) return;
+        o.items.forEach(item => {
+            if (String(item.id).trim() === String(productId).trim() || String(item.sku).trim() === String(productId).trim()) {
+                const qty = Number(item.quantity) || 1;
+                if (item.color) {
+                    stats.color[item.color] = (stats.color[item.color] || 0) + qty;
+                }
+                if (item.pattern) {
+                    stats.pattern[item.pattern] = (stats.pattern[item.pattern] || 0) + qty;
+                }
+                if (item.comboVariant || item.variantName) {
+                    const cName = item.comboVariant || item.variantName;
+                    stats.combo[cName] = (stats.combo[cName] || 0) + qty;
+                }
+            }
+        });
+    });
+
+    // 2. Thống kê từ biến thể lưu trực tiếp trong pData (nếu có thuộc tính sold)
+    if (pData) {
+        if (Array.isArray(pData.colorVariants)) {
+            pData.colorVariants.forEach(v => {
+                const vName = typeof v === 'string' ? v : v.name;
+                if (vName && typeof v === 'object' && v.sold !== undefined) {
+                    stats.color[vName] = Math.max(stats.color[vName] || 0, Number(v.sold) || 0);
+                }
+            });
+        }
+        if (Array.isArray(pData.patternVariants)) {
+            pData.patternVariants.forEach(v => {
+                const vName = typeof v === 'string' ? v : v.name;
+                if (vName && typeof v === 'object' && v.sold !== undefined) {
+                    stats.pattern[vName] = Math.max(stats.pattern[vName] || 0, Number(v.sold) || 0);
+                }
+            });
+        }
+        if (Array.isArray(pData.comboVariants)) {
+            pData.comboVariants.forEach(v => {
+                const vName = typeof v === 'string' ? v : v.name;
+                if (vName && typeof v === 'object' && v.sold !== undefined) {
+                    stats.combo[vName] = Math.max(stats.combo[vName] || 0, Number(v.sold) || 0);
+                }
+            });
+        }
+    }
+
+    return stats;
+};
+
+window.posOpenVariantModal = async (productId, cartIndex = -1) => {
     const bill = window.getCurrentBill();
     let currentCartItem = null;
     if (cartIndex >= 0 && bill && bill.cart && bill.cart[cartIndex]) {
         currentCartItem = bill.cart[cartIndex];
     }
 
-    const p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
+    let p = posProductsLocal.find(item => String(item.id).trim() === String(productId).trim());
+    if (!p && typeof doc !== 'undefined' && typeof getDoc !== 'undefined' && db) {
+        try {
+            const snap = await getDoc(doc(db, "products", productId));
+            if (snap.exists()) {
+                p = { id: snap.id, ...snap.data() };
+            }
+        } catch (e) {
+            console.error("Lỗi tải thông tin sản phẩm POS:", e);
+        }
+    }
+
     if (!p) {
         console.error("Không tìm thấy sản phẩm POS:", productId);
+        if (typeof showToast !== 'undefined') showToast("Không tìm thấy sản phẩm!", "error");
         return;
     }
 
@@ -8004,6 +8158,7 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
     const searchInput = document.getElementById('pos-product-search');
     if (searchInput) searchInput.value = '';
 
+    const comboVariants = Array.isArray(p.comboVariants) ? p.comboVariants : [];
     const colorVariants = Array.isArray(p.colorVariants) ? p.colorVariants : [];
     let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0 
         ? p.patternVariants 
@@ -8011,6 +8166,7 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
 
     currentPOSVariantCartIndex = cartIndex;
     currentPOSVariantProduct = p;
+    selectedPOSComboVariant = currentCartItem ? (currentCartItem.comboVariant || null) : null;
     selectedPOSColor = currentCartItem ? (currentCartItem.color || null) : null;
     selectedPOSPattern = currentCartItem ? (currentCartItem.pattern || null) : null;
 
@@ -8030,22 +8186,84 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
     if (skuEl) skuEl.innerText = p.id || '';
     if (priceEl) priceEl.innerText = formatVND(currentPrice);
 
-    // Color section
+    // Tính thống kê bán chạy của từng loại biến thể
+    const salesStats = window.getPOSVariantSalesCounts(p.id, p);
+
+    // Helper kiểm tra Best Seller
+    const getHotMap = (variants, statsMap) => {
+        const counts = {};
+        let maxCount = 0;
+        variants.forEach(v => {
+            const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+            const cnt = statsMap[vName] || 0;
+            counts[vName] = cnt;
+            if (cnt > maxCount) maxCount = cnt;
+        });
+        return { counts, maxCount };
+    };
+
+    // 1. Combo section
+    const comboSec = document.getElementById('pos-modal-combo-section');
+    const comboList = document.getElementById('pos-modal-combo-list');
+    if (comboSec && comboList) {
+        if (comboVariants.length > 0) {
+            comboSec.style.display = 'block';
+            const { counts: comboCounts, maxCount: maxComboCount } = getHotMap(comboVariants, salesStats.combo);
+            comboList.innerHTML = comboVariants.map(v => {
+                const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
+                const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
+                const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
+                const vPrice = typeof v === 'object' && v.price ? v.price : currentPrice;
+                const soldCount = comboCounts[vName] || 0;
+                const isHot = maxComboCount > 0 && soldCount === maxComboCount;
+
+                return `
+                <div class="pos-variant-card pos-combo-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vPrice}" onclick="window.posOnComboCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
+                        <img src="${vImg}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <span>${vName}</span>
+                                ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.72rem; color: #64748b;">
+                                Giá: <strong style="color: #d97706;">${formatVND(vPrice)}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                </div>`;
+            }).join('');
+        } else {
+            comboSec.style.display = 'none';
+        }
+    }
+
+    // 2. Color section
     const colorSec = document.getElementById('pos-modal-color-section');
     const colorList = document.getElementById('pos-modal-color-list');
     if (colorVariants.length > 0) {
         colorSec.style.display = 'block';
+        const { counts: colorCounts, maxCount: maxColorCount } = getHotMap(colorVariants, salesStats.color);
         colorList.innerHTML = colorVariants.map(v => {
             const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
             const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
             const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
+            const soldCount = colorCounts[vName] || 0;
+            const isHot = maxColorCount > 0 && soldCount === maxColorCount;
+            const vHex = (typeof v === 'object' && v.hex) ? v.hex : (typeof getColorHex === 'function' ? getColorHex(vName, null) : COLOR_MAP[vName]);
+
             return `
             <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
                 <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
                     <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vName}</div>
-                        <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal}</div>
+                        <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background-color: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
+                            <span>${vName}</span>
+                            ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                        </div>
+                        <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
                     </div>
                 </div>
                 <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
@@ -8055,43 +8273,59 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
         colorSec.style.display = 'none';
     }
 
-    // Pattern section
+    // 3. Pattern section
     const patternSec = document.getElementById('pos-modal-pattern-section');
     const patternList = document.getElementById('pos-modal-pattern-list');
     if (availablePatterns.length > 0) {
         patternSec.style.display = 'block';
+        const { counts: patternCounts, maxCount: maxPatternCount } = getHotMap(availablePatterns, salesStats.pattern);
         patternList.innerHTML = availablePatterns.map(v => {
             const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
             const vImg = (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
             const stockVal = typeof v === 'object' && v.stock !== undefined ? v.stock : p.stock;
+            const soldCount = patternCounts[vName] || 0;
+            const isHot = maxPatternCount > 0 && soldCount === maxPatternCount;
+
             return `
             <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
                 <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; pointer-events: none;">
                     <img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${vName}</div>
-                        <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal}</div>
+                        <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span>${vName}</span>
+                            ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                        </div>
+                        <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
                     </div>
                 </div>
+                <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
             </div>`;
         }).join('');
     } else {
         patternSec.style.display = 'none';
     }
 
-    // Active color/pattern selection highlight
-    if (selectedPOSColor) {
+    // Active combo / color / pattern selection highlight
+    if (selectedPOSComboVariant && comboList) {
+        const comboCard = Array.from(comboList.querySelectorAll('.pos-combo-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSComboVariant);
+        if (comboCard) window.posOnComboCardClick(comboCard);
+    } else if (comboVariants.length > 0 && comboList) {
+        const firstComboCard = comboList.querySelector('.pos-combo-card');
+        if (firstComboCard) window.posOnComboCardClick(firstComboCard);
+    }
+
+    if (selectedPOSColor && colorList) {
         const colCard = Array.from(colorList.querySelectorAll('.pos-color-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSColor);
         if (colCard) window.posOnColorCardClick(colCard);
-    } else if (colorVariants.length > 0) {
+    } else if (colorVariants.length > 0 && colorList) {
         const firstColCard = colorList.querySelector('.pos-color-card');
         if (firstColCard) window.posOnColorCardClick(firstColCard);
     }
 
-    if (selectedPOSPattern) {
+    if (selectedPOSPattern && patternList) {
         const patCard = Array.from(patternList.querySelectorAll('.pos-pattern-card')).find(c => decodeURIComponent(c.getAttribute('data-variant-name') || '') === selectedPOSPattern);
         if (patCard) window.posOnPatternCardClick(patCard);
-    } else if (availablePatterns.length > 0) {
+    } else if (availablePatterns.length > 0 && patternList) {
         const firstPatCard = patternList.querySelector('.pos-pattern-card');
         if (firstPatCard) window.posOnPatternCardClick(firstPatCard);
     }
@@ -8100,15 +8334,25 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
     if (confirmBtn) {
         confirmBtn.onclick = () => {
             const fsSettings = globalFlashSaleSettings;
-            const currentPrice = getProductCurrentPrice(p, fsSettings);
+            let finalPrice = getProductCurrentPrice(p, fsSettings);
 
-            let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl;
+            let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl;
+
+            if (selectedPOSComboVariant && comboVariants.length > 0) {
+                const cv = comboVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSComboVariant);
+                if (cv && typeof cv === 'object') {
+                    if (cv.price) finalPrice = cv.price;
+                    if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
+                }
+            }
+
             if (selectedPOSColor && colorVariants.length > 0) {
                 const cv = colorVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSColor);
                 if (cv && typeof cv === 'object' && (cv.thumbUrl || cv.imageUrl || cv.image)) {
                     variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                 }
             }
+
             if (selectedPOSPattern && availablePatterns.length > 0) {
                 const pv = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSPattern);
                 if (pv && typeof pv === 'object' && (pv.thumbUrl || pv.imageUrl || pv.image)) {
@@ -8119,9 +8363,9 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
             }
 
             if (currentPOSVariantCartIndex >= 0) {
-                window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, variantImg);
+                window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null, variantImg, finalPrice);
             } else {
-                window.addToPOSCart(p.id, p.name, currentPrice, variantImg, p.category || 'khac', selectedPOSColor || null, selectedPOSPattern || null);
+                window.addToPOSCart(p.id, p.name, finalPrice, variantImg, p.category || 'khac', selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null);
             }
             window.posCloseVariantModal();
         };
@@ -8130,14 +8374,16 @@ window.posOpenVariantModal = (productId, cartIndex = -1) => {
     modal.style.display = 'flex';
 };
 
-window.updatePOSCartItemVariant = (index, color, pattern, image) => {
+window.updatePOSCartItemVariant = (index, color, pattern, comboVariant, image, price = null) => {
     const bill = window.getCurrentBill();
     if (!bill || !bill.cart || !bill.cart[index]) return;
 
     const item = bill.cart[index];
     item.color = color;
     item.pattern = pattern;
+    item.comboVariant = comboVariant;
     if (image) item.image = image;
+    if (price && price > 0) item.price = price;
 
     window.savePOSBills();
     renderPOSCart();
@@ -8148,6 +8394,33 @@ window.posCloseVariantModal = () => {
     const modal = document.getElementById('pos-variant-modal');
     if (modal) modal.style.display = 'none';
     currentPOSVariantProduct = null;
+};
+
+window.posOnComboCardClick = (el) => {
+    if (!el) return;
+    const name = decodeURIComponent(el.getAttribute('data-variant-name') || '');
+    const img = decodeURIComponent(el.getAttribute('data-variant-img') || '');
+    const price = parseFloat(el.getAttribute('data-variant-price') || 0);
+
+    selectedPOSComboVariant = name;
+
+    document.querySelectorAll('.pos-combo-card').forEach(card => {
+        const isSel = card === el;
+        card.style.borderColor = isSel ? '#0066cc' : '#cbd5e1';
+        card.style.background = isSel ? '#f0f9ff' : '#fff';
+        card.style.boxShadow = isSel ? '0 0 0 2px rgba(0,102,204,0.2)' : 'none';
+        const chk = card.querySelector('.sel-check-badge');
+        if (chk) chk.style.display = isSel ? 'block' : 'none';
+    });
+
+    if (img && img !== 'undefined' && img !== 'null') {
+        const modalImg = document.getElementById('pos-modal-prod-img');
+        if (modalImg) modalImg.src = img;
+    }
+    if (price && price > 0) {
+        const priceEl = document.getElementById('pos-modal-prod-price');
+        if (priceEl) priceEl.innerText = formatVND(price);
+    }
 };
 
 window.posOnColorCardClick = (el) => {
@@ -8161,8 +8434,10 @@ window.posOnColorCardClick = (el) => {
         card.style.borderColor = isSel ? '#0066cc' : '#cbd5e1';
         card.style.background = isSel ? '#f0f9ff' : '#fff';
         card.style.boxShadow = isSel ? '0 0 0 2px rgba(0,102,204,0.2)' : 'none';
+        const chk = card.querySelector('.sel-check-badge');
+        if (chk) chk.style.display = isSel ? 'block' : 'none';
     });
-    if (img) {
+    if (img && img !== 'undefined' && img !== 'null') {
         const modalImg = document.getElementById('pos-modal-prod-img');
         if (modalImg) modalImg.src = img;
     }
@@ -8179,8 +8454,10 @@ window.posOnPatternCardClick = (el) => {
         card.style.borderColor = isSel ? '#0066cc' : '#cbd5e1';
         card.style.background = isSel ? '#f0f9ff' : '#fff';
         card.style.boxShadow = isSel ? '0 0 0 2px rgba(0,102,204,0.2)' : 'none';
+        const chk = card.querySelector('.sel-check-badge');
+        if (chk) chk.style.display = isSel ? 'block' : 'none';
     });
-    if (img && !selectedPOSColor) {
+    if (img && img !== 'undefined' && img !== 'null' && !selectedPOSColor) {
         const modalImg = document.getElementById('pos-modal-prod-img');
         if (modalImg) modalImg.src = img;
     }
@@ -8228,7 +8505,7 @@ window.posQuickAddVariant = (productId, encColor, encPattern, encImg) => {
     if (searchInput) searchInput.value = '';
 };
 
-window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null) => {
+window.addToPOSCart = async (id, name, price, image, category = 'khac', color = null, pattern = null, comboVariant = null) => {
     let bill = window.getCurrentBill();
     if (!bill) {
         if (typeof window.initPOSBills === 'function') window.initPOSBills();
@@ -8253,13 +8530,15 @@ window.addToPOSCart = async (id, name, price, image, category = 'khac', color = 
 
     const normColor = color || null;
     const normPattern = pattern || null;
+    const normCombo = comboVariant || null;
 
-    const existing = bill.cart.find(i => i.id === id && (i.color || null) === normColor && (i.pattern || null) === normPattern);
+    const existing = bill.cart.find(i => i.id === id && (i.color || null) === normColor && (i.pattern || null) === normPattern && (i.comboVariant || null) === normCombo);
     if (existing) {
         existing.quantity += 1;
         if (image) existing.image = image;
+        if (price) existing.price = price;
     } else {
-        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color: normColor, pattern: normPattern, discount: 0 });
+        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color: normColor, pattern: normPattern, comboVariant: normCombo, discount: 0 });
     }
 
     window.savePOSBills();
