@@ -4499,15 +4499,38 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
     let filtered = allOrdersCache.filter(order => {
         if (order.orderType === 'rental') return false;
 
-        const matchesId = !idVal || order.id.toLowerCase().includes(idVal) ||
-            (order.shippingAddress?.phone && order.shippingAddress.phone.includes(idVal)) ||
-            (order.customerPhone && order.customerPhone.includes(idVal)) ||
+        const matchesId = !idVal || 
+            (order.id && order.id.toLowerCase().includes(idVal)) ||
+            (order.shippingAddress?.phone && order.shippingAddress.phone.toLowerCase().includes(idVal)) ||
+            (order.customerPhone && order.customerPhone.toLowerCase().includes(idVal)) ||
+            (order.phone && order.phone.toLowerCase().includes(idVal)) ||
+            (order.userId && order.userId.toLowerCase().includes(idVal)) ||
             (order.shippingAddress?.fullName && order.shippingAddress.fullName.toLowerCase().includes(idVal)) ||
-            (order.customerName && order.customerName.toLowerCase().includes(idVal));
+            (order.customerName && order.customerName.toLowerCase().includes(idVal)) ||
+            (Array.isArray(order.items) && order.items.some(i => i.name && i.name.toLowerCase().includes(idVal)));
+
+        // Khi người dùng đang nhập từ khóa tìm kiếm (mã đơn, SĐT, tên...), ưu tiên hiển thị ngay kết quả
+        if (idVal) {
+            return matchesId;
+        }
 
         // Checkbox status filter (Đang xử lý, Hoàn thành, Không giao được, Đã hủy)
         const orderStatus = order.status || 'Đang xử lý';
-        const matchesStatus = checkedStatuses.length === 0 ? false : checkedStatuses.includes(orderStatus);
+        let matchesStatus = true;
+        if (checkedStatuses.length > 0) {
+            matchesStatus = checkedStatuses.some(chk => {
+                if (chk === 'Đang xử lý') {
+                    return ['Đang xử lý', 'Chờ thanh toán', 'Đã thanh toán', 'Đang giao hàng', 'Yêu cầu mới'].includes(orderStatus);
+                }
+                if (chk === 'Đã hoàn thành') {
+                    return ['Đã hoàn thành', 'Hoàn thành'].includes(orderStatus);
+                }
+                if (chk === 'Đã hủy') {
+                    return ['Đã hủy', 'Hủy'].includes(orderStatus);
+                }
+                return orderStatus === chk;
+            });
+        }
 
         // Checkbox type filter (Không giao hàng / Giao hàng)
         const isDelivery = (order.shippingMethod && order.shippingMethod !== 'pickup') || order.deliveryStatus;
@@ -4538,7 +4561,8 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
         const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
 
         let matchesDate = true;
-        const oDate = order.orderDate ? (order.orderDate.toDate ? order.orderDate.toDate() : new Date(order.orderDate)) : null;
+        const rawDate = order.orderDate || order.createdAt;
+        const oDate = rawDate ? (rawDate.toDate ? rawDate.toDate() : new Date(rawDate)) : null;
         if (oDate) {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -4598,7 +4622,7 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
             }
         }
 
-        return matchesId && matchesStatus && matchesType && matchesDeliveryStatus && matchesCarrier && matchesPayment && matchesCreator && matchesSeller && matchesPricelist && matchesChannel && matchesUserId && matchesDate;
+        return matchesStatus && matchesType && matchesDeliveryStatus && matchesCarrier && matchesPayment && matchesCreator && matchesSeller && matchesPricelist && matchesChannel && matchesUserId && matchesDate;
     });
 
     // Cập nhật dòng tổng cộng chuẩn KiotViet
@@ -6054,6 +6078,20 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                     }
                     const orderData = orderSnap.data();
 
+                    // 1. Đọc tồn kho các sản phẩm trước (ALL READS FIRST)
+                    const productSnapshots = [];
+                    if (orderData.items && Array.isArray(orderData.items)) {
+                        for (const item of orderData.items) {
+                            if (!item.id) continue;
+                            const productRef = doc(db, "products", item.id);
+                            const pSnap = await transaction.get(productRef);
+                            if (pSnap.exists()) {
+                                productSnapshots.push({ item, productRef, pSnap });
+                            }
+                        }
+                    }
+
+                    // 2. Thực hiện tất cả các thao tác ghi (ALL WRITES AFTER READS)
                     // Cập nhật trạng thái đơn hàng
                     transaction.update(orderRef, {
                         status: 'Đã hủy',
@@ -6062,43 +6100,36 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                     });
 
                     // Hoàn lại tồn kho cho các sản phẩm
-                    if (orderData.items && Array.isArray(orderData.items)) {
-                        for (const item of orderData.items) {
-                            if (!item.id) continue;
-                            const productRef = doc(db, "products", item.id);
-                            const pSnap = await transaction.get(productRef);
-                            if (!pSnap.exists()) continue;
+                    for (const { item, productRef, pSnap } of productSnapshots) {
+                        const pData = pSnap.data();
+                        const itemQty = Number(item.quantity) || 1;
+                        let pUpdate = {
+                            sold: increment(-itemQty)
+                        };
 
-                            const pData = pSnap.data();
-                            const itemQty = Number(item.quantity) || 1;
-                            let pUpdate = {
-                                sold: increment(-itemQty)
-                            };
-
-                            if (!pData.isCombo) {
-                                pUpdate.stock = increment(itemQty);
-                            }
-
-                            if (item.color && Array.isArray(pData.colorVariants)) {
-                                pUpdate.colorVariants = pData.colorVariants.map(v => {
-                                    if (v.name === item.color) {
-                                        return { ...v, stock: (Number(v.stock) || 0) + itemQty };
-                                    }
-                                    return v;
-                                });
-                            }
-
-                            if (item.pattern && Array.isArray(pData.patternVariants)) {
-                                pUpdate.patternVariants = pData.patternVariants.map(v => {
-                                    if (v.name === item.pattern) {
-                                        return { ...v, stock: (Number(v.stock) || 0) + itemQty };
-                                    }
-                                    return v;
-                                });
-                            }
-
-                            transaction.update(productRef, pUpdate);
+                        if (!pData.isCombo) {
+                            pUpdate.stock = increment(itemQty);
                         }
+
+                        if (item.color && Array.isArray(pData.colorVariants)) {
+                            pUpdate.colorVariants = pData.colorVariants.map(v => {
+                                if (v.name === item.color) {
+                                    return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                                }
+                                return v;
+                            });
+                        }
+
+                        if (item.pattern && Array.isArray(pData.patternVariants)) {
+                            pUpdate.patternVariants = pData.patternVariants.map(v => {
+                                if (v.name === item.pattern) {
+                                    return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                                }
+                                return v;
+                            });
+                        }
+
+                        transaction.update(productRef, pUpdate);
                     }
                 });
             }

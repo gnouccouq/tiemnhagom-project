@@ -9,7 +9,6 @@ const querystring = require('querystring');
 // Initialize Firebase Admin SDK if not already initialized
 admin.initializeApp();
 const db = admin.firestore();
-const bucket = admin.storage().bucket();
 
 /**
  * Hàm hỗ trợ trích xuất đường dẫn file từ URL Storage
@@ -116,6 +115,14 @@ exports.deleteReviewImages = functions.firestore
  * Helper function to delete a list of files from Firebase Storage.
  */
 async function deleteFilesFromStorage(urls, contextName) {
+    let bucket;
+    try {
+        bucket = admin.storage().bucket();
+    } catch (err) {
+        functions.logger.warn(`[${contextName}] Không thể khởi tạo bucket mặc định:`, err);
+        return null;
+    }
+
     const deletePromises = urls.map(async (url) => {
         const filePath = getFilePathFromUrl(url);
         if (!filePath) return null;
@@ -267,11 +274,18 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
             const customId = generateServerOrderId();
             const newOrderRef = db.collection("orders").doc(customId);
             
-            // Cập nhật kho cho từng sản phẩm
+            // 1. Đọc tồn kho tất cả sản phẩm trước (ALL READS FIRST)
+            const productSnapshots = [];
             for (const item of orderItems) {
                 const pRef = db.collection("products").doc(item.id);
                 const pSnap = await transaction.get(pRef);
-                const pData = pSnap.data();
+                productSnapshots.push({ item, pRef, pSnap });
+            }
+
+            // 2. Thực hiện tất cả các thao tác ghi (ALL WRITES AFTER READS)
+            // Cập nhật kho cho từng sản phẩm
+            for (const { item, pRef, pSnap } of productSnapshots) {
+                const pData = pSnap.data() || {};
 
                 let updateData = {
                     stock: admin.firestore.FieldValue.increment(-item.quantity),
@@ -723,47 +737,55 @@ exports.vnpayIpn = onRequest(async (req, res) => {
             } else {
                 // Thanh toán thất bại hoặc hủy -> Hủy đơn và cộng lại tồn kho
                 await db.runTransaction(async (transaction) => {
+                    // 1. Đọc dữ liệu đơn hàng và sản phẩm trước (ALL READS FIRST)
                     const latestOrderSnap = await transaction.get(orderRef);
                     if (!latestOrderSnap.exists || latestOrderSnap.data().status !== 'Chờ thanh toán') {
                         return; // Đã xử lý
                     }
 
+                    const productSnapshots = [];
+                    if (orderData.items && Array.isArray(orderData.items)) {
+                        for (const item of orderData.items) {
+                            if (!item.id) continue;
+                            const productRef = db.collection('products').doc(item.id);
+                            const pSnap = await transaction.get(productRef);
+                            if (pSnap.exists) {
+                                productSnapshots.push({ item, productRef, pSnap });
+                            }
+                        }
+                    }
+
+                    // 2. Thực hiện tất cả các thao tác ghi (ALL WRITES AFTER READS)
                     // Cập nhật trạng thái
                     transaction.update(orderRef, { status: 'Đã hủy', cancelReason: 'Thanh toán VNPay thất bại/hủy' });
 
                     // Trả lại tồn kho
-                    if (orderData.items && Array.isArray(orderData.items)) {
-                        for (const item of orderData.items) {
-                            const productRef = db.collection('products').doc(item.id);
-                            const pSnap = await transaction.get(productRef);
-                            if (!pSnap.exists) continue;
+                    for (const { item, productRef, pSnap } of productSnapshots) {
+                        const pData = pSnap.data();
+                        let updateData = {
+                            sold: admin.firestore.FieldValue.increment(-item.quantity)
+                        };
 
-                            const pData = pSnap.data();
-                            let updateData = {
-                                sold: admin.firestore.FieldValue.increment(-item.quantity)
-                            };
-
-                            if (!pData.isCombo) {
-                                updateData.stock = admin.firestore.FieldValue.increment(item.quantity);
-                            }
-
-                            if (item.color && Array.isArray(pData.colorVariants)) {
-                                const updatedColorVariants = pData.colorVariants.map(v => {
-                                    if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
-                                    return v;
-                                });
-                                updateData.colorVariants = updatedColorVariants;
-                            }
-                            if (item.pattern && Array.isArray(pData.patternVariants)) {
-                                const updatedPatternVariants = pData.patternVariants.map(v => {
-                                    if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
-                                    return v;
-                                });
-                                updateData.patternVariants = updatedPatternVariants;
-                            }
-                            
-                            transaction.update(productRef, updateData);
+                        if (!pData.isCombo) {
+                            updateData.stock = admin.firestore.FieldValue.increment(item.quantity);
                         }
+
+                        if (item.color && Array.isArray(pData.colorVariants)) {
+                            const updatedColorVariants = pData.colorVariants.map(v => {
+                                if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                return v;
+                            });
+                            updateData.colorVariants = updatedColorVariants;
+                        }
+                        if (item.pattern && Array.isArray(pData.patternVariants)) {
+                            const updatedPatternVariants = pData.patternVariants.map(v => {
+                                if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                return v;
+                            });
+                            updateData.patternVariants = updatedPatternVariants;
+                        }
+                        
+                        transaction.update(productRef, updateData);
                     }
                 });
                 
@@ -790,6 +812,7 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
 
     try {
         const result = await db.runTransaction(async (transaction) => {
+            // 1. GIAI ĐOẠN ĐỌC (ALL READS FIRST)
             const orderRef = db.collection('orders').doc(orderId);
             const orderSnap = await transaction.get(orderRef);
             
@@ -816,7 +839,21 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
                 throw new HttpsError("failed-precondition", "Không thể hủy đơn hàng đã hoàn thành.");
             }
 
-            // Đổi trạng thái
+            // Đọc tồn kho tất cả sản phẩm liên quan
+            const productSnapshots = [];
+            if (orderData.items && Array.isArray(orderData.items)) {
+                for (const item of orderData.items) {
+                    if (!item.id) continue;
+                    const productRef = db.collection('products').doc(item.id);
+                    const pSnap = await transaction.get(productRef);
+                    if (pSnap.exists) {
+                        productSnapshots.push({ item, productRef, pSnap });
+                    }
+                }
+            }
+
+            // 2. GIAI ĐOẠN GHI (ALL WRITES AFTER READS)
+            // Đổi trạng thái đơn hàng
             transaction.update(orderRef, { 
                 status: 'Đã hủy', 
                 canceledBy: uid, 
@@ -824,38 +861,33 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
             });
 
             // Cộng lại tồn kho
-            if (orderData.items && Array.isArray(orderData.items)) {
-                for (const item of orderData.items) {
-                    const productRef = db.collection('products').doc(item.id);
-                    const pSnap = await transaction.get(productRef);
-                    if (!pSnap.exists) continue;
+            for (const { item, productRef, pSnap } of productSnapshots) {
+                const pData = pSnap.data();
+                const itemQty = Number(item.quantity) || 1;
+                let updateData = {
+                    sold: admin.firestore.FieldValue.increment(-itemQty)
+                };
 
-                    const pData = pSnap.data();
-                    let updateData = {
-                        sold: admin.firestore.FieldValue.increment(-item.quantity)
-                    };
-
-                    if (!pData.isCombo) {
-                        updateData.stock = admin.firestore.FieldValue.increment(item.quantity);
-                    }
-
-                    if (item.color && Array.isArray(pData.colorVariants)) {
-                        const updatedColorVariants = pData.colorVariants.map(v => {
-                            if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
-                            return v;
-                        });
-                        updateData.colorVariants = updatedColorVariants;
-                    }
-                    if (item.pattern && Array.isArray(pData.patternVariants)) {
-                        const updatedPatternVariants = pData.patternVariants.map(v => {
-                            if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
-                            return v;
-                        });
-                        updateData.patternVariants = updatedPatternVariants;
-                    }
-                    
-                    transaction.update(productRef, updateData);
+                if (!pData.isCombo) {
+                    updateData.stock = admin.firestore.FieldValue.increment(itemQty);
                 }
+
+                if (item.color && Array.isArray(pData.colorVariants)) {
+                    const updatedColorVariants = pData.colorVariants.map(v => {
+                        if (v.name === item.color) return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                        return v;
+                    });
+                    updateData.colorVariants = updatedColorVariants;
+                }
+                if (item.pattern && Array.isArray(pData.patternVariants)) {
+                    const updatedPatternVariants = pData.patternVariants.map(v => {
+                        if (v.name === item.pattern) return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                        return v;
+                    });
+                    updateData.patternVariants = updatedPatternVariants;
+                }
+                
+                transaction.update(productRef, updateData);
             }
             
             return { success: true, message: "Hủy đơn hàng thành công và đã hoàn lại tồn kho." };
@@ -864,6 +896,9 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
         return result;
     } catch (error) {
         console.error("Lỗi cancelOrderSecure:", error);
+        if (error instanceof HttpsError) {
+            throw error;
+        }
         throw new HttpsError("internal", error.message);
     }
 });
