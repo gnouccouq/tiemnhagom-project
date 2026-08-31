@@ -101,6 +101,16 @@ export function getColorHex(colorName, fallback = '#CCCCCC') {
     return fallback;
 }
 
+export function removeVietnameseTones(str) {
+    if (!str) return '';
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+}
+
 export function addCustomColorHex(colorName, hexCode) {
     if (colorName && hexCode) {
         COLOR_MAP[colorName.trim()] = hexCode.trim();
@@ -604,16 +614,23 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 // cần sử dụng dịch vụ tìm kiếm chuyên biệt như Algolia hoặc triển khai N-grams.
                 const q = query(
                     collection(db, "products"),
-                    orderBy("name_lowercase"),
-                    limit(100) // Tăng giới hạn để tăng khả năng tìm thấy substring trong tập dữ liệu lớn hơn
+                    limit(500)
                 );
 
                 const snap = await getDocs(q);
-                // Lọc client-side để tìm kiếm "chữ cái bất kỳ" (substring search)
+                const valClean = removeVietnameseTones(val);
+
+                // Lọc client-side để tìm kiếm từ khóa có dấu / không dấu / mã SKU
                 const results = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(p => !p.isHidden && !p.isOnlyEvent && ((p.name_lowercase || p.name.toLowerCase()).includes(val) || p.id.toLowerCase().includes(val))) // Tìm theo tên hoặc mã SKU
-                    .slice(0, 6); // Chỉ hiển thị 6 gợi ý hàng đầu
+                    .filter(p => {
+                        if (p.isHidden || p.isOnlyEvent) return false;
+                        const nameRaw = (p.name || '').toLowerCase();
+                        const nameClean = removeVietnameseTones(p.name || '');
+                        const skuClean = (p.id || '').toLowerCase();
+                        return nameRaw.includes(val) || nameClean.includes(valClean) || skuClean.includes(valClean);
+                    })
+                    .slice(0, 8);
 
                 if (results.length === 0) {
                     box.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy sản phẩm phù hợp</div>`;

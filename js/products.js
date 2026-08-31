@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES // Import dynamicCategories directly
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
@@ -170,31 +170,25 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         updateMetaTag('property', 'og:description', seoDesc);
 
         // Apply filters
-        // Ưu tiên lọc theo Bộ sưu tập nếu có trên URL
-        if (collectionParam) {
-            productsQuery = query(productsQuery, where("collections", "array-contains", collectionParam));
-        } else if (currentCategory !== 'all') {
-            // Lọc theo Category (Hỗ trợ cả Group hoặc Sub-category)
-            // Nếu currentCategory là group (VD: Dụng cụ Bếp), ta cần lấy các sub-categories của nó
-            const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
-            if (selectedGroup) {
-                productsQuery = query(productsQuery, where("category", "in", selectedGroup.subs));
-            } else {
-                productsQuery = query(productsQuery, where("category", "==", currentCategory)); // Nếu là sub-category trực tiếp
-            } 
-        }
+        // Nếu KHÔNG có từ khóa tìm kiếm, mới áp dụng lọc Danh mục / BST / Sale / Giá
+        if (!hasSearchTerm) {
+            if (collectionParam) {
+                productsQuery = query(productsQuery, where("collections", "array-contains", collectionParam));
+            } else if (currentCategory !== 'all') {
+                const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
+                if (selectedGroup) {
+                    productsQuery = query(productsQuery, where("category", "in", selectedGroup.subs));
+                } else {
+                    productsQuery = query(productsQuery, where("category", "==", currentCategory));
+                } 
+            }
 
-        // Lọc theo trạng thái Sale
-        if (filterSale === 'true') {
-            productsQuery = query(productsQuery, where("sale", ">", 0));
-        } else if (filterSale === 'false') {
-            productsQuery = query(productsQuery, where("sale", "==", 0));
-        }
+            if (filterSale === 'true') {
+                productsQuery = query(productsQuery, where("sale", ">", 0));
+            } else if (filterSale === 'false') {
+                productsQuery = query(productsQuery, where("sale", "==", 0));
+            }
 
-        // Lọc theo giá (chỉ áp dụng nếu KHÔNG đang tìm kiếm theo tên)
-        // Firestore không cho phép lọc inequality trên nhiều field khác nhau (name, price, sale) trong 1 query
-        // Để đơn giản, nếu có searchTerm, ta ưu tiên tìm kiếm theo tên và bỏ qua lọc giá/sale
-        if (!hasSearchTerm) { // Nếu không tìm kiếm theo tên
             if (minPrice > 0) productsQuery = query(productsQuery, where("price", ">=", minPrice));
             if (maxPrice > 0) productsQuery = query(productsQuery, where("price", "<=", maxPrice));
         }
@@ -203,7 +197,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Firestore yêu cầu orderBy phải khớp với where clause đầu tiên nếu có
         // Hoặc nếu có range filter (price), orderBy phải là price
         if (hasSearchTerm) {
-            productsQuery = query(productsQuery, orderBy("name_lowercase", "asc"), limit(100)); 
+            productsQuery = query(productsQuery, limit(500)); 
         } else if (minPrice > 0 || maxPrice > 0) { // Nếu có lọc giá
             const priceDirection = (currentSort === 'price-desc') ? 'desc' : 'asc';
             productsQuery = query(productsQuery, orderBy("price", priceDirection)); // Bắt buộc phải order by price
@@ -282,8 +276,15 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Lọc Substring client-side nếu có search term và lọc sản phẩm bị ẩn
         const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden && !p.isOnlyEvent);
+        const termClean = removeVietnameseTones(searchTerm);
+        const termRaw = searchTerm.toLowerCase();
         let finalResults = hasSearchTerm 
-            ? allDocs.filter(p => (p.name_lowercase || p.name.toLowerCase()).includes(searchTerm.toLowerCase()))
+            ? allDocs.filter(p => {
+                const nameRaw = (p.name || '').toLowerCase();
+                const nameClean = removeVietnameseTones(p.name || '');
+                const sku = (p.id || '').toLowerCase();
+                return nameRaw.includes(termRaw) || nameClean.includes(termClean) || sku.includes(termClean);
+            })
             : allDocs;
 
         // Sắp xếp lại danh sách trả về theo giá cuối cùng (đã giảm) nếu user chọn sort giá
