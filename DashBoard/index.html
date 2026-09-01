@@ -2559,9 +2559,13 @@
                                                 <input type="checkbox" id="combo-variant-out-of-stock"
                                                     onchange="window.updateCurrentComboVariantOutOfStock(this.checked)"> Báo hết hàng
                                             </label>
-                                            <input type="text" id="combo-variant-image" placeholder="URL ảnh..."
-                                                oninput="window.updateCurrentComboVariantImage(this.value)"
-                                                style="flex: 2; min-width: 140px;">
+                                            <div style="display: flex; gap: 6px; flex: 2; min-width: 220px; align-items: center;">
+                                                <input type="text" id="combo-variant-image" placeholder="URL ảnh phân loại..."
+                                                    oninput="window.updateCurrentComboVariantImage(this.value)"
+                                                    style="flex: 1;">
+                                                <input type="file" id="combo-variant-image-file" accept="image/*" style="display: none;" onchange="window.uploadComboVariantImage(this)">
+                                                <button type="button" class="kiot-btn-outline" onclick="document.getElementById('combo-variant-image-file').click()" style="white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Tải ảnh từ máy tính">📷 Tải ảnh</button>
+                                            </div>
                                             <button type="button" class="kiot-btn-outline"
                                                 onclick="window.removeCurrentComboVariant()">Xóa</button>
                                         </div>
