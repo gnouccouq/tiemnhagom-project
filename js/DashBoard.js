@@ -4758,13 +4758,18 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
         return acc + sub;
     }, 0);
 
-    const sumDiscount = filtered.reduce((acc, cur) => acc + (cur.discountAmount || cur.discountVal || 0), 0);
+    const sumDiscount = filtered.reduce((acc, cur) => {
+        const items = cur.items || [];
+        const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (cur.totalAmount || 0);
+        const d = Number(cur.discountAmount || cur.discountVal || cur.discount || (sub > (cur.totalAmount || 0) && cur.totalAmount > 0 ? (sub - cur.totalAmount) : 0));
+        return acc + d;
+    }, 0);
 
     const sumPaid = filtered.reduce((acc, cur) => {
         const items = cur.items || [];
         const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (cur.totalAmount || 0);
         const ship = cur.shippingFee || 0;
-        const disc = cur.discountAmount || cur.discountVal || 0;
+        const disc = Number(cur.discountAmount || cur.discountVal || cur.discount || (sub > (cur.totalAmount || 0) && cur.totalAmount > 0 ? (sub - cur.totalAmount) : 0));
         const mem = cur.membershipDiscount || 0;
         const finalT = cur.totalAmount || Math.max(0, sub + ship - disc - mem);
         const paid = cur.cashGiven ? Math.max(finalT, cur.cashGiven) : finalT;
@@ -4862,7 +4867,7 @@ function renderOrderRows(ordersList, tableElement) {
         
         const items = order.items || [];
         const subtotal = items.length > 0 ? items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0) : (order.totalAmount || 0);
-        const discount = order.discountVal || 0;
+        const discount = Number(order.discountAmount || order.discountVal || order.discount || (subtotal > (order.totalAmount || 0) && order.totalAmount > 0 ? (subtotal - order.totalAmount) : 0));
         const finalTotal = order.totalAmount || Math.max(0, subtotal - discount);
         const paidAmount = order.cashGiven ? Math.max(finalTotal, order.cashGiven) : finalTotal;
         
@@ -8799,6 +8804,8 @@ window.createPOSOrder = async () => {
             totalAmount: total,
             subtotal: subtotal,
             discount: discountVal,
+            discountVal: discountVal,
+            discountAmount: discountVal,
             status: "Đã hoàn thành",
             orderDate: serverTimestamp ? serverTimestamp() : new Date(),
             createdAt: serverTimestamp ? serverTimestamp() : new Date(),
