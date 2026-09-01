@@ -70,16 +70,19 @@
 
         /* Minimal category list styles */
         .minimal-category-list {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 2.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 0; /* Xóa margin cũ */
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 2rem !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            margin-bottom: 0;
         }
         
         .category-grid-section {
-            margin-bottom: 2rem; /* Giảm khoảng trắng dưới danh mục */
+            margin-bottom: 2rem;
+            width: 100%;
         }
         .minimal-cat-item {
             color: #333;
@@ -88,6 +91,10 @@
             text-transform: lowercase;
             letter-spacing: 0.5px;
             transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
         }
         .minimal-cat-item.active {
             font-weight: 700;
@@ -98,15 +105,16 @@
         }
 
         .sub-category-list {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 0.8rem !important;
+            flex-wrap: wrap !important;
             margin-top: 1rem;
             padding-top: 0.8rem;
             border-top: 1px dashed #e0e0e0;
-            width: 100%;
+            width: 100% !important;
         }
         .minimal-subcat-item {
             color: #555;
@@ -118,6 +126,9 @@
             background: #f5f5f5;
             transition: all 0.2s ease;
             cursor: pointer;
+            display: inline-flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
         }
         .minimal-subcat-item.active {
             background: #333;
@@ -166,7 +177,7 @@
         <div class="products-page-container" style="padding-top: 0;">
         <!-- Phần danh mục sản phẩm ô vuông -->
         <section class="category-grid-section">
-            <div id="category-grid-display" class="category-square-grid">
+            <div id="category-grid-display">
                 <!-- Danh mục render từ JS -->
             </div>
         </section>
