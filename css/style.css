@@ -475,19 +475,7 @@ body > *:not(#header-placeholder) {
 }
 
 .nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0;
-    height: 1.5px;
-    background-color: var(--text-black);
-    transition: width 0.3s ease;
-}
-
-.nav-links a:hover::after,
-.nav-links a.active::after {
-    width: 100%;
+    display: none !important;
 }
 
 /* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng gÃƒÂ¡Ã‚ÂºÃ‚Â¡ch chÃƒÆ’Ã‚Â¢n cho cÃƒÆ’Ã‚Â¡c liÃƒÆ’Ã‚Âªn kÃƒÂ¡Ã‚ÂºÃ‚Â¿t bÃƒÆ’Ã‚Âªn trong mega menu */

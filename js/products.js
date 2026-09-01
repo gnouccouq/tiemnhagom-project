@@ -35,33 +35,76 @@ window.toggleFavorite = async (event, productId) => {
     await toggleFavoriteLogic(productId, fetchProducts);
 };
 
-// Hàm render danh mục sản phẩm (Dạng text đơn giản)
+// Hàm hiển thị thông báo khi không có sản phẩm
+function showEmptyProductsMessage(container, currentCategory, activeSubCategory, hasSearchTerm, searchTerm) {
+    if (!container) return;
+    let msgText = 'Không tìm thấy sản phẩm nào phù hợp.';
+    if (hasSearchTerm) {
+        msgText = `Không tìm thấy sản phẩm nào phù hợp với từ khóa "${searchTerm}".`;
+    } else if (activeSubCategory || currentCategory !== 'all') {
+        msgText = 'không có sản phẩm ở danh mục này';
+    }
+    container.innerHTML = `<p style="font-size: 1rem; color: #666; font-weight: 500; text-transform: lowercase;">${msgText}</p>`;
+    container.style.display = 'block';
+}
+
+// Hàm render danh mục sản phẩm (Bao gồm danh mục chính và danh mục con)
 function renderCategoryGrid() {
     const container = document.getElementById('category-grid-display');
     if (!container) return;
 
-    container.className = 'minimal-category-list';
-
-    // Lấy lại danh mục đã chọn từ URL nếu có
+    // Lấy danh mục từ URL
     const urlParams = new URLSearchParams(window.location.search);
     const catParam = urlParams.get('category') || 'all';
 
-    let html = `
-        <a href="javascript:void(0)" class="minimal-cat-item ${catParam === 'all' ? 'active' : ''}" data-filter-category="all" id="cat-all">
-            tất cả <span class="cat-count">(...)</span>
-        </a>
+    // Tìm nhóm chính đang active
+    let activeGroup = null;
+    if (catParam !== 'all') {
+        activeGroup = dynamicCategories.find(g => g.name === catParam || (g.subs && g.subs.includes(catParam)));
+    }
+    if (!activeGroup && activeSubCategory) {
+        activeGroup = dynamicCategories.find(g => g.subs && g.subs.includes(activeSubCategory));
+    }
+
+    let mainCatHtml = `
+        <div class="minimal-category-list">
+            <a href="javascript:void(0)" class="minimal-cat-item ${catParam === 'all' && !activeSubCategory ? 'active' : ''}" data-filter-category="all" id="cat-all">
+                tất cả <span class="cat-count">(...)</span>
+            </a>
     `;
 
     dynamicCategories.forEach(group => {
-        const isActive = catParam === group.name || (group.subs && group.subs.includes(catParam));
-        html += `
-            <a href="javascript:void(0)" class="minimal-cat-item ${isActive ? 'active' : ''}" data-filter-category="${group.name}" id="cat-${group.name.replace(/\s+/g, '-')}">
+        const isGroupActive = activeGroup && activeGroup.name === group.name;
+        mainCatHtml += `
+            <a href="javascript:void(0)" class="minimal-cat-item ${isGroupActive ? 'active' : ''}" data-filter-category="${group.name}" id="cat-${group.name.replace(/\s+/g, '-')}">
                 ${group.name.toLowerCase()} <span class="cat-count">(...)</span>
             </a>
         `;
     });
-    
-    container.innerHTML = html;
+    mainCatHtml += `</div>`;
+
+    // Render danh mục con nếu nhóm đang được chọn
+    let subCatHtml = '';
+    if (activeGroup && activeGroup.subs && activeGroup.subs.length > 0) {
+        subCatHtml += `<div class="sub-category-list">`;
+        const isAllSubActive = !activeSubCategory;
+        subCatHtml += `
+            <a href="javascript:void(0)" class="minimal-subcat-item ${isAllSubActive ? 'active' : ''}" data-filter-subcategory="group-all" data-parent-group="${activeGroup.name}">
+                tất cả ${activeGroup.name.toLowerCase()}
+            </a>
+        `;
+        activeGroup.subs.forEach(sub => {
+            const isSubActive = activeSubCategory === sub || catParam === sub;
+            subCatHtml += `
+                <a href="javascript:void(0)" class="minimal-subcat-item ${isSubActive ? 'active' : ''}" data-filter-subcategory="${sub}" id="subcat-${sub.replace(/\s+/g, '-')}">
+                    ${sub.toLowerCase()} <span class="subcat-count">(...)</span>
+                </a>
+            `;
+        });
+        subCatHtml += `</div>`;
+    }
+
+    container.innerHTML = mainCatHtml + subCatHtml;
     setupCategoryEvents();
 
     // Tải số lượng bất đồng bộ
@@ -92,11 +135,13 @@ async function fetchCategoryCounts() {
         };
 
         const elAll = document.getElementById('cat-all');
-        if (elAll) elAll.querySelector('.cat-count').textContent = `(${countCards(publicDocs)})`;
+        if (elAll && elAll.querySelector('.cat-count')) {
+            elAll.querySelector('.cat-count').textContent = `(${countCards(publicDocs)})`;
+        }
 
         dynamicCategories.forEach(group => {
             const el = document.getElementById(`cat-${group.name.replace(/\s+/g, '-')}`);
-            if (el) {
+            if (el && el.querySelector('.cat-count')) {
                 let catDocs = [];
                 if (group.subs && group.subs.length > 0) {
                     catDocs = publicDocs.filter(p => group.subs.includes(p.category));
@@ -104,6 +149,16 @@ async function fetchCategoryCounts() {
                     catDocs = publicDocs.filter(p => p.category === group.name);
                 }
                 el.querySelector('.cat-count').textContent = `(${countCards(catDocs)})`;
+            }
+
+            if (group.subs && Array.isArray(group.subs)) {
+                group.subs.forEach(sub => {
+                    const subEl = document.getElementById(`subcat-${sub.replace(/\s+/g, '-')}`);
+                    if (subEl && subEl.querySelector('.subcat-count')) {
+                        const subDocs = publicDocs.filter(p => p.category === sub);
+                        subEl.querySelector('.subcat-count').textContent = `(${countCards(subDocs)})`;
+                    }
+                });
             }
         });
     } catch (e) {
@@ -177,10 +232,14 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             } else if (currentCategory !== 'all') {
                 const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
                 if (selectedGroup) {
-                    productsQuery = query(productsQuery, where("category", "in", selectedGroup.subs));
+                    if (selectedGroup.subs && selectedGroup.subs.length > 0) {
+                        productsQuery = query(productsQuery, where("category", "in", selectedGroup.subs));
+                    } else {
+                        productsQuery = query(productsQuery, where("category", "==", currentCategory));
+                    }
                 } else {
                     productsQuery = query(productsQuery, where("category", "==", currentCategory));
-                } 
+                }
             }
 
             if (filterSale === 'true') {
@@ -256,7 +315,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         if (querySnapshot.empty) {
             if (navigation === 'init') {
                 productGrid.innerHTML = '';
-                noProductsMsg.style.display = 'block';
+                showEmptyProductsMessage(noProductsMsg, currentCategory, activeSubCategory, hasSearchTerm, searchTerm);
                 if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             } else if (loadMoreBtn) {
                 loadMoreBtn.style.display = 'none';
@@ -356,6 +415,18 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             return cardsHtml;
         }).join('');
 
+        if (finalResults.length === 0 || !htmlContent.trim()) {
+            if (navigation === 'init') {
+                productGrid.innerHTML = '';
+                showEmptyProductsMessage(noProductsMsg, currentCategory, activeSubCategory, hasSearchTerm, searchTerm);
+                if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            } else if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+            productGrid.classList.remove('loading-fade');
+            return;
+        }
+
         // Hiển thị nội dung
         if (navigation === 'init') {
             productGrid.innerHTML = htmlContent;
@@ -397,10 +468,30 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 function setupCategoryEvents() {
     document.querySelectorAll('.minimal-cat-item').forEach(item => {
         item.onclick = () => {
-            document.querySelectorAll('.minimal-cat-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            activeSubCategory = null; // Xóa ghi đè danh mục con khi người dùng chọn nhóm lớn tay
-            window.history.replaceState({}, '', window.location.pathname);
+            const cat = item.dataset.filterCategory;
+            activeSubCategory = null;
+            if (cat === 'all') {
+                window.history.replaceState({}, '', window.location.pathname);
+            } else {
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(cat)}`);
+            }
+            renderCategoryGrid();
+            fetchProducts('init');
+        };
+    });
+
+    document.querySelectorAll('.minimal-subcat-item').forEach(item => {
+        item.onclick = () => {
+            const sub = item.dataset.filterSubcategory;
+            if (sub === 'group-all') {
+                const parentGroup = item.dataset.parentGroup;
+                activeSubCategory = null;
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(parentGroup)}`);
+            } else {
+                activeSubCategory = sub;
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(sub)}`);
+            }
+            renderCategoryGrid();
             fetchProducts('init');
         };
     });
@@ -451,21 +542,16 @@ function handleInitialFilters() {
     const collParam = urlParams.get('collection');
     
     if (catParam && !collParam) {
-        document.querySelectorAll('.minimal-cat-item').forEach(l => l.classList.remove('active'));
-        const targetLink = document.querySelector(`.minimal-cat-item[data-filter-category="${catParam}"]`);
-        
-        if (targetLink) {
-            targetLink.classList.add('active'); // Khớp nhóm chính (ví dụ từ Footer)
-        } else {
-            // Nếu là danh mục con (ví dụ từ Mega Menu), tìm nhóm cha để highlight icon nhóm
+        let isGroup = dynamicCategories.some(g => g.name === catParam);
+        if (!isGroup) {
             for (const group of dynamicCategories) {
                 if (group.subs && group.subs.includes(catParam)) {
-                    const groupLink = document.querySelector(`.minimal-cat-item[data-filter-category="${group.name}"]`);
-                    if (groupLink) groupLink.classList.add('active');
-                    activeSubCategory = catParam; // Ghi đè để fetchProducts lọc đúng sub-category
+                    activeSubCategory = catParam;
                     break;
                 }
             }
+        } else {
+            activeSubCategory = null;
         }
     }
 
@@ -475,6 +561,7 @@ function handleInitialFilters() {
         if (sidebarSearch) sidebarSearch.value = searchParam;
     }
 
+    renderCategoryGrid();
     fetchProducts('init');
 }
 
