@@ -4,6 +4,7 @@ import {
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { renderPersonalizedRecommendations } from "./ai-recommendations.js";
 
 // Cấu hình phân trang
 const PAGE_SIZE = 10; // Tải mỗi lần 10 sản phẩm
@@ -604,4 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
             searchTimeout = setTimeout(() => fetchProducts('init'), 500);
         });
     }
+
+    // Tải gợi ý AI cá nhân hóa
+    renderPersonalizedRecommendations('ai-personalized-recommendations');
 });

@@ -5,6 +5,7 @@ import {
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+import { trackProductView, renderDecorMatchRecommendations } from "./ai-recommendations.js";
 
 // Biến toàn cục để quản lý gallery
 let allImages = [];
@@ -827,6 +828,8 @@ async function fetchProductDetail() {
 
             fetchRelatedProducts(productId, p.category); // Gọi hàm lấy sản phẩm liên quan
             fetchRecentlyViewed(productId); // Gọi hàm lấy sản phẩm đã xem gần đây
+            trackProductView(p); // Lưu vết AI học thói quen người dùng
+            renderDecorMatchRecommendations(p, 'ai-decor-match-container'); // AI Gợi ý phối không gian
             renderVariantSelectors(p); // Render bộ chọn biến thể
 
             // Tự động chọn biến thể từ URL

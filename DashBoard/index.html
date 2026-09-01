@@ -619,43 +619,92 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Bảo trì -->
+            <!-- Section Quản lý Cài đặt Hệ Thống (2 Cột Cân Bằng) -->
             <div id="maintenance-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Cài đặt Chế độ Bảo trì / Sắp khai trương</h3>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">
-                        Khi bật chế độ này, khách hàng sẽ không thể truy cập các trang khác ngoài trang đếm ngược.
-                        Chỉ Quản trị viên mới có thể truy cập các trang còn lại.
-                    </p>
-                    <form id="maintenance-settings-form" class="admin-form">
-                        <div class="form-group"
-                            style="display: flex; align-items: center; gap: 15px; margin-bottom: 2rem;">
-                            <label style="margin-bottom: 0; font-size: 1rem;">Trạng thái:</label>
-                            <label class="switch"
-                                style="position: relative; display: inline-block; width: 60px; height: 34px;">
-                                <input type="checkbox" id="maintenance-mode-toggle"
-                                    style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider round"
-                                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                            </label>
-                            <span id="maintenance-status-text" style="font-weight: 600; color: #e74c3c;">ĐANG TẮT</span>
+                <div class="settings-layout-container" style="display: flex; gap: 1.5rem; align-items: stretch; flex-wrap: wrap;">
+                    
+                    <!-- Cột Trái: Sidebar Menu Cài Đặt -->
+                    <div class="settings-nav-sidebar" style="flex: 0 0 250px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem 1rem; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+                        <h4 style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.6px; margin-bottom: 1.2rem; padding-left: 8px; font-weight: 700;">CÀI ĐẶT HỆ THỐNG</h4>
+                        <div class="settings-menu-list" style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+                            <button type="button" class="settings-tab-link active" data-tab="tab-ai-settings" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 8px; border: none; background: #f1f5f9; color: #0f172a; font-weight: 600; text-align: left; cursor: pointer; transition: all 0.2s;">
+                                <span style="font-size: 1.1rem;">✨</span> Trợ Lý AI Gemini
+                            </button>
+                            <button type="button" class="settings-tab-link" data-tab="tab-maintenance-settings" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: 500; text-align: left; cursor: pointer; transition: all 0.2s;">
+                                <span style="font-size: 1.1rem;">🛠️</span> Chế Độ Bảo Trì
+                            </button>
+                        </div>
+                        <div style="margin-top: auto; padding: 10px 8px 0 8px; border-top: 1px solid #f1f5f9; font-size: 0.75rem; color: #94a3b8; text-align: center;">
+                            Tiệm Nhà Gốm System v2.0
+                        </div>
+                    </div>
+
+                    <!-- Cột Phải: Nội Dung Cài Đặt -->
+                    <div class="settings-content-panel" style="flex: 1; min-width: 320px; width: 100%;">
+                        
+                        <!-- Panel 1: Cài đặt AI Gemini -->
+                        <div id="tab-ai-settings" class="settings-panel-item admin-card" style="display: block; margin-bottom: 0; min-height: 100%; box-sizing: border-box; padding: 1.5rem;">
+                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                                <h3 style="display: flex; align-items: center; gap: 8px; font-size: 1.25rem; color: #0f172a; margin-bottom: 4px;">✨ Cài đặt Trợ lý AI Gemini</h3>
+                                <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                    Tích hợp trí tuệ nhân tạo tư vấn sản phẩm, gợi ý quà tặng & phối đồ decor trên website.
+                                </p>
+                            </div>
+
+                            <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 14px 16px; border-radius: 8px; margin-bottom: 1.5rem;">
+                                <div style="font-weight: 600; font-size: 0.88rem; color: #1e40af; margin-bottom: 6px;">💡 Hướng dẫn lấy Gemini API Key (Miễn phí 100%):</div>
+                                <ol style="font-size: 0.83rem; color: #334155; margin: 0; padding-left: 18px; line-height: 1.6;">
+                                    <li>Truy cập <strong><a href="https://aistudio.google.com/" target="_blank" style="color: #2563eb; text-decoration: underline;">Google AI Studio</a></strong> và đăng nhập Gmail.</li>
+                                    <li>Bấm <strong>Get API key</strong> &rarr; Chọn <strong>Create API key in new project</strong>.</li>
+                                    <li>Sao chép mã Key (dạng <code>AIzaSy...</code>) và dán vào ô bên dưới.</li>
+                                </ol>
+                            </div>
+
+                            <form id="ai-settings-form" class="admin-form">
+                                <div class="form-group" style="margin-bottom: 1.5rem;">
+                                    <label style="font-weight: 600; color: #334155; margin-bottom: 8px; display: block;">Gemini API Key</label>
+                                    <input type="password" id="gemini-api-key-input" placeholder="Dán Gemini API Key của bạn tại đây (AIzaSy...)" autocomplete="off" style="font-family: monospace; font-size: 0.9rem; padding: 10px 14px;">
+                                    <small style="color: #64748b; margin-top: 6px; display: block;">Key được mã hóa bảo mật trong Firestore của hệ thống.</small>
+                                </div>
+                                <button type="submit" class="btn-dark" style="padding: 10px 25px; border-radius: 8px;">Lưu Cấu Hình AI</button>
+                            </form>
                         </div>
 
-                        <div class="form-group">
-                            <label>Tiêu đề trang bảo trì (H1)</label>
-                            <input type="text" id="maintenance-title" placeholder="Ví dụ: Tiệm Nhà Gốm Sắp Ra Mắt!">
+                        <!-- Panel 2: Cài đặt Bảo trì -->
+                        <div id="tab-maintenance-settings" class="settings-panel-item admin-card" style="display: none; margin-bottom: 0; min-height: 100%; box-sizing: border-box; padding: 1.5rem;">
+                            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1.25rem; color: #0f172a; margin-bottom: 4px;">🛠️ Cài đặt Chế độ Bảo trì / Sắp khai trương</h3>
+                                <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                    Bật chế độ bảo trì khi nâng cấp cửa hàng. Chỉ Quản trị viên mới xem được nội dung đầy đủ.
+                                </p>
+                            </div>
+                            <form id="maintenance-settings-form" class="admin-form">
+                                <div class="form-group" style="display: flex; align-items: center; gap: 15px; margin-bottom: 2rem;">
+                                    <label style="margin-bottom: 0; font-size: 1rem; font-weight: 600;">Trạng thái:</label>
+                                    <label class="switch">
+                                        <input type="checkbox" id="maintenance-mode-toggle">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span id="maintenance-status-text" style="font-weight: 600; color: #e74c3c;">ĐANG TẮT</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tiêu đề trang bảo trì (H1)</label>
+                                    <input type="text" id="maintenance-title" placeholder="Ví dụ: Tiệm Nhà Gốm Sắp Ra Mắt!">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nội dung mô tả</label>
+                                    <textarea id="maintenance-message" rows="3" placeholder="Ví dụ: Chúng tôi đang gấp rút hoàn thiện..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Thời gian đếm ngược đến (Ngày & Giờ)</label>
+                                    <input type="datetime-local" id="maintenance-countdown-date">
+                                </div>
+                                <button type="submit" class="btn-dark" style="width: 100%; border-radius: 8px;">Lưu cài đặt bảo trì</button>
+                            </form>
                         </div>
-                        <div class="form-group">
-                            <label>Nội dung mô tả</label>
-                            <textarea id="maintenance-message" rows="3"
-                                placeholder="Ví dụ: Chúng tôi đang gấp rút hoàn thiện..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Thời gian đếm ngược đến (Ngày & Giờ)</label>
-                            <input type="datetime-local" id="maintenance-countdown-date">
-                        </div>
-                        <button type="submit" class="btn-dark" style="width: 100%;">Lưu cài đặt</button>
-                    </form>
+
+                    </div>
                 </div>
             </div>
 

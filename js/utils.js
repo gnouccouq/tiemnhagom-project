@@ -13,6 +13,7 @@ import {
     RecaptchaVerifier, signInWithPhoneNumber
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
+import { initGeminiAssistant } from "./gemini-assistant.js";
 
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -2048,5 +2049,8 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+
+// --- Initialize Gemini AI Shopping Assistant Widget ---
+initGeminiAssistant();
 
 

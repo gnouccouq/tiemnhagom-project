@@ -10793,3 +10793,66 @@ window.deleteRestockAlert = async (id) => {
         showToast("Lỗi khi xóa yêu cầu", "error");
     }
 };
+
+// --- Gemini AI Settings Management ---
+document.addEventListener('DOMContentLoaded', () => {
+    const aiForm = document.getElementById('ai-settings-form');
+    const apiKeyInput = document.getElementById('gemini-api-key-input');
+
+    if (aiForm && apiKeyInput) {
+        // Load existing key
+        getDoc(doc(db, "settings", "ai_config")).then(snap => {
+            if (snap.exists() && snap.data().geminiApiKey) {
+                apiKeyInput.value = snap.data().geminiApiKey;
+            }
+        }).catch(e => console.error("Lỗi lấy Gemini Key:", e));
+
+        // Save key
+        aiForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const key = apiKeyInput.value.trim();
+            try {
+                await setDoc(doc(db, "settings", "ai_config"), {
+                    geminiApiKey: key,
+                    updatedAt: serverTimestamp ? serverTimestamp() : new Date()
+                }, { merge: true });
+                if (typeof showToast !== 'undefined') showToast("Đã lưu Cấu Hình AI Gemini thành công!", "success");
+            } catch (err) {
+                console.error("Lỗi lưu Gemini Key:", err);
+                if (typeof showToast !== 'undefined') showToast("Lỗi khi lưu API Key: " + err.message, "error");
+            }
+        };
+    }
+});
+
+// --- Settings Sub-Tab Navigation Handler ---
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.settings-tab-link');
+    if (!btn) return;
+
+    const targetTabId = btn.dataset.tab;
+    if (!targetTabId) return;
+
+    // Reset buttons
+    document.querySelectorAll('.settings-tab-link').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = '#64748b';
+        b.style.fontWeight = '500';
+    });
+
+    // Highlight active button
+    btn.classList.add('active');
+    btn.style.background = '#f1f5f9';
+    btn.style.color = '#0f172a';
+    btn.style.fontWeight = '600';
+
+    // Toggle Panels
+    document.querySelectorAll('.settings-panel-item').forEach(panel => {
+        panel.style.display = 'none';
+    });
+    const targetPanel = document.getElementById(targetTabId);
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+    }
+});
