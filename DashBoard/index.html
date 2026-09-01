@@ -2559,6 +2559,10 @@
                                                 <input type="checkbox" id="combo-variant-out-of-stock"
                                                     onchange="window.updateCurrentComboVariantOutOfStock(this.checked)"> Báo hết hàng
                                             </label>
+                                            <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #0284c7; cursor: pointer; white-space: nowrap;" title="Hiển thị phân loại combo này như một sản phẩm riêng biệt trên trang danh sách sản phẩm">
+                                                <input type="checkbox" id="combo-variant-show-independent"
+                                                    onchange="window.updateCurrentComboVariantShowOnCard(this.checked)"> 🌟 Combo độc lập
+                                            </label>
                                             <div style="display: flex; gap: 6px; flex: 2; min-width: 220px; align-items: center;">
                                                 <input type="text" id="combo-variant-image" placeholder="URL ảnh phân loại..."
                                                     oninput="window.updateCurrentComboVariantImage(this.value)"
