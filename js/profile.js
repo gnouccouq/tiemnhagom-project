@@ -226,8 +226,8 @@ window.viewOrderDetails = async (orderId) => {
             badgeBg = '#dcfce7'; badgeColor = '#15803d';
         }
 
-        const couponDiscountVal = order.discountAmount || 0;
-        const vipDiscountVal = order.membershipDiscount || 0;
+        const couponDiscountVal = Number(order.discountAmount || order.discountVal || order.discount || 0);
+        const vipDiscountVal = Number(order.membershipDiscount || 0);
         const items = order.items || [];
         const subtotalVal = order.subtotal || items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
         const shippingFeeVal = order.shippingFee || 0;
@@ -329,15 +329,15 @@ window.viewOrderDetails = async (orderId) => {
                             <span style="color: #64748b;">Phí vận chuyển:</span>
                             <span>${shippingFeeVal > 0 ? `+${new Intl.NumberFormat('vi-VN').format(shippingFeeVal)}đ` : '<span style="color: #16a34a; font-weight: 600;">0đ (Miễn phí)</span>'}</span>
                         </div>
-                        ${(order.couponCode || couponDiscountVal > 0) ? `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ea580c;">
-                                <span>Mã ưu đãi ${order.couponCode ? `(${escapeHTML(order.couponCode)})` : ''}:</span>
+                        ${couponDiscountVal > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ea580c; font-weight: 500;">
+                                <span>🏷️ ${order.couponCode ? `Mã ưu đãi (${escapeHTML(order.couponCode)})` : (order.source === 'pos' ? 'Giảm giá trực tiếp tại shop (POS)' : 'Giảm giá')}:</span>
                                 <span>-${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ</span>
                             </div>
                         ` : ''}
                         ${vipDiscountVal > 0 ? `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #16a34a;">
-                                <span>Ưu đãi thành viên VIP:</span>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #d97706; font-weight: 600;">
+                                <span>👑 Ưu đãi thành viên (Membership):</span>
                                 <span>-${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ</span>
                             </div>
                         ` : ''}

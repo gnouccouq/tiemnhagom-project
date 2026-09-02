@@ -7469,7 +7469,7 @@ window.editCoupon = async (code) => {
             if (!cancelBtn) {
                 cancelBtn = document.createElement('button');
                 cancelBtn.type = 'button';
-                cancelBtn.id = 'btn-cancel-coupon-edit';
+cancelBtn.id = 'btn-cancel-coupon-edit';
                 cancelBtn.className = 'btn-minimal';
                 cancelBtn.innerText = 'Hủy chỉnh sửa';
                 cancelBtn.style.width = '100%';
@@ -7555,6 +7555,49 @@ if (couponForm) {
         }
     });
 }
+
+window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
+    let totalSpent = 0;
+    
+    // Check local user cache
+    if (typeof posUsersLocal !== 'undefined' && Array.isArray(posUsersLocal)) {
+        const u = posUsersLocal.find(user => 
+            (customerId && String(user.id) === String(customerId)) || 
+            (customerPhone && user.phone && String(user.phone).trim() === String(customerPhone).trim())
+        );
+        if (u && typeof u.totalSpent === 'number' && u.totalSpent > 0) {
+            totalSpent = u.totalSpent;
+        }
+    }
+
+    // Calculate sum of completed orders
+    const orders = window.allOrdersCache || window.overviewOrdersData || [];
+    if (orders.length > 0) {
+        let calcSpent = 0;
+        orders.forEach(o => {
+            if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status)) {
+                const isMatch = (customerId && String(o.userId) === String(customerId)) ||
+                                (customerPhone && (
+                                    (o.shippingAddress?.phone && String(o.shippingAddress.phone).trim() === String(customerPhone).trim()) ||
+                                    (o.customerPhone && String(o.customerPhone).trim() === String(customerPhone).trim()) ||
+                                    (o.phone && String(o.phone).trim() === String(customerPhone).trim())
+                                ));
+                if (isMatch) {
+                    const items = o.items || [];
+                    const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (o.totalAmount || 0);
+                    const disc = Number(o.discountAmount || o.discountVal || o.discount || 0);
+                    const mem = Number(o.membershipDiscount || 0);
+                    const finalT = o.totalAmount || Math.max(0, sub - disc - mem);
+                    calcSpent += finalT;
+                }
+            }
+        });
+        if (calcSpent > totalSpent) totalSpent = calcSpent;
+    }
+
+    const tier = typeof getMembershipTier === 'function' ? getMembershipTier(totalSpent) : null;
+    return { totalSpent, tier };
+};
 
 window.viewUserOrders = (userId) => {
     // Chuyển sang tab đơn hàng
@@ -7719,11 +7762,6 @@ function renderPOSCart() {
                 );
 
                 let variantBadge = '';
-                const isVariantSelected = item.color || item.pattern || item.comboVariant;
-                if (isVariantSelected) {
-                    const labelParts = [];
-                    if (item.comboVariant) labelParts.push(item.comboVariant);
-                    if (item.color) labelParts.push(item.color);
                     if (item.pattern) labelParts.push(item.pattern);
                     const labelText = labelParts.join(' / ');
                     variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
@@ -7763,26 +7801,71 @@ function renderPOSCart() {
         }
     }
 
-    // Render customer info
+    // Render customer info & membership tier
     const custSearchBox = document.querySelector('.pos-customer-search-box');
     const custSelected = document.getElementById('pos-selected-customer');
+    let membershipDiscount = 0;
+    let currentTierInfo = null;
+
     if (custSearchBox && custSelected) {
-        if (bill.customerId) {
+        if (bill.customerId || bill.customerPhone) {
             custSearchBox.style.display = 'none';
             custSelected.style.display = 'flex';
-            document.getElementById('pos-cust-name-display').innerText = bill.customerName;
-            document.getElementById('pos-cust-phone-display').innerText = bill.customerPhone;
+            const nameEl = document.getElementById('pos-cust-name-display');
+            const phoneEl = document.getElementById('pos-cust-phone-display');
+            if (nameEl) nameEl.innerText = bill.customerName || 'Khách hàng';
+            if (phoneEl) phoneEl.innerText = bill.customerPhone ? `(${bill.customerPhone})` : '';
+
+            // Membership info
+            const memInfo = window.getPOSCustomerMembershipInfo(bill.customerId, bill.customerPhone);
+            if (memInfo && memInfo.tier) {
+                currentTierInfo = memInfo.tier;
+                const discountPct = currentTierInfo.discount !== undefined ? currentTierInfo.discount : (currentTierInfo.discountPercent || 0);
+                currentTierInfo.effectiveDiscountPct = discountPct;
+                const badgeEl = document.getElementById('pos-cust-membership-badge');
+                if (badgeEl) {
+                    if (discountPct > 0) {
+                        badgeEl.style.display = 'inline-block';
+                        badgeEl.innerHTML = `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; margin-left: 4px;">👑 Hạng ${memInfo.tier.name} (-${discountPct}%)</span>`;
+                    } else {
+                        badgeEl.style.display = 'inline-block';
+                        badgeEl.innerHTML = `<span style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; margin-left: 4px;">👑 Hạng ${memInfo.tier.name}</span>`;
+                    }
+                }
+            }
         } else {
             custSearchBox.style.display = 'flex';
             custSelected.style.display = 'none';
+            const badgeEl = document.getElementById('pos-cust-membership-badge');
+            if (badgeEl) badgeEl.style.display = 'none';
         }
     }
 
     // Render summary
     const subtotal = bill.cart.reduce((sum, i) => sum + ((i.price - (i.discount || 0)) * i.quantity), 0);
     const totalQty = bill.cart.reduce((sum, i) => sum + i.quantity, 0);
+
+    const discountPct = currentTierInfo ? (currentTierInfo.effectiveDiscountPct || 0) : 0;
+    if (discountPct > 0 && subtotal > 0) {
+        membershipDiscount = Math.round(subtotal * (discountPct / 100));
+    }
+    bill.membershipDiscount = membershipDiscount;
+
     const discountVal = bill.discountVal || 0;
-    const finalTotal = Math.max(0, subtotal - discountVal);
+    const finalTotal = Math.max(0, subtotal - discountVal - membershipDiscount);
+
+    const memRow = document.getElementById('pos-membership-discount-row');
+    const memDisplay = document.getElementById('pos-membership-discount-display');
+    const memLabel = document.getElementById('pos-membership-badge-label');
+    if (memRow && memDisplay) {
+        if (membershipDiscount > 0) {
+            memRow.style.display = 'flex';
+            if (memLabel) memLabel.innerText = `(${currentTierInfo.name} ${discountPct}%)`;
+            memDisplay.innerText = `-${formatVND(membershipDiscount)}đ`;
+        } else {
+            memRow.style.display = 'none';
+        }
+    }
 
     document.getElementById('pos-total-qty').innerText = `(${totalQty})`;
     document.getElementById('pos-subtotal').innerText = formatVND(subtotal);
@@ -8806,6 +8889,7 @@ window.createPOSOrder = async () => {
             discount: discountVal,
             discountVal: discountVal,
             discountAmount: discountVal,
+            membershipDiscount: bill.membershipDiscount || 0,
             status: "Đã hoàn thành",
             orderDate: serverTimestamp ? serverTimestamp() : new Date(),
             createdAt: serverTimestamp ? serverTimestamp() : new Date(),

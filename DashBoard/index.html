@@ -1200,10 +1200,11 @@
                                     </svg></button>
                             </div>
                             <div id="pos-customer-suggestions" class="search-suggestions"></div>
-                            <div id="pos-selected-customer" class="pos-selected-customer" style="display: none;">
+                            <div id="pos-selected-customer" class="pos-selected-customer" style="display: none; align-items: center; flex-wrap: wrap; gap: 6px;">
                                 <span id="pos-cust-name-display" style="font-weight: 600; font-size: 0.9rem;"></span>
                                 <span id="pos-cust-phone-display"
-                                    style="font-size: 0.8rem; color: #666; margin-left: 5px;"></span>
+                                    style="font-size: 0.8rem; color: #666;"></span>
+                                <span id="pos-cust-membership-badge" style="display: none;"></span>
                                 <button onclick="window.posClearCustomer()" class="btn-minimal"
                                     style="padding: 2px 5px; color: #e74c3c; border: none; margin-left: auto;">✕</button>
                             </div>
@@ -1222,6 +1223,10 @@
                                     <input type="text" id="pos-bill-discount-input" placeholder="0"
                                         onchange="window.updateBillDiscount(this.value)">
                                 </div>
+                            </div>
+                            <div class="summary-row" id="pos-membership-discount-row" style="display: none; background: #fffdf5; padding: 4px 8px; border-radius: 4px; border: 1px dashed #f59e0b;">
+                                <span style="color: #b45309; font-weight: 600; font-size: 0.88rem;">👑 Chiết khấu TV <span id="pos-membership-badge-label" style="font-size: 0.76rem; font-weight: normal;"></span></span>
+                                <span id="pos-membership-discount-display" style="color: #d97706; font-weight: 700; font-size: 0.95rem;">-0đ</span>
                             </div>
                             <div class="summary-row total">
                                 <span style="font-weight: bold;">Khách cần trả</span>
