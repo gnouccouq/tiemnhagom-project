@@ -163,11 +163,14 @@ Nhiệm vụ:
                 lastErrorMsg = errData.error?.message || `${response.status} ${response.statusText}`;
                 console.warn(`Gemini Model [${model}] thử không thành công:`, lastErrorMsg);
 
+                if (response.status === 429 || lastErrorMsg.includes("Quota") || lastErrorMsg.includes("RESOURCE_EXHAUSTED")) {
+                    console.warn("Hạn mức lượt gọi Gemini API tạm thời quá giới hạn (HTTP 429). Đang thử lại...");
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    continue;
+                }
+
                 if (lastErrorMsg.includes("API key not valid") || lastErrorMsg.includes("API_KEY_INVALID") || response.status === 400) {
                     return "Gemini API Key hiện tại bị sai hoặc không hợp lệ. Vui lòng truy cập Bảng quản trị (Admin Dashboard) -> tab Cài Đặt để dán lại Gemini API Key chuẩn từ Google AI Studio.";
-                }
-                if (lastErrorMsg.includes("Quota") || lastErrorMsg.includes("RESOURCE_EXHAUSTED") || response.status === 429) {
-                    return "Hạn mức lượt gọi API miễn phí tạm thời đạt giới hạn. Vui lòng đợi khoảng 30 giây và thử lại nhé!";
                 }
             }
         } catch (e) {

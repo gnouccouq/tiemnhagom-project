@@ -226,8 +226,6 @@ function renderOnlineUsersTable(usersList) {
 
 listenToOnlineUsers();
 
-let currentAdminPermissions = []; // Danh sách các ID section được phép truy cập
-
 // Danh sách tất cả các phân hệ có trong hệ thống
 const ALL_SECTIONS = [
     { id: 'overview-section', label: 'Tổng quan' },
@@ -249,6 +247,8 @@ const ALL_SECTIONS = [
     { id: 'online-users-section', label: 'Lượng truy cập' },
     { id: 'maintenance-section', label: 'Bảo trì' }
 ];
+
+let currentAdminPermissions = ALL_SECTIONS.map(s => s.id); // Khởi tạo mặc định đầy đủ quyền để hỗ trợ Deep Link / Hash URL
 
 // Cấu hình phân quyền mặc định theo Role (Fallback)
 const ROLE_PERMISSIONS = {
