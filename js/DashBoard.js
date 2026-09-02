@@ -256,6 +256,35 @@ const ROLE_PERMISSIONS = {
     staff: ['overview-section', 'pos-section', 'order-section', 'rental-order-section', 'flash-sale-settings-section', 'product-section'] // Thêm mục Sale và Sản phẩm cho Staff
 };
 
+const SECTION_HASH_MAP = {
+    'overview-section': '#/Overview',
+    'product-section': '#/Products',
+    'category-section': '#/Categories',
+    'restock-alerts-section': '#/RestockAlerts',
+    'flash-sale-settings-section': '#/FlashSale',
+    'inventory-log-section': '#/InventoryLog',
+    'order-section': '#/Orders',
+    'rental-order-section': '#/RentalOrders',
+    'user-section': '#/Customers',
+    'admin-account-section': '#/Staff',
+    'coupon-section': '#/Coupons',
+    'news-section': '#/News',
+    'collections-section': '#/Collections',
+    'maintenance-section': '#/Settings',
+    'pos-section': '#/POS',
+    'stats-section': '#/Reports'
+};
+
+function getSectionIdFromHash(hash) {
+    if (!hash) return null;
+    const cleanHash = hash.replace(/^#\/?/, '').toLowerCase();
+    for (const [secId, hVal] of Object.entries(SECTION_HASH_MAP)) {
+        const cleanVal = hVal.replace(/^#\/?/, '').toLowerCase();
+        if (cleanVal === cleanHash) return secId;
+    }
+    return null;
+}
+
 // --- Logic chuyển đổi Tab Admin ---
 function setupAdminTabs() {
     const tabs = document.querySelectorAll('.admin-tab-btn');
@@ -295,6 +324,12 @@ function setupAdminTabs() {
                 targetSection.classList.add('active');
                 // Cập nhật tiêu đề trang tương ứng với Tab
                 if (titleEl) titleEl.innerText = tab.innerText.replace(/[^\w\sÀ-ỹ]/g, '').trim();
+            }
+
+            // Cập nhật Hash trên thanh địa chỉ trình duyệt (#/Products, #/Orders...)
+            const targetHash = SECTION_HASH_MAP[targetId];
+            if (targetHash && window.location.hash !== targetHash) {
+                history.replaceState(null, '', targetHash);
             }
 
             if (targetId === 'overview-section') {
@@ -372,6 +407,24 @@ function setupAdminTabs() {
             document.querySelectorAll('.kiot-nav-item').forEach(i => i.classList.remove('open'));
         }
     });
+
+    // Hash routing listener (cho phép chuyển tab khi gõ URL hoặc bấm Back/Forward)
+    const handleHashRouting = () => {
+        const hash = window.location.hash;
+        const targetSecId = getSectionIdFromHash(hash);
+        if (targetSecId) {
+            const btn = document.querySelector(`.admin-tab-btn[data-target="${targetSecId}"]`);
+            if (btn && !btn.classList.contains('active')) {
+                btn.click();
+            }
+        }
+    };
+
+    window.addEventListener('hashchange', handleHashRouting);
+
+    if (window.location.hash) {
+        setTimeout(handleHashRouting, 100);
+    }
 }
 
 function closeAdminSidebar() {
