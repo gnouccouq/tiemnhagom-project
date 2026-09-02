@@ -391,9 +391,10 @@
                         <button type="button" style="border: none; background: transparent; color: #0066cc; font-size: 1.2rem; cursor: pointer; font-weight: bold;" onclick="window.posOpenAddCustomerModal()">+</button>
                     </div>
                     <div id="pos-customer-suggestions" class="search-suggestions"></div>
-                    <div id="pos-selected-customer" class="pos-selected-customer" style="display: none; margin-top: 6px;">
+                    <div id="pos-selected-customer" class="pos-selected-customer" style="display: none; margin-top: 6px; align-items: center; flex-wrap: wrap; gap: 6px;">
                         <span id="pos-cust-name-display" style="font-weight: 600; font-size: 0.88rem;"></span>
-                        <span id="pos-cust-phone-display" style="font-size: 0.78rem; color: #64748b; margin-left: 5px;"></span>
+                        <span id="pos-cust-phone-display" style="font-size: 0.78rem; color: #64748b;"></span>
+                        <span id="pos-cust-membership-badge" style="display: none;"></span>
                         <button type="button" onclick="window.posClearCustomer()" style="background: none; border: none; color: #ef4444; margin-left: auto; cursor: pointer;">✕</button>
                     </div>
                 </div>
@@ -408,6 +409,11 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #334155;">
                         <span>Giảm giá</span>
                         <input type="text" id="pos-bill-discount-input" placeholder="0" onchange="window.updateBillDiscount(this.value)" style="width: 95px; text-align: right; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 8px; font-size: 0.88rem; font-weight: 600; background: #f8fafc; outline: none;">
+                    </div>
+
+                    <div id="pos-membership-discount-row" style="display: none; justify-content: space-between; align-items: center; font-size: 0.88rem; background: #fffdf5; padding: 6px 10px; border-radius: 6px; border: 1px dashed #f59e0b; margin: 2px 0;">
+                        <span style="color: #b45309; font-weight: 600;">👑 Chiết khấu TV <span id="pos-membership-badge-label" style="font-size: 0.76rem; font-weight: normal;"></span></span>
+                        <span id="pos-membership-discount-display" style="color: #d97706; font-weight: 700; font-size: 0.95rem;">-0đ</span>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">

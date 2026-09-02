@@ -7558,6 +7558,11 @@ if (couponForm) {
 
 window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
     let totalSpent = 0;
+
+    // Check userTotalSpentLocal
+    if (typeof userTotalSpentLocal !== 'undefined' && customerId && userTotalSpentLocal[customerId]) {
+        totalSpent = userTotalSpentLocal[customerId];
+    }
     
     // Check local user cache
     if (typeof posUsersLocal !== 'undefined' && Array.isArray(posUsersLocal)) {
@@ -7565,7 +7570,7 @@ window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
             (customerId && String(user.id) === String(customerId)) || 
             (customerPhone && user.phone && String(user.phone).trim() === String(customerPhone).trim())
         );
-        if (u && typeof u.totalSpent === 'number' && u.totalSpent > 0) {
+        if (u && typeof u.totalSpent === 'number' && u.totalSpent > totalSpent) {
             totalSpent = u.totalSpent;
         }
     }
@@ -7574,13 +7579,16 @@ window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
     const orders = window.allOrdersCache || window.overviewOrdersData || [];
     if (orders.length > 0) {
         let calcSpent = 0;
+        const cleanPhone = (p) => p ? String(p).replace(/[^\d]/g, '') : '';
+        const targetPhone = cleanPhone(customerPhone);
+
         orders.forEach(o => {
             if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status)) {
                 const isMatch = (customerId && String(o.userId) === String(customerId)) ||
-                                (customerPhone && (
-                                    (o.shippingAddress?.phone && String(o.shippingAddress.phone).trim() === String(customerPhone).trim()) ||
-                                    (o.customerPhone && String(o.customerPhone).trim() === String(customerPhone).trim()) ||
-                                    (o.phone && String(o.phone).trim() === String(customerPhone).trim())
+                                (targetPhone && targetPhone.length >= 8 && (
+                                    cleanPhone(o.shippingAddress?.phone).endsWith(targetPhone.slice(-8)) ||
+                                    cleanPhone(o.customerPhone).endsWith(targetPhone.slice(-8)) ||
+                                    cleanPhone(o.phone).endsWith(targetPhone.slice(-8))
                                 ));
                 if (isMatch) {
                     const items = o.items || [];
@@ -7981,29 +7989,32 @@ window.calculatePOSChange = (inputElem) => {
     if (!input) return;
 
     let rawValue = input.value.replace(/,/g, '').replace(/\./g, '').replace(/[^\d]/g, '');
-    if (rawValue && inputElem) {
-        input.value = formatVND(rawValue);
-    } else if (!rawValue && inputElem) {
-        input.value = '';
-    }
+    let cash = parseFloat(rawValue) || 0;
 
-    const cash = parseFloat(rawValue) || 0;
     if (inputElem) {
+        input.value = cash > 0 ? formatVND(cash) : (input.value.trim() === '0' ? '0' : '');
         bill.cashGiven = cash;
         window.savePOSBills();
+    } else if (bill.cashGiven) {
+        cash = parseFloat(bill.cashGiven) || 0;
     }
 
-    const total = parseFloat(document.getElementById('pos-total-amount')?.dataset?.val || 0);
+    const totalEl = document.getElementById('pos-total-amount');
+    let total = 0;
+    if (totalEl) {
+        total = parseFloat(totalEl.dataset.val) || parseVND(totalEl.innerText) || 0;
+    }
+
+    const changeAmount = cash > total ? (cash - total) : 0;
     const returnRow = document.getElementById('pos-return-row');
     const changeInput = document.getElementById('pos-change-amount');
 
-    if (changeInput && returnRow) {
-        if (bill.cashGiven >= total && total > 0) {
-            returnRow.style.display = 'flex';
-            changeInput.innerText = formatVND(bill.cashGiven - total);
-        } else {
-            returnRow.style.display = 'none';
-        }
+    if (changeInput) {
+        changeInput.innerText = formatVND(changeAmount);
+    }
+
+    if (returnRow) {
+        returnRow.style.display = (cash >= total && total > 0) ? 'flex' : 'none';
     }
 };
 
