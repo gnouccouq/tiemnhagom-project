@@ -7762,6 +7762,11 @@ function renderPOSCart() {
                 );
 
                 let variantBadge = '';
+                const isVariantSelected = item.color || item.pattern || item.comboVariant;
+                if (isVariantSelected) {
+                    const labelParts = [];
+                    if (item.comboVariant) labelParts.push(item.comboVariant);
+                    if (item.color) labelParts.push(item.color);
                     if (item.pattern) labelParts.push(item.pattern);
                     const labelText = labelParts.join(' / ');
                     variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
