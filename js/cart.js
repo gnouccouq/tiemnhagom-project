@@ -844,6 +844,8 @@ window.placeOrder = async () => {
             }
 
             // 2. Giai đoạn GHI (WRITE): Xử lý logic và thực hiện các lệnh set/update.
+            const productUpdatesMap = {}; // pId -> { productRef, totalSold, colorQtyMap, patternQtyMap }
+
             for (const { item, productRef, productSnap } of productSnapshots) {
                 const product = productSnap.data();
                 let currentStock = product.stock || 0;
@@ -898,30 +900,51 @@ window.placeOrder = async () => {
                 });
                 productNames.push(product.name);
 
-                // Cập nhật tồn kho sản phẩm/biến thể
+                // Gom nhóm cập nhật kho theo Product ID
+                const pId = item.id;
+                if (!productUpdatesMap[pId]) {
+                    productUpdatesMap[pId] = {
+                        productRef,
+                        product,
+                        totalSold: 0,
+                        colorQtyMap: {},
+                        patternQtyMap: {}
+                    };
+                }
+                const pInfo = productUpdatesMap[pId];
+                pInfo.totalSold += item.quantity;
+                if (item.color) {
+                    pInfo.colorQtyMap[item.color] = (pInfo.colorQtyMap[item.color] || 0) + item.quantity;
+                }
+                if (item.pattern) {
+                    pInfo.patternQtyMap[item.pattern] = (pInfo.patternQtyMap[item.pattern] || 0) + item.quantity;
+                }
+            }
+
+            // Thực hiện update từng sản phẩm duy nhất 1 lần trong transaction
+            for (const pId of Object.keys(productUpdatesMap)) {
+                const { productRef, product, totalSold, colorQtyMap, patternQtyMap } = productUpdatesMap[pId];
                 let updateProductData = {
-                    sold: increment(item.quantity)
+                    sold: increment(totalSold)
                 };
                 if (!product.isCombo) {
-                    updateProductData.stock = increment(-item.quantity);
+                    updateProductData.stock = increment(-totalSold);
                 }
 
-                if (item.color && Array.isArray(product.colorVariants)) {
-                    const updatedColorVariants = product.colorVariants.map(v => {
-                        if (v.name === item.color) return { ...v, stock: (v.stock || 0) - item.quantity };
+                if (Array.isArray(product.colorVariants) && Object.keys(colorQtyMap).length > 0) {
+                    updateProductData.colorVariants = product.colorVariants.map(v => {
+                        const qty = colorQtyMap[v.name] || 0;
+                        if (qty > 0) return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
                         return v;
                     });
-                    updateProductData.colorVariants = updatedColorVariants;
                 }
-                if (item.pattern && Array.isArray(product.patternVariants)) {
-                    const updatedPatternVariants = product.patternVariants.map(v => {
-                        if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) - item.quantity };
+                if (Array.isArray(product.patternVariants) && Object.keys(patternQtyMap).length > 0) {
+                    updateProductData.patternVariants = product.patternVariants.map(v => {
+                        const qty = patternQtyMap[v.name] || 0;
+                        if (qty > 0) return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
                         return v;
                     });
-                    updateProductData.patternVariants = updatedPatternVariants;
                 }
-                
-                // Thực hiện ghi: Từ thời điểm này trở đi không được gọi thêm lệnh transaction.get() nào khác
                 transaction.update(productRef, updateProductData);
             }
 

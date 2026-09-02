@@ -8917,40 +8917,88 @@ window.createPOSOrder = async () => {
         if (setDoc) {
             await setDoc(orderRef, orderData);
 
-            // Update inventory
-            const updatePromises = bill.cart.map(async (item) => {
-                const productRef = doc(db, "products", item.id);
+            // Update inventory grouped by product ID to support multiple color/pattern/combo variants of the same product
+            const itemsByProduct = {};
+            bill.cart.forEach(item => {
+                const pId = String(item.id).trim();
+                if (!itemsByProduct[pId]) itemsByProduct[pId] = [];
+                itemsByProduct[pId].push(item);
+            });
+
+            const updatePromises = Object.keys(itemsByProduct).map(async (pId) => {
+                const items = itemsByProduct[pId];
+                const productRef = doc(db, "products", pId);
                 const pSnap = await getDoc(productRef);
                 if (!pSnap.exists()) return;
 
                 const pData = pSnap.data();
+                const totalQty = items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+
                 const updateData = {
-                    sold: increment(item.quantity)
+                    sold: increment(totalQty)
                 };
                 if (!pData.isCombo) {
-                    updateData.stock = increment(-item.quantity);
+                    updateData.stock = increment(-totalQty);
                 }
 
-                // Color variant inventory
-                if (item.color && pData.colorVariants) {
-                    const updatedVariants = pData.colorVariants.map(v => {
-                        if (v.name === item.color) {
-                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                // Color variants
+                if (Array.isArray(pData.colorVariants) && pData.colorVariants.length > 0) {
+                    const colorQtyMap = {};
+                    items.forEach(i => {
+                        if (i.color) {
+                            colorQtyMap[i.color] = (colorQtyMap[i.color] || 0) + (Number(i.quantity) || 1);
                         }
-                        return v;
                     });
-                    updateData.colorVariants = updatedVariants;
+                    if (Object.keys(colorQtyMap).length > 0) {
+                        updateData.colorVariants = pData.colorVariants.map(v => {
+                            const qty = colorQtyMap[v.name] || 0;
+                            if (qty > 0) {
+                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                            }
+                            return v;
+                        });
+                    }
                 }
-                // Pattern variant inventory
-                if (item.pattern && pData.patternVariants) {
-                    const updatedVariants = pData.patternVariants.map(v => {
-                        if (v.name === item.pattern) {
-                            return { ...v, stock: (v.stock || 0) - item.quantity };
+
+                // Pattern variants
+                if (Array.isArray(pData.patternVariants) && pData.patternVariants.length > 0) {
+                    const patternQtyMap = {};
+                    items.forEach(i => {
+                        if (i.pattern) {
+                            patternQtyMap[i.pattern] = (patternQtyMap[i.pattern] || 0) + (Number(i.quantity) || 1);
                         }
-                        return v;
                     });
-                    updateData.patternVariants = updatedVariants;
+                    if (Object.keys(patternQtyMap).length > 0) {
+                        updateData.patternVariants = pData.patternVariants.map(v => {
+                            const qty = patternQtyMap[v.name] || 0;
+                            if (qty > 0) {
+                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                            }
+                            return v;
+                        });
+                    }
                 }
+
+                // Combo variants
+                if (Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                    const comboQtyMap = {};
+                    items.forEach(i => {
+                        const cName = i.comboVariant || i.variantName;
+                        if (cName) {
+                            comboQtyMap[cName] = (comboQtyMap[cName] || 0) + (Number(i.quantity) || 1);
+                        }
+                    });
+                    if (Object.keys(comboQtyMap).length > 0) {
+                        updateData.comboVariants = pData.comboVariants.map(v => {
+                            const qty = comboQtyMap[v.name] || 0;
+                            if (qty > 0) {
+                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                            }
+                            return v;
+                        });
+                    }
+                }
+
                 return updateDoc(productRef, updateData);
             });
             await Promise.all(updatePromises);
@@ -8980,6 +9028,148 @@ window.createPOSOrder = async () => {
             checkBtn.disabled = false;
             checkBtn.innerHTML = "THANH TOÁN";
         }
+    }
+};
+
+window.realignAllPastOrdersInventory = async () => {
+    try {
+        if (typeof showToast !== 'undefined') showToast("Đang rà soát và đồng bộ tồn kho từ lịch sử đơn hàng...");
+        
+        const qCompleted = query(collection(db, "orders"), where("status", "in", ["Đã hoàn thành", "Hoàn thành"]));
+        const snap = await getDocs(qCompleted);
+
+        if (snap.empty) {
+            if (typeof showToast !== 'undefined') showToast("Không có đơn hàng đã hoàn thành nào.");
+            return;
+        }
+
+        const missingDeductions = {};
+        let totalAffectedOrders = 0;
+
+        snap.forEach(docSnap => {
+            const order = docSnap.data();
+            const items = order.items || [];
+            if (items.length < 2) return;
+
+            const itemsByProduct = {};
+            items.forEach(it => {
+                const pId = String(it.id).trim();
+                if (!itemsByProduct[pId]) itemsByProduct[pId] = [];
+                itemsByProduct[pId].push(it);
+            });
+
+            let orderHadOverwrites = false;
+
+            Object.keys(itemsByProduct).forEach(pId => {
+                const pItems = itemsByProduct[pId];
+                if (pItems.length > 1) {
+                    const overwrittenItems = pItems.slice(0, pItems.length - 1);
+                    overwrittenItems.forEach(it => {
+                        const qty = Number(it.quantity) || 1;
+                        if (!missingDeductions[pId]) {
+                            missingDeductions[pId] = { colors: {}, patterns: {}, combos: {} };
+                        }
+                        if (it.color) {
+                            missingDeductions[pId].colors[it.color] = (missingDeductions[pId].colors[it.color] || 0) + qty;
+                            orderHadOverwrites = true;
+                        }
+                        if (it.pattern) {
+                            missingDeductions[pId].patterns[it.pattern] = (missingDeductions[pId].patterns[it.pattern] || 0) + qty;
+                            orderHadOverwrites = true;
+                        }
+                        const comboName = it.comboVariant || it.variantName;
+                        if (comboName) {
+                            missingDeductions[pId].combos[comboName] = (missingDeductions[pId].combos[comboName] || 0) + qty;
+                            orderHadOverwrites = true;
+                        }
+                    });
+                }
+            });
+
+            if (orderHadOverwrites) totalAffectedOrders++;
+        });
+
+        const affectedProductIds = Object.keys(missingDeductions);
+        if (affectedProductIds.length === 0) {
+            if (typeof showToast !== 'undefined') showToast("Tồn kho hiện tại đã đồng bộ chuẩn xác! Không phát hiện biến thể bị thiếu trừ trong lịch sử.", "success");
+            return;
+        }
+
+        let updatedCount = 0;
+        let detailsLog = [];
+
+        for (const pId of affectedProductIds) {
+            const productRef = doc(db, "products", pId);
+            const pSnap = await getDoc(productRef);
+            if (!pSnap.exists()) continue;
+
+            const pData = pSnap.data();
+            const deductions = missingDeductions[pId];
+            const updateData = {};
+            let isModified = false;
+
+            if (Array.isArray(pData.colorVariants) && Object.keys(deductions.colors).length > 0) {
+                updateData.colorVariants = pData.colorVariants.map(v => {
+                    const missingQty = deductions.colors[v.name] || 0;
+                    if (missingQty > 0) {
+                        isModified = true;
+                        detailsLog.push(`${pData.name} - Màu "${v.name}": Trừ bù ${missingQty} sp (Kho cũ: ${v.stock} -> ${Math.max(0, (v.stock || 0) - missingQty)})`);
+                        return {
+                            ...v,
+                            stock: Math.max(0, (v.stock || 0) - missingQty),
+                            sold: (v.sold || 0) + missingQty
+                        };
+                    }
+                    return v;
+                });
+            }
+
+            if (Array.isArray(pData.patternVariants) && Object.keys(deductions.patterns).length > 0) {
+                updateData.patternVariants = pData.patternVariants.map(v => {
+                    const missingQty = deductions.patterns[v.name] || 0;
+                    if (missingQty > 0) {
+                        isModified = true;
+                        detailsLog.push(`${pData.name} - Họa tiết "${v.name}": Trừ bù ${missingQty} sp (Kho cũ: ${v.stock} -> ${Math.max(0, (v.stock || 0) - missingQty)})`);
+                        return {
+                            ...v,
+                            stock: Math.max(0, (v.stock || 0) - missingQty),
+                            sold: (v.sold || 0) + missingQty
+                        };
+                    }
+                    return v;
+                });
+            }
+
+            if (Array.isArray(pData.comboVariants) && Object.keys(deductions.combos).length > 0) {
+                updateData.comboVariants = pData.comboVariants.map(v => {
+                    const missingQty = deductions.combos[v.name] || 0;
+                    if (missingQty > 0) {
+                        isModified = true;
+                        detailsLog.push(`${pData.name} - Combo "${v.name}": Trừ bù ${missingQty} sp (Kho cũ: ${v.stock} -> ${Math.max(0, (v.stock || 0) - missingQty)})`);
+                        return {
+                            ...v,
+                            stock: Math.max(0, (v.stock || 0) - missingQty),
+                            sold: (v.sold || 0) + missingQty
+                        };
+                    }
+                    return v;
+                });
+            }
+
+            if (isModified) {
+                await updateDoc(productRef, updateData);
+                updatedCount++;
+            }
+        }
+
+        const msg = `Đã rà soát ${snap.size} đơn hàng. Đã trừ bù tồn kho thành công cho ${updatedCount} sản phẩm (${detailsLog.length} biến thể)!\n\nChi tiết:\n- ` + detailsLog.join('\n- ');
+        console.log(msg);
+        alert(msg);
+        if (typeof showToast !== 'undefined') showToast("Đã đồng bộ xong tồn kho sản phẩm từ lịch sử đơn hàng!", "success");
+        if (typeof initProductListener === 'function') initProductListener();
+    } catch (err) {
+        console.error("Lỗi đồng bộ tồn kho từ lịch sử đơn:", err);
+        if (typeof showToast !== 'undefined') showToast("Lỗi đồng bộ kho: " + err.message, "error");
     }
 };
 
