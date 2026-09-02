@@ -2558,6 +2558,9 @@
                                             <input type="text" id="combo-variant-name" placeholder="Tên phân loại"
                                                 oninput="window.updateCurrentComboVariantName(this.value)"
                                                 style="flex: 2; min-width: 140px;">
+                                            <input type="number" id="combo-variant-price" placeholder="Giá riêng (đ)" min="0"
+                                                oninput="window.updateCurrentComboVariantPrice(this.value)"
+                                                style="width: 110px;" title="Giá bán riêng cho phân loại combo này">
                                             <input type="number" id="combo-variant-stock" placeholder="Tồn kho" min="0"
                                                 oninput="window.updateCurrentComboVariantStock(this.value)"
                                                 style="width: 90px;">
@@ -2657,8 +2660,9 @@
 
                 <!-- STICKY FIXED FOOTER BAR (Cố định ở mép dưới cùng của Modal - Khớp KiotViet) -->
                 <div class="product-modal-footer">
-                    <!-- Phía trái: Checkbox Ẩn cửa hàng & Ẩn cửa hàng hiện Sự kiện -->
-                    <div class="footer-checkbox-group">
+                    <!-- Phía trái: Nút xóa sản phẩm & Checkbox Ẩn cửa hàng -->
+                    <div class="footer-checkbox-group" style="align-items: center;">
+                        <button type="button" id="btn-delete-product-modal" onclick="window.deleteProduct()" style="display: none; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fca5a5'; this.style.color='#7f1d1d';" onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';">🗑️ Xóa sản phẩm</button>
                         <label class="kiot-checkbox-label">
                             <input type="checkbox" id="product-is-hidden" class="kiot-checkbox">
                             <span>Ẩn khỏi cửa hàng (Tạm ngưng kinh doanh)</span>

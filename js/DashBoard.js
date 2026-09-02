@@ -1247,6 +1247,13 @@ window.openProductModal = function () {
         const defaultTabPane = document.getElementById('tab-product-basic');
         if (defaultTabBtn) defaultTabBtn.classList.add('active');
         if (defaultTabPane) defaultTabPane.classList.add('active');
+
+        // Hiển thị nút xóa nếu là sửa sản phẩm đã có ID
+        const delBtn = document.getElementById('btn-delete-product-modal');
+        const prodIdVal = document.getElementById('productId')?.value.trim();
+        if (delBtn) {
+            delBtn.style.display = prodIdVal ? 'inline-flex' : 'none';
+        }
     }
 };
 
@@ -1255,6 +1262,8 @@ window.closeProductModal = function () {
         productModal.classList.remove('active');
         productModal.style.display = 'none';
     }
+    const delBtn = document.getElementById('btn-delete-product-modal');
+    if (delBtn) delBtn.style.display = 'none';
     if (productForm) {
         productForm.reset();
         document.getElementById('variant-items-container').innerHTML = '';
@@ -2620,6 +2629,9 @@ window.renderComboVariantsTabs = function () {
     const nameInput = document.getElementById('combo-variant-name');
     if (nameInput) nameInput.value = currentVariant.name || '';
 
+    const priceInput = document.getElementById('combo-variant-price');
+    if (priceInput) priceInput.value = (currentVariant.price !== undefined && currentVariant.price !== null) ? currentVariant.price : '';
+
     const stockInput = document.getElementById('combo-variant-stock');
     if (stockInput) stockInput.value = currentVariant.stock !== undefined && currentVariant.stock !== null ? currentVariant.stock : '';
 
@@ -2632,11 +2644,23 @@ window.renderComboVariantsTabs = function () {
     const showOnCardCheckbox = document.getElementById('combo-variant-show-independent');
     if (showOnCardCheckbox) showOnCardCheckbox.checked = currentVariant.showOnProductPage || false;
 
+    window.recalculateTotalComboStock();
     window.renderComboItems();
 };
 
+window.recalculateTotalComboStock = function () {
+    const isCombo = document.querySelector('input[name="product-type"]:checked')?.value === 'combo';
+    if (!isCombo) return;
+    if (!window.comboVariants || window.comboVariants.length === 0) return;
+    const totalStock = window.comboVariants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0);
+    const prodStockInput = document.getElementById('product-stock');
+    if (prodStockInput) {
+        prodStockInput.value = totalStock;
+    }
+};
+
 window.addComboVariant = function () {
-    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], stock: 10, isOutOfStock: false, showOnProductPage: false });
+    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], stock: 10, price: null, isOutOfStock: false, showOnProductPage: false });
     window.currentComboVariantIndex = window.comboVariants.length - 1;
     window.renderComboVariantsTabs();
 };
@@ -2658,9 +2682,16 @@ window.updateCurrentComboVariantName = function (name) {
     }
 };
 
+window.updateCurrentComboVariantPrice = function (val) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        window.comboVariants[window.currentComboVariantIndex].price = (val === '' || val === null) ? null : (parseFloat(val) || 0);
+    }
+};
+
 window.updateCurrentComboVariantStock = function (val) {
     if (window.comboVariants[window.currentComboVariantIndex]) {
         window.comboVariants[window.currentComboVariantIndex].stock = val === '' ? 0 : parseInt(val, 10) || 0;
+        window.recalculateTotalComboStock();
     }
 };
 
@@ -4445,15 +4476,43 @@ window.saveQuickStock = async function () {
 };
 
 async function deleteProduct(id) {
-    if (confirm(`Bạn có chắc muốn xóa vĩnh viễn sản phẩm ${id}?`)) {
+    if (!id) {
+        const modalIdInput = document.getElementById('productId');
+        id = modalIdInput ? modalIdInput.value.trim() : '';
+    }
+    if (!id) {
+        showToast("Không tìm thấy mã sản phẩm cần xóa!", "error");
+        return;
+    }
+
+    const p = posProductsLocal.find(item => item.id === id);
+    const prodName = p ? p.name : id;
+
+    if (confirm(`⚠️ Bạn có chắc chắn muốn XÓA VĨNH VIỄN sản phẩm "${prodName}" (Mã SKU: ${id}) khỏi hệ thống không?\nHành động này không thể hoàn tác!`)) {
         try {
             await deleteDoc(doc(db, "products", id));
-            showToast(`Đã xóa sản phẩm ${id}`);
+            
+            // Cập nhật mảng sản phẩm local
+            posProductsLocal = posProductsLocal.filter(item => item.id !== id);
+            
+            showToast(`✅ Đã xóa sản phẩm "${prodName}" thành công!`, "success");
+
+            // Đóng modal sản phẩm nếu đang mở
+            if (typeof window.closeProductModal === 'function') {
+                window.closeProductModal();
+            }
+
+            // Render lại bảng dữ liệu
+            if (typeof renderAdminProductTable === 'function') {
+                renderAdminProductTable();
+            }
         } catch (error) {
-            showToast("Lỗi khi xóa: " + error.message, "error");
+            console.error("Lỗi khi xóa sản phẩm:", error);
+            showToast("Lỗi khi xóa sản phẩm: " + error.message, "error");
         }
     }
 }
+window.deleteProduct = deleteProduct;
 
 // --- Quản lý đơn hàng cho Admin ---
 let unsubscribeOrders = null;

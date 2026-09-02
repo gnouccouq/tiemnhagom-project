@@ -731,6 +731,11 @@ async function fetchProductDetail() {
 
                 let variantImage = p.imageUrl;
                 let variantPriceValue = null;
+                if (selectedComboVariant && p.comboVariants) {
+                    const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
+                    if (cv && cv.imageUrl) variantImage = cv.imageUrl;
+                    if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = cv.price;
+                }
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
@@ -1029,6 +1034,15 @@ window.selectComboVariant = (idx) => {
     document.querySelectorAll('.combo-variant-chip').forEach((chip, i) => {
         chip.classList.toggle('active', i === idx);
     });
+
+    if (variant.price && Number(variant.price) > 0) {
+        const priceEl = document.querySelector('.main-price');
+        if (priceEl) priceEl.innerText = `${new Intl.NumberFormat('vi-VN').format(variant.price)} VND`;
+    } else if (currentProductData) {
+        const baseP = currentProductData.salePrice || currentProductData.price;
+        const priceEl = document.querySelector('.main-price');
+        if (priceEl) priceEl.innerText = `${new Intl.NumberFormat('vi-VN').format(baseP)} VND`;
+    }
 
     const itemsContainer = document.getElementById('combo-items-display');
     if (itemsContainer) {
