@@ -11590,3 +11590,32 @@ input:focus + .slider {
 input:checked + .slider:before {
     transform: translateX(26px);
 }
+
+/* User Avatar in Header */
+.header-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #d4af37;
+    background-color: #f7f6f2;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+}
+
+.header-user-avatar-placeholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #f7f6f2;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-black);
+}
+
+.user-icon-link:hover .header-user-avatar {
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}

@@ -467,8 +467,27 @@ async function handleProfileAuth(user) {
                     // Cập nhật Firebase Auth
                     await updateProfile(user, { photoURL: downloadURL });
                     
-                    // Cập nhật UI
+                    // Cập nhật UI Profile
                     avatarImg.src = downloadURL;
+                    
+                    // Cập nhật tức thì lên Header Avatar
+                    const headerAvatarImg = document.getElementById('header-user-avatar-img');
+                    if (headerAvatarImg) {
+                        if (headerAvatarImg.tagName === 'IMG') {
+                            headerAvatarImg.src = downloadURL;
+                        } else {
+                            headerAvatarImg.outerHTML = `<img id="header-user-avatar-img" src="${downloadURL}" alt="${user.displayName || 'Tài khoản'}" class="header-user-avatar">`;
+                        }
+                    }
+
+                    // Lưu vào localStorage hint
+                    const existingHint = JSON.parse(localStorage.getItem('tng_user_hint') || '{}');
+                    localStorage.setItem('tng_user_hint', JSON.stringify({
+                        ...existingHint,
+                        loggedIn: true,
+                        avatar: downloadURL
+                    }));
+
                     showToast('Đã cập nhật ảnh đại diện');
                 } catch (error) {
                     showToast('Lỗi khi tải ảnh lên: ' + error.message, 'error');

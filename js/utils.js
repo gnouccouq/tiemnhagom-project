@@ -1012,17 +1012,23 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'));
 
             const isProfilePage = window.location.pathname.includes('profile');
-            const isOrdersTab = window.location.hash === '#orders';
-            const isFavsTab = window.location.hash === '#favs';
+            // Lấy avatar từ hint lưu trước đó hoặc từ Firebase Auth user
+            const cachedAvatar = userHint?.avatar || user.photoURL;
+            const defaultAvatarHTML = `
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            `;
+            const avatarContentHTML = cachedAvatar ? 
+                `<img id="header-user-avatar-img" src="${cachedAvatar}" alt="${displayName}" class="header-user-avatar" onerror="this.onerror=null; this.outerHTML='<div class=\\'header-user-avatar-placeholder\\'>${defaultAvatarHTML.replace(/"/g, '&quot;')}</div>';">` :
+                `<div id="header-user-avatar-img">${defaultAvatarHTML}</div>`;
 
-            // HIỂN THỊ NGAY icon người dùng (Chưa cần biết có phải admin hay không)
+            // HIỂN THỊ NGAY icon/avatar người dùng (Chưa cần biết có phải admin hay không)
             authSection.innerHTML = `
                 <div class="user-dropdown">
                     <a href="${profilePath}" class="user-icon-link" title="Tài khoản">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        ${avatarContentHTML}
                         <span id="admin-badge-placeholder"></span>
                     </a>
                     <ul class="user-dropdown-menu">
@@ -1200,6 +1206,24 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         await updateDoc(userRef, { lastLogin: new Date().toISOString() });
                         // Tự động cập nhật liên kết đơn hàng nếu user đã có SĐT lưu sẵn
                         if (userData.phone) await autoLinkOrdersByPhone(user.uid, userData.phone);
+
+                        // Cập nhật avatar từ Firestore nếu có
+                        const latestAvatar = userData.avatar || user.photoURL;
+                        if (latestAvatar) {
+                            localStorage.setItem('tng_user_hint', JSON.stringify({
+                                loggedIn: true,
+                                displayName: displayName,
+                                avatar: latestAvatar
+                            }));
+                            const headerAvatarImg = document.getElementById('header-user-avatar-img');
+                            if (headerAvatarImg) {
+                                if (headerAvatarImg.tagName === 'IMG') {
+                                    headerAvatarImg.src = latestAvatar;
+                                } else {
+                                    headerAvatarImg.outerHTML = `<img id="header-user-avatar-img" src="${latestAvatar}" alt="${displayName}" class="header-user-avatar" onerror="this.onerror=null; this.outerHTML='<div class=\\'header-user-avatar-placeholder\\'>${defaultAvatarHTML.replace(/"/g, '&quot;')}</div>';">`;
+                                }
+                            }
+                        }
                     }
                 } catch (e) { console.error("Background auth tasks error:", e); }
             })();
