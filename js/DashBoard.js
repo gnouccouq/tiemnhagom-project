@@ -3387,7 +3387,8 @@ function initProductListener() {
 
         renderAdminProductTable(); // Gọi hàm hiển thị bảng
         populateFlashSaleGroupSelect(); // Cập nhật dropdown chọn nhóm sale
-        renderAdminFlashSaleList(); // Tự động cập nhật danh sách Flash Sale
+        if (typeof renderAdminRegularSaleList === 'function') renderAdminRegularSaleList(); // Tự động cập nhật danh sách Flash Sale
+        if (typeof renderFsSelectedItemsTable === 'function') renderFsSelectedItemsTable();
     }, (error) => {
         console.error("Product listener error:", error);
     });
@@ -9773,115 +9774,402 @@ async function populateFlashSaleGroupSelect() {
     }
 }
 
-// --- Quản lý Cài đặt Flash Sale ---
+// --- Quản lý Cài đặt Flash Sale (Siêu Sale 9.9) Độc Lập ---
+let fsSelectedItemsMap = {}; // { [productId]: { salePrice: number, limit: number, sold: number } }
+let fsPickerSelectedIds = new Set();
+
 async function initFlashSaleSettings() {
     const form = document.getElementById('flash-sale-settings-form');
     if (!form || !db) return;
 
     const fsRef = doc(db, "settings", "flash_sale");
+    const activeToggle = document.getElementById('fs-active-toggle');
+    const statusHint = document.getElementById('fs-status-hint');
+
+    const updateStatusHint = () => {
+        if (!statusHint) return;
+        if (activeToggle && activeToggle.checked) {
+            statusHint.innerText = "(ĐANG BẬT CHIẾN DỊCH)";
+            statusHint.style.color = "#27ae60";
+        } else {
+            statusHint.innerText = "(Chưa kích hoạt)";
+            statusHint.style.color = "#e74c3c";
+        }
+    };
+    activeToggle?.addEventListener('change', updateStatusHint);
 
     // Load cài đặt hiện tại
-    const snap = await getDoc(fsRef);
-    if (snap.exists()) {
-        const s = snap.data();
-        document.getElementById('fs-active-toggle').checked = s.isActive || false;
-        document.getElementById('fs-title').value = s.title || '';
-        document.getElementById('fs-subtitle').value = s.subtitle || '';
-        document.getElementById('fs-groups').value = (s.priceGroups || []).join(', ');
-        if (s.startTime) {
-            document.getElementById('fs-start-time').value = s.startTime.toDate().toISOString().slice(0, 16);
+    try {
+        const snap = await getDoc(fsRef);
+        if (snap.exists()) {
+            const s = snap.data();
+            if (activeToggle) activeToggle.checked = s.isActive || false;
+            document.getElementById('fs-title').value = s.title || '';
+            document.getElementById('fs-subtitle').value = s.subtitle || '';
+            document.getElementById('fs-groups').value = (s.priceGroups || []).join(', ');
+            if (s.startTime) {
+                const startD = s.startTime.toDate ? s.startTime.toDate() : new Date(s.startTime);
+                document.getElementById('fs-start-time').value = startD.toISOString().slice(0, 16);
+            }
+            if (s.endTime) {
+                const endD = s.endTime.toDate ? s.endTime.toDate() : new Date(s.endTime);
+                document.getElementById('fs-end-time').value = endD.toISOString().slice(0, 16);
+            }
+
+            fsSelectedItemsMap = s.items || {};
+            populateFlashSaleGroupSelect();
         }
-        if (s.endTime) {
-            document.getElementById('fs-end-time').value = s.endTime.toDate().toISOString().slice(0, 16);
-        }
-        populateFlashSaleGroupSelect();
+    } catch (e) {
+        console.error("Lỗi nạp cấu hình flash sale:", e);
     }
+    updateStatusHint();
+    renderFsSelectedItemsTable();
+    initFsProductPickerModal();
 
     form.onsubmit = async (e) => {
         e.preventDefault();
-        const btn = form.querySelector('button[type="submit"]');
+        const btn = document.getElementById('btn-save-fs-all') || form.querySelector('button[type="submit"]');
         const priceGroups = document.getElementById('fs-groups').value.split(',')
             .map(p => parseInt(p.trim()))
             .filter(p => !isNaN(p));
 
+        const startTimeVal = document.getElementById('fs-start-time').value;
+        const endTimeVal = document.getElementById('fs-end-time').value;
+
+        if (!startTimeVal || !endTimeVal) {
+            showToast("Vui lòng chọn thời gian bắt đầu và kết thúc!", "error");
+            return;
+        }
+
+        // Lấy dữ liệu từ bảng sản phẩm
+        const updatedItems = {};
+        const rows = document.querySelectorAll('#fs-items-table-body tr[data-pid]');
+        rows.forEach(row => {
+            const pid = row.getAttribute('data-pid');
+            const salePriceInput = row.querySelector('.fs-item-saleprice');
+            const limitInput = row.querySelector('.fs-item-limit');
+            const soldInput = row.querySelector('.fs-item-sold');
+
+            const salePrice = parseInt(salePriceInput?.value.replace(/\D/g, '') || 0);
+            const limit = parseInt(limitInput?.value || 10);
+            const sold = parseInt(soldInput?.value || 0);
+
+            if (pid) {
+                updatedItems[pid] = {
+                    salePrice: salePrice,
+                    limit: limit,
+                    sold: sold
+                };
+            }
+        });
+
         try {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+            }
 
             await setDoc(fsRef, {
-                isActive: document.getElementById('fs-active-toggle').checked,
+                isActive: activeToggle ? activeToggle.checked : false,
                 title: document.getElementById('fs-title').value.trim(),
                 subtitle: document.getElementById('fs-subtitle').value.trim(),
-                startTime: new Date(document.getElementById('fs-start-time').value),
-                endTime: new Date(document.getElementById('fs-end-time').value),
+                startTime: new Date(startTimeVal),
+                endTime: new Date(endTimeVal),
                 priceGroups: priceGroups,
+                items: updatedItems,
                 lastUpdated: serverTimestamp()
             });
 
-            showToast("Đã cập nhật cấu hình Flash Sale!");
+            fsSelectedItemsMap = updatedItems;
+            showToast("Đã lưu cấu hình & danh sách Flash Sale 9.9 thành công!");
         } catch (err) {
-            showToast("Lỗi: " + err.message, "error");
+            showToast("Lỗi lưu Flash Sale: " + err.message, "error");
         } finally {
-            btn.disabled = false;
-            btn.innerText = "Lưu cấu hình Flash Sale";
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "💾 Lưu chiến dịch";
+            }
         }
     };
-
-    renderAdminFlashSaleList(); // Render lần đầu khi mở tab
 }
 
-// Logic tự động tính % giảm giá khi chọn nhóm đồng giá
-document.getElementById('flash-sale-group-select')?.addEventListener('change', (e) => {
-    const targetPrice = parseInt(e.target.value);
-    const originalPrice = window.getCurrencyValue('price');
-    const saleInput = document.getElementById('sale');
+// Render bảng các sản phẩm đang tham gia Flash Sale
+function renderFsSelectedItemsTable() {
+    const tbody = document.getElementById('fs-items-table-body');
+    const totalBadge = document.getElementById('fs-total-items-badge');
+    if (!tbody) return;
 
-    if (targetPrice && originalPrice > 0) {
-        if (targetPrice >= originalPrice) {
-            showToast("Giá đồng giá phải nhỏ hơn giá gốc!", "error");
-            e.target.value = "";
+    const pids = Object.keys(fsSelectedItemsMap);
+    if (totalBadge) totalBadge.innerText = `${pids.length} sản phẩm`;
+
+    if (pids.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: #94a3b8;">Chưa có sản phẩm nào trong chiến dịch Flash Sale.<br><button type="button" class="kiot-btn-outline" style="margin-top: 10px;" onclick="document.getElementById('btn-open-fs-product-picker').click()">+ Bấm vào đây để chọn sản phẩm</button></td></tr>`;
+        return;
+    }
+
+    let html = '';
+    pids.forEach(pid => {
+        const itemConfig = fsSelectedItemsMap[pid] || {};
+        const p = posProductsLocal.find(prod => prod.id === pid) || {
+            id: pid,
+            name: "Sản phẩm (" + pid + ")",
+            price: itemConfig.salePrice || 0,
+            imageUrl: "https://placehold.co/100x100?text=SP",
+            stock: 0
+        };
+
+        const originalPrice = p.price || 0;
+        const salePrice = itemConfig.salePrice !== undefined ? itemConfig.salePrice : Math.round(originalPrice * 0.8);
+        const limit = itemConfig.limit !== undefined ? itemConfig.limit : 20;
+        const sold = itemConfig.sold !== undefined ? itemConfig.sold : 0;
+        const percentSold = limit > 0 ? Math.min(100, Math.round((sold / limit) * 100)) : 0;
+
+        html += `
+            <tr data-pid="${pid}">
+                <td data-label="Ảnh"><img src="${p.imageUrl || p.thumbUrl || 'https://placehold.co/50x50'}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"></td>
+                <td data-label="Sản phẩm">
+                    <strong style="font-size: 0.9rem; color: #0f172a;">${p.name}</strong><br>
+                    <small style="color: #64748b;">Mã: ${pid} | Kho: <strong>${p.stock || 0}</strong></small>
+                </td>
+                <td data-label="Giá gốc" style="color: #64748b; font-size: 0.9rem;">${new Intl.NumberFormat('vi-VN').format(originalPrice)}đ</td>
+                <td data-label="Giá Flash Sale">
+                    <input type="text" class="kiot-filter-input fs-item-saleprice" value="${new Intl.NumberFormat('vi-VN').format(salePrice)}" 
+                        oninput="window.formatCurrencyInput(this)" style="font-weight: 700; color: #e65100; max-width: 130px;">
+                </td>
+                <td data-label="Số suất">
+                    <input type="number" min="1" class="kiot-filter-input fs-item-limit" value="${limit}" 
+                        oninput="window.updateFsRowProgress('${pid}')" style="width: 75px; text-align: center;">
+                </td>
+                <td data-label="Đã bán">
+                    <input type="number" min="0" class="kiot-filter-input fs-item-sold" value="${sold}" 
+                        oninput="window.updateFsRowProgress('${pid}')" style="width: 65px; text-align: center;">
+                </td>
+                <td data-label="Tiến độ">
+                    <div id="fs-progress-preview-${pid}" style="width: 100%; min-width: 120px;">
+                        <div style="background: #fed7aa; height: 16px; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percentSold}%; background: linear-gradient(90deg, #f97316, #ef4444); transition: width 0.3s;"></div>
+                            <span style="position: relative; z-index: 2; font-size: 0.68rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">${sold}/${limit} (${percentSold}%)</span>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Xóa" style="text-align: center;">
+                    <button type="button" class="kiot-t1-icon-btn" onclick="window.removeFsItem('${pid}')" title="Xóa khỏi đợt Sale" style="color: #ef4444; width: 32px; height: 32px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+window.updateFsRowProgress = (pid) => {
+    const row = document.querySelector(`#fs-items-table-body tr[data-pid="${pid}"]`);
+    if (!row) return;
+    const limit = parseInt(row.querySelector('.fs-item-limit')?.value || 1);
+    const sold = parseInt(row.querySelector('.fs-item-sold')?.value || 0);
+    const percent = limit > 0 ? Math.min(100, Math.round((sold / limit) * 100)) : 0;
+
+    const preview = document.getElementById(`fs-progress-preview-${pid}`);
+    if (preview) {
+        preview.innerHTML = `
+            <div style="background: #fed7aa; height: 16px; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percent}%; background: linear-gradient(90deg, #f97316, #ef4444); transition: width 0.3s;"></div>
+                <span style="position: relative; z-index: 2; font-size: 0.68rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">${sold}/${limit} (${percent}%)</span>
+            </div>
+        `;
+    }
+};
+
+window.removeFsItem = (pid) => {
+    if (confirm("Bạn có chắc muốn xóa sản phẩm này khỏi Flash Sale?")) {
+        delete fsSelectedItemsMap[pid];
+        renderFsSelectedItemsTable();
+    }
+};
+
+// Khởi tạo Modal Picker chọn sản phẩm
+function initFsProductPickerModal() {
+    const modal = document.getElementById('fs-product-picker-modal');
+    const openBtn = document.getElementById('btn-open-fs-product-picker');
+    const searchInput = document.getElementById('fs-search-product-input');
+    const listContainer = document.getElementById('fs-picker-product-list');
+    const confirmBtn = document.getElementById('fs-btn-confirm-picker');
+    const countLabel = document.getElementById('fs-picker-count');
+
+    if (!modal || !openBtn) return;
+
+    openBtn.onclick = () => {
+        fsPickerSelectedIds = new Set(Object.keys(fsSelectedItemsMap));
+        if (searchInput) searchInput.value = '';
+        renderPickerList('');
+        modal.style.display = 'flex';
+    };
+
+    const renderPickerList = (keyword = '') => {
+        if (!listContainer) return;
+        const kw = keyword.toLowerCase().trim();
+        const filtered = posProductsLocal.filter(p => {
+            if (p.isHidden || p.isOnlyEvent) return false;
+            if (!kw) return true;
+            return (p.name && p.name.toLowerCase().includes(kw)) || (p.id && p.id.toLowerCase().includes(kw));
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 2rem;">Không tìm thấy sản phẩm nào phù hợp.</div>';
             return;
         }
-        // Công thức: % Sale = (1 - Giá_mới / Giá_gốc) * 100
-        const salePercent = Math.round((1 - targetPrice / originalPrice) * 100);
-        saleInput.value = salePercent;
-        showToast(`Đã tự tính giảm giá: ${salePercent}%`);
-    } else if (e.target.value === "" && saleInput) {
-        saleInput.value = 0;
-        showToast("Đã hủy tham gia chương trình đồng giá, giảm giá về 0%");
-    }
-});
 
-// Hàm hiển thị danh sách sản phẩm đang sale trong tab Cấu hình Flash Sale
-function renderAdminFlashSaleList() {
-    const list = document.getElementById('admin-flash-sale-list');
+        listContainer.innerHTML = filtered.map(p => {
+            const isChecked = fsPickerSelectedIds.has(p.id);
+            return `
+                <label style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid ${isChecked ? '#fb923c' : '#e2e8f0'}; background: ${isChecked ? '#fff7ed' : '#fff'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    <input type="checkbox" value="${p.id}" ${isChecked ? 'checked' : ''} onchange="window.toggleFsPickerProduct('${p.id}', this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+                    <img src="${p.imageUrl || p.thumbUrl || 'https://placehold.co/40x40'}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 0.88rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                        <div style="font-size: 0.78rem; color: #64748b;">Mã: ${p.id} | Giá: <strong>${new Intl.NumberFormat('vi-VN').format(p.price || 0)}đ</strong> | Kho: ${p.stock || 0}</div>
+                    </div>
+                </label>
+            `;
+        }).join('');
+
+        if (countLabel) countLabel.innerText = `Đã chọn ${fsPickerSelectedIds.size} sản phẩm`;
+    };
+
+    window.toggleFsPickerProduct = (pid, checked) => {
+        if (checked) {
+            fsPickerSelectedIds.add(pid);
+        } else {
+            fsPickerSelectedIds.delete(pid);
+        }
+        if (countLabel) countLabel.innerText = `Đã chọn ${fsPickerSelectedIds.size} sản phẩm`;
+    };
+
+    searchInput?.addEventListener('input', (e) => {
+        renderPickerList(e.target.value);
+    });
+
+    confirmBtn.onclick = () => {
+        // Đồng bộ danh sách chọn vào fsSelectedItemsMap
+        const newMap = {};
+        fsPickerSelectedIds.forEach(pid => {
+            if (fsSelectedItemsMap[pid]) {
+                newMap[pid] = fsSelectedItemsMap[pid];
+            } else {
+                const prod = posProductsLocal.find(p => p.id === pid);
+                const originalPrice = prod ? (prod.price || 0) : 100000;
+                newMap[pid] = {
+                    salePrice: Math.round(originalPrice * 0.7), // Gợi ý mặc định giảm 30%
+                    limit: 20,
+                    sold: 0
+                };
+            }
+        });
+        fsSelectedItemsMap = newMap;
+        renderFsSelectedItemsTable();
+        modal.style.display = 'none';
+        showToast(`Đã thêm ${fsPickerSelectedIds.size} sản phẩm vào bảng Flash Sale!`);
+    };
+}
+
+// Logic chuyển đổi Tab giữa Siêu Sale 9.9 và Giảm giá thường ngày
+window.switchFsTab = (tab) => {
+    const tabBtn99 = document.getElementById('fs-tab-btn-99');
+    const tabBtnReg = document.getElementById('fs-tab-btn-regular');
+    const content99 = document.getElementById('fs-tab-content-99');
+    const contentReg = document.getElementById('fs-tab-content-regular');
+
+    if (tab === '99') {
+        if (tabBtn99) {
+            tabBtn99.style.background = '#fff7ed';
+            tabBtn99.style.color = '#c2410c';
+            tabBtn99.style.fontWeight = '700';
+        }
+        if (tabBtnReg) {
+            tabBtnReg.style.background = 'transparent';
+            tabBtnReg.style.color = '#475569';
+            tabBtnReg.style.fontWeight = '600';
+        }
+        if (content99) content99.style.display = 'block';
+        if (contentReg) contentReg.style.display = 'none';
+    } else {
+        if (tabBtnReg) {
+            tabBtnReg.style.background = '#eff6ff';
+            tabBtnReg.style.color = '#1d4ed8';
+            tabBtnReg.style.fontWeight = '700';
+        }
+        if (tabBtn99) {
+            tabBtn99.style.background = 'transparent';
+            tabBtn99.style.color = '#475569';
+            tabBtn99.style.fontWeight = '600';
+        }
+        if (content99) content99.style.display = 'none';
+        if (contentReg) contentReg.style.display = 'block';
+        renderAdminRegularSaleList();
+    }
+};
+
+// Hàm hiển thị danh sách sản phẩm giảm giá thường ngày (Sale % trong kho)
+function renderAdminRegularSaleList() {
+    const list = document.getElementById('admin-regular-sale-list');
+    const badge = document.getElementById('fs-regular-sale-badge');
     if (!list) return;
 
-    // Lọc sản phẩm có phần trăm giảm giá > 0 từ mảng cache local
     const saleProducts = posProductsLocal.filter(p => (p.sale || 0) > 0);
+    if (badge) badge.innerText = `${saleProducts.length} SP`;
 
     if (saleProducts.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #999;">Chưa có sản phẩm nào được thiết lập giảm giá.</td></tr>';
+        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2.5rem; color: #94a3b8;">Hiện chưa có sản phẩm nào được thiết lập % giảm giá thường ngày trong kho hàng.</td></tr>';
         return;
     }
 
     list.innerHTML = saleProducts.map(p => {
-        // Ưu tiên dùng flashSaleGroup để giá luôn là con số tròn
-        const salePrice = p.flashSaleGroup || p.salePrice || Math.round((p.price * (1 - (p.sale || 0) / 100)));
-        const stockClass = p.stock <= 0 ? 'color: #e74c3c; font-weight: bold;' : '';
+        const salePrice = p.salePrice || Math.round((p.price * (1 - (p.sale || 0) / 100)));
+        const stockClass = (p.stock || 0) <= 0 ? 'color: #ef4444; font-weight: bold;' : '';
 
         return `
             <tr>
-                <td data-label="Ảnh"><img src="${p.imageUrl}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;"></td>
-                <td data-label="Tên"><strong>${p.name}</strong><br><small style="color:#888;">SKU: ${p.id}</small></td>
-                <td data-label="Giá gốc">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</td>
-                <td data-label="Giảm" style="color: #c0392b; font-weight: 700;">-${p.sale}%</td>
-                <td data-label="Giá Sale" style="font-weight: 700; color: #27ae60;">${new Intl.NumberFormat('vi-VN').format(salePrice)} VND ${p.flashSaleGroup ? `<br><small style="color:#e67e22">Đồng giá ${p.flashSaleGroup / 1000}k</small>` : ''}</td>
-                <td data-label="Kho" style="${stockClass}">${p.stock}</td>
+                <td data-label="Ảnh"><img src="${p.imageUrl || p.thumbUrl || 'https://placehold.co/45x45'}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"></td>
+                <td data-label="Tên">
+                    <strong style="color: #0f172a; font-size: 0.9rem;">${p.name}</strong><br>
+                    <small style="color: #64748b;">Mã: ${p.id}</small>
+                </td>
+                <td data-label="Giá gốc" style="color: #64748b;">${new Intl.NumberFormat('vi-VN').format(p.price || 0)}đ</td>
+                <td data-label="Giảm" style="color: #ef4444; font-weight: 700;">-${p.sale}%</td>
+                <td data-label="Giá sau giảm" style="font-weight: 700; color: #16a34a;">${new Intl.NumberFormat('vi-VN').format(salePrice)}đ</td>
+                <td data-label="Kho" style="${stockClass}">${p.stock || 0}</td>
             </tr>
         `;
     }).join('');
 }
+
+window.filterFsTableItems = (keyword) => {
+    const kw = (keyword || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#fs-items-table-body tr[data-pid]');
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (!kw || text.includes(kw)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+};
+
+window.filterRegularSaleItems = (keyword) => {
+    const kw = (keyword || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#admin-regular-sale-list tr');
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (!kw || text.includes(kw)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+};
 
 // --- Quản lý Tin tức ---
 let quillNewsEditor = null;

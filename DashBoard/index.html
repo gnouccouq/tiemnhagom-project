@@ -510,78 +510,184 @@
             </div>
 
             <!-- Section Cài đặt Flash Sale -->
-            <section id="flash-sale-settings-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Cấu hình chương trình Flash Sale</h3>
-                    <form id="flash-sale-settings-form">
-                        <div class="form-group"
-                            style="display: flex; align-items: center; gap: 15px; background: #fff9f8; padding: 15px; border-radius: 8px; border: 1px solid #ffe4e1; margin-bottom: 20px;">
-                            <label class="slider-label" style="font-weight: 700; color: #c0392b;">KÍCH HOẠT FLASH
-                                SALE</label>
-                            <input type="checkbox" id="fs-active-toggle"
-                                style="width: 25px; height: 25px; cursor: pointer;">
+            <section id="flash-sale-settings-section" class="admin-section" style="padding: 0; margin: 0;">
+                <div class="kiot-product-layout">
+                    <!-- 1. Menu Sidebar Bên Trái (Cố định không cuộn trang) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Khuyến Mãi & Sale</h3>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Tiêu đề chương trình</label>
-                                <input type="text" id="fs-title" placeholder="VD: Flash Sale Đồng Giá">
-                            </div>
-                            <div class="form-group">
-                                <label>Phụ đề</label>
-                                <input type="text" id="fs-subtitle" placeholder="VD: Duy nhất trong tuần này">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Thời gian bắt đầu</label>
-                                <input type="datetime-local" id="fs-start-time" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Thời gian kết thúc</label>
-                                <input type="datetime-local" id="fs-end-time" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Các mức đồng giá (Cách nhau bằng dấu phẩy)</label>
-                                <input type="text" id="fs-groups" placeholder="39000, 49000, 59000, 99000">
-                                <small style="color: #888;">Hệ thống sẽ tạo các Tab tương ứng dựa trên giá này.</small>
+                        <div class="filter-group">
+                            <label class="filter-label">Danh mục chương trình</label>
+                            <div class="filter-radio-group" style="display: flex; flex-direction: column; gap: 6px;">
+                                <button type="button" id="fs-tab-btn-99" class="filter-radio-btn active" onclick="window.switchFsTab('99')"
+                                    style="justify-content: space-between; padding: 10px 12px; font-weight: 700; color: #c2410c; background: #fff7ed; border-color: #fdba74;">
+                                    <span>🔥 Siêu Sale 9.9</span>
+                                    <span style="font-size: 0.7rem; background: #ea580c; color: #fff; padding: 1px 6px; border-radius: 8px;">HOT</span>
+                                </button>
+                                <button type="button" id="fs-tab-btn-regular" class="filter-radio-btn" onclick="window.switchFsTab('regular')"
+                                    style="justify-content: space-between; padding: 10px 12px;">
+                                    <span>🏷️ Sale Thường Ngày</span>
+                                    <span id="fs-regular-sale-badge" style="font-size: 0.7rem; background: #f1f5f9; color: #64748b; padding: 1px 6px; border-radius: 8px;">0 SP</span>
+                                </button>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-dark"
-                            style="background: #c0392b; width: 100%; height: 50px;">Lưu cấu hình Flash Sale</button>
-                    </form>
-                </div>
+                        <!-- Cài đặt nhanh chiến dịch 9.9 ở sidebar -->
+                        <div id="fs-sidebar-quick-settings" style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                            <div style="background: #fff9f8; border: 1px solid #ffe4e1; border-radius: 6px; padding: 10px; margin-bottom: 12px;">
+                                <label style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 0.82rem; color: #c0392b; cursor: pointer;">
+                                    <span>KÍCH HOẠT SALE</span>
+                                    <input type="checkbox" id="fs-active-toggle" style="width: 20px; height: 20px; cursor: pointer;">
+                                </label>
+                                <div id="fs-status-hint" style="font-size: 0.75rem; font-weight: 600; color: #e74c3c; margin-top: 4px;">(Chưa kích hoạt)</div>
+                            </div>
 
-                <div class="admin-card" style="margin-top: 2rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0;">Sản phẩm đang thiết lập Giảm giá (Flash Sale)</h3>
-                        <small style="color: #666;">Chỉ những sản phẩm có % giảm giá &gt; 0 mới hiện ở đây</small>
+                            <div class="filter-group">
+                                <label class="filter-label">Tên chiến dịch</label>
+                                <input type="text" id="fs-title" class="kiot-filter-input" placeholder="VD: Siêu Sale 9.9">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Phụ đề / Thông điệp</label>
+                                <input type="text" id="fs-subtitle" class="kiot-filter-input" placeholder="VD: Số lượng có hạn">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Bắt đầu</label>
+                                <input type="datetime-local" id="fs-start-time" class="kiot-filter-input" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Kết thúc</label>
+                                <input type="datetime-local" id="fs-end-time" class="kiot-filter-input" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Mức đồng giá Tab (tùy chọn)</label>
+                                <input type="text" id="fs-groups" class="kiot-filter-input" placeholder="39000, 99000">
+                            </div>
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Ảnh</th>
-                                    <th>Tên sản phẩm</th>
-                                    <th>Giá gốc</th>
-                                    <th>Giảm (%)</th>
-                                    <th>Giá sau giảm</th>
-                                    <th>Tồn kho</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-flash-sale-list">
-                                <!-- JS render list sản phẩm đang sale -->
-                                <tr>
-                                    <td colspan="6" style="text-align:center; padding: 2rem;">Đang tải danh sách...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                    <!-- 2. Nội dung bên phải (Right Main Area - Cuộn độc lập) -->
+                    <div class="kiot-product-main">
+                        <!-- TAB 1: SIÊU SALE 9.9 -->
+                        <div id="fs-tab-content-99" style="display: flex; flex-direction: column; height: 100%;">
+                            <!-- Top Toolbar -->
+                            <div class="kiot-table-toolbar">
+                                <div class="search-box-wrapper">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" id="fs-table-search-input" placeholder="Tìm sản phẩm trong danh sách Sale..." onkeyup="window.filterFsTableItems(this.value)">
+                                </div>
+                                <div class="toolbar-actions">
+                                    <button type="button" id="btn-open-fs-product-picker" class="kiot-btn-primary" style="background: #e65100; border-color: #e65100; display: flex; align-items: center; gap: 6px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                        + Chọn sản phẩm vào Sale
+                                    </button>
+                                    <button type="button" id="btn-save-fs-all" class="kiot-btn-primary" onclick="document.getElementById('flash-sale-settings-form').requestSubmit()" style="background: #0066cc; border-color: #0066cc;">
+                                        💾 Lưu chiến dịch
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Summary Banner -->
+                            <div style="padding: 8px 14px; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 6px; font-size: 0.85rem; color: #9a3412; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>🔥 Danh sách sản phẩm tham gia <strong>Siêu Sale 9.9</strong> (Set giá & suất bán độc lập)</span>
+                                <span id="fs-total-items-badge" style="font-weight: 700; color: #ea580c;">0 sản phẩm</span>
+                            </div>
+
+                            <!-- Table Scroll Container (Không bị cuộn toàn trang) -->
+                            <div class="kiot-table-scroll-container">
+                                <form id="flash-sale-settings-form">
+                                    <table class="kiot-product-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50px;">Ảnh</th>
+                                                <th style="min-width: 180px;">Tên sản phẩm / Mã</th>
+                                                <th style="width: 110px;">Giá gốc</th>
+                                                <th style="width: 140px;">Giá Sale 9.9 (đ)</th>
+                                                <th style="width: 100px; text-align: center;">Số suất (Limit)</th>
+                                                <th style="width: 90px; text-align: center;">Đã bán</th>
+                                                <th style="min-width: 150px;">Tiến độ (Progress)</th>
+                                                <th style="width: 60px; text-align: center;">Xóa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs-items-table-body">
+                                            <tr>
+                                                <td colspan="8" style="text-align: center; padding: 3rem; color: #94a3b8;">Chưa chọn sản phẩm nào cho đợt Sale này. Bấm <strong>"+ Chọn sản phẩm vào Sale"</strong> ở trên để bắt đầu.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: GIẢM GIÁ THƯỜNG NGÀY TRONG KHO -->
+                        <div id="fs-tab-content-regular" style="display: none; flex-direction: column; height: 100%;">
+                            <!-- Top Toolbar -->
+                            <div class="kiot-table-toolbar">
+                                <div class="search-box-wrapper">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" id="regular-sale-search-input" placeholder="Tìm sản phẩm giảm giá thường ngày..." onkeyup="window.filterRegularSaleItems(this.value)">
+                                </div>
+                                <div class="toolbar-actions">
+                                    <button type="button" class="kiot-btn-outline admin-tab-btn" data-target="product-section" style="font-size: 0.82rem;">
+                                        📦 Tới Quản lý Sản phẩm &rarr;
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Summary Banner -->
+                            <div style="padding: 8px 14px; background: #f0f7ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 0.85rem; color: #0369a1; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>🏷️ Các sản phẩm đang được thiết lập <strong>% giảm giá trực tiếp trong kho hàng</strong></span>
+                                <span id="regular-sale-total-badge" style="font-weight: 700; color: #0066cc;">0 sản phẩm</span>
+                            </div>
+
+                            <!-- Table Scroll Container -->
+                            <div class="kiot-table-scroll-container">
+                                <table class="kiot-product-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">Ảnh</th>
+                                            <th style="min-width: 200px;">Tên sản phẩm</th>
+                                            <th style="width: 120px;">Giá gốc</th>
+                                            <th style="width: 100px; text-align: center;">Giảm (%)</th>
+                                            <th style="width: 130px;">Giá sau giảm</th>
+                                            <th style="width: 90px; text-align: center;">Tồn kho</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-regular-sale-list">
+                                        <tr>
+                                            <td colspan="6" style="text-align: center; padding: 3rem; color: #94a3b8;">Đang tải danh sách sản phẩm giảm giá...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
+
+            <!-- Modal Picker: Chọn sản phẩm thêm vào Flash Sale -->
+            <div id="fs-product-picker-modal" class="kiot-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                <div style="background: #fff; width: 90%; max-width: 700px; max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; font-size: 1.1rem; color: #0f172a;">Chọn sản phẩm tham gia Flash Sale</h4>
+                        <button type="button" class="kiot-btn-close" onclick="document.getElementById('fs-product-picker-modal').style.display='none'" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+                    </div>
+                    <div style="padding: 12px 20px; border-bottom: 1px solid #f1f5f9; background: #fafafa;">
+                        <input type="text" id="fs-search-product-input" class="kiot-filter-input" placeholder="🔍 Tìm theo tên hoặc mã sản phẩm..." style="width: 100%; font-size: 0.9rem;">
+                    </div>
+                    <div id="fs-picker-product-list" style="padding: 12px 20px; overflow-y: auto; flex: 1; max-height: 400px; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- List sản phẩm để tích chọn -->
+                    </div>
+                    <div style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+                        <span id="fs-picker-count" style="font-size: 0.85rem; color: #64748b;">Đã chọn 0 sản phẩm</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="kiot-btn-outline" onclick="document.getElementById('fs-product-picker-modal').style.display='none'">Hủy</button>
+                            <button type="button" id="fs-btn-confirm-picker" class="kiot-btn-primary" style="background: #e65100; border-color: #e65100;">Xác nhận thêm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Section Quản lý Banner -->
             <div id="banner-section" class="admin-section">
@@ -2920,7 +3026,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=51"></script>
+    <script type="module" src="../js/DashBoard.js?v=54"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

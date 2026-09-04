@@ -193,14 +193,54 @@ export const revealObserver = (typeof IntersectionObserver !== 'undefined') ? ne
 // Gán vào window để các module nạp dữ liệu động (như main.js) có thể sử dụng
 if (revealObserver) window.revealObserver = revealObserver;
 
-export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSettings) {
+export function getProductFlashSaleInfo(product, id, fsSettings = globalFlashSaleSettings) {
+    if (!fsSettings || !fsSettings.isActive) return null;
     const now = new Date();
-    const isFsRunning = fsSettings && fsSettings.isActive &&
-        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) &&
-        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
+    const startTime = fsSettings.startTime?.toDate ? fsSettings.startTime.toDate() : (fsSettings.startTime ? new Date(fsSettings.startTime) : null);
+    const endTime = fsSettings.endTime?.toDate ? fsSettings.endTime.toDate() : (fsSettings.endTime ? new Date(fsSettings.endTime) : null);
 
-    if (isFsRunning && product.flashSaleGroup) {
-        return product.flashSaleGroup;
+    const isRunning = (!startTime || now >= startTime) && (!endTime || now <= endTime);
+    const isUpcoming = startTime && now < startTime;
+
+    const productId = id || product.id;
+    const itemConfig = (fsSettings.items && productId) ? fsSettings.items[productId] : null;
+
+    if (!itemConfig) {
+        // Hỗ trợ chế độ đồng giá cũ nếu có
+        if (isRunning && product.flashSaleGroup) {
+            return {
+                isRunning: true,
+                isUpcoming: false,
+                salePrice: product.flashSaleGroup,
+                limit: product.stock || 999,
+                sold: 0,
+                isSoldOut: false
+            };
+        }
+        return null;
+    }
+
+    const limit = itemConfig.limit !== undefined ? Number(itemConfig.limit) : 20;
+    const sold = itemConfig.sold !== undefined ? Number(itemConfig.sold) : 0;
+    const isSoldOut = limit > 0 && sold >= limit;
+    const salePrice = Number(itemConfig.salePrice) || 0;
+
+    return {
+        isRunning,
+        isUpcoming,
+        salePrice,
+        limit,
+        sold,
+        isSoldOut,
+        startTime,
+        endTime
+    };
+}
+
+export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSettings, id = null) {
+    const fsInfo = getProductFlashSaleInfo(product, id || product.id, fsSettings);
+    if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.salePrice > 0) {
+        return fsInfo.salePrice;
     }
     if (product.sale > 0) {
         return product.salePrice || Math.round(product.price * (1 - product.sale / 100));
@@ -208,12 +248,11 @@ export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSett
     return product.price;
 }
 
-export function getProductEffectiveSale(product, fsSettings = globalFlashSaleSettings) {
-    const now = new Date();
-    const isFsRunning = fsSettings && fsSettings.isActive &&
-        (!fsSettings.startTime || now >= fsSettings.startTime.toDate()) &&
-        (!fsSettings.endTime || now <= fsSettings.endTime.toDate());
-
+export function getProductEffectiveSale(product, fsSettings = globalFlashSaleSettings, id = null) {
+    const fsInfo = getProductFlashSaleInfo(product, id || product.id, fsSettings);
+    if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.salePrice > 0 && product.price > 0) {
+        return Math.round((1 - fsInfo.salePrice / product.price) * 100);
+    }
     return product.sale || 0;
 }
 
@@ -807,8 +846,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     }
 
-    const currentPrice = getProductCurrentPrice(mockProduct);
-    const displaySale = getProductEffectiveSale(mockProduct);
+    const fsInfo = getProductFlashSaleInfo(mockProduct, id, globalFlashSaleSettings);
+    const currentPrice = getProductCurrentPrice(mockProduct, globalFlashSaleSettings, id);
+    const displaySale = getProductEffectiveSale(mockProduct, globalFlashSaleSettings, id);
     const hasSale = displaySale > 0;
     let isOutOfStock = (product.stock || 0) <= 0;
     if (variantOverride) {
@@ -820,8 +860,42 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     }
     const soldCount = product.sold || 0;
     const priceHtml = hasSale
-        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
+        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap; color: #e65100; font-weight: 700;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
         : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</p>`;
+
+    // Render Progress Bar nếu có cấu hình Flash Sale
+    let flashSaleBarHtml = '';
+    if (fsInfo && fsInfo.isRunning) {
+        if (fsInfo.isSoldOut) {
+            flashSaleBarHtml = `
+                <div class="flashsale-progress-wrapper">
+                    <div class="flashsale-progress-bar sold-out">
+                        <div class="flashsale-progress-fill" style="width: 100%;"></div>
+                        <span class="flashsale-progress-text">ĐÃ HẾT SUẤT SALE (${fsInfo.sold}/${fsInfo.limit})</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            const percentSold = fsInfo.limit > 0 ? Math.min(100, Math.round((fsInfo.sold / fsInfo.limit) * 100)) : 0;
+            const statusText = percentSold >= 80 ? `⚡ SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `🔥 ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
+            flashSaleBarHtml = `
+                <div class="flashsale-progress-wrapper">
+                    <div class="flashsale-progress-bar">
+                        <div class="flashsale-progress-fill" style="width: ${percentSold}%;"></div>
+                        <span class="flashsale-progress-text">${statusText}</span>
+                    </div>
+                </div>
+            `;
+        }
+    } else if (fsInfo && fsInfo.isUpcoming) {
+        flashSaleBarHtml = `
+            <div class="flashsale-progress-wrapper">
+                <div class="flashsale-progress-bar" style="background: #e0f2fe; border-color: #bae6fd;">
+                    <span class="flashsale-progress-text" style="color: #0369a1; text-shadow: none;">⏰ Sắp mở bán 9.9 (${fsInfo.limit} suất)</span>
+                </div>
+            </div>
+        `;
+    }
 
     let memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
     try {
@@ -844,7 +918,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     } catch (e) { }
 
-    const saleBadge = hasSale ? `<div class="sale-badge">-${displaySale}%</div>` : '';
+    const isFsItem = fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut;
+    const saleBadge = hasSale ? `<div class="sale-badge" style="${isFsItem ? 'background: linear-gradient(135deg, #e65100, #c62828);' : ''}">-${displaySale}%</div>` : '';
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = ''; // hasSale ? 'sale-sparkle' : '';
@@ -903,6 +978,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             </div>
             <div class="product-price-block">
                 ${priceHtml}
+                ${flashSaleBarHtml}
                 ${memPriceHtml}
             </div>
         </div>

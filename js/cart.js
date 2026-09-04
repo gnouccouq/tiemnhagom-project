@@ -954,6 +954,28 @@ window.placeOrder = async () => {
                 transaction.update(couponRef, { usedCount: increment(1) });
             }
 
+            // Tự động cập nhật số lượng đã bán (sold) cho Flash Sale Items nếu có
+            if (fsSettings && fsSettings.isActive && fsSettings.items) {
+                let hasFsUpdates = false;
+                const fsRef = doc(db, "settings", "flash_sale");
+                const updatedFsItems = { ...fsSettings.items };
+
+                processedOrderItems.forEach(item => {
+                    if (updatedFsItems[item.id]) {
+                        hasFsUpdates = true;
+                        const currentFsSold = Number(updatedFsItems[item.id].sold || 0);
+                        updatedFsItems[item.id] = {
+                            ...updatedFsItems[item.id],
+                            sold: currentFsSold + Number(item.quantity || 1)
+                        };
+                    }
+                });
+
+                if (hasFsUpdates) {
+                    transaction.set(fsRef, { items: updatedFsItems }, { merge: true });
+                }
+            }
+
             // Lưu đơn hàng
             transaction.set(newOrderRef, { ...orderData, items: processedOrderItems, productNames, totalAmount: finalTotal });
             return { id: newOrderRef.id, items: processedOrderItems };

@@ -166,8 +166,8 @@ async function initFlashSaleSync() {
 
         const settings = fsSnap.data();
         const now = new Date();
-        const endTime = settings.endTime?.toDate();
-        const startTime = settings.startTime?.toDate();
+        const startTime = settings.startTime?.toDate ? settings.startTime.toDate() : (settings.startTime ? new Date(settings.startTime) : null);
+        const endTime = settings.endTime?.toDate ? settings.endTime.toDate() : (settings.endTime ? new Date(settings.endTime) : null);
         const isExpired = endTime && now > endTime;
 
         // 2. Kiểm tra trạng thái sale
@@ -176,15 +176,20 @@ async function initFlashSaleSync() {
             return;
         }
 
-        // 3. Khởi động bộ đếm ngược động (ưu tiên đếm đến giờ bắt đầu nếu chưa tới)
-        if (startTime && now < startTime) {
-            const shimmer = saleSection.querySelector('.shimmer-title');
-            if (shimmer) shimmer.innerText = "Flash Sale Sắp Bắt Đầu";
+        const isUpcoming = startTime && now < startTime;
+        const shimmer = saleSection.querySelector('.shimmer-title');
+        const subtitle = saleSection.querySelector('.section-subtitle');
+
+        if (isUpcoming) {
+            if (shimmer) shimmer.innerHTML = `⏰ ${settings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
+            if (subtitle) subtitle.innerText = `Chính thức mở bán lúc ${startTime.toLocaleString('vi-VN')} - Săn deal số lượng có hạn!`;
             initDynamicCountdown(startTime);
+            fetchSaleProducts(true, settings); // Nạp danh sách xem trước (chỉ sản phẩm 9.9)
         } else {
+            if (shimmer) shimmer.innerHTML = `🔥 ${settings.title || "Flash Sale"} <img src="https://theme.hstatic.net/200000588671/1001020156/14/flashsale-hot.png?v=2949" alt="Hot" class="fire-icon">`;
+            if (subtitle) subtitle.innerText = settings.subtitle || "Cơ hội sở hữu những tác phẩm tinh xảo với mức giá tốt nhất";
             initDynamicCountdown(endTime);
-            // 4. Lấy danh sách sản phẩm (Chỉ khi đã bắt đầu)
-            fetchSaleProducts();
+            fetchSaleProducts(false, settings); // Nạp danh sách sale đang chạy
         }
 
     } catch (e) {
@@ -193,12 +198,12 @@ async function initFlashSaleSync() {
     }
 }
 
-async function fetchSaleProducts() {
+async function fetchSaleProducts(isUpcoming = false, fsSettings = null) {
     const saleGrid = document.getElementById('sale-product-grid');
     if (!saleGrid) return;
 
-    // Hiển thị skeleton loading trong khi chờ query Firestore
-    saleGrid.innerHTML = Array(5).fill(0).map(() => `
+    // Hiển thị skeleton loading
+    saleGrid.innerHTML = Array(4).fill(0).map(() => `
         <div class="skeleton-card">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton skeleton-text skeleton-title"></div>
@@ -208,35 +213,79 @@ async function fetchSaleProducts() {
     `).join('');
 
     try {
-        // Lấy danh sách sản phẩm và yêu thích CÙNG LÚC (chạy song song) để tiết kiệm 50% thời gian chờ
-        const q = query(collection(db, "products"), where("sale", ">", 0), limit(30));
-        
-        let favsPromise = Promise.resolve([]);
+        let favs = [];
         if (auth.currentUser) {
-            favsPromise = getDoc(doc(db, "favorites", auth.currentUser.uid))
-                .then(snap => snap.exists() ? snap.data().productIds || [] : [])
-                .catch(() => []);
+            const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
+            if (favSnap.exists()) favs = favSnap.data().productIds || [];
         } else {
-            favsPromise = Promise.resolve(JSON.parse(localStorage.getItem('favorites')) || []);
+            favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        const [querySnapshot, favs] = await Promise.all([getDocs(q), favsPromise]);
+        const fsItemIds = (fsSettings && fsSettings.items) ? Object.keys(fsSettings.items) : [];
+        let productsToRender = [];
 
-        let htmlContent = '';
-        let count = 0;
-        querySnapshot.forEach((doc) => {
-            if (doc.data().isHidden || doc.data().isOnlyEvent) return;
-            if (count >= 10) return;
-            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
-            count++;
-        });
+        if (isUpcoming) {
+            // Khi sắp diễn ra: Lấy các sản phẩm tham gia 9.9
+            if (fsItemIds.length > 0) {
+                const fsItemPromises = fsItemIds.slice(0, 8).map(pid => getDoc(doc(db, "products", pid)));
+                const snaps = await Promise.all(fsItemPromises);
+                snaps.forEach(snap => {
+                    if (snap.exists() && !snap.data().isHidden && !snap.data().isOnlyEvent) {
+                        productsToRender.push({ id: snap.id, ...snap.data() });
+                    }
+                });
+            } else {
+                // Nếu admin chưa chọn sản phẩm riêng trong items, tạm lấy các sản phẩm sale > 0 để preview
+                const q = query(collection(db, "products"), where("sale", ">", 0), limit(8));
+                const qSnap = await getDocs(q);
+                qSnap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    if (!d.isHidden && !d.isOnlyEvent) {
+                        productsToRender.push({ id: docSnap.id, ...d });
+                    }
+                });
+            }
+        } else {
+            // Khi đang diễn ra: Ưu tiên nạp các sản phẩm trong Flash Sale Campaign trước
+            if (fsItemIds.length > 0) {
+                const fsItemPromises = fsItemIds.slice(0, 8).map(pid => getDoc(doc(db, "products", pid)));
+                const snaps = await Promise.all(fsItemPromises);
+                snaps.forEach(snap => {
+                    if (snap.exists() && !snap.data().isHidden && !snap.data().isOnlyEvent) {
+                        productsToRender.push({ id: snap.id, ...snap.data() });
+                    }
+                });
+            }
 
-        if (htmlContent) {
-            saleGrid.innerHTML = htmlContent;
-            document.getElementById('sale-section').style.display = 'block';
+            // Nếu ít hơn 8 sản phẩm, bù thêm sản phẩm sale thông thường
+            if (productsToRender.length < 8) {
+                const q = query(collection(db, "products"), where("sale", ">", 0), limit(20));
+                const qSnap = await getDocs(q);
+                const existingIds = new Set(productsToRender.map(p => p.id));
+                qSnap.forEach(docSnap => {
+                    if (productsToRender.length < 8 && !existingIds.has(docSnap.id)) {
+                        const d = docSnap.data();
+                        if (!d.isHidden && !d.isOnlyEvent) {
+                            productsToRender.push({ id: docSnap.id, ...d });
+                            existingIds.add(docSnap.id);
+                        }
+                    }
+                });
+            }
+        }
+
+        const saleSec = document.getElementById('sale-section');
+        if (saleSec) {
+            if (productsToRender.length > 0) {
+                saleGrid.innerHTML = productsToRender.map(p => renderProductCardWithVariants(p, p.id, favs, 'product/index.html')).join('');
+                saleSec.style.display = 'block';
+            } else {
+                saleSec.style.display = 'none';
+            }
         }
     } catch (error) {
         console.error("Lỗi lấy sản phẩm sale:", error);
+        document.getElementById('sale-section').style.display = 'none';
     }
 }
 

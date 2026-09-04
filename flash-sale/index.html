@@ -45,7 +45,7 @@
             height: 40vh; /* Cao hơn chút cho countdown */
             min-height: 400px;
             margin-top: -80px;
-            margin-bottom: 4rem;
+            margin-bottom: 3rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -55,6 +55,46 @@
             z-index: 10;
             text-align: center;
             color: #fff;
+        }
+
+        /* Category Filter Tabs Styles */
+        .category-grid-section {
+            margin-bottom: 2.5rem;
+            width: 100%;
+        }
+        .minimal-category-list {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 2rem !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            margin-bottom: 0;
+        }
+        .minimal-cat-item {
+            color: #333;
+            text-decoration: none;
+            font-size: 1rem;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+        .minimal-cat-item.active {
+            font-weight: 700;
+            color: #000;
+        }
+        .minimal-cat-item:hover {
+            color: #000;
+            opacity: 0.7;
+        }
+        .minimal-cat-item .cat-count {
+            margin-left: 2px;
+            font-weight: normal;
         }
     </style>
 </head>
@@ -79,6 +119,13 @@
         </section>
 
         <div class="products-page-container" style="padding-top: 0;">
+
+        <!-- Thanh phân loại danh mục sản phẩm -->
+        <section class="category-grid-section">
+            <div id="category-grid-display">
+                <!-- Danh mục render động từ JS kèm số lượng sản phẩm sale -->
+            </div>
+        </section>
 
         <div class="sort-options">
             <label for="sort-by">Sắp xếp theo:</label>
@@ -119,6 +166,6 @@
 
     <div id="footer-placeholder"></div>
 
-    <script type="module" src="../js/flash-sale.js?v=7"></script>
+    <script type="module" src="../js/flash-sale.js?v=8"></script>
 </body>
 </html>
