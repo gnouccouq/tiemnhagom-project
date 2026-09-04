@@ -420,8 +420,21 @@ async function handleProfileAuth(user) {
         
         // Cập nhật thông tin trên Sidebar
         document.getElementById('sidebar-name').innerText = user.displayName || 'Khách hàng';
+        const userAvatarUrl = userData.avatar || user.photoURL;
         const avatarImg = document.getElementById('sidebar-avatar');
-        avatarImg.src = userData.avatar || user.photoURL || '../Asset/images/default-avatar.png';
+        avatarImg.src = userAvatarUrl || '../Asset/images/default-avatar.png';
+
+        // Đồng bộ lên Header Avatar ngay nếu chưa có
+        if (userAvatarUrl) {
+            const headerAvatarImg = document.getElementById('header-user-avatar-img');
+            if (headerAvatarImg) {
+                if (headerAvatarImg.tagName === 'IMG') {
+                    headerAvatarImg.src = userAvatarUrl;
+                } else {
+                    headerAvatarImg.outerHTML = `<img id="header-user-avatar-img" src="${userAvatarUrl}" alt="${user.displayName || 'Tài khoản'}" class="header-user-avatar">`;
+                }
+            }
+        }
 
         profileLayout.style.display = 'flex';
         notLoggedInMsg.style.display = 'none';

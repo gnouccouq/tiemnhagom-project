@@ -1012,6 +1012,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             const displayName = user.displayName || (user.email ? user.email.split('@')[0] : (user.phoneNumber || 'Thành viên'));
 
             const isProfilePage = window.location.pathname.includes('profile');
+            const isOrdersTab = window.location.hash === '#orders';
+            const isFavsTab = window.location.hash === '#favs';
+
             // Lấy avatar từ hint lưu trước đó hoặc từ Firebase Auth user
             const cachedAvatar = userHint?.avatar || user.photoURL;
             const defaultAvatarHTML = `
