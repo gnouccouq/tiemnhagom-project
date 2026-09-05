@@ -308,9 +308,9 @@
                 <img src="Asset/images/_MG_2519.jpg"
                     alt="Quy trình 3" class="story-slide" loading="lazy">
                 <div class="story-controls">
-                    <button onclick="window.moveStorySlide(-1)" class="story-nav-btn"
+                    <button type="button" id="btn-story-prev" class="story-nav-btn"
                         aria-label="Ảnh trước">&#10094;</button>
-                    <button onclick="window.moveStorySlide(1)" class="story-nav-btn"
+                    <button type="button" id="btn-story-next" class="story-nav-btn"
                         aria-label="Ảnh sau">&#10095;</button>
                 </div>
                 <div class="story-dots" id="story-dots"></div>
@@ -373,7 +373,7 @@
     <div id="footer-placeholder"></div>
 
     <!-- Firebase SDKs -->
-    <script type="module" src="js/main.js?v=5"></script>
+    <script type="module" src="js/main.js?v=6"></script>
 </body>
 
 </html>

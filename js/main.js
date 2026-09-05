@@ -590,8 +590,24 @@ function initStorySlider() {
         startStoryTimer();
     }
 
-    // Gán ra window để thẻ <button onclick="window.moveStorySlide(...)"> chạy được
+    // Gán ra window để dự phòng
     window.moveStorySlide = moveStorySlide;
+
+    // Gán Event Listener trực tiếp cho 2 nút mũi tên
+    const btnPrev = document.getElementById('btn-story-prev');
+    const btnNext = document.getElementById('btn-story-next');
+    if (btnPrev) {
+        btnPrev.addEventListener('click', (e) => {
+            e.preventDefault();
+            moveStorySlide(-1);
+        });
+    }
+    if (btnNext) {
+        btnNext.addEventListener('click', (e) => {
+            e.preventDefault();
+            moveStorySlide(1);
+        });
+    }
 
     startStoryTimer();
 }
