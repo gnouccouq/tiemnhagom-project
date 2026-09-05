@@ -230,37 +230,32 @@ body > *:not(#header-placeholder) {
 
 .carousel-dots {
     position: absolute;
-    bottom: 40px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 6px;
     z-index: 10;
 }
 
-.dot {
-    width: 40px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.3);
+.carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    transition: 0.3s;
-    position: relative;
-    overflow: hidden;
     border: none;
-    border-radius: 2px;
+    padding: 0;
+    display: inline-block;
 }
 
-.dot.active {
-    transform: none;
-}
-
-.dot-fill {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0;
-    background-color: #fff !important;
+.carousel-dot.active {
+    width: 20px;
+    height: 6px;
+    border-radius: 10px;
+    background: #ffffff;
 }
 
 /* ==========================================================================

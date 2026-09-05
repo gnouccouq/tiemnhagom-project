@@ -442,11 +442,11 @@ async function initHeroCarousel() {
     }).join('');
 
     dotsContainer.innerHTML = slidesData.map((_, idx) => `
-        <span class="dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"><span class="dot-fill"></span></span>
+        <div class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></div>
     `).join('');
 
     const slides = container.querySelectorAll('.carousel-slide');
-    const dots = dotsContainer.querySelectorAll('.dot');
+    const dots = dotsContainer.querySelectorAll('.carousel-dot');
 
     let currentIndex = 0;
     let slideInterval;
@@ -454,25 +454,10 @@ async function initHeroCarousel() {
 
     const showSlide = (index) => {
         slides.forEach(s => s.classList.remove('active'));
-        dots.forEach(d => {
-            d.classList.remove('active');
-            const fill = d.querySelector('.dot-fill');
-            if (fill) {
-                fill.style.transition = 'none'; // Reset animation ngay lập tức
-                fill.style.width = '0';
-            }
-        });
+        dots.forEach(d => d.classList.remove('active'));
 
         slides[index].classList.add('active');
         dots[index].classList.add('active');
-
-        // Kích hoạt thanh tiến trình cho dot hiện tại
-        const activeFill = dots[index].querySelector('.dot-fill');
-        if (activeFill) {
-            void activeFill.offsetWidth; // Force reflow để trình duyệt nhận diện reset width
-            activeFill.style.transition = `width ${slideDuration}ms linear`;
-            activeFill.style.width = '100%';
-        }
 
         currentIndex = index;
     };
