@@ -530,6 +530,73 @@ async function initHeroCarousel() {
 }
 
 // ----------------------------------------------------
+// STORY SLIDER (KHỐI VỀ TIỆM NHÀ GỐM TRANG CHỦ)
+// ----------------------------------------------------
+function initStorySlider() {
+    const slides = document.querySelectorAll('.story-slide');
+    const dotsContainer = document.getElementById('story-dots');
+    if (!slides || slides.length === 0) return;
+
+    let currentStoryIdx = 0;
+    let storyTimer = null;
+
+    // Render dots
+    if (dotsContainer) {
+        dotsContainer.innerHTML = Array.from(slides).map((_, i) => `
+            <div class="story-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></div>
+        `).join('');
+
+        const dots = dotsContainer.querySelectorAll('.story-dot');
+        dots.forEach((dot, idx) => {
+            dot.addEventListener('click', () => {
+                showStorySlide(idx);
+                resetStoryTimer();
+            });
+        });
+    }
+
+    function showStorySlide(idx) {
+        if (idx >= slides.length) idx = 0;
+        if (idx < 0) idx = slides.length - 1;
+        currentStoryIdx = idx;
+
+        slides.forEach((s, i) => {
+            s.classList.toggle('active', i === currentStoryIdx);
+        });
+
+        if (dotsContainer) {
+            const dots = dotsContainer.querySelectorAll('.story-dot');
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === currentStoryIdx);
+            });
+        }
+    }
+
+    function moveStorySlide(step) {
+        showStorySlide(currentStoryIdx + step);
+        resetStoryTimer();
+    }
+
+    function startStoryTimer() {
+        if (slides.length > 1) {
+            storyTimer = setInterval(() => {
+                showStorySlide(currentStoryIdx + 1);
+            }, 4500);
+        }
+    }
+
+    function resetStoryTimer() {
+        if (storyTimer) clearInterval(storyTimer);
+        startStoryTimer();
+    }
+
+    // Gán ra window để thẻ <button onclick="window.moveStorySlide(...)"> chạy được
+    window.moveStorySlide = moveStorySlide;
+
+    startStoryTimer();
+}
+
+// ----------------------------------------------------
 // FETCH HOME BLOG CAROUSEL
 // ----------------------------------------------------
 async function initHomeBlog() {
@@ -675,6 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFlashSaleSync();
     fetchRecommendations();
     fetchCollections();
+    initStorySlider();
     initHomeBlog();
     
     // Khởi tạo tìm kiếm ở trang chủ
