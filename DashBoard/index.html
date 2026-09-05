@@ -689,37 +689,59 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Banner -->
+            <!-- Section Quản lý Banner (KiotViet 2-Column Layout) -->
             <div id="banner-section" class="admin-section">
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Thêm/Sửa Slide Banner</h3>
-                        <form id="banner-form" class="admin-form">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Slide Banner</h3>
+                            <button type="button" class="filter-reset-link" id="btn-reset-banner-form">Thêm mới</button>
+                        </div>
+
+                        <form id="banner-form">
                             <input type="hidden" id="banner-index" value="-1">
 
-                            <div class="form-group">
-                                <label>Đường dẫn khi click (Link)</label>
-                                <input type="text" id="banner-link" placeholder="products/">
+                            <div class="filter-group">
+                                <label class="filter-label">Đường dẫn khi click (Link)</label>
+                                <input type="text" id="banner-link" class="kiot-filter-input" placeholder="products/">
                             </div>
-                            <div class="form-group">
-                                <label>Hình ảnh Banner Desktop (1920x1080)</label>
-                                <input type="file" id="banner-image" accept="image/*">
-                                <div id="banner-image-preview" style="margin-top: 10px;"></div>
+                            <div class="filter-group">
+                                <label class="filter-label">Banner Desktop (1920x1080)</label>
+                                <input type="file" id="banner-image" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <div id="banner-image-preview" style="margin-top: 8px;"></div>
                             </div>
-                            <div class="form-group">
-                                <label>Hình ảnh Banner Mobile (Dọc 1080x1920)</label>
-                                <input type="file" id="banner-image-mobile" accept="image/*">
-                                <div id="banner-image-mobile-preview" style="margin-top: 10px;"></div>
+                            <div class="filter-group">
+                                <label class="filter-label">Banner Mobile (1080x1920)</label>
+                                <input type="file" id="banner-image-mobile" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <div id="banner-image-mobile-preview" style="margin-top: 8px;"></div>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu Slide</button>
-                            <button type="button" id="btn-reset-banner-form" class="btn-minimal"
-                                style="width: 100%; margin-top: 10px;">Hủy / Thêm mới</button>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu Slide Banner
+                            </button>
                         </form>
                     </div>
-                    <div class="admin-card">
-                        <h3>Danh sách Slide hiện tại</h3>
-                        <div id="admin-banner-list" style="display: flex; flex-direction: column; gap: 15px;">
-                            <!-- JS render list slides -->
+
+                    <!-- 2. Danh sách Slide Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🖼️</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Slide Banner Trang chủ</span>
+                            </div>
+                        </div>
+
+                        <!-- Summary Banner -->
+                        <div style="padding: 8px 14px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; font-size: 0.85rem; color: #0369a1; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>✨ Banner sẽ tự động luân chuyển trên màn hình trang chủ</span>
+                        </div>
+
+                        <!-- Container danh sách slide cuộn độc lập -->
+                        <div class="kiot-table-scroll-container" style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div id="admin-banner-list" style="display: flex; flex-direction: column; gap: 15px;">
+                                <!-- JS render list slides -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -814,37 +836,66 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Yêu cầu báo có hàng -->
+            <!-- Section Quản lý Yêu cầu báo có hàng (KiotViet 2-Column Layout) -->
             <div id="restock-alerts-section" class="admin-section">
-                <div class="admin-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 10px;">
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">Danh sách yêu cầu thông báo khi có hàng</h3>
-                            <p style="margin: 4px 0 0; color: #64748b; font-size: 0.85rem;">Khách hàng đăng ký nhận tin khi sản phẩm hoặc biến thể hết hàng về đợt mới</p>
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Báo có hàng</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.fetchRestockAlertsAdmin()">Làm mới</button>
                         </div>
-                        <button type="button" class="btn-minimal" onclick="window.fetchRestockAlertsAdmin()" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.85rem;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                            Làm mới danh sách
-                        </button>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái xử lý</label>
+                            <select id="restock-status-filter" class="kiot-filter-select" onchange="if(typeof window.filterRestockAlerts==='function') window.filterRestockAlerts(this.value)">
+                                <option value="all">Tất cả yêu cầu</option>
+                                <option value="pending">Chờ có hàng / Chờ báo</option>
+                                <option value="notified">Đã thông báo khách</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Thời gian</th>
-                                    <th>Khách hàng</th>
-                                    <th>SĐT / Zalo</th>
-                                    <th>Email</th>
-                                    <th>Sản phẩm</th>
-                                    <th>Phân loại</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="restock-alerts-tbody">
-                                <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">Đang tải dữ liệu...</td></tr>
-                            </tbody>
-                        </table>
+
+                    <!-- 2. Bảng Danh Sách Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="restock-search-input" placeholder="Tìm theo tên sản phẩm, SĐT, Email..." onkeyup="if(typeof window.searchRestockAlerts==='function') window.searchRestockAlerts(this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="kiot-btn-outline" onclick="window.fetchRestockAlertsAdmin()">
+                                    🔄 Tải lại dữ liệu
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Summary Banner -->
+                        <div style="padding: 8px 14px; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 6px; font-size: 0.85rem; color: #9a3412; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>🔔 Danh sách khách hàng đăng ký nhận thông báo khi có hàng lại</span>
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 120px;">Thời gian</th>
+                                        <th style="width: 130px;">Khách hàng</th>
+                                        <th style="width: 110px;">SĐT / Zalo</th>
+                                        <th style="width: 140px;">Email</th>
+                                        <th style="width: 160px;">Sản phẩm</th>
+                                        <th style="width: 110px;">Phân loại</th>
+                                        <th style="width: 110px; text-align: center;">Trạng thái</th>
+                                        <th style="width: 90px; text-align: center;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="restock-alerts-tbody">
+                                    <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -857,94 +908,122 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Danh mục -->
+            <!-- Section Quản lý Danh mục (KiotViet 2-Column Layout) -->
             <div id="category-section" class="admin-section">
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Thêm Danh mục/Phân loại</h3>
-                        <form id="category-management-form" class="admin-form">
-                            <div class="form-group">
-                                <label>Tên Nhóm (VD: Dining Decor)</label>
-                                <input type="text" id="cat-group-name" required list="existing-groups"
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Thêm Danh Mục</h3>
+                        </div>
+
+                        <form id="category-management-form">
+                            <div class="filter-group">
+                                <label class="filter-label">Tên Nhóm (VD: Dining Decor)</label>
+                                <input type="text" id="cat-group-name" class="kiot-filter-input" required list="existing-groups"
                                     placeholder="Chọn nhóm cũ hoặc nhập nhóm mới">
                                 <datalist id="existing-groups"></datalist>
                             </div>
-                            <div class="form-group">
-                                <label>Tên Phân loại con (VD: Bát & Chén)</label>
-                                <input type="text" id="cat-sub-name" required placeholder="Nhập tên phân loại...">
+                            <div class="filter-group">
+                                <label class="filter-label">Tên Phân loại con (VD: Bát & Chén)</label>
+                                <input type="text" id="cat-sub-name" class="kiot-filter-input" required placeholder="Nhập tên phân loại...">
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Thêm vào hệ thống</button>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                ➕ Thêm vào hệ thống
+                            </button>
                         </form>
-                        <div
-                            style="margin-top: 2rem; padding: 15px; background: #fffcf5; border-radius: 8px; font-size: 0.85rem;">
-                            <p>💡 <strong>Lưu ý:</strong> Khi bạn xóa một danh mục, các sản phẩm thuộc danh mục đó sẽ
-                                không bị mất nhưng bạn cần cập nhật lại danh mục cho chúng để hiển thị đúng trên
-                                website.</p>
+
+                        <div style="margin-top: 1.5rem; padding: 12px; background: #fffcf5; border: 1px solid #fef3c7; border-radius: 8px; font-size: 0.82rem; color: #92400e;">
+                            <p>💡 <strong>Lưu ý:</strong> Khi bạn xóa một danh mục, sản phẩm thuộc danh mục đó cần cập nhật lại danh mục tương ứng.</p>
                         </div>
                     </div>
 
-                    <div class="admin-card">
-                        <h3>Cấu trúc danh mục hiện tại</h3>
-                        <div id="admin-category-tree" class="category-tree">
-                            <!-- JS render cấu trúc cây -->
-                            <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                    <!-- 2. Cấu Trúc Danh Mục Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">📁</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Cấu trúc cây danh mục sản phẩm</span>
+                            </div>
+                        </div>
+
+                        <!-- Table / Tree Scroll Container -->
+                        <div class="kiot-table-scroll-container" style="padding: 20px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div id="admin-category-tree" class="category-tree">
+                                <!-- JS render cấu trúc cây -->
+                                <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Tin tức -->
+            <!-- Section Quản lý Tin tức (KiotViet 2-Column Layout) -->
             <div id="news-section" class="admin-section">
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Đăng / Sửa bài viết</h3>
-                        <form id="news-form" class="admin-form">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="width: 380px; flex: 0 0 380px;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Bài viết & Tin tức</h3>
+                        </div>
+
+                        <form id="news-form">
                             <input type="hidden" id="news-id">
-                            <div class="form-group">
-                                <label>Tiêu đề bài viết</label>
-                                <input type="text" id="news-title" required
-                                    placeholder="VD: Cách bảo quản gốm sứ thủ công">
+                            <div class="filter-group">
+                                <label class="filter-label">Tiêu đề bài viết</label>
+                                <input type="text" id="news-title" class="kiot-filter-input" required placeholder="VD: Cách bảo quản gốm sứ...">
                             </div>
-                            <div class="form-group">
-                                <label>Ảnh bìa bài viết</label>
-                                <input type="file" id="news-image" accept="image/*">
-                                <div id="news-image-preview" style="margin-top: 10px;"></div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh bìa bài viết</label>
+                                <input type="file" id="news-image" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <div id="news-image-preview" style="margin-top: 6px;"></div>
                             </div>
-                            <div class="form-group">
-                                <label>Mô tả ngắn (Excerpt)</label>
-                                <textarea id="news-excerpt" rows="2"
-                                    placeholder="Tóm tắt bài viết hiện ở trang danh sách..."></textarea>
+                            <div class="filter-group">
+                                <label class="filter-label">Mô tả ngắn (Excerpt)</label>
+                                <textarea id="news-excerpt" class="kiot-filter-input" rows="2" placeholder="Tóm tắt bài viết..."></textarea>
                             </div>
-                            <div class="form-group">
-                                <label>Nội dung bài viết</label>
-                                <div id="quill-editor" style="height: 400px; background: white; margin-bottom: 20px;">
-                                </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Nội dung bài viết</label>
+                                <div id="quill-editor" style="height: 220px; background: white; margin-bottom: 10px; border-radius: 6px;"></div>
                                 <textarea id="news-content" style="display: none;"></textarea>
                             </div>
-                            <div class="form-group">
-                                <label>Tác giả</label>
-                                <input type="text" id="news-author" placeholder="Tiệm Nhà Gốm">
+                            <div class="filter-group">
+                                <label class="filter-label">Tác giả</label>
+                                <input type="text" id="news-author" class="kiot-filter-input" placeholder="Tiệm Nhà Gốm">
                             </div>
-                            <div class="form-group">
-                                <label>Trạng thái</label>
-                                <select id="news-status">
+                            <div class="filter-group">
+                                <label class="filter-label">Trạng thái</label>
+                                <select id="news-status" class="kiot-filter-select">
                                     <option value="published">Xuất bản ngay</option>
                                     <option value="draft">Bản nháp</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu bài viết</button>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu bài viết
+                            </button>
                         </form>
                     </div>
-                    <div class="admin-card">
-                        <h3>Danh sách bài viết</h3>
-                        <div class="table-responsive">
-                            <table class="admin-table">
+
+                    <!-- 2. Danh Sách Bài Viết Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">📰</span>
+                                <input type="text" placeholder="Tìm kiếm bài viết..." onkeyup="if(typeof window.searchNewsAdmin==='function') window.searchNewsAdmin(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
                                 <thead>
                                     <tr>
-                                        <th>Ảnh</th>
-                                        <th>Tiêu đề</th>
-                                        <th>Ngày đăng</th>
-                                        <th>Thao tác</th>
+                                        <th style="width: 80px;">Ảnh</th>
+                                        <th style="width: 250px;">Tiêu đề</th>
+                                        <th style="width: 120px;">Ngày đăng</th>
+                                        <th style="width: 100px; text-align: center;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-news-list">
@@ -956,92 +1035,117 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Bộ sưu tập -->
+            <!-- Section Quản lý Bộ sưu tập (KiotViet 2-Column Layout) -->
             <div id="collections-section" class="admin-section">
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Thêm/Sửa Bộ sưu tập</h3>
-                        <form id="collection-form" class="admin-form">
-                            <input type="hidden" id="collection-edit-index" value="-1">
-                            <div class="form-group">
-                                <label>Tên bộ sưu tập</label>
-                                <input type="text" id="collection-name" required placeholder="VD: Gốm Tối Giản">
-                            </div>
-                            <div class="form-group">
-                                <label>Ảnh Banner (1200x400)</label>
-                                <input type="file" id="collection-image" accept="image/*">
-                                <div id="collection-image-preview" style="margin-top: 10px;"></div>
-                            </div>
-                            <div class="form-group">
-                                <label>Mô tả / Câu chuyện bộ sưu tập</label>
-                                <textarea id="collection-description" rows="4"
-                                    placeholder="Kể câu chuyện về nguồn cảm hứng của bộ sưu tập này..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Ảnh Gallery nghệ thuật (Chọn nhiều ảnh)</label>
-                                <input type="file" id="collection-gallery" accept="image/*" multiple>
-                                <div id="collection-gallery-preview" class="image-preview-grid"></div>
-                            </div>
-                            <div class="form-group"
-                                style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                                <input type="checkbox" id="collection-show-home" style="width: auto; cursor: pointer;">
-                                <label for="collection-show-home" style="margin-bottom: 0; cursor: pointer;">Hiển thị ở
-                                    trang chủ (Tối đa 3)</label>
-                            </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu bộ sưu tập</button>
-                        </form>
-                        <div
-                            style="margin-top: 2rem; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem;">
-                            <p>💡 <strong>Gợi ý:</strong> Bộ sưu tập giúp bạn gom nhóm các sản phẩm theo chủ đề (Tết,
-                                Quà tặng, Minimalist...) để hiển thị nổi bật trên trang chủ.</p>
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="width: 350px; flex: 0 0 350px;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Bộ Sưu Tập</h3>
                         </div>
+
+                        <form id="collection-form">
+                            <input type="hidden" id="collection-edit-index" value="-1">
+                            <div class="filter-group">
+                                <label class="filter-label">Tên bộ sưu tập</label>
+                                <input type="text" id="collection-name" class="kiot-filter-input" required placeholder="VD: Gốm Tối Giản">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh Banner (1200x400)</label>
+                                <input type="file" id="collection-image" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <div id="collection-image-preview" style="margin-top: 6px;"></div>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Mô tả / Câu chuyện</label>
+                                <textarea id="collection-description" class="kiot-filter-input" rows="3" placeholder="Kể câu chuyện về bộ sưu tập..."></textarea>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh Gallery (Chọn nhiều)</label>
+                                <input type="file" id="collection-gallery" class="kiot-filter-input" accept="image/*" multiple style="padding: 4px;">
+                                <div id="collection-gallery-preview" class="image-preview-grid" style="margin-top: 6px;"></div>
+                            </div>
+                            <div class="filter-group" style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="collection-show-home" style="width: 16px; height: 16px; cursor: pointer;">
+                                <label for="collection-show-home" class="filter-label" style="margin: 0; cursor: pointer;">Hiện trang chủ (Tối đa 3)</label>
+                            </div>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu bộ sưu tập
+                            </button>
+                        </form>
                     </div>
 
-                    <div class="admin-card">
-                        <h3>Danh sách Bộ sưu tập hiện có</h3>
-                        <div id="admin-collection-list" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- JS render -->
-                            <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                    <!-- 2. Danh Sách Bộ Sưu Tập Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🏺</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Bộ sưu tập hiện có</span>
+                            </div>
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container" style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div id="admin-collection-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- JS render -->
+                                <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Quản lý Dự Án Sự Kiện -->
+            <!-- Section Quản lý Dự Án Sự Kiện (KiotViet 2-Column Layout) -->
             <div id="events-section" class="admin-section">
-                <div class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Thêm/Sửa Dự Án Sự Kiện</h3>
-                        <form id="event-form" class="admin-form">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="width: 350px; flex: 0 0 350px;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Dự Án Sự Kiện</h3>
+                        </div>
+
+                        <form id="event-form">
                             <input type="hidden" id="event-edit-index" value="-1">
-                            <div class="form-group">
-                                <label>Tên dự án</label>
-                                <input type="text" id="event-name" required placeholder="VD: Tiệc sinh nhật ngoài trời">
+                            <div class="filter-group">
+                                <label class="filter-label">Tên dự án</label>
+                                <input type="text" id="event-name" class="kiot-filter-input" required placeholder="VD: Tiệc sinh nhật ngoài trời">
                             </div>
-                            <div class="form-group">
-                                <label>Ảnh Banner (Đại diện)</label>
-                                <input type="file" id="event-image" accept="image/*">
-                                <div id="event-image-preview" style="margin-top: 10px;"></div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh Banner (Đại diện)</label>
+                                <input type="file" id="event-image" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <div id="event-image-preview" style="margin-top: 6px;"></div>
                             </div>
-                            <div class="form-group">
-                                <label>Mô tả / Câu chuyện dự án</label>
-                                <textarea id="event-description" rows="4"
-                                    placeholder="Kể về quá trình setup, concept của bữa tiệc..."></textarea>
+                            <div class="filter-group">
+                                <label class="filter-label">Mô tả / Concept</label>
+                                <textarea id="event-description" class="kiot-filter-input" rows="3" placeholder="Kể về quá trình setup, concept..."></textarea>
                             </div>
-                            <div class="form-group">
-                                <label>Ảnh Gallery thực tế (Chọn nhiều ảnh)</label>
-                                <input type="file" id="event-gallery" accept="image/*" multiple>
-                                <div id="event-gallery-preview" class="image-preview-grid"></div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh Gallery (Chọn nhiều)</label>
+                                <input type="file" id="event-gallery" class="kiot-filter-input" accept="image/*" multiple style="padding: 4px;">
+                                <div id="event-gallery-preview" class="image-preview-grid" style="margin-top: 6px;"></div>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu dự án</button>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu dự án
+                            </button>
                         </form>
                     </div>
 
-                    <div class="admin-card">
-                        <h3>Danh sách Dự Án hiện có</h3>
-                        <div id="admin-event-list" style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- JS render -->
-                            <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                    <!-- 2. Danh Sách Dự Án Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🎉</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Dự Án Sự Kiện đã thực hiện</span>
+                            </div>
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container" style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div id="admin-event-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- JS render -->
+                                <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1883,81 +1987,92 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Mã giảm giá -->
+            <!-- Section Quản lý Mã giảm giá (KiotViet 2-Column Layout) -->
             <div id="coupon-section" class="admin-section">
-                <section class="admin-grid">
-                    <div class="admin-card">
-                        <h3>Thêm mã giảm giá mới</h3>
-                        <form id="coupon-form" class="admin-form">
-                            <div class="form-group">
-                                <label>Mã Coupon (VD: TET2024)</label>
-                                <input type="text" id="coupon-code" required
-                                    placeholder="Nhập mã viết liền không dấu...">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="width: 360px; flex: 0 0 360px;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Thêm Mã Giảm Giá</h3>
+                        </div>
+
+                        <form id="coupon-form">
+                            <div class="filter-group">
+                                <label class="filter-label">Mã Coupon (VD: TET2024)</label>
+                                <input type="text" id="coupon-code" class="kiot-filter-input" required placeholder="Viết liền không dấu...">
                             </div>
-                            <div class="form-group">
-                                <label>Tên mã ưu đãi (VD: Siêu Sale Giữa Tháng)</label>
-                                <input type="text" id="coupon-name" required
-                                    placeholder="Nhập tên mã ưu đãi hiển thị...">
+                            <div class="filter-group">
+                                <label class="filter-label">Tên mã ưu đãi</label>
+                                <input type="text" id="coupon-name" class="kiot-filter-input" required placeholder="VD: Siêu Sale Giữa Tháng">
                             </div>
-                            <div class="form-group">
-                                <label>Loại giảm giá</label>
-                                <select id="coupon-type" required>
+                            <div class="filter-group">
+                                <label class="filter-label">Loại giảm giá</label>
+                                <select id="coupon-type" class="kiot-filter-select" required>
                                     <option value="percent">Phần trăm (%)</option>
                                     <option value="fixed">Số tiền cố định (VNĐ)</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Giá trị giảm</label>
-                                <input type="text" class="currency-input" id="coupon-value" required
-                                    placeholder="VD: 10 hoặc 50000">
+                            <div class="filter-group">
+                                <label class="filter-label">Giá trị giảm</label>
+                                <input type="text" class="kiot-filter-input currency-input" id="coupon-value" required placeholder="VD: 10 hoặc 50000">
                             </div>
-                            <div class="form-group">
-                                <label>Giảm tối đa (VNĐ) (Chỉ cho loại % - 0 = Không giới hạn)</label>
-                                <input type="text" class="currency-input" id="coupon-max-discount" value="0"
-                                    placeholder="VD: 50000">
+                            <div class="filter-group">
+                                <label class="filter-label">Giảm tối đa (VNĐ) (Loại %)</label>
+                                <input type="text" class="kiot-filter-input currency-input" id="coupon-max-discount" value="0" placeholder="VD: 50000">
                             </div>
-                            <div class="form-group">
-                                <label>Đơn hàng tối thiểu (VNĐ)</label>
-                                <input type="number" id="coupon-min-order" value="0">
+                            <div class="filter-group">
+                                <label class="filter-label">Đơn tối thiểu (VNĐ)</label>
+                                <input type="number" id="coupon-min-order" class="kiot-filter-input" value="0">
                             </div>
-                            <div class="form-group">
-                                <label>Giới hạn số lần sử dụng (0 = Không giới hạn)</label>
-                                <input type="number" id="coupon-limit" value="0">
+                            <div class="filter-group">
+                                <label class="filter-label">Lượt dùng tối đa (0 = Vô hạn)</label>
+                                <input type="number" id="coupon-limit" class="kiot-filter-input" value="0">
                             </div>
-                            <div class="form-group">
-                                <label>Ngày hết hạn</label>
-                                <input type="date" id="coupon-expiry">
+                            <div class="filter-group">
+                                <label class="filter-label">Ngày hết hạn</label>
+                                <input type="date" id="coupon-expiry" class="kiot-filter-input">
                             </div>
-                            <div class="form-group">
-                                <label>Áp dụng cho danh mục</label>
-                                <select id="coupon-category" required>
+                            <div class="filter-group">
+                                <label class="filter-label">Áp dụng danh mục</label>
+                                <select id="coupon-category" class="kiot-filter-select" required>
                                     <option value="all">Tất cả danh mục</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Thể lệ / Điều kiện sử dụng</label>
-                                <textarea id="coupon-conditions" rows="3"
-                                    placeholder="Ví dụ: Giảm 8% cho đơn tối thiểu 0đ, tối đa 500.000đ. Mỗi khách hàng được dùng 1 lần."></textarea>
+                            <div class="filter-group">
+                                <label class="filter-label">Thể lệ / Điều kiện</label>
+                                <textarea id="coupon-conditions" class="kiot-filter-input" rows="2" placeholder="Ví dụ: Giảm 8% cho đơn..."></textarea>
                             </div>
-                            <button type="submit" class="btn-dark" style="width: 100%;">Lưu mã giảm giá</button>
+                            <button type="submit" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu mã giảm giá
+                            </button>
                         </form>
                     </div>
-                    <div class="admin-card">
-                        <h3>Danh sách mã hiện có</h3>
-                        <div class="table-responsive">
-                            <table class="admin-table">
+
+                    <!-- 2. Danh Sách Mã Giảm Giá Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🎟️</span>
+                                <input type="text" placeholder="Tìm theo mã coupon, tên ưu đãi..." onkeyup="if(typeof window.searchCouponsAdmin==='function') window.searchCouponsAdmin(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
                                 <thead>
                                     <tr>
-                                        <th>Mã</th>
-                                        <th>Tên mã</th>
-                                        <th>Loại</th>
-                                        <th>Giá trị</th>
-                                        <th>Đơn tối thiểu</th>
-                                        <th>Giảm tối đa</th>
-                                        <th>Danh mục</th>
-                                        <th>Đã dùng / Tối đa</th>
-                                        <th>Hết hạn</th>
-                                        <th>Thao tác</th>
+                                        <th style="width: 100px;">Mã</th>
+                                        <th style="width: 150px;">Tên mã</th>
+                                        <th style="width: 80px;">Loại</th>
+                                        <th style="width: 90px; text-align: right;">Giá trị</th>
+                                        <th style="width: 100px; text-align: right;">Đơn tối thiểu</th>
+                                        <th style="width: 90px; text-align: right;">Giảm tối đa</th>
+                                        <th style="width: 110px;">Danh mục</th>
+                                        <th style="width: 100px; text-align: center;">Đã dùng</th>
+                                        <th style="width: 100px; text-align: center;">Hết hạn</th>
+                                        <th style="width: 90px; text-align: center;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-coupon-list">
@@ -1966,7 +2081,7 @@
                             </table>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
             <!-- Section Quản lý Khách hàng (KiotViet Layout) -->
@@ -2178,78 +2293,114 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Tài khoản Nội bộ -->
+            <!-- Section Quản lý Tài khoản Nội bộ (KiotViet 2-Column Layout) -->
             <div id="admin-account-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Đội ngũ Quản trị & Nhân viên</h3>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Danh sách các tài khoản có quyền
-                        truy cập vào hệ thống quản trị.</p>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Thông tin</th>
-                                    <th>Vai trò</th>
-                                    <th>Quyền hạn</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-staff-list">
-                                <!-- JS render -->
-                            </tbody>
-                        </table>
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Nhân viên</h3>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Vai trò quản trị</label>
+                            <select id="staff-role-filter" class="kiot-filter-select" onchange="if(typeof window.filterStaffByRole==='function') window.filterStaffByRole(this.value)">
+                                <option value="all">Tất cả vai trò</option>
+                                <option value="admin">Quản trị viên (Admin)</option>
+                                <option value="staff">Nhân viên bán hàng / POS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Danh Sách Nhân Viên Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" placeholder="Tìm kiếm tài khoản, tên nhân viên, email..." onkeyup="if(typeof window.searchStaffAdmin==='function') window.searchStaffAdmin(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Summary Banner -->
+                        <div style="padding: 8px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 0.85rem; color: #166534; margin-bottom: 10px;">
+                            👥 Danh sách các tài khoản nhân viên và ban quản trị có quyền truy cập hệ thống
+                        </div>
+
+                        <!-- Table Scroll Container -->
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 180px;">Thông tin</th>
+                                        <th style="width: 120px;">Vai trò</th>
+                                        <th style="width: 220px;">Quyền hạn</th>
+                                        <th style="width: 100px; text-align: center;">Trạng thái</th>
+                                        <th style="width: 100px; text-align: center;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-staff-list">
+                                    <!-- JS render -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section Thống kê -->
+            <!-- Section Thống kê Báo cáo (KiotViet 2-Column Layout) -->
             <div id="stats-section" class="admin-section">
-                <!-- Bộ lọc báo cáo -->
-                <div class="admin-card" style="margin-bottom: 2rem;">
-                    <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Năm báo cáo</label>
-                            <select id="stats-year-filter" style="width: 120px;"></select>
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Báo Cáo Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Báo cáo doanh thu</h3>
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Xem theo</label>
-                            <select id="stats-period-type" style="width: 180px;">
+
+                        <div class="filter-group">
+                            <label class="filter-label">Năm báo cáo</label>
+                            <select id="stats-year-filter" class="kiot-filter-select"></select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Xem theo chu kỳ</label>
+                            <select id="stats-period-type" class="kiot-filter-select">
                                 <option value="monthly">Từng tháng trong năm</option>
                                 <option value="quarterly" selected>Từng quý trong năm</option>
                                 <option value="daily">Từng ngày (Tháng hiện tại)</option>
                             </select>
                         </div>
-                        <button id="btn-refresh-stats" class="btn-dark"
-                            style="height: 40px; margin-top: 0; padding: 0 20px;">📊 Xem báo cáo</button>
-                        <button id="btn-export-stats-excel" class="btn-minimal"
-                            style="height: 40px; margin-top: 0; padding: 0 15px; display: flex; align-items: center; gap: 8px;">
-                            📊 Xuất báo cáo Excel
+
+                        <button id="btn-refresh-stats" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                            📊 Xem báo cáo
+                        </button>
+                        <button id="btn-export-stats-excel" class="kiot-btn-outline" style="width: 100%; margin-top: 8px; justify-content: center;">
+                            📥 Xuất Excel Báo cáo
                         </button>
                     </div>
-                </div>
 
-                <!-- Thẻ tóm tắt trong kỳ -->
-                <div class="overview-grid" style="margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">💰</div>
-                        <div class="stat-info">
-                            <h3>Doanh thu kỳ này</h3>
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <p id="period-revenue" style="margin: 0;">0 VND</p>
-                                <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
+                    <!-- 2. Nội dung Báo cáo Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main" style="gap: 16px;">
+                        <!-- Thẻ tóm tắt trong kỳ -->
+                        <div class="overview-grid" style="margin-bottom: 0;">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">💰</div>
+                                <div class="stat-info">
+                                    <h3>Doanh thu kỳ này</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-revenue" style="margin: 0;">0 VND</p>
+                                        <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #fce4ec; color: #c2185b;">📊</div>
-                        <div class="stat-info">
-                            <h3>Doanh thu thuần</h3>
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <p id="period-net-revenue" style="margin: 0;">0 VND</p>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fce4ec; color: #c2185b;">📊</div>
+                                <div class="stat-info">
+                                    <h3>Doanh thu thuần</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-net-revenue" style="margin: 0;">0 VND</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
                     <div class="stat-card" style="border: 1px solid #ffe0b2;">
                         <div class="stat-icon" style="background: #fff3e0; color: #e65100;">🧾</div>
                         <div class="stat-info">
@@ -2351,6 +2502,8 @@
                             </thead>
                             <tbody id="stats-detail-table"></tbody>
                         </table>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>
