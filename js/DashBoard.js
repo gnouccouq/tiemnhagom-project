@@ -140,10 +140,10 @@ function renderOnlineUsersTable(usersList) {
     }
 
     // Sắp xếp người mới vào hoặc mới tương tác lên đầu
-    usersList.sort((a, b) => b.startTime - a.startTime);
+    usersList.sort((a, b) => (Number(b?.startTime) || 0) - (Number(a?.startTime) || 0));
 
     tbody.innerHTML = usersList.map(u => {
-        const timeAgo = formatOnlineTimeAgo(u.startTime);
+        const timeAgo = formatOnlineTimeAgo(u?.startTime);
         const deviceIcon = u.deviceType === 'Mobile' ? '📱' : (u.deviceType === 'Tablet' ? '📟' : '💻');
         const userAvatar = u.isGuest ? '👤' : '⭐';
         const userBadge = u.isGuest 
