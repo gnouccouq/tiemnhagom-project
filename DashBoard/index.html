@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Tiệm Nhà Gốm</title>
-    <link rel="stylesheet" href="../css/style.css?v=46">
+    <link rel="stylesheet" href="../css/style.css?v=48">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <!-- Google Fonts -->
@@ -61,22 +61,26 @@
 
                         <!-- Notification Bell Dropdown -->
                         <div class="kiot-user-dropdown-wrapper" id="notification-dropdown-wrapper">
-                            <button type="button" class="kiot-t1-icon-btn" title="Thông báo">
+                            <button type="button" class="kiot-t1-icon-btn" id="btn-notification-bell" title="Thông báo hệ thống" style="position: relative;">
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                                 </svg>
                                 <span id="notification-indicator"
-                                    style="display: none; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; background-color: #0066cc; border-radius: 50%;"></span>
+                                    style="display: none; position: absolute; top: 1px; right: 1px; min-width: 16px; height: 16px; background-color: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 700; border-radius: 8px; align-items: center; justify-content: center; padding: 0 4px; border: 1.5px solid #fff; line-height: 1;">0</span>
                             </button>
-                            <div class="kiot-user-dropdown" style="min-width: 260px; right: -40px;">
-                                <div class="user-dropdown-header"><strong style="font-size: 0.9rem;">Thông báo hệ
-                                        thống</strong></div>
-                                <div class="user-dropdown-divider"></div>
-                                <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
-                                    <div style="padding: 16px; text-align: center; color: #64748b; font-size: 0.82rem;">
-                                        Không có thông báo mới</div>
+                            <div class="kiot-user-dropdown" id="notification-dropdown-menu" style="min-width: 320px; max-width: 360px; right: -40px; padding: 0; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); overflow: hidden;">
+                                <div class="user-dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                    <strong style="font-size: 0.9rem; color: #0f172a;">🔔 Thông báo hệ thống</strong>
+                                    <span id="notification-count-badge" style="font-size: 0.72rem; background: #fee2e2; color: #dc2626; font-weight: 700; padding: 2px 8px; border-radius: 10px;">0 mới</span>
+                                </div>
+                                <div id="notification-list" style="max-height: 320px; overflow-y: auto; padding: 4px 0;">
+                                    <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.82rem;">
+                                        Đang tải thông báo...</div>
+                                </div>
+                                <div style="padding: 8px 12px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                                    <button type="button" id="btn-refresh-notifications" style="border: none; background: none; color: #0066cc; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🔄 Cập nhật dữ liệu</button>
                                 </div>
                             </div>
                         </div>
@@ -487,11 +491,12 @@
                     <!-- Cột Phải: Sidebar Activity Timeline -->
                     <div class="kiot-overview-sidebar">
 
-                        <!-- Widget 3: Cảnh báo -->
-                        <div class="kiot-widget-card warning">
-                            <div class="widget-icon orange">🔔</div>
-                            <div class="widget-text">
-                                <p>Có 1 hoạt động đăng nhập hệ thống cần kiểm tra.</p>
+                        <!-- Widget 3: Cảnh báo thông minh -->
+                        <div class="kiot-widget-card warning" id="overview-smart-alert-card" style="cursor: pointer;" title="Bấm để xử lý">
+                            <div class="widget-icon orange" id="overview-smart-alert-icon">🔔</div>
+                            <div class="widget-text" id="overview-smart-alert-content">
+                                <strong id="overview-smart-alert-title" style="font-size: 0.84rem; color: #92400e; margin-bottom: 2px;">Cảnh báo kho hàng</strong>
+                                <p id="overview-smart-alert-desc" style="font-size: 0.76rem; color: #b45309;">Đang kiểm tra tồn kho và đơn hàng...</p>
                             </div>
                             <span class="widget-arrow">›</span>
                         </div>
@@ -2354,7 +2359,7 @@
                     <!-- 1. Bộ Lọc Báo Cáo Bên Trái (Left Filter Sidebar) -->
                     <div class="kiot-filter-sidebar">
                         <div class="filter-header">
-                            <h3 class="filter-title">Báo cáo doanh thu</h3>
+                            <h3 class="filter-title">Báo cáo & Phân tích</h3>
                         </div>
 
                         <div class="filter-group">
@@ -2367,11 +2372,12 @@
                                 <option value="monthly">Từng tháng trong năm</option>
                                 <option value="quarterly" selected>Từng quý trong năm</option>
                                 <option value="daily">Từng ngày (Tháng hiện tại)</option>
+                                <option value="all">Toàn bộ năm</option>
                             </select>
                         </div>
 
                         <button id="btn-refresh-stats" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
-                            📊 Xem báo cáo
+                            📊 Cập nhật báo cáo
                         </button>
                         <button id="btn-export-stats-excel" class="kiot-btn-outline" style="width: 100%; margin-top: 8px; justify-content: center;">
                             📥 Xuất Excel Báo cáo
@@ -2379,7 +2385,7 @@
                     </div>
 
                     <!-- 2. Nội dung Báo cáo Bên Phải (Right Main Area) -->
-                    <div class="kiot-product-main" style="gap: 16px;">
+                    <div class="kiot-product-main" style="gap: 20px;">
                         <!-- Thẻ tóm tắt trong kỳ -->
                         <div class="overview-grid" style="margin-bottom: 0;">
                             <div class="stat-card">
@@ -2401,109 +2407,159 @@
                                     </div>
                                 </div>
                             </div>
-                    <div class="stat-card" style="border: 1px solid #ffe0b2;">
-                        <div class="stat-icon" style="background: #fff3e0; color: #e65100;">🧾</div>
-                        <div class="stat-info">
-                            <h3>Tổng thuế (1.5%)</h3>
-                            <p id="period-tax-total" style="margin: 0; color: #e65100;">0 VND</p>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="opacity: 0.8;">
-                        <div class="stat-icon" style="background: #fff8e1; color: #ffa000;">🧾</div>
-                        <div class="stat-info">
-                            <h3>Thuế VAT (1%)</h3>
-                            <p id="period-vat-total" style="margin: 0;">0 VND</p>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="opacity: 0.8;">
-                        <div class="stat-icon" style="background: #fff3e0; color: #e67e22;">📝</div>
-                        <div class="stat-info">
-                            <h3>Thuế TNCN (0.5%)</h3>
-                            <p id="period-tncn-total" style="margin: 0;">0 VND</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">🛒</div>
-                        <div class="stat-info">
-                            <h3>Đơn hàng hoàn thành</h3>
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <p id="period-orders" style="margin: 0;">0</p>
-                                <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;">🛒</div>
+                                <div class="stat-info">
+                                    <h3>Đơn hoàn thành</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-orders" style="margin: 0;">0</p>
+                                        <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card" style="border: 1px solid #ffcdd2;">
+                                <div class="stat-icon" style="background: #ffebee; color: #c62828;">⚠️</div>
+                                <div class="stat-info">
+                                    <h3>Tỷ lệ hủy / hoàn</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-cancel-rate" style="margin: 0; color: #c62828;">0%</p>
+                                        <span id="period-lost-revenue" style="font-size: 0.72rem; color: #d32f2f; font-weight: 600;">(Mất 0đ)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;">📈</div>
+                                <div class="stat-info">
+                                    <h3>Lợi nhuận dự tính</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-profit" style="margin: 0;">0 VND</p>
+                                        <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">✨</div>
+                                <div class="stat-info">
+                                    <h3>TB đơn hàng (AOV)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                        <p id="period-avg-order" style="margin: 0;">0 VND</p>
+                                        <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;">📈</div>
-                        <div class="stat-info">
-                            <h3>Lợi nhuận dự tính</h3>
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <p id="period-profit" style="margin: 0;">0 VND</p>
-                                <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
+
+                        <!-- Hàng 1: Doanh thu & Bán chạy / Phân loại -->
+                        <div class="admin-grid" style="grid-template-columns: 1.4fr 1.1fr; gap: 1.5rem;">
+                            <div class="admin-card">
+                                <h3>📈 Biểu đồ biến động doanh thu</h3>
+                                <div style="height: 380px;"><canvas id="revenueMainChart"></canvas></div>
+                            </div>
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 6px;">
+                                    <h3 style="margin: 0;">🏆 Top Phân loại & Bán chạy</h3>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <select id="topSoldMetric" class="status-select" style="font-size: 0.75rem; padding: 4px 8px;">
+                                            <option value="revenue">Doanh thu (VND)</option>
+                                            <option value="quantity">Số lượng bán</option>
+                                        </select>
+                                        <select id="topSoldGroupBy" class="status-select" style="font-size: 0.75rem; padding: 4px 8px;">
+                                            <option value="product">Theo Sản phẩm</option>
+                                            <option value="variant">Theo Phân loại</option>
+                                            <option value="category">Theo Danh mục</option>
+                                        </select>
+                                        <select id="topSoldType" class="status-select" style="font-size: 0.75rem; padding: 4px 8px;">
+                                            <option value="bar">Cột</option>
+                                            <option value="pie">Tròn</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="height: 380px;"><canvas id="topSoldPeriodChart"></canvas></div>
                             </div>
                         </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;">✨</div>
-                        <div class="stat-info">
-                            <h3>TB đơn hàng</h3>
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <p id="period-avg-order" style="margin: 0;">0 VND</p>
-                                <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
+
+                        <!-- Hàng 2: 🕒 Khung giờ vàng mua sắm trong ngày (Peak Shopping Hours / 24h) -->
+                        <div class="admin-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 style="margin: 0;">🕒 Khung giờ vàng mua sắm trong ngày (Phân bổ 24h)</h3>
+                                    <div style="font-size: 0.82rem; color: #666; margin-top: 3px;">Phân tích thời điểm khách đặt hàng nhiều nhất để tối ưu thời gian LiveStream, Flash Sale & Quảng cáo</div>
+                                </div>
+                                <div id="peak-hour-insight-badge" style="background: #fff3cd; color: #856404; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 6px;">
+                                    🔥 Đang phân tích khung giờ...
+                                </div>
+                            </div>
+                            <div style="height: 280px;"><canvas id="hourlyShoppingChart"></canvas></div>
+                            <div id="hourly-periods-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
+                                <!-- Sẽ được điền động bằng JS: Sáng, Trưa/Chiều, Tối, Đêm -->
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="admin-grid" style="grid-template-columns: 1.5fr 1fr; gap: 2rem;">
-                    <div class="admin-card">
-                        <h3>Biểu đồ doanh thu</h3>
-                        <div style="height: 400px;"><canvas id="revenueMainChart"></canvas></div>
-                    </div>
-                    <div class="admin-card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="margin:0">Bán chạy trong kỳ</h3>
-                            <select id="topSoldType" class="status-select" style="font-size: 0.7rem;">
-                                <option value="bar">Cột</option>
-                                <option value="pie">Tròn</option>
-                            </select>
+                        <!-- Hàng 3: ⚠️ Phân tích Tỷ lệ Hoàn / Hủy Đơn Hàng & Thất Thoát Doanh Thu -->
+                        <div class="admin-grid" style="grid-template-columns: 1.1fr 1.4fr; gap: 1.5rem;">
+                            <div class="admin-card">
+                                <h3>⚠️ Phân bổ trạng thái & Tỷ lệ hủy đơn</h3>
+                                <div style="height: 280px;"><canvas id="orderStatusFunnelChart"></canvas></div>
+                                <div id="cancellation-summary-box" style="margin-top: 12px; padding: 12px; background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 8px; font-size: 0.88rem;">
+                                    <!-- Thống kê tỷ lệ hủy -->
+                                </div>
+                            </div>
+                            <div class="admin-card">
+                                <h3>❌ Top sản phẩm / Phân loại có tỷ lệ hủy cao</h3>
+                                <div style="font-size: 0.82rem; color: #666; margin-bottom: 10px;">Những mặt hàng hay bị hủy để rà soát lại thông tin mô tả, kích thước hoặc tư vấn</div>
+                                <div class="table-responsive" style="max-height: 330px; overflow-y: auto;">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Sản phẩm / Phân loại</th>
+                                                <th style="text-align: center;">SL Hủy</th>
+                                                <th style="text-align: right;">Giá trị hủy</th>
+                                                <th style="text-align: center;">Tỷ lệ hủy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="top-canceled-products-body">
+                                            <tr><td colspan="4" style="text-align: center; color: #888;">Đang tổng hợp dữ liệu...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                        <div style="height: 400px;"><canvas id="topSoldPeriodChart"></canvas></div>
-                    </div>
-                </div>
 
-                <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>So sánh doanh thu với năm trước (cùng kỳ 12 tháng)</h3>
-                    <div style="height: 400px;"><canvas id="revenueComparisonChart"></canvas></div>
-                </div>
+                        <!-- Hàng 4: So sánh 2 năm & Phương thức thanh toán -->
+                        <div class="admin-grid" style="grid-template-columns: 1.4fr 1fr; gap: 1.5rem;">
+                            <div class="admin-card">
+                                <h3>📊 So sánh doanh thu cùng kỳ với năm trước</h3>
+                                <div style="height: 320px;"><canvas id="revenueComparisonChart"></canvas></div>
+                            </div>
+                            <div class="admin-card">
+                                <h3>💳 Phân bổ theo phương thức thanh toán</h3>
+                                <div style="height: 320px;"><canvas id="paymentMethodChart"></canvas></div>
+                            </div>
+                        </div>
 
-                <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>Phân bổ doanh thu theo phương thức thanh toán</h3>
-                    <div style="height: 300px;"><canvas id="paymentMethodChart"></canvas></div>
-                </div>
-
-                <div class="admin-card" style="margin-top: 2rem;">
-                    <h3>Bảng kê chi tiết theo kỳ</h3>
-                    <div class="table-responsive">
-                        <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span
-                                class="spinner"></span> Đang tải dữ liệu...</div>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Thời gian</th>
-                                    <th>Số đơn</th>
-                                    <th>DT Thuần (Net)</th>
-                                    <th>VAT (1%)</th>
-                                    <th>TNCN (0.5%)</th>
-                                    <th>Tổng Thuế</th>
-                                    <th>Tổng DT (Gross)</th>
-                                    <th>Lợi nhuận (Est)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stats-detail-table"></tbody>
-                        </table>
-                    </div>
-                </div>
+                        <!-- Hàng 5: Bảng kê chi tiết theo kỳ -->
+                        <div class="admin-card">
+                            <h3>📋 Bảng kê chi tiết doanh thu & thuế theo kỳ</h3>
+                            <div class="table-responsive">
+                                <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span
+                                        class="spinner"></span> Đang tải dữ liệu...</div>
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Thời gian</th>
+                                            <th>Số đơn</th>
+                                            <th>DT Thuần (Net)</th>
+                                            <th>VAT (1%)</th>
+                                            <th>TNCN (0.5%)</th>
+                                            <th>Tổng Thuế</th>
+                                            <th>Tổng DT (Gross)</th>
+                                            <th>Lợi nhuận (Est)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stats-detail-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
