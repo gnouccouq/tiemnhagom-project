@@ -1255,6 +1255,53 @@ body > *:not(#header-placeholder) {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+.product-badges-corner {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.product-badge-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    transform: rotate(15deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    line-height: 1.1;
+    letter-spacing: 0.2px;
+    user-select: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-badge-circle.badge-new {
+    background: #d6e8dc;
+    color: #1e4b2d;
+    border: 1px solid rgba(30, 75, 45, 0.15);
+}
+
+.product-badge-circle.badge-hot {
+    background: #fcd9c6;
+    color: #9c3615;
+    border: 1px solid rgba(156, 54, 21, 0.15);
+}
+
+.product-badge-circle:hover {
+    transform: rotate(0deg) scale(1.08);
+}
+
 .product-card {
     background-color: var(--card-bg, #ffffff);
     padding: 12px;

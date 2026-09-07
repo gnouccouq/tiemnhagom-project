@@ -244,20 +244,33 @@ async function fetchProductDetail() {
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
             for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '★' : '☆';
 
+            // Lấy tham số biến thể từ URL
+            const urlColor = urlParams.get('color');
+            const urlPattern = urlParams.get('pattern');
+            const urlCombo = urlParams.get('combo');
+
             // Thiết lập màu/họa tiết mặc định nếu có
             if (colorVariants.length > 0) {
-                selectedColor = colorVariants[0].name;
-                // Cập nhật isOutOfStock dựa trên biến thể mặc định
-                if ((colorVariants[0].stock || 0) <= 0 || colorVariants[0].isOutOfStock) isOutOfStock = true;
+                const targetColor = urlColor ? (colorVariants.find(c => c.name === urlColor) || colorVariants[0]) : colorVariants[0];
+                selectedColor = targetColor.name;
+                // Cập nhật isOutOfStock dựa trên biến thể được chọn
+                const cStock = (targetColor.stock !== undefined && targetColor.stock !== null) ? Number(targetColor.stock) : (Number(p.stock) || 0);
+                const cOut = Boolean(targetColor.manualOutOfStock) || (Boolean(targetColor.isOutOfStock) && cStock <= 0);
+                if (cOut || cStock <= 0) isOutOfStock = true;
+                else isOutOfStock = false;
             }
 
             // Ưu tiên lấy pattern từ patternVariants mới, nếu không có thì fallback sang patterns cũ
             const patternsToUse = (p.patternVariants && p.patternVariants.length > 0) ? p.patternVariants : (p.patterns || []);
             if (patternsToUse.length > 0) {
-                const firstPattern = patternsToUse[0];
-                selectedPattern = typeof firstPattern === 'string' ? firstPattern : firstPattern.name;
-                // Cập nhật isOutOfStock dựa trên biến thể mặc định
-                if (typeof firstPattern !== 'string' && ((firstPattern.stock || 0) <= 0 || firstPattern.isOutOfStock)) isOutOfStock = true;
+                const targetPat = urlPattern ? (patternsToUse.find(pat => (typeof pat === 'string' ? pat : pat.name) === urlPattern) || patternsToUse[0]) : patternsToUse[0];
+                selectedPattern = typeof targetPat === 'string' ? targetPat : targetPat.name;
+                if (typeof targetPat !== 'string') {
+                    const patStock = (targetPat.stock !== undefined && targetPat.stock !== null) ? Number(targetPat.stock) : (Number(p.stock) || 0);
+                    const patOut = Boolean(targetPat.manualOutOfStock) || (Boolean(targetPat.isOutOfStock) && patStock <= 0);
+                    if (patOut || patStock <= 0) isOutOfStock = true;
+                    else isOutOfStock = false;
+                }
             }
 
             // Thiết lập combo mặc định và tính toán tồn kho thực tế từ các sản phẩm con
@@ -296,8 +309,8 @@ async function fetchProductDetail() {
                     // Tính lại tồn kho thực tế cho từng phân loại combo
                     p.comboVariants.forEach(v => {
                         if (!v.items || v.items.length === 0) {
-                            v.stock = 0;
-                            v.isOutOfStock = true;
+                            v.stock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(p.stock) || 0);
+                            v.isOutOfStock = Boolean(v.manualOutOfStock) || v.stock <= 0;
                             return;
                         }
 
@@ -344,9 +357,11 @@ async function fetchProductDetail() {
                         v.isOutOfStock = Boolean(v.manualOutOfStock) || hasOutOfStock || v.stock <= 0;
                     });
 
-                    selectedComboVariant = p.comboVariants[0].name || 'Phân loại 1';
-                    const defaultVariant = p.comboVariants[0];
-                    if ((defaultVariant.stock || 0) <= 0 || defaultVariant.isOutOfStock) {
+                    const matchedComboIdx = urlCombo ? p.comboVariants.findIndex(v => v.name === urlCombo) : -1;
+                    const initialComboVariant = (matchedComboIdx !== -1) ? p.comboVariants[matchedComboIdx] : p.comboVariants[0];
+                    selectedComboVariant = initialComboVariant.name || 'Phân loại 1';
+
+                    if ((initialComboVariant.stock || 0) <= 0 || initialComboVariant.isOutOfStock) {
                         isOutOfStock = true;
                     } else {
                         isOutOfStock = false;
@@ -354,12 +369,9 @@ async function fetchProductDetail() {
                 }
             }
 
-            // Nếu là combo, kiểm tra xem có bất kỳ phân loại nào còn hàng không
-            if (p.isCombo && Array.isArray(p.comboVariants) && p.comboVariants.length > 0) {
-                const defaultVariant = p.comboVariants[0];
-                isOutOfStock = Boolean(defaultVariant.isOutOfStock) || (defaultVariant.stock || 0) <= 0;
-            } else if ((colorVariants.length > 0 || patternsToUse.length > 0) && isOutOfStock) {
-                isOutOfStock = true;
+            // Nếu không phải combo hoặc không có biến thể, giữ nguyên isOutOfStock
+            if (!p.isCombo && (colorVariants.length === 0 && patternsToUse.length === 0)) {
+                isOutOfStock = (p.stock || 0) <= 0;
             }
 
             window.renderComboItemsHTML = (items) => {
@@ -591,6 +603,12 @@ async function fetchProductDetail() {
                 `;
             }
 
+            // Kiểm tra hàng mới: Được tạo trong vòng 14 ngày (2 tuần)
+            const FOURTEEN_DAYS_MS = 1209600000;
+            const createdAtMs = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+            const isNewArrival = !isOutOfStock && !isNaN(createdAtMs) && ((Date.now() - createdAtMs) <= FOURTEEN_DAYS_MS) && ((Date.now() - createdAtMs) >= 0);
+            const isBestSeller = !isOutOfStock && ((Number(p.sold) || 0) >= 5 || Boolean(p.isBestSeller));
+
             // Bao bọc toàn bộ nội dung thật trong div .fade-in-content để tạo hiệu ứng mượt mà
             container.innerHTML = `
             <div class="fade-in-content">
@@ -603,13 +621,23 @@ async function fetchProductDetail() {
                             ` : ''}
                             <img id="main-product-img" src="${p.imageUrl}" alt="${p.name}" fetchpriority="high" onclick="window.openFullScreen(this.src)">
                             <div id="detail-out-of-stock-badge" class="out-of-stock-badge" style="display: ${isOutOfStock ? 'flex' : 'none'};">Hết hàng</div>
+                            ${(isBestSeller || isNewArrival) ? `
+                                <div class="product-badges-corner" style="position: absolute; top: 12px; right: 12px; z-index: 10; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none;">
+                                    ${isBestSeller ? `<div class="product-badge-circle badge-hot" title="Sản phẩm bán chạy"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Bán</span><span style="font-size: 0.68rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Chạy</span></div>` : ''}
+                                    ${isNewArrival ? `<div class="product-badge-circle badge-new" title="Hàng mới về trong 2 tuần"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Hàng</span><span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Mới</span></div>` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                         ${galleryHtml}
                     </div>
                     <div class="product-info-sticky">
                         <div class="product-main-meta">
-                            <span class="category-tag">${p.category}</span>
-                            <span class="product-sku">Mã: ${productId}</span>
+                            <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span class="category-tag">${p.category}</span>
+                                <span class="product-sku">Mã: ${productId}</span>
+                                ${isNewArrival ? `<span class="product-badge badge-new" style="background: #d6e8dc; color: #1e4b2d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(30,75,45,0.2); display: inline-flex; align-items: center; gap: 3px;">✨ Hàng mới</span>` : ''}
+                                ${isBestSeller ? `<span class="product-badge badge-hot" style="background: #fcd9c6; color: #9c3615; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(156,54,21,0.2); display: inline-flex; align-items: center; gap: 3px;">🔥 Bán chạy</span>` : ''}
+                            </div>
                             <h1>${p.name}</h1>
                             <div class="rating">
                                 <span id="product-sold-display" style="color: #888; font-size: 0.85rem; font-weight:400;">Đã bán ${soldCount}</span>
