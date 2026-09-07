@@ -11867,4 +11867,239 @@ input:checked + .slider:before {
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(230, 81, 0, 0.3);
     margin-bottom: 4px;
+}
+
+/* ==========================================================================
+   HỆ THỐNG CUSTOM POPUP THÔNG BÁO / DIALOG (PREMIUM MODAL ALERT & CONFIRM)
+   ========================================================================== */
+.tng-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    box-sizing: border-box;
+}
+
+.tng-dialog-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tng-dialog-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    padding: 28px 24px 22px 24px;
+    transform: scale(0.92) translateY(10px);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.tng-dialog-overlay.active .tng-dialog-card {
+    transform: scale(1) translateY(0);
+}
+
+.tng-dialog-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+    animation: tngDialogIconPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes tngDialogIconPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.tng-dialog-icon-wrapper.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 3px solid #c8e6c9;
+}
+
+.tng-dialog-icon-wrapper.info {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 3px solid #bbdefb;
+}
+
+.tng-dialog-icon-wrapper.warning {
+    background: #fff8e1;
+    color: #f57f17;
+    border: 3px solid #ffecb3;
+}
+
+.tng-dialog-icon-wrapper.danger {
+    background: #ffebee;
+    color: #c62828;
+    border: 3px solid #ffcdd2;
+}
+
+.tng-dialog-icon-wrapper svg {
+    width: 32px;
+    height: 32px;
+}
+
+.tng-dialog-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 10px 0;
+    line-height: 1.35;
+    letter-spacing: -0.2px;
+}
+
+.tng-dialog-body {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.55;
+    margin-bottom: 22px;
+    max-height: 60vh;
+    overflow-y: auto;
+    width: 100%;
+    word-break: break-word;
+    white-space: pre-line;
+    text-align: left;
+    padding: 0 4px;
+}
+
+.tng-dialog-body.text-center {
+    text-align: center;
+}
+
+.tng-dialog-input-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.tng-dialog-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.tng-dialog-input:focus {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.15);
+}
+
+.tng-dialog-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+}
+
+.tng-dialog-btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    outline: none;
+}
+
+.tng-dialog-btn-primary {
+    background: #2c3e50;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.25);
+}
+
+.tng-dialog-btn-primary:hover {
+    background: #1a252f;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(44, 62, 80, 0.35);
+}
+
+.tng-dialog-btn-danger {
+    background: #e53935;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.25);
+}
+
+.tng-dialog-btn-danger:hover {
+    background: #c62828;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(229, 57, 53, 0.35);
+}
+
+.tng-dialog-btn-success {
+    background: #008060;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 128, 96, 0.25);
+}
+
+.tng-dialog-btn-success:hover {
+    background: #006e52;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 128, 96, 0.35);
+}
+
+.tng-dialog-btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.tng-dialog-btn-cancel:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+@media (max-width: 480px) {
+    .tng-dialog-card {
+        padding: 22px 18px 18px 18px;
+        border-radius: 16px;
+    }
+    .tng-dialog-title {
+        font-size: 1.1rem;
+    }
+    .tng-dialog-body {
+        font-size: 0.9rem;
+    }
+    .tng-dialog-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .tng-dialog-btn {
+        width: 100%;
+        padding: 11px 16px;
+    }
 }

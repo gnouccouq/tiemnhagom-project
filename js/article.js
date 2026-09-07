@@ -1,4 +1,4 @@
-import { db, initHeader, renderProductCard } from "./utils.js";
+import { db, initHeader, renderProductCard, showToast, showModalAlert } from "./utils.js";
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 async function fetchRecentArticles(currentId) {
@@ -140,9 +140,10 @@ async function fetchArticle() {
         window.copyArticleLink = () => {
             const shareUrl = `https://tiemnhagom-project.web.app/share?type=news&id=${id}`;
             navigator.clipboard.writeText(shareUrl).then(() => {
-                alert('Đã sao chép liên kết chia sẻ!');
+                showToast('Đã sao chép liên kết chia sẻ bài viết!');
             }).catch(e => {
                 console.error('Lỗi sao chép', e);
+                showToast('Lỗi khi sao chép liên kết', 'error');
             });
         };
 
@@ -152,10 +153,7 @@ async function fetchArticle() {
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Here you could send this feedback to Firestore if needed
-            // e.g., updateDoc(doc(db, "news", id), { positiveFeedback: increment(1) })
-            
-            alert(isSatisfied ? "Cảm ơn bạn đã đánh giá bài viết hữu ích! 🥰" : "Cảm ơn bạn đã góp ý. Chúng tôi sẽ cải thiện bài viết! 😞");
+            showToast(isSatisfied ? "Cảm ơn bạn đã đánh giá bài viết hữu ích! 🥰" : "Cảm ơn bạn đã góp ý. Chúng tôi sẽ cải thiện bài viết! 🌸");
         };
 
         container.innerHTML = `

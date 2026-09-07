@@ -325,6 +325,249 @@ export function showToast(message, type = 'success') {
     }, 4000);
 }
 
+// ==========================================================================
+// 2.1 HỆ THỐNG POPUP THÔNG BÁO / HỘP THOẠI CAO CẤP (PREMIUM DIALOGS)
+// ==========================================================================
+function getOrCreateDialogOverlay() {
+    let overlay = document.getElementById('tng-dialog-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'tng-dialog-overlay';
+        overlay.className = 'tng-dialog-overlay';
+        overlay.innerHTML = `
+            <div class="tng-dialog-card" id="tng-dialog-card">
+                <div class="tng-dialog-icon-wrapper" id="tng-dialog-icon"></div>
+                <h3 class="tng-dialog-title" id="tng-dialog-title">Thông báo</h3>
+                <div class="tng-dialog-body" id="tng-dialog-body"></div>
+                <div class="tng-dialog-input-wrapper" id="tng-dialog-input-wrap" style="display: none;">
+                    <input type="text" class="tng-dialog-input" id="tng-dialog-input" />
+                </div>
+                <div class="tng-dialog-actions" id="tng-dialog-actions"></div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    return overlay;
+}
+
+const DIALOG_ICONS = {
+    success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+    info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+    warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    danger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`
+};
+
+/**
+ * Hiển thị Popup Thông báo đẹp (Thay thế window.alert)
+ * @param {string} message - Nội dung thông báo
+ * @param {string} title - Tiêu đề thông báo
+ * @param {'success'|'info'|'warning'|'danger'} type - Loại thông báo
+ * @param {string} okText - Chữ nút Đóng
+ * @returns {Promise<void>}
+ */
+export function showModalAlert(message, title = 'Thông báo', type = 'info', okText = 'Đã hiểu') {
+    return new Promise((resolve) => {
+        const overlay = getOrCreateDialogOverlay();
+        const iconEl = document.getElementById('tng-dialog-icon');
+        const titleEl = document.getElementById('tng-dialog-title');
+        const bodyEl = document.getElementById('tng-dialog-body');
+        const inputWrap = document.getElementById('tng-dialog-input-wrap');
+        const actionsEl = document.getElementById('tng-dialog-actions');
+
+        const safeType = DIALOG_ICONS[type] ? type : 'info';
+        iconEl.className = `tng-dialog-icon-wrapper ${safeType}`;
+        iconEl.innerHTML = DIALOG_ICONS[safeType];
+
+        titleEl.innerText = title;
+        bodyEl.innerText = message;
+        bodyEl.className = message.length < 80 && !message.includes('\n') ? 'tng-dialog-body text-center' : 'tng-dialog-body';
+        if (inputWrap) inputWrap.style.display = 'none';
+
+        const btnClass = safeType === 'danger' ? 'tng-dialog-btn-danger' : (safeType === 'success' ? 'tng-dialog-btn-success' : 'tng-dialog-btn-primary');
+        actionsEl.innerHTML = `<button type="button" class="tng-dialog-btn ${btnClass}" id="tng-dialog-btn-ok">${okText}</button>`;
+
+        overlay.classList.add('active');
+
+        const btnOk = document.getElementById('tng-dialog-btn-ok');
+        const close = () => {
+            overlay.classList.remove('active');
+            resolve();
+        };
+
+        if (btnOk) {
+            btnOk.focus();
+            btnOk.onclick = close;
+        }
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') {
+                document.removeEventListener('keydown', handleKeyDown);
+                close();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown, { once: true });
+    });
+}
+
+/**
+ * Hiển thị Popup Xác nhận đẹp (Thay thế window.confirm)
+ * @param {string} message - Câu hỏi xác nhận
+ * @param {string} title - Tiêu đề
+ * @param {object} options - Tùy chọn { confirmText, cancelText, type }
+ * @returns {Promise<boolean>}
+ */
+export function showModalConfirm(message, title = 'Xác nhận', options = {}) {
+    const {
+        confirmText = 'Đồng ý',
+        cancelText = 'Hủy bỏ',
+        type = 'warning'
+    } = options;
+
+    return new Promise((resolve) => {
+        const overlay = getOrCreateDialogOverlay();
+        const iconEl = document.getElementById('tng-dialog-icon');
+        const titleEl = document.getElementById('tng-dialog-title');
+        const bodyEl = document.getElementById('tng-dialog-body');
+        const inputWrap = document.getElementById('tng-dialog-input-wrap');
+        const actionsEl = document.getElementById('tng-dialog-actions');
+
+        const safeType = DIALOG_ICONS[type] ? type : 'warning';
+        iconEl.className = `tng-dialog-icon-wrapper ${safeType}`;
+        iconEl.innerHTML = DIALOG_ICONS[safeType];
+
+        titleEl.innerText = title;
+        bodyEl.innerText = message;
+        bodyEl.className = message.length < 90 && !message.includes('\n') ? 'tng-dialog-body text-center' : 'tng-dialog-body';
+        if (inputWrap) inputWrap.style.display = 'none';
+
+        const btnConfirmClass = safeType === 'danger' ? 'tng-dialog-btn-danger' : (safeType === 'success' ? 'tng-dialog-btn-success' : 'tng-dialog-btn-primary');
+        actionsEl.innerHTML = `
+            <button type="button" class="tng-dialog-btn tng-dialog-btn-cancel" id="tng-dialog-btn-cancel">${cancelText}</button>
+            <button type="button" class="tng-dialog-btn ${btnConfirmClass}" id="tng-dialog-btn-confirm">${confirmText}</button>
+        `;
+
+        overlay.classList.add('active');
+
+        const btnConfirm = document.getElementById('tng-dialog-btn-confirm');
+        const btnCancel = document.getElementById('tng-dialog-btn-cancel');
+
+        const finish = (result) => {
+            overlay.classList.remove('active');
+            resolve(result);
+        };
+
+        if (btnConfirm) btnConfirm.onclick = () => finish(true);
+        if (btnCancel) btnCancel.onclick = () => finish(false);
+
+        if (btnConfirm) btnConfirm.focus();
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                finish(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown, { once: true });
+    });
+}
+
+/**
+ * Hiển thị Popup Nhập liệu đẹp (Thay thế window.prompt)
+ * @param {string} message - Hướng dẫn nhập
+ * @param {string} defaultValue - Giá trị mặc định
+ * @param {string} title - Tiêu đề
+ * @param {object} options - Tùy chọn { placeholder, confirmText, cancelText, type }
+ * @returns {Promise<string|null>}
+ */
+export function showModalPrompt(message, defaultValue = '', title = 'Nhập thông tin', options = {}) {
+    const {
+        placeholder = 'Nhập tại đây...',
+        confirmText = 'Xác nhận',
+        cancelText = 'Hủy',
+        type = 'info'
+    } = options;
+
+    return new Promise((resolve) => {
+        const overlay = getOrCreateDialogOverlay();
+        const iconEl = document.getElementById('tng-dialog-icon');
+        const titleEl = document.getElementById('tng-dialog-title');
+        const bodyEl = document.getElementById('tng-dialog-body');
+        const inputWrap = document.getElementById('tng-dialog-input-wrap');
+        const inputEl = document.getElementById('tng-dialog-input');
+        const actionsEl = document.getElementById('tng-dialog-actions');
+
+        const safeType = DIALOG_ICONS[type] ? type : 'info';
+        iconEl.className = `tng-dialog-icon-wrapper ${safeType}`;
+        iconEl.innerHTML = DIALOG_ICONS[safeType];
+
+        titleEl.innerText = title;
+        bodyEl.innerText = message;
+        bodyEl.className = 'tng-dialog-body text-center';
+
+        if (inputWrap && inputEl) {
+            inputWrap.style.display = 'block';
+            inputEl.value = defaultValue || '';
+            inputEl.placeholder = placeholder;
+        }
+
+        actionsEl.innerHTML = `
+            <button type="button" class="tng-dialog-btn tng-dialog-btn-cancel" id="tng-dialog-btn-cancel">${cancelText}</button>
+            <button type="button" class="tng-dialog-btn tng-dialog-btn-primary" id="tng-dialog-btn-confirm">${confirmText}</button>
+        `;
+
+        overlay.classList.add('active');
+
+        const btnConfirm = document.getElementById('tng-dialog-btn-confirm');
+        const btnCancel = document.getElementById('tng-dialog-btn-cancel');
+
+        const finish = (result) => {
+            overlay.classList.remove('active');
+            resolve(result);
+        };
+
+        if (btnConfirm) {
+            btnConfirm.onclick = () => {
+                const val = inputEl ? inputEl.value : '';
+                finish(val);
+            };
+        }
+        if (btnCancel) btnCancel.onclick = () => finish(null);
+
+        if (inputEl) {
+            setTimeout(() => {
+                inputEl.focus();
+                inputEl.select();
+            }, 50);
+
+            inputEl.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finish(inputEl.value);
+                } else if (e.key === 'Escape') {
+                    finish(null);
+                }
+            };
+        }
+    });
+}
+
+// Gán toàn cục để mọi script có thể gọi trực tiếp
+if (typeof window !== 'undefined') {
+    window.showModalAlert = showModalAlert;
+    window.showModalConfirm = showModalConfirm;
+    window.showModalPrompt = showModalPrompt;
+    window.showCustomAlert = showModalAlert;
+    window.showCustomConfirm = showModalConfirm;
+    window.showCustomPrompt = showModalPrompt;
+    window.handleHeaderAvatarError = function(img) {
+        if (!img) return;
+        img.onerror = null;
+        const placeholder = document.createElement('div');
+        placeholder.id = 'header-user-avatar-img';
+        placeholder.innerHTML = '<div class="header-user-avatar-placeholder"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>';
+        img.replaceWith(placeholder);
+    };
+}
+
 /**
  * Saves a contact message to Firestore.
  * @param {string} name - The name of the sender.
@@ -1175,14 +1418,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
             // Lấy avatar từ hint lưu trước đó hoặc từ Firebase Auth user
             const cachedAvatar = userHint?.avatar || user.photoURL;
-            const defaultAvatarHTML = `
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-            `;
+            const defaultAvatarHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
             const avatarContentHTML = cachedAvatar ? 
-                `<img id="header-user-avatar-img" src="${cachedAvatar}" alt="${displayName}" class="header-user-avatar" onerror="this.onerror=null; this.outerHTML='<div class=\\'header-user-avatar-placeholder\\'>${defaultAvatarHTML.replace(/"/g, '&quot;')}</div>';">` :
+                `<img id="header-user-avatar-img" src="${cachedAvatar}" alt="${displayName}" class="header-user-avatar" onerror="if(typeof window.handleHeaderAvatarError==='function'){window.handleHeaderAvatarError(this);}else{this.style.display='none';}">` :
                 `<div id="header-user-avatar-img">${defaultAvatarHTML}</div>`;
 
             // HIỂN THỊ NGAY icon/avatar người dùng (Chưa cần biết có phải admin hay không)
@@ -1381,7 +1619,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 if (headerAvatarImg.tagName === 'IMG') {
                                     headerAvatarImg.src = latestAvatar;
                                 } else {
-                                    headerAvatarImg.outerHTML = `<img id="header-user-avatar-img" src="${latestAvatar}" alt="${displayName}" class="header-user-avatar" onerror="this.onerror=null; this.outerHTML='<div class=\\'header-user-avatar-placeholder\\'>${defaultAvatarHTML.replace(/"/g, '&quot;')}</div>';">`;
+                                    headerAvatarImg.outerHTML = `<img id="header-user-avatar-img" src="${latestAvatar}" alt="${displayName}" class="header-user-avatar" onerror="if(typeof window.handleHeaderAvatarError==='function'){window.handleHeaderAvatarError(this);}else{this.style.display='none';}">`;
                                 }
                             }
                         }

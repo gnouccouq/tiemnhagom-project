@@ -1,6 +1,6 @@
 import { 
     db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
-    getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId
+    getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId, showModalConfirm
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -668,7 +668,12 @@ window.changeQty = async (index, delta) => {
 };
 
 window.removeItem = async (index) => {
-    if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) {
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?",
+        "Xóa sản phẩm",
+        { confirmText: "Xóa khỏi giỏ", cancelText: "Giữ lại", type: "warning" }
+    );
+    if (ok) {
         let cart = [];
         if (auth.currentUser) {
             const snap = await getDoc(doc(db, "carts", auth.currentUser.uid));
@@ -683,6 +688,7 @@ window.removeItem = async (index) => {
 
         renderCart();
         updateCartCount();
+        showToast("Đã xóa sản phẩm khỏi giỏ hàng");
     }
 };
 

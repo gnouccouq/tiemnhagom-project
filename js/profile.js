@@ -1,6 +1,7 @@
 import { 
     db, auth, logout, loginWithGoogle, updateCartCount, formatPhoneNumber,
-    showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification, escapeHTML
+    showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification, escapeHTML,
+    showModalConfirm, showModalAlert
 } from "./utils.js";
 import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
@@ -126,9 +127,12 @@ async function fetchFavorites(userId) {
 
 // Hàm hủy đơn hàng
 window.cancelOrder = async (orderId) => {
-    if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
-        return;
-    }
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn hủy đơn hàng này không?\n\n⚠️ Hành động này sẽ hủy yêu cầu đặt hàng và không thể hoàn tác.",
+        "Xác nhận hủy đơn hàng",
+        { confirmText: "Hủy đơn hàng", cancelText: "Giữ lại đơn", type: "danger" }
+    );
+    if (!ok) return;
 
     const user = auth.currentUser;
     if (!user) {
@@ -393,7 +397,12 @@ async function fetchAddresses(userId) {
 }
 
 window.deleteAddress = async (index) => {
-    if (!confirm("Xóa địa chỉ này khỏi sổ địa chỉ?")) return;
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn xóa địa chỉ này khỏi sổ địa chỉ không?",
+        "Xóa địa chỉ",
+        { confirmText: "Xóa địa chỉ", cancelText: "Hủy", type: "warning" }
+    );
+    if (!ok) return;
     const user = auth.currentUser;
     try {
         const userRef = doc(db, "users", user.uid);

@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
-    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP
+    fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP,
+    showModalAlert, showModalConfirm, showModalPrompt
 } from "./utils.js";
 import {
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy,
@@ -5174,28 +5175,33 @@ async function deleteProduct(id) {
     const p = posProductsLocal.find(item => item.id === id);
     const prodName = p ? p.name : id;
 
-    if (confirm(`⚠️ Bạn có chắc chắn muốn XÓA VĨNH VIỄN sản phẩm "${prodName}" (Mã SKU: ${id}) khỏi hệ thống không?\nHành động này không thể hoàn tác!`)) {
-        try {
-            await deleteDoc(doc(db, "products", id));
-            
-            // Cập nhật mảng sản phẩm local
-            posProductsLocal = posProductsLocal.filter(item => item.id !== id);
-            
-            showToast(`✅ Đã xóa sản phẩm "${prodName}" thành công!`, "success");
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn XÓA VĨNH VIỄN sản phẩm "${prodName}" (Mã SKU: ${id}) khỏi hệ thống không?\n\n⚠️ Hành động này sẽ xóa dữ liệu và không thể hoàn tác!`,
+        "Xác nhận xóa sản phẩm",
+        { confirmText: "Xóa vĩnh viễn", cancelText: "Giữ lại", type: "danger" }
+    );
+    if (!ok) return;
 
-            // Đóng modal sản phẩm nếu đang mở
-            if (typeof window.closeProductModal === 'function') {
-                window.closeProductModal();
-            }
+    try {
+        await deleteDoc(doc(db, "products", id));
+        
+        // Cập nhật mảng sản phẩm local
+        posProductsLocal = posProductsLocal.filter(item => item.id !== id);
+        
+        showToast(`✅ Đã xóa sản phẩm "${prodName}" thành công!`, "success");
 
-            // Render lại bảng dữ liệu
-            if (typeof renderAdminProductTable === 'function') {
-                renderAdminProductTable();
-            }
-        } catch (error) {
-            console.error("Lỗi khi xóa sản phẩm:", error);
-            showToast("Lỗi khi xóa sản phẩm: " + error.message, "error");
+        // Đóng modal sản phẩm nếu đang mở
+        if (typeof window.closeProductModal === 'function') {
+            window.closeProductModal();
         }
+
+        // Render lại bảng dữ liệu
+        if (typeof renderAdminProductTable === 'function') {
+            renderAdminProductTable();
+        }
+    } catch (error) {
+        console.error("Lỗi khi xóa sản phẩm:", error);
+        showToast("Lỗi khi xóa sản phẩm: " + error.message, "error");
     }
 }
 window.deleteProduct = deleteProduct;
@@ -7098,7 +7104,12 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
 };
 
 window.deleteAdminOrder = async (orderId) => {
-    if (confirm(`Bạn có chắc chắn muốn hủy đơn hàng #${orderId}? Tồn kho và số lượng đã bán sẽ được tự động hoàn lại.`)) {
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn hủy đơn hàng #${orderId} không?\n\nTồn kho và số lượng đã bán sẽ được tự động hoàn lại đầy đủ.`,
+        "Xác nhận hủy đơn hàng",
+        { confirmText: "Hủy đơn hàng", cancelText: "Giữ lại", type: "danger" }
+    );
+    if (ok) {
         await window.updateOrderStatus(orderId, 'Đã hủy');
     }
 };
@@ -8178,7 +8189,12 @@ window.toggleUserQuickView = function (userId, event) {
 
 window.deleteUser = async function (userId) {
     if (!userId) return;
-    if (!confirm(`Bạn có chắc chắn muốn xóa khách hàng "${userId}"? Hành động này không thể hoàn tác.`)) return;
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn xóa khách hàng "${userId}" không?\n\n⚠️ Hành động này sẽ xóa vĩnh viễn và không thể hoàn tác.`,
+        "Xác nhận xóa khách hàng",
+        { confirmText: "Xóa khách hàng", cancelText: "Hủy bỏ", type: "danger" }
+    );
+    if (!ok) return;
     try {
         await deleteDoc(doc(db, "users", userId));
         showToast(`Đã xóa khách hàng ${userId} thành công!`, "success");
@@ -8609,7 +8625,12 @@ function initCouponListener() {
 }
 
 window.deleteCoupon = async (code) => {
-    if (confirm(`Bạn có muốn xóa mã giảm giá ${code}?`)) {
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn xóa mã giảm giá "${code}" không?`,
+        "Xóa mã giảm giá",
+        { confirmText: "Xóa mã", cancelText: "Hủy bỏ", type: "danger" }
+    );
+    if (ok) {
         try {
             await deleteDoc(doc(db, "coupons", code));
             showToast(`Đã xóa mã ${code}`);
@@ -10348,7 +10369,7 @@ window.realignAllPastOrdersInventory = async () => {
 
         const msg = `Đã rà soát ${snap.size} đơn hàng. Đã trừ bù tồn kho thành công cho ${updatedCount} sản phẩm (${detailsLog.length} biến thể)!\n\nChi tiết:\n- ` + detailsLog.join('\n- ');
         console.log(msg);
-        alert(msg);
+        await showModalAlert(msg, "Đồng bộ tồn kho thành công", "success");
         if (typeof showToast !== 'undefined') showToast("Đã đồng bộ xong tồn kho sản phẩm từ lịch sử đơn hàng!", "success");
         if (typeof initProductListener === 'function') initProductListener();
     } catch (err) {
@@ -11362,8 +11383,13 @@ window.updateFsRowProgress = (pid) => {
     }
 };
 
-window.removeFsItem = (pid) => {
-    if (confirm("Bạn có chắc muốn xóa sản phẩm này khỏi Flash Sale?")) {
+window.removeFsItem = async (pid) => {
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn xóa sản phẩm này khỏi chiến dịch Flash Sale không?",
+        "Xóa khỏi Flash Sale",
+        { confirmText: "Xóa khỏi Sale", cancelText: "Hủy", type: "warning" }
+    );
+    if (ok) {
         delete fsSelectedItemsMap[pid];
         renderFsSelectedItemsTable();
     }
@@ -12860,7 +12886,12 @@ window.toggleRestockStatus = async (id, currentStatus) => {
 };
 
 window.deleteRestockAlert = async (id) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu thông báo này không?")) return;
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn xóa yêu cầu thông báo hàng về này không?",
+        "Xóa yêu cầu thông báo",
+        { confirmText: "Xóa yêu cầu", cancelText: "Hủy", type: "warning" }
+    );
+    if (!ok) return;
     try {
         await deleteDoc(doc(db, "restock_alerts", id));
         showToast("Đã xóa yêu cầu");
