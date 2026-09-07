@@ -632,11 +632,13 @@ async function fetchProductDetail() {
                     </div>
                     <div class="product-info-sticky">
                         <div class="product-main-meta">
-                            <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span class="category-tag">${p.category}</span>
-                                <span class="product-sku">Mã: ${productId}</span>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span class="category-tag" style="margin-bottom: 0;">${p.category}</span>
                                 ${isNewArrival ? `<span class="product-badge badge-new" style="background: #d6e8dc; color: #1e4b2d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(30,75,45,0.2); display: inline-flex; align-items: center; gap: 3px;">✨ Hàng mới</span>` : ''}
                                 ${isBestSeller ? `<span class="product-badge badge-hot" style="background: #fcd9c6; color: #9c3615; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(156,54,21,0.2); display: inline-flex; align-items: center; gap: 3px;">🔥 Bán chạy</span>` : ''}
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <span class="product-sku" style="margin-bottom: 0; display: inline-block;">Mã: ${productId}</span>
                             </div>
                             <h1>${p.name}</h1>
                             <div class="rating">
@@ -644,8 +646,8 @@ async function fetchProductDetail() {
                             </div>
                             <div class="product-price-row">
                                 <span class="main-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span>
-                                ${hasSale ? `<span class="old-price" style="text-decoration:line-through; color:#aaa; font-size:1.2rem;">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</span>` : ''}
-                                ${hasSale ? `<span class="sale-label" style="color:#c0392b; font-weight:700;">-${displaySale}%</span>` : ''}
+                                ${hasSale ? `<span class="old-price">${new Intl.NumberFormat('vi-VN').format(p.price)} VND</span>` : ''}
+                                ${hasSale ? `<span class="sale-label">-${displaySale}%</span>` : ''}
                             </div>
                             ${detailFlashSaleBarHtml}
                             ${(() => {
@@ -1013,10 +1015,6 @@ async function fetchProductDetail() {
             renderVariantSelectors(p); // Render bộ chọn biến thể
 
             // Tự động chọn biến thể từ URL
-            const urlColor = urlParams.get('color');
-            const urlPattern = urlParams.get('pattern');
-            const urlCombo = urlParams.get('combo');
-            
             if (urlColor && p.colorVariants) {
                 const colorV = p.colorVariants.find(v => v.name === urlColor);
                 if (colorV) window.selectColor(colorV.name, colorV.imageUrl);
