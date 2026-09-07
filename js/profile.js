@@ -447,8 +447,24 @@ async function handleProfileAuth(user) {
         const editGender = document.getElementById('edit-gender');
         const editJoinDate = document.getElementById('edit-join-date');
 
+        let userMainPhone = userData.phone || user.phoneNumber || '';
+        
+        // TỰ ĐỘNG LẤY SĐT TỪ SỔ ĐỊA CHỈ NẾU HỒ SƠ CHÍNH CHƯA CÓ
+        if (!userMainPhone && Array.isArray(userData.addresses) && userData.addresses.length > 0) {
+            const firstAddrWithPhone = userData.addresses.find(a => a && a.phone && a.phone.trim());
+            if (firstAddrWithPhone) {
+                userMainPhone = formatPhoneNumber(firstAddrWithPhone.phone.trim());
+                // Tự động đồng bộ ngầm vào Firestore và kích hoạt liên kết đơn hàng
+                updateDoc(userRef, {
+                    phone: userMainPhone,
+                    updatedAt: new Date().toISOString()
+                }).catch(() => {});
+                autoLinkOrdersByPhone(user.uid, userMainPhone).catch(() => {});
+            }
+        }
+
         if (editName) editName.value = user.displayName || '';
-        if (editPhone) editPhone.value = userData.phone || '';
+        if (editPhone) editPhone.value = userMainPhone;
         if (editEmail) editEmail.value = user.email || '';
         if (editDob) editDob.value = userData.dob || userData.birthday || '';
         if (editGender) editGender.value = userData.gender || '';
@@ -1257,6 +1273,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnAddAddress && addressModal) {
         btnAddAddress.onclick = () => {
+            // Tự động điền sẵn tên & SĐT nếu tài khoản đã có
+            const currentName = document.getElementById('edit-name')?.value || auth.currentUser?.displayName || '';
+            const currentPhone = document.getElementById('edit-phone')?.value || '';
+            const nameInput = document.getElementById('new-addr-name');
+            const phoneInput = document.getElementById('new-addr-phone');
+            if (nameInput && !nameInput.value && currentName) nameInput.value = currentName;
+            if (phoneInput && !phoneInput.value && currentPhone) phoneInput.value = currentPhone;
+
             addressModal.style.display = 'block';
             setTimeout(() => {
                 addressModal.style.opacity = '1';
@@ -1289,18 +1313,35 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (!auth.currentUser) throw new Error("Bạn chưa đăng nhập");
                 
+                const rawPhone = document.getElementById('new-addr-phone').value.trim();
+                const formattedPhone = formatPhoneNumber(rawPhone);
+
                 const newAddress = {
-                    fullName: document.getElementById('new-addr-name').value,
-                    phone: document.getElementById('new-addr-phone').value,
+                    fullName: document.getElementById('new-addr-name').value.trim(),
+                    phone: formattedPhone,
                     provinceName: document.getElementById('new-addr-province').value,
                     wardName: document.getElementById('new-addr-ward').value,
-                    address: document.getElementById('new-addr-detail').value
+                    address: document.getElementById('new-addr-detail').value.trim()
                 };
                 
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 await updateDoc(userRef, {
                     addresses: arrayUnion(newAddress)
                 });
+
+                // Nếu hồ sơ cá nhân chính chưa có SĐT thì tự động gán luôn SĐT này và kích hoạt liên kết đơn hàng cũ
+                const editPhoneInput = document.getElementById('edit-phone');
+                if (editPhoneInput && !editPhoneInput.value && formattedPhone) {
+                    editPhoneInput.value = formattedPhone;
+                    await updateDoc(userRef, {
+                        phone: formattedPhone,
+                        updatedAt: new Date().toISOString()
+                    }).catch(() => {});
+                    const linkedCount = await autoLinkOrdersByPhone(auth.currentUser.uid, formattedPhone);
+                    if (linkedCount > 0) {
+                        showToast(`Thành công! Đã tự động liên kết ${linkedCount} đơn hàng cũ theo số ${formattedPhone}.`);
+                    }
+                }
                 
                 showToast("Thêm địa chỉ thành công!");
                 formAddAddress.reset();
