@@ -199,11 +199,15 @@ async function fetchProductDetail() {
         if (docSnap.exists()) {
             const p = docSnap.data();
 
-            // Nếu không có ảnh đại diện, hoặc ảnh là placeholder thì lấy ảnh từ biến thể màu sắc hoặc họa tiết
+            // Nếu không có ảnh đại diện, hoặc ảnh là placeholder thì lấy ảnh từ biến thể combo / màu sắc / họa tiết
             const isPlaceholder = !p.imageUrl || p.imageUrl.includes('placehold.co') || p.imageUrl.includes('via.placeholder.com');
             if (isPlaceholder) {
                 let variantImage = null;
-                if (p.colorVariants && p.colorVariants.length > 0) {
+                if (p.isCombo && Array.isArray(p.comboVariants) && p.comboVariants.length > 0) {
+                    const firstComboWithImage = p.comboVariants.find(v => v && (v.imageUrl || v.thumbUrl));
+                    if (firstComboWithImage) variantImage = firstComboWithImage.imageUrl || firstComboWithImage.thumbUrl;
+                }
+                if (!variantImage && p.colorVariants && p.colorVariants.length > 0) {
                     const firstColorWithImage = p.colorVariants.find(v => v && v.imageUrl);
                     if (firstColorWithImage) variantImage = firstColorWithImage.imageUrl;
                 }

@@ -3385,9 +3385,19 @@ if (productForm) {
             const collectionsList = Array.from(document.querySelectorAll('.collection-checkbox:checked')).map(cb => cb.value);
             const eventsList = Array.from(document.querySelectorAll('.event-checkbox:checked')).map(cb => cb.value);
 
-            const finalImageUrl = currentMain || 'https://placehold.co/300x300?text=No+Image';
-
             const isCombo = document.querySelector('input[name="product-type"]:checked').value === 'combo';
+
+            let finalImageUrl = currentMain;
+            if ((!finalImageUrl || finalImageUrl.includes('placehold.co')) && isCombo && Array.isArray(window.comboVariants) && window.comboVariants.length > 0) {
+                const firstVarWithImg = window.comboVariants.find(v => v && (v.imageUrl || v.thumbUrl));
+                if (firstVarWithImg) {
+                    finalImageUrl = firstVarWithImg.imageUrl || firstVarWithImg.thumbUrl;
+                    if (!currentThumb) currentThumb = finalImageUrl;
+                }
+            }
+            if (!finalImageUrl) {
+                finalImageUrl = 'https://placehold.co/300x300?text=No+Image';
+            }
 
             let rawDesc = document.getElementById('description') ? document.getElementById('description').value : '';
             if (window.quillProductEditor && window.quillProductEditor.root) {

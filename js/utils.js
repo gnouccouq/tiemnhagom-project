@@ -979,7 +979,11 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
 
     if (isPlaceholder && !variantOverride) {
         let variantImage = null;
-        if (product.colorVariants && product.colorVariants.length > 0) {
+        if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
+            const firstComboWithImage = product.comboVariants.find(v => v && (v.imageUrl || v.thumbUrl));
+            if (firstComboWithImage) variantImage = firstComboWithImage.imageUrl || firstComboWithImage.thumbUrl;
+        }
+        if (!variantImage && product.colorVariants && product.colorVariants.length > 0) {
             const firstColorWithImage = product.colorVariants.find(v => v && v.imageUrl);
             if (firstColorWithImage) variantImage = firstColorWithImage.imageUrl;
         }
