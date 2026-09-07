@@ -1291,9 +1291,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             ${badgesCorner}
         </div>
         <div class="product-card-info">
-            <div class="product-sku-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; margin-bottom: 4px; color: #888;">
-                <span class="product-sku" style="letter-spacing: 1px;">Mã: ${id}</span>
-                ${effectiveSold > 0 ? `<span class="product-sold-mini" style="color: #64748b; font-weight: 500;">Đã bán ${effectiveSold}</span>` : ''}
+            <div class="product-sku-row">
+                <span class="product-sku">Mã: ${id}</span>
+                ${effectiveSold > 0 ? `<span class="product-sold-mini">Đã bán ${effectiveSold}</span>` : ''}
             </div>
             <a href="${linkUrl}" class="product-title-link">
                 <h3>${displayName}</h3>
@@ -1928,6 +1928,12 @@ export async function loadSharedComponents(pathPrefix = './') {
             const footerPlaceholder = document.getElementById('footer-placeholder');
             if (footerPlaceholder) {
                 footerPlaceholder.innerHTML = footerHTML;
+                // Đưa cụm floating widgets ra trực tiếp thẻ <body> để cố định chuẩn viewport
+                const floatingWidgets = footerPlaceholder.querySelector('.floating-widgets');
+                if (floatingWidgets) {
+                    document.body.appendChild(floatingWidgets);
+                }
+                setupScrollToTop();
             }
         }
 

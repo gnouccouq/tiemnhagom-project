@@ -132,7 +132,7 @@ export async function renderPersonalizedRecommendations(containerId = 'ai-person
                     <h2 class="ai-section-title">Sản phẩm có thể bạn sẽ thích</h2>
                     <p class="ai-section-subtitle">Dựa trên phong cách và sở thích trang trí của bạn</p>
                 </div>
-                <div class="product-grid grid">
+                <div class="ai-recommendation-grid">
                     ${cardsHtml}
                 </div>
             </div>
@@ -188,7 +188,7 @@ export async function renderDecorMatchRecommendations(currentProduct, containerI
                     <div class="ai-badge" style="background: #fdf3e7; color: #d35400;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg> Gợi ý Phối Không Gian</div>
                     <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin-top: 5px;">Món đồ hợp phối cùng sản phẩm này</h3>
                 </div>
-                <div class="product-grid grid">
+                <div class="ai-recommendation-grid">
                     ${cardsHtml}
                 </div>
             </div>

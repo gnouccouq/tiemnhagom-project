@@ -79,11 +79,9 @@ html {
 @keyframes pageFadeIn {
     0% {
         opacity: 0;
-        filter: blur(8px);
     }
     100% {
         opacity: 1;
-        filter: blur(0);
     }
 }
 
@@ -96,8 +94,17 @@ body {
     padding-top: 80px;
 }
 
-body > *:not(#header-placeholder) {
-    animation: pageFadeIn 0.8s ease-out forwards;
+body > *:not(#header-placeholder):not(#footer-placeholder):not(.floating-widgets):not(.gemini-chat-widget) {
+    animation: pageFadeIn 0.4s ease-out;
+}
+
+#footer-placeholder,
+footer,
+.floating-widgets,
+.gemini-chat-widget {
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
 }
 
 /* ==========================================================================
@@ -1420,6 +1427,67 @@ body > *:not(#header-placeholder) {
     padding: 0 4px;
 }
 
+.product-sku-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+    color: #888;
+    line-height: 1.2;
+    width: 100%;
+    min-width: 0;
+}
+
+.product-sku-row .product-sku {
+    color: #888;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1 1 auto;
+    margin-bottom: 0;
+}
+
+.product-sku-row .product-sold-mini {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+@media (max-width: 768px) {
+    .product-sku-row {
+        font-size: 0.68rem;
+        gap: 2px;
+        margin-bottom: 3px;
+    }
+    .product-sku-row .product-sku {
+        font-size: 0.68rem;
+        letter-spacing: 0;
+    }
+    .product-sku-row .product-sold-mini {
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-sku-row {
+        font-size: 0.62rem;
+    }
+    .product-sku-row .product-sku {
+        font-size: 0.62rem;
+    }
+    .product-sku-row .product-sold-mini {
+        font-size: 0.62rem;
+    }
+}
+
 .product-title-link {
     text-decoration: none;
 }
@@ -1476,19 +1544,55 @@ body > *:not(#header-placeholder) {
 
 section {
     padding: 4rem 5%;
-    /* TrÃƒÂ¡Ã‚ÂºÃ‚Â£ vÃƒÂ¡Ã‚Â»Ã‚Â lÃƒÂ¡Ã‚Â»Ã‚Â chuÃƒÂ¡Ã‚ÂºÃ‚Â©n cho cÃƒÆ’Ã‚Â¡c trang */
     margin-top: 2rem;
 }
 
 .special-offers {
     display: none;
-    /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh, JS sÃƒÂ¡Ã‚ÂºÃ‚Â½ hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡n khi cÃƒÆ’Ã‚Â³ data */
     background-color: #fff9f8;
-    /* NÃƒÂ¡Ã‚Â»Ã‚Ân hÃƒÂ¡Ã‚Â»Ã¢â‚¬Å“ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚ÂºÃ‚Â¥t nhÃƒÂ¡Ã‚ÂºÃ‚Â¡t ÃƒÂ¡Ã‚ÂºÃ‚Â¥m cÃƒÆ’Ã‚Âºng */
     padding: 5rem 5%;
     margin-top: 4rem;
     border-top: 1px solid #ffe4e1;
     border-bottom: 1px solid #ffe4e1;
+}
+
+@media (max-width: 768px) {
+    .special-offers .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding: 1.5rem 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .special-offers .sale-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: #e6d5c3;
+        color: #4a3c31;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        transform: rotate(-15deg);
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-card {
+        padding: 8px 6px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
 }
 
 .special-offers h2 {
@@ -1791,34 +1895,41 @@ h2::after {
     }
 
     .grid {
-        grid-template-columns: repeat(2, 1fr);
-        /* Ãƒâ€žÃ‚ÂÃƒÂ¡Ã‚ÂºÃ‚Â£m bÃƒÂ¡Ã‚ÂºÃ‚Â£o luÃƒÆ’Ã‚Â´n 2 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trÃƒÆ’Ã‚Âªn mobile */
-        gap: 12px;
-        padding: 1.5rem 0;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding: 1rem 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
 
     .sale-badge {
         position: absolute;
-        top: 10px;
-        left: 10px;
+        top: 8px;
+        left: 8px;
         background: #e6d5c3;
         color: #4a3c31;
-        width: 45px;
-        height: 45px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         font-weight: 700;
         transform: rotate(-15deg);
         z-index: 10;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-
-    padding: 0.8rem;
-}
+    .product-card {
+        padding: 8px 6px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
 
 .product-card h3 {
     font-size: 0.9rem;
@@ -11397,11 +11508,27 @@ body:hover::-webkit-scrollbar-thumb {
    AI RECOMMENDATIONS & GEMINI ASSISTANT STYLES
    ========================================================================== */
 .ai-recommendation-section {
-    margin: 4rem 0 2rem 0;
+    margin: 3.5rem 0 2rem 0;
     padding: 2rem;
     background: #faf8f5;
     border-radius: 16px;
     border: 1px solid #eee8df;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ai-recommendation-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ai-recommendation-grid .product-card {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .ai-section-header {
@@ -11434,6 +11561,68 @@ body:hover::-webkit-scrollbar-thumb {
 .ai-section-subtitle {
     font-size: 0.9rem;
     color: #7f8c8d;
+}
+
+@media (max-width: 1200px) {
+    .ai-recommendation-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 992px) {
+    .ai-recommendation-section {
+        padding: 1.5rem;
+        margin: 2.5rem 0 1.5rem 0;
+    }
+    .ai-recommendation-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+    .ai-section-title {
+        font-size: 1.35rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .ai-recommendation-section {
+        padding: 1.25rem 10px;
+        margin: 2rem 0 1.5rem 0;
+        border-radius: 12px;
+    }
+    .ai-recommendation-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .ai-recommendation-grid .product-card {
+        padding: 8px;
+    }
+    .ai-section-title {
+        font-size: 1.2rem;
+    }
+    .ai-section-subtitle {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-recommendation-section {
+        padding: 1rem 8px;
+        margin: 1.5rem 0 1rem 0;
+    }
+    .ai-recommendation-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .ai-recommendation-grid .product-card {
+        padding: 6px;
+    }
+    .ai-section-title {
+        font-size: 1.1rem;
+    }
+    .ai-section-subtitle {
+        font-size: 0.75rem;
+    }
 }
 
 /* Floating Gemini Chat Widget */
