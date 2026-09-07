@@ -770,20 +770,32 @@ export function updateMembershipPrices(tier) {
 }
 window.updateMembershipPrices = updateMembershipPrices;
 
-export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html') {
-    let cardsHtml = renderProductCard(product, id, favsList, linkBase);
+export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html', options = {}) {
+    const onlyBestSellers = Boolean(options.onlyBestSellers);
+    const productIsBestSeller = !((product.stock || 0) <= 0) && ((Number(product.sold) || 0) >= 5 || Boolean(product.isBestSeller));
+    
+    let cardsHtml = '';
+    if (!onlyBestSellers || productIsBestSeller) {
+        cardsHtml += renderProductCard(product, id, favsList, linkBase);
+    }
             
     // Render independent color variants
     if (product.colorVariants && Array.isArray(product.colorVariants)) {
         product.colorVariants.forEach(v => {
-            if (v.showOnProductPage) {
+            const vSold = Number(v.sold) || 0;
+            const vIsBestSeller = !(v.stock <= 0 || v.isOutOfStock) && (vSold >= 5 || Boolean(v.isBestSeller));
+            const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
+
+            if (shouldShow) {
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'color',
                     name: v.name,
                     imageUrl: v.imageUrl,
                     price: v.price,
                     stock: v.stock,
-                    isOutOfStock: v.isOutOfStock
+                    sold: vSold,
+                    isOutOfStock: v.isOutOfStock,
+                    isBestSeller: v.isBestSeller
                 });
             }
         });
@@ -792,14 +804,20 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
     // Render independent pattern variants
     if (product.patternVariants && Array.isArray(product.patternVariants)) {
         product.patternVariants.forEach(v => {
-            if (v.showOnProductPage) {
+            const vSold = Number(v.sold) || 0;
+            const vIsBestSeller = !(v.stock <= 0 || v.isOutOfStock) && (vSold >= 5 || Boolean(v.isBestSeller));
+            const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
+
+            if (shouldShow) {
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'pattern',
                     name: v.name,
                     imageUrl: v.imageUrl,
                     price: v.price,
                     stock: v.stock,
-                    isOutOfStock: v.isOutOfStock
+                    sold: vSold,
+                    isOutOfStock: v.isOutOfStock,
+                    isBestSeller: v.isBestSeller
                 });
             }
         });
@@ -808,14 +826,20 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
     // Render independent combo variants
     if (product.comboVariants && Array.isArray(product.comboVariants)) {
         product.comboVariants.forEach(v => {
-            if (v.showOnProductPage) {
+            const vSold = Number(v.sold) || 0;
+            const vIsBestSeller = !(v.stock <= 0 || v.isOutOfStock) && (vSold >= 5 || Boolean(v.isBestSeller));
+            const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
+
+            if (shouldShow) {
                 cardsHtml += renderProductCard(product, id, favsList, linkBase, {
                     type: 'combo',
                     name: v.name,
                     imageUrl: v.imageUrl || v.thumbUrl,
                     price: v.price,
                     stock: v.stock,
-                    isOutOfStock: v.isOutOfStock
+                    sold: vSold,
+                    isOutOfStock: v.isOutOfStock,
+                    isBestSeller: v.isBestSeller
                 });
             }
         });
@@ -851,14 +875,30 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const displaySale = getProductEffectiveSale(mockProduct, globalFlashSaleSettings, id);
     const hasSale = displaySale > 0;
     let isOutOfStock = (product.stock || 0) <= 0;
-    if (variantOverride) {
-        if (variantOverride.isOutOfStock !== undefined && variantOverride.isOutOfStock !== null) {
-            isOutOfStock = Boolean(variantOverride.isOutOfStock) || (variantOverride.stock !== undefined && variantOverride.stock !== null && variantOverride.stock <= 0);
-        } else if (variantOverride.stock !== undefined && variantOverride.stock !== null) {
-            isOutOfStock = variantOverride.stock <= 0;
-        }
+    if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
+        const hasAnyAvailable = product.comboVariants.some(v => {
+            const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : 0;
+            const vOut = Boolean(v.manualOutOfStock) || (Boolean(v.isOutOfStock) && vStock <= 0);
+            return !vOut && vStock > 0;
+        });
+        isOutOfStock = !hasAnyAvailable;
     }
-    const soldCount = product.sold || 0;
+    if (variantOverride) {
+        const vStock = (variantOverride.stock !== undefined && variantOverride.stock !== null) ? Number(variantOverride.stock) : 0;
+        const vOut = Boolean(variantOverride.manualOutOfStock) || (Boolean(variantOverride.isOutOfStock) && vStock <= 0);
+        isOutOfStock = vOut || vStock <= 0;
+    }
+    const effectiveSold = (variantOverride && variantOverride.sold !== undefined)
+        ? (Number(variantOverride.sold) || 0)
+        : (Number(product.sold) || 0);
+
+    const isBestSeller = !isOutOfStock && (
+        variantOverride
+            ? ((Number(variantOverride.sold) || 0) >= 5 || Boolean(variantOverride.isBestSeller))
+            : ((Number(product.sold) || 0) >= 5 || Boolean(product.isBestSeller))
+    );
+    const bestSellerBadge = isBestSeller ? `<div class="hot-seller-badge" style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; z-index: 10; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(255, 65, 108, 0.4); letter-spacing: 0.3px;">🔥 Bán chạy</div>` : '';
+
     const priceHtml = hasSale
         ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap; color: #e65100; font-weight: 700;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
         : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</p>`;
@@ -967,9 +1007,13 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                      alt="${displayName}" loading="lazy" width="300" height="300">
             </a>
             ${isOutOfStock ? stockBadge : saleBadge}
+            ${bestSellerBadge}
         </div>
         <div class="product-card-info">
-            <div class="product-sku" style="font-size: 0.7rem; margin-bottom: 4px; letter-spacing: 1px;">Mã: ${id}</div>
+            <div class="product-sku-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; margin-bottom: 4px; color: #888;">
+                <span class="product-sku" style="letter-spacing: 1px;">Mã: ${id}</span>
+                ${effectiveSold > 0 ? `<span class="product-sold-mini" style="color: #64748b; font-weight: 500;">Đã bán ${effectiveSold}</span>` : ''}
+            </div>
             <a href="${linkUrl}" class="product-title-link">
                 <h3>${displayName}</h3>
             </a>

@@ -2820,9 +2820,14 @@
                                             <input type="number" id="combo-variant-price" placeholder="Giá riêng (đ)" min="0"
                                                 oninput="window.updateCurrentComboVariantPrice(this.value)"
                                                 style="width: 110px;" title="Giá bán riêng cho phân loại combo này">
-                                            <input type="number" id="combo-variant-stock" placeholder="Tồn kho" min="0"
-                                                oninput="window.updateCurrentComboVariantStock(this.value)"
-                                                style="width: 90px;">
+                                            <div style="display: flex; align-items: center; gap: 6px; background: #e0f2fe; border: 1px solid #bae6fd; padding: 5px 10px; border-radius: 6px;" title="Tồn kho tự động tính từ tồn kho của các sản phẩm thành phần">
+                                                <span style="font-size: 0.8rem; color: #0369a1; font-weight: 600; white-space: nowrap;">📦 Tồn kho:</span>
+                                                <span id="combo-variant-stock-badge" style="font-size: 0.85rem; font-weight: 700; color: #0284c7;">0</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 6px; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 10px; border-radius: 6px;" title="Số lượng phân loại này đã được bán ra">
+                                                <span style="font-size: 0.8rem; color: #b45309; font-weight: 600; white-space: nowrap;">🔥 Đã bán:</span>
+                                                <input type="number" id="combo-variant-sold-input" min="0" style="width: 55px; padding: 2px 4px; font-size: 0.85rem; font-weight: 700; color: #b45309; border: 1px solid #fcd34d; border-radius: 4px; background: #fff; text-align: center;" oninput="window.updateCurrentComboVariantSold(this.value)">
+                                            </div>
                                             <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #dc2626; cursor: pointer; white-space: nowrap;">
                                                 <input type="checkbox" id="combo-variant-out-of-stock"
                                                     onchange="window.updateCurrentComboVariantOutOfStock(this.checked)"> Báo hết hàng

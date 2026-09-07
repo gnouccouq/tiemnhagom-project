@@ -95,7 +95,7 @@ async function fetchBestSellingProducts() {
         querySnapshot.forEach((doc) => {
             if (doc.data().isHidden || doc.data().isOnlyEvent) return;
             if (count >= 10) return;
-            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html');
+            htmlContent += renderProductCardWithVariants(doc.data(), doc.id, favs, 'product/index.html', { onlyBestSellers: true });
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm bán chạy.</p>';

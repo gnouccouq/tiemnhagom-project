@@ -844,14 +844,35 @@ window.placeOrder = async () => {
             }
 
             // 2. Giai đoạn GHI (WRITE): Xử lý logic và thực hiện các lệnh set/update.
-            const productUpdatesMap = {}; // pId -> { productRef, totalSold, colorQtyMap, patternQtyMap }
+            const productUpdatesMap = {}; // pId -> { productRef, product, totalSold, colorQtyMap, patternQtyMap, comboQtyMap }
 
             for (const { item, productRef, productSnap } of productSnapshots) {
                 const product = productSnap.data();
                 let currentStock = product.stock || 0;
                 let variantImage = product.imageUrl;
-
                 let variantPriceValue = null;
+
+                // Kiểm tra biến thể combo nếu có
+                let matchedComboName = null;
+                if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
+                    matchedComboName = item.comboVariant || item.combo;
+                    if (!matchedComboName && item.variant) {
+                        const matchedCV = product.comboVariants.find(cv => item.variant.includes(cv.name));
+                        if (matchedCV) matchedComboName = matchedCV.name;
+                    }
+                    if (!matchedComboName && product.comboVariants.length === 1) {
+                        matchedComboName = product.comboVariants[0].name;
+                    }
+                    if (matchedComboName) {
+                        const cv = product.comboVariants.find(v => v.name === matchedComboName);
+                        if (cv) {
+                            if (cv.imageUrl) variantImage = cv.imageUrl;
+                            if (cv.price && Number(cv.price) > 0) variantPriceValue = cv.price;
+                            if (cv.stock !== undefined && cv.stock !== null) currentStock = cv.stock;
+                            if (cv.isOutOfStock) currentStock = 0;
+                        }
+                    }
+                }
 
                 // Kiểm tra tồn kho biến thể màu sắc
                 if (item.color && Array.isArray(product.colorVariants)) {
@@ -896,7 +917,8 @@ window.placeOrder = async () => {
                     quantity: item.quantity,
                     color: item.color || null,
                     pattern: item.pattern || null,
-                    variant: item.variant || [item.color, item.pattern].filter(Boolean).join(' / ') || null
+                    comboVariant: matchedComboName || item.comboVariant || null,
+                    variant: item.variant || [matchedComboName, item.color, item.pattern].filter(Boolean).join(' / ') || null
                 });
                 productNames.push(product.name);
 
@@ -908,7 +930,8 @@ window.placeOrder = async () => {
                         product,
                         totalSold: 0,
                         colorQtyMap: {},
-                        patternQtyMap: {}
+                        patternQtyMap: {},
+                        comboQtyMap: {}
                     };
                 }
                 const pInfo = productUpdatesMap[pId];
@@ -919,11 +942,14 @@ window.placeOrder = async () => {
                 if (item.pattern) {
                     pInfo.patternQtyMap[item.pattern] = (pInfo.patternQtyMap[item.pattern] || 0) + item.quantity;
                 }
+                if (matchedComboName) {
+                    pInfo.comboQtyMap[matchedComboName] = (pInfo.comboQtyMap[matchedComboName] || 0) + item.quantity;
+                }
             }
 
             // Thực hiện update từng sản phẩm duy nhất 1 lần trong transaction
             for (const pId of Object.keys(productUpdatesMap)) {
-                const { productRef, product, totalSold, colorQtyMap, patternQtyMap } = productUpdatesMap[pId];
+                const { productRef, product, totalSold, colorQtyMap, patternQtyMap, comboQtyMap } = productUpdatesMap[pId];
                 let updateProductData = {
                     sold: increment(totalSold)
                 };
@@ -934,14 +960,38 @@ window.placeOrder = async () => {
                 if (Array.isArray(product.colorVariants) && Object.keys(colorQtyMap).length > 0) {
                     updateProductData.colorVariants = product.colorVariants.map(v => {
                         const qty = colorQtyMap[v.name] || 0;
-                        if (qty > 0) return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                        if (qty > 0) {
+                            return {
+                                ...v,
+                                stock: Math.max(0, (v.stock || 0) - qty),
+                                sold: (v.sold || 0) + qty
+                            };
+                        }
                         return v;
                     });
                 }
                 if (Array.isArray(product.patternVariants) && Object.keys(patternQtyMap).length > 0) {
                     updateProductData.patternVariants = product.patternVariants.map(v => {
                         const qty = patternQtyMap[v.name] || 0;
-                        if (qty > 0) return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                        if (qty > 0) {
+                            return {
+                                ...v,
+                                stock: Math.max(0, (v.stock || 0) - qty),
+                                sold: (v.sold || 0) + qty
+                            };
+                        }
+                        return v;
+                    });
+                }
+                if (Array.isArray(product.comboVariants) && Object.keys(comboQtyMap).length > 0) {
+                    updateProductData.comboVariants = product.comboVariants.map(v => {
+                        const qty = comboQtyMap[v.name] || 0;
+                        if (qty > 0) {
+                            return {
+                                ...v,
+                                sold: (v.sold || 0) + qty
+                            };
+                        }
                         return v;
                     });
                 }

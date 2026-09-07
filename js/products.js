@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
@@ -363,57 +363,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Hiển thị toàn bộ các sản phẩm đã lọc trong đợt này (không bị cắt xén thủ công gây mất sản phẩm)
         htmlContent = finalResults.map((p) => {
-            let cardsHtml = renderProductCard(p, p.id, favs, '../product/index.html');
-            
-            // Render independent color variants
-            if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                p.colorVariants.forEach(v => {
-                    if (v.showOnProductPage) {
-                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
-                            type: 'color',
-                            name: v.name,
-                            imageUrl: v.imageUrl,
-                            price: v.price,
-                            stock: v.stock,
-                            isOutOfStock: v.isOutOfStock
-                        });
-                    }
-                });
-            }
-            
-            // Render independent pattern variants
-            if (p.patternVariants && Array.isArray(p.patternVariants)) {
-                p.patternVariants.forEach(v => {
-                    if (v.showOnProductPage) {
-                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
-                            type: 'pattern',
-                            name: v.name,
-                            imageUrl: v.imageUrl,
-                            price: v.price,
-                            stock: v.stock,
-                            isOutOfStock: v.isOutOfStock
-                        });
-                    }
-                });
-            }
-
-            // Render independent combo variants
-            if (p.comboVariants && Array.isArray(p.comboVariants)) {
-                p.comboVariants.forEach(v => {
-                    if (v.showOnProductPage) {
-                        cardsHtml += renderProductCard(p, p.id, favs, '../product/index.html', {
-                            type: 'combo',
-                            name: v.name,
-                            imageUrl: v.imageUrl || v.thumbUrl,
-                            price: v.price,
-                            stock: v.stock,
-                            isOutOfStock: v.isOutOfStock
-                        });
-                    }
-                });
-            }
-            
-            return cardsHtml;
+            return renderProductCardWithVariants(p, p.id, favs, '../product/index.html');
         }).join('');
 
         if (finalResults.length === 0 || !htmlContent.trim()) {
