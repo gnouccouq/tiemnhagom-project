@@ -170,7 +170,8 @@ async function renderCart() {
     
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
     const selectedProvinceOption = document.getElementById('shipping-province')?.options[document.getElementById('shipping-province').selectedIndex];
-    const selectedProvinceName = selectedProvinceOption ? selectedProvin    let userTier = getMembershipTier(0);
+    const selectedProvinceName = selectedProvinceOption ? selectedProvinceOption.text : '';
+    let userTier = getMembershipTier(0);
     let membershipDiscountVal = 0;
     
     if (auth.currentUser) {

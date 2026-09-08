@@ -290,7 +290,6 @@ function getSectionIdFromHash(hash) {
 // --- Logic chuyển đổi Tab Admin ---
 function setupAdminTabs() {
     const tabs = document.querySelectorAll('.admin-tab-btn');
-    const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
     const sections = document.querySelectorAll('.admin-section');
     const titleEl = document.getElementById('current-tab-title');
 
@@ -304,22 +303,32 @@ function setupAdminTabs() {
                 return;
             }
 
-            // Xóa trạng thái active của tất cả các tab và section
+            // Xóa trạng thái active của tất cả các tab, bottom nav, drawer links và section
             tabs.forEach(t => t.classList.remove('active'));
-            bottomNavBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.drawer-link-btn').forEach(d => d.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
 
             // Tự động đóng tất cả dropdown menu
             document.querySelectorAll('.kiot-nav-item').forEach(item => item.classList.remove('open'));
 
-            // Kích hoạt tab và section được chọn
-            tab.classList.add('active');
+            // Đóng mobile drawer nếu đang mở
+            closeMobileDrawer();
+
+            // Kích hoạt tất cả các nút tương ứng với targetId (Header, Bottom Nav, Mobile Drawer)
+            document.querySelectorAll(`.admin-tab-btn[data-target="${targetId}"]`).forEach(btn => {
+                btn.classList.add('active');
+            });
+
             document.querySelectorAll('.kiot-nav-item').forEach(item => item.classList.remove('active'));
             const parentNavItem = tab.closest('.kiot-nav-item');
             if (parentNavItem) parentNavItem.classList.add('active');
 
             const correspondingBottomBtn = document.querySelector(`.bottom-nav-btn[data-target="${targetId}"]`);
             if (correspondingBottomBtn) correspondingBottomBtn.classList.add('active');
+
+            const correspondingDrawerBtn = document.querySelector(`.drawer-link-btn[data-target="${targetId}"]`);
+            if (correspondingDrawerBtn) correspondingDrawerBtn.classList.add('active');
 
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
@@ -389,6 +398,25 @@ function setupAdminTabs() {
         });
     });
 
+    // Mobile Drawer Handlers
+    const btnToggleDrawer = document.getElementById('btn-mobile-drawer-toggle');
+    const btnBottomMenu = document.getElementById('btn-mobile-bottom-menu');
+    const btnCloseDrawer = document.getElementById('btn-close-mobile-drawer');
+    const drawerOverlay = document.getElementById('mobile-admin-drawer-overlay');
+    const btnDrawerLogout = document.getElementById('btn-mobile-drawer-logout');
+
+    if (btnToggleDrawer) btnToggleDrawer.addEventListener('click', openMobileDrawer);
+    if (btnBottomMenu) btnBottomMenu.addEventListener('click', openMobileDrawer);
+    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeMobileDrawer);
+    if (drawerOverlay) drawerOverlay.addEventListener('click', closeMobileDrawer);
+    if (btnDrawerLogout) {
+        btnDrawerLogout.addEventListener('click', () => {
+            if (typeof logout === 'function') {
+                logout().then(() => window.location.href = "../index.html");
+            }
+        });
+    }
+
     // Xử lý bật/tắt Dropdown khi BẤM MỞ hoặc BẤM NGOÀI
     document.querySelectorAll('.kiot-nav-item').forEach(navItem => {
         const btn = navItem.querySelector('.kiot-nav-btn');
@@ -431,6 +459,22 @@ function setupAdminTabs() {
     if (window.location.hash) {
         setTimeout(handleHashRouting, 100);
     }
+}
+
+function openMobileDrawer() {
+    const drawer = document.getElementById('mobile-admin-drawer');
+    const overlay = document.getElementById('mobile-admin-drawer-overlay');
+    if (drawer) drawer.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileDrawer() {
+    const drawer = document.getElementById('mobile-admin-drawer');
+    const overlay = document.getElementById('mobile-admin-drawer-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 function closeAdminSidebar() {
@@ -490,12 +534,21 @@ async function checkAdminRights(user) {
 
 function updateAdminSidebarProfile(user, adminData) {
     const container = document.getElementById('admin-user-info');
-    if (!container) return;
     const roleNames = { super_admin: 'Quản trị tối cao', manager: 'Quản lý', staff: 'Nhân viên' };
-    container.innerHTML = `
-        <p style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">${user.displayName || user.email}</p>
-        <p style="font-size:0.7rem; color:#f1c40f; font-weight:600;">${roleNames[currentAdminRole] || 'Nhân viên'}</p>
-    `;
+    const displayName = user.displayName || user.email || 'Quản trị viên';
+    const roleTitle = roleNames[currentAdminRole] || 'Nhân viên';
+
+    if (container) {
+        container.innerHTML = `
+            <p style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">${displayName}</p>
+            <p style="font-size:0.7rem; color:#f1c40f; font-weight:600;">${roleTitle}</p>
+        `;
+    }
+
+    const drawerNameEl = document.getElementById('drawer-user-name');
+    const drawerRoleEl = document.getElementById('drawer-user-role');
+    if (drawerNameEl) drawerNameEl.innerText = displayName;
+    if (drawerRoleEl) drawerRoleEl.innerText = roleTitle;
 }
 
 function applyRoleToSidebar() {
@@ -516,6 +569,23 @@ function applyRoleToSidebar() {
         if (subTabs.length > 0) {
             const hasVisibleSubTab = Array.from(subTabs).some(t => t.style.display !== 'none');
             navItem.style.display = hasVisibleSubTab ? 'flex' : 'none';
+        }
+    });
+
+    // Ẩn/hiện các mục và nhóm trong Mobile Drawer theo quyền
+    document.querySelectorAll('.drawer-link-btn[data-target]').forEach(tab => {
+        const target = tab.getAttribute('data-target');
+        if (target && !currentAdminPermissions.includes(target)) {
+            tab.style.display = 'none';
+        } else {
+            tab.style.display = 'flex';
+        }
+    });
+    document.querySelectorAll('.drawer-nav-group').forEach(group => {
+        const links = group.querySelectorAll('.drawer-link-btn[data-target]');
+        if (links.length > 0) {
+            const hasVisible = Array.from(links).some(l => l.style.display !== 'none');
+            group.style.display = hasVisible ? 'block' : 'none';
         }
     });
 }
@@ -567,13 +637,25 @@ function setupNewOrderNotification() {
 // Lắng nghe số lượng đơn hàng "Đang xử lý" để cập nhật badge sidebar
 function initUnprocessedOrderBadge() {
     const badge = document.getElementById('order-count-badge');
-    if (!badge || !db) return;
+    const mobileBadge = document.getElementById('mobile-order-badge');
+    const drawerBadge = document.getElementById('drawer-order-count-badge');
+    if (!db) return;
 
     const q = query(collection(db, "orders"), where("status", "==", "Đang xử lý"));
     onSnapshot(q, (snapshot) => {
         const count = snapshot.size;
-        badge.innerText = count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
+        if (badge) {
+            badge.innerText = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+        if (mobileBadge) {
+            mobileBadge.innerText = count > 99 ? '99+' : count;
+            mobileBadge.style.display = count > 0 ? 'flex' : 'none';
+        }
+        if (drawerBadge) {
+            drawerBadge.innerText = count;
+            drawerBadge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
     }, (error) => {
         console.error("Order badge listener error:", error);
     });

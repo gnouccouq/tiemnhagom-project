@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Tiệm Nhà Gốm</title>
-    <link rel="stylesheet" href="../css/style.css?v=48">
+    <link rel="stylesheet" href="../css/style.css?v=49">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <!-- Google Fonts -->
@@ -35,6 +35,13 @@
             <div class="kiot-tier1">
                 <div class="kiot-tier-inner">
                     <div class="kiot-t1-left">
+                        <button type="button" id="btn-mobile-drawer-toggle" class="kiot-mobile-drawer-toggle" title="Menu quản trị">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <line x1="3" y1="18" x2="21" y2="18"></line>
+                            </svg>
+                        </button>
                         <a href="../index.html" class="kiot-brand-box" title="Tiệm Nhà Gốm Admin">
                             <img src="../Asset/images/logo.webp" alt="Logo">
                             <span>Tiệm Nhà Gốm</span>
@@ -223,50 +230,53 @@
             </div>
         </header>
 
-        <!-- Thanh điều hướng dưới cùng cho Mobile -->
-        <nav class="admin-bottom-nav">
-            <button class="bottom-nav-btn active" data-target="overview-section">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 6l-9.5 9.5-5-5L1 18"></path>
-                        <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
-                </span>
-                <span class="label">Tổng quan</span>
+        <!-- Thanh điều hướng dưới cùng cho Mobile (App-like Bottom Navigation) -->
+        <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+            <button type="button" class="bottom-nav-btn admin-tab-btn active" data-target="overview-section">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Tổng quan</span>
             </button>
-            <button class="bottom-nav-btn" data-target="product-section">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="7" width="18" height="13" rx="3"></rect>
-                        <path d="M16 7a4 4 0 0 0-8 0"></path>
-                    </svg>
-                </span>
-                <span class="label">Sản phẩm</span>
+            <button type="button" class="bottom-nav-btn admin-tab-btn" data-target="product-section">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <span>Sản phẩm</span>
             </button>
-            <a href="pos.html" class="bottom-nav-btn" target="_blank" style="text-decoration: none;">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="8" cy="21" r="1"></circle>
-                        <circle cx="19" cy="21" r="1"></circle>
-                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12">
-                        </path>
+            <a href="pos.html" target="_blank" class="bottom-nav-btn bottom-nav-pos-btn" title="Màn hình bán hàng POS">
+                <div class="pos-fab-circle">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
-                </span>
-                <span class="label">POS</span>
+                </div>
+                <span>POS</span>
             </a>
-            <button class="bottom-nav-btn" id="btn-open-sidebar-mobile">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="4" y1="12" x2="20" y2="12"></line>
-                        <line x1="4" y1="6" x2="16" y2="6"></line>
-                        <line x1="4" y1="18" x2="12" y2="18"></line>
-                    </svg>
-                </span>
-                <span class="label">Thêm</span>
+            <button type="button" class="bottom-nav-btn admin-tab-btn" data-target="order-section" style="position: relative;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>Đơn hàng</span>
+                <span id="mobile-order-badge" class="mobile-nav-badge" style="display: none;">0</span>
+            </button>
+            <button type="button" class="bottom-nav-btn" id="btn-mobile-bottom-menu">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>Menu</span>
             </button>
         </nav>
 
@@ -3446,7 +3456,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=55"></script>
+    <script type="module" src="../js/DashBoard.js?v=56"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
@@ -3649,6 +3659,146 @@
                 <button type="button" class="btn-minimal" style="padding: 8px 18px; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; font-weight: 500; background: white; cursor: pointer;" onclick="window.closeQuickStockModal()">Bỏ qua</button>
                 <button type="button" id="qs-save-btn" class="kiot-btn-primary" style="padding: 8px 22px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="window.saveQuickStock()">💾 Lưu tồn kho</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer Overlay & Drawer -->
+    <div id="mobile-admin-drawer-overlay" class="mobile-drawer-overlay"></div>
+    <div id="mobile-admin-drawer" class="mobile-admin-drawer">
+        <div class="mobile-drawer-header">
+            <div class="mobile-drawer-user-box">
+                <div class="drawer-user-avatar">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                </div>
+                <div class="drawer-user-info">
+                    <strong id="drawer-user-name">Quản trị viên</strong>
+                    <span id="drawer-user-role">Admin</span>
+                </div>
+            </div>
+            <button type="button" id="btn-close-mobile-drawer" class="drawer-close-btn" title="Đóng menu">&times;</button>
+        </div>
+        <div class="mobile-drawer-body">
+            <!-- Nhóm 1: Tổng quan & Bán hàng -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Nghiệp vụ chính</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn active" data-target="overview-section">
+                    <span class="drawer-icon">📊</span>
+                    <span>Tổng quan kinh doanh</span>
+                </button>
+                <a href="pos.html" target="_blank" class="drawer-link-btn pos-highlight">
+                    <span class="drawer-icon">🛒</span>
+                    <span>Màn hình bán hàng POS</span>
+                    <span class="drawer-badge" style="background: #16a34a;">Mở</span>
+                </a>
+            </div>
+
+            <!-- Nhóm 2: Quản lý hàng hóa & kho -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Hàng hóa & Kho</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="product-section">
+                    <span class="drawer-icon">📦</span>
+                    <span>Danh sách sản phẩm</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="flash-sale-settings-section">
+                    <span class="drawer-icon">⚡</span>
+                    <span>Thiết lập Flash Sale</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="category-section">
+                    <span class="drawer-icon">🏷️</span>
+                    <span>Danh mục sản phẩm</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="inventory-log-section">
+                    <span class="drawer-icon">📋</span>
+                    <span>Nhật ký kho & Tồn kho</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="restock-alerts-section">
+                    <span class="drawer-icon">🔔</span>
+                    <span>Yêu cầu báo có hàng</span>
+                </button>
+            </div>
+
+            <!-- Nhóm 3: Đơn hàng & giao dịch -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Đơn hàng & Giao dịch</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="order-section">
+                    <span class="drawer-icon">🛍️</span>
+                    <span>Đơn mua hàng</span>
+                    <span id="drawer-order-count-badge" class="drawer-badge" style="display: none; background: #ef4444;">0</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="rental-order-section">
+                    <span class="drawer-icon">📅</span>
+                    <span>Đơn thuê sản phẩm</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="coupon-section">
+                    <span class="drawer-icon">🎟️</span>
+                    <span>Mã giảm giá (Coupon)</span>
+                </button>
+            </div>
+
+            <!-- Nhóm 4: Báo cáo & Phân tích -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Báo cáo & Phân tích</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="stats-section">
+                    <span class="drawer-icon">📈</span>
+                    <span>Báo cáo doanh thu & Lợi nhuận</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="customer-analytics-section">
+                    <span class="drawer-icon">📍</span>
+                    <span>Vị trí & Lượt xem SP</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="online-users-section">
+                    <span class="drawer-icon">⚡</span>
+                    <span>Người dùng Online (Realtime)</span>
+                </button>
+            </div>
+
+            <!-- Nhóm 5: Nội dung & Khách hàng -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Nội dung & Khách hàng</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="user-section">
+                    <span class="drawer-icon">👥</span>
+                    <span>Danh sách khách hàng</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="banner-section">
+                    <span class="drawer-icon">🖼️</span>
+                    <span>Banner & Trưng bày</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="collections-section">
+                    <span class="drawer-icon">✨</span>
+                    <span>Bộ sưu tập nổi bật</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="events-section">
+                    <span class="drawer-icon">🎪</span>
+                    <span>Dự án & Sự kiện workshop</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="news-section">
+                    <span class="drawer-icon">📰</span>
+                    <span>Bài viết & Cẩm nang gốm</span>
+                </button>
+            </div>
+
+            <!-- Nhóm 6: Hệ thống -->
+            <div class="drawer-nav-group">
+                <div class="drawer-group-title">Hệ thống</div>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="admin-account-section">
+                    <span class="drawer-icon">🛡️</span>
+                    <span>Phân quyền tài khoản Admin</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="maintenance-section">
+                    <span class="drawer-icon">⚙️</span>
+                    <span>Cài đặt hệ thống & Bảo trì</span>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-drawer-footer">
+            <a href="../index.html" class="drawer-footer-btn">
+                <span>🏪 Trang web</span>
+            </a>
+            <button type="button" id="btn-mobile-drawer-logout" class="drawer-footer-btn text-danger">
+                <span>🚪 Đăng xuất</span>
+            </button>
         </div>
     </div>
 
