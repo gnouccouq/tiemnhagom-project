@@ -183,6 +183,7 @@
                     let productsHtml = '';
                     pSnap.forEach(doc => productsHtml += renderProductCard(doc.data(), doc.id, [], '../product/index.html'));
                     grid.innerHTML = productsHtml || '<p style="grid-column:1/-1; text-align:center;">Chưa có sản phẩm nào trong bộ sưu tập này.</p>';
+                    if (window.updateMembershipPrices) window.updateMembershipPrices();
 
                     document.getElementById('collection-detail-page').style.display = 'block';
                     document.querySelectorAll('.reveal-on-scroll').forEach(el => window.revealObserver?.observe(el));

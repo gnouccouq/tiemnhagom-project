@@ -389,6 +389,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             // Nối thêm vào cuối grid
             productGrid.insertAdjacentHTML('beforeend', htmlContent);
         }
+        if (window.updateMembershipPrices) window.updateMembershipPrices();
         productGrid.classList.remove('loading-fade');
         
         // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm

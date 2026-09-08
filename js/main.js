@@ -56,6 +56,7 @@ async function fetchFeaturedProducts() {
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm nào.</p>';
+        if (window.updateMembershipPrices) window.updateMembershipPrices();
     } catch (error) {
         console.error("Lỗi lấy dữ liệu sản phẩm:", error);
         grid.innerHTML = '<p>Không thể tải sản phẩm. Vui lòng thử lại sau.</p>';
@@ -99,6 +100,7 @@ async function fetchBestSellingProducts() {
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có sản phẩm bán chạy.</p>';
+        if (window.updateMembershipPrices) window.updateMembershipPrices();
     } catch (error) {
         console.error("Lỗi lấy dữ liệu sản phẩm bán chạy:", error);
         grid.innerHTML = '<p>Không thể tải sản phẩm. Vui lòng thử lại sau.</p>';
@@ -142,6 +144,7 @@ async function fetchComboProducts() {
             count++;
         });
         grid.innerHTML = htmlContent || '<p>Hiện chưa có Combo nào.</p>';
+        if (window.updateMembershipPrices) window.updateMembershipPrices();
     } catch (error) {
         console.error("Lỗi lấy dữ liệu Combo:", error);
         grid.innerHTML = '<p>Không thể tải Combo. Vui lòng thử lại sau.</p>';
@@ -278,6 +281,7 @@ async function fetchSaleProducts(isUpcoming = false, fsSettings = null) {
         if (saleSec) {
             if (productsToRender.length > 0) {
                 saleGrid.innerHTML = productsToRender.map(p => renderProductCardWithVariants(p, p.id, favs, 'product/index.html')).join('');
+                if (window.updateMembershipPrices) window.updateMembershipPrices();
                 saleSec.style.display = 'block';
             } else {
                 saleSec.style.display = 'none';
@@ -372,6 +376,7 @@ async function fetchRecommendations() {
 
         if (htmlContent) {
             recGrid.innerHTML = htmlContent;
+            if (window.updateMembershipPrices) window.updateMembershipPrices();
         } else {
             recSection.style.display = 'none'; // Ẩn nếu không có dữ liệu thực tế phù hợp
         }

@@ -162,11 +162,14 @@ async function renderCart() {
     
     if (auth.currentUser) {
         const qOrders = query(collection(db, "orders"), 
-            where("userId", "==", auth.currentUser.uid), 
-            where("status", "==", "Đã hoàn thành"));
+            where("userId", "==", auth.currentUser.uid));
         const orderSnaps = await getDocs(qOrders);
         let totalSpent = 0;
-        orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
+        orderSnaps.forEach(d => {
+            if (['Đã hoàn thành', 'Hoàn thành'].includes(d.data().status)) {
+                totalSpent += (d.data().totalAmount || 0);
+            }
+        });
         userTier = getMembershipTier(totalSpent);
         membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
     }
@@ -755,11 +758,14 @@ window.placeOrder = async () => {
     let membershipDiscountVal = 0;
     if (auth.currentUser) {
         const qOrders = query(collection(db, "orders"), 
-            where("userId", "==", auth.currentUser.uid), 
-            where("status", "==", "Đã hoàn thành"));
+            where("userId", "==", auth.currentUser.uid));
         const orderSnaps = await getDocs(qOrders);
         let totalSpent = 0;
-        orderSnaps.forEach(d => totalSpent += (d.data().totalAmount || 0));
+        orderSnaps.forEach(d => {
+            if (['Đã hoàn thành', 'Hoàn thành'].includes(d.data().status)) {
+                totalSpent += (d.data().totalAmount || 0);
+            }
+        });
         userTier = getMembershipTier(totalSpent);
         membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
     }

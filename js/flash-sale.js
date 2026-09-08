@@ -349,6 +349,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         }
 
         productGrid.innerHTML = htmlContent;
+        if (window.updateMembershipPrices) window.updateMembershipPrices();
         // Ẩn phân trang vì đã hiện toàn bộ theo section
         if (document.querySelector('.pagination-container')) document.querySelector('.pagination-container').style.display = 'none';
 

@@ -1065,6 +1065,7 @@ async function fetchRelatedProducts(currentProductId, currentCategory) {
         if (htmlContent) {
             relatedGrid.innerHTML = htmlContent;
             relatedSection.style.display = 'block';
+            if (window.updateMembershipPrices) window.updateMembershipPrices();
         }
     } catch (error) {
         console.error("Lỗi lấy sản phẩm liên quan:", error);
@@ -1098,6 +1099,7 @@ async function fetchRecentlyViewed(currentProductId) {
         if (htmlContent) {
             viewedGrid.innerHTML = htmlContent;
             viewedSection.style.display = 'block';
+            if (window.updateMembershipPrices) window.updateMembershipPrices();
         }
     } catch (error) {
         console.error("Lỗi lấy lịch sử xem:", error);
@@ -1450,7 +1452,9 @@ window.updateDisplayPrice = () => {
     const dynamicPriceDivs = document.querySelectorAll('.dynamic-membership-price');
     dynamicPriceDivs.forEach(div => {
         div.dataset.price = currentPrice;
+        div.setAttribute('data-price', currentPrice);
     });
+    if (window.updateMembershipPrices) window.updateMembershipPrices();
 };
 
 // Hàm chia sẻ sản phẩm sử dụng Web Share API hoặc Fallback Copy Link
