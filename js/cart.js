@@ -239,56 +239,76 @@ export function updateShippingMethodOptions() {
 
     if (isHCM) {
         group.innerHTML = `
-            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
-                <div style="padding-left: 24px;">
-                    <strong>🚚 Giao thông thường nội thành</strong>
-                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Nhận hàng trong 1-2 ngày làm việc</div>
+            <label class="shipping-method-option" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${newSelected === 'delivery' ? '#c2410c' : '#cbd5e1'}; background: ${newSelected === 'delivery' ? '#c2410c' : '#fff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+                        ${newSelected === 'delivery' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
+                    </span>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.92rem;">🚚 Giao thông thường nội thành</strong>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Nhận hàng trong 1-2 ngày làm việc</div>
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #0284c7; white-space: nowrap;">20.000đ</div>
-                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''}>
-                <span class="radio-checkmark"></span>
+                <div style="font-weight: 700; color: #0284c7; white-space: nowrap; font-size: 0.95rem;">20.000đ</div>
+                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''} style="display: none;">
             </label>
 
-            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'express_2h' ? '#c2410c' : '#fed7aa'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'express_2h' ? '#fff7ed' : '#fffaf5'}; cursor: pointer; transition: all 0.2s;">
-                <div style="padding-left: 24px;">
-                    <strong style="color: #c2410c;">⚡ Giao nhanh 2 Giờ (Hỏa tốc)</strong>
-                    <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Áp dụng nội thành TP.HCM (Khung giờ 10h - 19h)</div>
+            <label class="shipping-method-option" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid ${newSelected === 'express_2h' ? '#c2410c' : '#fed7aa'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'express_2h' ? '#fff7ed' : '#fffaf5'}; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${newSelected === 'express_2h' ? '#c2410c' : '#cbd5e1'}; background: ${newSelected === 'express_2h' ? '#c2410c' : '#fff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+                        ${newSelected === 'express_2h' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
+                    </span>
+                    <div>
+                        <strong style="color: #c2410c; font-size: 0.92rem;">⚡ Giao nhanh 2 Giờ (Hỏa tốc)</strong>
+                        <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Áp dụng nội thành TP.HCM (Khung giờ 10h - 19h)</div>
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #c2410c; white-space: nowrap;">30.000đ</div>
-                <input type="radio" name="shipping-method" value="express_2h" ${newSelected === 'express_2h' ? 'checked' : ''}>
-                <span class="radio-checkmark"></span>
+                <div style="font-weight: 700; color: #c2410c; white-space: nowrap; font-size: 0.95rem;">30.000đ</div>
+                <input type="radio" name="shipping-method" value="express_2h" ${newSelected === 'express_2h' ? 'checked' : ''} style="display: none;">
             </label>
 
-            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
-                <div style="padding-left: 24px;">
-                    <strong>🏪 Nhận tại cửa hàng</strong>
-                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+            <label class="shipping-method-option" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${newSelected === 'pickup' ? '#c2410c' : '#cbd5e1'}; background: ${newSelected === 'pickup' ? '#c2410c' : '#fff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+                        ${newSelected === 'pickup' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
+                    </span>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.92rem;">🏪 Nhận tại cửa hàng</strong>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #16a34a; white-space: nowrap;">0đ</div>
-                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''}>
-                <span class="radio-checkmark"></span>
+                <div style="font-weight: 700; color: #16a34a; white-space: nowrap; font-size: 0.95rem;">0đ</div>
+                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''} style="display: none;">
             </label>
         `;
     } else {
         group.innerHTML = `
-            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
-                <div style="padding-left: 24px;">
-                    <strong>🚚 Giao hàng tiêu chuẩn toàn quốc</strong>
-                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Giao hàng tận nơi toàn quốc (3-5 ngày)</div>
+            <label class="shipping-method-option" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${newSelected === 'delivery' ? '#c2410c' : '#cbd5e1'}; background: ${newSelected === 'delivery' ? '#c2410c' : '#fff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+                        ${newSelected === 'delivery' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
+                    </span>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.92rem;">🚚 Giao hàng tiêu chuẩn toàn quốc</strong>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Giao hàng tận nơi toàn quốc (3-5 ngày)</div>
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #0284c7; white-space: nowrap;">40.000đ</div>
-                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''}>
-                <span class="radio-checkmark"></span>
+                <div style="font-weight: 700; color: #0284c7; white-space: nowrap; font-size: 0.95rem;">40.000đ</div>
+                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''} style="display: none;">
             </label>
 
-            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
-                <div style="padding-left: 24px;">
-                    <strong>🏪 Nhận tại cửa hàng</strong>
-                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+            <label class="shipping-method-option" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${newSelected === 'pickup' ? '#c2410c' : '#cbd5e1'}; background: ${newSelected === 'pickup' ? '#c2410c' : '#fff'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box;">
+                        ${newSelected === 'pickup' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
+                    </span>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.92rem;">🏪 Nhận tại cửa hàng</strong>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #16a34a; white-space: nowrap;">0đ</div>
-                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''}>
-                <span class="radio-checkmark"></span>
+                <div style="font-weight: 700; color: #16a34a; white-space: nowrap; font-size: 0.95rem;">0đ</div>
+                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''} style="display: none;">
             </label>
         `;
     }

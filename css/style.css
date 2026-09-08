@@ -11926,6 +11926,65 @@ body:hover::-webkit-scrollbar-thumb {
     border-radius: 2px;
     z-index: 1;
 }
+
+.radio-container,
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 28px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+    margin-bottom: 12px;
+    min-height: 20px;
+}
+
+.radio-container input,
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.product-image-gallery {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+}
+
+.radio-checkmark,
+.checkmark {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: #eee;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.checkbox-container .checkmark {
+    border-radius: 4px;
+}
+
+.radio-container:hover input~.radio-checkmark {
+    background-color: #ccc;
+}
+
+.radio-container input:checked~.radio-checkmark {
+    background-color: var(--text-black);
+}
+
+.checkbox-container input:checked~.checkmark {
+    background-color: var(--text-black);
+}
+
 .tracking-timeline-line-fill {
     position: absolute;
     top: 19px;
