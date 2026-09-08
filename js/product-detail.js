@@ -2,7 +2,7 @@ import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, renderProductCardWithVariants, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, getProductFlashSaleInfo, COLOR_MAP, getColorHex,
-    isUserInHCM, updateExpressDeliveryBadges
+    isUserInHCM, updateExpressDeliveryBadges, getExpressDeliveryStatus
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
@@ -612,6 +612,7 @@ async function fetchProductDetail() {
             const createdAtMs = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
             const isNewArrival = !isOutOfStock && !isNaN(createdAtMs) && ((Date.now() - createdAtMs) <= FOURTEEN_DAYS_MS) && ((Date.now() - createdAtMs) >= 0);
             const isBestSeller = !isOutOfStock && ((Number(p.sold) || 0) >= 5 || Boolean(p.isBestSeller));
+            const deliveryInfo = getExpressDeliveryStatus();
 
             // Bao bọc toàn bộ nội dung thật trong div .fade-in-content để tạo hiệu ứng mượt mà
             container.innerHTML = `
@@ -733,11 +734,11 @@ async function fetchProductDetail() {
                                     <span>🔍 <strong>Đồng kiểm khi nhận:</strong> Mở hộp kiểm tra trước khi thanh toán</span>
                                 </div>
                                 <div class="express-2h-detail-item" style="display: ${isUserInHCM() ? 'flex' : 'none'}; align-items: center; gap: 8px; margin-top: 2px;">
-                                    <span class="express-2h-badge" style="margin-top: 0; padding: 2px 6px; font-size: 0.68rem;">
+                                    <span class="express-2h-badge" style="margin-top: 0; padding: 2px 6px; font-size: 0.68rem;" title="${deliveryInfo.fullDesc}">
                                         <svg viewBox="0 0 20 16" fill="currentColor"><path d="M1 4h3v1.5H1V4zm-1 3.5h4V9H0V7.5zm2 3.5h3v1.5H2V11z"/><path d="M6 3h8v6h3.5l2.5 3v3h-2a2 2 0 0 1-4 0h-4a2 2 0 0 1-4 0H5V3h1zm9.5 2.5V8H18l-1.67-2.5H15.5zM7.5 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
                                         <span>2 Giờ</span>
                                     </span>
-                                    <span>⚡ <strong>Giao nhanh 2 Giờ:</strong> Hỏa tốc áp dụng tại nội thành TP. Hồ Chí Minh</span>
+                                    <span>⚡ <strong>Giao nhanh 2 Giờ:</strong> <span class="express-detail-time-text" style="color: #c2410c; font-weight: 700;">${deliveryInfo.timeText}</span> <span class="express-detail-desc-text" style="color: #64748b; font-size: 0.78rem;">(${deliveryInfo.fullDesc})</span></span>
                                 </div>
                             </div>
                         </div>

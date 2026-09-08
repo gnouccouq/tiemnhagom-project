@@ -3,80 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chính sách vận chuyển - Tiệm Nhà Gốm | Quy trình đóng gói chống vỡ</title>
-    <meta name="description" content="Tìm hiểu về thời gian giao hàng, phí vận chuyển và quy trình đóng gói gốm sứ 3 lớp đặc biệt tại Tiệm Nhà Gốm để đảm bảo hàng không nứt vỡ.">
+    <title>Chính sách vận chuyển & Biểu phí giao hàng - Tiệm Nhà Gốm</title>
+    <meta name="description" content="Chi tiết biểu phí giao hàng tại Tiệm Nhà Gốm: Giao tiêu chuẩn nội thành 20k, Giao nhanh 2h hỏa tốc 30k, Toàn quốc 40k. Quy chuẩn đóng gói 5 lớp chống vỡ và bảo hiểm 100%.">
     <link rel="canonical" href="https://tiemnhagom.vn/shipping-policy.html">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tiemnhagom.vn/shipping-policy.html">
-    <meta property="og:title" content="Chính sách vận chuyển - Tiệm Nhà Gốm | Quy trình đóng gói chống vỡ">
-    <meta property="og:description" content="Tìm hiểu về thời gian giao hàng, phí vận chuyển và quy trình đóng gói gốm sứ 3 lớp đặc biệt tại Tiệm Nhà Gốm để đảm bảo hàng không nứt vỡ.">
+    <meta property="og:title" content="Chính sách vận chuyển & Biểu phí giao hàng - Tiệm Nhà Gốm">
+    <meta property="og:description" content="Biểu phí giao hàng minh bạch: Nội thành 20k, Giao 2h hỏa tốc 30k, Đi tỉnh 40k. Cam kết bảo hiểm nứt vỡ 100%.">
     <meta property="og:image" content="https://tiemnhagom.vn/Asset/images/hero-bg.jpg">
     <meta property="og:locale" content="vi_VN">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://tiemnhagom.vn/shipping-policy.html">
-    <meta property="twitter:title" content="Chính sách vận chuyển - Tiệm Nhà Gốm | Quy trình đóng gói chống vỡ">
-    <meta property="twitter:description" content="Tìm hiểu về thời gian giao hàng, phí vận chuyển và quy trình đóng gói gốm sứ 3 lớp đặc biệt tại Tiệm Nhà Gốm để đảm bảo hàng không nứt vỡ.">
+    <meta property="twitter:title" content="Chính sách vận chuyển - Tiệm Nhà Gốm">
+    <meta property="twitter:description" content="Chính sách vận chuyển và bảng giá cước giao nhận tại Tiệm Nhà Gốm.">
     <meta property="twitter:image" content="https://tiemnhagom.vn/Asset/images/hero-bg.jpg">
 
-    <link rel="stylesheet" href="./css/style.css?v=16">
+    <link rel="stylesheet" href="./css/style.css?v=17">
     <link rel="icon" type="image/png" href="./Asset/icons/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .legal-content h3 { font-family: var(--font-serif); margin: 1.5rem 0 0.8rem; color: var(--text-black); }
-        .legal-content p { margin-bottom: 1rem; color: #555; font-size: 0.95rem; }
-        .legal-content li { margin-bottom: 0.5rem; color: #555; font-size: 0.95rem; }
-    </style>
+        .legal-page-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
 
-    <style>
-        #col-hero {
-            background-attachment: scroll;
-            background-position: center;
-            background-size: cover;
+        .shipping-hero {
+            background: linear-gradient(135deg, #2d2422 0%, #4a3b32 100%);
+            color: #fff;
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .shipping-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            margin: 0 0 0.5rem;
+            color: #fff;
+        }
+
+        .shipping-hero p {
+            color: #fed7aa;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .shipping-content {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            line-height: 1.7;
+            color: #334155;
+        }
+
+        .shipping-content h2 {
+            font-family: var(--font-serif);
+            color: #0f172a;
+            font-size: 1.3rem;
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #fed7aa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .shipping-content h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .fee-table {
             width: 100%;
-            height: 30vh;
-            min-height: 300px;
-            margin-top: -80px;
-            margin-bottom: 4rem;
+            border-collapse: collapse;
+            margin: 1.2rem 0 1.8rem;
+            font-size: 0.9rem;
+        }
+
+        .fee-table th {
+            background: #fff7ed;
+            color: #9a3412;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #fdba74;
+            font-weight: 700;
+        }
+
+        .fee-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .fee-table tr:hover {
+            background: #fafaf9;
+        }
+
+        .fee-price {
+            font-weight: 700;
+            color: #c2410c;
+        }
+
+        .alert-box {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+            padding: 1.2rem;
+            border-radius: 0 10px 10px 0;
+            margin: 1.5rem 0;
+            font-size: 0.92rem;
         }
     </style>
 </head>
 <body class="home-page">
     <div id="header-placeholder"></div>
+
     <main>
-        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
-        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1566576721346-d4a3b4eaad21?q=80&w=1600'); display: flex; align-items: center; justify-content: center; position: relative;">
-            <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10; text-align: center;">Chính sách vận chuyển</h1>
-        </section>
+        <div class="legal-page-wrapper">
+            <div class="shipping-hero">
+                <h1>Chính sách vận chuyển & Biểu phí</h1>
+                <p>Đóng gói chuẩn 5 lớp - Giao hỏa tốc 2 giờ - Bảo hiểm bể vỡ 100%</p>
+            </div>
 
-        <div class="profile-container" style="padding-top: 0;">
-            <div class="profile-card legal-content">
-                <h3>1. Thời gian giao hàng</h3>
+            <div class="shipping-content">
+                <h2>1. Bảng giá cước vận chuyển áp dụng</h2>
+                <p>Tiệm Nhà Gốm áp dụng biểu phí vận chuyển đồng giá minh bạch trên toàn hệ thống:</p>
+
+                <table class="fee-table">
+                    <thead>
+                        <tr>
+                            <th>Khu vực giao hàng</th>
+                            <th>Hình thức vận chuyển</th>
+                            <th>Thời gian dự kiến</th>
+                            <th>Mức phí</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Nội thành TP. Hồ Chí Minh</strong></td>
+                            <td>🚚 Giao tiêu chuẩn</td>
+                            <td>1 - 2 ngày làm việc</td>
+                            <td class="fee-price">20.000đ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nội thành TP. Hồ Chí Minh</strong></td>
+                            <td>⚡ <strong>Giao nhanh 2 Giờ (Hỏa tốc)</strong></td>
+                            <td>Nhận trong 2 giờ (10h - 19h)</td>
+                            <td class="fee-price">30.000đ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ngoại thành & Toàn quốc</strong></td>
+                            <td>🚚 Giao hàng tiêu chuẩn</td>
+                            <td>3 - 5 ngày làm việc</td>
+                            <td class="fee-price">40.000đ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tại cửa hàng</strong></td>
+                            <td>🏪 Nhận trực tiếp</td>
+                            <td>Lấy hàng ngay</td>
+                            <td class="fee-price" style="color: #16a34a;">0đ (Miễn phí)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert-box">
+                    <strong>🎖️ Ưu đãi Khách hàng thân thiết:</strong> Hội viên hạng <strong>Vàng</strong> (từ 5 triệu) và <strong>Kim Cương</strong> (từ 10 triệu) được <strong>MIỄN PHÍ VẬN CHUYỂN 100%</strong> cho mọi đơn hàng.
+                </div>
+
+                <h2>2. Quy định dịch vụ Giao nhanh 2 Giờ</h2>
                 <ul>
-                    <li><strong>Khu vực TP. Hồ Chí Minh:</strong> Giao trong vòng 1-2 ngày làm việc.</li>
-                    <li><strong>Các tỉnh thành khác:</strong> Giao trong vòng 3-5 ngày làm việc (tùy khu vực).</li>
+                    <li><strong>Khung giờ hoạt động:</strong> Áp dụng từ <strong>10:00 sáng đến 19:00 tối</strong> hằng ngày tại các quận nội thành TP.HCM.</li>
+                    <li><strong>Đơn đặt sáng sớm (Trước 10:00):</strong> Được giao ưu tiên trước <strong>12:00 trưa hôm nay</strong>.</li>
+                    <li><strong>Đơn đặt tối muộn (Sau 19:00):</strong> Được giao vào sáng hôm sau trước <strong>12:00 trưa ngày mai</strong>.</li>
                 </ul>
 
-                <h3>2. Quy trình đóng gói chống vỡ</h3>
-                <p>Gốm là mặt hàng đặc thù, Tiệm áp dụng quy trình đóng gói 3 lớp tiêu chuẩn:</p>
-                <ul>
-                    <li><strong>Lớp 1:</strong> Quấn màng xốp nổ (bubble wrap) dày nhiều lớp cho từng sản phẩm đơn lẻ.</li>
-                    <li><strong>Lớp 2:</strong> Chèn giấy chống sốc hoặc mút xốp vào các khoảng trống trong thùng carton để cố định sản phẩm.</li>
-                    <li><strong>Lớp 3:</strong> Đóng thùng carton dày, dán băng keo cảnh báo "Hàng dễ vỡ" bên ngoài.</li>
-                </ul>
+                <h2>3. Quy trình đóng gói 5 lớp chống bể vỡ</h2>
+                <ol>
+                    <li><strong>Lớp 1:</strong> Bọc màng xốp nổ (bubble wrap) 3-4 lớp quanh thân món gốm.</li>
+                    <li><strong>Lớp 2:</strong> Xốp định hình chuyên dụng bảo vệ các phần nhạy cảm như quai ấm, vòi bình, miệng chén.</li>
+                    <li><strong>Lớp 3:</strong> Hộp carton riêng biệt cho từng sản phẩm.</li>
+                    <li><strong>Lớp 4:</strong> Hạt xốp hoặc mút chèn khít mọi góc cạnh trong thùng vận chuyển.</li>
+                    <li><strong>Lớp 5:</strong> Thùng carton sóng 5 lớp chịu lực bên ngoài, niêm phong băng keo và dán tem cảnh báo hàng dễ vỡ.</li>
+                </ol>
 
-                <h3>3. Đơn vị vận chuyển</h3>
-                <p>Tiệm hợp tác với các đơn vị vận chuyển uy tín như Giao Hàng Tiết Kiệm, Viettel Post hoặc đơn vị vận chuyển hỏa tốc trong nội thành.</p>
-
-                <h3>4. Phí vận chuyển</h3>
-                <p>Phí vận chuyển được tính dựa trên trọng lượng đơn hàng và khoảng cách địa lý, sẽ được thông báo cụ thể khi nhân viên gọi điện xác nhận đơn hàng.</p>
+                <h2>4. Cam kết Bảo hiểm Bể vỡ 100% & Đồng kiểm</h2>
+                <p>Khách hàng được quyền <strong>mở hộp đồng kiểm</strong> cùng nhân viên giao hàng hoặc quay video khi mở hộp (unboxing). Nếu sản phẩm xảy ra sự cố nứt vỡ, Tiệm sẽ gửi đổi mới ngay lập tức hoàn toàn miễn phí mà Quý khách không phải chịu bất kỳ chi phí phát sinh nào.</p>
             </div>
         </div>
     </main>
+
     <div id="footer-placeholder"></div>
+
     <script type="module">
         import { initHeader } from "./js/utils.js";
         document.addEventListener('DOMContentLoaded', () => { initHeader('./'); });

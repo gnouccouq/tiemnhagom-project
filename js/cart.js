@@ -1,6 +1,7 @@
 import { 
     db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
-    getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId, showModalConfirm
+    getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId, showModalConfirm,
+    isUserInHCM
 } from "./utils.js";
 import {
     doc, getDoc, setDoc, collection, addDoc, serverTimestamp, updateDoc, increment, runTransaction,
@@ -33,15 +34,29 @@ async function loadLocationData() {
     }
 }
 
+// Hàm kiểm tra tỉnh thành có phải là TP. Hồ Chí Minh không
+export function isHCMProvince(provinceName) {
+    if (!provinceName) {
+        return isUserInHCM();
+    }
+    const norm = provinceName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return norm.includes('ho chi minh') || norm.includes('hcm') || norm.includes('sai gon') || norm.includes('saigon');
+}
+
 // Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
-function calculateShippingFee(method, provinceName) { // Changed parameter name to provinceName
-    if (method === 'pickup') return 0;
-    if (!provinceName) return 0; // Phí mặc định khi chưa chọn tỉnh
+export function calculateShippingFee(method, provinceName) {
+    if (method === 'pickup') return 0; // Nhận tại shop: 0đ
     
-    const innerCities = ["Hồ Chí Minh"]; // Expanded inner cities
-    const isInnerCity = innerCities.some(city => provinceName.includes(city));
-    if (isInnerCity) return 30000; // Phí nội thành
-    return 40000; // Phí đi tỉnh
+    const isHCM = isHCMProvince(provinceName);
+    if (isHCM) {
+        if (method === 'express_2h') {
+            return 30000; // Giao nhanh 2h nội thành TP.HCM: 30k
+        }
+        return 20000; // Giao thông thường nội thành TP.HCM: 20k
+    }
+    
+    // Ngoài TP. Hồ Chí Minh
+    return 40000; // Phí ship ngoài TP.HCM: 40k
 }
 
 // Function to fetch provinces from API
@@ -155,9 +170,7 @@ async function renderCart() {
     
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
     const selectedProvinceOption = document.getElementById('shipping-province')?.options[document.getElementById('shipping-province').selectedIndex];
-    const selectedProvinceName = selectedProvinceOption ? selectedProvinceOption.textContent : null; // Get name for shipping fee calculation
-    
-    let userTier = getMembershipTier(0);
+    const selectedProvinceName = selectedProvinceOption ? selectedProvin    let userTier = getMembershipTier(0);
     let membershipDiscountVal = 0;
     
     if (auth.currentUser) {
@@ -174,25 +187,117 @@ async function renderCart() {
         membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
     }
 
-    let shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName); // Pass name
+    let shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName);
     if (userTier && userTier.freeShipping) {
         shippingFee = 0;
+    }
+
+    let shippingLabel = 'Phí vận chuyển';
+    if (shippingMethod === 'express_2h') {
+        shippingLabel = '⚡ Phí giao nhanh 2 Giờ';
+    } else if (shippingMethod === 'pickup') {
+        shippingLabel = '🏪 Nhận tại cửa hàng';
     }
 
     const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
 
     priceBreakdownEl.innerHTML = `
         <div class="price-row"><span>Tạm tính (Gồm VAT)</span><span>${new Intl.NumberFormat('vi-VN').format(total)}đ</span></div>
-        <div class="price-row"><span>Phí vận chuyển</span><span>${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ</span></div>
-        ${discountAmount > 0 ? `<div class="price-row discount"><span>Discount</span><span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span></div>` : ''}
+        <div class="price-row"><span>${shippingLabel}</span><span>${shippingFee > 0 ? `${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ` : '<span style="color: #16a34a; font-weight: 600;">0đ (Miễn phí)</span>'}</span></div>
+        ${discountAmount > 0 ? `<div class="price-row discount"><span>Mã giảm giá</span><span>-${new Intl.NumberFormat('vi-VN').format(discountAmount)}đ</span></div>` : ''}
         ${membershipDiscountVal > 0 ? `<div class="price-row discount"><span>Ưu đãi hạng ${userTier.name}</span><span>-${new Intl.NumberFormat('vi-VN').format(membershipDiscountVal)}đ</span></div>` : ''}
-        <div class="price-row total"><span>Total</span><span>${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span></div>
+        <div class="price-row total"><span>Tổng thanh toán</span><span>${new Intl.NumberFormat('vi-VN').format(finalTotal)}đ</span></div>
     `;
 
     if (checkoutFormContainer) {
         renderCheckoutForm(checkoutFormContainer);
         fetchAvailableCoupons();
     }
+}
+
+export function updateShippingMethodOptions() {
+    const group = document.getElementById('shipping-methods-group');
+    if (!group) return;
+
+    let selectedProvinceName = null;
+    const provinceSelect = document.getElementById('shipping-province');
+    if (window.tsProvince && window.tsProvince.getValue()) {
+        const item = window.tsProvince.options[window.tsProvince.getValue()];
+        if (item) selectedProvinceName = item.text;
+    } else if (provinceSelect && provinceSelect.selectedIndex >= 0) {
+        selectedProvinceName = provinceSelect.options[provinceSelect.selectedIndex]?.textContent;
+    }
+
+    const isHCM = isHCMProvince(selectedProvinceName);
+    const currentChecked = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
+    let newSelected = currentChecked;
+
+    if (!isHCM && newSelected === 'express_2h') {
+        newSelected = 'delivery';
+    }
+
+    if (isHCM) {
+        group.innerHTML = `
+            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="padding-left: 24px;">
+                    <strong>🚚 Giao thông thường nội thành</strong>
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Nhận hàng trong 1-2 ngày làm việc</div>
+                </div>
+                <div style="font-weight: 700; color: #0284c7; white-space: nowrap;">20.000đ</div>
+                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''}>
+                <span class="radio-checkmark"></span>
+            </label>
+
+            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'express_2h' ? '#c2410c' : '#fed7aa'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'express_2h' ? '#fff7ed' : '#fffaf5'}; cursor: pointer; transition: all 0.2s;">
+                <div style="padding-left: 24px;">
+                    <strong style="color: #c2410c;">⚡ Giao nhanh 2 Giờ (Hỏa tốc)</strong>
+                    <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Áp dụng nội thành TP.HCM (Khung giờ 10h - 19h)</div>
+                </div>
+                <div style="font-weight: 700; color: #c2410c; white-space: nowrap;">30.000đ</div>
+                <input type="radio" name="shipping-method" value="express_2h" ${newSelected === 'express_2h' ? 'checked' : ''}>
+                <span class="radio-checkmark"></span>
+            </label>
+
+            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="padding-left: 24px;">
+                    <strong>🏪 Nhận tại cửa hàng</strong>
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+                </div>
+                <div style="font-weight: 700; color: #16a34a; white-space: nowrap;">0đ</div>
+                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''}>
+                <span class="radio-checkmark"></span>
+            </label>
+        `;
+    } else {
+        group.innerHTML = `
+            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'delivery' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; margin-bottom: 8px; background: ${newSelected === 'delivery' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="padding-left: 24px;">
+                    <strong>🚚 Giao hàng tiêu chuẩn toàn quốc</strong>
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Giao hàng tận nơi toàn quốc (3-5 ngày)</div>
+                </div>
+                <div style="font-weight: 700; color: #0284c7; white-space: nowrap;">40.000đ</div>
+                <input type="radio" name="shipping-method" value="delivery" ${newSelected === 'delivery' ? 'checked' : ''}>
+                <span class="radio-checkmark"></span>
+            </label>
+
+            <label class="radio-container" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1.5px solid ${newSelected === 'pickup' ? '#c2410c' : '#e2e8f0'}; border-radius: 8px; background: ${newSelected === 'pickup' ? '#fffaf5' : '#fff'}; cursor: pointer; transition: all 0.2s;">
+                <div style="padding-left: 24px;">
+                    <strong>🏪 Nhận tại cửa hàng</strong>
+                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
+                </div>
+                <div style="font-weight: 700; color: #16a34a; white-space: nowrap;">0đ</div>
+                <input type="radio" name="shipping-method" value="pickup" ${newSelected === 'pickup' ? 'checked' : ''}>
+                <span class="radio-checkmark"></span>
+            </label>
+        `;
+    }
+
+    group.querySelectorAll('input[name="shipping-method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            updateShippingMethodOptions();
+            renderCart();
+        });
+    });
 }
 
 window.useSavedAddress = async (index) => {
@@ -237,6 +342,7 @@ window.useSavedAddress = async (index) => {
             });
             wardSelect.disabled = false;
         }
+        updateShippingMethodOptions();
         renderCart(); // Cập nhật phí ship dựa trên tỉnh thành mới
         showToast("Đã áp dụng địa chỉ từ sổ địa chỉ");
     }
@@ -308,15 +414,8 @@ async function renderCheckoutForm(container) {
             
             <div class="form-group">
                 <label>Delivery Method | Phương thức nhận hàng</label>
-                <div class="radio-group">
-                    <label class="radio-container">Giao hàng tận nơi
-                        <input type="radio" name="shipping-method" value="delivery" checked>
-                        <span class="radio-checkmark"></span>
-                    </label>
-                    <label class="radio-container">Nhận tại cửa hàng
-                        <input type="radio" name="shipping-method" value="pickup">
-                        <span class="radio-checkmark"></span>
-                    </label>
+                <div class="radio-group" id="shipping-methods-group">
+                    <!-- Được render tự động bởi updateShippingMethodOptions -->
                 </div>
             </div>
             ${auth.currentUser ? `
@@ -351,10 +450,8 @@ async function renderCheckoutForm(container) {
         </div>
     `;
 
-    // Lắng nghe thay đổi để cập nhật phí vận chuyển ngay lập tức
-    container.querySelectorAll('input[name="shipping-method"]').forEach(radio => {
-        radio.addEventListener('change', renderCart);
-    });
+    // Render danh sách phương thức giao hàng ban đầu
+    updateShippingMethodOptions();
 
     const provinceSelect = document.getElementById('shipping-province');
     const wardSelect = document.getElementById('shipping-ward');
@@ -379,9 +476,27 @@ async function renderCheckoutForm(container) {
             create: false,
             sortField: { field: "text", direction: "asc" }
         });
+
+        window.tsProvince.on('change', async (provinceId) => {
+            if (window.tsWard) {
+                window.tsWard.clear(true);
+                window.tsWard.clearOptions();
+                window.tsWard.disable();
+            }
+            if (provinceId) {
+                const communes = await fetchCommunesByProvinceId(provinceId);
+                if (window.tsWard) {
+                    window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
+                    communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+                    window.tsWard.enable();
+                }
+            }
+            updateShippingMethodOptions();
+            renderCart();
+        });
     }
 
-    // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã
+    // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã (Fallback)
     provinceSelect?.addEventListener('change', async (e) => {
         const provinceId = e.target.value;
         
@@ -412,6 +527,7 @@ async function renderCheckoutForm(container) {
                 wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
             }
         }
+        updateShippingMethodOptions();
         renderCart(); // Cập nhật phí ship
     });
 
@@ -702,12 +818,22 @@ window.placeOrder = async () => {
     const formattedPhone = formatPhoneNumber(phone);
     
     const provinceSelect = document.getElementById('shipping-province');
-    const provinceId = provinceSelect?.value;
-    const provinceName = provinceSelect?.options[provinceSelect.selectedIndex]?.textContent;
+    let provinceId = provinceSelect?.value;
+    let provinceName = provinceSelect?.options[provinceSelect.selectedIndex]?.textContent;
+    if (window.tsProvince && window.tsProvince.getValue()) {
+        provinceId = window.tsProvince.getValue();
+        const item = window.tsProvince.options[provinceId];
+        if (item) provinceName = item.text;
+    }
 
     const wardSelect = document.getElementById('shipping-ward');
-    const wardId = wardSelect?.value;
-    const wardName = wardSelect?.options[wardSelect.selectedIndex]?.textContent;
+    let wardId = wardSelect?.value;
+    let wardName = wardSelect?.options[wardSelect.selectedIndex]?.textContent;
+    if (window.tsWard && window.tsWard.getValue()) {
+        wardId = window.tsWard.getValue();
+        const item = window.tsWard.options[wardId];
+        if (item) wardName = item.text;
+    }
 
     const address = document.getElementById('shipping-address')?.value.trim();
     const note = document.getElementById('order-note')?.value.trim();

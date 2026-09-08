@@ -1345,22 +1345,74 @@ export function isUserInHCM(locStr = null, lat = null, lon = null) {
     return isHCM;
 }
 
+export function getExpressDeliveryStatus() {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (hour < 10) {
+        return {
+            badgeText: '2 Giờ',
+            timeText: 'Giao trước 12h',
+            fullDesc: 'Giao nhanh trước 12:00 trưa hôm nay (đặt từ sáng sớm trước 10h)',
+            status: 'morning_before_10'
+        };
+    } else if (hour >= 10 && hour < 19) {
+        return {
+            badgeText: '2 Giờ',
+            timeText: 'Giao trong 2h',
+            fullDesc: 'Giao hỏa tốc nhận hàng trong 2 giờ tại nội thành TP.HCM (khung giờ 10h - 19h)',
+            status: 'active_window'
+        };
+    } else {
+        return {
+            badgeText: '2 Giờ',
+            timeText: 'Giao vào ngày mai',
+            fullDesc: 'Giao nhanh trước 12:00 trưa ngày mai (áp dụng đơn đặt sau 19h tối)',
+            status: 'evening_after_19'
+        };
+    }
+}
+
 export function updateExpressDeliveryBadges(isHcm = null) {
     if (isHcm === null) {
         isHcm = isUserInHCM();
     }
-    const badges = document.querySelectorAll('.express-2h-badge');
-    badges.forEach(b => {
-        if (!b.closest('.express-2h-detail-item')) {
-            b.style.display = isHcm ? 'inline-flex' : 'none';
+    const info = getExpressDeliveryStatus();
+
+    // 1. Cập nhật các dòng thông tin trên thẻ sản phẩm
+    const rows = document.querySelectorAll('.product-express-delivery-row');
+    rows.forEach(r => {
+        r.style.display = isHcm ? 'flex' : 'none';
+        const timeEl = r.querySelector('.express-2h-time-text');
+        if (timeEl) {
+            timeEl.textContent = info.timeText;
+        }
+        const badgeEl = r.querySelector('.express-2h-badge');
+        if (badgeEl) {
+            badgeEl.setAttribute('title', info.fullDesc);
         }
     });
+
+    // 2. Cập nhật dòng chi tiết trên trang chi tiết sản phẩm
     const detailItems = document.querySelectorAll('.express-2h-detail-item');
     detailItems.forEach(item => {
         item.style.display = isHcm ? 'flex' : 'none';
+        const timeSpan = item.querySelector('.express-detail-time-text');
+        if (timeSpan) {
+            timeSpan.textContent = info.timeText;
+        }
+        const descSpan = item.querySelector('.express-detail-desc-text');
+        if (descSpan) {
+            descSpan.textContent = `(${info.fullDesc})`;
+        }
+        const badgeEl = item.querySelector('.express-2h-badge');
+        if (badgeEl) {
+            badgeEl.setAttribute('title', info.fullDesc);
+        }
     });
 }
 window.updateExpressDeliveryBadges = updateExpressDeliveryBadges;
+window.getExpressDeliveryStatus = getExpressDeliveryStatus;
 
 export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html', options = {}) {
     const onlyBestSellers = Boolean(options.onlyBestSellers);
@@ -1630,13 +1682,17 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     }
 
     const isHcm = isUserInHCM();
+    const deliveryInfo = getExpressDeliveryStatus();
     const express2hBadge = `
-        <div class="express-2h-badge" style="display: ${isHcm ? 'inline-flex' : 'none'};" title="Giao nhanh 2 Giờ trong nội thành TP. Hồ Chí Minh">
-            <svg viewBox="0 0 20 16" fill="currentColor">
-                <path d="M1 4h3v1.5H1V4zm-1 3.5h4V9H0V7.5zm2 3.5h3v1.5H2V11z"/>
-                <path d="M6 3h8v6h3.5l2.5 3v3h-2a2 2 0 0 1-4 0h-4a2 2 0 0 1-4 0H5V3h1zm9.5 2.5V8H18l-1.67-2.5H15.5zM7.5 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
-            </svg>
-            <span>2 Giờ</span>
+        <div class="product-express-delivery-row" style="margin-top: 5px; display: ${isHcm ? 'flex' : 'none'}; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <div class="express-2h-badge" title="${deliveryInfo.fullDesc}">
+                <svg viewBox="0 0 20 16" fill="currentColor">
+                    <path d="M1 4h3v1.5H1V4zm-1 3.5h4V9H0V7.5zm2 3.5h3v1.5H2V11z"/>
+                    <path d="M6 3h8v6h3.5l2.5 3v3h-2a2 2 0 0 1-4 0h-4a2 2 0 0 1-4 0H5V3h1zm9.5 2.5V8H18l-1.67-2.5H15.5zM7.5 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                </svg>
+                <span>${deliveryInfo.badgeText}</span>
+            </div>
+            <span class="express-2h-time-text" style="font-size: 0.72rem; color: #c2410c; font-weight: 600;">${deliveryInfo.timeText}</span>
         </div>
     `;
 
@@ -1666,9 +1722,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                 ${flashSaleBarHtml}
                 ${memPriceHtml}
             </div>
-            <div class="product-express-delivery-row" style="margin-top: 4px; display: flex; align-items: center; justify-content: flex-start;">
-                ${express2hBadge}
-            </div>
+            ${express2hBadge}
         </div>
     </div>
     `;

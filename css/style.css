@@ -11509,6 +11509,43 @@ body:hover::-webkit-scrollbar-thumb {
     z-index: 1;
     transition: width 0.5s ease;
 }
+
+/* Badge Giao nhanh 2 Giờ (Chỉ hiển thị khi khách ở TP. Hồ Chí Minh) */
+.product-express-delivery-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.express-2h-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #c2410c, #9a3412);
+    color: #ffffff !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px 3px 5px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(154, 52, 18, 0.22);
+    user-select: none;
+    letter-spacing: 0.2px;
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.express-2h-time-text {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #c2410c;
+    letter-spacing: 0.1px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
 .timeline-step {
     position: relative;
     z-index: 2;
