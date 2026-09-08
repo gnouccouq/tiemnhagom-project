@@ -5,82 +5,244 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chương trình Thành viên Gốm-Membership - Tiệm Nhà Gốm</title>
     <meta name="description" content="Khám phá đặc quyền dành riêng cho thành viên Tiệm Nhà Gốm. Tích lũy chi tiêu để thăng hạng và nhận ưu đãi giảm giá lên đến 5% vĩnh viễn.">
-    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="stylesheet" href="../css/style.css?v=18">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <style>
         #col-hero {
             background-attachment: scroll;
             background-position: center;
             background-size: cover;
             width: 100%;
-            height: 30vh;
-            min-height: 300px;
+            height: 32vh;
+            min-height: 260px;
             margin-top: -80px;
-            margin-bottom: 2rem;
-            display: flex; align-items: center; justify-content: center; text-align: center; position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .membership-page-intro {
+            text-align: center;
+            padding: 3.5rem 1.5rem 1.5rem 1.5rem;
+        }
+        .membership-page-intro h2 {
+            font-family: var(--font-serif);
+            font-size: 2.3rem;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .membership-page-intro p {
+            color: #64748b;
+            max-width: 620px;
+            margin: 0 auto;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Progress Card */
+        #personal-membership-section {
+            display: none;
+            padding: 1.5rem 1.5rem 2.5rem;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+        .personal-progress-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .personal-progress-card h3 {
+            text-align: center;
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            color: #0f172a;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Slider Wrapper */
+        .slider-wrapper {
+            position: relative;
+            max-width: 100vw;
+            overflow: hidden;
+            padding-bottom: 2rem;
         }
         .tier-showcase {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
-            gap: 2rem;
-            padding: 5rem calc(50vw - 175px);
+            gap: 28px;
+            padding: 2rem calc(50vw - 175px);
             scroll-behavior: smooth;
             align-items: stretch;
             -ms-overflow-style: none;
             scrollbar-width: none;
+            box-sizing: border-box;
         }
-        .tier-showcase::-webkit-scrollbar { display: none; }
+        .tier-showcase::-webkit-scrollbar {
+            display: none;
+        }
 
-        .tier-big-card {
-            background: #fff; border-radius: 20px; padding: 40px 30px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative; overflow: hidden;
+        .tier-card-wrapper {
             flex: 0 0 350px;
-            display: flex; flex-direction: column;
+            width: 350px;
+            max-width: 85vw;
+            display: flex;
+            flex-direction: column;
             scroll-snap-align: center;
-            transform: scale(0.85);
-            opacity: 0.6;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            box-sizing: border-box;
         }
-        .tier-big-card.active-tier {
-            transform: scale(1.05);
-            opacity: 1;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            z-index: 10;
+
+        .tier-card-wrapper .membership-card {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto 20px auto;
+            box-sizing: border-box;
         }
-        
-        .slider-nav-btn {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 20;
-            background: #fff; border: 1px solid #ddd; border-radius: 50%;
-            width: 50px; height: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
-            color: #333; transition: 0.3s;
+
+        .tier-info-box {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 24px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
-        .slider-nav-btn:hover { background: var(--text-black); color: #fff; }
-        .slider-nav-btn.prev { left: 20px; }
-        .slider-nav-btn.next { right: 20px; }
-        
-        @media (max-width: 768px) {
-            .tier-showcase { padding: 3rem calc(50vw - 150px); }
-            .tier-big-card { flex: 0 0 300px; padding: 30px 20px; }
-        }
-        .tier-big-card h2 { font-size: 1.5rem; margin-bottom: 10px; }
-        .tier-price-requirement { font-size: 0.9rem; color: #888; margin-bottom: 20px; }
-        .tier-benefit-list { list-style: none; padding: 0; margin: 25px 0 0 0; border-top: 1px solid #eee; padding-top: 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; text-align: left; }
-        .tier-benefit-list li { margin-bottom: 12px; font-size: 0.95rem; color: #555; }
-        .tier-benefit-list li strong { color: #e74c3c; font-size: 1.2rem; }
-        
-        .how-it-works { background: #fff; padding: 6rem 5%; text-align: center; }
-        .steps-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px; max-width: 1000px; margin: 4rem auto 0;
-        }
-        .step-item h3 { margin: 15px 0 10px; font-size: 1.2rem; }
-        .step-num { 
-            width: 40px; height: 40px; background: var(--text-black); color: #fff; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;
+
+        .tier-spend-badge {
+            display: inline-block;
+            background: #fff7ed;
+            color: #c2410c;
             font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid #fed7aa;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .tier-benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+        }
+        .tier-benefits-list li {
+            font-size: 0.88rem;
+            color: #334155;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 22px;
+        }
+        .tier-benefits-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #16a34a;
+            font-weight: 700;
+        }
+
+        /* Nav Arrows */
+        .slider-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 50%;
+            width: 46px;
+            height: 46px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        .slider-nav-btn:hover {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+        }
+        .slider-nav-btn.prev { left: 25px; }
+        .slider-nav-btn.next { right: 25px; }
+
+        @media (max-width: 768px) {
+            .tier-showcase {
+                padding: 1.5rem calc(50vw - 150px);
+                gap: 16px;
+            }
+            .tier-card-wrapper {
+                flex: 0 0 300px;
+                width: 300px;
+            }
+            .slider-nav-btn { display: none; }
+            .personal-progress-card { padding: 1.5rem; }
+        }
+
+        .how-it-works {
+            background: #ffffff;
+            padding: 5rem 5%;
+            text-align: center;
+        }
+        .how-it-works h2 {
+            font-family: var(--font-serif);
+            font-size: 2rem;
+            color: #0f172a;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 3.5rem auto 0;
+        }
+        .step-item {
+            background: #f8fafc;
+            padding: 30px 20px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+        .step-item h3 {
+            margin: 15px 0 8px;
+            font-size: 1.15rem;
+            color: #0f172a;
+        }
+        .step-item p {
+            font-size: 0.88rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .step-num {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #c2410c, #ea580c);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(194, 65, 12, 0.3);
         }
     </style>
 </head>
@@ -88,66 +250,59 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <!-- Banner đầu trang full chiều ngang, phong cách tối giản -->
-        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1520408222757-6f9f95d87d5d?q=80&w=1600');">
+        <!-- Banner đầu trang full chiều ngang -->
+        <section id="col-hero" style="background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('https://images.unsplash.com/photo-1520408222757-6f9f95d87d5d?q=80&w=1600');">
             <div class="reveal-on-scroll" style="z-index: 10;">
-                <h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; margin-bottom: 5px;">gốm-membership</h1>
-                <p style="color: #fff; font-size: 0.9rem; letter-spacing: 0.5px; opacity: 0.9;">Gắn kết đam mê - Nhận ngàn đặc quyền</p>
+                <h1 id="hero-banner-title" style="color: #fff; font-size: 1.6rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; margin-bottom: 6px;">gốm-membership</h1>
+                <p style="color: #fff; font-size: 0.95rem; letter-spacing: 0.5px; opacity: 0.95;">Gắn kết đam mê - Nhận ngàn đặc quyền</p>
             </div>
         </section>
 
-        <section style="text-align: center; padding-top: 5rem;">
-            <h2 style="font-family: var(--font-serif); font-size: 2.2rem;">Hạng Thẻ Thành Viên</h2>
-            <p style="color: #666; max-width: 600px; margin: 10px auto;">Càng mua sắm, ưu đãi càng lớn. Hệ thống tự động nâng hạng dựa trên tổng chi tiêu tích lũy của bạn.</p>
+        <!-- Tiêu đề giới thiệu -->
+        <section class="membership-page-intro">
+            <h2>Hạng Thẻ Thành Viên</h2>
+            <p>Càng mua sắm, ưu đãi càng lớn. Hệ thống tự động nâng hạng dựa trên tổng chi tiêu tích lũy của bạn.</p>
         </section>
 
         <!-- Tiến độ cá nhân (Chỉ hiện khi đã đăng nhập) -->
-        <section id="personal-membership-section" style="display: none; padding: 2rem 5%; max-width: 800px; margin: 0 auto;">
-            <div class="admin-card" style="padding: 2.5rem; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 10px 30px rgba(0,0,0,0.03); background: #fff;">
-                <h3 style="margin-bottom: 1.5rem; text-align: center; font-family: var(--font-serif); font-size: 1.5rem;">Tiến độ thăng hạng của bạn</h3>
+        <section id="personal-membership-section">
+            <div class="personal-progress-card">
+                <h3>Tiến độ thăng hạng của bạn</h3>
                 <div id="personal-membership-progress"></div>
             </div>
         </section>
 
-        <div class="slider-wrapper" style="position: relative; max-width: 100vw; overflow: hidden;">
-            <button class="slider-nav-btn prev" id="slider-prev">&#10094;</button>
+        <!-- Slider danh sách các Hạng thẻ -->
+        <div class="slider-wrapper">
+            <button class="slider-nav-btn prev" id="slider-prev" title="Xem hạng trước">&#10094;</button>
             <div class="tier-showcase" id="membership-tiers-render">
                 <!-- JS will render tiers here from MEMBERSHIP_TIERS in utils.js -->
             </div>
-            <button class="slider-nav-btn next" id="slider-next">&#10095;</button>
+            <button class="slider-nav-btn next" id="slider-next" title="Xem hạng kế tiếp">&#10095;</button>
         </div>
 
-        <!-- Phần hiển thị ưu đãi thẻ -->
-        <section id="active-tier-benefits-section" style="max-width: 800px; margin: 1rem auto 4rem; padding: 0 5%; transition: opacity 0.3s ease;">
-            <div style="padding: 2.5rem; border-radius: 20px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee;">
-                <h3 id="benefits-title" style="text-align: center; font-family: var(--font-serif); font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text-black);">Ưu đãi thẻ</h3>
-                <ul class="tier-benefit-list" id="benefits-list" style="border-top: none; padding-top: 0; margin-top: 0;">
-                    <!-- JS sẽ render ưu đãi vào đây -->
-                </ul>
-            </div>
-        </section>
-
+        <!-- Hướng dẫn thăng hạng -->
         <section class="how-it-works">
-            <h2 style="font-family: var(--font-serif);">Làm sao để thăng hạng?</h2>
+            <h2>Làm sao để thăng hạng?</h2>
             <div class="steps-grid">
                 <div class="step-item reveal-on-scroll">
                     <div class="step-num">1</div>
                     <h3>Đăng ký tài khoản</h3>
-                    <p style="font-size: 0.9rem; color: #777;">Tạo tài khoản bằng Email hoặc Google để bắt đầu tích lũy điểm từ đơn hàng đầu tiên.</p>
+                    <p>Tạo tài khoản bằng Email hoặc Google để bắt đầu tích lũy điểm từ đơn hàng đầu tiên.</p>
                 </div>
-                <div class="step-item reveal-on-scroll" style="transition-delay: 0.2s;">
+                <div class="step-item reveal-on-scroll" style="transition-delay: 0.15s;">
                     <div class="step-num">2</div>
                     <h3>Mua sắm & Tích lũy</h3>
-                    <p style="font-size: 0.9rem; color: #777;">Mỗi đơn hàng hoàn thành sẽ được cộng dồn vào tổng chi tiêu trên hệ thống của Tiệm.</p>
+                    <p>Mỗi đơn hàng hoàn thành sẽ được cộng dồn vào tổng chi tiêu trên hệ thống của Tiệm.</p>
                 </div>
-                <div class="step-item reveal-on-scroll" style="transition-delay: 0.4s;">
+                <div class="step-item reveal-on-scroll" style="transition-delay: 0.3s;">
                     <div class="step-num">3</div>
                     <h3>Tự động nâng hạng</h3>
-                    <p style="font-size: 0.9rem; color: #777;">Khi đạt mốc chi tiêu, hệ thống sẽ tự động nâng hạng và áp dụng giảm giá cho các đơn hàng tiếp theo.</p>
+                    <p>Khi đạt mốc chi tiêu, hệ thống sẽ tự động nâng hạng và áp dụng giảm giá vĩnh viễn cho bạn.</p>
                 </div>
             </div>
-            <div style="margin-top: 4rem;">
-                <a href="../products/" class="btn-dark" style="padding: 1.2rem 3rem; border-radius: 40px;">Bắt đầu tích lũy ngay</a>
+            <div style="margin-top: 3.5rem;">
+                <a href="../products/" class="btn-dark" style="padding: 1rem 2.8rem; border-radius: 40px; text-decoration: none; font-weight: 600;">Bắt đầu tích lũy ngay</a>
             </div>
         </section>
     </main>
@@ -167,26 +322,23 @@
                 }
             });
 
-            function getTierBenefitsHtml(tier, index, allTiers) {
-                if (tier.id === 'null') return `<li>Hiện chưa có ưu đãi mua hàng đặc biệt cho hạng thành viên Gốm Mộc. Tích lũy thêm để nhận nhiều đặc quyền nhé!</li>`;
+            function getTierBenefitsHtml(tier) {
+                if (tier.id === 'null') {
+                    return `<li>Hạng thành viên khởi đầu khi đăng ký tài khoản</li><li>Tích lũy chi tiêu để nhận chiết khấu và quà tặng hấp dẫn</li>`;
+                }
                 let html = ``;
-                if (tier.discount > 0) html += `<li>Giảm giá trực tiếp <strong>${tier.discount}%</strong></li>`;
+                if (tier.discount > 0) html += `<li>Giảm giá trực tiếp <strong>${tier.discount}%</strong> mọi đơn hàng</li>`;
                 if (tier.tierUpVoucher > 0) html += `<li>Tặng voucher <strong>${tier.tierUpVoucher / 1000}K</strong> khi lên hạng</li>`;
-                if (tier.friendVoucher) html += `<li><strong>Đặc quyền tặng voucher cho người thân</strong></li>`;
-                if (tier.freeShipping) html += `<li><strong>Miễn phí giao hàng</strong> mọi đơn hàng</li>`;
-                if (tier.birthdayVoucher > 0) html += `<li><strong>Ưu đãi sinh nhật:</strong> <strong>${new Intl.NumberFormat('vi-VN').format(tier.birthdayVoucher)}đ</strong></li>`;
+                if (tier.friendVoucher) html += `<li><strong>Đặc quyền tặng voucher</strong> cho người thân</li>`;
+                if (tier.freeShipping) html += `<li><strong>Miễn phí giao hàng</strong> toàn quốc</li>`;
+                if (tier.birthdayVoucher > 0) html += `<li><strong>Ưu đãi sinh nhật:</strong> Voucher <strong>${new Intl.NumberFormat('vi-VN').format(tier.birthdayVoucher)}đ</strong></li>`;
                 return html;
             }
 
-            const benefitsMap = {};
-            MEMBERSHIP_TIERS.forEach((tier, index) => {
-                benefitsMap[tier.id] = getTierBenefitsHtml(tier, index, MEMBERSHIP_TIERS);
-            });
-
             const container = document.getElementById('membership-tiers-render');
-            container.innerHTML = MEMBERSHIP_TIERS.map((tier, index) => `
+            container.innerHTML = MEMBERSHIP_TIERS.map((tier) => `
                 <div class="tier-card-wrapper" id="showcase-${tier.id}">
-                    <div class="membership-card tier-${tier.id}" style="margin: 0 auto 25px auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                    <div class="membership-card tier-${tier.id}">
                         <div class="membership-card-chip"></div>
                         <div>
                             <div class="member-label">MEMBER TIER</div>
@@ -194,12 +346,12 @@
                             <div class="tier-discount">${tier.discount > 0 ? `Giảm ${tier.discount}% toàn bộ đơn hàng` : 'Hạng khởi đầu'}</div>
                         </div>
                     </div>
-                    <div class="tier-info-box" style="padding: 20px; background: #fff; border-radius: 15px;">
+                    <div class="tier-info-box">
                         <div class="tier-spend-badge">
                             ${tier.min === 0 ? 'Mặc định khi đăng ký' : `Tích lũy từ ${new Intl.NumberFormat('vi-VN').format(tier.min)}đ`}
                         </div>
-                        <ul class="tier-benefits-list" style="padding-left: 20px; margin-top: 10px;">
-                            ${benefitsMap[tier.id]}
+                        <ul class="tier-benefits-list">
+                            ${getTierBenefitsHtml(tier)}
                         </ul>
                     </div>
                 </div>
@@ -218,14 +370,22 @@
                         card.style.opacity = '1';
                     } else {
                         card.style.transform = 'scale(0.96)';
-                        card.style.opacity = '0.7';
+                        card.style.opacity = '0.75';
                     }
                 });
             };
 
-            slider.addEventListener('scroll', handleScroll);
+            slider.addEventListener('scroll', handleScroll, { passive: true });
             window.addEventListener('resize', handleScroll);
             setTimeout(handleScroll, 100);
+
+            // Slider Navigation Buttons
+            document.getElementById('slider-prev')?.addEventListener('click', () => {
+                slider.scrollBy({ left: -380, behavior: 'smooth' });
+            });
+            document.getElementById('slider-next')?.addEventListener('click', () => {
+                slider.scrollBy({ left: 380, behavior: 'smooth' });
+            });
         });
 
         async function renderPersonalProgress(userId) {
@@ -260,13 +420,37 @@
                     }, 600);
                 }
                 
-                let progressHtml = nextTier ? `
-                    <div class="tier-progress-box">
-                        <p>Đã tích lũy: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ / ${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</p>
-                    </div>` : `<p>Bạn đã đạt hạng cao nhất.</p>`;
+                let percent = 100;
+                let progressHtml = '';
+                if (nextTier) {
+                    const prevMin = currentTier.min || 0;
+                    const diff = nextTier.min - prevMin;
+                    const spentInTier = Math.max(0, totalSpent - prevMin);
+                    percent = Math.min(100, Math.round((spentInTier / diff) * 100));
+
+                    progressHtml = `
+                        <div style="margin-top: 20px; background: #f8fafc; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 8px; color: #475569;">
+                                <span>Tiến độ lên <strong>${nextTier.name}</strong></span>
+                                <span style="font-weight: 700; color: #c2410c;">${percent}%</span>
+                            </div>
+                            <div style="height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
+                                <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, #c2410c, #ea580c); border-radius: 10px; transition: width 0.8s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b;">
+                                <span>Đã tích lũy: <strong>${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ</strong></span>
+                                <span>Mục tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</strong></span>
+                            </div>
+                        </div>`;
+                } else {
+                    progressHtml = `
+                        <div style="margin-top: 20px; text-align: center; background: #f0fdf4; padding: 14px; border-radius: 12px; border: 1px solid #bbf7d0; color: #166534; font-weight: 600; font-size: 0.9rem;">
+                            🎉 Chúc mừng bạn đã đạt hạng thành viên cao nhất (<strong>${currentTier.name}</strong>)!
+                        </div>`;
+                }
                 
                 progressContainer.innerHTML = `
-                    <div class="membership-card tier-${currentTier.id}">
+                    <div class="membership-card tier-${currentTier.id}" style="margin: 0 auto 15px auto;">
                         <div class="membership-card-chip"></div>
                         <div>
                             <div class="member-label">MEMBER TIER</div>
