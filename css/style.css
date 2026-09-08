@@ -1218,6 +1218,61 @@ footer,
     cursor: pointer;
 }
 
+/* Badge Giao nhanh 2 Giờ (Chỉ hiển thị khi khách ở TP. Hồ Chí Minh) */
+.express-2h-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #0b74e5;
+    color: #ffffff !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 8px 3px 5px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(11, 116, 229, 0.25);
+    user-select: none;
+    letter-spacing: 0.2px;
+    transition: transform 0.15s ease, background 0.2s ease;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+.product-card .price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-black);
+    white-space: nowrap;
+}
+
+.product-card .price .current-price {
+    font-weight: 700;
+    color: #e53935;
+}
+
+.product-card .price .old-price {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    font-weight: 400;
+    text-decoration: line-through;
+}
+
+.express-2h-badge:hover {
+    background: #095ec4;
+    transform: translateY(-1px);
+}
+
+.express-2h-badge svg {
+    width: 15px;
+    height: 13px;
+    fill: currentColor;
+    flex-shrink: 0;
+}
+
 .btn-outline:hover {
     background: var(--text-black);
     color: var(--bg-cream);

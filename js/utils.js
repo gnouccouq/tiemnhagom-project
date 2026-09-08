@@ -1143,6 +1143,94 @@ export function updateMembershipPrices(tier) {
 }
 window.updateMembershipPrices = updateMembershipPrices;
 
+// 8.1 Kiểm tra vị trí khách hàng tại nội thành TP. Hồ Chí Minh để hiển thị nhãn Giao Nhanh 2h
+// Danh sách các khu vực ngoại thành hoặc tỉnh lân cận KHÔNG hỗ trợ giao hỏa tốc 2h
+const EXCLUDED_OUTER_AREAS = [
+    'hoc mon', 'hóc môn',
+    'cu chi', 'củ chi',
+    'binh chanh', 'bình chánh',
+    'nha be', 'nhà bè',
+    'can gio', 'cần giờ',
+    'dong nai', 'đồng nai', 'bien hoa', 'biên hòa', 'long thanh', 'nhon trach', 'trang bom', 'vinh cuu',
+    'vung tau', 'vũng tàu', 'ba ria', 'bà rịa', 'phu my', 'phú mỹ', 'con dao', 'côn đảo',
+    'binh duong', 'bình dương', 'thu dau mot', 'thủ dầu một', 'di an', 'dĩ an', 'thuan an', 'thuận an', 'ben cat', 'bến cát', 'tan uyen', 'tân uyên', 'bau bang', 'bàu bàng',
+    'long an', 'tan an', 'tân an', 'duc hoa', 'đức hòa', 'ben luc', 'bến lức', 'can giuoc', 'cần giuộc',
+    'tay ninh', 'tây ninh',
+    'tien giang', 'tiền giang', 'my tho', 'mỹ tho',
+    'ha noi', 'hà nội', 'da nang', 'đà nẵng', 'can tho', 'cần thơ', 'hai phong', 'hải phòng'
+];
+
+function getDistanceFromHcmCenter(lat, lon) {
+    if (!lat || !lon) return null;
+    const HCM_LAT = 10.7769; // Tọa độ trung tâm TP.HCM (Quận 1 / Bến Thành)
+    const HCM_LON = 106.7009;
+    const R = 6371; // Bán kính Trái Đất theo km
+    const dLat = (lat - HCM_LAT) * Math.PI / 180;
+    const dLon = (lon - HCM_LON) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(HCM_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Khoảng cách tính bằng km
+}
+
+export function isUserInHCM(locStr = null, lat = null, lon = null) {
+    const loc = locStr || sessionStorage.getItem('tng_user_location') || '';
+    if (!loc && lat === null && lon === null) return false;
+
+    const norm = loc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // 1. Loại trừ ngay nếu chuỗi vị trí chứa huyện ngoại thành hoặc tỉnh lân cận
+    const isExcluded = EXCLUDED_OUTER_AREAS.some(area => {
+        const normArea = area.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return norm.includes(normArea);
+    });
+    if (isExcluded) return false;
+
+    // 2. Kiểm tra tọa độ GPS / IP nếu có (Bán kính nội thành HCM <= 16km từ Quận 1)
+    if (lat === null || lon === null) {
+        try {
+            const rawLat = sessionStorage.getItem('tng_user_lat');
+            const rawLon = sessionStorage.getItem('tng_user_lon');
+            if (rawLat && rawLon) {
+                lat = parseFloat(rawLat);
+                lon = parseFloat(rawLon);
+            }
+        } catch (e) { }
+    }
+
+    if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+        const dist = getDistanceFromHcmCenter(lat, lon);
+        if (dist !== null) {
+            // Nếu khoảng cách > 16km từ trung tâm TP.HCM -> Ngoại thành hoặc tỉnh khác -> Không giao 2h
+            if (dist > 16) return false;
+            // Nếu trong bán kính <= 16km -> Thuộc nội thành TP.HCM
+            return true;
+        }
+    }
+
+    // 3. Kiểm tra từ khóa TP.HCM hợp lệ
+    const isHCM = norm.includes('ho chi minh') || norm.includes('hcm') || norm.includes('sai gon') || norm.includes('saigon') || norm.includes('tp.hcm');
+    return isHCM;
+}
+
+export function updateExpressDeliveryBadges(isHcm = null) {
+    if (isHcm === null) {
+        isHcm = isUserInHCM();
+    }
+    const badges = document.querySelectorAll('.express-2h-badge');
+    badges.forEach(b => {
+        if (!b.closest('.express-2h-detail-item')) {
+            b.style.display = isHcm ? 'inline-flex' : 'none';
+        }
+    });
+    const detailItems = document.querySelectorAll('.express-2h-detail-item');
+    detailItems.forEach(item => {
+        item.style.display = isHcm ? 'flex' : 'none';
+    });
+}
+window.updateExpressDeliveryBadges = updateExpressDeliveryBadges;
+
 export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html', options = {}) {
     const onlyBestSellers = Boolean(options.onlyBestSellers);
     const productIsBestSeller = !((product.stock || 0) <= 0) && ((Number(product.sold) || 0) >= 5 || Boolean(product.isBestSeller));
@@ -1307,8 +1395,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     ` : '';
 
     const priceHtml = hasSale
-        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;"><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.85em;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</span> <span style="white-space: nowrap; color: #e65100; font-weight: 700;">${new Intl.NumberFormat('vi-VN').format(currentPrice)} VND</span></p>`
-        : `<p class="price" style="margin-bottom: 2px; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)} VND</p>`;
+        ? `<p class="price" style="margin-bottom: 2px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; white-space: nowrap;"><span class="current-price" style="color: #e53935; font-weight: 700; font-size: 1.05rem;">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</span><span class="old-price" style="text-decoration: line-through; color: #94a3b8; font-size: 0.82rem; font-weight: 400;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)}đ</span></p>`
+        : `<p class="price" style="margin-bottom: 2px; display: flex; align-items: baseline; gap: 6px; white-space: nowrap;"><span class="current-price" style="color: var(--text-black, #1c1d21); font-weight: 700; font-size: 1.05rem;">${new Intl.NumberFormat('vi-VN').format(mockProduct.price)}đ</span></p>`;
 
     // Render Progress Bar nếu có cấu hình Flash Sale
     let flashSaleBarHtml = '';
@@ -1410,6 +1498,17 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     }
 
+    const isHcm = isUserInHCM();
+    const express2hBadge = `
+        <div class="express-2h-badge" style="display: ${isHcm ? 'inline-flex' : 'none'};" title="Giao nhanh 2 Giờ trong nội thành TP. Hồ Chí Minh">
+            <svg viewBox="0 0 20 16" fill="currentColor">
+                <path d="M1 4h3v1.5H1V4zm-1 3.5h4V9H0V7.5zm2 3.5h3v1.5H2V11z"/>
+                <path d="M6 3h8v6h3.5l2.5 3v3h-2a2 2 0 0 1-4 0h-4a2 2 0 0 1-4 0H5V3h1zm9.5 2.5V8H18l-1.67-2.5H15.5zM7.5 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+            </svg>
+            <span>2 Giờ</span>
+        </div>
+    `;
+
     return `
     <div class="product-card ${sparkleClass} ${outOfStockClass}">
         <div class="product-card-image">
@@ -1435,6 +1534,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                 ${priceHtml}
                 ${flashSaleBarHtml}
                 ${memPriceHtml}
+            </div>
+            <div class="product-express-delivery-row" style="margin-top: 4px; display: flex; align-items: center; justify-content: flex-start;">
+                ${express2hBadge}
             </div>
         </div>
     </div>
@@ -1787,6 +1889,29 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Luôn cập nhật con số trên icon giỏ hàng/yêu thích
         updateCartCount(user);
         updateFavoriteCount(user);
+
+        // Lấy vị trí địa lý của khách hàng để hiển thị nhãn Giao Nhanh 2 Giờ nếu ở nội thành TP. Hồ Chí Minh
+        fetchUserLocation().then(loc => {
+            const isHcm = isUserInHCM(loc);
+            updateExpressDeliveryBadges(isHcm);
+        });
+
+        // Nếu trình duyệt hỗ trợ Geolocation và đã được cấp quyền, tối ưu kiểm tra theo GPS thực tế
+        if (typeof navigator !== 'undefined' && navigator.geolocation && !sessionStorage.getItem('tng_gps_checked')) {
+            sessionStorage.setItem('tng_gps_checked', '1');
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    sessionStorage.setItem('tng_user_lat', lat.toString());
+                    sessionStorage.setItem('tng_user_lon', lon.toString());
+                    const isHcm = isUserInHCM(null, lat, lon);
+                    updateExpressDeliveryBadges(isHcm);
+                },
+                () => { },
+                { timeout: 3000, maximumAge: 600000 }
+            );
+        }
 
         // Khởi tạo popup Cookie
         setupCookieConsent(pathPrefix);
@@ -2242,6 +2367,10 @@ async function fetchUserLocation() {
             const data = await res.json();
             if (data && data.success) {
                 const loc = `${data.city || data.region || ''}, ${data.country_code || ''}`.replace(/^,\s*/, '').trim();
+                if (data.latitude && data.longitude) {
+                    sessionStorage.setItem('tng_user_lat', data.latitude.toString());
+                    sessionStorage.setItem('tng_user_lon', data.longitude.toString());
+                }
                 if (loc) {
                     sessionStorage.setItem('tng_user_location', loc);
                     return loc;
@@ -2255,6 +2384,10 @@ async function fetchUserLocation() {
         if (res2.ok) {
             const data2 = await res2.json();
             const loc2 = `${data2.city || data2.region || ''}, ${data2.country_code || data2.country || ''}`.replace(/^,\s*/, '').trim();
+            if (data2.latitude && data2.longitude) {
+                sessionStorage.setItem('tng_user_lat', data2.latitude.toString());
+                sessionStorage.setItem('tng_user_lon', data2.longitude.toString());
+            }
             if (loc2) {
                 sessionStorage.setItem('tng_user_location', loc2);
                 return loc2;
@@ -2268,6 +2401,10 @@ async function fetchUserLocation() {
         if (res3.ok) {
             const data3 = await res3.json();
             const loc3 = `${data3.city || data3.region || ''}, ${data3.country_code || ''}`.replace(/^,\s*/, '').trim();
+            if (data3.latitude && data3.longitude) {
+                sessionStorage.setItem('tng_user_lat', data3.latitude.toString());
+                sessionStorage.setItem('tng_user_lon', data3.longitude.toString());
+            }
             if (loc3) {
                 sessionStorage.setItem('tng_user_location', loc3);
                 return loc3;
