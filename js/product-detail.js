@@ -235,6 +235,9 @@ async function fetchProductDetail() {
             const availablePatterns = p.patterns || [];
             // Lưu vào lịch sử kèm danh mục để tối ưu gợi ý ở trang chủ
             addToHistory(productId, p.category);
+            try {
+                updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => {});
+            } catch (e) {}
 
             const currentPrice = getProductCurrentPrice(p, fsSettings);
             const displaySale = getProductEffectiveSale(p, fsSettings);

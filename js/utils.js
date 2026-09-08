@@ -1100,6 +1100,137 @@ function setupCookieConsent(pathPrefix) {
     document.getElementById('btn-decline-cookie').onclick = () => handleChoice('declined');
 }
 
+// 10.1 Logic: Thông báo yêu cầu truy cập vị trí của khách hàng (Location Permission Prompt)
+export function setupLocationPrompt() {
+    const savedConsent = localStorage.getItem('tng_location_consent');
+    const dismissed = sessionStorage.getItem('tng_location_prompt_dismissed');
+
+    // Nếu người dùng đã từng cho phép, tự động đồng bộ tọa độ ngầm
+    if (savedConsent === 'granted' && typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                sessionStorage.setItem('tng_user_lat', lat.toString());
+                sessionStorage.setItem('tng_user_lon', lon.toString());
+                const isHcm = isUserInHCM(null, lat, lon);
+                if (isHcm) sessionStorage.setItem('tng_user_location', 'TP. Hồ Chí Minh');
+                updateExpressDeliveryBadges(isHcm);
+            },
+            () => { },
+            { timeout: 5000, maximumAge: 300000 }
+        );
+        return;
+    }
+
+    // Nếu đã từ chối hoặc người dùng bấm "Để sau" trong phiên này thì không hiện lại
+    if (savedConsent === 'denied' || dismissed) {
+        return;
+    }
+
+    // Nếu đang có popup rồi thì không tạo thêm
+    if (document.getElementById('tng-location-prompt')) return;
+
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'tng-location-prompt';
+    promptDiv.id = 'tng-location-prompt';
+    promptDiv.innerHTML = `
+        <div class="tng-loc-inner">
+            <button class="tng-loc-close" id="btn-close-loc-prompt" title="Đóng">&times;</button>
+            <div class="tng-loc-header">
+                <div class="tng-loc-icon-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="tng-loc-title">Xác định vị trí của bạn</h4>
+                </div>
+            </div>
+            <p class="tng-loc-desc">
+                Cho phép Tiệm Nhà Gốm biết vị trí của bạn để tự động kích hoạt dịch vụ <strong>Giao nhanh 2 Giờ</strong> (nội thành TP.HCM) và ước tính phí ship nhanh nhất.
+            </p>
+            <div class="tng-loc-actions">
+                <button id="btn-later-location" class="tng-loc-btn-later">Để sau</button>
+                <button id="btn-allow-location" class="tng-loc-btn-allow">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                    <span>Chia sẻ vị trí</span>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(promptDiv);
+
+    // Hiển thị mượt mà sau 1.2s
+    setTimeout(() => {
+        if (promptDiv) promptDiv.classList.add('show');
+    }, 1200);
+
+    const closePrompt = () => {
+        promptDiv.classList.remove('show');
+        setTimeout(() => promptDiv.remove(), 500);
+    };
+
+    const handleAllow = () => {
+        const btnAllow = document.getElementById('btn-allow-location');
+        if (btnAllow) {
+            btnAllow.innerHTML = `<span>Đang xác định...</span>`;
+            btnAllow.disabled = true;
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    sessionStorage.setItem('tng_user_lat', lat.toString());
+                    sessionStorage.setItem('tng_user_lon', lon.toString());
+                    localStorage.setItem('tng_user_lat', lat.toString());
+                    localStorage.setItem('tng_user_lon', lon.toString());
+                    localStorage.setItem('tng_location_consent', 'granted');
+
+                    const isHcm = isUserInHCM(null, lat, lon);
+                    if (isHcm) {
+                        sessionStorage.setItem('tng_user_location', 'TP. Hồ Chí Minh');
+                        showToast('🎉 Vị trí: Nội thành TP.HCM (Hỗ trợ Giao nhanh 2 Giờ!)', 'success');
+                    } else {
+                        showToast('📍 Đã cập nhật vị trí của bạn thành công.', 'info');
+                    }
+                    updateExpressDeliveryBadges(isHcm);
+                    closePrompt();
+                },
+                (err) => {
+                    console.warn('Geolocation error / denied:', err);
+                    localStorage.setItem('tng_location_consent', 'denied');
+                    // Fallback qua IP
+                    fetchUserLocation().then(loc => {
+                        const isHcm = isUserInHCM(loc);
+                        updateExpressDeliveryBadges(isHcm);
+                    });
+                    showToast('Chưa thể lấy GPS chính xác. Tiệm sẽ dùng vị trí ước lượng qua mạng.', 'info');
+                    closePrompt();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            localStorage.setItem('tng_location_consent', 'unsupported');
+            closePrompt();
+        }
+    };
+
+    document.getElementById('btn-allow-location')?.addEventListener('click', handleAllow);
+    document.getElementById('btn-later-location')?.addEventListener('click', () => {
+        sessionStorage.setItem('tng_location_prompt_dismissed', '1');
+        closePrompt();
+    });
+    document.getElementById('btn-close-loc-prompt')?.addEventListener('click', () => {
+        sessionStorage.setItem('tng_location_prompt_dismissed', '1');
+        closePrompt();
+    });
+}
+window.setupLocationPrompt = setupLocationPrompt;
+
 // 8. Logic UI: Render thẻ sản phẩm dùng chung
 export function updateMembershipPrices(tier) {
     if (!tier) {
@@ -1915,6 +2046,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Khởi tạo popup Cookie
         setupCookieConsent(pathPrefix);
+
+        // Khởi tạo thông báo yêu cầu truy cập vị trí
+        setupLocationPrompt();
 
         // Khởi tạo tính năng xem ảnh full screen
         setupFullScreenImages();

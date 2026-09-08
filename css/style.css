@@ -1021,7 +1021,7 @@ footer,
         padding: 8px 0;
     }
 
-    /* ThÃƒÆ’Ã‚Âªm padding dÃƒÂ¡Ã‚Â»Ã‚Âc cho cÃƒÆ’Ã‚Â¡c mÃƒÂ¡Ã‚Â»Ã‚Â¥c menu cÃƒÂ¡Ã‚ÂºÃ‚Â¥p cao nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t */
+    /* ThÃƒÆ’Ã‚Âªm padding dÃƒÂ¡Ã‚Â»Ã‚Â c cho cÃƒÆ’Ã‚Â¡c mÃƒÂ¡Ã‚Â»Ã‚Â¥c menu cÃƒÂ¡Ã‚ÂºÃ‚Â¥p cao nhÃƒÂ¡Ã‚ÂºÃ‚Â¥t */
 
     /* Overlay khi mÃƒÂ¡Ã‚Â»Ã…Â¸ menu */
     body.menu-open::after {
@@ -1223,14 +1223,14 @@ footer,
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: #0b74e5;
+    background: linear-gradient(135deg, #c2410c, #9a3412);
     color: #ffffff !important;
     font-size: 0.72rem;
     font-weight: 700;
     line-height: 1;
     padding: 3px 8px 3px 5px;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(11, 116, 229, 0.25);
+    box-shadow: 0 2px 5px rgba(154, 52, 18, 0.22); transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
     user-select: none;
     letter-spacing: 0.2px;
     transition: transform 0.15s ease, background 0.2s ease;
@@ -1262,7 +1262,7 @@ footer,
 }
 
 .express-2h-badge:hover {
-    background: #095ec4;
+    background: linear-gradient(135deg, #9a3412, #7c2d12); box-shadow: 0 3px 7px rgba(124, 45, 18, 0.3);
     transform: translateY(-1px);
 }
 
@@ -4247,9 +4247,12 @@ button.kiot-nav-btn span {
     border-radius: 6px;
     padding: 14px 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    position: relative;
-    z-index: 1000 !important;
-    overflow: visible !important;
+    position: sticky !important;
+    top: 15px !important;
+    align-self: flex-start !important;
+    max-height: calc(100vh - 120px) !important;
+    overflow-y: auto !important;
+    z-index: 100 !important;
 }
 
 .filter-header {
@@ -12346,4 +12349,296 @@ input:checked + .slider:before {
         width: 100%;
         padding: 11px 16px;
     }
-}
+}
+
+/* ==========================================================================
+   Popup / Banner Yêu Cầu Vị Trí Khách Hàng (Location Permission Prompt)
+   ========================================================================== */
+.tng-location-prompt {
+    position: fixed;
+    top: 90px;
+    right: 25px;
+    max-width: 420px;
+    width: calc(100% - 30px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15), 0 4px 15px rgba(194, 65, 12, 0.1);
+    border: 1px solid rgba(194, 65, 12, 0.18);
+    z-index: 10000;
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.tng-location-prompt.show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.tng-loc-inner {
+    padding: 18px 20px 16px;
+    position: relative;
+}
+
+.tng-loc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.tng-loc-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fff7ed, #fed7aa);
+    color: #c2410c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(194, 65, 12, 0.15);
+}
+
+.tng-loc-icon-wrap svg {
+    width: 22px;
+    height: 22px;
+}
+
+.tng-loc-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #1c1917;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.tng-loc-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.tng-loc-close:hover {
+    color: #1c1917;
+    background: #f3f4f6;
+}
+
+.tng-loc-desc {
+    font-size: 0.82rem;
+    color: #57534e;
+    line-height: 1.5;
+    margin: 0 0 14px 0;
+}
+
+.tng-loc-desc strong {
+    color: #c2410c;
+}
+
+.tng-loc-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.tng-loc-btn-allow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #c2410c, #9a3412);
+    color: #ffffff !important;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(194, 65, 12, 0.25);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tng-loc-btn-allow:hover {
+    background: linear-gradient(135deg, #9a3412, #7c2d12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(194, 65, 12, 0.35);
+}
+
+.tng-loc-btn-later {
+    background: transparent;
+    border: 1px solid #d6d3d1;
+    color: #78716c;
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tng-loc-btn-later:hover {
+    background: #f5f5f4;
+    color: #1c1917;
+}
+
+@media (max-width: 767px) {
+    .tng-location-prompt {
+        top: auto;
+        bottom: 20px;
+        right: 15px;
+        left: 15px;
+        width: auto;
+        transform: translateY(30px) scale(0.96);
+    }
+    .tng-location-prompt.show {
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+
+
+/* ==========================================================================
+   PERFECT ADMIN DASHBOARD SCROLLING ARCHITECTURE:
+   1. Single-Column Sections: Scroll the whole section smoothly (display: block; overflow-y: auto)
+   2. Two-Column Sections: Lock the left sidebar in place & scroll the right side independently
+   ========================================================================== */
+
+/* 1. Single-Column Sections (Overview, Online Users, Maintenance, POS, Flash Sale) */
+#online-users-section,
+#overview-section,
+#maintenance-section,
+#pos-section,
+#flash-sale-settings-section {
+    display: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: 16px 20px 40px 20px !important;
+    box-sizing: border-box !important;
+}
+
+#online-users-section.active,
+#overview-section.active,
+#maintenance-section.active,
+#pos-section.active,
+#flash-sale-settings-section.active {
+    display: block !important;
+    overflow-y: auto !important;
+    height: 100% !important;
+}
+
+/* 2. Two-Column Sections with Left Filter Sidebar & Right Main Content */
+#product-section,
+#order-section,
+#rental-order-section,
+#user-section,
+#admin-account-section,
+#coupon-section,
+#news-section,
+#collections-section,
+#events-section,
+#category-section,
+#restock-alerts-section,
+#inventory-log-section,
+#banner-section,
+#stats-section,
+#customer-analytics-section {
+    display: none !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    padding: 14px 20px !important;
+    box-sizing: border-box !important;
+}
+
+#product-section.active,
+#order-section.active,
+#rental-order-section.active,
+#user-section.active,
+#admin-account-section.active,
+#coupon-section.active,
+#news-section.active,
+#collections-section.active,
+#events-section.active,
+#category-section.active,
+#restock-alerts-section.active,
+#inventory-log-section.active,
+#banner-section.active,
+#stats-section.active,
+#customer-analytics-section.active {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+.kiot-product-layout {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    gap: 16px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.kiot-filter-sidebar {
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 14px 16px 24px !important;
+    box-sizing: border-box !important;
+    position: static !important;
+}
+
+.kiot-product-main {
+    flex: 1 !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 14px 16px 30px !important;
+    box-sizing: border-box !important;
+}
+
+#customer-analytics-section .kiot-product-main,
+#stats-section .kiot-product-main {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 8px 30px 0 !important;
+}

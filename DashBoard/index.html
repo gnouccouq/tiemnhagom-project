@@ -187,6 +187,7 @@
                             <div class="kiot-dropdown-menu">
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="stats-section"><span>Báo cáo
                                         doanh thu</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="customer-analytics-section"><span>Vị trí & Lượt xem SP</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="online-users-section"><span>Hệ
                                         thống Online</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="maintenance-section"><span>Bảo
@@ -194,10 +195,10 @@
                             </div>
                         </div>
 
-                        <!-- 7. Bán online -->
+                        <!-- 7. Nội dung & Marketing -->
                         <div class="kiot-nav-item">
                             <button class="kiot-nav-btn">
-                                <span>Bán online</span> <span style="font-size: 0.6rem;">▾</span>
+                                <span>Nội dung & Marketing</span> <span style="font-size: 0.6rem;">▾</span>
                             </button>
                             <div class="kiot-dropdown-menu">
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="banner-section"><span>Banner
@@ -2354,10 +2355,10 @@
             </div>
 
             <!-- Section Thống kê Báo cáo (KiotViet 2-Column Layout) -->
-            <div id="stats-section" class="admin-section">
-                <div class="kiot-product-layout">
-                    <!-- 1. Bộ Lọc Báo Cáo Bên Trái (Left Filter Sidebar) -->
-                    <div class="kiot-filter-sidebar">
+            <div id="stats-section" class="admin-section" style="overflow-y: hidden !important; padding: 14px 20px !important;">
+                <div class="kiot-product-layout" style="display: flex; gap: 16px; height: 100% !important; min-height: 0 !important; overflow: hidden !important;">
+                    <!-- 1. Bộ Lọc Báo Cáo Bên Trái (Cố định) -->
+                    <div class="kiot-filter-sidebar" style="width: 260px !important; flex-shrink: 0 !important; height: 100% !important; max-height: 100% !important; overflow-y: auto !important; position: static !important;">
                         <div class="filter-header">
                             <h3 class="filter-title">Báo cáo & Phân tích</h3>
                         </div>
@@ -2384,8 +2385,8 @@
                         </button>
                     </div>
 
-                    <!-- 2. Nội dung Báo cáo Bên Phải (Right Main Area) -->
-                    <div class="kiot-product-main" style="gap: 20px;">
+                    <!-- 2. Nội dung Báo cáo Bên Phải (Right Main Area - Cuộn độc lập) -->
+                    <div class="kiot-product-main" style="flex: 1 !important; height: 100% !important; min-height: 0 !important; overflow-y: auto !important; display: flex; flex-direction: column; gap: 20px; background: transparent; border: none; box-shadow: none; padding: 0 8px 30px 0;">
                         <!-- Thẻ tóm tắt trong kỳ -->
                         <div class="overview-grid" style="margin-bottom: 0;">
                             <div class="stat-card">
@@ -2557,6 +2558,211 @@
                                         </tr>
                                     </thead>
                                     <tbody id="stats-detail-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Báo Cáo Phân Tích Vị Trí Khách Hàng & Sản Phẩm Xem Nhiều -->
+            <div id="customer-analytics-section" class="admin-section" style="overflow-y: hidden !important; padding: 14px 20px !important;">
+                <div class="kiot-product-layout" style="display: flex; gap: 16px; height: 100% !important; min-height: 0 !important; overflow: hidden !important;">
+                    <!-- 1. Bộ lọc bên trái (Cố định hoàn toàn) -->
+                    <div class="kiot-filter-sidebar" style="width: 260px !important; flex-shrink: 0 !important; height: 100% !important; max-height: 100% !important; overflow-y: auto !important; position: static !important;">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Bộ lọc phân tích</h3>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Khoảng thời gian</label>
+                            <select id="analytics-time-range" class="kiot-filter-select">
+                                <option value="7days">7 ngày qua</option>
+                                <option value="30days" selected>30 ngày qua</option>
+                                <option value="year">Năm nay</option>
+                                <option value="all">Toàn bộ thời gian</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Lọc theo Danh mục SP</label>
+                            <select id="analytics-category-filter" class="kiot-filter-select">
+                                <option value="all">Tất cả danh mục</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Khu vực phân tích</label>
+                            <select id="analytics-region-filter" class="kiot-filter-select">
+                                <option value="all">Toàn quốc</option>
+                                <option value="hcm_inner">Chỉ Nội thành TP.HCM (Giao 2h)</option>
+                                <option value="hcm_all">Toàn TP. Hồ Chí Minh</option>
+                                <option value="hanoi">Khu vực Hà Nội</option>
+                                <option value="other">Các tỉnh thành khác</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-refresh-customer-analytics" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                            🔄 Cập nhật báo cáo
+                        </button>
+                        <button id="btn-export-customer-analytics-excel" class="kiot-btn-outline" style="width: 100%; margin-top: 8px; justify-content: center;">
+                            📥 Xuất Excel Báo cáo
+                        </button>
+                    </div>
+
+                    <!-- 2. Nội dung chính bên phải (Cuộn độc lập) -->
+                    <div class="kiot-product-main" style="flex: 1 !important; height: 100% !important; min-height: 0 !important; overflow-y: auto !important; display: flex; flex-direction: column; gap: 20px; background: transparent; border: none; box-shadow: none; padding: 0 8px 30px 0;">
+                        <!-- Header tiêu đề -->
+                        <div class="kiot-card" style="margin-bottom: 0; flex-shrink: 0;">
+                            <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 class="kiot-card-title" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                        <span>📍</span> Báo Cáo Vị Trí Khách Hàng & Sản Phẩm Quan Tâm Nhất
+                                    </h3>
+                                    <p style="color: #666; font-size: 0.85rem; margin: 4px 0 0 0;">
+                                        Phân tích chuyên sâu địa lý khách hàng, khu vực tiềm năng, sản phẩm được xem nhiều nhất và tỷ lệ chuyển đổi đơn hàng.
+                                    </p>
+                                </div>
+                                <div style="font-size: 0.85rem; color: #c2410c; background: #fff7ed; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid #ffedd5;">
+                                    ⚡ Dữ liệu tổng hợp Realtime
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thẻ tóm tắt KPIs (Stats Cards) -->
+                        <div class="overview-grid" style="margin-bottom: 0; flex-shrink: 0;">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fff7ed; color: #c2410c;">📍</div>
+                                <div class="stat-info">
+                                    <h3>Khu vực dẫn đầu</h3>
+                                    <p id="kpi-top-location" style="margin: 0; font-size: 1.25rem;">Đang tải...</p>
+                                    <span id="kpi-top-location-sub" style="font-size: 0.75rem; color: #666;"></span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;">⚡</div>
+                                <div class="stat-info">
+                                    <h3>Tỷ lệ Nội thành HCM (Giao 2H)</h3>
+                                    <p id="kpi-hcm-inner-rate" style="margin: 0; font-size: 1.25rem; color: #2e7d32;">0%</p>
+                                    <span id="kpi-hcm-inner-sub" style="font-size: 0.75rem; color: #2e7d32;">Đủ điều kiện hỏa tốc</span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;">👀</div>
+                                <div class="stat-info">
+                                    <h3>Tổng lượt xem sản phẩm</h3>
+                                    <p id="kpi-total-views" style="margin: 0; font-size: 1.25rem;">0</p>
+                                    <span id="kpi-total-views-sub" style="font-size: 0.75rem; color: #0284c7;">Lượt quan tâm SP</span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fdf2f8; color: #db2777;">🔥</div>
+                                <div class="stat-info">
+                                    <h3>Sản phẩm Hot nhất</h3>
+                                    <p id="kpi-top-viewed-product" style="margin: 0; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Sản phẩm">Đang tải...</p>
+                                    <span id="kpi-top-product-sub" style="font-size: 0.75rem; color: #db2777;">0 lượt xem</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HÀNG 1: BIỂU ĐỒ VỊ TRÍ KHÁCH HÀNG -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; flex-shrink: 0;">
+                            <!-- Biểu đồ phân bổ Tỉnh / Thành phố -->
+                            <div class="kiot-card" style="padding: 20px; flex-shrink: 0;">
+                                <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">🗺️ Phân bổ Khách hàng theo Tỉnh / Thành phố</h4>
+                                </div>
+                                <div style="height: 280px; position: relative;">
+                                    <canvas id="chartCustomerLocations"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Biểu đồ phân bổ Quận / Huyện & Nội thành HCM -->
+                            <div class="kiot-card" style="padding: 20px; flex-shrink: 0;">
+                                <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">⚡ Phân bổ Khu vực TP.HCM & Giao nhanh 2H</h4>
+                                </div>
+                                <div style="height: 280px; position: relative;">
+                                    <canvas id="chartHcmDistricts"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BẢNG CHI TIẾT VỊ TRÍ ĐỊA LÝ -->
+                        <div class="kiot-card" style="padding: 20px; flex-shrink: 0; min-height: 240px;">
+                            <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">📋 Bảng Xếp Hạng Khu Vực Khách Hàng Tập Trung Nhiều Nhất</h4>
+                                <span id="location-table-summary" style="font-size: 0.8rem; color: #78716c;"></span>
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table class="kiot-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 0.82rem; color: #475569;">
+                                            <th style="padding: 10px 12px; width: 60px;">Hạng</th>
+                                            <th style="padding: 10px 12px;">Tỉnh / Thành phố</th>
+                                            <th style="padding: 10px 12px;">Khu vực trọng điểm</th>
+                                            <th style="padding: 10px 12px; text-align: center;">Giao nhanh 2H</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Lượng khách / Lượt</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Số đơn hàng</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Tỷ lệ (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customer-location-table-body">
+                                        <tr><td colspan="7" style="text-align: center; padding: 25px; color: #888;">Đang tổng hợp dữ liệu...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- HÀNG 2: BIỂU ĐỒ SẢN PHẨM XEM NHIỀU -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; flex-shrink: 0;">
+                            <!-- Biểu đồ Top 10 sản phẩm xem nhiều -->
+                            <div class="kiot-card" style="padding: 20px; flex-shrink: 0;">
+                                <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">🔥 Top 10 Sản Phẩm Được Xem & Quan Tâm Nhiều Nhất</h4>
+                                </div>
+                                <div style="height: 320px; position: relative;">
+                                    <canvas id="chartTopViewedProducts"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Biểu đồ lượt xem theo danh mục -->
+                            <div class="kiot-card" style="padding: 20px; flex-shrink: 0;">
+                                <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">🏷️ Tỷ Lệ Quan Tâm Theo Danh Mục Sản Phẩm</h4>
+                                </div>
+                                <div style="height: 320px; position: relative;">
+                                    <canvas id="chartCategoryViews"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BẢNG CHI TIẾT SẢN PHẨM & TỶ LỆ CHUYỂN ĐỔI -->
+                        <div class="kiot-card" style="padding: 20px; flex-shrink: 0; min-height: 240px;">
+                            <div class="kiot-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                                <h4 style="margin: 0; font-size: 1rem; color: #1c1917; font-weight: 700;">📊 Chi Tiết Lượt Xem, Đã Bán & Tỷ Lệ Chuyển Đổi Từng Sản Phẩm</h4>
+                                <input type="text" id="analytics-product-search" placeholder="🔍 Tìm kiếm sản phẩm..." class="kiot-filter-input" style="max-width: 250px; font-size: 0.82rem; padding: 6px 12px;">
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table class="kiot-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 0.82rem; color: #475569;">
+                                            <th style="padding: 10px 12px;">Sản phẩm</th>
+                                            <th style="padding: 10px 12px;">Danh mục</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Giá bán</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Lượt xem 👀</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Đã bán 🛒</th>
+                                            <th style="padding: 10px 12px; text-align: right;">Tồn kho</th>
+                                            <th style="padding: 10px 12px; text-align: center;">Tỷ lệ Mua/Xem</th>
+                                            <th style="padding: 10px 12px; text-align: center;">Hiệu suất</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="top-viewed-products-table-body">
+                                        <tr><td colspan="8" style="text-align: center; padding: 25px; color: #888;">Đang tải danh sách sản phẩm...</td></tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
