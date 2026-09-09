@@ -247,10 +247,28 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
                         .reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 }
 
-                const isValid = (!expiryDate || expiryDate >= today) && 
+                let isValid = (!expiryDate || expiryDate >= today) && 
                                 (coupon.limit === 0 || (coupon.usedCount || 0) < coupon.limit) &&
                                 (applicableSubtotal >= (coupon.minOrder || 0)) &&
                                 (!coupon.category || coupon.category === 'all' || applicableSubtotal > 0);
+
+                // Không cho phép dùng mã gán riêng cho tài khoản khác
+                if (isValid && coupon.assignedTo && coupon.assignedTo !== uid) {
+                    isValid = false;
+                }
+
+                // Không cho phép chính chủ tự áp dụng mã quà tặng người thân do mình sở hữu
+                if (isValid && coupon.assignedBy && coupon.assignedBy === uid) {
+                    isValid = false;
+                }
+
+                // Voucher tặng người thân chỉ áp dụng cho khách hàng mới chưa từng có đơn hàng
+                if (isValid && coupon.forNewCustomerOnly && uid) {
+                    const pastOrdersSnap = await db.collection("orders").where("userId", "==", uid).limit(1).get();
+                    if (!pastOrdersSnap.empty) {
+                        isValid = false;
+                    }
+                }
 
                 if (isValid) {
                     if (coupon.type === 'percent') {
