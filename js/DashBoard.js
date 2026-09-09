@@ -9506,6 +9506,8 @@ window.getPOSVariantSalesCounts = (productId, pData = null) => {
         combo: {}
     };
 
+    const comboVariantsList = pData && Array.isArray(pData.comboVariants) ? pData.comboVariants : [];
+
     // 1. Thống kê từ dữ liệu đơn hàng (overviewOrdersData)
     const orders = window.overviewOrdersData || [];
     orders.forEach(o => {
@@ -9519,8 +9521,17 @@ window.getPOSVariantSalesCounts = (productId, pData = null) => {
                 if (item.pattern) {
                     stats.pattern[item.pattern] = (stats.pattern[item.pattern] || 0) + qty;
                 }
-                if (item.comboVariant || item.variantName) {
-                    const cName = item.comboVariant || item.variantName;
+                
+                // Lọc biến thể Combo
+                let cName = item.comboVariant || item.variantName || item.combo;
+                if (!cName && item.variant && comboVariantsList.length > 0) {
+                    const matched = comboVariantsList.find(cv => item.variant.includes(cv.name));
+                    if (matched) cName = matched.name;
+                }
+                if (!cName && comboVariantsList.length === 1) {
+                    cName = comboVariantsList[0].name;
+                }
+                if (cName) {
                     stats.combo[cName] = (stats.combo[cName] || 0) + qty;
                 }
             }
@@ -10235,7 +10246,11 @@ window.createPOSOrder = async () => {
                         updateData.colorVariants = pData.colorVariants.map(v => {
                             const qty = colorQtyMap[v.name] || 0;
                             if (qty > 0) {
-                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                                return {
+                                    ...v,
+                                    stock: Math.max(0, (v.stock || 0) - qty),
+                                    sold: (v.sold || 0) + qty
+                                };
                             }
                             return v;
                         });
@@ -10254,7 +10269,11 @@ window.createPOSOrder = async () => {
                         updateData.patternVariants = pData.patternVariants.map(v => {
                             const qty = patternQtyMap[v.name] || 0;
                             if (qty > 0) {
-                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                                return {
+                                    ...v,
+                                    stock: Math.max(0, (v.stock || 0) - qty),
+                                    sold: (v.sold || 0) + qty
+                                };
                             }
                             return v;
                         });
@@ -10265,7 +10284,14 @@ window.createPOSOrder = async () => {
                 if (Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
                     const comboQtyMap = {};
                     items.forEach(i => {
-                        const cName = i.comboVariant || i.variantName;
+                        let cName = i.comboVariant || i.variantName || i.combo;
+                        if (!cName && i.variant) {
+                            const matchedCV = pData.comboVariants.find(cv => i.variant.includes(cv.name));
+                            if (matchedCV) cName = matchedCV.name;
+                        }
+                        if (!cName && pData.comboVariants.length === 1) {
+                            cName = pData.comboVariants[0].name;
+                        }
                         if (cName) {
                             comboQtyMap[cName] = (comboQtyMap[cName] || 0) + (Number(i.quantity) || 1);
                         }
@@ -10274,7 +10300,11 @@ window.createPOSOrder = async () => {
                         updateData.comboVariants = pData.comboVariants.map(v => {
                             const qty = comboQtyMap[v.name] || 0;
                             if (qty > 0) {
-                                return { ...v, stock: Math.max(0, (v.stock || 0) - qty) };
+                                return {
+                                    ...v,
+                                    stock: Math.max(0, (v.stock !== undefined && v.stock !== null ? v.stock : 0) - qty),
+                                    sold: (v.sold || 0) + qty
+                                };
                             }
                             return v;
                         });
