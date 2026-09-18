@@ -92,7 +92,7 @@ async function fetchArticle() {
 
         const date = n.createdAt ? new Date(n.createdAt.toDate()).toLocaleDateString('vi-VN') : '';
         const author = n.author || 'Tiệm Nhà Gốm';
-        const shareUrl = `https://tiemnhagom-project.web.app/share?type=news&id=${id}`;
+        const shareUrl = `https://tiemnhagom.vn/share?type=news&id=${id}`;
         const urlStr = encodeURIComponent(shareUrl);
         const encodedTitle = encodeURIComponent(`${n.title} | Tiệm Nhà Gốm`);
 
@@ -138,7 +138,7 @@ async function fetchArticle() {
         }
 
         window.copyArticleLink = () => {
-            const shareUrl = `https://tiemnhagom-project.web.app/share?type=news&id=${id}`;
+            const shareUrl = `https://tiemnhagom.vn/share?type=news&id=${id}`;
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showToast('Đã sao chép liên kết chia sẻ bài viết!');
             }).catch(e => {

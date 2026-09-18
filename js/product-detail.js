@@ -1487,7 +1487,7 @@ window.updateDisplayPrice = () => {
 window.shareProduct = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const pid = urlParams.get('id');
-    const shareUrl = pid ? `https://tiemnhagom-project.web.app/share?type=product&id=${pid}` : window.location.href;
+    const shareUrl = pid ? `https://tiemnhagom.vn/share?type=product&id=${pid}` : window.location.href;
     
     const shareData = {
         title: document.title,
