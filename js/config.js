@@ -1,4 +1,20 @@
 // js/config.js
+
+// Tự động điều hướng tất cả truy cập về tên miền chính thức tiemnhagom.vn
+if (
+    typeof window !== 'undefined' &&
+    window.location.hostname !== 'tiemnhagom.vn' &&
+    window.location.hostname !== 'localhost' &&
+    window.location.hostname !== '127.0.0.1' &&
+    !window.location.hostname.endsWith('.local') &&
+    window.location.protocol.startsWith('http')
+) {
+    const isMobileApp = window.Capacitor !== undefined || window.cordova !== undefined;
+    if (!isMobileApp) {
+        window.location.replace('https://tiemnhagom.vn' + window.location.pathname + window.location.search + window.location.hash);
+    }
+}
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager
