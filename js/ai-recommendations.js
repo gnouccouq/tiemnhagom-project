@@ -180,7 +180,7 @@ export async function renderDecorMatchRecommendations(currentProduct, containerI
             favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        const cardsHtml = finalMatches.map(p => renderProductCard(p, p.id, favs, './index.html')).join('');
+        const cardsHtml = finalMatches.map(p => renderProductCard(p, p.id, favs, '/product/index.html')).join('');
 
         container.innerHTML = `
             <div class="ai-decor-match-section" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px dashed #e0e0e0;">

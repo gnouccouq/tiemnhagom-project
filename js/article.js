@@ -57,7 +57,7 @@ async function fetchSuggestedProducts() {
         }
 
         const productsHtml = snap.docs.map(docSnap => {
-            return renderProductCard(docSnap.data(), docSnap.id, [], '../product/index.html');
+            return renderProductCard(docSnap.data(), docSnap.id, [], '/product/index.html');
         }).join('');
         
         container.innerHTML = productsHtml;
@@ -75,6 +75,11 @@ async function fetchArticle() {
     if (!id) {
         container.innerHTML = "<p style='text-align:center;'>Bài viết không tồn tại.</p>";
         return;
+    }
+
+    // Tự động đồng bộ thanh địa chỉ sang link xem trước để khi copy link trực tiếp trên trình duyệt vẫn hiện đầy đủ ảnh & tên
+    if (id && window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', `/share?type=news&id=${encodeURIComponent(id)}`);
     }
 
     try {
@@ -130,8 +135,8 @@ async function fetchArticle() {
         if (breadcrumbContainer) {
             breadcrumbContainer.innerHTML = `
                 <div class="article-breadcrumb">
-                    <a href="../index.html">Trang chủ</a> <span class="separator">›</span>
-                    <a href="index.html">Blog</a> <span class="separator">›</span>
+                    <a href="/index.html">Trang chủ</a> <span class="separator">›</span>
+                    <a href="/blog/index.html">Blog</a> <span class="separator">›</span>
                     <span class="current">${n.title}</span>
                 </div>
             `;
@@ -191,7 +196,7 @@ async function fetchArticle() {
                 <button class="feedback-btn" onclick="submitFeedback(false, this)">😞 Không hài lòng</button>
             </div>
             
-            <a href="index.html" class="article-back-btn">
+            <a href="/blog/index.html" class="article-back-btn">
                 &larr; QUAY TRỞ LẠI "Blog"
             </a>
         `;
