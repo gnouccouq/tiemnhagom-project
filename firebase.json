@@ -13,6 +13,18 @@
     ],
 
 
+    "redirects": [
+      {
+        "source": "/*/lookbook",
+        "destination": "/lookbook/",
+        "type": 301
+      },
+      {
+        "source": "/*/lookbook/**",
+        "destination": "/lookbook/",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "/share",
