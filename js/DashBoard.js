@@ -2369,6 +2369,7 @@ let adminLookbookScenes = [];
 let lookbookDraftHotspots = [];
 let lookbookCurrentImgUrl = '';
 let currentPickingCoords = null;
+let lookbookIsComingSoon = true;
 
 async function initLookbookManagement() {
     const listContainer = document.getElementById('admin-lookbook-list');
