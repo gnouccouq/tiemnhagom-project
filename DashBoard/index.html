@@ -216,6 +216,7 @@
                                         kiện</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài viết &
                                         Tin tức</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="lookbook-section"><span>Lookbook Không gian</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="coupon-section"><span>Mã giảm
                                         giá</span></button>
                             </div>
@@ -1105,6 +1106,127 @@
                             <div id="admin-collection-list" style="display: flex; flex-direction: column; gap: 12px;">
                                 <!-- JS render -->
                                 <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Quản lý Lookbook Không Gian (KiotViet 2-Column Layout) -->
+            <div id="lookbook-section" class="admin-section">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar" style="width: 440px; flex: 0 0 440px;">
+                        <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 class="filter-title">Thiết Lập Lookbook</h3>
+                            <button type="button" class="kiot-btn-secondary" id="btn-reset-lookbook-form" style="padding: 4px 8px; font-size: 0.78rem;">+ Thêm mới</button>
+                        </div>
+
+                        <form id="lookbook-form">
+                            <input type="hidden" id="lookbook-edit-id" value="">
+                            
+                            <div class="filter-group">
+                                <label class="filter-label">Tên không gian / Cảnh Lookbook</label>
+                                <input type="text" id="lookbook-title" class="kiot-filter-input" required placeholder="VD: Bàn Ăn Men Mộc Cho Gia Đình">
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">Phân loại không gian</label>
+                                <select id="lookbook-category" class="kiot-filter-input" required>
+                                    <option value="dining">🍲 Bàn Ăn Ấm Cúng (dining)</option>
+                                    <option value="teatime">🍵 Góc Thưởng Trà (teatime)</option>
+                                    <option value="decor">🏺 Decor & Bình Hoa (decor)</option>
+                                    <option value="kitchen">🍳 Gian Bếp Mộc (kitchen)</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">Mô tả cảm hứng</label>
+                                <textarea id="lookbook-desc" class="kiot-filter-input" rows="2" placeholder="Chia sẻ đôi dòng về cách phối và nét đẹp của góc không gian này..."></textarea>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">Ảnh không gian (Tải lên hoặc chọn file)</label>
+                                <input type="file" id="lookbook-image-file" class="kiot-filter-input" accept="image/*" style="padding: 4px;">
+                                <input type="text" id="lookbook-image-url" class="kiot-filter-input" placeholder="Hoặc dán URL ảnh trực tiếp..." style="margin-top: 5px;">
+                            </div>
+
+                            <!-- Interactive Hotspot Builder -->
+                            <div class="filter-group" style="border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; background: #f8fafc;">
+                                <label class="filter-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <span>🎯 Ghim Sản Phẩm Lên Ảnh</span>
+                                    <span style="font-size: 0.72rem; color: #64748b; font-weight: normal;">Nhấp chuột vào ảnh để ghim</span>
+                                </label>
+                                
+                                <!-- Canvas Preview where admin clicks to add hotspot -->
+                                <div id="lookbook-canvas-preview" style="position: relative; width: 100%; aspect-ratio: 16/10; background: #e2e8f0; border-radius: 6px; overflow: hidden; cursor: crosshair; display: flex; align-items: center; justify-content: center;">
+                                    <img id="lookbook-preview-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                    <span id="lookbook-preview-placeholder" style="color: #94a3b8; font-size: 0.8rem; text-align: center; padding: 10px;">Vui lòng chọn hoặc tải ảnh lên để bắt đầu ghim sản phẩm</span>
+                                    <div id="lookbook-hotspots-overlay" style="position: absolute; inset: 0; pointer-events: none;"></div>
+                                </div>
+
+                                <!-- Form ghim sản phẩm xuất hiện khi nhấp vào ảnh -->
+                                <div id="hotspot-creator-box" style="display: none; margin-top: 10px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #3b82f6;">
+                                    <div style="font-size: 0.78rem; font-weight: 600; color: #1e40af; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                                        <span>Ghim tại: <span id="hotspot-coords-text">0%, 0%</span></span>
+                                        <button type="button" id="btn-cancel-hotspot-pick" style="border: none; background: transparent; color: #ef4444; cursor: pointer; font-size: 0.75rem;">Hủy</button>
+                                    </div>
+                                    <div style="margin-bottom: 6px;">
+                                        <select id="hotspot-product-select" class="kiot-filter-input" style="font-size: 0.82rem; padding: 4px 8px;">
+                                            <option value="">-- Chọn sản phẩm từ kho --</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                                        <input type="text" id="hotspot-custom-name" class="kiot-filter-input" placeholder="Tên món đồ" style="font-size: 0.8rem; flex: 1;">
+                                        <input type="number" id="hotspot-custom-price" class="kiot-filter-input" placeholder="Giá (đ)" style="font-size: 0.8rem; width: 90px;">
+                                    </div>
+                                    <button type="button" id="btn-confirm-add-hotspot" class="kiot-btn-primary" style="width: 100%; padding: 4px; font-size: 0.78rem; justify-content: center;">
+                                        + Thêm điểm ghim này
+                                    </button>
+                                </div>
+
+                                <!-- Danh sách các điểm ghim đã tạo -->
+                                <div style="margin-top: 10px;">
+                                    <label style="font-size: 0.75rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Điểm ghim đã tạo (<span id="hotspot-count">0</span>):</label>
+                                    <div id="lookbook-hotspot-list-preview" style="display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow-y: auto;">
+                                        <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Chưa có điểm ghim nào.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btn-save-lookbook" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
+                                💾 Lưu không gian Lookbook
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 2. Danh Sách Không Gian Bên Phải (Right Main Area) -->
+                    <div class="kiot-product-main">
+                        <!-- Top Toolbar -->
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon">📸</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Không gian Lookbook đã đăng</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 8px; background: #fff8eb; border: 1px solid #fed7aa; padding: 4px 12px; border-radius: 6px;">
+                                    <span style="font-size: 0.78rem; font-weight: 600; color: #9a3412;">Trạng thái trang khách:</span>
+                                    <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.78rem; margin: 0;">
+                                        <input type="checkbox" id="lookbook-coming-soon-toggle" checked style="cursor: pointer;">
+                                        <span id="lookbook-status-label" style="font-weight: 600; color: #ea580c;">⏳ Sắp ra mắt (Coming Soon)</span>
+                                    </label>
+                                </div>
+                                <a href="../lookbook/?preview=true" target="_blank" class="kiot-btn-secondary" style="font-size: 0.82rem; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                                    👁️ Xem trang khách (Preview)
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Table / Grid Container -->
+                        <div class="kiot-table-scroll-container" style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div id="admin-lookbook-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                                <!-- JS render list of scenes -->
+                                <div style="text-align:center; padding: 2rem; grid-column: 1/-1;"><span class="spinner"></span></div>
                             </div>
                         </div>
                     </div>
@@ -3456,7 +3578,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=56"></script>
+    <script type="module" src="../js/DashBoard.js?v=58"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
@@ -3776,6 +3898,10 @@
                 <button type="button" class="drawer-link-btn admin-tab-btn" data-target="news-section">
                     <span class="drawer-icon">📰</span>
                     <span>Bài viết & Cẩm nang gốm</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="lookbook-section">
+                    <span class="drawer-icon">📸</span>
+                    <span>Lookbook Không gian</span>
                 </button>
             </div>
 

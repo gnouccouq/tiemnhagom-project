@@ -24,7 +24,7 @@
     "rules": "firestore.rules"
   },
   "storage": {
-    "rules": "firestore.rules"
+    "rules": "storage.rules"
   },
   "functions": [
     {

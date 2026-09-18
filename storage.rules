@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Hàm kiểm tra admin bên Storage
+    function isAdmin() { // Kiểm tra xem user có tồn tại trong collection admins không
+      return request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Kiểm tra xem user hiện tại có phải là Super Admin không
+    function isSuperAdmin() {
+      return isAdmin() && firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.role == 'super_admin';
+    }
+
+    match /products/{productId}/{allPaths=**} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin(); 
+    }
+
+    // Ảnh Banner (banners) - Cho phép quản trị viên thay đổi banner trang chủ
+    match /banners/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ảnh Danh mục (categories)
+    match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSuperAdmin(); // Chỉ Super Admin mới được quản lý ảnh danh mục
+    }
+
+    // Ảnh Bộ sưu tập (collections)
+    match /collections/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ảnh Lookbook (lookbook)
+    match /lookbook/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ảnh Tin tức (news)
+    match /news/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ảnh Combo (combo_variants)
+    match /combo_variants/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ảnh Sự kiện (events & events/gallery)
+    match /events/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /reviews/{productId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if isSuperAdmin(); // Chỉ Super Admin mới được xóa ảnh review
+    }
+  }
+}

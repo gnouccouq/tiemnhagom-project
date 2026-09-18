@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookbook - Góc Gốm Của Bạn | Tiệm Nhà Gốm</title>
+    <meta name="description"
+        content="Khám phá không gian sống mộc mạc, đậm chất nghệ thuật qua từng góc gốm thực tế tại Tiệm Nhà Gốm. Mua sắm nhanh các tác phẩm bình hoa, tách trà, đĩa bát ngay trên ảnh.">
+    <link rel="canonical" href="https://tiemnhagom.vn/lookbook/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tiemnhagom.vn/lookbook/">
+    <meta property="og:title" content="Lookbook - Góc Gốm Của Bạn | Tiệm Nhà Gốm">
+    <meta property="og:description"
+        content="Khám phá không gian sống mộc mạc qua từng góc gốm thực tế. Xem gợi ý phối cảnh và mua sắm trực tiếp từ ảnh.">
+    <meta property="og:image" content="https://tiemnhagom.vn/Asset/images/homedecor.jpg">
+    <meta property="og:locale" content="vi_VN">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://tiemnhagom.vn/lookbook/">
+    <meta property="twitter:title" content="Lookbook - Góc Gốm Của Bạn | Tiệm Nhà Gốm">
+    <meta property="twitter:description"
+        content="Khám phá không gian sống mộc mạc qua từng góc gốm thực tế. Xem gợi ý phối cảnh và mua sắm trực tiếp từ ảnh.">
+    <meta property="twitter:image" content="https://tiemnhagom.vn/Asset/images/homedecor.jpg">
+
+    <link rel="stylesheet" href="../css/style.css?v=18">
+    <link rel="stylesheet" href="../css/lookbook.css">
+    <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+    <link rel="apple-touch-icon" href="../Asset/icons/favicon.png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4FNKRZ13JC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-4FNKRZ13JC');
+    </script>
+</head>
+
+<body class="lookbook-page">
+    <!-- Admin Preview Top Bar (Chỉ hiển thị khi là Admin hoặc ?preview=true) -->
+    <div id="lookbook-admin-preview-bar" class="lookbook-admin-bar" style="display: none;">
+        <div class="admin-bar-inner">
+            <span>🔒 <strong>Chế độ Xem trước Admin:</strong> Khách hàng vãng lai hiện đang thấy màn hình <em>Sắp Ra Mắt</em>.</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="btn-toggle-preview-mode" class="btn-admin-pill">👁️ Đổi chế độ xem</button>
+                <a href="../DashBoard/index.html#/Lookbook" class="btn-admin-pill outline">⚙️ Về Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="header-placeholder"></div>
+
+    <main>
+        <!-- 1. COMING SOON VIEW (Mặc định hiển thị khi tính năng đang Sắp Ra Mắt) -->
+        <div id="lookbook-coming-soon-view" style="display: block;">
+            <section class="lookbook-coming-soon-container">
+                <span class="coming-soon-badge">✨ SẮP RA MẮT • COMING SOON</span>
+                <h1 class="coming-soon-title">Không Gian Cảm Hứng<br><em>Shoppable Lookbook</em></h1>
+                <p class="coming-soon-desc">
+                    Từng món đồ gốm chỉ thực sự bừng nở vẻ đẹp khi được đặt đúng không gian của nó. Tiệm Nhà Gốm đang chuẩn bị những góc phối cảnh mộc mạc và tĩnh tại để bạn có thể vừa thưởng lãm, vừa chạm tay mua sắm trực tiếp từ hình ảnh. Hẹn gặp bạn trong những ngày gần nhất!
+                </p>
+
+                <!-- Teaser Cards Preview -->
+                <div class="coming-soon-teasers">
+                    <div class="coming-soon-card">
+                        <img src="../Asset/images/dining.jpg" alt="Bàn ăn men mộc" class="coming-soon-card-img" loading="lazy">
+                        <div class="coming-soon-card-body">
+                            <span class="coming-soon-card-tag">🍲 Bàn ăn ấm cúng</span>
+                            <h3 class="coming-soon-card-name">Bàn Ăn Men Mộc Gia Đình</h3>
+                        </div>
+                    </div>
+                    <div class="coming-soon-card">
+                        <img src="../Asset/images/teatime.jpg" alt="Góc thưởng trà" class="coming-soon-card-img" loading="lazy">
+                        <div class="coming-soon-card-body">
+                            <span class="coming-soon-card-tag">🍵 Góc thưởng trà</span>
+                            <h3 class="coming-soon-card-name">Trà Sớm Tĩnh Tại Bên Cửa Sổ</h3>
+                        </div>
+                    </div>
+                    <div class="coming-soon-card">
+                        <img src="../Asset/images/homedecor.jpg" alt="Decor & Bình hoa" class="coming-soon-card-img" loading="lazy">
+                        <div class="coming-soon-card-body">
+                            <span class="coming-soon-card-tag">🏺 Decor nghệ thuật</span>
+                            <h3 class="coming-soon-card-name">Bình Hoa Men Tro Phòng Khách</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notify Form -->
+                <div class="coming-soon-notify-box">
+                    <h3>Nhận thông báo khi Lookbook mở cửa</h3>
+                    <p>Để lại email hoặc số điện thoại của bạn, Tiệm sẽ gửi thông báo và tặng ngay <strong>Voucher giảm giá 10%</strong> khi tính năng chính thức ra mắt.</p>
+                    <form id="coming-soon-notify-form" class="notify-input-group" onsubmit="window.handleComingSoonNotify(event)">
+                        <input type="text" id="notify-contact-input" placeholder="Nhập email hoặc số điện thoại..." required>
+                        <button type="submit">Đăng ký ngay</button>
+                    </form>
+                </div>
+
+                <!-- Action Links -->
+                <div class="coming-soon-actions">
+                    <a href="../index.html" class="btn-coming-soon secondary">🏪 Trở về trang chủ</a>
+                    <a href="../blog.html" class="btn-coming-soon secondary">📰 Đọc cẩm nang gốm</a>
+                    <a href="../category/index.html" class="btn-coming-soon primary">Khám phá sản phẩm có sẵn →</a>
+                </div>
+            </section>
+        </div>
+
+        <!-- 2. LIVE LOOKBOOK VIEW (Hiển thị khi công khai hoặc trong Chế độ Xem Trước của Admin) -->
+        <div id="lookbook-live-view" style="display: none;">
+            <!-- Hero Section -->
+            <section class="lookbook-hero">
+                <span class="lookbook-hero-subtitle">Cảm Hứng Không Gian</span>
+                <h1 class="lookbook-hero-title">Góc Gốm Của Bạn</h1>
+                <p class="lookbook-hero-desc">
+                    Từng món đồ gốm chỉ thực sự trọn vẹn khi được hòa mình vào không gian sống. Hãy cùng ngắm nhìn những góc bếp ấm, bàn trà tĩnh tại và chọn ngay món gốm bạn yêu thích trực tiếp từ ảnh.
+                </p>
+            </section>
+
+            <!-- Filter Bar -->
+            <section class="lookbook-nav-container">
+                <div class="lookbook-filter-bar">
+                    <button type="button" class="lookbook-filter-btn active" data-filter="all">
+                        <span>Tất cả không gian</span>
+                        <span class="badge-count"></span>
+                    </button>
+                    <button type="button" class="lookbook-filter-btn" data-filter="dining">
+                        <span>🍲 Bàn ăn ấm cúng</span>
+                        <span class="badge-count"></span>
+                    </button>
+                    <button type="button" class="lookbook-filter-btn" data-filter="teatime">
+                        <span>🍵 Góc thưởng trà</span>
+                        <span class="badge-count"></span>
+                    </button>
+                    <button type="button" class="lookbook-filter-btn" data-filter="decor">
+                        <span>🏺 Decor & Bình hoa</span>
+                        <span class="badge-count"></span>
+                    </button>
+                    <button type="button" class="lookbook-filter-btn" data-filter="kitchen">
+                        <span>🍳 Gian bếp mộc</span>
+                        <span class="badge-count"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Lookbook Grid -->
+            <section class="lookbook-container">
+                <div id="lookbook-grid" class="lookbook-grid">
+                    <!-- Scenes with interactive hotspots injected by lookbook.js -->
+                    <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;">
+                        <span class="spinner"></span>
+                        <p style="margin-top: 1rem; color: #888;">Đang nạp cảm hứng không gian gốm...</p>
+                    </div>
+                </div>
+
+                <!-- UGC Banner: Khoe Góc Gốm -->
+                <div class="lookbook-ugc-banner">
+                    <div class="ugc-banner-content">
+                        <h3>Khoe góc gốm đẹp của bạn cùng Tiệm</h3>
+                        <p>
+                            Bạn đang sở hữu một góc nhỏ ấm áp cùng gốm của Tiệm Nhà Gốm? Hãy chụp ảnh và chia sẻ cùng chúng mình để được xuất hiện trong Lookbook và nhận ngay <strong>Voucher giảm giá 10%</strong> cho lần mua sắm tiếp theo!
+                        </p>
+                    </div>
+                    <div class="ugc-banner-actions">
+                        <button type="button" class="btn-ugc-share" onclick="window.openUgcModal()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            Gửi ảnh nhận quà
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Lightbox Modal -->
+    <div id="lookbook-lightbox-modal" class="lookbook-modal">
+        <button type="button" class="lookbook-modal-close" onclick="window.closeLightbox()" aria-label="Đóng">&times;</button>
+        <div class="lookbook-modal-content">
+            <img id="lightbox-img" src="" alt="Lookbook Zoom">
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Script -->
+    <script type="module" src="../js/lookbook.js?v=3"></script>
+</body>
+
+</html>

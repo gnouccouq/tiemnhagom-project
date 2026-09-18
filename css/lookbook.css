@@ -1,0 +1,954 @@
+/* css/lookbook.css - Tiệm Nhà Gốm Shoppable Lookbook */
+
+.lookbook-page {
+    background-color: var(--bg-cream, #F7F6F2);
+    min-height: 100vh;
+}
+
+/* 1. Hero Section */
+.lookbook-hero {
+    position: relative;
+    width: 100%;
+    height: 42vh;
+    min-height: 320px;
+    margin-top: -80px;
+    background-image: linear-gradient(to bottom, rgba(20, 20, 20, 0.45), rgba(20, 20, 20, 0.65)), url('../Asset/images/homedecor.jpg');
+    background-size: cover;
+    background-position: center 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #ffffff;
+    padding: 80px 20px 20px 20px;
+}
+
+.lookbook-hero-subtitle {
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #e8d8c8;
+    margin-bottom: 0.5rem;
+    opacity: 0.95;
+}
+
+.lookbook-hero-title {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 2.5rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin-bottom: 0.8rem;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.lookbook-hero-desc {
+    max-width: 620px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 300;
+}
+
+/* 2. Controls & Filter Bar */
+.lookbook-nav-container {
+    max-width: 1400px;
+    margin: -30px auto 2.5rem auto;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.lookbook-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    background: #ffffff;
+    padding: 0.8rem 1.2rem;
+    border-radius: 50px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+.lookbook-filter-btn {
+    border: none;
+    background: transparent;
+    padding: 0.55rem 1.2rem;
+    border-radius: 30px;
+    font-size: 0.88rem;
+    font-family: var(--font-sans, 'Montserrat', sans-serif);
+    font-weight: 500;
+    color: #555555;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lookbook-filter-btn:hover {
+    color: #000000;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.lookbook-filter-btn.active {
+    background: #1c1d21;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+.lookbook-filter-btn .badge-count {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* 3. Lookbook Content Grid */
+.lookbook-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem 5rem 1.5rem;
+}
+
+.lookbook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+}
+
+@media (max-width: 992px) {
+    .lookbook-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
+
+/* 4. Lookbook Card */
+.lookbook-card {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.lookbook-card:hover {
+    box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+}
+
+/* Image Scene Container */
+.lookbook-scene-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #e9e7e1;
+    user-select: none;
+}
+
+.lookbook-scene-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.lookbook-card:hover .lookbook-scene-img {
+    transform: scale(1.02);
+}
+
+/* Space Category Badge */
+.lookbook-tag-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    color: #2c3e50;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 5;
+}
+
+/* Fullscreen zoom button */
+.lookbook-zoom-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: all 0.25s ease;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.lookbook-card:hover .lookbook-zoom-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.lookbook-zoom-btn:hover {
+    background: #000;
+    color: #fff;
+}
+
+/* 5. Hotspot Marker */
+.lookbook-hotspot {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    margin-top: -14px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    touch-action: manipulation;
+}
+
+.hotspot-dot {
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0,0,0,0.3);
+    position: relative;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.hotspot-pulse {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    animation: hotspotRipple 2.2s infinite ease-out;
+    pointer-events: none;
+}
+
+@keyframes hotspotRipple {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.9;
+    }
+    70% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+.lookbook-hotspot:hover .hotspot-dot,
+.lookbook-hotspot.active .hotspot-dot {
+    transform: scale(1.25);
+    background: #2c3e50;
+    box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(0,0,0,0.4);
+}
+
+/* 6. Hotspot Popover Tooltip */
+.hotspot-popover {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 10px;
+    width: 250px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Arrow tip */
+.hotspot-popover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
+}
+
+/* Fallback: when placed near top edge, popover flips downward */
+.lookbook-hotspot.flip-down .hotspot-popover {
+    bottom: auto;
+    top: calc(100% + 12px);
+    transform: translateX(-50%) translateY(-6px);
+}
+.lookbook-hotspot.flip-down .hotspot-popover::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent #ffffff transparent;
+}
+
+/* Show state */
+.lookbook-hotspot:hover .hotspot-popover,
+.lookbook-hotspot.active .hotspot-popover {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.hotspot-product-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #f0ede6;
+}
+
+.hotspot-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.hotspot-product-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.hotspot-product-name:hover {
+    color: #a0522d;
+}
+
+.hotspot-product-price {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hotspot-product-price .old-price {
+    font-size: 0.72rem;
+    color: #999;
+    text-decoration: line-through;
+    font-weight: 400;
+}
+
+.hotspot-product-actions {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-hotspot-view {
+    font-size: 0.72rem;
+    color: #555;
+    background: #f2f2f2;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-hotspot-view:hover {
+    background: #e2e2e2;
+    color: #000;
+}
+
+.btn-hotspot-add {
+    background: #1c1d21;
+    color: #ffffff;
+    border: none;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+}
+
+.btn-hotspot-add:hover {
+    background: #333;
+}
+
+/* 7. Card Content */
+.lookbook-card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.lookbook-scene-title {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+}
+
+.lookbook-scene-desc {
+    font-size: 0.88rem;
+    color: #666666;
+    line-height: 1.55;
+    margin-bottom: 1.2rem;
+    font-weight: 300;
+}
+
+/* Products in Scene List */
+.lookbook-scene-products {
+    margin-top: auto;
+    border-top: 1px dashed #eae8e2;
+    padding-top: 1rem;
+}
+
+.lookbook-products-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lookbook-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.lookbook-item-pill {
+    background: #f7f6f2;
+    border: 1px solid #e8e6e0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lookbook-item-pill:hover {
+    background: #1c1d21;
+    color: #fff;
+    border-color: #1c1d21;
+}
+
+.lookbook-item-pill .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a0522d;
+}
+
+.lookbook-item-pill:hover .pill-dot {
+    background: #fff;
+}
+
+/* 8. Community UGC Submission Banner */
+.lookbook-ugc-banner {
+    max-width: 1400px;
+    margin: 3rem auto 0 auto;
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.ugc-banner-content h3 {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1.8rem;
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+}
+
+.ugc-banner-content p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 650px;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+.ugc-banner-actions {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.btn-ugc-share {
+    background: #ffffff;
+    color: #1a252f;
+    padding: 0.8rem 1.6rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-ugc-share:hover {
+    background: #e9e7e1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .lookbook-hero {
+        height: 38vh;
+        min-height: 280px;
+    }
+    .lookbook-hero-title {
+        font-size: 1.9rem;
+    }
+    .lookbook-filter-bar {
+        border-radius: 16px;
+        padding: 0.5rem;
+        gap: 0.4rem;
+    }
+    .lookbook-filter-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    .lookbook-ugc-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 2.2rem 1.5rem;
+    }
+    .ugc-banner-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .btn-ugc-share {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+/* 9. Lightbox Modal */
+.lookbook-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: modalFadeIn 0.25s ease;
+}
+
+.lookbook-modal.open {
+    display: flex;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lookbook-modal-content {
+    position: relative;
+    max-width: 1100px;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+.lookbook-modal-content img {
+    max-width: 100%;
+    max-height: 85vh;
+    display: block;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+.lookbook-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 10;
+}
+
+.lookbook-modal-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* ===================================================
+   7. Coming Soon & Admin Preview Bar
+   =================================================== */
+
+/* Admin Preview Top Bar */
+.lookbook-admin-bar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    border-bottom: 2px solid #3b82f6;
+}
+
+.lookbook-admin-bar .admin-bar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-admin-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: #3b82f6;
+    color: #fff;
+    border: 1px solid #3b82f6;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-admin-pill:hover {
+    background: #2563eb;
+}
+
+.btn-admin-pill.outline {
+    background: transparent;
+    border-color: #64748b;
+    color: #cbd5e1;
+}
+
+.btn-admin-pill.outline:hover {
+    border-color: #fff;
+    color: #fff;
+}
+
+/* Coming Soon Screen */
+.lookbook-coming-soon-container {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px 80px 20px;
+    background: radial-gradient(circle at center top, rgba(232, 216, 200, 0.45) 0%, rgba(247, 246, 242, 0) 70%);
+}
+
+.coming-soon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e2d9cf;
+    color: #8D6E63;
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.coming-soon-title {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 600;
+    color: #1c1d21;
+    line-height: 1.25;
+    margin-bottom: 1.2rem;
+    max-width: 800px;
+}
+
+.coming-soon-title em {
+    font-style: italic;
+    color: #8D6E63;
+    font-weight: 400;
+}
+
+.coming-soon-desc {
+    max-width: 650px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #666;
+    margin-bottom: 2.8rem;
+    font-weight: 300;
+}
+
+/* Teaser Cards Gallery */
+.coming-soon-teasers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 3.2rem;
+}
+
+.coming-soon-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.coming-soon-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.coming-soon-card-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    filter: brightness(0.92);
+    display: block;
+}
+
+.coming-soon-card-body {
+    padding: 14px;
+    text-align: left;
+}
+
+.coming-soon-card-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: #8D6E63;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.coming-soon-card-name {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1c1d21;
+    margin: 0;
+}
+
+/* Notify Form */
+.coming-soon-notify-box {
+    background: #ffffff;
+    border: 1px solid #e8e2d9;
+    border-radius: 16px;
+    padding: 30px 35px;
+    max-width: 580px;
+    width: 100%;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.05);
+    margin-bottom: 2.5rem;
+}
+
+.coming-soon-notify-box h3 {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1.35rem;
+    color: #1c1d21;
+    margin: 0 0 8px 0;
+}
+
+.coming-soon-notify-box p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0 0 18px 0;
+    line-height: 1.5;
+}
+
+.notify-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.notify-input-group input {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 30px;
+    border: 1px solid #d4c8bc;
+    font-size: 0.9rem;
+    font-family: var(--font-sans, 'Montserrat', sans-serif);
+    outline: none;
+    transition: border-color 0.2s;
+    background: #FAF9F6;
+}
+
+.notify-input-group input:focus {
+    border-color: #8D6E63;
+    background: #fff;
+}
+
+.notify-input-group button {
+    padding: 12px 24px;
+    border-radius: 30px;
+    border: none;
+    background: #1c1d21;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    font-family: var(--font-sans, 'Montserrat', sans-serif);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+}
+
+.notify-input-group button:hover {
+    background: #333;
+}
+
+/* Action Links */
+.coming-soon-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-coming-soon {
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-coming-soon.primary {
+    background: #8D6E63;
+    color: #fff;
+}
+
+.btn-coming-soon.primary:hover {
+    background: #73574d;
+}
+
+.btn-coming-soon.secondary {
+    background: transparent;
+    color: #555;
+    border: 1px solid #dcd3c9;
+}
+
+.btn-coming-soon.secondary:hover {
+    color: #111;
+    border-color: #111;
+    background: #fff;
+}
+
+@media (max-width: 768px) {
+    .coming-soon-teasers {
+        grid-template-columns: 1fr;
+        max-width: 320px;
+    }
+    .notify-input-group {
+        flex-direction: column;
+    }
+    .notify-input-group button {
+        width: 100%;
+    }
+    .coming-soon-notify-box {
+        padding: 24px 20px;
+    }
+}
+

@@ -629,7 +629,7 @@ exports.shareRedirect = onRequest(async (req, res) => {
 const VNP_TMN_CODE = '0AS8YQYG';
 const VNP_HASH_SECRET = 'UQPWQRISTNFVFCTYTPLBUSYIAOXRESOL';
 const VNP_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-const VNP_RETURN_URL = 'http://127.0.0.1:5500/cart/thank-you.html'; // Đổi sang localhost để test
+const VNP_RETURN_URL = process.env.VNP_RETURN_URL || 'https://tiemnhagom.vn/cart/thank-you.html';
 
 function sortObject(obj) {
     let sorted = {};

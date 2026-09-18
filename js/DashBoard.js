@@ -1,7 +1,7 @@
 import {
     db, auth, rtdb, storage, showToast, logout, DEFAULT_PRODUCT_CATEGORIES, formatPhoneNumber,
     fetchFlashSaleSettings, getProductCurrentPrice, globalFlashSaleSettings, getMembershipTier, generateOrderId, COLOR_MAP,
-    showModalAlert, showModalConfirm, showModalPrompt, generateAutomaticVouchers, MEMBERSHIP_TIERS
+    showModalAlert, showModalConfirm, showModalPrompt, generateAutomaticVouchers, MEMBERSHIP_TIERS, escapeHTML
 } from "./utils.js";
 import {
     doc, setDoc, deleteDoc, collection, onSnapshot, getDoc, getDocs, query, orderBy,
@@ -244,6 +244,7 @@ const ALL_SECTIONS = [
     { id: 'inventory-log-section', label: 'Nhật ký kho' },
     { id: 'news-section', label: 'Tin tức' },
     { id: 'collections-section', label: 'Bộ sưu tập' },
+    { id: 'lookbook-section', label: 'Lookbook Không gian' },
     { id: 'events-section', label: 'Dự án sự kiện' },
     { id: 'online-users-section', label: 'Lượng truy cập' },
     { id: 'maintenance-section', label: 'Bảo trì' }
@@ -271,6 +272,7 @@ const SECTION_HASH_MAP = {
     'coupon-section': '#/Coupons',
     'news-section': '#/News',
     'collections-section': '#/Collections',
+    'lookbook-section': '#/Lookbook',
     'maintenance-section': '#/Settings',
     'pos-section': '#/POS',
     'stats-section': '#/Reports',
@@ -382,6 +384,10 @@ function setupAdminTabs() {
 
             if (targetId === 'collections-section') {
                 initCollectionManagement();
+            }
+
+            if (targetId === 'lookbook-section') {
+                initLookbookManagement();
             }
 
             if (targetId === 'events-section') {
@@ -2358,6 +2364,488 @@ window.deleteCollection = async (idx) => {
     showToast("Đã xóa bộ sưu tập");
 };
 
+// --- Logic Quản lý Lookbook Không Gian ---
+let adminLookbookScenes = [];
+let lookbookDraftHotspots = [];
+let lookbookCurrentImgUrl = '';
+let currentPickingCoords = null;
+
+async function initLookbookManagement() {
+    const listContainer = document.getElementById('admin-lookbook-list');
+    const form = document.getElementById('lookbook-form');
+    if (!listContainer || !form) return;
+
+    // 1. Lắng nghe dữ liệu Lookbook từ Firestore realtime
+    onSnapshot(doc(db, "settings", "lookbook"), (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            adminLookbookScenes = data.items || [];
+            lookbookIsComingSoon = data.isComingSoon !== false; // Mặc định là true (Sắp ra mắt)
+        } else {
+            adminLookbookScenes = [];
+            lookbookIsComingSoon = true;
+        }
+        renderAdminLookbookList(listContainer);
+
+        const csToggle = document.getElementById('lookbook-coming-soon-toggle');
+        const csLabel = document.getElementById('lookbook-status-label');
+        if (csToggle) csToggle.checked = lookbookIsComingSoon;
+        if (csLabel) {
+            csLabel.innerText = lookbookIsComingSoon ? '⏳ Sắp ra mắt (Coming Soon)' : '🟢 Đang công khai (Live)';
+            csLabel.style.color = lookbookIsComingSoon ? '#ea580c' : '#16a34a';
+        }
+    });
+
+    // 1.1 Xử lý chuyển đổi trạng thái Sắp Ra Mắt / Công Khai
+    const csToggle = document.getElementById('lookbook-coming-soon-toggle');
+    if (csToggle) {
+        csToggle.onchange = async (e) => {
+            const isComingSoon = e.target.checked;
+            try {
+                await setDoc(doc(db, "settings", "lookbook"), { 
+                    isComingSoon: isComingSoon,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                showToast(isComingSoon ? "Đã chuyển trang Lookbook sang chế độ Sắp Ra Mắt!" : "Đã công khai trang Lookbook!", "success");
+            } catch (err) {
+                console.error("Lỗi cập nhật trạng thái Lookbook:", err);
+                showToast("Lỗi: " + err.message, "error");
+            }
+        };
+    }
+
+    // 2. Điền sản phẩm vào dropdown để chọn ghim
+    populateHotspotProductSelect();
+
+    // 3. Xử lý ảnh (file input & URL input)
+    const fileInput = document.getElementById('lookbook-image-file');
+    const urlInput = document.getElementById('lookbook-image-url');
+
+    if (fileInput) {
+        fileInput.onchange = async (e) => {
+            const f = e.target.files[0];
+            if (f) {
+                const reader = new FileReader();
+                reader.onload = (ev) => updateLookbookPreviewImage(ev.target.result);
+                reader.readAsDataURL(f);
+            }
+        };
+    }
+
+    if (urlInput) {
+        urlInput.oninput = (e) => {
+            const url = e.target.value.trim();
+            if (url) updateLookbookPreviewImage(url);
+        };
+    }
+
+    // 4. Nhấp chuột vào Canvas Preview để ghim sản phẩm
+    const canvas = document.getElementById('lookbook-canvas-preview');
+    const creatorBox = document.getElementById('hotspot-creator-box');
+    const coordsText = document.getElementById('hotspot-coords-text');
+
+    if (canvas) {
+        canvas.onclick = (e) => {
+            if (!lookbookCurrentImgUrl) {
+                showToast("Vui lòng chọn hoặc tải ảnh lên trước khi ghim!", "warning");
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+            const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+
+            currentPickingCoords = { x, y };
+            coordsText.textContent = `${x}%, ${y}%`;
+            creatorBox.style.display = 'block';
+
+            // Reset form ghim
+            document.getElementById('hotspot-product-select').value = '';
+            document.getElementById('hotspot-custom-name').value = '';
+            document.getElementById('hotspot-custom-price').value = '';
+        };
+    }
+
+    // Hủy chọn điểm ghim
+    const cancelPickBtn = document.getElementById('btn-cancel-hotspot-pick');
+    if (cancelPickBtn) {
+        cancelPickBtn.onclick = () => {
+            currentPickingCoords = null;
+            creatorBox.style.display = 'none';
+        };
+    }
+
+    // Chọn sản phẩm từ dropdown auto-fill tên & giá
+    const prodSelect = document.getElementById('hotspot-product-select');
+    if (prodSelect) {
+        prodSelect.onchange = (e) => {
+            const pId = e.target.value;
+            if (!pId) return;
+            const pList = (typeof posProductsLocal !== 'undefined' && posProductsLocal.length > 0)
+                ? posProductsLocal
+                : (typeof adminProducts !== 'undefined' ? adminProducts : []);
+            const p = pList.find(item => item.id === pId);
+            if (p) {
+                document.getElementById('hotspot-custom-name').value = p.name;
+                const curPrice = p.sale > 0 ? Math.round(p.price * (1 - p.sale / 100)) : p.price;
+                document.getElementById('hotspot-custom-price').value = curPrice;
+            }
+        };
+    }
+
+    // Xác nhận thêm điểm ghim
+    const confirmAddBtn = document.getElementById('btn-confirm-add-hotspot');
+    if (confirmAddBtn) {
+        confirmAddBtn.onclick = () => {
+            if (!currentPickingCoords) return;
+            const name = document.getElementById('hotspot-custom-name').value.trim();
+            const price = parseInt(document.getElementById('hotspot-custom-price').value) || 0;
+            const pId = document.getElementById('hotspot-product-select').value;
+            const pList = (typeof posProductsLocal !== 'undefined' && posProductsLocal.length > 0)
+                ? posProductsLocal
+                : (typeof adminProducts !== 'undefined' ? adminProducts : []);
+            const matchedP = pList.find(item => item.id === pId);
+
+            if (!name) {
+                showToast("Vui lòng nhập tên sản phẩm cho điểm ghim!", "error");
+                return;
+            }
+
+            lookbookDraftHotspots.push({
+                x: currentPickingCoords.x,
+                y: currentPickingCoords.y,
+                name: name,
+                price: price,
+                productId: pId || '',
+                thumbUrl: matchedP?.imageUrl || lookbookCurrentImgUrl || '',
+                category: matchedP?.category || 'Home Decor'
+            });
+
+            currentPickingCoords = null;
+            creatorBox.style.display = 'none';
+            renderHotspotsOnCanvas();
+            renderHotspotsDraftList();
+            showToast("Đã thêm điểm ghim!");
+        };
+    }
+
+    // Nút làm mới / thêm mới
+    const resetBtn = document.getElementById('btn-reset-lookbook-form');
+    if (resetBtn) {
+        resetBtn.onclick = () => resetLookbookForm();
+    }
+
+    // 5. Submit form lưu cảnh Lookbook
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('lookbook-edit-id').value;
+        const title = document.getElementById('lookbook-title').value.trim();
+        const category = document.getElementById('lookbook-category').value;
+        const desc = document.getElementById('lookbook-desc').value.trim();
+        const file = document.getElementById('lookbook-image-file').files[0];
+        const manualUrl = document.getElementById('lookbook-image-url').value.trim();
+        const submitBtn = document.getElementById('btn-save-lookbook');
+
+        if (!title) {
+            showToast("Vui lòng nhập tên không gian!", "error");
+            return;
+        }
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
+
+            let finalImgUrl = form.dataset.currentImageUrl || lookbookCurrentImgUrl;
+
+            // Nếu người dùng chọn file ảnh mới -> tải lên Storage
+            if (file) {
+                const webpFile = await convertToWebP(file, 1400, false);
+                const storageRef = ref(storage, `lookbook/${Date.now()}_${webpFile.name}`);
+                const snap = await uploadBytes(storageRef, webpFile);
+                finalImgUrl = await getDownloadURL(snap.ref);
+            } else if (manualUrl) {
+                finalImgUrl = manualUrl;
+            }
+
+            if (!finalImgUrl) {
+                throw new Error("Vui lòng chọn hoặc tải ảnh không gian!");
+            }
+
+            const catLabels = {
+                dining: "Bàn Ăn Ấm Cúng",
+                teatime: "Góc Thưởng Trà",
+                decor: "Decor & Bình Hoa",
+                kitchen: "Gian Bếp Mộc"
+            };
+
+            const sceneData = {
+                id: editId || `scene_${Date.now()}`,
+                title,
+                category,
+                categoryLabel: catLabels[category] || "Không gian đẹp",
+                desc,
+                imageUrl: finalImgUrl,
+                hotspots: [...lookbookDraftHotspots],
+                updatedAt: new Date().toISOString()
+            };
+
+            let updatedList = [...adminLookbookScenes];
+            if (editId) {
+                const idx = updatedList.findIndex(s => s.id === editId);
+                if (idx !== -1) updatedList[idx] = sceneData;
+                else updatedList.push(sceneData);
+            } else {
+                updatedList.unshift(sceneData);
+            }
+
+            const csToggle = document.getElementById('lookbook-coming-soon-toggle');
+            const isComingSoon = csToggle ? csToggle.checked : true;
+
+            await setDoc(doc(db, "settings", "lookbook"), { 
+                items: updatedList,
+                isComingSoon: isComingSoon,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            showToast("Đã lưu không gian Lookbook thành công!", "success");
+            resetLookbookForm();
+        } catch (err) {
+            console.error("Lỗi lưu Lookbook:", err);
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "💾 Lưu không gian Lookbook";
+        }
+    };
+}
+
+function updateLookbookPreviewImage(src) {
+    lookbookCurrentImgUrl = src;
+    const previewImg = document.getElementById('lookbook-preview-img');
+    const placeholder = document.getElementById('lookbook-preview-placeholder');
+    if (!previewImg || !placeholder) return;
+
+    if (src) {
+        previewImg.src = src;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+        placeholder.style.display = 'block';
+    }
+    renderHotspotsOnCanvas();
+}
+
+function populateHotspotProductSelect() {
+    const select = document.getElementById('hotspot-product-select');
+    if (!select) return;
+
+    const pList = (typeof posProductsLocal !== 'undefined' && posProductsLocal.length > 0)
+        ? posProductsLocal
+        : (typeof adminProducts !== 'undefined' ? adminProducts : []);
+    let opts = '<option value="">-- Chọn sản phẩm từ kho --</option>';
+    pList.forEach(p => {
+        const curPrice = p.sale > 0 ? Math.round(p.price * (1 - p.sale / 100)) : p.price;
+        opts += `<option value="${p.id}">${escapeHTML(p.name)} - ${new Intl.NumberFormat('vi-VN').format(curPrice)}đ</option>`;
+    });
+    select.innerHTML = opts;
+}
+
+function renderHotspotsOnCanvas() {
+    const overlay = document.getElementById('lookbook-hotspots-overlay');
+    if (!overlay) return;
+
+    overlay.innerHTML = lookbookDraftHotspots.map((spot, idx) => `
+        <div style="position: absolute; left: ${spot.x}%; top: ${spot.y}%; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 50%; background: #2563eb; color: #fff; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,0.3); z-index: 10;" title="${escapeHTML(spot.name)}">
+            ${idx + 1}
+        </div>
+    `).join('');
+}
+
+function renderHotspotsDraftList() {
+    const container = document.getElementById('lookbook-hotspot-list-preview');
+    const countEl = document.getElementById('hotspot-count');
+    if (!container) return;
+
+    if (countEl) countEl.innerText = lookbookDraftHotspots.length;
+
+    if (lookbookDraftHotspots.length === 0) {
+        container.innerHTML = '<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Chưa có điểm ghim nào.</span>';
+        return;
+    }
+
+    container.innerHTML = lookbookDraftHotspots.map((spot, idx) => `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                <span style="background: #2563eb; color: #fff; border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">${idx + 1}</span>
+                <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${escapeHTML(spot.name)}</span>
+                <span style="color: #64748b;">(${new Intl.NumberFormat('vi-VN').format(spot.price)}đ)</span>
+            </div>
+            <button type="button" onclick="window.removeDraftHotspot(${idx})" style="border: none; background: transparent; color: #ef4444; font-size: 1rem; cursor: pointer; padding: 0 4px;" title="Xóa điểm ghim này">&times;</button>
+        </div>
+    `).join('');
+}
+
+window.removeDraftHotspot = (idx) => {
+    lookbookDraftHotspots.splice(idx, 1);
+    renderHotspotsOnCanvas();
+    renderHotspotsDraftList();
+};
+
+function resetLookbookForm() {
+    const form = document.getElementById('lookbook-form');
+    if (form) {
+        form.reset();
+        delete form.dataset.currentImageUrl;
+    }
+    document.getElementById('lookbook-edit-id').value = '';
+    lookbookDraftHotspots = [];
+    currentPickingCoords = null;
+    updateLookbookPreviewImage('');
+    renderHotspotsDraftList();
+    const creatorBox = document.getElementById('hotspot-creator-box');
+    if (creatorBox) creatorBox.style.display = 'none';
+}
+
+function renderAdminLookbookList(container) {
+    if (!container) return;
+
+    if (adminLookbookScenes.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: #64748b;">
+                <p style="margin-bottom: 10px;">Chưa có không gian nào trong cơ sở dữ liệu.</p>
+                <button type="button" class="kiot-btn-secondary" onclick="window.seedDefaultLookbookScenes()" style="font-size: 0.82rem;">
+                    📥 Tải 6 mẫu không gian có sẵn của Tiệm vào hệ thống
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = adminLookbookScenes.map((scene, idx) => `
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="position: relative; aspect-ratio: 16/10; overflow: hidden; background: #f1f5f9;">
+                <img src="${scene.imageUrl}" alt="${escapeHTML(scene.title)}" style="width: 100%; height: 100%; object-fit: cover;">
+                <span style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 500;">
+                    ${scene.categoryLabel || scene.category}
+                </span>
+                <span style="position: absolute; bottom: 8px; right: 8px; background: #2563eb; color: #fff; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                    ${(scene.hotspots || []).length} ghim
+                </span>
+            </div>
+            <div style="padding: 12px; display: flex; flex-direction: column; flex: 1;">
+                <h4 style="font-size: 0.92rem; font-weight: 600; color: #1e293b; margin: 0 0 6px 0; line-height: 1.3;">
+                    ${escapeHTML(scene.title)}
+                </h4>
+                <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 12px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    ${escapeHTML(scene.desc || '')}
+                </p>
+                <div style="margin-top: auto; display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+                    <button type="button" class="kiot-btn-secondary" onclick="window.editLookbookScene('${scene.id}')" style="flex: 1; justify-content: center; font-size: 0.78rem; padding: 4px;">
+                        ✏️ Sửa
+                    </button>
+                    <button type="button" class="kiot-btn-secondary text-danger" onclick="window.deleteLookbookScene('${scene.id}')" style="color: #ef4444; border-color: #fecaca; font-size: 0.78rem; padding: 4px 10px;">
+                        🗑️ Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.editLookbookScene = (sceneId) => {
+    const scene = adminLookbookScenes.find(s => s.id === sceneId);
+    if (!scene) return;
+
+    document.getElementById('lookbook-edit-id').value = scene.id;
+    document.getElementById('lookbook-title').value = scene.title || '';
+    document.getElementById('lookbook-category').value = scene.category || 'dining';
+    document.getElementById('lookbook-desc').value = scene.desc || '';
+    document.getElementById('lookbook-image-url').value = scene.imageUrl || '';
+
+    const form = document.getElementById('lookbook-form');
+    form.dataset.currentImageUrl = scene.imageUrl;
+
+    lookbookDraftHotspots = [...(scene.hotspots || [])];
+    updateLookbookPreviewImage(scene.imageUrl);
+    renderHotspotsDraftList();
+
+    window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+    showToast(`Đang sửa: ${scene.title}`);
+};
+
+window.deleteLookbookScene = async (sceneId) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa không gian Lookbook này không?")) return;
+
+    try {
+        const updatedList = adminLookbookScenes.filter(s => s.id !== sceneId);
+        const csToggle = document.getElementById('lookbook-coming-soon-toggle');
+        const isComingSoon = csToggle ? csToggle.checked : true;
+        await setDoc(doc(db, "settings", "lookbook"), { 
+            items: updatedList,
+            isComingSoon: isComingSoon,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        showToast("Đã xóa không gian Lookbook");
+        resetLookbookForm();
+    } catch (e) {
+        showToast("Lỗi xóa: " + e.message, "error");
+    }
+};
+
+window.seedDefaultLookbookScenes = async () => {
+    if (!confirm("Hệ thống sẽ tải 6 mẫu không gian phối cảnh có sẵn của Tiệm vào cơ sở dữ liệu để bạn tùy chỉnh. Tiếp tục?")) return;
+    try {
+        const defaultScenes = [
+            {
+                id: "scene-dining-1",
+                category: "dining",
+                categoryLabel: "Bàn Ăn Ấm Cúng",
+                title: "Bàn Ăn Men Mộc Cho Bữa Cơm Gia Đình",
+                desc: "Sự kết hợp tinh tế giữa đĩa gốm men hỏa biến, bát cơm mộc mạc và chén nước chấm nhỏ nhắn tạo nên một mâm cơm ấm cúng, đậm chất hoài niệm.",
+                imageUrl: "../Asset/images/dining.jpg",
+                hotspots: [
+                    { x: 48, y: 54, name: "Đĩa Gốm Men Mộc Sâu Lòng", price: 185000, thumbUrl: "../Asset/images/dining.jpg" },
+                    { x: 28, y: 68, name: "Bát Cơm Men Rạn Cổ Điển", price: 65000, thumbUrl: "../Asset/images/481205605_945767991014584_315534319945390599_n.jpg" },
+                    { x: 72, y: 42, name: "Tô Canh Gốm Mộc Họa Tiết Lá", price: 245000, thumbUrl: "../Asset/images/482217280_952466933678023_578750406849519694_n_11zon.webp" }
+                ]
+            },
+            {
+                id: "scene-teatime-1",
+                category: "teatime",
+                categoryLabel: "Góc Thưởng Trà",
+                title: "Góc Trà Ban Mai Tĩnh Tại Bên Cửa Sổ",
+                desc: "Một chiếc ấm tử sa mộc mạc kết hợp cùng những tách trà nhỏ và khay gỗ thô mộc, mở ra không gian thiền định bình yên cho những sớm mai chậm rãi.",
+                imageUrl: "../Asset/images/teatime.jpg",
+                hotspots: [
+                    { x: 44, y: 48, name: "Ấm Trà Đất Nung Thủ Công", price: 420000, thumbUrl: "../Asset/images/teatime.jpg" },
+                    { x: 66, y: 62, name: "Tách Trà Gốm Thô Mộc", price: 85000, thumbUrl: "../Asset/images/483488913_952567577001292_8906787465398018074_n_11zon.webp" }
+                ]
+            },
+            {
+                id: "scene-decor-1",
+                category: "decor",
+                categoryLabel: "Decor & Bình Hoa",
+                title: "Góc Phòng Khách Tinh Tế Với Bình Hoa Men Tro",
+                desc: "Dáng bình gốm mộc vuốt tay thủ công kết hợp những cành hoa tươi của 'Hoa Nhà Gốm', tạo điểm nhấn nghệ thuật đầy sức sống.",
+                imageUrl: "../Asset/images/homedecor.jpg",
+                hotspots: [
+                    { x: 42, y: 42, name: "Bình Hoa Men Tro Dáng Cổ", price: 390000, thumbUrl: "../Asset/images/homedecor.jpg" }
+                ]
+            }
+        ];
+
+        await setDoc(doc(db, "settings", "lookbook"), { 
+            items: defaultScenes,
+            isComingSoon: true, // Mặc định vẫn giữ Sắp ra mắt khi nạp mẫu
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        showToast("Đã tải dữ liệu mẫu thành công!", "success");
+    } catch (e) {
+        showToast("Lỗi nạp mẫu: " + e.message, "error");
+    }
+};
+
 // --- Logic Quản lý Dự Án Sự Kiện ---
 async function initEventManagement() {
     const listContainer = document.getElementById('admin-event-list');
@@ -2501,6 +2989,7 @@ function initCategoryManagement() {
     // Thiết lập lắng nghe bộ sưu tập và sự kiện để hiện checkbox trong form sản phẩm
     initCollectionManagement();
     initEventManagement();
+    initLookbookManagement();
 
     if (!categoryUnsubscribe) {
         categoryUnsubscribe = onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
@@ -3998,6 +4487,7 @@ function initProductListener() {
 
         renderAdminProductTable(); // Gọi hàm hiển thị bảng
         populateFlashSaleGroupSelect(); // Cập nhật dropdown chọn nhóm sale
+        if (typeof populateHotspotProductSelect === 'function') populateHotspotProductSelect(); // Cập nhật dropdown ghim sản phẩm Lookbook
         if (typeof renderAdminRegularSaleList === 'function') renderAdminRegularSaleList(); // Tự động cập nhật danh sách Flash Sale
         if (typeof renderFsSelectedItemsTable === 'function') renderFsSelectedItemsTable();
         if (typeof updateDashboardNotificationsAndAlerts === 'function') updateDashboardNotificationsAndAlerts();
