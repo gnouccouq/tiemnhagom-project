@@ -2512,13 +2512,27 @@ async function initLookbookManagement() {
                 return;
             }
 
+            let pImg = '';
+            if (matchedP) {
+                if (matchedP.imageUrl && !matchedP.imageUrl.includes('placehold.co')) {
+                    pImg = matchedP.imageUrl;
+                } else if (Array.isArray(matchedP.colorVariants) && matchedP.colorVariants.length > 0) {
+                    const v = matchedP.colorVariants.find(item => item && item.imageUrl && !item.imageUrl.includes('placehold.co'));
+                    if (v) pImg = v.imageUrl;
+                } else if (Array.isArray(matchedP.additionalImages) && matchedP.additionalImages.length > 0) {
+                    const a = matchedP.additionalImages.find(img => img && !img.includes('placehold.co'));
+                    if (a) pImg = a;
+                }
+            }
+            if (!pImg) pImg = matchedP?.imageUrl || lookbookCurrentImgUrl || '';
+
             lookbookDraftHotspots.push({
                 x: currentPickingCoords.x,
                 y: currentPickingCoords.y,
                 name: name,
                 price: price,
                 productId: pId || '',
-                thumbUrl: matchedP?.imageUrl || lookbookCurrentImgUrl || '',
+                thumbUrl: pImg,
                 category: matchedP?.category || 'Home Decor'
             });
 
@@ -2679,7 +2693,8 @@ function renderHotspotsDraftList() {
         <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
             <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
                 <span style="background: #2563eb; color: #fff; border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">${idx + 1}</span>
-                <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${escapeHTML(spot.name)}</span>
+                <span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">${escapeHTML(spot.name)}</span>
+                ${spot.productId ? `<span style="font-size: 0.68rem; color: #2563eb; background: #eff6ff; padding: 1px 4px; border-radius: 3px; font-weight: 600;">#${escapeHTML(spot.productId)}</span>` : ''}
                 <span style="color: #64748b;">(${new Intl.NumberFormat('vi-VN').format(spot.price)}đ)</span>
             </div>
             <button type="button" onclick="window.removeDraftHotspot(${idx})" style="border: none; background: transparent; color: #ef4444; font-size: 1rem; cursor: pointer; padding: 0 4px;" title="Xóa điểm ghim này">&times;</button>

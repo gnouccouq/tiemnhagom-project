@@ -21,8 +21,8 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 name: "Đĩa Gốm Men Mộc Sâu Lòng",
                 price: 185000,
                 oldPrice: 210000,
-                thumbUrl: "../Asset/images/dining.jpg",
-                productId: "dia-gom-men-moc",
+                thumbUrl: "../Asset/images/484397934_1826427484824769_5324677749728797257_n_11zon.webp",
+                productId: "",
                 category: "Dining Decor"
             },
             {
@@ -32,7 +32,7 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 price: 65000,
                 oldPrice: null,
                 thumbUrl: "../Asset/images/481205605_945767991014584_315534319945390599_n.jpg",
-                productId: "bat-com-men-ran",
+                productId: "",
                 category: "Dining Decor"
             },
             {
@@ -42,7 +42,7 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 price: 245000,
                 oldPrice: 280000,
                 thumbUrl: "../Asset/images/482217280_952466933678023_578750406849519694_n_11zon.webp",
-                productId: "to-canh-gom-moc",
+                productId: "",
                 category: "Dining Decor"
             }
         ]
@@ -58,31 +58,31 @@ const DEFAULT_LOOKBOOK_SCENES = [
             {
                 x: 44,
                 y: 48,
-                name: "Ấm Trà Đất Nung Thủ Công",
-                price: 420000,
-                oldPrice: 480000,
+                name: "Bộ Ấm Trà Gốm Hoa Nhí",
+                price: 325000,
+                oldPrice: 380000,
                 thumbUrl: "../Asset/images/teatime.jpg",
-                productId: "am-tra-dat-nung",
+                productId: "TNG37207",
                 category: "Teatime & Drinks"
             },
             {
                 x: 66,
                 y: 62,
-                name: "Tách Trà Gốm Thô Mộc",
-                price: 85000,
+                name: "Tách Trà Gốm Thủ Công",
+                price: 335000,
                 oldPrice: null,
-                thumbUrl: "../Asset/images/483488913_952567577001292_8906787465398018074_n_11zon.webp",
-                productId: "tach-tra-gom-tho",
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNGSX06%2F1782879033033_111.webp?alt=media&token=ed9a85cf-9ab5-4e6d-8b34-6da94c0ad461",
+                productId: "TNGSX06",
                 category: "Teatime & Drinks"
             },
             {
                 x: 22,
                 y: 35,
-                name: "Bình Hoa Mini Cắm Cành Khô",
-                price: 150000,
-                oldPrice: 175000,
-                thumbUrl: "../Asset/images/homedecor.jpg",
-                productId: "binh-hoa-mini-decor",
+                name: "Lọ Hoa Mini Đắp Nổi",
+                price: 391000,
+                oldPrice: null,
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNG157%2F1782878923487_57.webp?alt=media&token=343cd93e-dd07-402c-8185-c56e295fe9e1",
+                productId: "TNG157",
                 category: "Home Decor"
             }
         ]
@@ -98,21 +98,11 @@ const DEFAULT_LOOKBOOK_SCENES = [
             {
                 x: 42,
                 y: 42,
-                name: "Bình Hoa Men Tro Dáng Cổ",
-                price: 390000,
-                oldPrice: 450000,
-                thumbUrl: "../Asset/images/homedecor.jpg",
-                productId: "binh-hoa-men-tro",
-                category: "Home Decor"
-            },
-            {
-                x: 70,
-                y: 58,
-                name: "Tượng Gốm Thiền Decor",
-                price: 280000,
+                name: "Bình Dáng Chum Sóng Lam - S",
+                price: 1159000,
                 oldPrice: null,
-                thumbUrl: "../Asset/images/lifestyle.jpg",
-                productId: "tuong-gom-decor",
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNG11-700%2F1785668560613_1785667896369_612620544547452719_6377004220506790096_25d368402747e72fd29f8352cce6cab1.webp?alt=media&token=08603dc6-927b-409c-958d-681cf9245156",
+                productId: "TNG11-700",
                 category: "Home Decor"
             }
         ]
@@ -128,21 +118,21 @@ const DEFAULT_LOOKBOOK_SCENES = [
             {
                 x: 35,
                 y: 45,
-                name: "Hũ Đựng Gia Vị Gốm Nắp Gỗ",
-                price: 120000,
-                oldPrice: 140000,
-                thumbUrl: "../Asset/images/kitchenware.jpg",
-                productId: "hu-gia-vi-gom",
+                name: "Chén Chấm Có Tay Cầm",
+                price: 45000,
+                oldPrice: null,
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNG37054%2Fvariants%2F1788178996968_106.webp?alt=media&token=a06bbfd2-d9be-42ed-b176-8cd13f96e147",
+                productId: "TNG37054",
                 category: "Kitchenware"
             },
             {
                 x: 62,
                 y: 52,
-                name: "Khay Gốm Trữ Đồ Ăn Nghệ Thuật",
-                price: 210000,
+                name: "Dĩa Oval Hoa Cúc Gốm Mộc",
+                price: 245000,
                 oldPrice: null,
-                thumbUrl: "../Asset/images/dining.jpg",
-                productId: "khay-gom-nghe-thuat",
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNG37315%2F1788248824400_160.webp?alt=media&token=17cf5039-dcfe-4bb9-b58a-0d9060294982",
+                productId: "TNG37315",
                 category: "Dining Decor"
             }
         ]
@@ -158,11 +148,11 @@ const DEFAULT_LOOKBOOK_SCENES = [
             {
                 x: 50,
                 y: 55,
-                name: "Ly Gốm Uống Nước Dáng Cao",
-                price: 95000,
-                oldPrice: 110000,
-                thumbUrl: "../Asset/images/lifestyle.jpg",
-                productId: "ly-gom-dang-cao",
+                name: "Cốc Gốm Mộc - Đất Phấn",
+                price: 196700,
+                oldPrice: null,
+                thumbUrl: "https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/products%2FTNG126-01%2F1788261678541_157.webp?alt=media&token=1bef1e02-8a16-47c5-b91c-67f848e299af",
+                productId: "TNG126-01",
                 category: "Lifestyle"
             },
             {
@@ -172,7 +162,7 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 price: 85000,
                 oldPrice: null,
                 thumbUrl: "../Asset/images/homedecor.jpg",
-                productId: "chau-gom-sen-da",
+                productId: "",
                 category: "Home Decor"
             }
         ]
@@ -192,7 +182,7 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 price: 560000,
                 oldPrice: 650000,
                 thumbUrl: "../Asset/images/banner_decor.jpg",
-                productId: "set-bat-dia-tiec",
+                productId: "",
                 category: "Dining Decor"
             },
             {
@@ -202,7 +192,7 @@ const DEFAULT_LOOKBOOK_SCENES = [
                 price: 490000,
                 oldPrice: null,
                 thumbUrl: "../Asset/images/banner_decor.jpg",
-                productId: "binh-hoa-cao-cap",
+                productId: "",
                 category: "Home Decor"
             }
         ]
@@ -325,6 +315,21 @@ window.handleComingSoonNotify = async (e) => {
     input.value = "";
 };
 
+// Trợ giúp lấy ảnh thật của sản phẩm (bỏ qua ảnh giữ chỗ placehold.co)
+function getBestProductImage(p, fallback = '') {
+    if (!p) return fallback;
+    if (p.imageUrl && !p.imageUrl.includes('placehold.co')) return p.imageUrl;
+    if (Array.isArray(p.colorVariants) && p.colorVariants.length > 0) {
+        const v = p.colorVariants.find(item => item && item.imageUrl && !item.imageUrl.includes('placehold.co'));
+        if (v) return v.imageUrl;
+    }
+    if (Array.isArray(p.additionalImages) && p.additionalImages.length > 0) {
+        const a = p.additionalImages.find(img => img && !img.includes('placehold.co'));
+        if (a) return a;
+    }
+    return (fallback && !fallback.includes('placehold.co')) ? fallback : (p.imageUrl || fallback || '');
+}
+
 // Tải dữ liệu Lookbook (Lắng nghe thời gian thực từ Firestore, fallback mẫu)
 function loadLookbookData() {
     const container = document.getElementById('lookbook-grid');
@@ -345,7 +350,7 @@ function loadLookbookData() {
 
         try {
             // Cố gắng liên kết hotspots với sản phẩm thực tế trong Firestore để có giá & link chuẩn xác nhất
-            const productsSnap = await getDocs(query(collection(db, "products"), limit(100)));
+            const productsSnap = await getDocs(collection(db, "products"));
             if (!productsSnap.empty) {
                 const realProducts = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -353,35 +358,45 @@ function loadLookbookData() {
                 allScenes.forEach(scene => {
                     if (!scene.hotspots) scene.hotspots = [];
                     scene.hotspots.forEach(spot => {
-                        // Tìm sản phẩm khớp theo ID hoặc theo tên
+                        // 1. Tìm sản phẩm khớp chính xác theo ID (nếu có)
                         let matched = null;
                         if (spot.productId) {
                             matched = realProducts.find(p => p.id === spot.productId);
                         }
+                        // 2. Nếu không tìm thấy theo ID, chỉ khớp khi TÊN SẢN PHẨM HOÀN TOÀN TRÙNG NHAU (tránh nhận nhầm sp)
                         if (!matched && spot.name) {
-                            matched = realProducts.find(p => 
-                                (p.name && p.name.toLowerCase().includes(spot.name.toLowerCase().split(' ')[0])) ||
-                                (p.category && spot.category && p.category.toLowerCase() === spot.category.toLowerCase())
-                            );
+                            const cleanSpotName = spot.name.trim().toLowerCase();
+                            matched = realProducts.find(p => p.name && p.name.trim().toLowerCase() === cleanSpotName);
                         }
 
                         if (matched) {
                             spot.productId = matched.id;
                             spot.name = matched.name || spot.name;
-                            spot.price = matched.price || spot.price;
-                            spot.oldPrice = matched.sale > 0 ? matched.price : spot.oldPrice;
+                            const basePrice = (typeof matched.price === 'number') ? matched.price : (spot.price || 0);
                             if (matched.sale > 0) {
-                                spot.price = Math.round(matched.price * (1 - matched.sale / 100));
+                                spot.oldPrice = basePrice;
+                                spot.price = Math.round(basePrice * (1 - matched.sale / 100));
+                            } else {
+                                spot.price = basePrice;
+                                if (matched.salePrice) spot.oldPrice = basePrice;
                             }
-                            if (matched.imageUrl) {
-                                spot.thumbUrl = matched.imageUrl;
+                            // Đồng bộ ảnh thật, tránh placeholder
+                            const validImg = getBestProductImage(matched, spot.thumbUrl);
+                            if (validImg) {
+                                spot.thumbUrl = validImg;
+                            }
+                        } else {
+                            // Không tìm thấy trong kho -> Giữ nguyên thông tin đã tạo
+                            // Nếu productId là id giả (không tồn tại trong DB), xóa đi để tránh link 404
+                            if (spot.productId && !realProducts.some(p => p.id === spot.productId)) {
+                                spot.productId = '';
                             }
                         }
                     });
                 });
             }
         } catch (e) {
-            console.warn("Lookbook: Sử dụng dữ liệu sản phẩm mặc định (offline/fallback)", e);
+            console.warn("Lookbook: Lỗi đồng bộ sản phẩm:", e);
         }
 
         renderScenes();
@@ -422,7 +437,9 @@ function renderScenes() {
                 : '';
             
             const flipClass = spot.y < 25 ? 'flip-down' : '';
-            const productUrl = spot.productId ? `../product/index.html?id=${encodeURIComponent(spot.productId)}` : '#';
+            const productUrl = spot.productId 
+                ? `../product/index.html?id=${encodeURIComponent(spot.productId)}` 
+                : `../products/?search=${encodeURIComponent(spot.name)}`;
 
             return `
                 <div class="lookbook-hotspot ${flipClass}" 
