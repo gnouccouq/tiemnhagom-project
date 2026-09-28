@@ -2998,37 +2998,80 @@
                                 </div>
                             </div>
 
-                            <!-- Bên phải 30%: Khung Upload Ảnh với 4 Ô Phụ bên phải (Bố cục Hình 2) -->
-                            <div style="width: 280px; flex-shrink: 0;">
-                                <label>Hình ảnh sản phẩm</label>
-                                <div class="kiot-image-upload-wrapper"
-                                    style="height: 165px; max-height: 165px; box-sizing: border-box; overflow: hidden;">
-                                    <div class="kiot-image-upload-main"
-                                        onclick="document.getElementById('imageFile').click()">
-                                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#94a3b8"
-                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                                            style="margin-bottom: 4px;">
-                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                            <polyline points="21 15 16 10 5 21"></polyline>
-                                        </svg>
-                                        <button type="button" class="kiot-btn-outline"
-                                            style="padding: 3px 10px; font-size: 0.78rem; pointer-events: none;">Thêm
-                                            ảnh</button>
-                                        <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Mỗi ảnh không
-                                            quá 2 MB</span>
-                                        <span style="font-size: 0.65rem; color: #cbd5e1;">(Hỗ trợ cả tệp HEIC)</span>
-                                    </div>
-                                    <div class="kiot-image-side-slots" id="kiot-image-side-slots">
-                                        <div class="kiot-thumb-slot">🖼️</div>
-                                        <div class="kiot-thumb-slot">🖼️</div>
-                                        <div class="kiot-thumb-slot">🖼️</div>
-                                        <div class="kiot-thumb-slot">🖼️</div>
-                                    </div>
+                            <!-- Bên phải 32%: Khung Quản lý & Sắp xếp Thứ tự Ảnh sản phẩm -->
+                            <div style="width: 320px; flex-shrink: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <label style="margin-bottom: 0; font-weight: 700; color: #1e293b; font-size: 0.85rem;">Hình ảnh sản phẩm</label>
+                                    <span id="product-images-count-badge" style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 12px; font-weight: 600;">0 ảnh</span>
+                                </div>
+
+                                <!-- Khung Tải Ảnh Nhanh (Click hoặc Kéo thả tệp từ máy) -->
+                                <div class="kiot-image-upload-wrapper" id="kiot-image-dropzone"
+                                    style="height: 105px; max-height: 105px; padding: 8px 12px; border: 2px dashed #93c5fd; border-radius: 8px; background: #f0f7ff; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; transition: all 0.2s;"
+                                    onclick="document.getElementById('imageFile').click()">
+                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2563eb"
+                                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                                        style="margin-bottom: 3px;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #1d4ed8;">+ Thêm ảnh / Kéo thả tệp vào đây</span>
+                                    <span style="font-size: 0.68rem; color: #64748b; margin-top: 2px;">Tải nhiều ảnh cùng lúc (JPG, PNG, WEBP, HEIC)</span>
                                 </div>
                                 <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
-                                <div id="image-preview-container" class="image-preview-grid"
-                                    style="margin-top: 8px; max-height: 60px; overflow-y: auto;"></div>
+
+                                <!-- Gallery Sắp xếp Thứ tự Ảnh -->
+                                <div style="margin-top: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <span style="font-size: 0.72rem; color: #475569; font-weight: 500;">
+                                            💡 Kéo thả ảnh để đổi thứ tự (Ảnh #1 là đại diện)
+                                        </span>
+                                        <button type="button" id="btn-sync-variant-images" onclick="window.syncVariantImagesToGallery()" style="background: none; border: none; font-size: 0.72rem; color: #2563eb; cursor: pointer; padding: 0; font-weight: 600;" title="Lấy tất cả ảnh từ các biến thể thêm vào gallery">
+                                            + Lấy ảnh biến thể
+                                        </button>
+                                    </div>
+                                    <!-- Grid ảnh kéo thả -->
+                                    <div id="image-preview-container" class="product-gallery-sortable-grid"
+                                        style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-height: 190px; overflow-y: auto; padding: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; min-height: 75px;">
+                                    </div>
+                                </div>
+
+                                <!-- Ô Tải Ảnh Thứ 2 (Hover Card) Riêng Biệt -->
+                                <div style="margin-top: 10px; padding: 8px 10px; background: #fffbeb; border: 1.5px dashed #f59e0b; border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin: 0; font-size: 0.78rem; font-weight: 700; color: #b45309;">
+                                            🖼️ Ảnh thứ 2 khi di chuột (Hover Card)
+                                        </label>
+                                        <span style="font-size: 0.65rem; color: #92400e; background: #fef3c7; padding: 1px 5px; border-radius: 4px; font-weight: 600;">Riêng biệt</span>
+                                    </div>
+                                    <div style="font-size: 0.68rem; color: #78350f; margin-bottom: 6px;">
+                                        Ảnh riêng này chỉ hiển thị khi rê chuột vào card sản phẩm ngoài website.
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <div id="hover-image-preview-slot"
+                                            style="width: 50px; height: 50px; border-radius: 6px; border: 1.5px dashed #d97706; background: #fff; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;"
+                                            onclick="document.getElementById('hoverImageFile').click()"
+                                            title="Nhấn để tải ảnh thứ 2 riêng biệt">
+                                            <span style="font-size: 1.2rem; color: #d97706;">+</span>
+                                        </div>
+
+                                        <div style="flex: 1; min-width: 0;">
+                                            <button type="button" class="kiot-btn-outline" style="padding: 3px 8px; font-size: 0.75rem; border-color: #d97706; color: #b45309; background: #fff;" onclick="document.getElementById('hoverImageFile').click()">
+                                                📁 Chọn ảnh riêng
+                                            </button>
+                                            <div id="hover-image-name" style="font-size: 0.68rem; color: #94a3b8; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                Chưa chọn ảnh hover
+                                            </div>
+                                        </div>
+
+                                        <button type="button" id="btn-remove-hover-image" onclick="window.removeHoverImage()" style="display: none; background: #fee2e2; border: none; color: #dc2626; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;" title="Xóa ảnh hover">
+                                            ✕ Xóa
+                                        </button>
+                                    </div>
+                                    <input type="file" id="hoverImageFile" accept="image/*" style="display: none;">
+                                </div>
                             </div>
                         </div>
 
@@ -3155,18 +3198,25 @@
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label>Tính năng an toàn & Sử dụng</label>
                                     <div
-                                        style="display: flex; gap: 20px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                        style="display: flex; gap: 16px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
                                         <label
-                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
-                                            <input type="checkbox" id="usage-food-safe"> 🍲 An toàn thực phẩm
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 6px;">
+                                            <input type="checkbox" id="usage-dishwasher-safe" checked>
+                                            <img src="../Asset/icons/dishwashersafe.webp" alt="Dishwasher" style="width: 22px; height: 22px; object-fit: contain;"> Máy rửa chén
                                         </label>
                                         <label
-                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 6px;">
+                                            <input type="checkbox" id="usage-microwave-safe" checked>
+                                            <img src="../Asset/icons/microwavesafe.webp" alt="Microwave" style="width: 22px; height: 22px; object-fit: contain;"> Lò vi sóng
+                                        </label>
+                                        <label
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 6px;">
+                                            <input type="checkbox" id="usage-food-safe" checked>
+                                            <img src="../Asset/icons/foodsafe.webp" alt="Food Safe" style="width: 22px; height: 22px; object-fit: contain;"> An toàn thực phẩm
+                                        </label>
+                                        <label
+                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 6px;">
                                             <input type="checkbox" id="usage-oven-safe"> ♨️ Dùng lò nướng
-                                        </label>
-                                        <label
-                                            style="margin: 0; font-size: 0.85rem; cursor: pointer; color: #334155; display: flex; align-items: center; gap: 4px;">
-                                            <input type="checkbox" id="usage-microwave-safe"> 📻 Dùng lò vi sóng
                                         </label>
                                     </div>
                                 </div>
@@ -3255,8 +3305,156 @@
                                 </div>
 
                                 <!-- Biến thể màu sắc & Họa tiết -->
+                                <style>
+                                    .variant-row.is-dragging, .pattern-variant-row.is-dragging {
+                                        opacity: 0.35 !important;
+                                        background: #e0f2fe !important;
+                                        border: 2px dashed #0284c7 !important;
+                                        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15) !important;
+                                    }
+                                    .variant-drag-handle {
+                                        cursor: grab;
+                                    }
+                                    .variant-drag-handle:active {
+                                        cursor: grabbing;
+                                    }
+                                    .variant-drag-handle:hover {
+                                        color: #0284c7 !important;
+                                    }
+
+                                    /* Gallery Sắp xếp thứ tự ảnh sản phẩm */
+                                    .gallery-thumb-card {
+                                        position: relative;
+                                        aspect-ratio: 1/1;
+                                        border-radius: 6px;
+                                        border: 1.5px solid #cbd5e1;
+                                        background: #f8fafc;
+                                        overflow: hidden;
+                                        cursor: grab;
+                                        transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+                                        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                                    }
+                                    .gallery-thumb-card:hover {
+                                        border-color: #3b82f6;
+                                        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+                                        transform: translateY(-2px);
+                                    }
+                                    .gallery-thumb-card.is-main {
+                                        border-color: #16a34a;
+                                        box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+                                    }
+                                    .gallery-thumb-card.is-dragging-gallery {
+                                        opacity: 0.35 !important;
+                                        border: 2px dashed #2563eb !important;
+                                        transform: scale(0.95);
+                                    }
+                                    .gallery-thumb-card img {
+                                        width: 100%;
+                                        height: 100%;
+                                        object-fit: cover;
+                                        display: block;
+                                        pointer-events: none;
+                                    }
+                                    .gallery-badge-cover {
+                                        position: absolute;
+                                        top: 2px;
+                                        left: 2px;
+                                        background: #16a34a;
+                                        color: #fff;
+                                        font-size: 0.58rem;
+                                        font-weight: 700;
+                                        padding: 1px 4px;
+                                        border-radius: 3px;
+                                        z-index: 5;
+                                        pointer-events: none;
+                                        line-height: 1.2;
+                                    }
+                                    .gallery-badge-index {
+                                        position: absolute;
+                                        top: 2px;
+                                        left: 2px;
+                                        background: rgba(0,0,0,0.6);
+                                        color: #fff;
+                                        font-size: 0.58rem;
+                                        font-weight: 600;
+                                        padding: 1px 4px;
+                                        border-radius: 3px;
+                                        z-index: 5;
+                                        pointer-events: none;
+                                        line-height: 1.2;
+                                    }
+                                    .gallery-card-actions {
+                                        position: absolute;
+                                        bottom: 0;
+                                        left: 0;
+                                        right: 0;
+                                        background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        padding: 3px 3px;
+                                        opacity: 0;
+                                        transition: opacity 0.2s;
+                                        z-index: 6;
+                                    }
+                                    .gallery-thumb-card:hover .gallery-card-actions {
+                                        opacity: 1;
+                                    }
+                                    .gallery-action-btn {
+                                        background: rgba(255,255,255,0.9);
+                                        border: none;
+                                        border-radius: 3px;
+                                        color: #1e293b;
+                                        font-size: 0.65rem;
+                                        width: 17px;
+                                        height: 17px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        cursor: pointer;
+                                        padding: 0;
+                                        transition: all 0.15s;
+                                    }
+                                    .gallery-action-btn:hover {
+                                        background: #ffffff;
+                                        color: #2563eb;
+                                        transform: scale(1.15);
+                                    }
+                                    .gallery-action-btn.btn-del:hover {
+                                        background: #ef4444;
+                                        color: #ffffff;
+                                    }
+                                    .gallery-action-btn.btn-make-main:hover {
+                                        background: #f59e0b;
+                                        color: #ffffff;
+                                    }
+
+                                    /* Biến thể ô ảnh kéo thả */
+                                    .variant-img-preview {
+                                        transition: all 0.2s;
+                                    }
+                                    .variant-img-preview.drag-over {
+                                        border-color: #2563eb !important;
+                                        background: #eff6ff !important;
+                                        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4) !important;
+                                        transform: scale(1.12);
+                                    }
+                                </style>
                                 <div class="form-group">
-                                    <label>Biến thể màu sắc</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin: 0; font-weight: 700;">Biến thể màu sắc</label>
+                                        <span style="font-size: 0.72rem; color: #64748b;">💡 Kéo thả <strong style="color:#0284c7;">⋮⋮</strong> để sắp xếp vị trí hiển thị</span>
+                                    </div>
+                                    <div style="display: flex; gap: 6px; padding: 5px 10px; font-size: 0.72rem; color: #475569; font-weight: 600; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px dashed #cbd5e1;">
+                                        <span style="width: 24px; text-align: center;" title="Kéo thả sắp xếp">Vị trí</span>
+                                        <span style="flex: 2; min-width: 0;">Tên màu & Màu sắc (Hỗ trợ Đơn sắc / Loang Gradient 🌈)</span>
+                                        <span style="width: 82px; text-align: center;">Giá riêng</span>
+                                        <span style="width: 62px; text-align: center;">Giảm %</span>
+                                        <span style="width: 60px; text-align: center;">Tồn kho</span>
+                                        <span style="width: 52px; text-align: center;">Độc lập</span>
+                                        <span style="width: 32px; text-align: center;">Ảnh</span>
+                                        <span style="width: 20px;"></span>
+                                    </div>
                                     <div id="variant-items-container"
                                         style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
                                     </div>
@@ -3264,7 +3462,20 @@
                                         style="width: 100%; font-size: 0.82rem;">+ Thêm biến thể màu sắc</button>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label>Biến thể họa tiết</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin: 0; font-weight: 700;">Biến thể họa tiết</label>
+                                        <span style="font-size: 0.72rem; color: #64748b;">💡 Kéo thả <strong style="color:#0284c7;">⋮⋮</strong> để sắp xếp vị trí hiển thị</span>
+                                    </div>
+                                    <div style="display: flex; gap: 6px; padding: 5px 10px; font-size: 0.72rem; color: #475569; font-weight: 600; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px dashed #cbd5e1;">
+                                        <span style="width: 24px; text-align: center;" title="Kéo thả sắp xếp">Vị trí</span>
+                                        <span style="flex: 2; min-width: 0;">Tên họa tiết (VD: Nhám, Hoa lam, Men rạn)</span>
+                                        <span style="width: 82px; text-align: center;">Giá riêng</span>
+                                        <span style="width: 62px; text-align: center;">Giảm %</span>
+                                        <span style="width: 60px; text-align: center;">Tồn kho</span>
+                                        <span style="width: 52px; text-align: center;">Độc lập</span>
+                                        <span style="width: 32px; text-align: center;">Ảnh</span>
+                                        <span style="width: 20px;"></span>
+                                    </div>
                                     <div id="pattern-variant-items-container"
                                         style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
                                     </div>
@@ -3578,7 +3789,7 @@
 
     <!-- Khung chứa hóa đơn in ấn (Chỉ hiện khi in) -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=59"></script>
+    <script type="module" src="../js/DashBoard.js?v=60"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

@@ -1688,10 +1688,16 @@ window.closeProductModal = function () {
         document.getElementById('variant-items-container').innerHTML = '';
         document.getElementById('pattern-variant-items-container').innerHTML = '';
         document.getElementById('image-preview-container').innerHTML = '';
+        window.productGalleryImages = [];
+        const badgeCount = document.getElementById('product-images-count-badge');
+        if (badgeCount) badgeCount.innerText = '0 ảnh';
         if (window.quillProductEditor) window.quillProductEditor.root.innerHTML = '';
         delete document.getElementById('productId').dataset.currentImageUrl;
         delete document.getElementById('productId').dataset.currentAdditionalImages;
         delete document.getElementById('productId').dataset.currentThumbUrl;
+        delete document.getElementById('productId').dataset.currentHoverImageUrl;
+        if (document.getElementById('hoverImageFile')) document.getElementById('hoverImageFile').value = '';
+        if (typeof window.renderHoverImagePreview === 'function') window.renderHoverImagePreview();
         delete document.getElementById('productId').dataset.originalId;
         document.getElementById('productId').readOnly = false;
 
@@ -1787,74 +1793,588 @@ if (productSection && btnOpenProductModal) {
 }
 
 
-// Hàm hiển thị danh sách ảnh đang có trong Form (khi sửa)
-function renderImagePreviews() {
+// ==========================================
+// QUẢN LÝ THƯ VIỆN ẢNH SẢN PHẨM & KÉO THẢ SẮP XẾP
+// ==========================================
+window.productGalleryImages = []; // Danh sách các ảnh: { id, type: 'url'|'file', url, thumbUrl, file, previewUrl }
+window.draggedProductMedia = null; // Đối tượng ảnh đang kéo trong gallery hoặc kéo thả vào biến thể
+window.draggedVariantMedia = null; // Đối tượng ảnh biến thể đang kéo
+
+// Đảm bảo dữ liệu ảnh trong gallery được đồng bộ từ dataset nếu chưa có
+function ensureProductGalleryLoaded() {
     const productIdEl = document.getElementById('productId');
-    const container = document.getElementById('image-preview-container');
-    const mainSlot = document.querySelector('.kiot-image-upload-main');
-    const sideSlotsContainer = document.getElementById('kiot-image-side-slots');
-
-    if (container) container.innerHTML = '';
     if (!productIdEl) return;
+    if (window.productGalleryImages.length === 0) {
+        const mainUrl = productIdEl.dataset.currentImageUrl;
+        const thumbUrl = productIdEl.dataset.currentThumbUrl || mainUrl;
+        const additionalUrls = JSON.parse(productIdEl.dataset.currentAdditionalImages || '[]');
 
-    const mainUrl = productIdEl.dataset.currentImageUrl;
-    const additionalUrls = JSON.parse(productIdEl.dataset.currentAdditionalImages || '[]');
-
-    // Cập nhật slot ảnh chính
-    if (mainSlot) {
-        if (mainUrl && !mainUrl.includes('placeholder') && !mainUrl.includes('via.')) {
-            mainSlot.innerHTML = `
-                <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                    <img src="${mainUrl}" alt="Ảnh chính" style="max-width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px;">
-                    <button type="button" onclick="event.stopPropagation(); window.removeMainProductImage();" title="Xóa ảnh chính" style="position: absolute; top: 4px; right: 4px; background: rgba(220,38,38,0.85); color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">&times;</button>
-                </div>`;
-        } else {
-            mainSlot.innerHTML = `
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 4px;">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                <button type="button" class="kiot-btn-outline" style="padding: 3px 10px; font-size: 0.78rem; pointer-events: none;">Thêm ảnh</button>
-                <span style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Mỗi ảnh không quá 2 MB</span>
-                <span style="font-size: 0.65rem; color: #cbd5e1;">(Hỗ trợ cả tệp HEIC)</span>`;
+        if (mainUrl && !mainUrl.includes('placeholder') && !mainUrl.includes('via.') && !mainUrl.includes('placehold.co')) {
+            window.productGalleryImages.push({
+                id: 'url_main_' + Date.now(),
+                type: 'url',
+                url: mainUrl,
+                thumbUrl: thumbUrl
+            });
         }
-    }
-
-    // Cập nhật 4 slot thumbnail phụ đứng bên phải
-    if (sideSlotsContainer) {
-        const slots = sideSlotsContainer.querySelectorAll('.kiot-thumb-slot');
-        slots.forEach((slot, idx) => {
-            if (additionalUrls[idx]) {
-                slot.innerHTML = `
-                    <div style="position: relative; width: 100%; height: 100%;">
-                        <img src="${additionalUrls[idx]}" alt="Thumb ${idx + 1}" style="width: 100%; height: 100%; object-fit: cover;">
-                        <button type="button" onclick="event.stopPropagation(); window.removeAdditionalProductImage(${idx});" title="Xóa ảnh này" style="position: absolute; top: 1px; right: 1px; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;">&times;</button>
-                    </div>`;
-            } else {
-                slot.innerHTML = `🖼️`;
-            }
-        });
+        if (Array.isArray(additionalUrls)) {
+            additionalUrls.forEach((u, i) => {
+                if (u && typeof u === 'string' && u !== mainUrl && !u.includes('placehold.co')) {
+                    window.productGalleryImages.push({
+                        id: 'url_add_' + i + '_' + Date.now(),
+                        type: 'url',
+                        url: u,
+                        thumbUrl: u
+                    });
+                }
+            });
+        }
     }
 }
 
-window.removeMainProductImage = function () {
+// Cập nhật dataset của productId dựa trên window.productGalleryImages
+function syncGalleryToDataset() {
     const productIdEl = document.getElementById('productId');
-    if (productIdEl) {
-        productIdEl.dataset.currentImageUrl = '';
+    if (!productIdEl) return;
+    const urlItems = window.productGalleryImages.filter(x => x && x.type === 'url');
+    if (urlItems.length > 0) {
+        productIdEl.dataset.currentImageUrl = urlItems[0].url;
+        productIdEl.dataset.currentThumbUrl = urlItems[0].thumbUrl || urlItems[0].url;
+        productIdEl.dataset.currentAdditionalImages = JSON.stringify(urlItems.slice(1).map(x => x.url));
+    } else {
+        delete productIdEl.dataset.currentImageUrl;
+        delete productIdEl.dataset.currentThumbUrl;
+        productIdEl.dataset.currentAdditionalImages = '[]';
+    }
+}
+
+// Hàm hiển thị danh sách ảnh sản phẩm có thể kéo thả sắp xếp
+function renderImagePreviews() {
+    ensureProductGalleryLoaded();
+    const container = document.getElementById('image-preview-container');
+    const badgeCount = document.getElementById('product-images-count-badge');
+    if (badgeCount) {
+        badgeCount.innerText = `${window.productGalleryImages.length} ảnh`;
+    }
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (window.productGalleryImages.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px 6px; color: #94a3b8; font-size: 0.75rem; text-align: center;">
+                <span style="font-size: 1.2rem; margin-bottom: 2px;">🖼️</span>
+                <span>Chưa có ảnh nào</span>
+                <span style="font-size: 0.68rem; color: #cbd5e1;">Bấm ô trên hoặc kéo thả tệp vào đây</span>
+            </div>`;
+        syncGalleryToDataset();
+        return;
+    }
+
+    let draggedGalleryIdx = null;
+
+    window.productGalleryImages.forEach((item, idx) => {
+        const isMain = (idx === 0);
+        const imgSrc = item.url || item.previewUrl;
+
+        const card = document.createElement('div');
+        card.className = `gallery-thumb-card ${isMain ? 'is-main' : ''}`;
+        card.setAttribute('draggable', 'true');
+        card.dataset.index = idx;
+        card.title = isMain ? 'Ảnh chính (Ảnh đại diện sản phẩm) - Kéo để đổi thứ tự' : `Ảnh phụ #${idx} - Kéo để đổi thứ tự hoặc kéo vào ô ảnh biến thể`;
+
+        card.innerHTML = `
+            <img src="${imgSrc}" alt="Ảnh ${idx + 1}" loading="lazy">
+            ${isMain ? `<span class="gallery-badge-cover">⭐ Đại diện</span>` : `<span class="gallery-badge-index">#${idx + 1}</span>`}
+            
+            <div class="gallery-card-actions">
+                <div style="display: flex; gap: 2px;">
+                    ${!isMain ? `
+                        <button type="button" class="gallery-action-btn btn-make-main" title="Đặt làm ảnh đại diện" onclick="event.stopPropagation(); window.setAsMainProductImage(${idx});">⭐</button>
+                    ` : ''}
+                    ${idx > 0 ? `
+                        <button type="button" class="gallery-action-btn" title="Chuyển sang trái" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, -1);">◀</button>
+                    ` : ''}
+                    ${idx < window.productGalleryImages.length - 1 ? `
+                        <button type="button" class="gallery-action-btn" title="Chuyển sang phải" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, 1);">▶</button>
+                    ` : ''}
+                </div>
+                <button type="button" class="gallery-action-btn btn-del" title="Xóa ảnh này" onclick="event.stopPropagation(); window.removeProductGalleryImage(${idx});">&times;</button>
+            </div>
+        `;
+
+        // Sự kiện kéo thả trong gallery & kéo thả ra ngoài biến thể
+        card.addEventListener('dragstart', (e) => {
+            draggedGalleryIdx = idx;
+            window.draggedProductMedia = item;
+            card.classList.add('is-dragging-gallery');
+            e.dataTransfer.effectAllowed = 'copyMove';
+            e.dataTransfer.setData('text/plain', imgSrc);
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('is-dragging-gallery');
+            setTimeout(() => { window.draggedProductMedia = null; }, 200);
+        });
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            card.style.borderColor = '#2563eb';
+        });
+
+        card.addEventListener('dragleave', () => {
+            card.style.borderColor = isMain ? '#16a34a' : '#cbd5e1';
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.style.borderColor = isMain ? '#16a34a' : '#cbd5e1';
+            if (draggedGalleryIdx !== null && draggedGalleryIdx !== idx) {
+                window.reorderProductGalleryImages(draggedGalleryIdx, idx);
+            }
+        });
+
+        container.appendChild(card);
+    });
+
+    syncGalleryToDataset();
+}
+
+// Đổi vị trí 2 ảnh trong Gallery
+window.reorderProductGalleryImages = function (fromIdx, toIdx) {
+    if (fromIdx < 0 || fromIdx >= window.productGalleryImages.length) return;
+    if (toIdx < 0 || toIdx >= window.productGalleryImages.length) return;
+    const [moved] = window.productGalleryImages.splice(fromIdx, 1);
+    window.productGalleryImages.splice(toIdx, 0, moved);
+    renderImagePreviews();
+};
+
+// Đưa 1 ảnh lên làm ảnh chính (index 0)
+window.setAsMainProductImage = function (idx) {
+    if (idx <= 0 || idx >= window.productGalleryImages.length) return;
+    const [moved] = window.productGalleryImages.splice(idx, 1);
+    window.productGalleryImages.unshift(moved);
+    renderImagePreviews();
+    if (typeof showToast === 'function') showToast("Đã đặt làm ảnh đại diện!", "success");
+};
+
+// Di chuyển ảnh 1 bước (left: -1, right: +1)
+window.moveProductGalleryImage = function (idx, direction) {
+    const toIdx = idx + direction;
+    window.reorderProductGalleryImages(idx, toIdx);
+};
+
+// Xóa ảnh khỏi gallery
+window.removeProductGalleryImage = function (idx) {
+    if (idx < 0 || idx >= window.productGalleryImages.length) return;
+    window.productGalleryImages.splice(idx, 1);
+    renderImagePreviews();
+};
+
+// Tương thích ngược với các hàm cũ
+window.removeMainProductImage = function () {
+    window.removeProductGalleryImage(0);
+};
+window.removeAdditionalProductImage = function (idx) {
+    window.removeProductGalleryImage(idx + 1);
+};
+
+// Thêm file mới vào gallery
+window.addFilesToProductGallery = function (fileList) {
+    if (!fileList || fileList.length === 0) return;
+    Array.from(fileList).forEach((file, i) => {
+        if (!file.type.startsWith('image/')) return;
+        window.productGalleryImages.push({
+            id: 'file_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5),
+            type: 'file',
+            file: file,
+            previewUrl: URL.createObjectURL(file)
+        });
+    });
+    renderImagePreviews();
+};
+
+// Lấy tất cả ảnh từ các biến thể (màu sắc, họa tiết) thêm vào gallery sản phẩm
+window.syncVariantImagesToGallery = function () {
+    let addedCount = 0;
+    const existingUrls = new Set(window.productGalleryImages.map(x => x.url || x.previewUrl));
+
+    // Quét biến thể màu sắc
+    document.querySelectorAll('.variant-row').forEach((row, i) => {
+        const fileInput = row.querySelector('.variant-file-input');
+        const imgEl = row.querySelector('.variant-img-preview img');
+        const curUrl = row.dataset.currentUrl;
+
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const f = fileInput.files[0];
+            const pUrl = imgEl ? imgEl.src : URL.createObjectURL(f);
+            if (!existingUrls.has(pUrl)) {
+                window.productGalleryImages.push({
+                    id: 'var_c_file_' + Date.now() + '_' + i,
+                    type: 'file',
+                    file: f,
+                    previewUrl: pUrl
+                });
+                existingUrls.add(pUrl);
+                addedCount++;
+            }
+        } else if (curUrl && !curUrl.includes('placehold.co') && !existingUrls.has(curUrl)) {
+            window.productGalleryImages.push({
+                id: 'var_c_url_' + Date.now() + '_' + i,
+                type: 'url',
+                url: curUrl,
+                thumbUrl: curUrl
+            });
+            existingUrls.add(curUrl);
+            addedCount++;
+        }
+    });
+
+    // Quét biến thể họa tiết
+    document.querySelectorAll('.pattern-variant-row').forEach((row, i) => {
+        const fileInput = row.querySelector('.variant-file-input');
+        const imgEl = row.querySelector('.variant-img-preview img');
+        const curUrl = row.dataset.currentUrl;
+
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const f = fileInput.files[0];
+            const pUrl = imgEl ? imgEl.src : URL.createObjectURL(f);
+            if (!existingUrls.has(pUrl)) {
+                window.productGalleryImages.push({
+                    id: 'var_p_file_' + Date.now() + '_' + i,
+                    type: 'file',
+                    file: f,
+                    previewUrl: pUrl
+                });
+                existingUrls.add(pUrl);
+                addedCount++;
+            }
+        } else if (curUrl && !curUrl.includes('placehold.co') && !existingUrls.has(curUrl)) {
+            window.productGalleryImages.push({
+                id: 'var_p_url_' + Date.now() + '_' + i,
+                type: 'url',
+                url: curUrl,
+                thumbUrl: curUrl
+            });
+            existingUrls.add(curUrl);
+            addedCount++;
+        }
+    });
+
+    if (addedCount > 0) {
         renderImagePreviews();
+        if (typeof showToast === 'function') {
+            showToast(`Đã thêm ${addedCount} ảnh từ biến thể vào thư viện ảnh sản phẩm!`, "success");
+        }
+    } else {
+        if (typeof showToast === 'function') {
+            showToast("Không tìm thấy ảnh biến thể mới nào để thêm.", "info");
+        }
     }
 };
 
-window.removeAdditionalProductImage = function (index) {
+// Đăng ký sự kiện Dropzone cho khung tải ảnh
+setTimeout(() => {
+    const dropzone = document.getElementById('kiot-image-dropzone');
+    if (dropzone) {
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#2563eb';
+            dropzone.style.background = '#eff6ff';
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = '#93c5fd';
+            dropzone.style.background = '#f0f7ff';
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#93c5fd';
+            dropzone.style.background = '#f0f7ff';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                window.addFilesToProductGallery(e.dataTransfer.files);
+            }
+        });
+    }
+
+    const imageFileInput = document.getElementById('imageFile');
+    if (imageFileInput) {
+        imageFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                window.addFilesToProductGallery(e.target.files);
+                e.target.value = '';
+            }
+        });
+    }
+
+    // Lắng nghe tải ảnh thứ 2 (hover image) riêng biệt
+    const hoverFileInput = document.getElementById('hoverImageFile');
+    if (hoverFileInput) {
+        hoverFileInput.addEventListener('change', () => {
+            window.renderHoverImagePreview();
+        });
+    }
+
+    const hoverSlot = document.getElementById('hover-image-preview-slot');
+    if (hoverSlot) {
+        hoverSlot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            hoverSlot.style.borderColor = '#2563eb';
+            hoverSlot.style.background = '#eff6ff';
+        });
+        hoverSlot.addEventListener('dragleave', () => {
+            hoverSlot.style.borderColor = '#d97706';
+            hoverSlot.style.background = '#fff';
+        });
+        hoverSlot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            hoverSlot.style.borderColor = '#d97706';
+            hoverSlot.style.background = '#fff';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const f = e.dataTransfer.files[0];
+                if (f.type.startsWith('image/')) {
+                    const dt = new DataTransfer();
+                    dt.items.add(f);
+                    if (hoverFileInput) hoverFileInput.files = dt.files;
+                    window.renderHoverImagePreview();
+                }
+            }
+        });
+    }
+}, 300);
+
+// ==========================================
+// QUẢN LÝ ẢNH THỨ 2 KHI DI CHUỘT (HOVER CARD RIÊNG BIỆT)
+// ==========================================
+window.renderHoverImagePreview = function () {
+    const slot = document.getElementById('hover-image-preview-slot');
+    const nameEl = document.getElementById('hover-image-name');
+    const delBtn = document.getElementById('btn-remove-hover-image');
+    const fileInput = document.getElementById('hoverImageFile');
     const productIdEl = document.getElementById('productId');
-    if (productIdEl) {
-        const additionalUrls = JSON.parse(productIdEl.dataset.currentAdditionalImages || '[]');
-        additionalUrls.splice(index, 1);
-        productIdEl.dataset.currentAdditionalImages = JSON.stringify(additionalUrls);
-        renderImagePreviews();
+    if (!slot) return;
+
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    const curUrl = productIdEl ? productIdEl.dataset.currentHoverImageUrl : '';
+
+    if (file) {
+        slot.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        if (nameEl) nameEl.innerText = file.name;
+        if (delBtn) delBtn.style.display = 'block';
+    } else if (curUrl && !curUrl.includes('placeholder') && !curUrl.includes('placehold.co')) {
+        slot.innerHTML = `<img src="${curUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        if (nameEl) nameEl.innerText = 'Đã có ảnh hover';
+        if (delBtn) delBtn.style.display = 'block';
+    } else {
+        slot.innerHTML = `<span style="font-size: 1.2rem; color: #d97706;">+</span>`;
+        if (nameEl) nameEl.innerText = 'Chưa chọn ảnh hover';
+        if (delBtn) delBtn.style.display = 'none';
     }
 };
+
+window.removeHoverImage = function () {
+    const productIdEl = document.getElementById('productId');
+    const fileInput = document.getElementById('hoverImageFile');
+    if (productIdEl) productIdEl.dataset.currentHoverImageUrl = '';
+    if (fileInput) fileInput.value = '';
+    window.renderHoverImagePreview();
+    if (typeof showToast === 'function') showToast("Đã gỡ ảnh hover thứ 2", "info");
+};
+
+// Helper gắn sự kiện tương tác kéo thả và chọn ảnh cho biến thể
+function setupVariantImageInteraction(previewEl, row, fileInput) {
+    if (!previewEl) return;
+
+    previewEl.setAttribute('draggable', 'true');
+    previewEl.title = "Kéo thả ảnh vào đây, kéo để đổi ảnh, hoặc click để chọn";
+
+    // 1. Kéo ô ảnh biến thể này để gán sang biến thể khác
+    previewEl.addEventListener('dragstart', (e) => {
+        const img = previewEl.querySelector('img');
+        if (img && img.src) {
+            window.draggedVariantMedia = {
+                url: row.dataset.currentUrl || '',
+                src: img.src,
+                file: fileInput && fileInput.files ? fileInput.files[0] : null
+            };
+            e.dataTransfer.effectAllowed = 'copyMove';
+            e.dataTransfer.setData('text/plain', img.src);
+        }
+    });
+
+    previewEl.addEventListener('dragend', () => {
+        setTimeout(() => { window.draggedVariantMedia = null; }, 200);
+    });
+
+    // 2. Kéo rê chuột lên ô ảnh
+    previewEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        previewEl.classList.add('drag-over');
+    });
+
+    previewEl.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        previewEl.classList.remove('drag-over');
+    });
+
+    // 3. Thả ảnh vào ô biến thể
+    previewEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        previewEl.classList.remove('drag-over');
+
+        // TH1: Kéo từ Gallery sản phẩm
+        if (window.draggedProductMedia) {
+            const media = window.draggedProductMedia;
+            if (media.type === 'file' && media.file) {
+                const dt = new DataTransfer();
+                dt.items.add(media.file);
+                fileInput.files = dt.files;
+                row.dataset.currentUrl = '';
+                previewEl.innerHTML = `<img src="${media.previewUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else if (media.url) {
+                row.dataset.currentUrl = media.url;
+                fileInput.value = '';
+                previewEl.innerHTML = `<img src="${media.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            if (typeof showToast === 'function') showToast("Đã gán ảnh từ thư viện cho biến thể!", "success");
+            return;
+        }
+
+        // TH2: Kéo từ biến thể khác
+        if (window.draggedVariantMedia) {
+            const vm = window.draggedVariantMedia;
+            if (vm.file) {
+                const dt = new DataTransfer();
+                dt.items.add(vm.file);
+                fileInput.files = dt.files;
+                row.dataset.currentUrl = '';
+                previewEl.innerHTML = `<img src="${vm.src}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else if (vm.url || vm.src) {
+                row.dataset.currentUrl = vm.url || vm.src;
+                fileInput.value = '';
+                previewEl.innerHTML = `<img src="${vm.src || vm.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            if (typeof showToast === 'function') showToast("Đã sao chép ảnh biến thể!", "success");
+            return;
+        }
+
+        // TH3: Kéo tệp ảnh từ máy tính (Desktop/Folder)
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('image/')) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                row.dataset.currentUrl = '';
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    previewEl.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                };
+                reader.readAsDataURL(file);
+                if (typeof showToast === 'function') showToast("Đã tải ảnh cho biến thể!", "success");
+            }
+        }
+    });
+
+    // 4. Click vào ô ảnh: Nếu trong gallery có ảnh, cho phép chọn nhanh hoặc tải tệp
+    previewEl.onclick = (e) => {
+        e.stopPropagation();
+        
+        // Nếu không có ảnh nào trong gallery thì trực tiếp mở file picker
+        if (!window.productGalleryImages || window.productGalleryImages.length === 0) {
+            fileInput.click();
+            return;
+        }
+
+        // Tạo popover chọn ảnh nhanh từ gallery
+        const existingPop = document.getElementById('variant-img-picker-popover');
+        if (existingPop) existingPop.remove();
+
+        const popover = document.createElement('div');
+        popover.id = 'variant-img-picker-popover';
+        popover.style = "position: fixed; z-index: 10000; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); padding: 10px; width: 220px;";
+
+        const rect = previewEl.getBoundingClientRect();
+        popover.style.top = `${Math.min(window.innerHeight - 250, rect.bottom + 4)}px`;
+        popover.style.left = `${Math.max(10, rect.left - 100)}px`;
+
+        popover.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: #1e293b;">Chọn ảnh biến thể</span>
+                <button type="button" style="background: none; border: none; font-size: 14px; cursor: pointer; color: #94a3b8;" onclick="this.closest('#variant-img-picker-popover').remove()">&times;</button>
+            </div>
+            <div style="font-size: 0.68rem; color: #64748b; margin-bottom: 6px;">Chọn từ thư viện ảnh sản phẩm:</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-height: 120px; overflow-y: auto; margin-bottom: 8px; padding: 2px;">
+                ${window.productGalleryImages.map((m, mIdx) => `
+                    <div class="popover-thumb-item" data-media-idx="${mIdx}" style="aspect-ratio: 1/1; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; cursor: pointer; background: #f8fafc;" title="Chọn ảnh #${mIdx + 1}">
+                        <img src="${m.url || m.previewUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display: flex; gap: 4px; flex-direction: column;">
+                <button type="button" class="btn-pop-upload-pc" style="width: 100%; padding: 4px; font-size: 0.72rem; border: 1px solid #cbd5e1; border-radius: 4px; background: #f1f5f9; cursor: pointer; color: #1e293b; font-weight: 600;">📁 Tải từ máy tính</button>
+                ${(row.dataset.currentUrl || (fileInput.files && fileInput.files.length > 0)) ? `
+                    <button type="button" class="btn-pop-remove-img" style="width: 100%; padding: 4px; font-size: 0.72rem; border: none; border-radius: 4px; background: #fee2e2; cursor: pointer; color: #dc2626; font-weight: 600;">✕ Gỡ ảnh biến thể</button>
+                ` : ''}
+            </div>
+        `;
+
+        document.body.appendChild(popover);
+
+        // Click chọn thumbnail từ popover
+        popover.querySelectorAll('.popover-thumb-item').forEach(itemEl => {
+            itemEl.onclick = () => {
+                const mIdx = Number(itemEl.dataset.mediaIdx);
+                const media = window.productGalleryImages[mIdx];
+                if (media) {
+                    if (media.type === 'file' && media.file) {
+                        const dt = new DataTransfer();
+                        dt.items.add(media.file);
+                        fileInput.files = dt.files;
+                        row.dataset.currentUrl = '';
+                        previewEl.innerHTML = `<img src="${media.previewUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    } else if (media.url) {
+                        row.dataset.currentUrl = media.url;
+                        fileInput.value = '';
+                        previewEl.innerHTML = `<img src="${media.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    }
+                    if (typeof showToast === 'function') showToast("Đã chọn ảnh cho biến thể!", "success");
+                }
+                popover.remove();
+            };
+        });
+
+        // Nút tải từ máy tính
+        popover.querySelector('.btn-pop-upload-pc').onclick = () => {
+            popover.remove();
+            fileInput.click();
+        };
+
+        // Nút gỡ ảnh
+        const btnRem = popover.querySelector('.btn-pop-remove-img');
+        if (btnRem) {
+            btnRem.onclick = () => {
+                row.dataset.currentUrl = '';
+                fileInput.value = '';
+                previewEl.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>';
+                popover.remove();
+                if (typeof showToast === 'function') showToast("Đã gỡ ảnh biến thể", "info");
+            };
+        }
+
+        // Đóng popover khi click ra ngoài
+        const outsideClickListener = (ev) => {
+            if (!popover.contains(ev.target) && ev.target !== previewEl) {
+                popover.remove();
+                document.removeEventListener('click', outsideClickListener);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', outsideClickListener), 10);
+    };
+}
 
 // --- Logic Quản lý Biến thể Màu sắc & Ảnh ---
 window.syncStockWithVariants = function () {
@@ -1913,9 +2433,113 @@ window.syncStockWithVariants = function () {
     }
 };
 
-window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '') => {
+// --- Logic Kéo thả sắp xếp Biến thể & Quản lý Màu sắc, Họa tiết ---
+function makeVariantRowDraggable(row, container) {
+    if (!row || !container) return;
+
+    const handle = row.querySelector('.variant-drag-handle');
+    if (handle) {
+        handle.setAttribute('draggable', 'true');
+
+        handle.addEventListener('dragstart', (e) => {
+            row.classList.add('is-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+        });
+
+        handle.addEventListener('dragend', () => {
+            row.classList.remove('is-dragging');
+            if (typeof window.syncStockWithVariants === 'function') {
+                window.syncStockWithVariants();
+            }
+        });
+    }
+
+    const upBtn = row.querySelector('.btn-var-move-up');
+    const downBtn = row.querySelector('.btn-var-move-down');
+    if (upBtn) {
+        upBtn.onclick = (e) => {
+            e.stopPropagation();
+            const prev = row.previousElementSibling;
+            if (prev) {
+                container.insertBefore(row, prev);
+                if (typeof window.syncStockWithVariants === 'function') window.syncStockWithVariants();
+            }
+        };
+    }
+    if (downBtn) {
+        downBtn.onclick = (e) => {
+            e.stopPropagation();
+            const next = row.nextElementSibling;
+            if (next) {
+                container.insertBefore(next, row);
+                if (typeof window.syncStockWithVariants === 'function') window.syncStockWithVariants();
+            }
+        };
+    }
+}
+
+function setupVariantContainerDragDrop(container) {
+    if (!container || container.dataset.dragDropInitialized) return;
+    container.dataset.dragDropInitialized = 'true';
+
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const dragging = container.querySelector('.is-dragging');
+        if (!dragging) return;
+
+        const siblings = [...container.querySelectorAll('.variant-row:not(.is-dragging), .pattern-variant-row:not(.is-dragging)')];
+        const nextSibling = siblings.find(sibling => {
+            const box = sibling.getBoundingClientRect();
+            return e.clientY <= box.top + box.height / 2;
+        });
+
+        if (nextSibling) {
+            container.insertBefore(dragging, nextSibling);
+        } else {
+            container.appendChild(dragging);
+        }
+    });
+}
+
+// Helper phân tích giá trị màu (hỗ trợ cả Hex đơn sắc và Gradient CSS)
+function parseVariantColor(rawHex, colorName = '') {
+    let raw = (rawHex || '').trim();
+    if (!raw && colorName && typeof getColorHex === 'function') {
+        raw = getColorHex(colorName, '#3498db');
+    }
+    if (!raw && colorName && typeof COLOR_MAP !== 'undefined') {
+        raw = COLOR_MAP[colorName] || '#3498db';
+    }
+    if (!raw) raw = '#3498db';
+
+    // Kiểm tra gradient CSS hoặc cú pháp rút gọn '#col1, #col2' / '#col1 - #col2'
+    if (raw.includes('gradient')) {
+        const matches = raw.match(/#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\)/g);
+        const c1 = matches && matches[0] ? matches[0] : '#3498db';
+        const c2 = matches && matches[1] ? matches[1] : '#ec4899';
+        return { isGradient: true, hex1: c1, hex2: c2, css: raw };
+    }
+
+    if (raw.includes(',') || raw.includes(' - ') || raw.includes('/')) {
+        const parts = raw.split(/[,/\-]|\s+-\s+/).map(s => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            const c1 = parts[0].startsWith('#') ? parts[0] : ('#' + parts[0]);
+            const c2 = parts[1].startsWith('#') ? parts[1] : ('#' + parts[1]);
+            return { isGradient: true, hex1: c1, hex2: c2, css: `linear-gradient(135deg, ${c1}, ${c2})` };
+        }
+    }
+
+    let singleHex = raw.startsWith('#') ? raw : ('#' + raw);
+    return { isGradient: false, hex1: singleHex, hex2: '#ec4899', css: singleHex };
+}
+
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '', sale = '', sold = 0, id = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
+
+    setupVariantContainerDragDrop(container);
 
     // Tạo datalist cho màu sắc nếu chưa có
     let datalist = document.getElementById('color-suggestions');
@@ -1927,106 +2551,184 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     const colorOptions = Object.keys(COLOR_MAP).map(colorName => `<option value="${colorName}">`).join('');
     datalist.innerHTML = colorOptions;
 
-    const initialHex = customHex || (typeof getColorHex === 'function' ? getColorHex(name, '#3498db') : (COLOR_MAP[name] || '#3498db'));
+    const parsedColor = parseVariantColor(customHex, name);
+    const variantId = id || ('var_c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
 
     const row = document.createElement('div');
     row.className = 'variant-row';
-    row.style = 'display: flex; gap: 8px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 8px; transition: all 0.15s ease;';
-    row.dataset.currentUrl = imageUrl;
+    row.style = 'display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
+    row.dataset.currentUrl = imageUrl || '';
+    row.dataset.variantId = variantId;
+    row.dataset.originalName = name || '';
+    row.dataset.sold = (sold !== undefined && sold !== null) ? sold : 0;
+
+    const toHex7 = (h) => {
+        if (!h || !h.startsWith('#')) return '#3498db';
+        if (h.length === 4) return '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+        return h.length === 7 ? h : '#3498db';
+    };
+
+    const hex1_7 = toHex7(parsedColor.hex1);
+    const hex2_7 = toHex7(parsedColor.hex2);
 
     row.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 6px; flex: 1.5; min-width: 0;">
-            <!-- Color Swatch Circle Preview -->
-            <div class="variant-color-swatch" style="width: 24px; height: 24px; border-radius: 50%; background-color: ${initialHex}; border: 2px solid #cbd5e1; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); cursor: pointer;" title="Xem trước màu sắc"></div>
+        <!-- Drag Handle & Reorder -->
+        <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+            <div class="variant-drag-handle" title="Kéo thả để sắp xếp thứ tự" style="cursor: grab; display: flex; align-items: center; justify-content: center; width: 14px; height: 26px; color: #94a3b8; font-size: 1rem; user-select: none;">⋮⋮</div>
+            <div style="display: flex; flex-direction: column; gap: 1px;">
+                <button type="button" class="btn-var-move-up" style="background:none; border:none; padding:0; color:#94a3b8; font-size:8px; cursor:pointer; line-height:1;" title="Chuyển lên trên">▲</button>
+                <button type="button" class="btn-var-move-down" style="background:none; border:none; padding:0; color:#94a3b8; font-size:8px; cursor:pointer; line-height:1;" title="Chuyển xuống dưới">▼</button>
+            </div>
+        </div>
+
+        <!-- Color Section: Swatch + Name + Gradient Toggle + Pickers + Hex/CSS -->
+        <div style="display: flex; align-items: center; gap: 6px; flex: 2; min-width: 0;">
+            <!-- Color Swatch Circle Preview (Supports Gradient) -->
+            <div class="variant-color-swatch" style="width: 26px; height: 26px; border-radius: 50%; background: ${parsedColor.css}; border: 2px solid #cbd5e1; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); cursor: pointer;" title="Xem trước màu sắc / Nhấn để chọn màu"></div>
             
             <!-- Color Name Input -->
-            <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Đỏ rượu)" style="padding: 7px 10px; border: 1px solid #cbd5e1; flex: 1; min-width: 0; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
+            <input type="text" list="color-suggestions" class="variant-name" value="${name}" placeholder="Tên màu (VD: Đỏ ruby, Loang tím hồng)" style="padding: 6px 8px; border: 1px solid #cbd5e1; flex: 1.2; min-width: 90px; border-radius: 6px; font-family: inherit; font-size: 0.83rem;">
             
-            <!-- Color Picker Toggle -->
-            <input type="color" class="variant-color-picker" value="${initialHex.length === 7 ? initialHex : '#3498db'}" style="width: 28px; height: 28px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: transparent; flex-shrink: 0;" title="Chọn màu bằng bảng màu (Color Picker)">
+            <!-- Mode Toggle Button: Solid or Gradient -->
+            <button type="button" class="btn-toggle-gradient" style="border: 1px solid #cbd5e1; background: ${parsedColor.isGradient ? '#eff6ff' : '#f8fafc'}; color: ${parsedColor.isGradient ? '#2563eb' : '#64748b'}; border-radius: 6px; padding: 4px 6px; font-size: 0.72rem; cursor: pointer; flex-shrink: 0; font-weight: 600;" title="Bật/Tắt chế độ màu loang (Gradient)">
+                ${parsedColor.isGradient ? '🌈 Loang' : '🎨 Đơn'}
+            </button>
+
+            <!-- Color Picker 1 -->
+            <input type="color" class="variant-color-picker" value="${hex1_7}" style="width: 26px; height: 26px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: transparent; flex-shrink: 0;" title="Màu chính">
             
-            <!-- Hex Code Input -->
-            <input type="text" class="variant-hex-input" value="${initialHex}" placeholder="#HEX" style="width: 72px; padding: 6px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem; text-align: center; text-transform: uppercase; font-family: monospace; flex-shrink: 0;" title="Nhập mã màu Hex">
+            <!-- Color Picker 2 (Hiển thị khi chế độ Gradient) -->
+            <input type="color" class="variant-color-picker-2" value="${hex2_7}" style="width: 26px; height: 26px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: transparent; flex-shrink: 0; display: ${parsedColor.isGradient ? 'block' : 'none'};" title="Màu loang phụ">
+
+            <!-- Hex / Gradient Code Input -->
+            <input type="text" class="variant-hex-input" value="${parsedColor.css}" placeholder="#HEX hoặc loang..." style="width: 105px; padding: 6px 6px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; text-align: center; font-family: monospace; flex-shrink: 0;" title="Mã màu HEX hoặc linear-gradient(135deg, #c1, #c2)">
         </div>
 
-        <div style="width: 85px; flex-shrink: 0;">
-            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 7px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
+        <!-- Giá riêng -->
+        <div style="width: 82px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
+            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá riêng" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
 
-        <div style="width: 65px; flex-shrink: 0;">
-            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 7px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.85rem;">
+        <!-- Giảm % riêng -->
+        <div style="width: 62px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
+            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
         </div>
 
-        <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+        <!-- Tồn kho -->
+        <div style="width: 60px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        </div>
+
+        <!-- Checkbox hiển thị độc lập -->
+        <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
-            <label style="font-size: 0.75rem; cursor: pointer; color: #475569;">Độc lập</label>
+            <label style="font-size: 0.72rem; cursor: pointer; color: #475569; white-space: nowrap;">Độc lập</label>
         </div>
 
-        <div class="variant-img-preview" style="width: 36px; height: 36px; background: #eee; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho màu này">
-            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:18px; color:#94a3b8;">+</div>'}
+        <!-- Ảnh biến thể -->
+        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho màu này">
+            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>'}
         </div>
 
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
-        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.4rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa màu này">&times;</button>
+        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa màu này">&times;</button>
     `;
 
     const nameInput = row.querySelector('.variant-name');
-    const colorPicker = row.querySelector('.variant-color-picker');
+    const colorPicker1 = row.querySelector('.variant-color-picker');
+    const colorPicker2 = row.querySelector('.variant-color-picker-2');
     const hexInput = row.querySelector('.variant-hex-input');
     const swatch = row.querySelector('.variant-color-swatch');
+    const toggleBtn = row.querySelector('.btn-toggle-gradient');
 
-    // Sync function to update swatch and inputs
-    const updateSwatch = (hexVal) => {
-        if (!hexVal) return;
-        let formattedHex = hexVal.trim();
-        if (!formattedHex.startsWith('#') && /^[0-9A-F]{3,6}$/i.test(formattedHex)) {
-            formattedHex = '#' + formattedHex;
-        }
-        swatch.style.backgroundColor = formattedHex;
-        if (/^#([0-9A-F]{3}){1,2}$/i.test(formattedHex)) {
-            const hex7 = formattedHex.length === 4 ? '#' + formattedHex[1] + formattedHex[1] + formattedHex[2] + formattedHex[2] + formattedHex[3] + formattedHex[3] : formattedHex;
-            colorPicker.value = hex7;
+    let currentIsGradient = parsedColor.isGradient;
+
+    // Cập nhật giao diện Swatch và Text
+    const refreshColorDisplay = () => {
+        if (currentIsGradient) {
+            colorPicker2.style.display = 'block';
+            toggleBtn.innerHTML = '🌈 Loang';
+            toggleBtn.style.background = '#eff6ff';
+            toggleBtn.style.color = '#2563eb';
+            const gradCss = `linear-gradient(135deg, ${colorPicker1.value}, ${colorPicker2.value})`;
+            swatch.style.background = gradCss;
+            hexInput.value = gradCss;
+        } else {
+            colorPicker2.style.display = 'none';
+            toggleBtn.innerHTML = '🎨 Đơn';
+            toggleBtn.style.background = '#f8fafc';
+            toggleBtn.style.color = '#64748b';
+            swatch.style.background = colorPicker1.value;
+            hexInput.value = colorPicker1.value.toUpperCase();
         }
     };
 
-    // Event: Typoing Color Name -> Lookup Hex from COLOR_MAP
+    // Toggle gradient mode
+    toggleBtn.onclick = () => {
+        currentIsGradient = !currentIsGradient;
+        refreshColorDisplay();
+    };
+
+    // Color Pickers input
+    colorPicker1.oninput = () => {
+        refreshColorDisplay();
+        if (nameInput.value.trim() && !currentIsGradient && typeof addCustomColorHex === 'function') {
+            addCustomColorHex(nameInput.value.trim(), colorPicker1.value);
+        }
+    };
+    colorPicker2.oninput = () => {
+        if (currentIsGradient) refreshColorDisplay();
+    };
+
+    // Tự động gợi ý màu khi gõ tên màu
     nameInput.oninput = (e) => {
         const val = e.target.value;
         const foundHex = typeof getColorHex === 'function' ? getColorHex(val, null) : COLOR_MAP[val];
-        if (foundHex) {
+        if (foundHex && !currentIsGradient) {
+            colorPicker1.value = toHex7(foundHex);
             hexInput.value = foundHex;
-            updateSwatch(foundHex);
+            swatch.style.background = foundHex;
         }
     };
 
-    // Event: Color Picker change
-    colorPicker.oninput = (e) => {
-        const hex = e.target.value;
-        hexInput.value = hex.toUpperCase();
-        updateSwatch(hex);
-        if (nameInput.value.trim() && typeof addCustomColorHex === 'function') {
-            addCustomColorHex(nameInput.value.trim(), hex);
-        }
-    };
-
-    // Event: Manual Hex Input
+    // Nhập trực tiếp vào ô Hex/Gradient input
     hexInput.oninput = (e) => {
-        const hex = e.target.value.toUpperCase();
-        updateSwatch(hex);
-        if (nameInput.value.trim() && /^#([0-9A-F]{3}){1,2}$/i.test(hex) && typeof addCustomColorHex === 'function') {
-            addCustomColorHex(nameInput.value.trim(), hex);
+        const val = e.target.value.trim();
+        const p = parseVariantColor(val, '');
+        if (p.isGradient) {
+            currentIsGradient = true;
+            colorPicker1.value = toHex7(p.hex1);
+            colorPicker2.value = toHex7(p.hex2);
+            colorPicker2.style.display = 'block';
+            toggleBtn.innerHTML = '🌈 Loang';
+            toggleBtn.style.background = '#eff6ff';
+            toggleBtn.style.color = '#2563eb';
+            swatch.style.background = p.css;
+        } else {
+            currentIsGradient = false;
+            colorPicker2.style.display = 'none';
+            toggleBtn.innerHTML = '🎨 Đơn';
+            toggleBtn.style.background = '#f8fafc';
+            toggleBtn.style.color = '#64748b';
+            if (/^#([0-9A-Fa-f]{3}){1,2}$/i.test(p.hex1)) {
+                colorPicker1.value = toHex7(p.hex1);
+            }
+            swatch.style.background = p.css;
         }
     };
 
-    swatch.onclick = () => colorPicker.click();
+    swatch.onclick = () => {
+        colorPicker1.click();
+    };
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
 
-    preview.onclick = () => fileInput.click();
+    setupVariantImageInteraction(preview, row, fileInput);
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            row.dataset.currentUrl = '';
             const reader = new FileReader();
             reader.onload = (re) => { preview.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
             reader.readAsDataURL(file);
@@ -2043,47 +2745,77 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
         window.syncStockWithVariants();
     };
 
+    makeVariantRowDraggable(row, container);
     container.appendChild(row);
     window.syncStockWithVariants();
 };
 
-window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '') => {
+window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', sale = '', sold = 0, id = '') => {
     const container = document.getElementById('pattern-variant-items-container');
     if (!container) return;
 
+    setupVariantContainerDragDrop(container);
+
+    const variantId = id || ('var_p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+
     const row = document.createElement('div');
     row.className = 'pattern-variant-row';
-    row.style = 'display: flex; gap: 10px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee;';
-    row.dataset.currentUrl = imageUrl;
+    row.style = 'display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
+    row.dataset.currentUrl = imageUrl || '';
+    row.dataset.variantId = variantId;
+    row.dataset.originalName = name || '';
+    row.dataset.sold = (sold !== undefined && sold !== null) ? sold : 0;
 
     row.innerHTML = `
-        <div style="flex: 1;">
-            <input type="text" class="variant-name" value="${name}" placeholder="Tên họa tiết (VD: Nhám)" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+        <!-- Drag Handle & Reorder -->
+        <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+            <div class="variant-drag-handle" title="Kéo thả để sắp xếp thứ tự" style="cursor: grab; display: flex; align-items: center; justify-content: center; width: 14px; height: 26px; color: #94a3b8; font-size: 1rem; user-select: none;">⋮⋮</div>
+            <div style="display: flex; flex-direction: column; gap: 1px;">
+                <button type="button" class="btn-var-move-up" style="background:none; border:none; padding:0; color:#94a3b8; font-size:8px; cursor:pointer; line-height:1;" title="Chuyển lên trên">▲</button>
+                <button type="button" class="btn-var-move-down" style="background:none; border:none; padding:0; color:#94a3b8; font-size:8px; cursor:pointer; line-height:1;" title="Chuyển xuống dưới">▼</button>
+            </div>
         </div>
-        <div style="width: 90px;">
-            <input type="number" class="variant-price" value="${price}" placeholder="Giá riêng" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+
+        <div style="flex: 2; min-width: 0;">
+            <input type="text" class="variant-name" value="${name}" placeholder="Tên họa tiết (VD: Nhám, Hoa lam, Men rạn)" style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.83rem;">
         </div>
-        <div style="width: 70px;">
-            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 8px; border: 1px solid #ddd; width: 100%; border-radius: 4px; font-family: inherit;">
+
+        <!-- Giá riêng -->
+        <div style="width: 82px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
+            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá riêng" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
-        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+
+        <!-- Giảm % riêng -->
+        <div style="width: 62px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
+            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        </div>
+
+        <!-- Tồn kho -->
+        <div style="width: 60px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
-            <label style="font-size: 0.75rem; cursor: pointer; color: #555;">Độc lập</label>
+            <label style="font-size: 0.72rem; cursor: pointer; color: #475569; white-space: nowrap;">Độc lập</label>
         </div>
-        <div class="variant-img-preview" style="width: 40px; height: 40px; background: #eee; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; position: relative;" title="Chọn ảnh cho họa tiết này">
-            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:20px; color:#999;">+</div>'}
+
+        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho họa tiết này">
+            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>'}
         </div>
+
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
-        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.5rem; line-height: 1; padding: 0 5px;">&times;</button>
+        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa họa tiết này">&times;</button>
     `;
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
 
-    preview.onclick = () => fileInput.click();
+    setupVariantImageInteraction(preview, row, fileInput);
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            row.dataset.currentUrl = '';
             const reader = new FileReader();
             reader.onload = (re) => { preview.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
             reader.readAsDataURL(file);
@@ -2100,6 +2832,7 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
         window.syncStockWithVariants();
     };
 
+    makeVariantRowDraggable(row, container);
     container.appendChild(row);
     window.syncStockWithVariants();
 };
@@ -4172,12 +4905,23 @@ if (productForm) {
                 }
                 const priceInput = row.querySelector('.variant-price');
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
+                const saleInput = row.querySelector('.variant-sale');
+                const sale = (saleInput && saleInput.value !== '') ? Math.max(0, Math.min(100, Number(saleInput.value))) : null;
                 const hexInput = row.querySelector('.variant-hex-input');
                 const hex = hexInput && hexInput.value ? hexInput.value.trim() : null;
                 
-                const existingCV = existingColorVariants.find(c => c.name === name);
-                const sold = (existingCV && existingCV.sold !== undefined) ? existingCV.sold : 0;
-                return { name, imageUrl: variantUrl, stock, showOnProductPage, price, hex, sold };
+                const variantId = row.dataset.variantId || ('var_c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+                const origName = (row.dataset.originalName || '').trim().toLowerCase();
+                const rowSold = Number(row.dataset.sold || 0);
+
+                // Khớp biến thể cũ theo id -> originalName -> name mới, tránh reset sold về 0 khi đổi tên
+                const existingCV = existingColorVariants.find(c => 
+                    (c.id && c.id === variantId) || 
+                    (origName && c.name && c.name.trim().toLowerCase() === origName) || 
+                    (c.name && c.name.trim().toLowerCase() === name.toLowerCase())
+                );
+                const sold = (existingCV && existingCV.sold !== undefined) ? existingCV.sold : rowSold;
+                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, hex, sold };
             });
             const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
             if (colorVariantsResult.length > 0) hasVariants = true;
@@ -4203,27 +4947,55 @@ if (productForm) {
                 }
                 const priceInput = row.querySelector('.variant-price');
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
+                const saleInput = row.querySelector('.variant-sale');
+                const sale = (saleInput && saleInput.value !== '') ? Math.max(0, Math.min(100, Number(saleInput.value))) : null;
                 
-                const existingPV = existingPatternVariants.find(p => p.name === name);
-                const sold = (existingPV && existingPV.sold !== undefined) ? existingPV.sold : 0;
-                return { name, imageUrl: variantUrl, stock, showOnProductPage, price, sold };
+                const variantId = row.dataset.variantId || ('var_p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+                const origName = (row.dataset.originalName || '').trim().toLowerCase();
+                const rowSold = Number(row.dataset.sold || 0);
+
+                // Khớp biến thể cũ theo id -> originalName -> name mới, tránh reset sold về 0 khi đổi tên
+                const existingPV = existingPatternVariants.find(p => 
+                    (p.id && p.id === variantId) || 
+                    (origName && p.name && p.name.trim().toLowerCase() === origName) || 
+                    (p.name && p.name.trim().toLowerCase() === name.toLowerCase())
+                );
+                const sold = (existingPV && existingPV.sold !== undefined) ? existingPV.sold : rowSold;
+                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, sold };
             });
             const patternVariantsResult = (await Promise.all(patternPromises)).filter(v => v.name);
             if (patternVariantsResult.length > 0) hasVariants = true;
             patternVariantsResult.forEach(v => totalVariantStock += v.stock);
 
-            // 2. Xử lý upload thêm ảnh mới với Progress Bar CHI TIẾT
-            if (imageFiles.length > 0) {
-                const files = Array.from(imageFiles);
-                const totalFiles = files.length;
+            // 2. Đồng bộ các file từ input nếu chưa có trong gallery
+            if (imageFiles && imageFiles.length > 0) {
+                const existingFileNames = new Set(window.productGalleryImages.filter(x => x && x.type === 'file' && x.file).map(x => x.file.name));
+                Array.from(imageFiles).forEach((f, i) => {
+                    if (!existingFileNames.has(f.name)) {
+                        window.productGalleryImages.push({
+                            id: 'file_in_' + Date.now() + '_' + i,
+                            type: 'file',
+                            file: f,
+                            previewUrl: URL.createObjectURL(f)
+                        });
+                        existingFileNames.add(f.name);
+                    }
+                });
+            }
+
+            // Lấy danh sách tất cả các item file cần upload
+            const fileItemsToUpload = (window.productGalleryImages || []).filter(item => item && item.type === 'file' && item.file);
+
+            if (fileItemsToUpload.length > 0) {
+                const totalFiles = fileItemsToUpload.length;
                 const progressMap = new Map(); // Lưu tiến trình của từng file: index -> percent
 
-                const uploadPromises = files.map(async (file, index) => {
-                    // Tạo URL xem trước cục bộ cho ảnh
-                    const previewUrl = URL.createObjectURL(file);
+                const uploadPromises = fileItemsToUpload.map(async (item, index) => {
+                    const file = item.file;
+                    const previewUrl = item.previewUrl || URL.createObjectURL(file);
 
                     // Tạo UI cho từng file riêng lẻ
-                    const fileProgressDiv = document.createElement('div'); // This line was missing in the previous diff, causing the code to be incorrect.
+                    const fileProgressDiv = document.createElement('div');
                     fileProgressDiv.style = "margin-bottom: 10px; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee;";
                     fileProgressDiv.innerHTML = `
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -4242,7 +5014,7 @@ if (productForm) {
                     progressContainer.appendChild(fileProgressDiv);
 
                     // Tạo 2 phiên bản: Ảnh lớn và Thumbnail
-                    const webpFile = await convertToWebP(file, 1000); // Main image size // This line was also missing in the previous diff.
+                    const webpFile = await convertToWebP(file, 1000); // Main image size
                     const thumbWebp = await convertToWebP(file, 400); // Thumbnail size
 
                     const storageRef = ref(storage, `products/${productId}/${Date.now()}_${webpFile.name}`);
@@ -4257,7 +5029,6 @@ if (productForm) {
                             (snapshot) => {
                                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
 
-                                // Cập nhật thanh tiến trình riêng lẻ
                                 const bar = document.getElementById(`bar-${index}`);
                                 const text = document.getElementById(`percent-${index}`);
                                 if (bar) bar.style.width = progress + '%';
@@ -4265,37 +5036,40 @@ if (productForm) {
 
                                 progressMap.set(index, progress);
 
-                                // Tính tổng tiến trình trung bình để cập nhật nút Submit
                                 let totalProgress = 0;
                                 progressMap.forEach(p => totalProgress += p);
                                 const overallPercent = totalProgress / totalFiles;
 
-                                // Cập nhật text trên nút
                                 submitBtn.innerHTML = `<span class="spinner-small"></span> Đang tải lên: ${Math.round(overallPercent)}%`;
                             },
                             (error) => {
-                                // Thu hồi bộ nhớ URL tạm thời khi có lỗi
                                 URL.revokeObjectURL(previewUrl);
                                 reject(error);
                             },
                             () => {
-                                // Thu hồi bộ nhớ URL tạm thời khi thành công
                                 URL.revokeObjectURL(previewUrl);
-                                getDownloadURL(uploadTask.snapshot.ref).then(fullUrl => resolve({ fullUrl, thumbUrl })).catch(reject);
+                                getDownloadURL(uploadTask.snapshot.ref).then(fullUrl => {
+                                    // Cập nhật lại chính item trong window.productGalleryImages để giữ nguyên vị trí đã sắp xếp
+                                    item.type = 'url';
+                                    item.url = fullUrl;
+                                    item.thumbUrl = thumbUrl;
+                                    resolve({ fullUrl, thumbUrl });
+                                }).catch(reject);
                             }
                         );
                     });
                 });
 
-                const results = await Promise.all(uploadPromises);
-                // currentThumb đã được khai báo ở trên, giờ chỉ gán lại giá trị
+                await Promise.all(uploadPromises);
+            }
 
-                if (!currentMain) {
-                    currentMain = results[0].fullUrl;
-                    currentThumb = results[0].thumbUrl;
-                    currentAdditionals = [...currentAdditionals, ...results.slice(1).map(r => r?.fullUrl)];
-                } else {
-                    currentAdditionals = [...currentAdditionals, ...results.map(r => r?.fullUrl)];
+            // Cập nhật currentMain và currentAdditionals TUÂN THỦ 100% THỨ TỰ TRONG GALLERY
+            if (Array.isArray(window.productGalleryImages) && window.productGalleryImages.length > 0) {
+                const finalOrderUrls = window.productGalleryImages.map(x => x.url).filter(Boolean);
+                if (finalOrderUrls.length > 0) {
+                    currentMain = finalOrderUrls[0];
+                    currentThumb = window.productGalleryImages[0]?.thumbUrl || currentMain;
+                    currentAdditionals = finalOrderUrls.slice(1);
                 }
             }
 
@@ -4315,6 +5089,17 @@ if (productForm) {
             }
             if (!finalImageUrl) {
                 finalImageUrl = 'https://placehold.co/300x300?text=No+Image';
+            }
+
+            // Xử lý upload ảnh hover thứ 2 riêng biệt (nếu có file mới)
+            let finalHoverImageUrl = document.getElementById('productId').dataset.currentHoverImageUrl || null;
+            const hoverFileInput = document.getElementById('hoverImageFile');
+            if (hoverFileInput && hoverFileInput.files && hoverFileInput.files[0]) {
+                const hFile = hoverFileInput.files[0];
+                const hWebp = await convertToWebP(hFile, 1000);
+                const hRef = ref(storage, `products/${productId}/hover_${Date.now()}_${hWebp.name}`);
+                await uploadBytes(hRef, hWebp);
+                finalHoverImageUrl = await getDownloadURL(hRef);
             }
 
             let rawDesc = document.getElementById('description') ? document.getElementById('description').value : '';
@@ -4346,9 +5131,10 @@ if (productForm) {
                     capacity: Number(document.getElementById('capacity').value || 0)
                 },
                 usage: {
-                    isFoodSafe: document.getElementById('usage-food-safe').checked,
-                    isOvenSafe: document.getElementById('usage-oven-safe').checked,
-                    isMicrowaveSafe: document.getElementById('usage-microwave-safe').checked
+                    isFoodSafe: document.getElementById('usage-food-safe') ? document.getElementById('usage-food-safe').checked : true,
+                    isOvenSafe: document.getElementById('usage-oven-safe') ? document.getElementById('usage-oven-safe').checked : false,
+                    isMicrowaveSafe: document.getElementById('usage-microwave-safe') ? document.getElementById('usage-microwave-safe').checked : true,
+                    isDishwasherSafe: document.getElementById('usage-dishwasher-safe') ? document.getElementById('usage-dishwasher-safe').checked : true
                 },
                 details: {
                     material: document.getElementById('material').value.trim(),
@@ -4358,6 +5144,7 @@ if (productForm) {
                 imageUrl: finalImageUrl,
                 thumbUrl: currentThumb, // Add thumbUrl to productData
                 additionalImages: currentAdditionals,
+                hoverImageUrl: finalHoverImageUrl,
                 description: safeDescription,
                 colorVariants: colorVariantsResult,
                 patternVariants: patternVariantsResult,
@@ -5406,9 +6193,10 @@ async function editProduct(id) {
             document.getElementById('product-is-hidden').checked = p.isHidden || false;
             document.getElementById('product-only-event').checked = p.isOnlyEvent || false;
             document.getElementById('stock').value = p.stock || 0;
-            document.getElementById('usage-food-safe').checked = p.usage?.isFoodSafe || false;
-            document.getElementById('usage-oven-safe').checked = p.usage?.isOvenSafe || false;
-            document.getElementById('usage-microwave-safe').checked = p.usage?.isMicrowaveSafe || false;
+            if (document.getElementById('usage-food-safe')) document.getElementById('usage-food-safe').checked = p.usage?.isFoodSafe !== false;
+            if (document.getElementById('usage-oven-safe')) document.getElementById('usage-oven-safe').checked = p.usage?.isOvenSafe || false;
+            if (document.getElementById('usage-microwave-safe')) document.getElementById('usage-microwave-safe').checked = p.usage?.isMicrowaveSafe !== false;
+            if (document.getElementById('usage-dishwasher-safe')) document.getElementById('usage-dishwasher-safe').checked = p.usage?.isDishwasherSafe !== false;
 
             document.getElementById('weight').value = p.specs?.weight || '';
             document.getElementById('capacity').value = p.specs?.capacity || '';
@@ -5431,7 +6219,17 @@ async function editProduct(id) {
             if (variantContainer) {
                 variantContainer.innerHTML = '';
                 if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                    p.colorVariants.forEach(v => window.addVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || '', v.hex || ''));
+                    p.colorVariants.forEach(v => window.addVariantRow(
+                        v.name, 
+                        v.imageUrl, 
+                        v.stock || 0, 
+                        v.showOnProductPage || false, 
+                        v.price || '', 
+                        v.hex || '', 
+                        (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
+                        v.sold || 0, 
+                        v.id || ''
+                    ));
                 }
             }
 
@@ -5440,10 +6238,19 @@ async function editProduct(id) {
             if (patternContainer) {
                 patternContainer.innerHTML = '';
                 if (p.patternVariants && Array.isArray(p.patternVariants)) {
-                    p.patternVariants.forEach(v => window.addPatternVariantRow(v.name, v.imageUrl, v.stock || 0, v.showOnProductPage || false, v.price || ''));
+                    p.patternVariants.forEach(v => window.addPatternVariantRow(
+                        v.name, 
+                        v.imageUrl, 
+                        v.stock || 0, 
+                        v.showOnProductPage || false, 
+                        v.price || '', 
+                        (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
+                        v.sold || 0, 
+                        v.id || ''
+                    ));
                 } else if (p.patterns && Array.isArray(p.patterns)) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
-                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, ''));
+                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, '', '', 0, ''));
                 }
             }
 
@@ -5467,11 +6274,40 @@ async function editProduct(id) {
             document.getElementById('product-is-hidden').checked = p.isHidden || false;
 
             // Lưu URL ảnh hiện tại để không bị mất nếu không upload ảnh mới
-            document.getElementById('productId').dataset.currentImageUrl = p.imageUrl;
+            document.getElementById('productId').dataset.currentImageUrl = p.imageUrl || '';
             document.getElementById('productId').dataset.currentAdditionalImages = JSON.stringify(p.additionalImages || []);
 
-            // Hiển thị xem trước ảnh
+            // Nạp dữ liệu vào gallery quản lý ảnh
+            window.productGalleryImages = [];
+            if (p.imageUrl && !p.imageUrl.includes('placeholder') && !p.imageUrl.includes('via.') && !p.imageUrl.includes('placehold.co')) {
+                window.productGalleryImages.push({
+                    id: 'url_main_' + Date.now(),
+                    type: 'url',
+                    url: p.imageUrl,
+                    thumbUrl: p.thumbUrl || p.imageUrl
+                });
+            }
+            if (Array.isArray(p.additionalImages)) {
+                p.additionalImages.forEach((imgUrl, i) => {
+                    if (imgUrl && typeof imgUrl === 'string' && imgUrl !== p.imageUrl && !imgUrl.includes('placehold.co')) {
+                        window.productGalleryImages.push({
+                            id: 'url_add_' + i + '_' + Date.now(),
+                            type: 'url',
+                            url: imgUrl,
+                            thumbUrl: imgUrl
+                        });
+                    }
+                });
+            }
+
+            // Hiển thị xem trước ảnh gallery
             renderImagePreviews();
+
+            // Nạp và hiển thị ảnh thứ 2 (hover image) riêng biệt
+            document.getElementById('productId').dataset.currentHoverImageUrl = p.hoverImageUrl || '';
+            if (typeof window.renderHoverImagePreview === 'function') {
+                window.renderHoverImagePreview();
+            }
 
             // Mở form modal
             if (typeof window.openProductModal === 'function') {
@@ -10291,7 +11127,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                             <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background-color: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
+                                    ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
                                     <span>${vName}</span>
                                     ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
                                 </div>
@@ -10368,33 +11204,50 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
         const confirmBtn = document.getElementById('pos-btn-confirm-variant');
         if (confirmBtn) {
             confirmBtn.onclick = () => {
-                let finalPrice = currentPrice;
+                let vPrice = null;
+                let vSale = null;
 
                 let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl;
 
                 if (selectedPOSComboVariant && comboVariants.length > 0) {
                     const cv = comboVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSComboVariant);
                     if (cv && typeof cv === 'object') {
-                        if (cv.price) finalPrice = cv.price;
+                        if (cv.price && Number(cv.price) > 0) vPrice = Number(cv.price);
+                        if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') vSale = Number(cv.sale);
                         if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                     }
                 }
 
                 if (selectedPOSColor && colorVariants.length > 0) {
                     const cv = colorVariants.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSColor);
-                    if (cv && typeof cv === 'object' && (cv.thumbUrl || cv.imageUrl || cv.image)) {
-                        variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
+                    if (cv && typeof cv === 'object') {
+                        if (cv.price && Number(cv.price) > 0) vPrice = Number(cv.price);
+                        if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') vSale = Number(cv.sale);
+                        if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                     }
                 }
 
                 if (selectedPOSPattern && availablePatterns.length > 0) {
                     const pv = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === selectedPOSPattern);
-                    if (pv && typeof pv === 'object' && (pv.thumbUrl || pv.imageUrl || pv.image)) {
-                        if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
-                            variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
+                    if (pv && typeof pv === 'object') {
+                        if (pv.price && Number(pv.price) > 0) vPrice = Number(pv.price);
+                        if (pv.sale !== undefined && pv.sale !== null && pv.sale !== '') vSale = Number(pv.sale);
+                        if (pv.thumbUrl || pv.imageUrl || pv.image) {
+                            if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
+                                variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
+                            }
                         }
                     }
                 }
+
+                const baseP = (vPrice !== null && vPrice > 0) ? vPrice : (p.price || currentPrice);
+                let effSale = 0;
+                if (vSale !== null) {
+                    effSale = Math.max(0, Math.min(100, vSale));
+                } else {
+                    effSale = p.sale || 0;
+                }
+                const finalPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
 
                 if (currentPOSVariantCartIndex >= 0) {
                     window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null, variantImg, finalPrice);
@@ -10417,6 +11270,7 @@ window.updatePOSCartItemVariant = (index, color, pattern, comboVariant, image, p
     item.color = color;
     item.pattern = pattern;
     item.comboVariant = comboVariant;
+    item.variant = [comboVariant, color, pattern].filter(Boolean).join(' / ') || null;
     if (image) item.image = image;
     if (price && price > 0) item.price = price;
 
@@ -10566,14 +11420,16 @@ window.addToPOSCart = async (id, name, price, image, category = 'khac', color = 
     const normColor = color || null;
     const normPattern = pattern || null;
     const normCombo = comboVariant || null;
+    const varLabel = [normCombo, normColor, normPattern].filter(Boolean).join(' / ') || null;
 
     const existing = bill.cart.find(i => i.id === id && (i.color || null) === normColor && (i.pattern || null) === normPattern && (i.comboVariant || null) === normCombo);
     if (existing) {
         existing.quantity += 1;
         if (image) existing.image = image;
         if (price) existing.price = price;
+        existing.variant = varLabel;
     } else {
-        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color: normColor, pattern: normPattern, comboVariant: normCombo, discount: 0 });
+        bill.cart.push({ id, name, price, cost, image, quantity: 1, category, color: normColor, pattern: normPattern, comboVariant: normCombo, variant: varLabel, discount: 0 });
     }
 
     window.savePOSBills();

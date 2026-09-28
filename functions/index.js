@@ -459,10 +459,51 @@ exports.sendTelegramOnNewOrder = functions.firestore
         const discountAmount = orderData.discountAmount || 0;
         const membershipDiscount = orderData.membershipDiscount || 0;
         
+        function getItemVariantText(item) {
+            if (!item) return '';
+            const parts = [];
+
+            if (item.comboVariant && item.comboVariant !== 'null' && item.comboVariant !== 'undefined') {
+                parts.push(`Combo: ${item.comboVariant}`);
+            }
+            if (item.color && item.color !== 'null' && item.color !== 'undefined') {
+                parts.push(`Màu: ${item.color}`);
+            }
+            if (item.pattern && item.pattern !== 'null' && item.pattern !== 'undefined') {
+                parts.push(`Họa tiết: ${item.pattern}`);
+            }
+
+            if (parts.length > 0) {
+                return parts.join(' | ');
+            }
+
+            if (item.variant && typeof item.variant === 'string' && item.variant.trim() !== '' && item.variant !== 'null' && item.variant !== 'undefined') {
+                return item.variant.trim();
+            }
+
+            if (item.variant && typeof item.variant === 'object') {
+                const objParts = [];
+                if (item.variant.comboVariant) objParts.push(`Combo: ${item.variant.comboVariant}`);
+                if (item.variant.color) objParts.push(`Màu: ${item.variant.color}`);
+                if (item.variant.pattern) objParts.push(`Họa tiết: ${item.variant.pattern}`);
+                if (item.variant.name) objParts.push(item.variant.name);
+                if (objParts.length > 0) return objParts.join(' | ');
+            }
+
+            if (item.selectedComboVariant) parts.push(`Combo: ${item.selectedComboVariant}`);
+            if (item.selectedColor) parts.push(`Màu: ${item.selectedColor}`);
+            if (item.selectedPattern) parts.push(`Họa tiết: ${item.selectedPattern}`);
+            if (parts.length > 0) return parts.join(' | ');
+
+            return '';
+        }
+
         let itemsList = '';
         if (orderData.items && Array.isArray(orderData.items)) {
             orderData.items.forEach((item, index) => {
-                itemsList += `${index + 1}. ${item.name} ${item.variant && item.variant !== 'null' ? `(${item.variant})` : ''} (Mã: ${item.id}) - SL: ${item.quantity} - Giá: ${new Intl.NumberFormat('vi-VN').format(item.price)}đ\n`;
+                const variantText = getItemVariantText(item);
+                const variantDisplay = variantText ? `\n   🎨 <b>Biến thể:</b> <i>${variantText}</i>` : '';
+                itemsList += `${index + 1}. <b>${item.name}</b>${variantDisplay}\n   (Mã: <code>${item.id}</code>) - SL: <b>${item.quantity}</b> - Đơn giá: ${new Intl.NumberFormat('vi-VN').format(item.price)}đ\n`;
             });
         }
 
@@ -484,7 +525,9 @@ exports.sendTelegramOnNewOrder = functions.firestore
             let rentalItemsList = '';
             if (orderData.items && Array.isArray(orderData.items)) {
                 orderData.items.forEach((item, index) => {
-                    rentalItemsList += `${index + 1}. ${item.name} (Mã: ${item.id}) - SL: ${item.quantity} - Giá thuê: ${new Intl.NumberFormat('vi-VN').format(item.rentalPrice || 0)}đ\n`;
+                    const variantText = getItemVariantText(item);
+                    const variantDisplay = variantText ? `\n   🎨 <b>Biến thể:</b> <i>${variantText}</i>` : '';
+                    rentalItemsList += `${index + 1}. <b>${item.name}</b>${variantDisplay}\n   (Mã: <code>${item.id}</code>) - SL: <b>${item.quantity}</b> - Giá thuê: ${new Intl.NumberFormat('vi-VN').format(item.rentalPrice || 0)}đ\n`;
                 });
             }
 

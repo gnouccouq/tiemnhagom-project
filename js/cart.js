@@ -1036,7 +1036,8 @@ window.placeOrder = async () => {
                         const cv = product.comboVariants.find(v => v.name === matchedComboName);
                         if (cv) {
                             if (cv.imageUrl) variantImage = cv.imageUrl;
-                            if (cv.price && Number(cv.price) > 0) variantPriceValue = cv.price;
+                            if (cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
+                            if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
                             if (cv.stock !== undefined && cv.stock !== null) currentStock = cv.stock;
                             if (cv.isOutOfStock) currentStock = 0;
                         }
@@ -1049,7 +1050,8 @@ window.placeOrder = async () => {
                     if (!variant) throw new Error(`Biến thể màu "${item.color}" của sản phẩm ${product.name} không tồn tại.`);
                     currentStock = variant.stock || 0;
                     if (variant.imageUrl) variantImage = variant.imageUrl;
-                    if (variant.price) variantPriceValue = variant.price;
+                    if (variant.price && Number(variant.price) > 0) variantPriceValue = Number(variant.price);
+                    if (variant.sale !== undefined && variant.sale !== null && variant.sale !== '') variantSaleValue = Number(variant.sale);
                 }
                 // Kiểm tra tồn kho biến thể họa tiết
                 if (item.pattern && Array.isArray(product.patternVariants)) {
@@ -1057,23 +1059,29 @@ window.placeOrder = async () => {
                     if (!variant) throw new Error(`Biến thể họa tiết "${item.pattern}" của sản phẩm ${product.name} không tồn tại.`);
                     currentStock = variant.stock || 0;
                     if (variant.imageUrl) variantImage = variant.imageUrl;
-                    if (variant.price) variantPriceValue = variant.price;
+                    if (variant.price && Number(variant.price) > 0) variantPriceValue = Number(variant.price);
+                    if (variant.sale !== undefined && variant.sale !== null && variant.sale !== '') variantSaleValue = Number(variant.sale);
                 }
 
                 if (!product.isCombo && currentStock < item.quantity) {
                     throw new Error(`Sản phẩm "${product.name}" (biến thể ${item.color || item.pattern || 'mặc định'}) đã hết hàng hoặc không đủ số lượng. Chỉ còn ${currentStock} sản phẩm.`);
                 }
 
+                const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : product.price;
+                let effSale = 0;
+                if (variantSaleValue !== null) {
+                    effSale = Math.max(0, Math.min(100, variantSaleValue));
+                } else {
+                    effSale = product.sale || (product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0);
+                }
+
                 let mockProduct = { ...product };
-                if (variantPriceValue !== null) {
-                    if (variantPriceValue < product.price) {
-                        mockProduct.salePrice = variantPriceValue;
-                        mockProduct.sale = Math.round((1 - variantPriceValue / product.price) * 100);
-                    } else {
-                        mockProduct.price = variantPriceValue;
-                        mockProduct.sale = 0;
-                        mockProduct.salePrice = null;
-                    }
+                mockProduct.price = basePrice;
+                mockProduct.sale = effSale;
+                if (effSale > 0) {
+                    mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+                } else {
+                    mockProduct.salePrice = null;
                 }
                 const currentUnitPrice = getProductCurrentPrice(mockProduct, fsSettings);
                 finalSubtotal += currentUnitPrice * item.quantity;

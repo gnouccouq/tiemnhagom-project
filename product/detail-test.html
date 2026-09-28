@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết sản phẩm mới (Bản thử nghiệm) - Tiệm Nhà Gốm</title>
+  <meta name="description"
+    content="Trải nghiệm trang chi tiết sản phẩm gốm sứ thủ công mới với bố cục hợp lý, hiện đại và tinh tế tại Tiệm Nhà Gốm.">
+  <link rel="stylesheet" href="../css/style.css?v=18">
+  <link rel="stylesheet" href="../css/product-detail-v2.css?v=4">
+  <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
+
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="detail-v2-body">
+  <div id="header-placeholder"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Top Bar: Back & Breadcrumb -->
+  <div class="v2-top-bar-container">
+    <div class="v2-container">
+      <div class="v2-top-bar">
+        <a href="javascript:history.back()" class="v2-btn-back">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Quay lại</span>
+        </a>
+        <nav id="breadcrumb-container" class="v2-breadcrumb">
+          <a href="../">Trang chủ</a>
+          <span class="separator">&rsaquo;</span>
+          <a href="../products/">Sản phẩm</a>
+          <span class="separator">&rsaquo;</span>
+          <span class="current">Đang tải...</span>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Hero Stage (Gallery + Purchase Panel) -->
+  <main class="v2-container" style="padding-top: 10px;">
+    <div id="product-detail-content" class="v2-hero-grid">
+      <!-- Loading Skeleton -->
+      <div class="v2-gallery-wrap">
+        <div class="skeleton" style="width: 100%; aspect-ratio: 1/1; border-radius: 8px;"></div>
+        <div class="skeleton" style="width: 100%; height: 70px; border-radius: 6px;"></div>
+      </div>
+      <div class="v2-info-panel">
+        <div class="skeleton" style="width: 30%; height: 20px; border-radius: 12px;"></div>
+        <div class="skeleton" style="width: 85%; height: 40px; border-radius: 6px;"></div>
+        <div class="skeleton" style="width: 45%; height: 32px; border-radius: 6px;"></div>
+        <div class="skeleton" style="width: 100%; height: 80px; border-radius: 8px;"></div>
+        <div class="skeleton" style="width: 100%; height: 50px; border-radius: 8px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Middle Stage: Structured Tabs (Mô tả, Thông số & An toàn, Bảo quản gốm, Đánh giá) -->
+  <section class="v2-middle-section" id="v2-middle-section">
+    <div class="v2-container">
+      <div class="v2-tabs-nav" id="v2-tabs-nav">
+        <button class="v2-tab-btn active" data-tab="tab-desc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Mô tả & Câu chuyện
+        </button>
+        <button class="v2-tab-btn" data-tab="tab-specs">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Thông số & An toàn
+        </button>
+        <button class="v2-tab-btn" data-tab="tab-care">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Bảo quản gốm sứ
+        </button>
+        <button class="v2-tab-btn" data-tab="tab-reviews" id="tab-reviews-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Đánh giá (<span id="v2-tab-review-count">0</span>)
+        </button>
+      </div>
+
+      <div class="v2-tabs-content">
+        <!-- Tab 1: Description -->
+        <div class="v2-tab-pane active" id="tab-desc">
+          <div id="v2-tab-desc-content" class="v2-rich-text">
+            <p>Đang tải mô tả sản phẩm...</p>
+          </div>
+          <div id="v2-tab-combo-content" style="display: none; margin-top: 2rem;"></div>
+        </div>
+
+        <!-- Tab 2: Specs & Safety -->
+        <div class="v2-tab-pane" id="tab-specs">
+          <div id="v2-tab-specs-content">
+            <!-- Specs & Safety Icons rendered here -->
+          </div>
+        </div>
+
+        <!-- Tab 3: Care Guide -->
+        <div class="v2-tab-pane" id="tab-care">
+          <div class="v2-care-guide-grid">
+            <div class="v2-care-card">
+              <div class="v2-care-icon">🌡️</div>
+              <h4>Nhiệt độ & Sốc nhiệt</h4>
+              <p>Tránh thay đổi nhiệt độ đột ngột (ví dụ đưa sản phẩm đang đông lạnh vào lò vi sóng/lò nướng ngay). Để sản phẩm về nhiệt độ phòng trước khi làm nóng.</p>
+            </div>
+            <div class="v2-care-card">
+              <div class="v2-care-icon">🧼</div>
+              <h4>Vệ sinh & Men gốm</h4>
+              <p>Khuyên dùng bọt biển mềm hoặc khăn cotton ẩm với nước rửa chén dịu nhẹ. Hạn chế dùng bùi nhùi kim loại sắc nhọn chà xát mạnh lên lớp men bóng/men mờ.</p>
+            </div>
+            <div class="v2-care-card">
+              <div class="v2-care-icon">🍽️</div>
+              <h4>Máy rửa chén</h4>
+              <p>Xếp các đĩa chén gốm có khoảng cách an toàn, tránh va chạm cạnh mép khi máy đang phun áp lực cao để bảo vệ độ bền của men gốm.</p>
+            </div>
+            <div class="v2-care-card">
+              <div class="v2-care-icon">🏺</div>
+              <h4>Lưu trữ & Bảo quản</h4>
+              <p>Nếu xếp chồng nhiều bát đĩa, có thể lót thêm một lớp giấy ăn mỏng hoặc khăn vải giữa các sản phẩm để tránh ma sát trầy xước men.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Reviews -->
+        <div class="v2-tab-pane" id="tab-reviews">
+          <div id="v2-reviews-container">
+            <p style="text-align: center; color: #888; padding: 2rem;">Đang tải đánh giá...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sticky Bottom Bar on Mobile/Scroll -->
+  <div id="v2-sticky-bar" class="v2-sticky-bar">
+    <div class="v2-sticky-inner">
+      <div class="v2-sticky-prod">
+        <img id="v2-sticky-thumb" src="../Asset/icons/favicon.png" alt="Thumbnail">
+        <div class="v2-sticky-info">
+          <div id="v2-sticky-name" class="v2-sticky-name">Đang tải...</div>
+          <div id="v2-sticky-price" class="v2-sticky-price">0đ</div>
+        </div>
+      </div>
+      <div class="v2-sticky-actions">
+        <button id="v2-sticky-add-cart" class="v2-sticky-btn-cart">Thêm giỏ</button>
+        <button id="v2-sticky-buy-now" class="v2-sticky-btn-buy">Mua ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  <section id="related-products-section" class="v2-recommend-section" style="display: none;">
+    <div class="v2-container">
+      <div class="v2-section-heading">
+        <span class="v2-subheading">Gợi ý dành cho bạn</span>
+        <h2>Sản phẩm cùng bộ sưu tập</h2>
+      </div>
+      <div id="related-product-grid" class="v2-product-grid"></div>
+    </div>
+  </section>
+
+  <!-- Recently Viewed Products -->
+  <section id="recently-viewed-section" class="v2-recommend-section" style="display: none; background: #fff;">
+    <div class="v2-container">
+      <div class="v2-section-heading">
+        <span class="v2-subheading">Lịch sử xem</span>
+        <h2>Sản phẩm bạn đã xem gần đây</h2>
+      </div>
+      <div id="recently-viewed-grid" class="v2-product-grid"></div>
+    </div>
+  </section>
+
+  <!-- Fullscreen Lightbox Modal -->
+  <div id="v2-lightbox-modal" class="v2-lightbox" onclick="window.closeV2Lightbox()">
+    <button class="v2-lightbox-close" onclick="window.closeV2Lightbox()" title="Đóng">&times;</button>
+    <img id="v2-lightbox-img" src="" alt="Phóng to ảnh" onclick="event.stopPropagation()">
+  </div>
+
+  <!-- Coupons Drawer / Modal -->
+  <div id="v2-coupons-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h4 style="margin: 0; font-family: var(--v2-font-serif); font-size: 1.2rem;">Mã ưu đãi của Tiệm</h4>
+        <button type="button" class="close-modal" onclick="document.getElementById('v2-coupons-modal').classList.remove('active')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <div id="v2-coupons-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+        <!-- Coupons rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Decor Match Recommendations -->
+  <div id="ai-decor-match-container" style="padding: 0 5%; max-width: 1320px; margin: 0 auto; display: none;"></div>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- Module JS -->
+  <script type="module" src="../js/product-detail-v2.js?v=3"></script>
+</body>
+
+</html>

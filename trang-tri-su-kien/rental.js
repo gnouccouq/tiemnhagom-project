@@ -225,11 +225,13 @@ function filterAndRenderRentalProducts() {
 
     let html = '';
     items.forEach(product => {
+        const secondaryImg = product.hoverImageUrl || null;
         html += `
             <div class="product-card">
                 <div class="product-card-image">
                     <a href="../product/index.html?id=${product.id}">
-                        <img src="${product.imageUrl}" alt="${product.name}" loading="lazy" width="300" height="300">
+                        <img class="product-card-img-primary" src="${product.imageUrl}" alt="${product.name}" loading="lazy" width="300" height="300">
+                        ${secondaryImg ? `<img class="product-card-img-secondary" src="${secondaryImg}" alt="${product.name} - Chi tiết" loading="lazy" width="300" height="300">` : ''}
                     </a>
                 </div>
                 <div class="product-card-info">

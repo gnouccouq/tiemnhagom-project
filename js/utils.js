@@ -1440,6 +1440,8 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     name: v.name,
                     imageUrl: v.imageUrl,
                     price: v.price,
+                    sale: v.sale,
+                    hex: v.hex,
                     stock: vStock,
                     sold: vSold,
                     manualOutOfStock: v.manualOutOfStock,
@@ -1467,6 +1469,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     name: v.name,
                     imageUrl: v.imageUrl,
                     price: v.price,
+                    sale: v.sale,
                     stock: vStock,
                     sold: vSold,
                     manualOutOfStock: v.manualOutOfStock,
@@ -1513,20 +1516,27 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
 
     let variantPriceValue = null;
-    if (variantOverride && variantOverride.price) {
-        variantPriceValue = variantOverride.price;
+    let variantSaleValue = null;
+    if (variantOverride) {
+        if (variantOverride.price && Number(variantOverride.price) > 0) variantPriceValue = Number(variantOverride.price);
+        if (variantOverride.sale !== undefined && variantOverride.sale !== null && variantOverride.sale !== '') variantSaleValue = Number(variantOverride.sale);
+    }
+
+    const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : product.price;
+    let effSale = 0;
+    if (variantSaleValue !== null) {
+        effSale = Math.max(0, Math.min(100, variantSaleValue));
+    } else {
+        effSale = product.sale || (product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0);
     }
 
     let mockProduct = { ...product };
-    if (variantPriceValue !== null) {
-        if (variantPriceValue < product.price) {
-            mockProduct.salePrice = variantPriceValue;
-            mockProduct.sale = Math.round((1 - variantPriceValue / product.price) * 100);
-        } else {
-            mockProduct.price = variantPriceValue;
-            mockProduct.sale = 0;
-            mockProduct.salePrice = null;
-        }
+    mockProduct.price = basePrice;
+    mockProduct.sale = effSale;
+    if (effSale > 0) {
+        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+    } else {
+        mockProduct.salePrice = null;
     }
 
     const fsInfo = getProductFlashSaleInfo(mockProduct, id, globalFlashSaleSettings);
@@ -1681,6 +1691,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     }
 
+    // Ảnh thứ 2 khi di chuột: Tải riêng biệt, không liên quan tới ảnh chung của sản phẩm
+    const secondaryImageUrl = product.hoverImageUrl || null;
+
     const isHcm = isUserInHCM();
     const deliveryInfo = getExpressDeliveryStatus();
     const express2hBadge = `
@@ -1700,8 +1713,12 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     <div class="product-card ${sparkleClass} ${outOfStockClass}">
         <div class="product-card-image">
             <a href="${linkUrl}">
-                <img src="${finalImageUrl}" 
+                <img class="product-card-img-primary" src="${finalImageUrl}" 
                      alt="${displayName}" loading="lazy" width="300" height="300">
+                ${secondaryImageUrl ? `
+                <img class="product-card-img-secondary" src="${secondaryImageUrl}" 
+                     alt="${displayName} - Chi tiết" loading="lazy" width="300" height="300">
+                ` : ''}
             </a>
             ${isOutOfStock ? stockBadge : saleBadge}
             ${badgesCorner}

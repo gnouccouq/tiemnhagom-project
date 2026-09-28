@@ -764,48 +764,47 @@ async function fetchProductDetail() {
                             </div>
                         ` : ''}
 
-                        <!-- Dimensions and Usage Icons -->
-                        <div class="product-specs-container" style="margin-top: 1.5rem;">
-                            ${(p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) || (p.specs && (p.specs.weight || p.specs.capacity)) || (p.details && (p.details.material || p.details.origin)) ? `
-                                <div style="margin-bottom: 1.5rem; padding: 15px; background: #fcfbf8; border-radius: 8px; font-size: 0.85rem; border: 1px solid #f0efeb;">
-                                    <h5 style="margin-bottom: 10px; font-family: var(--font-serif); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; color: #888;">Thông số sản phẩm</h5>
-                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                                        ${p.dimensions.length ? `<div><strong>Dài:</strong> ${p.dimensions.length} cm</div>` : ''}
-                                        ${p.dimensions.width ? `<div><strong>Rộng:</strong> ${p.dimensions.width} cm</div>` : ''}
-                                        ${p.dimensions.height ? `<div><strong>Cao:</strong> ${p.dimensions.height} cm</div>` : ''}
-                                        ${p.specs?.weight ? `<div><strong>Trọng lượng:</strong> ${p.specs.weight} g</div>` : ''}
-                                        ${p.specs?.capacity ? `<div><strong>Dung tích:</strong> ${p.specs.capacity} ml</div>` : ''}
-                                    </div>
-                                    ${(p.details?.material || p.details?.origin) ? `
-                                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;">
-                                            ${p.details.material ? `<div><strong>Chất liệu:</strong> ${p.details.material}</div>` : ''}
-                                            ${p.details.origin ? `<div><strong>Xuất xứ:</strong> ${p.details.origin}</div>` : ''}
+                        <!-- Specs and Safety Usage Icons Box -->
+                        <div class="product-specs-box">
+                            <div class="product-specs-title">THÔNG SỐ SẢN PHẨM</div>
+                            <div class="product-specs-divider"></div>
+                            
+                            <div class="product-specs-details">
+                                <div class="product-specs-row">Chất liệu: <span>${p.details?.material || 'Gốm'}</span></div>
+                                ${p.details?.origin ? `<div class="product-specs-row">Xuất xứ: <span>${p.details.origin}</span></div>` : ''}
+                                ${(p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) ? `
+                                    <div class="product-specs-row">Kích thước: <span>${[
+                                        p.dimensions.length ? `Dài ${p.dimensions.length}cm` : '',
+                                        p.dimensions.width ? `Rộng ${p.dimensions.width}cm` : '',
+                                        p.dimensions.height ? `Cao ${p.dimensions.height}cm` : ''
+                                    ].filter(Boolean).join(' × ')}</span></div>
+                                ` : ''}
+                                ${p.specs?.weight ? `<div class="product-specs-row">Trọng lượng: <span>${p.specs.weight} g</span></div>` : ''}
+                                ${p.specs?.capacity ? `<div class="product-specs-row">Dung tích: <span>${p.specs.capacity} ml</span></div>` : ''}
+                            </div>
+
+                            ${(p.usage?.isDishwasherSafe !== false || p.usage?.isMicrowaveSafe !== false || p.usage?.isFoodSafe !== false) ? `
+                                <div class="product-safety-icons-wrap">
+                                    ${p.usage?.isDishwasherSafe !== false ? `
+                                        <div class="safety-icon-tooltip-wrap">
+                                            <img src="../Asset/icons/dishwashersafe.webp" alt="Dishwasher safe" class="safety-icon-img">
+                                            <div class="safety-icon-tooltip">Dishwasher safe | An toàn cho máy rửa chén</div>
+                                        </div>
+                                    ` : ''}
+                                    ${p.usage?.isMicrowaveSafe !== false ? `
+                                        <div class="safety-icon-tooltip-wrap">
+                                            <img src="../Asset/icons/microwavesafe.webp" alt="Microwave safe" class="safety-icon-img">
+                                            <div class="safety-icon-tooltip">Microwave safe | An toàn cho lò vi sóng</div>
+                                        </div>
+                                    ` : ''}
+                                    ${p.usage?.isFoodSafe !== false ? `
+                                        <div class="safety-icon-tooltip-wrap">
+                                            <img src="../Asset/icons/foodsafe.webp" alt="Food safe" class="safety-icon-img">
+                                            <div class="safety-icon-tooltip">Food safe | An toàn thực phẩm</div>
                                         </div>
                                     ` : ''}
                                 </div>
                             ` : ''}
-
-                            <div style="display: flex; gap: 20px; margin-bottom: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
-                                ${p.usage?.isFoodSafe ? `
-                                    <div style="text-align: center; font-size: 0.6rem; color: #5a8f79; width: 60px;">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><path d="M12 2L3 9l9 7 9-7-9-7z"/><path d="M3 19l9-7 9 7"/></svg>
-                                        <div>An toàn thực phẩm</div>
-                                    </div>` : ''}
-                                <div style="text-align: center; font-size: 0.6rem; color: ${p.usage?.isOvenSafe ? '#2c3e50' : '#e74c3c'}; width: 60px;">
-                                    ${p.usage?.isOvenSafe ? `
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 10h12"/><path d="M6 14h12"/></svg>
-                                        <div>Đút lò được</div>
-                                    ` : `
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px; opacity: 0.5;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="5" x2="22" y2="19"/></svg>
-                                        <div>Không đút lò</div>
-                                    `}
-                                </div>
-                                ${p.usage?.isMicrowaveSafe ? `
-                                    <div style="text-align: center; font-size: 0.6rem; color: #2c3e50; width: 60px;">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;"><path d="M2 15s1-2 4-2 4 2 4 2 1-2 4-2 4 2 4 2"/><path d="M2 10s1-2 4-2 4 2 4 2 1-2 4-2 4 2 4 2"/></svg>
-                                        <div>Lò vi sóng</div>
-                                    </div>` : ''}
-                            </div>
                         </div>
 
                         <div class="product-description" id="product-description-container">
@@ -931,33 +930,38 @@ async function fetchProductDetail() {
 
                 let variantImage = p.imageUrl;
                 let variantPriceValue = null;
+                let variantSaleValue = null;
                 if (selectedComboVariant && p.comboVariants) {
                     const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
                     if (cv && cv.imageUrl) variantImage = cv.imageUrl;
-                    if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = cv.price;
+                    if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
+                    if (cv && cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
                 }
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
-                    if (c && c.price) variantPriceValue = c.price;
+                    if (c && c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
+                    if (c && c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
-                    if (pattern && pattern.price) variantPriceValue = pattern.price;
+                    if (pattern && pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
+                    if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
                 }
                 
                 let mockProduct = { ...p };
-                if (variantPriceValue !== null) {
-                    if (variantPriceValue < p.price) {
-                        mockProduct.salePrice = variantPriceValue;
-                        mockProduct.sale = Math.round((1 - variantPriceValue / p.price) * 100);
-                    } else {
-                        mockProduct.price = variantPriceValue;
-                        mockProduct.sale = 0;
-                        mockProduct.salePrice = null;
-                    }
+                const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : p.price;
+                let effSale = 0;
+                if (variantSaleValue !== null) {
+                    effSale = Math.max(0, Math.min(100, variantSaleValue));
+                } else {
+                    effSale = p.sale || (p.salePrice ? Math.round((1 - p.salePrice / p.price) * 100) : 0);
                 }
+                mockProduct.price = basePrice;
+                mockProduct.sale = effSale;
+                mockProduct.salePrice = effSale > 0 ? Math.round(basePrice * (1 - effSale / 100)) : null;
+
                 const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
                 await addToCart({
@@ -966,9 +970,10 @@ async function fetchProductDetail() {
                     price: currentVariantPrice,
                     image: variantImage,
                     quantity: qty,
-                    color: selectedColor,
-                    pattern: selectedPattern,
-                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    color: selectedColor || null,
+                    pattern: selectedPattern || null,
+                    comboVariant: selectedComboVariant || null,
+                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / ') || null,
                     category: p.category
                 });
             };
@@ -989,33 +994,38 @@ async function fetchProductDetail() {
 
                 let variantImage = p.imageUrl;
                 let variantPriceValue = null;
+                let variantSaleValue = null;
                 if (selectedComboVariant && p.comboVariants) {
                     const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
                     if (cv && cv.imageUrl) variantImage = cv.imageUrl;
-                    if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = cv.price;
+                    if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
+                    if (cv && cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
                 }
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
-                    if (c && c.price) variantPriceValue = c.price;
+                    if (c && c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
+                    if (c && c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
-                    if (pattern && pattern.price) variantPriceValue = pattern.price;
+                    if (pattern && pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
+                    if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
                 }
                 
                 let mockProduct = { ...p };
-                if (variantPriceValue !== null) {
-                    if (variantPriceValue < p.price) {
-                        mockProduct.salePrice = variantPriceValue;
-                        mockProduct.sale = Math.round((1 - variantPriceValue / p.price) * 100);
-                    } else {
-                        mockProduct.price = variantPriceValue;
-                        mockProduct.sale = 0;
-                        mockProduct.salePrice = null;
-                    }
+                const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : p.price;
+                let effSale = 0;
+                if (variantSaleValue !== null) {
+                    effSale = Math.max(0, Math.min(100, variantSaleValue));
+                } else {
+                    effSale = p.sale || (p.salePrice ? Math.round((1 - p.salePrice / p.price) * 100) : 0);
                 }
+                mockProduct.price = basePrice;
+                mockProduct.sale = effSale;
+                mockProduct.salePrice = effSale > 0 ? Math.round(basePrice * (1 - effSale / 100)) : null;
+
                 const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
                 // Hiển thị trạng thái loading
@@ -1028,9 +1038,10 @@ async function fetchProductDetail() {
                     price: currentVariantPrice,
                     image: variantImage,
                     quantity: qty,
-                    color: selectedColor,
-                    pattern: selectedPattern,
-                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / '),
+                    color: selectedColor || null,
+                    pattern: selectedPattern || null,
+                    comboVariant: selectedComboVariant || null,
+                    variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / ') || null,
                     category: p.category
                 });
                 window.location.href = '../cart/'; // Chuyển hướng thẳng tới giỏ hàng
@@ -1156,7 +1167,7 @@ function renderVariantSelectors(product) {
             const isOut = variant.isOutOfStock || (variant.stock !== undefined && variant.stock !== null && variant.stock <= 0);
             return `
                             <div class="color-chip ${variant.name === selectedColor ? 'active' : ''} ${isOut ? 'disabled-variant' : ''}"
-                                 style="background-color: ${colorHex}; ${isLightColor ? 'border-color: #ccc;' : ''} position: relative; display: inline-flex; align-items: center; justify-content: center;"
+                                 style="background: ${colorHex}; ${isLightColor ? 'border-color: #ccc;' : ''} position: relative; display: inline-flex; align-items: center; justify-content: center;"
                                  data-color-name="${variant.name}"
                                  data-color-hex="${colorHex}"
                                  data-variant-image="${variant.imageUrl || ''}"
@@ -1247,7 +1258,9 @@ window.selectComboVariant = (idx) => {
         chip.classList.toggle('active', i === idx);
     });
 
-    if (variant.price && Number(variant.price) > 0) {
+    if (window.updateDisplayPrice) {
+        window.updateDisplayPrice();
+    } else if (variant.price && Number(variant.price) > 0) {
         const priceEl = document.querySelector('.main-price');
         if (priceEl) priceEl.innerText = `${new Intl.NumberFormat('vi-VN').format(variant.price)} VND`;
     } else if (currentProductData) {
@@ -1438,25 +1451,48 @@ window.selectPattern = (patternName, imageUrl) => {
 window.updateDisplayPrice = () => {
     if (!currentProductData) return;
     let variantPriceValue = null;
+    let variantSaleValue = null;
+
+    if (selectedComboVariant && currentProductData.comboVariants) {
+        const cv = currentProductData.comboVariants.find(v => (v.name || v) === selectedComboVariant);
+        if (cv) {
+            if (cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
+            if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+        }
+    }
     if (selectedColor && currentProductData.colorVariants) {
         const c = currentProductData.colorVariants.find(v => v.name === selectedColor);
-        if (c && c.price) variantPriceValue = c.price;
+        if (c) {
+            if (c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
+            if (c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
+        }
     }
     if (selectedPattern && currentProductData.patternVariants) {
         const pattern = currentProductData.patternVariants.find(v => v.name === selectedPattern);
-        if (pattern && pattern.price) variantPriceValue = pattern.price;
+        if (pattern) {
+            if (pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
+            if (pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
+        }
     }
     
     let mockProduct = { ...currentProductData };
-    if (variantPriceValue !== null) {
-        if (variantPriceValue < currentProductData.price) {
-            mockProduct.salePrice = variantPriceValue;
-            mockProduct.sale = Math.round((1 - variantPriceValue / currentProductData.price) * 100);
-        } else {
-            mockProduct.price = variantPriceValue;
-            mockProduct.sale = 0;
-            mockProduct.salePrice = null;
-        }
+    const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : currentProductData.price;
+    
+    // Nếu biến thể có giảm % riêng (kể cả 0%): dùng mức giảm riêng đó
+    // Nếu không nhập giảm % riêng: lấy mức giảm chính của sản phẩm
+    let effSale = 0;
+    if (variantSaleValue !== null) {
+        effSale = Math.max(0, Math.min(100, variantSaleValue));
+    } else {
+        effSale = currentProductData.sale || (currentProductData.salePrice ? Math.round((1 - currentProductData.salePrice / currentProductData.price) * 100) : 0);
+    }
+
+    mockProduct.price = basePrice;
+    mockProduct.sale = effSale;
+    if (effSale > 0) {
+        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+    } else {
+        mockProduct.salePrice = null;
     }
     const currentPrice = getProductCurrentPrice(mockProduct);
     

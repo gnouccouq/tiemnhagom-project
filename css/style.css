@@ -1376,10 +1376,9 @@ footer,
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px rgba(231, 76, 60, 0.2);
-    /* Glow effect */
-    border-color: rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
@@ -1401,20 +1400,47 @@ footer,
     position: relative;
     aspect-ratio: 1/1;
     overflow: hidden;
-    background-color: #f5f5f5;
+    background-color: #f7f7f7;
     border-radius: 8px;
     margin-bottom: 12px;
+}
+
+.product-card-image a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
 .product-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: block;
 }
 
-.product-card:hover .product-card-image img {
-    transform: scale(1.1);
+.product-card-image .product-card-img-primary {
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.product-card-image .product-card-img-secondary {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 2;
+    transition: opacity 0.4s ease-in-out;
+    pointer-events: none;
+}
+
+.product-card:hover .product-card-image .product-card-img-secondary {
+    opacity: 1;
 }
 
 .product-card-actions {
@@ -1675,8 +1701,8 @@ section {
 }
 
 .special-offers .product-card:hover {
-    border-color: #c0392b;
-    box-shadow: 0 10px 25px rgba(192, 57, 43, 0.15);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.08);
 }
 
 /* Burning Fire Animation for Flash Sale */
@@ -13427,3 +13453,124 @@ input:checked + .slider:before {
     box-shadow: none !important;
     padding: 0 8px 30px 0 !important;
 }
+
+/* ==========================================================================
+   Product Specs Box & Safety Usage Icons with Tooltips (Asset/icons)
+   ========================================================================== */
+.product-specs-box {
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 16px 20px;
+    background: #fcfbf8;
+    border: 1px solid #ebe8e2;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #2c2c2c;
+    position: relative;
+    overflow: visible;
+}
+
+.product-specs-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #8c8985;
+    margin-bottom: 10px;
+}
+
+.product-specs-divider {
+    border-top: 1px dashed #dedbd4;
+    margin-bottom: 14px;
+}
+
+.product-specs-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.88rem;
+    color: #333333;
+    line-height: 1.6;
+}
+
+.product-specs-row {
+    color: #333333;
+}
+
+.product-specs-row span,
+.product-specs-row strong {
+    color: #1a1a1a;
+}
+
+.product-safety-icons-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #dedbd4;
+}
+
+.safety-icon-tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.safety-icon-img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.safety-icon-tooltip-wrap:hover .safety-icon-img {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.safety-icon-tooltip {
+    position: absolute;
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #555555;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    white-space: normal;
+    width: max-content;
+    max-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+}
+
+.safety-icon-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: #555555 transparent transparent transparent;
+}
+
+.safety-icon-tooltip-wrap:hover .safety-icon-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
