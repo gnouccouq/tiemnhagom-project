@@ -372,17 +372,45 @@ async function fetchUserData(user) {
         const snapUid = await getDocs(qUid);
         snapUid.forEach(d => orderDocs.push({ id: d.id, ...d.data() }));
 
-        // Nếu có số điện thoại, gộp thêm đơn đặt theo số điện thoại
+        // Nếu có số điện thoại, gộp thêm đơn đặt theo số điện thoại (POS + Online Web)
         if (phone) {
             const phoneClean = phone.replace(/\D/g, '');
-            const phone84 = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
-            const qPhone = query(ordersRef, where("phone", "in", [phone, phoneClean, phone84]));
-            const snapPhone = await getDocs(qPhone);
-            snapPhone.forEach(d => {
-                if (!orderDocs.some(existing => existing.id === d.id)) {
-                    orderDocs.push({ id: d.id, ...d.data() });
-                }
-            });
+            const phone0 = phoneClean.startsWith('84') && phoneClean.length >= 10 ? '0' + phoneClean.substring(2) : (phoneClean.startsWith('0') ? phoneClean : '0' + phoneClean);
+            const phone84 = phone0.startsWith('0') ? '+84' + phone0.substring(1) : phone0;
+            const phoneList = Array.from(new Set([phone, phoneClean, phone0, phone84])).filter(Boolean).slice(0, 10);
+
+            // 1. Phone
+            try {
+                const qPhone = query(ordersRef, where("phone", "in", phoneList));
+                const snapPhone = await getDocs(qPhone);
+                snapPhone.forEach(d => {
+                    if (!orderDocs.some(existing => existing.id === d.id)) {
+                        orderDocs.push({ id: d.id, ...d.data() });
+                    }
+                });
+            } catch (e) { }
+
+            // 2. shippingAddress.phone
+            try {
+                const qShipPhone = query(ordersRef, where("shippingAddress.phone", "in", phoneList));
+                const snapShipPhone = await getDocs(qShipPhone);
+                snapShipPhone.forEach(d => {
+                    if (!orderDocs.some(existing => existing.id === d.id)) {
+                        orderDocs.push({ id: d.id, ...d.data() });
+                    }
+                });
+            } catch (e) { }
+
+            // 3. customerPhone
+            try {
+                const qCustPhone = query(ordersRef, where("customerPhone", "in", phoneList));
+                const snapCustPhone = await getDocs(qCustPhone);
+                snapCustPhone.forEach(d => {
+                    if (!orderDocs.some(existing => existing.id === d.id)) {
+                        orderDocs.push({ id: d.id, ...d.data() });
+                    }
+                });
+            } catch (e) { }
         }
 
         // Tính tổng chi tiêu từ các đơn hoàn thành

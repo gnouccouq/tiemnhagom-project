@@ -231,7 +231,7 @@
                             Số điện thoại đặt hàng hoặc Mã đơn hàng
                         </label>
                         <div class="tracking-search-group">
-                            <input type="text" id="lookup-input" class="tracking-input" placeholder="Ví dụ: 0777709662 hoặc TNG28082026..." required>
+                            <input type="text" id="lookup-input" class="tracking-input" placeholder="Ví dụ: 0777709662 hoặc TNG28082026..." autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" required>
                             <button type="submit" id="btn-search-order" class="tracking-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 Tra cứu ngay
@@ -287,12 +287,16 @@
 
         window.handleOrderSearch = async (e) => {
             e.preventDefault();
-            const inputVal = document.getElementById('lookup-input').value.trim();
+            const rawInput = document.getElementById('lookup-input').value;
+            // Làm sạch ký tự ẩn (zero-width, non-breaking space, khoảng trắng đầu/cuối)
+            const cleanVal = (rawInput || '')
+                .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+                .trim();
             const btn = document.getElementById('btn-search-order');
             const resultArea = document.getElementById('tracking-result-area');
             const notFoundArea = document.getElementById('tracking-not-found');
 
-            if (!inputVal) return;
+            if (!cleanVal) return;
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-small"></span> Đang tra cứu...';
@@ -301,54 +305,92 @@
 
             try {
                 let ordersFound = [];
+                const ordersRef = collection(db, "orders");
 
-                // 1. Kiểm tra xem có phải là mã đơn hàng (TNG... hoặc doc ID trực tiếp)
-                if (inputVal.toUpperCase().startsWith('TNG') || inputVal.length >= 15) {
-                    try {
-                        const orderDocSnap = await getDoc(doc(db, "orders", inputVal));
-                        if (orderDocSnap.exists()) {
-                            ordersFound.push({ id: orderDocSnap.id, ...orderDocSnap.data() });
-                        }
-                    } catch (e) { }
+                // Chuẩn bị các biến thể mã đơn hàng (loại bỏ dấu cách giữa các ký tự, in hoa, in thường)
+                const valWithoutSpaces = cleanVal.replace(/\s+/g, '');
+                const valUpper = valWithoutSpaces.toUpperCase();
+                const isPossibleOrderId = valUpper.startsWith('TNG') || /[A-Za-z]/.test(cleanVal) || (valWithoutSpaces.length >= 15 && !valWithoutSpaces.startsWith('+'));
+
+                // 1. Kiểm tra theo Mã đơn hàng (Document ID hoặc trường orderId/code)
+                if (isPossibleOrderId) {
+                    const idCandidates = Array.from(new Set([
+                        cleanVal,
+                        valWithoutSpaces,
+                        valUpper,
+                        valWithoutSpaces.toLowerCase()
+                    ])).filter(Boolean);
+
+                    for (const candidateId of idCandidates) {
+                        try {
+                            const orderDocSnap = await getDoc(doc(db, "orders", candidateId));
+                            if (orderDocSnap.exists() && !ordersFound.some(o => o.id === orderDocSnap.id)) {
+                                ordersFound.push({ id: orderDocSnap.id, ...orderDocSnap.data() });
+                            }
+                        } catch (err) { }
+                    }
+
+                    // Nếu chưa tìm thấy theo Document ID trực tiếp, thử query theo trường orderId / code trong Firestore
+                    if (ordersFound.length === 0) {
+                        try {
+                            const qOrderField = query(ordersRef, where("orderId", "in", idCandidates.slice(0, 10)));
+                            const sOrderField = await getDocs(qOrderField);
+                            sOrderField.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (err) { }
+                    }
                 }
 
-                // 2. Nếu chưa tìm thấy theo ID trực tiếp, tìm theo SĐT hoặc mã đơn trong query
+                // 2. Tìm kiếm theo Số điện thoại (chạy khi chưa tìm thấy đơn hoặc chuỗi có thể là SĐT)
                 if (ordersFound.length === 0) {
-                    const cleanedPhone = formatPhoneNumber(inputVal);
+                    // Chuẩn hóa số điện thoại: loại bỏ toàn bộ khoảng cách, dấu ngoặc, dấu chấm, dấu gạch nối
+                    const digitsOnly = cleanVal.replace(/\D/g, '');
+                    const cleanedPhone = formatPhoneNumber(cleanVal);
                     const p84 = cleanedPhone.startsWith('0') ? '+84' + cleanedPhone.substring(1) : cleanedPhone;
-                    const phoneList = [inputVal, cleanedPhone, p84].filter(Boolean);
+                    const p84NoPlus = cleanedPhone.startsWith('0') ? '84' + cleanedPhone.substring(1) : cleanedPhone;
 
-                    const ordersRef = collection(db, "orders");
+                    // Tập hợp các biến thể số điện thoại người dùng có thể đã lưu hoặc nhập vào
+                    const phoneList = Array.from(new Set([
+                        cleanedPhone,
+                        p84,
+                        p84NoPlus,
+                        digitsOnly,
+                        cleanVal,
+                        valWithoutSpaces
+                    ])).filter(p => p && p.length >= 8 && p.length <= 15).slice(0, 10);
 
-                    // Query theo shippingAddress.phone
-                    try {
-                        const q1 = query(ordersRef, where("shippingAddress.phone", "in", phoneList));
-                        const s1 = await getDocs(q1);
-                        s1.forEach(d => {
-                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
-                        });
-                    } catch (e) { }
+                    if (phoneList.length > 0) {
+                        // Query theo shippingAddress.phone (Đơn đặt online từ website)
+                        try {
+                            const q1 = query(ordersRef, where("shippingAddress.phone", "in", phoneList));
+                            const s1 = await getDocs(q1);
+                            s1.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (e) { }
 
-                    // Query theo customerPhone
-                    try {
-                        const q2 = query(ordersRef, where("customerPhone", "in", phoneList));
-                        const s2 = await getDocs(q2);
-                        s2.forEach(d => {
-                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
-                        });
-                    } catch (e) { }
+                        // Query theo customerPhone (Đơn tạo từ POS hoặc kênh khác)
+                        try {
+                            const q2 = query(ordersRef, where("customerPhone", "in", phoneList));
+                            const s2 = await getDocs(q2);
+                            s2.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (e) { }
 
-                    // Query theo phone
-                    try {
-                        const q3 = query(ordersRef, where("phone", "in", phoneList));
-                        const s3 = await getDocs(q3);
-                        s3.forEach(d => {
-                            if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
-                        });
-                    } catch (e) { }
+                        // Query theo phone (Trường số điện thoại gốc)
+                        try {
+                            const q3 = query(ordersRef, where("phone", "in", phoneList));
+                            const s3 = await getDocs(q3);
+                            s3.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (e) { }
+                    }
                 }
 
-                // Sắp xếp đơn mới nhất lên đầu
+                // 3. Sắp xếp đơn mới nhất lên đầu
                 ordersFound.sort((a, b) => {
                     const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.orderDate?.toDate ? a.orderDate.toDate().getTime() : 0);
                     const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.orderDate?.toDate ? b.orderDate.toDate().getTime() : 0);

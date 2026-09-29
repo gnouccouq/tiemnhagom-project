@@ -82,7 +82,8 @@ service cloud.firestore {
         )
       );
 
-      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      // Cho phép tra cứu đơn hàng công khai theo Mã đơn hoặc Số điện thoại
+      allow read: if true;
 
       // Cấu trúc update chặt chẽ cho người dùng
       allow update: if isAdmin() || (

@@ -7,7 +7,7 @@
   font-family: 'Elle Gabor Std Light';
   src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff'),
        url('../Asset/fonts/ElleGaborStd-Light.ttf') format('truetype');
-  font-weight: 400;
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -16,7 +16,7 @@
   font-family: 'ellegaborstd';
   src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff'),
        url('../Asset/fonts/ElleGaborStd-Light.ttf') format('truetype');
-  font-weight: 400;
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -54,10 +54,20 @@ body.detail-v2-body {
   background-color: var(--v2-bg-main);
   color: var(--v2-text-main);
   font-family: var(--v2-font-serif);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
   margin: 0;
   padding: 0;
+  padding-top: 85px; /* Offset for fixed navbar */
   overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  body.detail-v2-body {
+    padding-top: 75px;
+  }
 }
 
 .v2-container {
@@ -67,11 +77,10 @@ body.detail-v2-body {
 }
 
 /* ==========================================================================
-   Top Navigation & Breadcrumb
+   Top Navigation & Breadcrumb (Hàng Quay lại & Breadcrumb Trang chủ)
    ========================================================================== */
 .v2-top-bar-container {
-  padding: 16px 0 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 18px 0 12px;
 }
 
 .v2-top-bar {
@@ -85,40 +94,46 @@ body.detail-v2-body {
 .v2-btn-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: #666;
+  gap: 8px;
+  color: #888;
   text-decoration: none;
-  font-family: var(--v2-font-sans);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 6px 12px;
-  border-radius: var(--v2-radius-sm);
-  background: var(--v2-bg-card);
-  border: 1px solid var(--v2-border);
-  transition: all 0.2s ease;
+  letter-spacing: 1.5px;
+  transition: all 0.25s ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.v2-btn-back svg {
+  transition: transform 0.25s ease;
 }
 
 .v2-btn-back:hover {
   color: var(--v2-text-black);
-  border-color: var(--v2-text-black);
-  transform: translateX(-2px);
+  transform: translateX(-4px);
 }
 
 .v2-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--v2-font-sans);
-  font-size: 0.82rem;
-  color: var(--v2-text-light);
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #888;
   flex-wrap: wrap;
 }
 
 .v2-breadcrumb a {
-  color: var(--v2-text-muted);
+  color: #888;
   text-decoration: none;
+  font-family: var(--v2-font-serif);
+  font-weight: 400;
   transition: color 0.2s ease;
 }
 
@@ -126,10 +141,16 @@ body.detail-v2-body {
   color: var(--v2-text-black);
 }
 
+.v2-breadcrumb .separator {
+  color: #aaa;
+  margin: 0 3px;
+}
+
 .v2-breadcrumb .current {
   color: var(--v2-text-black);
-  font-weight: 600;
-  max-width: 320px;
+  font-family: var(--v2-font-serif);
+  font-weight: 400;
+  max-width: 360px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -463,15 +484,16 @@ body.detail-v2-body {
 }
 
 .v2-sku-text {
-  font-family: var(--v2-font-sans);
-  font-size: 0.78rem;
+  font-family: var(--v2-font-serif);
+  font-size: 0.9rem;
+  font-weight: 400;
   color: var(--v2-text-light);
   letter-spacing: 1px;
 }
 
 .v2-product-title {
   font-family: var(--v2-font-serif);
-  font-size: 2.1rem;
+  font-size: 2.2rem;
   font-weight: 400;
   line-height: 1.25;
   color: var(--v2-text-black);
@@ -482,8 +504,9 @@ body.detail-v2-body {
   display: flex;
   align-items: center;
   gap: 14px;
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
   color: var(--v2-text-muted);
 }
 
@@ -506,24 +529,25 @@ body.detail-v2-body {
 }
 
 .v2-main-price {
-  font-size: 2.1rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 400;
   color: var(--v2-text-black);
-  font-family: var(--v2-font-sans);
-  letter-spacing: -0.5px;
+  font-family: var(--v2-font-serif);
+  letter-spacing: 0.5px;
 }
 
 .v2-old-price {
-  font-family: var(--v2-font-sans);
-  font-size: 1.15rem;
+  font-family: var(--v2-font-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
   color: #999;
   text-decoration: line-through;
 }
 
 .v2-sale-pill {
-  font-family: var(--v2-font-sans);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-family: var(--v2-font-serif);
+  font-size: 0.9rem;
+  font-weight: 400;
   background: var(--v2-sale-red-bg);
   color: var(--v2-sale-red);
   padding: 2px 8px;
@@ -539,21 +563,22 @@ body.detail-v2-body {
   background: #fafaf8;
   border: 1px dashed #dcd7ce;
   border-radius: var(--v2-radius-sm);
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
 .v2-member-price-badge .tier-label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .v2-member-price-badge .tier-price {
-  font-weight: 700;
+  font-weight: 400;
   color: #c0392b;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
 }
 
 /* Variants Section */
@@ -564,21 +589,22 @@ body.detail-v2-body {
 }
 
 .v2-variant-title {
-  font-family: var(--v2-font-sans);
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #444;
+  letter-spacing: 1px;
+  color: #222;
   margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
 }
 
 .v2-variant-title span {
-  font-weight: 600;
+  font-family: var(--v2-font-serif);
+  font-weight: 400;
   color: var(--v2-text-black);
-  text-transform: none;
+  text-transform: uppercase;
 }
 
 .v2-color-swatches {
@@ -596,8 +622,9 @@ body.detail-v2-body {
   border-radius: 20px;
   cursor: pointer;
   background: #ffffff;
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 400;
   color: #333;
   transition: all 0.2s ease;
 }
@@ -618,7 +645,7 @@ body.detail-v2-body {
   border-color: #000000 !important;
   background: #f8f9fa !important;
   color: #000000 !important;
-  font-weight: 600;
+  font-weight: 400;
   box-shadow: 0 0 0 1px #000000;
 }
 
@@ -633,10 +660,10 @@ body.detail-v2-body {
   border: 1px solid #ddd;
   border-radius: 4px;
   background: #ffffff;
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
   color: #333;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -649,7 +676,7 @@ body.detail-v2-body {
   background: #f8f9fa !important;
   color: #000000 !important;
   border-color: #000000 !important;
-  font-weight: 600;
+  font-weight: 400;
   box-shadow: 0 0 0 1px #000000;
 }
 

@@ -256,13 +256,13 @@ function updatePriceDisplay() {
     const salePillEl = document.getElementById('v2-sale-pill');
     const stickyPriceEl = document.getElementById('v2-sticky-price');
 
-    if (mainPriceEl) mainPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + 'đ';
-    if (stickyPriceEl) stickyPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + 'đ';
+    if (mainPriceEl) mainPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
+    if (stickyPriceEl) stickyPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
 
     if (salePercent > 0) {
         if (oldPriceEl) {
             oldPriceEl.style.display = 'inline';
-            oldPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(basePrice) + 'đ';
+            oldPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(basePrice) + ' VND';
         }
         if (salePillEl) {
             salePillEl.style.display = 'inline';
@@ -499,13 +499,16 @@ async function fetchProductDetailV2() {
         // Update Breadcrumb
         const breadcrumb = document.getElementById('breadcrumb-container');
         if (breadcrumb) {
+            const categoryHtml = p.category ? `
+                <a href="../products/?category=${encodeURIComponent(p.category)}">${escapeHTML(p.category)}</a>
+                <span class="separator">&rsaquo;</span>
+            ` : '';
             breadcrumb.innerHTML = `
                 <a href="../">Trang chủ</a>
                 <span class="separator">&rsaquo;</span>
                 <a href="../products/">Sản phẩm</a>
                 <span class="separator">&rsaquo;</span>
-                <a href="../products/?category=${encodeURIComponent(p.category)}">${escapeHTML(p.category)}</a>
-                <span class="separator">&rsaquo;</span>
+                ${categoryHtml}
                 <span class="current">${escapeHTML(p.name)}</span>
             `;
         }
@@ -623,8 +626,8 @@ async function fetchProductDetailV2() {
 
                 <!-- Price Box -->
                 <div class="v2-price-container">
-                    <span id="v2-main-price" class="v2-main-price">0đ</span>
-                    <span id="v2-old-price" class="v2-old-price" style="display: none;">0đ</span>
+                    <span id="v2-main-price" class="v2-main-price">0 VND</span>
+                    <span id="v2-old-price" class="v2-old-price" style="display: none;">0 VND</span>
                     <span id="v2-sale-pill" class="v2-sale-pill" style="display: none;">-0%</span>
                 </div>
 

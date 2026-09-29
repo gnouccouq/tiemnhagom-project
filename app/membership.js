@@ -227,15 +227,45 @@ async function loadUserData(user) {
 
         if (phone) {
             const phoneClean = phone.replace(/\D/g, '');
-            const phone84 = phone.startsWith('0') ? '+84' + phone.substring(1) : phone;
-            const qPhone = query(ordersRef, where("phone", "in", [phone, phoneClean, phone84]));
-            const snapPhone = await getDocs(qPhone);
-            snapPhone.forEach(d => {
-                const oid = d.data().orderId || d.id;
-                if (!orderDocs.some(o => (o.orderId === oid || o.id === d.id))) {
-                    orderDocs.push({ id: d.id, orderId: oid, ...d.data() });
-                }
-            });
+            const phone0 = phoneClean.startsWith('84') && phoneClean.length >= 10 ? '0' + phoneClean.substring(2) : (phoneClean.startsWith('0') ? phoneClean : '0' + phoneClean);
+            const phone84 = phone0.startsWith('0') ? '+84' + phone0.substring(1) : phone0;
+            const phoneList = Array.from(new Set([phone, phoneClean, phone0, phone84])).filter(Boolean).slice(0, 10);
+
+            // 1. Tìm theo phone (POS / trực tiếp)
+            try {
+                const qPhone = query(ordersRef, where("phone", "in", phoneList));
+                const snapPhone = await getDocs(qPhone);
+                snapPhone.forEach(d => {
+                    const oid = d.data().orderId || d.id;
+                    if (!orderDocs.some(o => (o.orderId === oid || o.id === d.id))) {
+                        orderDocs.push({ id: d.id, orderId: oid, ...d.data() });
+                    }
+                });
+            } catch (e) { }
+
+            // 2. Tìm theo shippingAddress.phone (Đơn online từ web)
+            try {
+                const qShipPhone = query(ordersRef, where("shippingAddress.phone", "in", phoneList));
+                const snapShipPhone = await getDocs(qShipPhone);
+                snapShipPhone.forEach(d => {
+                    const oid = d.data().orderId || d.id;
+                    if (!orderDocs.some(o => (o.orderId === oid || o.id === d.id))) {
+                        orderDocs.push({ id: d.id, orderId: oid, ...d.data() });
+                    }
+                });
+            } catch (e) { }
+
+            // 3. Tìm theo customerPhone
+            try {
+                const qCustPhone = query(ordersRef, where("customerPhone", "in", phoneList));
+                const snapCustPhone = await getDocs(qCustPhone);
+                snapCustPhone.forEach(d => {
+                    const oid = d.data().orderId || d.id;
+                    if (!orderDocs.some(o => (o.orderId === oid || o.id === d.id))) {
+                        orderDocs.push({ id: d.id, orderId: oid, ...d.data() });
+                    }
+                });
+            } catch (e) { }
         }
 
 
