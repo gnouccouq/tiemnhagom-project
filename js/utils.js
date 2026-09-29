@@ -348,8 +348,13 @@ export function getProductCurrentPrice(product, fsSettings = globalFlashSaleSett
     if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.salePrice > 0) {
         return fsInfo.salePrice;
     }
+    // Ưu tiên 1: Giá sale cố định đã nhập (ví dụ 99.000đ)
+    if (product.salePrice !== undefined && product.salePrice !== null && Number(product.salePrice) > 0) {
+        return Number(product.salePrice);
+    }
+    // Ưu tiên 2: Giảm theo % sale nếu không có giá sale cố định
     if (product.sale > 0) {
-        return product.salePrice || Math.round(product.price * (1 - product.sale / 100));
+        return Math.round(product.price * (1 - product.sale / 100));
     }
     return product.price;
 }
@@ -1534,7 +1539,12 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
     if (effSale > 0) {
-        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+        // Nếu sản phẩm có giá sale cố định và không có biến thể ghi đè giá riêng -> Giữ đúng giá salePrice cố định
+        if (product.salePrice && Number(product.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+            mockProduct.salePrice = Number(product.salePrice);
+        } else {
+            mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+        }
     } else {
         mockProduct.salePrice = null;
     }

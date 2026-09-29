@@ -1079,7 +1079,11 @@ window.placeOrder = async () => {
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
                 if (effSale > 0) {
-                    mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+                    if (product.salePrice && Number(product.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+                        mockProduct.salePrice = Number(product.salePrice);
+                    } else {
+                        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+                    }
                 } else {
                     mockProduct.salePrice = null;
                 }

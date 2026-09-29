@@ -240,7 +240,15 @@ function getEffectiveVariantPrice() {
 
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
-    mockProduct.salePrice = effSale > 0 ? Math.round(basePrice * (1 - effSale / 100)) : null;
+    if (effSale > 0) {
+        if (currentProductData.salePrice && Number(currentProductData.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+            mockProduct.salePrice = Number(currentProductData.salePrice);
+        } else {
+            mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+        }
+    } else {
+        mockProduct.salePrice = null;
+    }
 
     return {
         basePrice,

@@ -13585,6 +13585,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.value = '';
             }
         }
+
+        // Tự động tính toán tương hỗ giữa % Sale và Giá Sale cố định
+        if (e.target && e.target.id === 'salePrice') {
+            const price = window.getCurrencyValue('price');
+            const salePrice = window.getCurrencyValue('salePrice');
+            const saleInput = document.getElementById('sale');
+            if (saleInput) {
+                if (price > 0 && salePrice > 0 && salePrice < price) {
+                    saleInput.value = Math.round((1 - salePrice / price) * 100);
+                } else if (!salePrice) {
+                    saleInput.value = 0;
+                }
+            }
+        } else if (e.target && e.target.id === 'sale') {
+            const price = window.getCurrencyValue('price');
+            const salePercent = Number(e.target.value || 0);
+            const salePriceInput = document.getElementById('salePrice');
+            if (salePriceInput) {
+                if (price > 0 && salePercent > 0) {
+                    salePriceInput.value = window.formatCurrencyDisplay(Math.round(price * (1 - salePercent / 100)));
+                } else {
+                    salePriceInput.value = '';
+                }
+            }
+        }
     });
 });
 // --- POS Add Customer Modal Logic ---

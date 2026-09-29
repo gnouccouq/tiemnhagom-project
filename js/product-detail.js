@@ -960,7 +960,15 @@ async function fetchProductDetail() {
                 }
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
-                mockProduct.salePrice = effSale > 0 ? Math.round(basePrice * (1 - effSale / 100)) : null;
+                if (effSale > 0) {
+                    if (p.salePrice && Number(p.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+                        mockProduct.salePrice = Number(p.salePrice);
+                    } else {
+                        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+                    }
+                } else {
+                    mockProduct.salePrice = null;
+                }
 
                 const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
@@ -1024,7 +1032,15 @@ async function fetchProductDetail() {
                 }
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
-                mockProduct.salePrice = effSale > 0 ? Math.round(basePrice * (1 - effSale / 100)) : null;
+                if (effSale > 0) {
+                    if (p.salePrice && Number(p.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+                        mockProduct.salePrice = Number(p.salePrice);
+                    } else {
+                        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+                    }
+                } else {
+                    mockProduct.salePrice = null;
+                }
 
                 const currentVariantPrice = getProductCurrentPrice(mockProduct, fsSettings);
 
@@ -1490,7 +1506,11 @@ window.updateDisplayPrice = () => {
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
     if (effSale > 0) {
-        mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+        if (currentProductData.salePrice && Number(currentProductData.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
+            mockProduct.salePrice = Number(currentProductData.salePrice);
+        } else {
+            mockProduct.salePrice = Math.round(basePrice * (1 - effSale / 100));
+        }
     } else {
         mockProduct.salePrice = null;
     }
