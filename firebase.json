@@ -9,8 +9,12 @@
       "tiemnhagom-app/**",
       "android/**",
       "ios/**",
+      "functions/**",
+      "firestore.rules",
+      "storage.rules",
       "*.apk",
-      "*.log"
+      "*.log",
+      "*.md"
     ],
 
 
@@ -23,6 +27,46 @@
       {
         "source": "/*/lookbook/**",
         "destination": "/lookbook/",
+        "type": 301
+      },
+      {
+        "source": "/chinh-sach-gia.html",
+        "destination": "/chinh-sach/chinh-sach-gia.html",
+        "type": 301
+      },
+      {
+        "source": "/buying-guide.html",
+        "destination": "/chinh-sach/buying-guide.html",
+        "type": 301
+      },
+      {
+        "source": "/shipping-policy.html",
+        "destination": "/chinh-sach/shipping-policy.html",
+        "type": 301
+      },
+      {
+        "source": "/giai-quyet-khieu-nai.html",
+        "destination": "/chinh-sach/giai-quyet-khieu-nai.html",
+        "type": 301
+      },
+      {
+        "source": "/payment-policy.html",
+        "destination": "/chinh-sach/payment-policy.html",
+        "type": 301
+      },
+      {
+        "source": "/return-refund-policy.html",
+        "destination": "/chinh-sach/return-refund-policy.html",
+        "type": 301
+      },
+      {
+        "source": "/privacy-policy.html",
+        "destination": "/chinh-sach/privacy-policy.html",
+        "type": 301
+      },
+      {
+        "source": "/terms-of-service.html",
+        "destination": "/chinh-sach/terms-of-service.html",
         "type": 301
       }
     ],

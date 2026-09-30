@@ -95,43 +95,59 @@
         <priority>0.7</priority>
     </url>
 
-    <!-- Các chính sách -->
+    <!-- Các chính sách & Thông tin pháp lý -->
     <url>
-        <loc>https://tiemnhagom.vn/buying-guide.html</loc>
-        <lastmod>2026-06-19</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/</loc>
+        <lastmod>2026-09-30</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/chinh-sach/chinh-sach-gia.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://tiemnhagom.vn/payment-policy.html</loc>
-        <lastmod>2026-06-19</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/buying-guide.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://tiemnhagom.vn/shipping-policy.html</loc>
-        <lastmod>2026-06-19</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/shipping-policy.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://tiemnhagom.vn/return-refund-policy.html</loc>
-        <lastmod>2026-06-19</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/giai-quyet-khieu-nai.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
-
-    <!-- Thông tin pháp lý -->
     <url>
-        <loc>https://tiemnhagom.vn/privacy-policy.html</loc>
-        <lastmod>2026-09-08</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/payment-policy.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
-        <priority>0.5</priority>
+        <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://tiemnhagom.vn/terms-of-service.html</loc>
-        <lastmod>2026-09-08</lastmod>
+        <loc>https://tiemnhagom.vn/chinh-sach/return-refund-policy.html</loc>
+        <lastmod>2026-09-30</lastmod>
         <changefreq>monthly</changefreq>
-        <priority>0.5</priority>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/chinh-sach/privacy-policy.html</loc>
+        <lastmod>2026-09-30</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/chinh-sach/terms-of-service.html</loc>
+        <lastmod>2026-09-30</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
     </url>
 </urlset>

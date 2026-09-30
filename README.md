@@ -40,6 +40,7 @@ tiemnhagom-project/
 ├── product/                   # Trang chi tiết sản phẩm (/product/?id=...)
 ├── products/                  # Danh mục sản phẩm & bộ lọc tìm kiếm
 ├── cart/                      # Giỏ hàng & luồng thanh toán (Checkout, ship, voucher)
+├── chinh-sach/                # Trung tâm chính sách & pháp lý (/chinh-sach/)
 ├── DashBoard/                 # Cổng quản trị POS & Quản lý bán hàng (/DashBoard/)
 ├── profile/                   # Thông tin tài khoản, lịch sử đơn & tích điểm hội viên
 ├── login/                     # Đăng nhập & Xác thực người dùng

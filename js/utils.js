@@ -1084,7 +1084,7 @@ function setupCookieConsent(pathPrefix) {
             <div class="cookie-text">
                 <p>
                     <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
-                    <a href="${pathPrefix}privacy-policy.html">Chính sách bảo mật</a> của chúng tôi.
+                    <a href="${pathPrefix}chinh-sach/privacy-policy.html">Chính sách bảo mật</a> của chúng tôi.
                 </p>
             </div>
             <div class="cookie-actions">
@@ -2279,17 +2279,18 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="hoa-nha-gom\//g, `href="${pathPrefix}hoa-nha-gom/`)
                 .replace(/href="trang-tri-su-kien\//g, `href="${pathPrefix}trang-tri-su-kien/`)
                 .replace(/href="contact\//g, `href="${pathPrefix}contact/`)
+                .replace(/href="chinh-sach\//g, `href="${pathPrefix}chinh-sach/`)
                 .replace(/href="index\.html"/g, `href="${pathPrefix}index.html"`)
                 .replace(/href="tra-cuu-don-hang\.html"/g, `href="${pathPrefix}tra-cuu-don-hang.html"`)
                 .replace(/href="faq\.html"/g, `href="${pathPrefix}faq.html"`)
-                .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}privacy-policy.html"`)
-                .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}terms-of-service.html"`)
-                .replace(/href="buying-guide\.html"/g, `href="${pathPrefix}buying-guide.html"`)
-                .replace(/href="payment-policy\.html"/g, `href="${pathPrefix}payment-policy.html"`)
-                .replace(/href="shipping-policy\.html"/g, `href="${pathPrefix}shipping-policy.html"`)
-                .replace(/href="return-refund-policy\.html"/g, `href="${pathPrefix}return-refund-policy.html"`)
-                .replace(/href="chinh-sach-gia\.html"/g, `href="${pathPrefix}chinh-sach-gia.html"`)
-                .replace(/href="giai-quyet-khieu-nai\.html"/g, `href="${pathPrefix}giai-quyet-khieu-nai.html"`)
+                .replace(/href="privacy-policy\.html"/g, `href="${pathPrefix}chinh-sach/privacy-policy.html"`)
+                .replace(/href="terms-of-service\.html"/g, `href="${pathPrefix}chinh-sach/terms-of-service.html"`)
+                .replace(/href="buying-guide\.html"/g, `href="${pathPrefix}chinh-sach/buying-guide.html"`)
+                .replace(/href="payment-policy\.html"/g, `href="${pathPrefix}chinh-sach/payment-policy.html"`)
+                .replace(/href="shipping-policy\.html"/g, `href="${pathPrefix}chinh-sach/shipping-policy.html"`)
+                .replace(/href="return-refund-policy\.html"/g, `href="${pathPrefix}chinh-sach/return-refund-policy.html"`)
+                .replace(/href="chinh-sach-gia\.html"/g, `href="${pathPrefix}chinh-sach/chinh-sach-gia.html"`)
+                .replace(/href="giai-quyet-khieu-nai\.html"/g, `href="${pathPrefix}chinh-sach/giai-quyet-khieu-nai.html"`)
                 .replace(/href="ho-tro-truc-tuyen\.html"/g, `href="${pathPrefix}ho-tro-truc-tuyen.html"`);
         };
 
