@@ -14,6 +14,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 import { initGeminiAssistant } from "./gemini-assistant.js";
+import { initNoelTheme, noelEngine } from "./noel-theme.js";
+export { initNoelTheme, noelEngine };
 
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -1804,6 +1806,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             const systemSnap = await getDoc(doc(db, "settings", "system"));
             if (systemSnap.exists()) {
                 const settings = systemSnap.data();
+                if (noelEngine && typeof noelEngine.applySystemSettings === 'function') {
+                    noelEngine.applySystemSettings(settings);
+                }
                 const now = new Date();
                 const countdownDate = settings.countdownDate ? settings.countdownDate.toDate() : null;
                 // Bảo trì hoạt động khi: Mode bật VÀ (không có ngày hẹn HOẶC chưa tới ngày hẹn)
@@ -2409,6 +2414,13 @@ export async function loadSharedComponents(pathPrefix = './') {
                 }
                 setupScrollToTop();
             }
+        }
+
+        // Bước 2.5: Khởi tạo giao diện Giáng Sinh / Noel & Tuyết rơi
+        try {
+            initNoelTheme(pathPrefix);
+        } catch (noelErr) {
+            console.warn("Lỗi khởi tạo Noel theme:", noelErr);
         }
 
         // Bước 3: Lắng nghe và render danh mục động từ Firestore

@@ -1,0 +1,292 @@
+/* ============================================================
+   TIỆM NHÀ GỐM - CHRISTMAS / NOEL THEME STYLES
+   Hiệu ứng lễ hội Giáng sinh: Tuyết rơi, Mũ Noel, Dây đèn trang trí
+   ============================================================ */
+
+/* 1. Snow Canvas Overlay */
+#noel-snow-canvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
+    z-index: 99998 !important;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    display: block;
+}
+
+body.noel-active #noel-snow-canvas {
+    opacity: 1;
+}
+
+/* 2. Santa Hat on Logo */
+.logo {
+    position: relative !important;
+}
+
+.noel-santa-hat {
+    position: absolute;
+    top: -14px;
+    left: 4px; /* Dời mũ sang phải để đội vừa vặn trên vòm lò gốm */
+    width: 32px;
+    height: 32px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transform: scale(0.6) rotate(-10deg);
+    transform-origin: bottom right;
+    transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='hatRed' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ff416c'/%3E%3Cstop offset='100%25' stop-color='%23c0392b'/%3E%3C/linearGradient%3E%3Cfilter id='hatShadow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeDropShadow dx='0' dy='3' stdDeviation='2' flood-opacity='0.25'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23hatShadow)'%3E%3Cpath d='M25 72 C 30 35, 68 18, 85 24 C 82 42, 70 65, 78 72 Z' fill='url(%23hatRed)'/%3E%3Cpath d='M85 24 Q 92 28, 92 38' stroke='%23c0392b' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='92' cy='40' r='10' fill='%23ffffff' filter='drop-shadow(0 2px 2px rgba(0,0,0,0.15))'/%3E%3Crect x='18' y='68' width='66' height='16' rx='8' fill='%23ffffff' filter='drop-shadow(0 2px 3px rgba(0,0,0,0.12))'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+body.noel-active .noel-santa-hat {
+    opacity: 1;
+    transform: scale(1) rotate(-14deg);
+    animation: hatSway 3.6s ease-in-out infinite alternate;
+}
+
+@keyframes hatSway {
+    0% {
+        transform: scale(1) rotate(-14deg);
+    }
+    50% {
+        transform: scale(1.03) rotate(-9deg) translateY(-1px);
+    }
+    100% {
+        transform: scale(1) rotate(-17deg);
+    }
+}
+
+/* 3. Noel Fairy Lights along Header Navbar (Giữ nguyên position của navbar trong style.css) */
+.noel-fairy-lights {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 16px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    overflow: hidden;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+body.noel-active .noel-fairy-lights {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Connecting green string wire */
+.noel-fairy-lights::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: radial-gradient(ellipse at 50% -20%, transparent 68%, #2d5a27 70%, #2d5a27 74%, transparent 76%);
+    background-size: 40px 10px;
+    opacity: 0.85;
+}
+
+.noel-light-bulb {
+    position: relative;
+    width: 8px;
+    height: 12px;
+    border-radius: 50% 50% 45% 45%;
+    margin-top: 4px;
+    transition: all 0.3s ease;
+}
+
+/* Bulb base socket */
+.noel-light-bulb::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 2px;
+    width: 4px;
+    height: 3px;
+    background: #1e391b;
+    border-radius: 1px;
+}
+
+/* 5 Holiday Colors */
+.noel-light-bulb.b-red {
+    background: #ff3344;
+    box-shadow: 0 1px 8px #ff3344, 0 0 14px rgba(255, 51, 68, 0.6);
+    animation: twinkleRed 1.8s infinite alternate ease-in-out;
+}
+
+.noel-light-bulb.b-gold {
+    background: #ffbb00;
+    box-shadow: 0 1px 8px #ffbb00, 0 0 14px rgba(255, 187, 0, 0.6);
+    animation: twinkleGold 1.5s infinite alternate ease-in-out 0.3s;
+}
+
+.noel-light-bulb.b-green {
+    background: #2ecc71;
+    box-shadow: 0 1px 8px #2ecc71, 0 0 14px rgba(46, 204, 113, 0.6);
+    animation: twinkleGreen 2s infinite alternate ease-in-out 0.6s;
+}
+
+.noel-light-bulb.b-blue {
+    background: #38bdf8;
+    box-shadow: 0 1px 8px #38bdf8, 0 0 14px rgba(56, 189, 248, 0.6);
+    animation: twinkleBlue 1.6s infinite alternate ease-in-out 0.9s;
+}
+
+.noel-light-bulb.b-warm {
+    background: #fff3c4;
+    box-shadow: 0 1px 8px #fff3c4, 0 0 14px rgba(255, 243, 196, 0.6);
+    animation: twinkleWarm 2.2s infinite alternate ease-in-out 1.2s;
+}
+
+@keyframes twinkleRed {
+    0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #ff3344); }
+    50% { opacity: 0.45; filter: none; }
+}
+
+@keyframes twinkleGold {
+    0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #ffbb00); }
+    50% { opacity: 0.35; filter: none; }
+}
+
+@keyframes twinkleGreen {
+    0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #2ecc71); }
+    50% { opacity: 0.4; filter: none; }
+}
+
+@keyframes twinkleBlue {
+    0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #38bdf8); }
+    50% { opacity: 0.35; filter: none; }
+}
+
+@keyframes twinkleWarm {
+    0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #fff3c4); }
+    50% { opacity: 0.5; filter: none; }
+}
+
+/* 4. Holiday Festive Message Banner */
+.noel-message-banner {
+    position: fixed;
+    top: 92px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    z-index: 2500;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px 8px 18px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(192, 57, 43, 0.28);
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(192, 57, 43, 0.12);
+    color: #2c3e50;
+    font-family: var(--font-sans, sans-serif);
+    font-size: 0.88rem;
+    font-weight: 500;
+    max-width: 90vw;
+    opacity: 0;
+    pointer-events: auto;
+    transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.noel-message-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.noel-message-banner .noel-banner-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    display: inline-block;
+    animation: gentleWobble 3s infinite ease-in-out;
+}
+
+@keyframes gentleWobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+}
+
+.noel-message-banner .noel-banner-text {
+    color: #1e293b;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.noel-message-banner .noel-banner-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: #94a3b8;
+    padding: 0 4px;
+    margin-left: 4px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.noel-message-banner .noel-banner-close:hover {
+    color: #e74c3c;
+}
+
+/* 5. Mobile Responsiveness */
+@media (max-width: 992px) {
+    .noel-santa-hat {
+        top: -12px;
+        left: 2px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .noel-fairy-lights {
+        height: 12px;
+        bottom: -7px;
+    }
+
+    .noel-light-bulb {
+        width: 6px;
+        height: 9px;
+    }
+
+    .noel-message-banner {
+        top: 76px;
+        padding: 6px 12px 6px 14px;
+        font-size: 0.78rem;
+        max-width: 92vw;
+    }
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .noel-santa-hat,
+    .noel-light-bulb {
+        animation: none !important;
+    }
+    
+    #noel-snow-canvas {
+        display: none !important;
+    }
+}

@@ -262,23 +262,37 @@ function updatePriceDisplay() {
     const mainPriceEl = document.getElementById('v2-main-price');
     const oldPriceEl = document.getElementById('v2-old-price');
     const salePillEl = document.getElementById('v2-sale-pill');
+    const savingRowEl = document.getElementById('v2-price-saving-row');
     const stickyPriceEl = document.getElementById('v2-sticky-price');
 
-    if (mainPriceEl) mainPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
-    if (stickyPriceEl) stickyPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
+    const formattedCurrent = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
+    const formattedBase = new Intl.NumberFormat('vi-VN').format(basePrice) + ' VND';
+
+    if (mainPriceEl) mainPriceEl.innerText = formattedCurrent;
+    if (stickyPriceEl) stickyPriceEl.innerText = formattedCurrent;
 
     if (salePercent > 0) {
         if (oldPriceEl) {
-            oldPriceEl.style.display = 'inline';
-            oldPriceEl.innerText = new Intl.NumberFormat('vi-VN').format(basePrice) + ' VND';
+            oldPriceEl.style.display = 'inline-block';
+            oldPriceEl.innerText = formattedBase;
         }
         if (salePillEl) {
-            salePillEl.style.display = 'inline';
+            salePillEl.style.display = 'inline-flex';
             salePillEl.innerText = `-${salePercent}%`;
+        }
+        if (savingRowEl) {
+            const savingAmount = basePrice - currentPrice;
+            if (savingAmount > 0) {
+                savingRowEl.style.display = 'flex';
+                savingRowEl.innerHTML = `<span>Tiết kiệm <strong>${new Intl.NumberFormat('vi-VN').format(savingAmount)} VND</strong></span>`;
+            } else {
+                savingRowEl.style.display = 'none';
+            }
         }
     } else {
         if (oldPriceEl) oldPriceEl.style.display = 'none';
         if (salePillEl) salePillEl.style.display = 'none';
+        if (savingRowEl) savingRowEl.style.display = 'none';
     }
 
     // Dynamic membership price badge
@@ -352,7 +366,13 @@ window.selectV2Combo = (idx) => {
     const label = document.getElementById('v2-selected-combo-label');
     if (label) label.innerText = selectedComboVariant;
 
-    document.querySelectorAll('.v2-combo-card').forEach((el, i) => {
+    const soldDisplay = document.getElementById('v2-sold-display');
+    if (soldDisplay && currentProductData) {
+        const vSold = cv.sold !== undefined ? cv.sold : (currentProductData.sold || 0);
+        soldDisplay.innerText = `Đã bán ${vSold} (${selectedComboVariant})`;
+    }
+
+    document.querySelectorAll('.v2-combo-chip, .v2-combo-card').forEach((el, i) => {
         el.classList.toggle('active', i === idx);
     });
 
@@ -579,35 +599,63 @@ async function fetchProductDetailV2() {
 
                 <!-- Guarantee & Safe Delivery Strip (Balanced with left side) -->
                 <div class="v2-guarantee-card">
-                    <div class="v2-guarantee-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        Cam kết an tâm khi nhận hàng tại Tiệm Nhà Gốm
+                    <div class="v2-guarantee-header">
+                        <div class="v2-guarantee-title">
+                            <span class="v2-guarantee-title-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                            </span>
+                            <span>Cam kết an tâm khi nhận hàng tại Tiệm Nhà Gốm</span>
+                        </div>
                     </div>
                     <div class="v2-guarantee-grid">
                         <div class="v2-guarantee-item">
-                            <span style="font-size: 1.2rem;">📦</span>
-                            <div>
+                            <div class="v2-guarantee-icon-box">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="v2-guarantee-text">
                                 <strong>Đóng gói 5 lớp chuẩn gốm</strong>
                                 <span>Bọt khí chống sốc & mút định hình đa tầng</span>
                             </div>
                         </div>
                         <div class="v2-guarantee-item">
-                            <span style="font-size: 1.2rem;">🛡️</span>
-                            <div>
+                            <div class="v2-guarantee-icon-box">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <polyline points="9 12 11 14 15 10"></polyline>
+                                </svg>
+                            </div>
+                            <div class="v2-guarantee-text">
                                 <strong>Bảo hiểm bể vỡ 100%</strong>
                                 <span>Đổi mới lập tức nếu nứt vỡ trong vận chuyển</span>
                             </div>
                         </div>
                         <div class="v2-guarantee-item">
-                            <span style="font-size: 1.2rem;">🔍</span>
-                            <div>
+                            <div class="v2-guarantee-icon-box">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <polyline points="8.5 11 10.5 13 14 9.5"></polyline>
+                                </svg>
+                            </div>
+                            <div class="v2-guarantee-text">
                                 <strong>Đồng kiểm khi nhận</strong>
                                 <span>Mở kiểm tra hàng ưng ý mới thanh toán</span>
                             </div>
                         </div>
                         <div class="v2-guarantee-item">
-                            <span style="font-size: 1.2rem;">⚡</span>
-                            <div>
+                            <div class="v2-guarantee-icon-box">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="3" width="15" height="13" rx="1"></rect>
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                                </svg>
+                            </div>
+                            <div class="v2-guarantee-text">
                                 <strong>Giao nhanh hỏa tốc 2H</strong>
                                 <span>Áp dụng nội thành TP. Hồ Chí Minh</span>
                             </div>
@@ -625,18 +673,20 @@ async function fetchProductDetailV2() {
 
                 <h1 class="v2-product-title">${escapeHTML(p.name)}</h1>
 
-                <div class="v2-rating-sold-row">
-                    <div class="v2-stars" title="Đánh giá 5 sao">★★★★★</div>
-                    <span>(5.0)</span>
-                    <span>&bull;</span>
-                    <span>Đã bán <strong>${p.sold || 0}</strong> sản phẩm</span>
+                <div class="v2-sold-row">
+                    <span id="v2-sold-display" class="v2-sold-badge">Đã bán ${p.sold || 0}${selectedComboVariant ? ` (${selectedComboVariant})` : ''}</span>
                 </div>
 
                 <!-- Price Box -->
                 <div class="v2-price-container">
-                    <span id="v2-main-price" class="v2-main-price">0 VND</span>
-                    <span id="v2-old-price" class="v2-old-price" style="display: none;">0 VND</span>
-                    <span id="v2-sale-pill" class="v2-sale-pill" style="display: none;">-0%</span>
+                    <div class="v2-price-main-row">
+                        <span id="v2-main-price" class="v2-main-price">0 VND</span>
+                        <div class="v2-price-sub-wrap">
+                            <span id="v2-old-price" class="v2-old-price" style="display: none;">0 VND</span>
+                            <span id="v2-sale-pill" class="v2-sale-pill" style="display: none;">-0%</span>
+                        </div>
+                    </div>
+                    <div id="v2-price-saving-row" class="v2-price-saving-row" style="display: none;"></div>
                 </div>
 
                 <!-- Member VIP Price Badge -->
@@ -682,18 +732,19 @@ async function fetchProductDetailV2() {
                 ${p.isCombo && p.comboVariants?.length > 1 ? `
                     <div class="v2-variants-group">
                         <div class="v2-variant-title">
-                            Phân loại Combo: <span id="v2-selected-combo-label">${escapeHTML(p.comboVariants[0].name || 'Combo 1')}</span>
+                            PHÂN LOẠI COMBO: <span id="v2-selected-combo-label">${escapeHTML(selectedComboVariant || p.comboVariants[0].name || 'Combo 1')}</span>
                         </div>
-                        <div class="v2-combo-cards">
-                            ${p.comboVariants.map((v, i) => `
-                                <div class="v2-combo-card ${i === 0 ? 'active' : ''}" onclick="window.selectV2Combo(${i})">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; border-radius: 4px; object-fit: cover;">` : ''}
-                                        <span style="font-weight: 600; font-size: 0.88rem;">${escapeHTML(v.name || `Combo ${i + 1}`)}</span>
+                        <div class="v2-combo-chips">
+                            ${p.comboVariants.map((v, i) => {
+                                const cName = v.name || `Combo ${i + 1}`;
+                                const isActive = cName === selectedComboVariant;
+                                return `
+                                    <div class="v2-combo-chip ${isActive ? 'active' : ''}" onclick="window.selectV2Combo(${i})">
+                                        ${v.imageUrl ? `<img src="${v.imageUrl}" alt="${escapeHTML(cName)}">` : ''}
+                                        <span>${escapeHTML(cName)}</span>
                                     </div>
-                                    <span style="font-size: 0.82rem; color: #000000; font-weight: 700;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + 'đ' : ''}</span>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -930,11 +981,10 @@ async function fetchRelatedProductsV2(currentId, category) {
         const q = query(collection(db, "products"), where("category", "==", category), limit(9));
         const snap = await getDocs(q);
         let html = '';
-        let count = 0;
+        const targetLink = window.location.pathname.includes('detail-test.html') ? '/product/detail-test.html' : '../product/index.html';
         snap.forEach(d => {
             if (d.id !== currentId && count < 8 && !d.data().isHidden && !d.data().isOnlyEvent) {
-                // Point to detail-test.html for seamless test navigation!
-                html += renderProductCardWithVariants(d.data(), d.id, [], '/product/detail-test.html');
+                html += renderProductCardWithVariants(d.data(), d.id, [], targetLink);
                 count++;
             }
         });
@@ -961,10 +1011,11 @@ async function fetchRecentlyViewedV2(currentId) {
 
     try {
         let html = '';
+        const targetLink = window.location.pathname.includes('detail-test.html') ? '/product/detail-test.html' : '../product/index.html';
         for (const id of ids) {
             const snap = await getDoc(doc(db, "products", id));
             if (snap.exists() && !snap.data().isHidden) {
-                html += renderProductCardWithVariants(snap.data(), id, [], '/product/detail-test.html');
+                html += renderProductCardWithVariants(snap.data(), id, [], targetLink);
             }
         }
         if (html) {

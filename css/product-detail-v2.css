@@ -7,7 +7,7 @@
   font-family: 'Elle Gabor Std Light';
   src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff'),
        url('../Asset/fonts/ElleGaborStd-Light.ttf') format('truetype');
-  font-weight: 100 900;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -16,7 +16,7 @@
   font-family: 'ellegaborstd';
   src: url('../Asset/fonts/ElleGaborStd-Light.woff') format('woff'),
        url('../Asset/fonts/ElleGaborStd-Light.ttf') format('truetype');
-  font-weight: 100 900;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -46,15 +46,15 @@
   --v2-radius-lg: 12px;
   --v2-radius-full: 9999px;
 
-  --v2-font-serif: 'Elle Gabor Std Light', 'ellegaborstd', Georgia, serif;
-  --v2-font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --v2-font-serif: 'Elle Gabor Std Light', serif;
+  --v2-font-sans: 'Elle Gabor Std Light', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body.detail-v2-body {
+  font-family: var(--v2-font-serif);
+  font-weight: 600;
   background-color: var(--v2-bg-main);
   color: var(--v2-text-main);
-  font-family: var(--v2-font-serif);
-  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
@@ -262,40 +262,49 @@ body.detail-v2-body {
   top: 14px;
   left: 14px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
   z-index: 5;
   pointer-events: none;
 }
 
 .v2-pill-badge {
-  font-family: var(--v2-font-sans);
+  font-family: 'Elle Gabor Std Light', serif;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
 }
 
 .v2-pill-badge.hot {
-  background: #fcd9c6;
-  color: #9c3615;
-  border: 1px solid rgba(156, 54, 21, 0.2);
+  background: rgba(254, 243, 199, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .v2-pill-badge.new {
-  background: #d6e8dc;
-  color: #1e4b2d;
-  border: 1px solid rgba(30, 75, 45, 0.2);
+  background: rgba(220, 252, 231, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #166534;
+  border: 1px solid rgba(22, 101, 52, 0.3);
 }
 
 .v2-pill-badge.sale {
-  background: var(--v2-sale-red);
-  color: #fff;
+  background: #c0392b;
+  color: #ffffff;
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  box-shadow: 0 3px 10px rgba(192, 57, 43, 0.3);
 }
 
 .v2-img-counter {
@@ -402,50 +411,97 @@ body.detail-v2-body {
 /* Guarantee Card under gallery */
 .v2-guarantee-card {
   background: #ffffff;
-  border: 1px solid var(--v2-border);
-  border-radius: var(--v2-radius-md);
-  padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  border: 1px solid #ebe7df;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  margin-top: 18px;
+}
+
+.v2-guarantee-header {
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px dashed #e8e3d9;
 }
 
 .v2-guarantee-title {
-  font-family: var(--v2-font-sans);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #1e3a2b;
+  font-family: var(--v2-font-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
+}
+
+.v2-guarantee-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f4efe6;
+  color: #1a1a1a;
+  flex-shrink: 0;
 }
 
 .v2-guarantee-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px 18px;
 }
 
 @media (max-width: 600px) {
   .v2-guarantee-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
 .v2-guarantee-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  font-family: var(--v2-font-sans);
-  font-size: 0.8rem;
-  color: #444;
-  line-height: 1.4;
+  gap: 12px;
+  padding: 2px 0;
 }
 
-.v2-guarantee-item strong {
-  color: var(--v2-text-black);
-  display: block;
+.v2-guarantee-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f7f5f0;
+  border: 1px solid #ede8de;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.v2-guarantee-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.v2-guarantee-text strong {
+  font-family: var(--v2-font-serif);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #000000;
+  line-height: 1.35;
+}
+
+.v2-guarantee-text span {
+  font-family: var(--v2-font-serif);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #666666;
+  line-height: 1.4;
 }
 
 /* ==========================================================================
@@ -484,74 +540,150 @@ body.detail-v2-body {
 }
 
 .v2-sku-text {
-  font-family: var(--v2-font-serif);
-  font-size: 0.9rem;
+  font-family: var(--v2-font-sans);
+  font-size: 0.75rem;
   font-weight: 400;
-  color: var(--v2-text-light);
-  letter-spacing: 1px;
+  color: #aaaaaa;
+  letter-spacing: 2px;
 }
 
 .v2-product-title {
   font-family: var(--v2-font-serif);
   font-size: 2.2rem;
-  font-weight: 400;
-  line-height: 1.25;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--v2-text-black);
-  margin: 0;
+  margin: 0 0 1.5rem 0;
 }
 
-.v2-rating-sold-row {
+.v2-sold-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-family: var(--v2-font-serif);
-  font-size: 0.95rem;
+  gap: 12px;
+  font-family: var(--v2-font-sans);
+  font-size: 0.85rem;
+  color: #888888;
+  margin: 0 0 0.8rem 0;
   font-weight: 400;
-  color: var(--v2-text-muted);
 }
 
-.v2-stars {
-  color: #f59e0b;
+.v2-sold-badge {
   display: inline-flex;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-family: var(--v2-font-sans);
+  font-weight: 400;
+  color: #888888;
+  font-size: 0.85rem;
 }
 
-/* Price Box - Clean Original Styling */
+.v2-sold-badge strong {
+  color: inherit;
+  font-weight: 400;
+}
+
+.v2-sold-badge svg {
+  color: #888888;
+}
+
+.v2-stock-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--v2-font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.v2-stock-status.in-stock {
+  color: #16a34a;
+}
+
+.v2-stock-status.out-of-stock {
+  color: #dc2626;
+}
+
+.v2-stock-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Price Box - Exact Match with .product-price-row in style.css */
 .v2-price-container {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0 0 1.5rem 0;
+}
+
+.v2-price-main-row {
+  display: flex;
   align-items: baseline;
-  gap: 14px;
-  padding: 12px 16px;
-  background: var(--v2-bg-soft);
-  border-radius: var(--v2-radius-sm);
-  border: 1px solid var(--v2-border);
+  gap: 12px 16px;
   flex-wrap: wrap;
+  margin-bottom: 0.8rem;
 }
 
 .v2-main-price {
   font-size: 2.2rem;
-  font-weight: 400;
-  color: var(--v2-text-black);
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--v2-text-black, #1a1a1a);
   font-family: var(--v2-font-serif);
-  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.v2-price-sub-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px 16px;
 }
 
 .v2-old-price {
   font-family: var(--v2-font-serif);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 400;
-  color: #999;
+  color: #999999;
   text-decoration: line-through;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .v2-sale-pill {
-  font-family: var(--v2-font-serif);
-  font-size: 0.9rem;
-  font-weight: 400;
-  background: var(--v2-sale-red-bg);
-  color: var(--v2-sale-red);
+  font-family: var(--v2-font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #c0392b;
+  white-space: nowrap;
+  background: rgba(192, 57, 43, 0.08);
   padding: 2px 8px;
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.v2-price-saving-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #15803d;
+  font-family: var(--v2-font-sans);
+  font-weight: 400;
+}
+
+.v2-price-saving-row strong {
+  font-weight: 700;
+  color: #166534;
 }
 
 /* Membership dynamic price badge */
@@ -589,20 +721,20 @@ body.detail-v2-body {
 }
 
 .v2-variant-title {
-  font-family: var(--v2-font-serif);
-  font-size: 0.95rem;
-  font-weight: 400;
+  font-family: var(--v2-font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #222;
-  margin-bottom: 4px;
+  color: #444444;
+  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
 }
 
 .v2-variant-title span {
-  font-family: var(--v2-font-serif);
-  font-weight: 400;
+  font-family: var(--v2-font-sans);
+  font-weight: 500;
   color: var(--v2-text-black);
   text-transform: uppercase;
 }
@@ -622,10 +754,10 @@ body.detail-v2-body {
   border-radius: 20px;
   cursor: pointer;
   background: #ffffff;
-  font-family: var(--v2-font-serif);
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: #333;
+  font-family: var(--v2-font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333333;
   transition: all 0.2s ease;
 }
 
@@ -643,9 +775,9 @@ body.detail-v2-body {
 
 .v2-color-item.active {
   border-color: #000000 !important;
-  background: #f8f9fa !important;
+  background: #ffffff !important;
   color: #000000 !important;
-  font-weight: 400;
+  font-weight: 600;
   box-shadow: 0 0 0 1px #000000;
 }
 
@@ -660,10 +792,10 @@ body.detail-v2-body {
   border: 1px solid #ddd;
   border-radius: 4px;
   background: #ffffff;
-  font-family: var(--v2-font-serif);
-  font-size: 0.95rem;
-  color: #333;
-  font-weight: 400;
+  font-family: var(--v2-font-sans);
+  font-size: 0.85rem;
+  color: #333333;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -676,37 +808,56 @@ body.detail-v2-body {
   background: #f8f9fa !important;
   color: #000000 !important;
   border-color: #000000 !important;
-  font-weight: 400;
+  font-weight: 600;
   box-shadow: 0 0 0 1px #000000;
 }
 
-/* Combo Selector */
+/* Combo Selector - Pill Chips matching original detail page */
+.v2-combo-chips,
 .v2-combo-cards {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
+.v2-combo-chip,
 .v2-combo-card {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 6px 14px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 20px;
   background: #ffffff;
   cursor: pointer;
+  font-family: var(--v2-font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333333;
   transition: all 0.2s ease;
 }
 
+.v2-combo-chip:hover,
 .v2-combo-card:hover {
   border-color: #000000;
 }
 
+.v2-combo-chip.active,
 .v2-combo-card.active {
-  border-color: #000000 !important;
-  background: #f8f9fa !important;
-  box-shadow: 0 0 0 1px #000000;
+  border: 2px solid #000000 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.v2-combo-chip img,
+.v2-combo-card img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 /* Stock status */
@@ -808,12 +959,12 @@ body.detail-v2-body {
   background: var(--v2-btn-dark) !important;
   color: #ffffff !important;
   border: 1px solid var(--v2-btn-dark) !important;
-  border-radius: 6px !important;
-  font-family: var(--v2-font-sans);
-  font-size: 0.92rem !important;
+  border-radius: 4px !important;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1rem !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
-  letter-spacing: 1px !important;
+  letter-spacing: 0.5px !important;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -835,10 +986,10 @@ body.detail-v2-body {
   background: #ffffff !important;
   color: var(--v2-btn-outline-text) !important;
   border: 1.5px solid var(--v2-btn-outline-border) !important;
-  border-radius: 6px !important;
-  font-family: var(--v2-font-sans);
-  font-size: 0.88rem !important;
-  font-weight: 700 !important;
+  border-radius: 4px !important;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -928,7 +1079,7 @@ body.detail-v2-body {
   padding: 14px 22px;
   font-family: var(--v2-font-serif);
   font-size: 1.15rem;
-  font-weight: 400;
+  font-weight: 600;
   color: #777;
   background: transparent;
   border: none;
@@ -969,13 +1120,14 @@ body.detail-v2-body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Rich Description styling */
+/* Rich Description styling - Matching .product-description in style.css */
 .v2-rich-text {
   max-width: 900px;
   font-family: var(--v2-font-serif);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   line-height: 1.8;
-  color: #333333;
+  color: #555555;
 }
 
 .v2-rich-text img {
@@ -987,6 +1139,7 @@ body.detail-v2-body {
 
 .v2-rich-text h2, .v2-rich-text h3 {
   font-family: var(--v2-font-serif);
+  font-weight: 600;
   color: var(--v2-text-black);
   margin-top: 28px;
   margin-bottom: 12px;
@@ -1081,22 +1234,28 @@ body.detail-v2-body {
 
 .v2-sticky-info {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .v2-sticky-name {
-  font-family: var(--v2-font-serif);
-  font-size: 0.95rem;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: var(--v2-text-black);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .v2-sticky-price {
-  font-family: var(--v2-font-sans);
-  font-size: 0.95rem;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--v2-text-black);
+  line-height: 1.2;
 }
 
 .v2-sticky-actions {
@@ -1112,10 +1271,18 @@ body.detail-v2-body {
   color: #000000;
   border: 1.5px solid #000000;
   border-radius: 4px;
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.v2-sticky-btn-cart:hover {
+  background: #f5f5f5;
 }
 
 .v2-sticky-btn-buy {
@@ -1124,11 +1291,21 @@ body.detail-v2-body {
   color: #ffffff;
   border: 1px solid #000000;
   border-radius: 4px;
-  font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-family: var(--v2-font-serif) !important;
+  font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.v2-sticky-btn-buy:hover {
+  background: #2c3e50;
+  border-color: #2c3e50;
 }
 
 /* Recommendations Section */
@@ -1224,4 +1401,66 @@ body.detail-v2-body {
 
 .v2-lightbox-close:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   Product Cards Typography (Match other pages 100%)
+   ========================================================================== */
+.product-card,
+.product-card * {
+  font-family: var(--v2-font-serif) !important;
+}
+
+.product-card-info h3 {
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1rem;
+  font-weight: 600 !important;
+  color: var(--text-black);
+  line-height: 1.3;
+}
+
+.product-card .price {
+  font-family: var(--v2-font-serif) !important;
+  font-size: 1.05rem;
+  font-weight: 700 !important;
+  color: var(--text-black);
+}
+
+.product-card .price .current-price {
+  font-family: var(--v2-font-serif) !important;
+  font-weight: 700 !important;
+  color: #e53935;
+}
+
+.product-card .price .old-price {
+  font-family: var(--v2-font-serif) !important;
+  font-size: 0.82rem;
+  font-weight: 400 !important;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.product-sku-row {
+  font-family: var(--v2-font-serif) !important;
+}
+
+.product-sku-row .product-sku {
+  font-family: var(--v2-font-serif) !important;
+  font-size: 0.72rem;
+  color: #888888;
+}
+
+.product-sku-row .product-sold-mini {
+  font-family: var(--v2-font-serif) !important;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.product-card .discount-badge-circle {
+  font-family: var(--v2-font-serif) !important;
+}
+
+.product-card .express-2h-badge {
+  font-family: var(--v2-font-serif) !important;
 }

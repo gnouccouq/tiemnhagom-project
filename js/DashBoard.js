@@ -372,6 +372,7 @@ function setupAdminTabs() {
 
             if (targetId === 'maintenance-section') {
                 initMaintenanceSettings();
+                initHolidaySettings();
             }
 
             if (targetId === 'admin-account-section') {
@@ -12626,6 +12627,67 @@ async function initMaintenanceSettings() {
     };
 
     loadSettings(); // Load cài đặt khi tab được mở
+}
+
+// --- Quản lý Cài đặt Giao diện Noel & Lễ Hội ---
+async function initHolidaySettings() {
+    const toggle = document.getElementById('holiday-active-toggle');
+    const statusText = document.getElementById('holiday-status-text');
+    const densitySelect = document.getElementById('holiday-snow-density');
+    const lightsToggle = document.getElementById('holiday-show-lights');
+    const messageInput = document.getElementById('holiday-message');
+    const form = document.getElementById('holiday-settings-form');
+
+    if (!toggle || !form || !db) return;
+
+    const systemRef = doc(db, "settings", "system");
+
+    // 1. Tải cài đặt hiện tại
+    const loadHolidaySettings = async () => {
+        try {
+            const snap = await getDoc(systemRef);
+            if (snap.exists()) {
+                const settings = snap.data();
+                const hs = settings.holidaySeason || {};
+                const isActive = hs.active !== false; // Mặc định true
+                toggle.checked = isActive;
+                statusText.innerText = isActive ? 'ĐANG BẬT' : 'ĐANG TẮT';
+                statusText.style.color = isActive ? '#27ae60' : '#e74c3c';
+                densitySelect.value = hs.snowDensity || 'medium';
+                lightsToggle.checked = hs.showLights !== false;
+                messageInput.value = hs.message || '';
+            }
+        } catch (err) {
+            console.error("Lỗi tải cài đặt lễ hội:", err);
+        }
+    };
+
+    toggle.addEventListener('change', () => {
+        statusText.innerText = toggle.checked ? 'ĐANG BẬT' : 'ĐANG TẮT';
+        statusText.style.color = toggle.checked ? '#27ae60' : '#e74c3c';
+    });
+
+    // 2. Lưu cài đặt
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await setDoc(systemRef, {
+                holidaySeason: {
+                    active: toggle.checked,
+                    snowDensity: densitySelect.value,
+                    showLights: lightsToggle.checked,
+                    message: messageInput.value.trim(),
+                    updatedAt: serverTimestamp(),
+                    updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
+                }
+            }, { merge: true });
+            showToast("Đã lưu cài đặt giao diện Noel thành công!");
+        } catch (err) {
+            showToast("Lỗi lưu cài đặt Noel: " + err.message, "error");
+        }
+    };
+
+    loadHolidaySettings();
 }
 
 // Hàm đổ dữ liệu vào dropdown chọn nhóm đồng giá trong form sản phẩm
