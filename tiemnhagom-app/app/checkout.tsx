@@ -1,0 +1,508 @@
+// app/checkout.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Header } from '../src/components/Header';
+import { AddressPicker } from '../src/components/AddressPicker';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { useCart } from '../src/context/CartContext';
+import { useAuth } from '../src/context/AuthContext';
+import { createOrder } from '../src/services/orderService';
+import { formatCurrency } from '../src/utils/format';
+
+export default function CheckoutScreen() {
+  const router = useRouter();
+  const { cart, subtotal, shippingFee, discountAmount, totalAmount, appliedCoupon, clearCart, shippingMethod } = useCart();
+  const { user, userProfile } = useAuth();
+
+  const [fullName, setFullName] = useState(userProfile?.displayName || '');
+  const [phone, setPhone] = useState(userProfile?.phone || '');
+  const [streetAddress, setStreetAddress] = useState(userProfile?.streetAddress || userProfile?.address || '');
+  const [locationName, setLocationName] = useState(userProfile?.locationName || '');
+  const [provinceCode, setProvinceCode] = useState<string | undefined>(userProfile?.provinceCode);
+  const [wardCode, setWardCode] = useState<string | undefined>(userProfile?.wardCode);
+  const [addressPickerVisible, setAddressPickerVisible] = useState(false);
+  const [note, setNote] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'banking'>('cod');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmitOrder = async () => {
+    if (!fullName.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập họ và tên người nhận.');
+      return;
+    }
+    if (!phone.trim() || phone.trim().length < 9) {
+      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại hợp lệ để giao hàng.');
+      return;
+    }
+    if (!streetAddress.trim() || !locationName) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ địa chỉ nhận hàng (Tỉnh/Thành và Số nhà).');
+      return;
+    }
+    if (cart.length === 0) {
+      Alert.alert('Lỗi', 'Giỏ hàng đang trống.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const orderPayload = {
+        userId: user ? user.uid : 'guest',
+        customerName: fullName.trim(),
+        shippingAddress: {
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          address: `${streetAddress.trim()}, ${locationName}`,
+        },
+        items: cart,
+        subtotal,
+        shippingFee,
+        discountAmount,
+        couponCode: appliedCoupon || undefined,
+        totalAmount,
+        paymentMethod,
+        note: note.trim() || undefined,
+      };
+
+      const result = await createOrder(orderPayload);
+      if (result.success && result.orderCode) {
+        clearCart();
+        router.replace({
+          pathname: '/order-success',
+          params: {
+            orderCode: result.orderCode,
+            totalAmount: totalAmount.toString(),
+            customerName: fullName.trim(),
+            paymentMethod,
+          },
+        });
+      } else {
+        Alert.alert('Lỗi', result.error || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+      }
+    } catch (e: any) {
+      Alert.alert('Lỗi', e.message || 'Đã xảy ra sự cố trong quá trình đặt hàng.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <Header title="Thanh toán" showBack showCart={false} showSearch={false} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Recipient Information */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="location-outline" size={20} color={Colors.primary} />
+            <Text style={styles.cardTitle}>Thông tin người nhận</Text>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Họ và tên *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nguyễn Văn A"
+              placeholderTextColor={Colors.textMuted}
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Số điện thoại *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="0901234567"
+              placeholderTextColor={Colors.textMuted}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Tỉnh / Thành phố, Phường / Xã *</Text>
+            <TouchableOpacity
+              style={styles.locationSelector}
+              onPress={() => setAddressPickerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.locationText, !locationName && styles.locationPlaceholder]}>
+                {locationName || 'Chọn khu vực giao hàng...'}
+              </Text>
+              <Ionicons name="chevron-down" size={20} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Số nhà, Tên đường *</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Nhập số nhà, tên đường, tòa nhà..."
+              placeholderTextColor={Colors.textMuted}
+              value={streetAddress}
+              onChangeText={setStreetAddress}
+              multiline
+              numberOfLines={2}
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Ghi chú đơn hàng (nếu có)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="VD: Giao giờ hành chính, gọi trước khi đến..."
+              placeholderTextColor={Colors.textMuted}
+              value={note}
+              onChangeText={setNote}
+            />
+          </View>
+        </View>
+
+        {/* Payment Method */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="card-outline" size={20} color={Colors.primary} />
+            <Text style={styles.cardTitle}>Phương thức thanh toán</Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.paymentOption, paymentMethod === 'cod' && styles.paymentOptionActive]}
+            onPress={() => setPaymentMethod('cod')}
+          >
+            <Ionicons
+              name={paymentMethod === 'cod' ? 'radio-button-on' : 'radio-button-off'}
+              size={18}
+              color={paymentMethod === 'cod' ? Colors.primary : Colors.textMuted}
+            />
+            <View style={styles.paymentTextWrap}>
+              <Text style={styles.paymentName}>Thanh toán khi nhận hàng (COD)</Text>
+              <Text style={styles.paymentDesc}>Nhận hàng, kiểm tra đồ gốm và thanh toán tiền mặt</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.paymentOption, paymentMethod === 'banking' && styles.paymentOptionActive]}
+            onPress={() => setPaymentMethod('banking')}
+          >
+            <Ionicons
+              name={paymentMethod === 'banking' ? 'radio-button-on' : 'radio-button-off'}
+              size={18}
+              color={paymentMethod === 'banking' ? Colors.primary : Colors.textMuted}
+            />
+            <View style={styles.paymentTextWrap}>
+              <Text style={styles.paymentName}>Chuyển khoản VietQR</Text>
+              <Text style={styles.paymentDesc}>Quét mã QR qua app ngân hàng tiện lợi và bảo mật</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Order Items Preview */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Đơn hàng ({cart.length} món)</Text>
+          <View style={styles.itemsWrap}>
+            {cart.map((item) => (
+              <View key={item.id} style={styles.itemRow}>
+                <Text style={styles.itemName} numberOfLines={1}>
+                  {item.name} {item.variant?.name ? `(${item.variant.name})` : ''}
+                </Text>
+                <Text style={styles.itemDetail}>
+                  x{item.quantity} • {formatCurrency(item.price * item.quantity)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Summary Card */}
+        <View style={styles.card}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tạm tính:</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Phí vận chuyển:</Text>
+            <Text style={styles.summaryValue}>
+              {shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee)}
+            </Text>
+          </View>
+          {discountAmount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>Giảm giá:</Text>
+              <Text style={[styles.summaryValue, { color: Colors.badgeSale }]}>
+                -{formatCurrency(discountAmount)}
+              </Text>
+            </View>
+          )}
+          <View style={styles.divider} />
+          <View style={styles.summaryRowTotal}>
+            <Text style={styles.totalLabel}>Tổng cần thanh toán:</Text>
+            <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <AddressPicker
+        visible={addressPickerVisible}
+        onClose={() => setAddressPickerVisible(false)}
+        initialProvinceCode={provinceCode}
+        initialWardCode={wardCode}
+        onSelect={(prov, ward) => {
+          setProvinceCode(prov.province_code);
+          setWardCode(ward.ward_code);
+          setLocationName(`${ward.name}, ${prov.name}`);
+        }}
+      />
+
+      {/* Submit Button */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomTotal}>
+          <Text style={styles.bottomTotalLabel}>Tổng thanh toán</Text>
+          <Text style={styles.bottomTotalValue}>{formatCurrency(totalAmount)}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+          onPress={handleSubmitOrder}
+          disabled={loading}
+          activeOpacity={0.88}
+        >
+          {loading ? (
+            <ActivityIndicator color={Colors.textInverse} />
+          ) : (
+            <Text style={styles.submitBtnText}>Xác nhận đặt hàng</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: 110,
+  },
+  card: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...Shadows.sm,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  cardTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.base,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  formGroup: {
+    marginBottom: Spacing.sm,
+  },
+  label: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  input: {
+    fontFamily: 'ElleGaborStd',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: Spacing.md,
+    height: 42,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+  },
+  textArea: {
+    height: 60,
+    paddingTop: Spacing.sm,
+    textAlignVertical: 'top',
+  },
+  locationSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: Spacing.md,
+    height: 42,
+  },
+  locationText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
+    flex: 1,
+  },
+  locationPlaceholder: {
+    color: Colors.textMuted,
+  },
+  paymentOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderLight,
+    gap: Spacing.sm,
+  },
+  paymentOptionActive: {
+    backgroundColor: '#FAF5F1',
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: 6,
+  },
+  paymentTextWrap: {
+    flex: 1,
+  },
+  paymentName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  paymentDesc: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  itemsWrap: {
+    marginTop: Spacing.sm,
+    gap: 6,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textPrimary,
+    flex: 1,
+    marginRight: 6,
+  },
+  itemDetail: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  summaryLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+  },
+  summaryValue: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.divider,
+    marginVertical: Spacing.sm,
+  },
+  summaryRowTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.base,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  totalValue: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.cardBackground,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    ...Shadows.md,
+  },
+  bottomTotal: {
+    flex: 1,
+  },
+  bottomTotalLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textMuted,
+  },
+  bottomTotalValue: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  submitBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    minWidth: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
+  },
+  submitBtnText: {
+    fontFamily: 'ElleGaborStd',
+    color: Colors.textInverse,
+    fontWeight: '700',
+    fontSize: Typography.fontSize.base,
+  },
+});

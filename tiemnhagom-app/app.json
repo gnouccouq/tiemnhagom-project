@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Tiệm Nhà Gốm",
+    "slug": "tiemnhagom",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/LOGO.jpg",
+    "scheme": "tiemnhagom",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#9C7156",
+    "splash": {
+      "image": "./assets/images/LOGO.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#9C7156"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.tiemnhagom.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ứng dụng cần quyền truy cập camera để bạn có thể chụp ảnh trực tiếp làm ảnh đại diện cho tài khoản cá nhân.",
+        "NSPhotoLibraryUsageDescription": "Ứng dụng cần quyền truy cập thư viện ảnh để bạn có thể tải lên ảnh đại diện cá nhân hoặc gửi ảnh minh chứng lỗi sản phẩm cho bộ phận hỗ trợ."
+      }
+    },
+    "android": {
+      "package": "vn.tiemnhagom.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#9C7156",
+        "foregroundImage": "./assets/images/LOGO.jpg"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/LOGO.jpg"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/LOGO.jpg",
+          "resizeMode": "contain",
+          "backgroundColor": "#9C7156"
+        }
+      ],
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

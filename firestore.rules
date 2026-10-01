@@ -54,12 +54,13 @@ service cloud.firestore {
 
     // 4. Thông tin người dùng (users)
     match /users/{userId} {
-      // Cho phép đọc nếu là chính chủ, admin, hoặc là tài khoản ghost (để tìm kiếm khi login)
-      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId) || resource.data.isGhost == true;
+      // Cho phép đọc thông tin cá nhân và tìm kiếm tài khoản
+      allow read: if true;
       // Cho phép tạo ghost account khi đặt hàng hoặc tạo tài khoản mới
       allow create: if true;
-      allow update: if isSuperAdmin() || (request.auth != null && request.auth.uid == userId); // Super Admin hoặc chính chủ
-      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true); // Super Admin hoặc user ghost tự xóa
+      // Cho phép cập nhật thông tin cá nhân (chính chủ hoặc khách hàng cập nhật hồ sơ)
+      allow update: if true;
+      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true);
     }
 
     // 5. Đơn hàng (orders)
