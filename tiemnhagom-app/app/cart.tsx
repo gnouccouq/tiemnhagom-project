@@ -1,4 +1,4 @@
-// app/(tabs)/cart.tsx
+// app/cart.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -13,12 +13,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Header } from '../../src/components/Header';
-import { CartItemCard } from '../../src/components/CartItemCard';
-import { EmptyState } from '../../src/components/EmptyState';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
-import { useCart } from '../../src/context/CartContext';
-import { formatCurrency } from '../../src/utils/format';
+import { Header } from '../src/components/Header';
+import { CartItemCard } from '../src/components/CartItemCard';
+import { EmptyState } from '../src/components/EmptyState';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { useCart } from '../src/context/CartContext';
+import { formatCurrency } from '../src/utils/format';
 
 export default function CartScreen() {
   const router = useRouter();

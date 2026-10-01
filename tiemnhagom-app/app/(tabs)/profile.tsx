@@ -26,6 +26,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useWishlist } from '../../src/context/WishlistContext';
 import { getUserOrders } from '../../src/services/orderService';
 import { formatCurrency } from '../../src/utils/format';
+import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings, Language, FontSize } from '../../src/context/SettingsContext';
 
 // Cấu hình hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
@@ -182,7 +183,7 @@ export default function ProfileScreen() {
   };
 
   const openWebsite = () => {
-    Linking.openURL('https://tiemnhagom.vn').catch(console.warn);
+    openWebLink('https://tiemnhagom.vn', 'Tiệm Nhà Gốm');
   };
 
   return (
@@ -252,7 +253,7 @@ export default function ProfileScreen() {
         {(user || userProfile) && (
           <View style={styles.infoCard}>
             <View style={styles.infoHeaderRow}>
-              <Text style={styles.sectionHeading}>Thông Tin Tài Khoản</Text>
+              <Text style={styles.menuGroupHeader}>Thông tin tài khoản</Text>
               <TouchableOpacity style={styles.editPillBtn} onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
                 <Ionicons name="create-outline" size={14} color="#18181B" />
                 <Text style={styles.editPillText}>Chỉnh sửa</Text>
@@ -311,6 +312,7 @@ export default function ProfileScreen() {
 
         {/* 3. ĐIỀU HƯỚNG NHANH (Orders, Favorites, Cart) */}
         <View style={styles.menuCard}>
+          <Text style={styles.menuGroupHeader}>Đơn hàng của tôi</Text>
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/(tabs)/orders')}
@@ -331,7 +333,7 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.menuLeft}>
-              <Ionicons name="heart-outline" size={20} color="#C86432" />
+              <Ionicons name="heart-outline" size={20} color="#2D3B34" />
               <Text style={styles.menuTitle}>Sản phẩm yêu thích</Text>
             </View>
             <View style={styles.menuRight}>
@@ -386,7 +388,7 @@ export default function ProfileScreen() {
         <View style={styles.menuCard}>
           <Text style={styles.menuGroupHeader}>Điều khoản & Chính sách</Text>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => Linking.openURL('https://tiemnhagom.vn/chinh-sach/privacy-policy.html')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/privacy-policy.html', 'Chính sách Bảo mật')} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="shield-checkmark-outline" size={20} color="#2D3B34" />
               <Text style={styles.menuTitle}>Chính sách quyền riêng tư</Text>
@@ -396,7 +398,7 @@ export default function ProfileScreen() {
 
           <View style={styles.rowDivider} />
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => Linking.openURL('https://tiemnhagom.vn/chinh-sach/terms-of-service.html')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/terms-of-service.html', 'Điều khoản Dịch vụ')} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="document-text-outline" size={20} color="#2D3B34" />
               <Text style={styles.menuTitle}>Điều khoản sử dụng dịch vụ</Text>
@@ -421,6 +423,16 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.menuItem} onPress={openWebsite} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
+              <Ionicons name="mail-outline" size={20} color="#2D3B34" />
+              <Text style={styles.menuTitle}>Email liên hệ</Text>
+            </View>
+            <Text style={styles.menuValue}>tiemnhagom.contact@gmail.com</Text>
+          </TouchableOpacity>
+
+          <View style={styles.rowDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={openWebsite} activeOpacity={0.7}>
+            <View style={styles.menuLeft}>
               <Ionicons name="globe-outline" size={20} color="#2D3B34" />
               <Text style={styles.menuTitle}>Website chính thức</Text>
             </View>
@@ -429,7 +441,7 @@ export default function ProfileScreen() {
 
           <View style={styles.rowDivider} />
 
-          <View style={styles.menuItemStatic}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => openWebLink('https://maps.app.goo.gl/7Jxw7yJyaQG8wkHeA', 'Địa chỉ cửa hàng')} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="location-outline" size={20} color="#2D3B34" />
               <View>
@@ -437,7 +449,8 @@ export default function ProfileScreen() {
                 <Text style={styles.menuSubtitle}>Mở cửa 10:00 - 21:00</Text>
               </View>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={18} color="#7A827E" />
+          </TouchableOpacity>
         </View>
 
         {/* 7. QUẢN LÝ TÀI KHOẢN */}

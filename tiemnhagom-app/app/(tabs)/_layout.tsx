@@ -3,8 +3,10 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 
 export default function TabLayout() {
+  const { unreadCount } = useNotificationBadge();
   return (
     <Tabs
       screenOptions={{
@@ -58,7 +60,7 @@ export default function TabLayout() {
                 size={focused ? 44 : 42}
                 color={color}
               />
-              <View style={styles.redDot} />
+              {unreadCount > 0 && <View style={styles.redDot} />}
             </View>
           ),
         }}

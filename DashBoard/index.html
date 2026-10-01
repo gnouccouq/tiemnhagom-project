@@ -3865,7 +3865,7 @@
     <!-- Script Gửi Push Notification (Marketing) -->
     <script type="module">
         import { db } from "../js/utils.js";
-        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { collection, getDocs, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
         
         window.sendPushToAllUsers = async function() {
             const title = document.getElementById('push-title').value;
@@ -3881,10 +3881,18 @@
             btnEl.disabled = true;
             msgEl.style.display = 'inline-block';
             msgEl.style.color = '#0066cc';
-            msgEl.innerText = "Đang quét danh sách khách hàng...";
+            msgEl.innerText = "Đang xử lý gửi thông báo (In-app & Push)...";
             
             try {
-                // Lấy tất cả user có expoPushToken (đã login trên App)
+                // 1. Lưu thông báo vào CSDL cho mục đích In-app (ai mở tab Thông báo sẽ thấy)
+                await addDoc(collection(db, "global_notifications"), {
+                    title: title,
+                    body: body,
+                    type: 'promo',
+                    createdAt: serverTimestamp()
+                });
+
+                // 2. Lấy tất cả user có expoPushToken để gửi Push
                 const q = query(collection(db, "users"), where("expoPushToken", "!=", null));
                 const snapshot = await getDocs(q);
                 
@@ -3895,13 +3903,15 @@
                 });
                 
                 if(tokens.length === 0) {
-                    msgEl.style.color = '#ef4444';
-                    msgEl.innerText = "Chưa có khách hàng nào cài app hoặc cấp quyền.";
+                    msgEl.style.color = '#16a34a';
+                    msgEl.innerText = "Đã gửi thông báo In-app! (Chưa có ai đăng ký nhận Push).";
+                    document.getElementById('push-title').value = '';
+                    document.getElementById('push-body').value = '';
                     btnEl.disabled = false;
                     return;
                 }
                 
-                msgEl.innerText = `Đang gửi đến ${tokens.length} thiết bị...`;
+                msgEl.innerText = `Đang đẩy Push đến ${tokens.length} thiết bị...`;
                 
                 const message = {
                     to: tokens,
@@ -3923,12 +3933,12 @@
                 
                 if(response.ok) {
                     msgEl.style.color = '#16a34a';
-                    msgEl.innerText = `Đã gửi thành công (Tới ${tokens.length} KH)!`;
+                    msgEl.innerText = `Thành công: Đã gửi In-app & Push tới ${tokens.length} KH!`;
                     document.getElementById('push-title').value = '';
                     document.getElementById('push-body').value = '';
                 } else {
                     msgEl.style.color = '#ef4444';
-                    msgEl.innerText = "Lỗi máy chủ gửi thông báo Expo.";
+                    msgEl.innerText = "Đã gửi In-app. Lỗi máy chủ gửi Push.";
                 }
             } catch(e) {
                 console.error(e);

@@ -14,6 +14,7 @@ import { CartProvider } from '../src/context/CartContext';
 import { WishlistProvider } from '../src/context/WishlistContext';
 import { SettingsProvider, useSettings } from '../src/context/SettingsContext';
 import { Colors } from '../src/constants/theme';
+import { NotificationBadgeProvider } from '../src/context/NotificationBadgeContext';
 
 export {
   ErrorBoundary,
@@ -78,6 +79,24 @@ function NavigationRoot() {
       <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      {/* Cart: Stack screen riêng → hỗ trợ swipe-back iOS */}
+      <Stack.Screen
+        name="(tabs)/cart"
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          animation: 'slide_from_right',
+        }}
+      />
+      {/* WebView: mở từ dưới lên */}
+      <Stack.Screen
+        name="webview"
+        options={{
+          headerShown: false,
+          gestureEnabled: true,
+          animation: 'slide_from_bottom',
+        }}
+      />
     </Stack>
   );
 }
@@ -119,8 +138,10 @@ export default function RootLayout() {
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              <StatusBar style="dark" />
-              <AppWrapper />
+              <NotificationBadgeProvider>
+                <StatusBar style="dark" />
+                <AppWrapper />
+              </NotificationBadgeProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>

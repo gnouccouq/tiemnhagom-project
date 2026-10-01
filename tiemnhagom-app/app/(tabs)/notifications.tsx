@@ -1,5 +1,5 @@
 // app/(tabs)/notifications.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,22 @@ import {
   StatusBar,
   RefreshControl,
   Platform,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SWIPE_THRESHOLD = 80;
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../../src/config/firebase';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Header } from '../../src/components/Header';
 import { Colors, Typography } from '../../src/constants/theme';
+import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 
 interface NotificationItem {
   id: string;
@@ -106,32 +117,291 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 
 type FilterType = 'all' | 'promo' | 'order' | 'system';
 
+// Key lưu trạng thái đã đọc riêng (không bị ghi đè khi load từ Firebase)
+const READ_IDS_KEY = '@tiemnhagom_read_ids';
+
+// ─── SwipeableNotifItem: vuốt trái để xóa ──────────────────────────────────
+function SwipeableNotifItem({
+  item,
+  onPress,
+  onDelete,
+  setScrollEnabled,
+}: {
+  item: NotificationItem;
+  onPress: () => void;
+  onDelete: () => void;
+  setScrollEnabled: (v: boolean) => void;
+}) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const deleteOpacity = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 8 && Math.abs(g.dy) < 15 && g.dx < 0,
+      onPanResponderGrant: () => {
+        setScrollEnabled(false); // khóa scroll dọc khi bắt đầu vuốt ngang
+      },
+      onPanResponderMove: (_, g) => {
+        if (g.dx < 0) {
+          translateX.setValue(Math.max(g.dx, -110));
+          deleteOpacity.setValue(Math.min(Math.abs(g.dx) / SWIPE_THRESHOLD, 1));
+        }
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dx < -SWIPE_THRESHOLD || g.vx < -0.5) {
+          Animated.timing(translateX, {
+            toValue: -SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => { setScrollEnabled(true); onDelete(); });
+        } else {
+          setScrollEnabled(true); // mở lại scroll khi bounce về
+          Animated.parallel([
+            Animated.spring(translateX, { toValue: 0, useNativeDriver: true, bounciness: 4 }),
+            Animated.timing(deleteOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
+          ]).start();
+        }
+      },
+      onPanResponderTerminate: (_) => {
+        setScrollEnabled(true); // mở lại scroll nếu gesture bị hủy
+        Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+        Animated.timing(deleteOpacity, { toValue: 0, duration: 120, useNativeDriver: true }).start();
+      },
+    })
+  ).current;
+
+  return (
+    <View style={{ marginBottom: 10, overflow: 'visible' }}>
+      {/* Nền đỏ xóa — phía sau card */}
+      <Animated.View style={[swipeStyles.deleteBg, { opacity: deleteOpacity }]}>
+        <Ionicons name="trash" size={20} color="#fff" />
+        <Text style={swipeStyles.deleteText}>Xóa</Text>
+      </Animated.View>
+
+      {/* Card chính trượt sang trái */}
+      <Animated.View
+        style={{ transform: [{ translateX }] }}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity
+          style={[styles.itemCard, !item.isRead && styles.itemCardUnread]}
+          activeOpacity={0.85}
+          onPress={onPress}
+        >
+          <View style={[styles.iconWrap, { backgroundColor: item.iconBg }]}>
+            <Ionicons name={item.icon} size={20} color={item.iconColor} />
+          </View>
+          <View style={styles.itemBody}>
+            <View style={styles.itemHeader}>
+              <Text style={[styles.itemTitle, !item.isRead && styles.itemTitleUnread]} numberOfLines={1}>
+                {item.title}
+              </Text>
+              {!item.isRead && <View style={styles.dotUnread} />}
+            </View>
+            <Text style={styles.itemMessage} numberOfLines={2}>{item.message}</Text>
+            <View style={styles.itemFooter}>
+              <Text style={styles.itemTime}>{item.time}</Text>
+              {item.link && (
+                <View style={styles.linkRow}>
+                  <Text style={styles.linkText}>Xem chi tiết</Text>
+                  <Ionicons name="chevron-forward" size={12} color="#111111" />
+                </View>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+
+const swipeStyles = StyleSheet.create({
+  deleteBg: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    backgroundColor: '#E53935',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  deleteText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+});
+// ──────────────────────────────────────────────────────────────────────────────
+
+
 export default function NotificationsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const { setUnreadCount } = useNotificationBadge();
+
+  // Lấy danh sách ID đã đọc từ AsyncStorage
+  const getReadIds = async (): Promise<Set<string>> => {
+    try {
+      const raw = await AsyncStorage.getItem(READ_IDS_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  // Lưu ID đã đọc vào AsyncStorage
+  const saveReadIds = async (ids: Set<string>) => {
+    try {
+      await AsyncStorage.setItem(READ_IDS_KEY, JSON.stringify([...ids]));
+    } catch {}
+  };
+
+  // Lấy dữ liệu thông báo thật từ bộ nhớ cục bộ VÀ từ Firebase In-App
+  const loadNotifications = async () => {
+    try {
+      // 1. Tải danh sách ID đã đọc (lưu riêng, không bị mất khi reload)
+      const readIds = await getReadIds();
+
+      // 2. Tải thông báo đẩy (Push) đã lưu cục bộ
+      const saved = await AsyncStorage.getItem('@tiemnhagom_notifications');
+      let localNotis: NotificationItem[] = saved ? JSON.parse(saved) : [];
+
+      // 3. Tải thông báo In-App từ Firebase (Dashboard gửi xuống)
+      const q = query(collection(db, 'global_notifications'), orderBy('createdAt', 'desc'), limit(15));
+      const snapshot = await getDocs(q);
+
+      const firestoreNotis: NotificationItem[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          type: data.type || 'promo',
+          title: data.title || 'Thông báo',
+          message: data.body || '',
+          time: 'Mới',
+          isRead: readIds.has(doc.id),  // ← áp dụng trạng thái đã đọc đã lưu
+          icon: 'sparkles',
+          iconBg: '#F3E5DC',
+          iconColor: '#C86432',
+        };
+      });
+
+      // 4. Gộp cả 2 nguồn, loại trùng
+      const merged = [...firestoreNotis, ...localNotis].filter(
+        (value, index, self) =>
+          index === self.findIndex(t => t.title === value.title && t.message === value.message)
+      );
+
+      setNotifications(merged);
+      // Cập nhật badge cho tab bar
+      setUnreadCount(merged.filter(n => !n.isRead).length);
+    } catch (e) {
+      console.log('Lỗi tải thông báo', e);
+    }
+  };
+
+  const saveNotifications = async (newData: NotificationItem[]) => {
+    setNotifications(newData);
+    setUnreadCount(newData.filter(n => !n.isRead).length);
+    try {
+      // Lưu push notifications cục bộ
+      const localOnly = newData.filter(n => !n.id.startsWith('-') && n.id.length < 20);
+      await AsyncStorage.setItem('@tiemnhagom_notifications', JSON.stringify(localOnly));
+      // Lưu riêng danh sách ID đã đọc (bao gồm cả Firestore ID)
+      const readIds = new Set(newData.filter(n => n.isRead).map(n => n.id));
+      await saveReadIds(readIds);
+    } catch (e) {
+      console.log('Lỗi lưu thông báo', e);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadNotifications();
+    }, [])
+  );
+
+  // Lắng nghe thông báo tới khi đang mở tab này
+  React.useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      const title = notification.request.content.title || 'Thông báo mới';
+      const body = notification.request.content.body || '';
+
+      const newNoti: NotificationItem = {
+        id: Date.now().toString(),
+        type: 'promo',
+        title: title,
+        message: body,
+        time: 'Vừa xong',
+        isRead: false,
+        icon: 'notifications',
+        iconBg: '#F3E5DC',
+        iconColor: '#C86432',
+      };
+
+      setNotifications(prev => {
+        const updated = [newNoti, ...prev];
+        AsyncStorage.setItem('@tiemnhagom_notifications', JSON.stringify(updated));
+        setUnreadCount(updated.filter(n => !n.isRead).length);
+        return updated;
+      });
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleRefresh = () => {
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 600);
+    await loadNotifications();
+    setRefreshing(false);
+  };
+
+  const simulatePush = () => {
+    const newNoti: NotificationItem = {
+      id: Date.now().toString(),
+      type: 'promo',
+      title: 'Tiệm Nhà Gốm Sale 50%!',
+      message: 'Đừng bỏ lỡ bộ sưu tập lọ lộc bình vừa cập bến. Vào app mua ngay!',
+      time: 'Vừa xong',
+      isRead: false,
+      icon: 'sparkles',
+      iconBg: '#F3E5DC',
+      iconColor: '#C86432',
+    };
+    
+    setNotifications(prev => {
+      const updated = [newNoti, ...prev];
+      AsyncStorage.setItem('@tiemnhagom_notifications', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const updated = notifications.map((n) => ({ ...n, isRead: true }));
+    saveNotifications(updated);
   };
 
   const handlePressItem = (item: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-    );
+    const updated = notifications.map((n) => (n.id === item.id ? { ...n, isRead: true } : n));
+    saveNotifications(updated);
     if (item.link) {
       router.push(item.link as any);
     }
+  };
+
+  const handleDeleteItem = (id: string) => {
+    const updated = notifications.filter((n) => n.id !== id);
+    saveNotifications(updated);
   };
 
   const filteredItems = notifications.filter((n) => {
@@ -155,16 +425,18 @@ export default function NotificationsScreen() {
           )}
         </View>
 
-        {unreadCount > 0 && (
-          <TouchableOpacity
-            style={styles.markAllBtn}
-            onPress={handleMarkAllRead}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="checkmark-done" size={15} color="#111111" />
-            <Text style={styles.markAllText}>Đã đọc tất cả</Text>
-          </TouchableOpacity>
-        )}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          {unreadCount > 0 && (
+            <TouchableOpacity
+              style={styles.markAllBtn}
+              onPress={handleMarkAllRead}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="checkmark-done" size={15} color="#111111" />
+              <Text style={styles.markAllText}>Đã đọc</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Filter Tabs */}
@@ -197,6 +469,7 @@ export default function NotificationsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        scrollEnabled={scrollEnabled}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -216,39 +489,13 @@ export default function NotificationsScreen() {
           </View>
         ) : (
           filteredItems.map((item) => (
-            <TouchableOpacity
+            <SwipeableNotifItem
               key={item.id}
-              style={[styles.itemCard, !item.isRead && styles.itemCardUnread]}
-              activeOpacity={0.8}
+              item={item}
               onPress={() => handlePressItem(item)}
-            >
-              <View style={[styles.iconWrap, { backgroundColor: item.iconBg }]}>
-                <Ionicons name={item.icon} size={20} color={item.iconColor} />
-              </View>
-
-              <View style={styles.itemBody}>
-                <View style={styles.itemHeader}>
-                  <Text style={[styles.itemTitle, !item.isRead && styles.itemTitleUnread]} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  {!item.isRead && <View style={styles.dotUnread} />}
-                </View>
-
-                <Text style={styles.itemMessage} numberOfLines={2}>
-                  {item.message}
-                </Text>
-
-                <View style={styles.itemFooter}>
-                  <Text style={styles.itemTime}>{item.time}</Text>
-                  {item.link && (
-                    <View style={styles.linkRow}>
-                      <Text style={styles.linkText}>Xem chi tiết</Text>
-                      <Ionicons name="chevron-forward" size={12} color="#111111" />
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
+              onDelete={() => handleDeleteItem(item.id)}
+              setScrollEnabled={setScrollEnabled}
+            />
           ))
         )}
       </ScrollView>
@@ -348,7 +595,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 14,
-    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#EEEEEE',
     shadowColor: '#000',

@@ -247,7 +247,8 @@ const ALL_SECTIONS = [
     { id: 'lookbook-section', label: 'Lookbook Không gian' },
     { id: 'events-section', label: 'Dự án sự kiện' },
     { id: 'online-users-section', label: 'Lượng truy cập' },
-    { id: 'maintenance-section', label: 'Bảo trì' }
+    { id: 'maintenance-section', label: 'Bảo trì' },
+    { id: 'push-notification-section', label: 'Gửi Push (App)' }
 ];
 
 let currentAdminPermissions = ALL_SECTIONS.map(s => s.id); // Khởi tạo mặc định đầy đủ quyền để hỗ trợ Deep Link / Hash URL

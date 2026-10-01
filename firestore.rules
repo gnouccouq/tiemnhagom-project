@@ -161,6 +161,13 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // 14. Thông báo toàn cục từ Dashboard (global_notifications)
+    match /global_notifications/{notifId} {
+      allow read: if true;           // App đọc để hiện in-app
+      allow create: if isAdmin();    // Chỉ Admin Dashboard mới được gửi
+      allow update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
