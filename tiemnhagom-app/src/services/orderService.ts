@@ -45,19 +45,62 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
       // 1. Read product stocks
       const productSnapshots: any[] = [];
       const items = cleanOrderData.items || [];
+      const productDocsMap: Record<string, any> = {};
       
       for (const item of items) {
         if (!item.id) continue;
         const productRef = doc(db, 'products', item.id);
         const snap = await transaction.get(productRef);
         if (snap.exists()) {
-           productSnapshots.push({ item, productRef, productData: snap.data() });
+           const productData = snap.data();
+           productDocsMap[item.id] = { ref: productRef, data: productData };
+           productSnapshots.push({ item, productRef, productData, isChild: false });
         }
+      }
+
+      // Second pass: Fetch child items of combo variants
+      // Need a traditional loop because we are pushing to productSnapshots while iterating
+      const initialLength = productSnapshots.length;
+      for (let i = 0; i < initialLength; i++) {
+          const { item, productData } = productSnapshots[i];
+          if (productData.isCombo && item.variant && item.variant.type === 'combo') {
+              const cv = productData.comboVariants?.find((v: any) => v.name === item.variant.name);
+              if (cv && cv.items) {
+                  for (const child of cv.items) {
+                      if (!productDocsMap[child.id]) {
+                          const childRef = doc(db, 'products', child.id);
+                          const childSnap = await transaction.get(childRef);
+                          if (childSnap.exists()) {
+                              productDocsMap[child.id] = { ref: childRef, data: childSnap.data() };
+                          }
+                      }
+                      
+                      if (productDocsMap[child.id]) {
+                          const childQty = item.quantity * Math.max(1, parseInt(child.quantity, 10) || 1);
+                          const pseudoItem: any = {
+                              id: child.id,
+                              quantity: childQty,
+                          };
+                          if (child.selectedColor) {
+                              pseudoItem.variant = { type: 'color', name: child.selectedColor };
+                          } else if (child.selectedPattern) {
+                              pseudoItem.variant = { type: 'pattern', name: child.selectedPattern };
+                          }
+                          productSnapshots.push({ 
+                              item: pseudoItem, 
+                              productRef: productDocsMap[child.id].ref, 
+                              productData: productDocsMap[child.id].data, 
+                              isChild: true 
+                          });
+                      }
+                  }
+              }
+          }
       }
 
       // 2. Compute stock updates
       const productUpdatesMap: any = {};
-      for (const { item, productRef, productData } of productSnapshots) {
+      for (const { item, productRef, productData, isChild } of productSnapshots) {
          const pId = item.id;
          if (!productUpdatesMap[pId]) {
             productUpdatesMap[pId] = {
@@ -71,7 +114,12 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
          }
          
          const pInfo = productUpdatesMap[pId];
-         pInfo.totalSold += item.quantity;
+         if (!isChild) {
+             pInfo.totalSold += item.quantity;
+         } else {
+             // For child items, we only deduct stock, we might optionally increment sold count
+             pInfo.totalSold += item.quantity; 
+         }
          
          if (item.variant && item.variant.type === 'combo') {
             const vName = item.variant.name;

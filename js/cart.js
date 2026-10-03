@@ -1002,6 +1002,7 @@ window.placeOrder = async () => {
 
             // 1. Giai đoạn ĐỌC (READ): Thực hiện tất cả các lệnh get trước khi thực hiện bất kỳ lệnh ghi nào.
             const productSnapshots = [];
+            const productDocsMap = {};
             for (const item of cart) {
                 const productRef = doc(db, "products", item.id);
                 const productSnap = await transaction.get(productRef);
@@ -1009,14 +1010,63 @@ window.placeOrder = async () => {
                 if (!productSnap.exists()) {
                     throw new Error(`Sản phẩm ID ${item.id} không tồn tại.`);
                 }
-                productSnapshots.push({ item, productRef, productSnap });
+                const product = productSnap.data();
+                productDocsMap[item.id] = { ref: productRef, product };
+                productSnapshots.push({ item, productRef, product, isChild: false });
+            }
+
+            // Second pass: Fetch child items of combo variants
+            const initialLength = productSnapshots.length;
+            for (let i = 0; i < initialLength; i++) {
+                const { item, product } = productSnapshots[i];
+                let matchedComboName = null;
+                if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
+                    matchedComboName = item.comboVariant || item.combo;
+                    if (!matchedComboName && item.variant) {
+                        const matchedCV = product.comboVariants.find(cv => item.variant.includes(cv.name));
+                        if (matchedCV) matchedComboName = matchedCV.name;
+                    }
+                    if (!matchedComboName && product.comboVariants.length === 1) {
+                        matchedComboName = product.comboVariants[0].name;
+                    }
+                    
+                    if (matchedComboName) {
+                        const cv = product.comboVariants.find(v => v.name === matchedComboName);
+                        if (cv && cv.items) {
+                            for (const child of cv.items) {
+                                if (!productDocsMap[child.id]) {
+                                    const childRef = doc(db, "products", child.id);
+                                    const childSnap = await transaction.get(childRef);
+                                    if (childSnap.exists()) {
+                                        productDocsMap[child.id] = { ref: childRef, product: childSnap.data() };
+                                    }
+                                }
+                                
+                                if (productDocsMap[child.id]) {
+                                    const childQty = item.quantity * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                    const pseudoItem = {
+                                        id: child.id,
+                                        quantity: childQty,
+                                        color: child.selectedColor || null,
+                                        pattern: child.selectedPattern || null,
+                                    };
+                                    productSnapshots.push({ 
+                                        item: pseudoItem, 
+                                        productRef: productDocsMap[child.id].ref, 
+                                        product: productDocsMap[child.id].product, 
+                                        isChild: true 
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // 2. Giai đoạn GHI (WRITE): Xử lý logic và thực hiện các lệnh set/update.
             const productUpdatesMap = {}; // pId -> { productRef, product, totalSold, colorQtyMap, patternQtyMap, comboQtyMap }
 
-            for (const { item, productRef, productSnap } of productSnapshots) {
-                const product = productSnap.data();
+            for (const { item, productRef, product, isChild } of productSnapshots) {
                 let currentStock = product.stock || 0;
                 let variantImage = product.imageUrl;
                 let variantPriceValue = null;
@@ -1116,7 +1166,11 @@ window.placeOrder = async () => {
                     };
                 }
                 const pInfo = productUpdatesMap[pId];
-                pInfo.totalSold += item.quantity;
+                if (!isChild) {
+                    pInfo.totalSold += item.quantity;
+                } else {
+                    pInfo.totalSold += item.quantity; // Update sold for child too
+                }
                 if (item.color) {
                     pInfo.colorQtyMap[item.color] = (pInfo.colorQtyMap[item.color] || 0) + item.quantity;
                 }
