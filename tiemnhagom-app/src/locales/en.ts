@@ -28,6 +28,7 @@ export const en = {
   cacheCleared: 'Cache cleared successfully',
 
   // Profile Page
+  account: 'Account',
   memberCard: 'DIGITAL MEMBER CARD',
   holder: 'CARD HOLDER',
   memberCode: 'MEMBER ID',

@@ -224,6 +224,7 @@ export const vi = {
   confirmOrder: 'Xác nhận đặt hàng',
 
   // Profile Screen
+  account: 'Tài khoản',
   guestCustomer: 'Khách hàng',
   guestMember: 'Hội viên gốm',
   welcomeTitle: 'Chào mừng bạn đến với Tiệm Nhà Gốm',

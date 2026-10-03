@@ -28,6 +28,7 @@ export const zh = {
   cacheCleared: '缓存已成功清除',
 
   // Profile Page
+  account: '帐户',
   memberCard: '数字会员卡',
   holder: '持卡人',
   memberCode: '会员号',
