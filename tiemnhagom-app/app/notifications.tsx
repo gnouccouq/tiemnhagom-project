@@ -21,11 +21,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
-import { db } from '../../src/config/firebase';
+import { db } from '../src/config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { Header } from '../../src/components/Header';
-import { Colors, Typography } from '../../src/constants/theme';
-import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
+import { Header } from '../src/components/Header';
+import { Colors, Typography } from '../src/constants/theme';
+import { useNotificationBadge } from '../src/context/NotificationBadgeContext';
 
 interface NotificationItem {
   id: string;
@@ -60,7 +60,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     message: 'Kiện hàng đồ gốm của bạn đã được đóng gói bọc xốp cẩn thận và đang trên đường vận chuyển.',
     time: '2 giờ trước',
     isRead: false,
-    link: '/(tabs)/orders',
+    link: '/orders',
     icon: 'cube',
     iconBg: '#EEF3EB',
     iconColor: '#3B4D45',
@@ -96,7 +96,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     message: 'Cảm ơn bạn đã tin tưởng Tiệm Nhà Gốm. Hãy để lại đánh giá trải nghiệm của bạn nhé.',
     time: '4 ngày trước',
     isRead: true,
-    link: '/(tabs)/orders',
+    link: '/orders',
     icon: 'checkmark-circle',
     iconBg: '#E8F5E9',
     iconColor: '#2E7D32',
@@ -412,12 +412,12 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
-      <Header title="Thông báo" showSearch={false} />
+      <Header title="Thông báo" showSearch={false} showBack={true} showCart={false} />
 
       {/* Top Bar Actions */}
       <View style={styles.topActionsBar}>
         <View style={styles.unreadInfo}>
-          <Text style={styles.topTitle}>Hộp thư thông báo</Text>
+          {/* Bỏ chữ Hộp thư thông báo */}
           {unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadBadgeText}>{unreadCount} mới</Text>

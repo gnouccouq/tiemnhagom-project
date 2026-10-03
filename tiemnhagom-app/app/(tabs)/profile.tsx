@@ -315,7 +315,7 @@ export default function ProfileScreen() {
           <Text style={styles.menuGroupHeader}>Đơn hàng của tôi</Text>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/orders')}
+            onPress={() => router.push('/orders')}
             activeOpacity={0.7}
           >
             <View style={styles.menuLeft}>
@@ -329,7 +329,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/products')}
+            onPress={() => router.push('/favorites')}
             activeOpacity={0.7}
           >
             <View style={styles.menuLeft}>
@@ -346,7 +346,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/cart')}
+            onPress={() => router.push('/cart')}
             activeOpacity={0.7}
           >
             <View style={styles.menuLeft}>

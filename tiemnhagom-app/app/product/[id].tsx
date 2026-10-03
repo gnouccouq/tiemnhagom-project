@@ -28,7 +28,7 @@ const { width } = Dimensions.get('window');
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function ProductDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, variant: variantParam } = useLocalSearchParams<{ id: string; variant?: string }>();
   const router = useRouter();
   const { addToCart, cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
@@ -48,17 +48,35 @@ export default function ProductDetailScreen() {
         .then((res) => {
           setProduct(res);
           if (res) {
-            // Tự động chọn biến thể đầu tiên nếu có
-            if (res.colorVariants && res.colorVariants.length > 0) {
-              setSelectedVariant({ ...res.colorVariants[0], type: 'color' });
-            } else if (res.patternVariants && res.patternVariants.length > 0) {
-              setSelectedVariant({ ...res.patternVariants[0], type: 'pattern' });
+            // Nếu có variant param (từ việc click sản phẩm biến thể độc lập), tìm và chọn đúng biến thể
+            if (variantParam) {
+              const matchColor = res.colorVariants?.find((v) => v.name === variantParam);
+              const matchPattern = res.patternVariants?.find((v) => v.name === variantParam);
+              const matchCombo = res.comboVariants?.find((v) => v.name === variantParam);
+              if (matchColor) {
+                setSelectedVariant({ ...matchColor, type: 'color' });
+              } else if (matchPattern) {
+                setSelectedVariant({ ...matchPattern, type: 'pattern' });
+              } else if (matchCombo) {
+                setSelectedVariant({ ...matchCombo, type: 'combo' });
+              } else if (res.colorVariants && res.colorVariants.length > 0) {
+                setSelectedVariant({ ...res.colorVariants[0], type: 'color' });
+              } else if (res.patternVariants && res.patternVariants.length > 0) {
+                setSelectedVariant({ ...res.patternVariants[0], type: 'pattern' });
+              }
+            } else {
+              // Tự động chọn biến thể đầu tiên nếu có
+              if (res.colorVariants && res.colorVariants.length > 0) {
+                setSelectedVariant({ ...res.colorVariants[0], type: 'color' });
+              } else if (res.patternVariants && res.patternVariants.length > 0) {
+                setSelectedVariant({ ...res.patternVariants[0], type: 'pattern' });
+              }
             }
           }
         })
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, variantParam]);
 
   // Danh sách hình ảnh (Cần tính toán trước các lệnh return sớm để đảm bảo Rules of Hooks)
   const baseImages = (product?.images && product.images.length > 0)
@@ -151,7 +169,7 @@ export default function ProductDetailScreen() {
     addToCart(product, quantity, selectedVariant);
     Alert.alert('Thành công', 'Đã thêm sản phẩm vào giỏ hàng!', [
       { text: 'Tiếp tục xem', style: 'cancel' },
-      { text: 'Xem giỏ hàng', onPress: () => router.push('/(tabs)/cart') },
+      { text: 'Xem giỏ hàng', onPress: () => router.push('/cart') },
     ]);
   };
 
@@ -197,7 +215,7 @@ export default function ProductDetailScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/(tabs)/cart')}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/cart')}>
             <Ionicons name="cart-outline" size={28} color={Colors.textPrimary} />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>

@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '../constants/theme';
 import { useCart } from '../context/CartContext';
+import { useNotificationBadge } from '../context/NotificationBadgeContext';
 
 export interface HeaderProps {
   title?: string;
@@ -50,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const { cartCount } = useCart();
+  const { unreadCount } = useNotificationBadge();
   const insets = useSafeAreaInsets();
 
   const statusBarHeight =
@@ -110,20 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <View style={styles.iconCrossfadeBox}>
-                  <Ionicons
-                    name="chevron-back"
-                    size={15}
-                    color="#18181B"
-                    style={{ opacity: progress }}
-                  />
-                  <Ionicons
-                    name="chevron-back"
-                    size={15}
-                    color="#FFFFFF"
-                    style={[styles.iconOverlay, { opacity: 1 - progress }]}
-                  />
-                </View>
+                <Ionicons name="chevron-back" size={22} color="#18181B" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -197,37 +186,17 @@ export const Header: React.FC<HeaderProps> = ({
             )
           )}
 
-          {/* 3. Nút Giỏ hàng lớn & sắc nét */}
+          {/* 3. Nút Thông báo (Thay cho Giỏ hàng) */}
           {showCart && (
             <TouchableOpacity
-              style={styles.cartButton}
+              style={styles.iconButton}
               activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/cart')}
-              accessibilityLabel="Giỏ hàng"
+              onPress={() => router.push('/notifications')}
+              accessibilityLabel="Thông báo"
             >
-              <View style={styles.cartIconBox}>
-                {/* Icon đen (hiện dần khi cuộn xuống) */}
-                <Ionicons
-                  name="cart-outline"
-                  size={30}
-                  color="#18181B"
-                  style={{ opacity: progress }}
-                />
-                {/* Icon trắng (mờ dần khi cuộn xuống) */}
-                <Ionicons
-                  name="cart-outline"
-                  size={30}
-                  color="#FFFFFF"
-                  style={[styles.iconOverlayCenter, { opacity: 1 - progress }]}
-                />
-              </View>
-
-              {cartCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {cartCount > 99 ? '99+' : cartCount}
-                  </Text>
-                </View>
+              <Ionicons name="notifications-outline" size={22} color="#18181B" />
+              {unreadCount > 0 && (
+                <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
               )}
             </TouchableOpacity>
           )}
@@ -250,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
 
           {showBack && (
-            <View style={styles.titleContainer}>
+            <View style={styles.titleContainer} pointerEvents="none">
               <Text style={styles.title} numberOfLines={1}>
                 {title}
               </Text>
@@ -260,20 +229,14 @@ export const Header: React.FC<HeaderProps> = ({
           <View style={styles.right}>
             {showCart && (
               <TouchableOpacity
-                style={styles.cartButton}
+                style={styles.iconButton}
                 activeOpacity={0.8}
-                onPress={() => router.push('/(tabs)/cart')}
-                accessibilityLabel="Giỏ hàng"
+                onPress={() => router.push('/notifications')}
+                accessibilityLabel="Thông báo"
               >
-                <View style={styles.cartIconBox}>
-                  <Ionicons name="cart-outline" size={35} color="#18181B" />
-                </View>
-                {cartCount > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                      {cartCount > 99 ? '99+' : cartCount}
-                    </Text>
-                  </View>
+                <Ionicons name="notifications-outline" size={22} color="#18181B" />
+                {unreadCount > 0 && (
+                  <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
                 )}
               </TouchableOpacity>
             )}
@@ -457,9 +420,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   titleContainer: {
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: 50, // Tránh đè lên nút back/cart
   },
   title: {
     fontSize: Typography.fontSize.md,

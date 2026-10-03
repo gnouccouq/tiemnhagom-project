@@ -97,7 +97,7 @@ export default function OrderSuccessScreen() {
         <View style={styles.actionsGroup}>
           <TouchableOpacity
             style={styles.primaryBtn}
-            onPress={() => router.replace('/(tabs)/orders')}
+            onPress={() => router.replace('/orders')}
             activeOpacity={0.88}
           >
             <Ionicons name="receipt-outline" size={20} color={Colors.textInverse} />

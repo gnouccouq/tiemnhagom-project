@@ -2,11 +2,13 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
+import { useCart } from '../../src/context/CartContext';
 
 export default function TabLayout() {
   const { unreadCount } = useNotificationBadge();
+  const { cartCount } = useCart();
   return (
     <Tabs
       screenOptions={{
@@ -48,19 +50,23 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. Thông báo */}
+      {/* 3. Giỏ hàng */}
       <Tabs.Screen
-        name="notifications"
+        name="cart"
         options={{
-          title: 'Thông báo',
+          title: 'Giỏ hàng',
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.iconWithBadge}>
               <Ionicons
-                name={focused ? 'notifications' : 'notifications-outline'}
+                name={focused ? 'cart' : 'cart-outline'}
                 size={focused ? 44 : 42}
                 color={color}
               />
-              {unreadCount > 0 && <View style={styles.redDot} />}
+              {cartCount > 0 && (
+                <View style={styles.badgeCount}>
+                  <Text style={styles.badgeCountText}>{cartCount > 99 ? '99+' : cartCount}</Text>
+                </View>
+              )}
             </View>
           ),
         }}
@@ -93,20 +99,6 @@ export default function TabLayout() {
               color={color}
             />
           ),
-        }}
-      />
-
-      {/* Các màn hình giỏ hàng và đơn hàng (giữ route cho header và link nội bộ) */}
-      <Tabs.Screen
-        name="cart"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          href: null,
         }}
       />
     </Tabs>
@@ -144,15 +136,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  redDot: {
+  badgeCount: {
     position: 'absolute',
-    top: -2,
-    right: -4,
-    width: 8.5,
-    height: 8.5,
-    borderRadius: 4.25,
-    backgroundColor: '#E53935',
+    top: -6,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#111111',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
+  },
+  badgeCountText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+    fontFamily: 'ElleGaborStd',
   },
 });

@@ -12,11 +12,29 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
     const orderCode = generateOrderCode();
     const ordersRef = collection(db, 'orders');
 
+    // Hàm đệ quy xóa các trường undefined
+    const removeUndefined = (obj: any): any => {
+      if (Array.isArray(obj)) {
+        return obj.map(removeUndefined);
+      } else if (obj !== null && typeof obj === 'object') {
+        const result: any = {};
+        for (const key in obj) {
+          if (obj[key] !== undefined) {
+            result[key] = removeUndefined(obj[key]);
+          }
+        }
+        return result;
+      }
+      return obj;
+    };
+
+    const cleanOrderData = removeUndefined(orderData);
+
     const newOrder = {
-      ...orderData,
+      ...cleanOrderData,
       orderCode,
       status: 'Đang xử lý',
-      paymentStatus: orderData.paymentMethod === 'cod' ? 'pending' : 'pending',
+      paymentStatus: cleanOrderData.paymentMethod === 'cod' ? 'pending' : 'pending',
       orderDate: serverTimestamp(),
       createdAt: serverTimestamp(),
     };

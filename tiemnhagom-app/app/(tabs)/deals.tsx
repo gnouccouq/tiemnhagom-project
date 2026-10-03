@@ -147,7 +147,7 @@ export default function DealsScreen() {
       const data = await getActiveCoupons(user?.uid);
       setCoupons(data);
     } catch (e) {
-      console.warn('Lỗi tải vouchers từ Firestore:', e);
+      console.warn('Lỗi tải vouchers từ Firestore: ' + String(e));
     } finally {
       setLoadingCoupons(false);
     }

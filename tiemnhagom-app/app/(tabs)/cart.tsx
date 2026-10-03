@@ -1,4 +1,4 @@
-// app/(tabs)/cart.tsx
+// app/cart.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -96,13 +96,7 @@ export default function CartScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       {/* Custom Header với nút back */}
       <View style={styles.customHeader}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBackBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="chevron-back" size={24} color="#111111" />
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
         <Text style={styles.headerTitle}>Giỏ hàng</Text>
         {cart.length > 0 ? (
           <TouchableOpacity onPress={confirmClearCart} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>

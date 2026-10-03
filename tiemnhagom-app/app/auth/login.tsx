@@ -19,8 +19,10 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -172,7 +174,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* FULLSCREEN BACKGROUND IMAGE (.login-page-bg) */}
+      {/* FULLSCREEN BACKGROUND IMAGE */}
       <Image
         source={require('../../assets/images/hero-bg.webp')}
         style={StyleSheet.absoluteFill}
@@ -180,8 +182,14 @@ export default function LoginScreen() {
         priority="high"
       />
 
-      {/* GRADIENT OVERLAY (Linear gradient đen sang tối) */}
+      {/* GRADIENT OVERLAY */}
       <View style={styles.bgOverlay} />
+      <LinearGradient
+        colors={['transparent', 'rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 1)']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
 
       {/* AUTH CARD (BOTTOM SHEET .auth-sheet-standalone & .auth-modal-card) */}
       <KeyboardAvoidingView
@@ -195,7 +203,7 @@ export default function LoginScreen() {
         >
           <View style={styles.authModalCard}>
             {/* AUTH MODAL HEADER */}
-            <View style={styles.authModalHeader}>
+            <Animated.View entering={FadeInUp.duration(600).delay(100)} style={styles.authModalHeader}>
               <View style={styles.authModalTitle}>
                 {!isSignUpMode ? (
                   <>
@@ -220,8 +228,9 @@ export default function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </Animated.View>
 
+            <Animated.View entering={FadeInDown.duration(600).delay(300)}>
             {/* FORM INPUTS (.auth-input-group & .auth-input) */}
             {isSignUpMode && (
               <>
@@ -229,7 +238,7 @@ export default function LoginScreen() {
                   <TextInput
                     style={styles.authInput}
                     placeholder="full name"
-                    placeholderTextColor="#a8b8b0"
+                    placeholderTextColor="#A0A0A0"
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
@@ -240,7 +249,7 @@ export default function LoginScreen() {
                   <TextInput
                     style={styles.authInput}
                     placeholder="phone number"
-                    placeholderTextColor="#a8b8b0"
+                    placeholderTextColor="#A0A0A0"
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
@@ -253,7 +262,7 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.authInput}
                 placeholder="email"
-                placeholderTextColor="#a8b8b0"
+                placeholderTextColor="#A0A0A0"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -265,7 +274,7 @@ export default function LoginScreen() {
               <TextInput
                 style={[styles.authInput, { paddingRight: 48 }]}
                 placeholder="password"
-                placeholderTextColor="#a8b8b0"
+                placeholderTextColor="#A0A0A0"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -278,12 +287,12 @@ export default function LoginScreen() {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={19}
-                  color="#555"
+                  color="#FFF"
                 />
               </TouchableOpacity>
             </View>
 
-            {/* SUBMIT BUTTON (.btn-auth-submit) */}
+            {/* SUBMIT BUTTON */}
             <TouchableOpacity
               style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
               onPress={handleSubmit}
@@ -291,7 +300,7 @@ export default function LoginScreen() {
               activeOpacity={0.88}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color="#111" size="small" />
               ) : (
                 <Text style={styles.btnAuthSubmitText}>
                   {isSignUpMode ? 'create account' : 'sign in'}
@@ -307,7 +316,7 @@ export default function LoginScreen() {
               activeOpacity={0.88}
             >
               {googleLoading ? (
-                <ActivityIndicator color="#3b4d45" size="small" />
+                <ActivityIndicator color="#FFF" size="small" />
               ) : (
                 <>
                   <Image
@@ -334,6 +343,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
             )}
+          </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -423,72 +433,61 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'flex-end',
   },
-  // .auth-modal-card in app/app.css
   authModalCard: {
-    backgroundColor: '#eef3eb', // Chuẩn màu xanh gốm sage sang trọng từ app.css
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    backgroundColor: 'transparent',
     paddingHorizontal: 24,
     paddingTop: 26,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 40,
-    elevation: 20,
   },
   authModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 30,
   },
   authModalTitle: {
     flex: 1,
   },
   mainTitleText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 20,
+    fontSize: 34,
     fontWeight: '700',
-    color: '#3b4d45',
-    lineHeight: 25,
-    letterSpacing: -0.3,
+    color: '#FFFFFF',
+    lineHeight: 40,
   },
   subTitleText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#3b4d45',
-    lineHeight: 25,
-    letterSpacing: -0.3,
+    fontSize: 16,
+    color: '#DDDDDD',
+    marginTop: 6,
   },
   authHeaderRight: {
     alignItems: 'flex-end',
-    paddingTop: 2,
+    paddingTop: 8,
   },
   authToggleLink: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 13.5,
-    color: '#3b4d45',
+    fontSize: 15,
+    color: '#FFFFFF',
     textDecorationLine: 'underline',
-    fontWeight: '500',
+    fontWeight: '700',
   },
   authInputGroup: {
-    marginBottom: 12,
+    marginBottom: 16,
     position: 'relative',
     justifyContent: 'center',
   },
   authInput: {
     fontFamily: 'ElleGaborStd',
     width: '100%',
-    height: 48,
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#e1e8df',
-    borderRadius: 24,
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 26,
     paddingHorizontal: 20,
-    fontSize: 14,
-    color: '#2b3a33',
+    fontSize: 15,
+    color: '#FFFFFF',
   },
   authPasswordToggle: {
     position: 'absolute',
@@ -498,19 +497,20 @@ const styles = StyleSheet.create({
   // .btn-auth-submit in app/app.css
   btnAuthSubmit: {
     width: '100%',
-    height: 48,
-    backgroundColor: '#5d6160',
-    borderRadius: 24,
+    height: 52,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 10,
+    marginBottom: 16,
   },
   btnAuthSubmitText: {
     fontFamily: 'ElleGaborStd',
-    color: '#ffffff',
-    fontSize: 14.5,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    color: '#111111',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   btnDisabled: {
     opacity: 0.65,

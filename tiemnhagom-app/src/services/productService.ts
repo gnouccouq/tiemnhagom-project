@@ -9,6 +9,7 @@ export interface ProductCategoryItem {
   name: string;
   enName?: string;
   icon: string;
+  imageUrl?: string;
   subs?: string[];
   order?: number;
 }
@@ -93,6 +94,7 @@ export async function getCategories(): Promise<ProductCategoryItem[]> {
             id: g.name,
             name: g.name, // Giữ nguyên tên gốc từ Firestore
             icon: getCategoryIcon(g.name),
+            imageUrl: g.imageUrl || g.image || undefined,
             subs: Array.isArray(g.subs) ? g.subs : [],
             order: g.order,
           })),
@@ -407,7 +409,13 @@ export async function getProducts(options?: {
     // Lọc theo danh mục (hỗ trợ cả nhóm danh mục chính, tên tiếng Việt, tên tiếng Anh và danh mục con)
     if (options?.category && options.category !== 'all') {
       const target = options.category.toLowerCase().trim();
-      const matchedGroup = DEFAULT_CATEGORIES.find(
+      let allCategoryDefs = DEFAULT_CATEGORIES;
+      try {
+        const dynCats = await getCategories();
+        if (dynCats && dynCats.length > 0) allCategoryDefs = dynCats;
+      } catch {}
+
+      const matchedGroup = allCategoryDefs.find(
         (g) =>
           g.id.toLowerCase() === target ||
           g.name.toLowerCase() === target ||

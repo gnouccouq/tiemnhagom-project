@@ -1,9 +1,10 @@
 // app/_layout.tsx
 import '../src/utils/textScaler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -29,7 +30,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // Cổng bảo vệ xác thực (Auth Gate)
 function NavigationRoot() {
   const { user, userProfile, loading } = useAuth();
-  const segments = useSegments();
+  const pathname = usePathname();
   const router = useRouter();
 
   const isAuth = Boolean(user || userProfile);
@@ -37,16 +38,24 @@ function NavigationRoot() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === 'auth';
+    AsyncStorage.getItem('has_seen_onboarding').then((value) => {
+      // Nếu đã đăng nhập thì ngầm định là đã qua onboarding
+      const seenOnboarding = (value === 'true') || isAuth;
+      const inAuthGroup = pathname.startsWith('/auth');
+      const inOnboarding = pathname === '/onboarding';
 
-    if (!isAuth && !inAuthGroup) {
-      // 1. Chưa đăng nhập: Bắt buộc chuyển hướng đến màn hình /auth/login
-      router.replace('/auth/login');
-    } else if (isAuth && inAuthGroup) {
-      // 2. Đã đăng nhập: Tự động chuyển thẳng vào màn hình chính (tabs)
-      router.replace('/(tabs)');
-    }
-  }, [isAuth, loading, segments]);
+      if (!seenOnboarding && !inOnboarding) {
+        // Chưa xem onboarding -> vào trang onboarding
+        router.replace('/onboarding');
+      } else if (seenOnboarding && !isAuth && !inAuthGroup) {
+        // Đã xem onboarding nhưng chưa đăng nhập -> vào trang login
+        router.replace('/auth/login');
+      } else if (isAuth && (inAuthGroup || inOnboarding)) {
+        // Đã đăng nhập nhưng lại đang ở trang login hoặc onboarding -> vào trang chính
+        router.replace('/(tabs)');
+      }
+    });
+  }, [isAuth, loading, pathname]);
 
   if (loading) {
     return (
@@ -64,6 +73,14 @@ function NavigationRoot() {
         animation: 'slide_from_right',
       }}
     >
+      <Stack.Screen
+        name="onboarding"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+          animation: 'fade',
+        }}
+      />
       {/* Trang Login riêng biệt, bắt buộc trước khi vào app */}
       <Stack.Screen
         name="auth/login"
@@ -81,7 +98,7 @@ function NavigationRoot() {
       <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
       {/* Cart: Stack screen riêng → hỗ trợ swipe-back iOS */}
       <Stack.Screen
-        name="(tabs)/cart"
+        name="cart"
         options={{
           headerShown: false,
           gestureEnabled: true,

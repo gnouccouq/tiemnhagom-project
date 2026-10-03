@@ -216,7 +216,7 @@ export default function HomeScreen() {
         setCategories(catRes.value);
       }
     } catch (e) {
-      console.warn('Lỗi load home:', e);
+      console.warn('Lỗi load home: ' + String(e));
     } finally {
       setLoading(false);
       setRefreshing(false);

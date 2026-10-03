@@ -138,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await AsyncStorage.removeItem(STORAGE_KEY_SESSION);
       await AsyncStorage.removeItem(STORAGE_KEY_PROFILE);
+      await AsyncStorage.removeItem('has_seen_onboarding');
     } catch (e) {
       console.warn('Lỗi xóa AsyncStorage khi logout:', e);
     }

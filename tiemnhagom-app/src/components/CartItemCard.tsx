@@ -18,7 +18,7 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   onUpdateQuantity,
   onRemove,
 }) => {
-  const imageUri = item.imageUrl || item.variant?.imageUrl || 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=300&auto=format&fit=crop';
+  const imageUri = item.variant?.imageUrl || item.imageUrl || 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=300&auto=format&fit=crop';
 
   return (
     <View style={styles.card}>
@@ -36,7 +36,9 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
 
         {item.variant && item.variant.name && (
           <View style={styles.variantBadge}>
-            <Text style={styles.variantText}>Phân loại: {item.variant.name}</Text>
+            <Text style={styles.variantText}>
+              {item.variant.type === 'color' ? 'Màu sắc' : item.variant.type === 'pattern' ? 'Họa tiết' : item.variant.type === 'combo' ? 'Combo' : 'Phân loại'}: {item.variant.name}
+            </Text>
           </View>
         )}
 
