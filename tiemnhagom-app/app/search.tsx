@@ -84,7 +84,8 @@ export default function SearchScreen() {
     return allProducts.filter((product) => {
       const name = removeVietnameseTones(product.name.toLowerCase());
       const cat = removeVietnameseTones((product.category || '').toLowerCase());
-      return name.includes(term) || cat.includes(term);
+      const sku = (product.id || '').toLowerCase();
+      return name.includes(term) || cat.includes(term) || sku.includes(term);
     });
   }, [searchText, allProducts]);
 
