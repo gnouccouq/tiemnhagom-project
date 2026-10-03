@@ -1170,6 +1170,7 @@ window.placeOrder = async () => {
                         if (qty > 0) {
                             return {
                                 ...v,
+                                stock: Math.max(0, (v.stock || 0) - qty),
                                 sold: (v.sold || 0) + qty
                             };
                         }

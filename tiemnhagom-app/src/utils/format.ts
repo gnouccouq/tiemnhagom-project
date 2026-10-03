@@ -69,3 +69,34 @@ export function generateOrderCode(): string {
   const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `TNG${dateStr}${timeStr}-${randomSuffix}`;
 }
+
+/**
+ * Kiểm tra xem sản phẩm có thực sự hết hàng hay không
+ */
+export function checkOutOfStock(product: any, variantOverride?: any): boolean {
+  if (!product) return true;
+  
+  let isOutOfStock = Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (Number(product.stock) || 0) <= 0;
+  
+  if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
+    const hasAnyAvailable = product.comboVariants.some((v: any) => {
+      const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+      const vOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock);
+      return !vOut && vStock > 0;
+    });
+    isOutOfStock = !hasAnyAvailable;
+  }
+  
+  if (variantOverride) {
+    const isManualOut = Boolean(variantOverride.manualOutOfStock);
+    const rawStock = (variantOverride.stock !== undefined && variantOverride.stock !== null)
+      ? Number(variantOverride.stock)
+      : (Number(product.stock) || 0);
+    const vStock = (!isManualOut && rawStock <= 0 && (Number(product.stock) || 0) > 0)
+      ? Number(product.stock)
+      : rawStock;
+    isOutOfStock = isManualOut || (Boolean(variantOverride.isOutOfStock) && vStock <= 0) || vStock <= 0;
+  }
+  
+  return isOutOfStock;
+}

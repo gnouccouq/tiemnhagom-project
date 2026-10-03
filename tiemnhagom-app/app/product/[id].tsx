@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
 import { getProductById } from '../../src/services/productService';
 import { Product, ProductVariant } from '../../src/types';
-import { formatCurrency } from '../../src/utils/format';
+import { formatCurrency, checkOutOfStock } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useWishlist } from '../../src/context/WishlistContext';
 
@@ -159,7 +159,7 @@ export default function ProductDetailScreen() {
 
 
   const maxStock = selectedVariant?.stock ?? product.stock ?? 10;
-  const isOutOfStock = maxStock <= 0;
+  const isOutOfStock = checkOutOfStock(product, selectedVariant);
 
   const handleAddToCart = () => {
     if (isOutOfStock) {

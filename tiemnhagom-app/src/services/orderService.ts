@@ -1,5 +1,5 @@
 // src/services/orderService.ts
-import { addDoc, collection, doc, getDocs, limit, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, limit, orderBy, query, serverTimestamp, updateDoc, where, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Order } from '../types';
 import { generateOrderCode } from '../utils/format';
@@ -39,10 +39,116 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
       createdAt: serverTimestamp(),
     };
 
-    const docRef = await addDoc(ordersRef, newOrder);
+    let newOrderId = '';
+
+    await runTransaction(db, async (transaction) => {
+      // 1. Read product stocks
+      const productSnapshots: any[] = [];
+      const items = cleanOrderData.items || [];
+      
+      for (const item of items) {
+        if (!item.id) continue;
+        const productRef = doc(db, 'products', item.id);
+        const snap = await transaction.get(productRef);
+        if (snap.exists()) {
+           productSnapshots.push({ item, productRef, productData: snap.data() });
+        }
+      }
+
+      // 2. Compute stock updates
+      const productUpdatesMap: any = {};
+      for (const { item, productRef, productData } of productSnapshots) {
+         const pId = item.id;
+         if (!productUpdatesMap[pId]) {
+            productUpdatesMap[pId] = {
+               productRef,
+               productData,
+               totalSold: 0,
+               comboQtyMap: {} as any,
+               colorQtyMap: {} as any,
+               patternQtyMap: {} as any,
+            };
+         }
+         
+         const pInfo = productUpdatesMap[pId];
+         pInfo.totalSold += item.quantity;
+         
+         if (item.variant && item.variant.type === 'combo') {
+            const vName = item.variant.name;
+            pInfo.comboQtyMap[vName] = (pInfo.comboQtyMap[vName] || 0) + item.quantity;
+         } else if (item.variant && item.variant.type === 'color') {
+            const vName = item.variant.name;
+            pInfo.colorQtyMap[vName] = (pInfo.colorQtyMap[vName] || 0) + item.quantity;
+         } else if (item.variant && item.variant.type === 'pattern') {
+            const vName = item.variant.name;
+            pInfo.patternQtyMap[vName] = (pInfo.patternQtyMap[vName] || 0) + item.quantity;
+         }
+      }
+
+      for (const pId of Object.keys(productUpdatesMap)) {
+         const { productRef, productData, totalSold, comboQtyMap, colorQtyMap, patternQtyMap } = productUpdatesMap[pId];
+         
+         let updatePayload: any = {
+            sold: increment(totalSold)
+         };
+         
+         if (!productData.isCombo) {
+            updatePayload.stock = increment(-totalSold);
+         }
+         
+         if (Array.isArray(productData.comboVariants) && Object.keys(comboQtyMap || {}).length > 0) {
+            updatePayload.comboVariants = productData.comboVariants.map((v: any) => {
+               const qty = comboQtyMap[v.name] || 0;
+               if (qty > 0) {
+                  return {
+                     ...v,
+                     stock: Math.max(0, (v.stock || 0) - qty),
+                     sold: (v.sold || 0) + qty
+                  };
+               }
+               return v;
+            });
+         }
+         
+         if (Array.isArray(productData.colorVariants) && Object.keys(colorQtyMap || {}).length > 0) {
+            updatePayload.colorVariants = productData.colorVariants.map((v: any) => {
+               const qty = colorQtyMap[v.name] || 0;
+               if (qty > 0) {
+                  return {
+                     ...v,
+                     stock: Math.max(0, (v.stock || 0) - qty),
+                     sold: (v.sold || 0) + qty
+                  };
+               }
+               return v;
+            });
+         }
+         
+         if (Array.isArray(productData.patternVariants) && Object.keys(patternQtyMap || {}).length > 0) {
+            updatePayload.patternVariants = productData.patternVariants.map((v: any) => {
+               const qty = patternQtyMap[v.name] || 0;
+               if (qty > 0) {
+                  return {
+                     ...v,
+                     stock: Math.max(0, (v.stock || 0) - qty),
+                     sold: (v.sold || 0) + qty
+                  };
+               }
+               return v;
+            });
+         }
+         
+         transaction.update(productRef, updatePayload);
+      }
+
+      const newOrderRef = doc(collection(db, 'orders'));
+      newOrderId = newOrderRef.id;
+      transaction.set(newOrderRef, newOrder);
+    });
+
     return {
       success: true,
-      orderId: docRef.id,
+      orderId: newOrderId,
       orderCode,
     };
   } catch (error: any) {

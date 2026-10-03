@@ -1555,14 +1555,14 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const currentPrice = getProductCurrentPrice(mockProduct, globalFlashSaleSettings, id);
     const displaySale = getProductEffectiveSale(mockProduct, globalFlashSaleSettings, id);
     const hasSale = displaySale > 0;
-    let isOutOfStock = (product.stock || 0) <= 0;
+    let isOutOfStock = Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (product.stock || 0) <= 0;
     if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
         const hasAnyAvailable = product.comboVariants.some(v => {
             const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
-            const vOut = Boolean(v.manualOutOfStock) || (Boolean(v.isOutOfStock) && vStock <= 0);
+            const vOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock);
             return !vOut && vStock > 0;
         });
-        isOutOfStock = !hasAnyAvailable && (Number(product.stock) || 0) <= 0;
+        isOutOfStock = !hasAnyAvailable;
     }
     if (variantOverride) {
         const isManualOut = Boolean(variantOverride.manualOutOfStock);

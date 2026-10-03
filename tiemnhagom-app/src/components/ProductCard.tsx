@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
+import { checkOutOfStock } from '../utils/format';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '../types';
@@ -77,7 +79,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     addToCart(product, 1, product.selectedVariant);
   };
 
-  const isSoldOut = product.stock !== undefined && product.stock <= 0;
+  const isSoldOut = checkOutOfStock(product);
 
   return (
     <TouchableOpacity
@@ -132,9 +134,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Overlay Hết hàng */}
         {isSoldOut && (
           <View style={styles.outOfStockOverlay}>
-            <View style={styles.outOfStockPill}>
-              <Text style={styles.outOfStockText}>Tạm hết hàng</Text>
-            </View>
+            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} experimentalBlurMethod="dimezisBlurView">
+              <Text style={styles.outOfStockText}>Hết hàng</Text>
+            </BlurView>
           </View>
         )}
       </View>
@@ -324,23 +326,28 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   outOfStockOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.38)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    zIndex: 10,
   },
-  outOfStockPill: {
-    backgroundColor: 'rgba(24, 24, 27, 0.88)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+  outOfStockCircle: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   outOfStockText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontSize: 11,
+    color: '#ffffff',
+    fontSize: 10,
     fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   content: {
     padding: 10,
