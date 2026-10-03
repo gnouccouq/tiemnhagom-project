@@ -21,9 +21,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/constants/theme';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
 import { Product } from '../../src/types';
-import { formatCurrency } from '../../src/utils/format';
+import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
+import { useSettings } from '../../src/context/SettingsContext';
+import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -121,6 +123,7 @@ const bubbleStyles = StyleSheet.create({
 function ProductRow({ product }: { product: Product }) {
   const router = useRouter();
   const { addToCart } = useCart();
+  const { t } = useSettings();
 
   const img = product.images?.[0] || product.imageUrl;
   const price = (product.salePrice !== undefined && product.salePrice !== null) ? product.salePrice : product.price;
@@ -170,7 +173,7 @@ function ProductRow({ product }: { product: Product }) {
         style={rowStyles.addBtn}
         onPress={() => {
           addToCart(product, 1);
-          Alert.alert('✓', 'Đã thêm vào giỏ hàng', [{ text: 'OK' }]);
+          Alert.alert('✓', t('addedToCart'), [{ text: t('ok') }]);
         }}
       >
         <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -266,7 +269,16 @@ const rowStyles = StyleSheet.create({
 export default function ProductsScreen() {
   const params = useLocalSearchParams<{ category?: string; search?: string; collection?: string }>();
   const router = useRouter();
+  const { t } = useSettings();
 
+  const SORT_OPTIONS = [
+    { id: 'newest', label: t('sortNewest') },
+    { id: 'popular', label: t('sortPopular') },
+    { id: 'price-asc', label: t('sortPriceAsc') },
+    { id: 'price-desc', label: t('sortPriceDesc') },
+  ];
+
+  const { products: realtimeProducts, loadingProducts } = useRealtimeData();
   const [categories, setCategories] = useState<ProductCategoryItem[]>(DEFAULT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState<string>(params.category || 'all');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
@@ -298,25 +310,66 @@ export default function ProductsScreen() {
     if (params.category) setSelectedCategory(params.category);
   }, [params.category]);
 
-  const fetchItems = useCallback(async () => {
-    try {
-      // Load toàn bộ không giới hạn
-      const data = await getProducts({
-        category: selectedSubCategory || selectedCategory,
-        searchTerm: params.search || '',
-        sortBy,
-        // Không truyền maxItems → lấy tất cả
+  const fetchItems = useCallback(() => {
+    let items = [...realtimeProducts];
+
+    // Lọc theo category
+    const catTarget = (selectedSubCategory || selectedCategory).toLowerCase().trim();
+    if (catTarget && catTarget !== 'all') {
+      const matchedGroup = categories.find(
+        (g) =>
+          g.id.toLowerCase() === catTarget ||
+          g.name.toLowerCase() === catTarget ||
+          (g.enName && g.enName.toLowerCase() === catTarget)
+      );
+
+      const targetSubs = matchedGroup?.subs ? matchedGroup.subs.map((s) => s.toLowerCase()) : [];
+      const matchCriteria = [
+        catTarget,
+        ...(matchedGroup?.id ? [matchedGroup.id.toLowerCase()] : []),
+        ...(matchedGroup?.name ? [matchedGroup.name.toLowerCase()] : []),
+        ...(matchedGroup?.enName ? [matchedGroup.enName.toLowerCase()] : []),
+        ...targetSubs,
+      ];
+
+      items = items.filter((p) => {
+        const pCat = (p.category || '').toLowerCase();
+        return matchCriteria.some((c) => pCat.includes(c) || c.includes(pCat));
       });
-      setAllProducts(data);
-      setPage(1);
-      setProducts(data.slice(0, PAGE_SIZE)); // hiển thị trang đầu tiên
-    } catch (e) {
-      console.warn('Lỗi load products: ' + String(e));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
-  }, [selectedCategory, selectedSubCategory, params.search, sortBy]);
+
+    // Lọc theo search
+    if (params.search && params.search.trim() !== '') {
+      const cleanTerm = removeVietnameseTones(params.search);
+      items = items.filter((p) => {
+        const cleanName = removeVietnameseTones(p.name);
+        const sku = p.id.toLowerCase();
+        return cleanName.includes(cleanTerm) || sku.includes(cleanTerm);
+      });
+    }
+
+    // Sắp xếp
+    if (sortBy === 'price-asc') {
+      items.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
+    } else if (sortBy === 'price-desc') {
+      items.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price));
+    } else if (sortBy === 'popular') {
+      items.sort((a, b) => (b.sold || 0) - (a.sold || 0));
+    } else {
+      // newest (mặc định createdAt desc)
+      items.sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      });
+    }
+
+    setAllProducts(items);
+    setPage(1);
+    setProducts(items.slice(0, PAGE_SIZE));
+    setLoading(false);
+    setRefreshing(false);
+  }, [selectedCategory, selectedSubCategory, params.search, sortBy, realtimeProducts, categories]);
 
   // Load thêm khi cuộn xuống gần cuối
   const loadMore = useCallback(() => {
@@ -330,16 +383,19 @@ export default function ProductsScreen() {
   }, [loadingMore, page, products.length, allProducts]);
 
   useEffect(() => {
-    setLoading(true);
-    fetchItems();
-  }, [fetchItems]);
+    if (loadingProducts) {
+      setLoading(true);
+    } else {
+      fetchItems();
+    }
+  }, [fetchItems, loadingProducts]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchItems();
   };
 
-  const activeCatName = categories.find(c => c.id === selectedCategory)?.name || 'Tất cả';
+  const activeCatName = categories.find(c => c.id === selectedCategory)?.name || t('all');
   const activeCat = categories.find(c => c.id === selectedCategory);
   const subs = activeCat?.subs || [];
 
@@ -356,7 +412,7 @@ export default function ProductsScreen() {
             <View style={[styles.dot, { backgroundColor: '#E8A87C' }]} />
             <View style={[styles.dot, { backgroundColor: '#9A7B4F' }]} />
           </View>
-          <Text style={styles.headerTitleText}>Danh mục</Text>
+          <Text style={styles.headerTitleText}>{t('categories')}</Text>
           <Ionicons name="chevron-down" size={16} color="#1F2937" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
 
@@ -410,7 +466,7 @@ export default function ProductsScreen() {
               onPress={() => setSelectedSubCategory('')}
             >
               <Text style={[styles.subChipText, selectedSubCategory === '' && styles.subChipTextActive]}>
-                Tất cả
+                {t('all')}
               </Text>
             </TouchableOpacity>
             {subs.map((sub, i) => (
@@ -430,10 +486,10 @@ export default function ProductsScreen() {
 
       {/* ── Section Title + Sort ── */}
       <Text style={styles.sectionTitle}>
-        {selectedSubCategory || (activeCatName === 'Tất cả' ? 'Tất cả sản phẩm' : activeCatName)}
+        {selectedSubCategory || (activeCatName === t('all') ? t('allProducts') : activeCatName)}
       </Text>
       <View style={styles.sectionHeader}>
-        <Text style={styles.countText}>{allProducts.length} sản phẩm</Text>
+        <Text style={styles.countText}>{allProducts.length} {t('productsCount')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
           {SORT_OPTIONS.map(opt => (
             <TouchableOpacity
@@ -451,13 +507,13 @@ export default function ProductsScreen() {
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color="#111111" />
-          <Text style={styles.loadingText}>Đang tải sản phẩm...</Text>
+          <Text style={styles.loadingText}>{t('loadingProducts')}</Text>
         </View>
       ) : products.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Ionicons name="cube-outline" size={48} color="#C8B89A" />
-          <Text style={styles.emptyTitle}>Chưa có sản phẩm</Text>
-          <Text style={styles.emptyDesc}>Danh mục này đang được cập nhật, thử chọn danh mục khác nhé!</Text>
+          <Text style={styles.emptyTitle}>{t('noProducts')}</Text>
+          <Text style={styles.emptyDesc}>{t('noProductsDesc')}</Text>
         </View>
       ) : (
         <FlatList
@@ -495,7 +551,7 @@ export default function ProductsScreen() {
       >
         <SafeAreaView style={modalStyles.safeArea}>
           <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Danh mục</Text>
+            <Text style={modalStyles.title}>{t('categories')}</Text>
             <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Ionicons name="close" size={24} color="#1F2937" />
             </TouchableOpacity>

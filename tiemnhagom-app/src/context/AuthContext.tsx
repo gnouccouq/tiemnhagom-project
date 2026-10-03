@@ -9,6 +9,7 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithCredential,
   signInAnonymously
 } from 'firebase/auth';
@@ -28,6 +29,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signInWithGoogleCredential: (idToken: string) => Promise<void>;
+  signInWithAppleCredential: (idToken: string, rawNonce: string) => Promise<void>;
   signInWithPhoneSession: (phone: string, displayName?: string) => Promise<void>;
   updateUserProfileData: (data: Partial<UserProfile>) => Promise<void>;
 }
@@ -163,6 +165,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUserProfile(cred.user.uid);
   };
 
+  const signInWithAppleCredential = async (idToken: string, rawNonce: string) => {
+    const provider = new OAuthProvider('apple.com');
+    const credential = provider.credential({
+      idToken,
+      rawNonce,
+    });
+    const cred = await signInWithCredential(auth, credential);
+    await fetchUserProfile(cred.user.uid);
+  };
+
   const signInWithPhoneSession = async (phoneNumber: string, displayName?: string) => {
     // Tìm hoặc tạo profile gắn với số điện thoại
     try {
@@ -266,6 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         resetPassword,
         signInWithGoogleCredential,
+        signInWithAppleCredential,
         signInWithPhoneSession,
         updateUserProfileData,
       }}

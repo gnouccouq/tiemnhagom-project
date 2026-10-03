@@ -10472,8 +10472,9 @@ function renderPOSCart() {
     const subtotal = bill.cart.reduce((sum, i) => sum + ((i.price - (i.discount || 0)) * i.quantity), 0);
     const totalQty = bill.cart.reduce((sum, i) => sum + i.quantity, 0);
 
+    const applyMemDiscount = (bill.applyMemberDiscount !== false);
     const discountPct = currentTierInfo ? (currentTierInfo.effectiveDiscountPct || 0) : 0;
-    if (discountPct > 0 && subtotal > 0) {
+    if (applyMemDiscount && discountPct > 0 && subtotal > 0) {
         membershipDiscount = Math.round(subtotal * (discountPct / 100));
     }
     bill.membershipDiscount = membershipDiscount;
@@ -10484,11 +10485,21 @@ function renderPOSCart() {
     const memRow = document.getElementById('pos-membership-discount-row');
     const memDisplay = document.getElementById('pos-membership-discount-display');
     const memLabel = document.getElementById('pos-membership-badge-label');
+    const memCheckbox = document.getElementById('pos-apply-member-discount');
+    if (memCheckbox) memCheckbox.checked = applyMemDiscount;
+
     if (memRow && memDisplay) {
-        if (membershipDiscount > 0) {
+        if (discountPct > 0 && currentTierInfo) { // Vẫn hiện row nhưng cho phép uncheck
             memRow.style.display = 'flex';
             if (memLabel) memLabel.innerText = `(${currentTierInfo.name} ${discountPct}%)`;
             memDisplay.innerText = `-${formatVND(membershipDiscount)}đ`;
+            if (!applyMemDiscount) {
+                memDisplay.style.textDecoration = 'line-through';
+                memDisplay.style.color = '#94a3b8';
+            } else {
+                memDisplay.style.textDecoration = 'none';
+                memDisplay.style.color = '#d97706';
+            }
         } else {
             memRow.style.display = 'none';
         }
@@ -10552,6 +10563,15 @@ window.updateBillDiscount = (val) => {
     const bill = window.getCurrentBill();
     if (bill) {
         bill.discountVal = parseVND(val);
+        window.savePOSBills();
+        renderPOSCart();
+    }
+};
+
+window.toggleMemberDiscount = (isChecked) => {
+    const bill = window.getCurrentBill();
+    if (bill) {
+        bill.applyMemberDiscount = isChecked;
         window.savePOSBills();
         renderPOSCart();
     }

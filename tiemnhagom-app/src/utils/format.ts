@@ -62,10 +62,10 @@ export function removeVietnameseTones(str: string): string {
  * Tạo mã đơn ngẫu nhiên theo chuẩn Tiệm Nhà Gốm: TNG-XXXXXX
  */
 export function generateOrderCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = 'TNG-';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  const now = new Date();
+  const pad = (n: number, l = 2) => String(n).padStart(l, '0');
+  const dateStr = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}`;
+  const timeStr = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(), 3)}`;
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `TNG${dateStr}${timeStr}-${randomSuffix}`;
 }

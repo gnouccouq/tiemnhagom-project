@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useCart } from '../../src/context/CartContext';
+import { useSettings } from '../../src/context/SettingsContext';
 
 export default function TabLayout() {
   const { unreadCount } = useNotificationBadge();
   const { cartCount } = useCart();
+  const { t } = useSettings();
   return (
     <Tabs
       screenOptions={{
@@ -24,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
+          title: t('home'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'home' : 'home-outline'}
@@ -39,7 +41,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="products"
         options={{
-          title: 'Danh mục',
+          title: t('categories'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'grid' : 'grid-outline'}
@@ -54,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="cart"
         options={{
-          title: 'Giỏ hàng',
+          title: t('cartTab'),
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.iconWithBadge}>
               <Ionicons
@@ -76,7 +78,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="deals"
         options={{
-          title: 'Ưu đãi',
+          title: t('deals'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'pricetag' : 'pricetag-outline'}
@@ -91,7 +93,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Tài khoản',
+          title: t('profile'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'person' : 'person-outline'}

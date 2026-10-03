@@ -168,6 +168,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // 15. Cấu hình app chung (Force Update, etc)
+    match /app_config/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

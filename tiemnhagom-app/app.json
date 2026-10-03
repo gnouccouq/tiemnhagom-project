@@ -9,9 +9,9 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#9C7156",
     "splash": {
-      "image": "./assets/images/LOGO.jpg",
+      "image": "./assets/images/LOGO_3_BLACK_PNG.png",
       "resizeMode": "contain",
-      "backgroundColor": "#9C7156"
+      "backgroundColor": "#F7F6F2"
     },
     "ios": {
       "supportsTablet": true,
@@ -41,12 +41,19 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/LOGO.jpg",
+          "image": "./assets/images/LOGO_3_BLACK_PNG.png",
           "resizeMode": "contain",
-          "backgroundColor": "#9C7156"
+          "backgroundColor": "#F7F6F2"
         }
       ],
-      "expo-image"
+      "expo-image",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Ứng dụng cần quyền sử dụng Face ID để xác thực khi mở khóa ứng dụng."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

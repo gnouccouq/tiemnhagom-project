@@ -19,6 +19,7 @@ import { AddressPicker } from '../src/components/AddressPicker';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
+import { useSettings } from '../src/context/SettingsContext';
 import { createOrder } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
 
@@ -37,22 +38,23 @@ export default function CheckoutScreen() {
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'banking'>('cod');
   const [loading, setLoading] = useState(false);
+  const { t } = useSettings();
 
   const handleSubmitOrder = async () => {
     if (!fullName.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập họ và tên người nhận.');
+      Alert.alert(t('error'), t('errMissingName'));
       return;
     }
     if (!phone.trim() || phone.trim().length < 9) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại hợp lệ để giao hàng.');
+      Alert.alert(t('error'), t('errInvalidPhone'));
       return;
     }
     if (!streetAddress.trim() || !locationName) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ địa chỉ nhận hàng (Tỉnh/Thành và Số nhà).');
+      Alert.alert(t('error'), t('errMissingAddress'));
       return;
     }
     if (cart.length === 0) {
-      Alert.alert('Lỗi', 'Giỏ hàng đang trống.');
+      Alert.alert(t('error'), t('errEmptyCart'));
       return;
     }
 
@@ -89,10 +91,10 @@ export default function CheckoutScreen() {
           },
         });
       } else {
-        Alert.alert('Lỗi', result.error || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+        Alert.alert(t('error'), result.error || t('errCreateOrderFailed'));
       }
     } catch (e: any) {
-      Alert.alert('Lỗi', e.message || 'Đã xảy ra sự cố trong quá trình đặt hàng.');
+      Alert.alert(t('error'), e.message || t('errOrderProcess'));
     } finally {
       setLoading(false);
     }
@@ -101,18 +103,18 @@ export default function CheckoutScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      <Header title="Thanh toán" showBack showCart={false} showSearch={false} />
+      <Header title={t('checkoutTitle')} showBack showCart={false} showSearch={false} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Recipient Information */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="location-outline" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Thông tin người nhận</Text>
+            <Text style={styles.cardTitle}>{t('recipientInfo')}</Text>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Họ và tên *</Text>
+            <Text style={styles.label}>{t('fullNameReq')}</Text>
             <TextInput
               style={styles.input}
               placeholder="Nguyễn Văn A"
@@ -123,7 +125,7 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Số điện thoại *</Text>
+            <Text style={styles.label}>{t('phoneReq')}</Text>
             <TextInput
               style={styles.input}
               placeholder="0901234567"
@@ -135,24 +137,24 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Tỉnh / Thành phố, Phường / Xã *</Text>
+            <Text style={styles.label}>{t('provinceWardReq')}</Text>
             <TouchableOpacity
               style={styles.locationSelector}
               onPress={() => setAddressPickerVisible(true)}
               activeOpacity={0.7}
             >
               <Text style={[styles.locationText, !locationName && styles.locationPlaceholder]}>
-                {locationName || 'Chọn khu vực giao hàng...'}
+                {locationName || t('selectDeliveryArea')}
               </Text>
               <Ionicons name="chevron-down" size={20} color={Colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Số nhà, Tên đường *</Text>
+            <Text style={styles.label}>{t('streetNameReq')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Nhập số nhà, tên đường, tòa nhà..."
+              placeholder={t('streetNamePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={streetAddress}
               onChangeText={setStreetAddress}
@@ -162,10 +164,10 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Ghi chú đơn hàng (nếu có)</Text>
+            <Text style={styles.label}>{t('orderNote')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="VD: Giao giờ hành chính, gọi trước khi đến..."
+              placeholder={t('orderNotePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={note}
               onChangeText={setNote}
@@ -177,7 +179,7 @@ export default function CheckoutScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="card-outline" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Phương thức thanh toán</Text>
+            <Text style={styles.cardTitle}>{t('paymentMethodTitle')}</Text>
           </View>
 
           <TouchableOpacity
@@ -190,8 +192,8 @@ export default function CheckoutScreen() {
               color={paymentMethod === 'cod' ? Colors.primary : Colors.textMuted}
             />
             <View style={styles.paymentTextWrap}>
-              <Text style={styles.paymentName}>Thanh toán khi nhận hàng (COD)</Text>
-              <Text style={styles.paymentDesc}>Nhận hàng, kiểm tra đồ gốm và thanh toán tiền mặt</Text>
+              <Text style={styles.paymentName}>{t('cod')}</Text>
+              <Text style={styles.paymentDesc}>{t('codDesc')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -205,15 +207,15 @@ export default function CheckoutScreen() {
               color={paymentMethod === 'banking' ? Colors.primary : Colors.textMuted}
             />
             <View style={styles.paymentTextWrap}>
-              <Text style={styles.paymentName}>Chuyển khoản VietQR</Text>
-              <Text style={styles.paymentDesc}>Quét mã QR qua app ngân hàng tiện lợi và bảo mật</Text>
+              <Text style={styles.paymentName}>{t('vietQR')}</Text>
+              <Text style={styles.paymentDesc}>{t('vietQRDesc')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Order Items Preview */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Đơn hàng ({cart.length} món)</Text>
+          <Text style={styles.cardTitle}>{t('orderTitle')} ({cart.length} {t('itemsCount')})</Text>
           <View style={styles.itemsWrap}>
             {cart.map((item) => (
               <View key={item.id} style={styles.itemRow}>
@@ -231,18 +233,18 @@ export default function CheckoutScreen() {
         {/* Summary Card */}
         <View style={styles.card}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tạm tính:</Text>
+            <Text style={styles.summaryLabel}>{t('subtotal')}:</Text>
             <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Phí vận chuyển:</Text>
+            <Text style={styles.summaryLabel}>{t('shippingFee')}:</Text>
             <Text style={styles.summaryValue}>
-              {shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee)}
+              {shippingFee === 0 ? t('free') : formatCurrency(shippingFee)}
             </Text>
           </View>
           {discountAmount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>Giảm giá:</Text>
+              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}:</Text>
               <Text style={[styles.summaryValue, { color: Colors.badgeSale }]}>
                 -{formatCurrency(discountAmount)}
               </Text>
@@ -250,7 +252,7 @@ export default function CheckoutScreen() {
           )}
           <View style={styles.divider} />
           <View style={styles.summaryRowTotal}>
-            <Text style={styles.totalLabel}>Tổng cần thanh toán:</Text>
+            <Text style={styles.totalLabel}>{t('totalToPay')}</Text>
             <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
           </View>
         </View>
@@ -271,7 +273,7 @@ export default function CheckoutScreen() {
       {/* Submit Button */}
       <View style={styles.bottomBar}>
         <View style={styles.bottomTotal}>
-          <Text style={styles.bottomTotalLabel}>Tổng thanh toán</Text>
+          <Text style={styles.bottomTotalLabel}>{t('totalPayment')}</Text>
           <Text style={styles.bottomTotalValue}>{formatCurrency(totalAmount)}</Text>
         </View>
 
@@ -284,7 +286,7 @@ export default function CheckoutScreen() {
           {loading ? (
             <ActivityIndicator color={Colors.textInverse} />
           ) : (
-            <Text style={styles.submitBtnText}>Xác nhận đặt hàng</Text>
+            <Text style={styles.submitBtnText}>{t('confirmOrder')}</Text>
           )}
         </TouchableOpacity>
       </View>

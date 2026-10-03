@@ -1,11 +1,11 @@
 // src/constants/theme.ts
 
 export const Colors = {
-  // Brand Terracotta & Earth Tones
-  primary: '#C86432',       // Terracotta đỏ đất nung đặc trưng
-  primaryDark: '#A0481E',
-  primaryLight: '#F3E5DC',
-  primaryHover: '#B25424',
+  // Brand Terracotta & Earth Tones (Changed to Black/Grey theme per user directive)
+  primary: '#111111',       // Black theme
+  primaryDark: '#000000',
+  primaryLight: '#E5E5E5',
+  primaryHover: '#333333',
 
   // Neutrals & Backgrounds
   background: '#FAF8F5',    // Màu kem gốm ấm áp (warm cream)

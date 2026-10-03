@@ -21,6 +21,8 @@ export interface HeaderProps {
   showBack?: boolean;
   showCart?: boolean;
   showSearch?: boolean;
+  showSettings?: boolean;
+  onSettingsPress?: () => void;
   onSearchPress?: () => void;
   searchValue?: string;
   onSearchChange?: (text: string) => void;
@@ -38,6 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   showBack = false,
   showCart = true,
   showSearch = true,
+  showSettings = false,
+  onSettingsPress,
   onSearchPress,
   searchValue,
   onSearchChange,
@@ -227,6 +231,16 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           <View style={styles.right}>
+            {showSettings && (
+              <TouchableOpacity
+                style={[styles.iconButton, { marginRight: 8 }]}
+                activeOpacity={0.8}
+                onPress={onSettingsPress}
+                accessibilityLabel="Cài đặt"
+              >
+                <Ionicons name="settings-outline" size={22} color="#18181B" />
+              </TouchableOpacity>
+            )}
             {showCart && (
               <TouchableOpacity
                 style={styles.iconButton}
@@ -254,8 +268,6 @@ const styles = StyleSheet.create({
   containerDefault: {
     height: 56,
     backgroundColor: '#FAF8F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDE7DE',
     justifyContent: 'center',
     paddingHorizontal: 14,
   },

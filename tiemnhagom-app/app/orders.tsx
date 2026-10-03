@@ -17,12 +17,16 @@ import { Image } from 'expo-image';
 import { EmptyState } from '../src/components/EmptyState';
 import { lookupOrders, getUserOrders } from '../src/services/orderService';
 import { useAuth } from '../src/context/AuthContext';
+import { useRealtimeData } from '../src/context/RealtimeDataContext';
+import { useSettings } from '../src/context/SettingsContext';
 import { Order } from '../src/types';
 import { formatCurrency, formatDate } from '../src/utils/format';
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const { t } = useSettings();
   const { user } = useAuth();
+  const { orders: realtimeOrders } = useRealtimeData();
   const [activeTab, setActiveTab] = useState<'lookup' | 'my-orders'>('lookup');
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,19 +34,14 @@ export default function OrdersScreen() {
   const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'my-orders' && user) {
-      setLoading(true);
-      getUserOrders(user.uid)
-        .then((res) => {
-          setOrders(res);
-          setHasSearched(true);
-        })
-        .finally(() => setLoading(false));
+    if (activeTab === 'my-orders') {
+      setOrders(realtimeOrders);
+      setHasSearched(true);
     } else if (activeTab === 'lookup') {
       setOrders([]);
       setHasSearched(false);
     }
-  }, [activeTab, user]);
+  }, [activeTab, realtimeOrders]);
 
   const handleLookup = async () => {
     if (!searchInput.trim()) return;
@@ -61,15 +60,15 @@ export default function OrdersScreen() {
   const getStatusConfig = (status: string) => {
     const s = (status || '').toLowerCase();
     if (s.includes('hoàn thành') || s.includes('thành công') || s.includes('completed')) {
-      return { bg: '#F0FDF4', color: '#16A34A', icon: 'checkmark-circle' as const, label: 'Hoàn thành' };
+      return { bg: '#F0FDF4', color: '#16A34A', icon: 'checkmark-circle' as const, label: t('statusCompleted') };
     }
     if (s.includes('đang giao') || s.includes('shipping') || s.includes('delivery')) {
-      return { bg: '#EFF6FF', color: '#2563EB', icon: 'bicycle' as const, label: 'Đang giao' };
+      return { bg: '#EFF6FF', color: '#2563EB', icon: 'bicycle' as const, label: t('statusShipping') };
     }
     if (s.includes('hủy') || s.includes('cancelled') || s.includes('cancel')) {
-      return { bg: '#FEF2F2', color: '#DC2626', icon: 'close-circle' as const, label: 'Đã hủy' };
+      return { bg: '#FEF2F2', color: '#DC2626', icon: 'close-circle' as const, label: t('statusCancelled') };
     }
-    return { bg: '#F5F3FF', color: '#7C3AED', icon: 'time' as const, label: status || 'Đang xử lý' };
+    return { bg: '#F5F3FF', color: '#7C3AED', icon: 'time' as const, label: status || t('statusProcessing') };
   };
 
   return (
@@ -86,7 +85,7 @@ export default function OrdersScreen() {
           <Ionicons name="chevron-back" size={22} color="#111111" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Đơn hàng</Text>
+          <Text style={styles.headerTitle}>{t('orderTitle')}</Text>
         </View>
         <View style={styles.headerRight} />
       </View>
@@ -99,7 +98,7 @@ export default function OrdersScreen() {
           activeOpacity={0.8}
         >
           <Ionicons name="search-outline" size={14} color={activeTab === 'lookup' ? '#FFFFFF' : '#71717A'} />
-          <Text style={[styles.tabText, activeTab === 'lookup' && styles.tabTextActive]}>Tra cứu đơn</Text>
+          <Text style={[styles.tabText, activeTab === 'lookup' && styles.tabTextActive]}>{t('lookupOrder')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'my-orders' && styles.tabActive]}
@@ -107,7 +106,7 @@ export default function OrdersScreen() {
           activeOpacity={0.8}
         >
           <Ionicons name="receipt-outline" size={14} color={activeTab === 'my-orders' ? '#FFFFFF' : '#71717A'} />
-          <Text style={[styles.tabText, activeTab === 'my-orders' && styles.tabTextActive]}>Đơn của tôi</Text>
+          <Text style={[styles.tabText, activeTab === 'my-orders' && styles.tabTextActive]}>{t('myOrders')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -122,16 +121,16 @@ export default function OrdersScreen() {
             <View style={styles.lookupIconWrap}>
               <Ionicons name="search" size={22} color="#111111" />
             </View>
-            <Text style={styles.lookupTitle}>Tra cứu tình trạng đơn hàng</Text>
+            <Text style={styles.lookupTitle}>{t('lookupOrderTitle')}</Text>
             <Text style={styles.lookupDesc}>
-              Nhập số điện thoại hoặc mã đơn hàng (VD: TNG-XXXXXX) để kiểm tra lộ trình giao hàng.
+              {t('lookupOrderDesc')}
             </Text>
             <View style={styles.inputRow}>
               <View style={styles.inputWrap}>
                 <Ionicons name="call-outline" size={16} color="#9CA3AF" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="SĐT hoặc Mã đơn hàng..."
+                  placeholder={t('lookupOrderPlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   value={searchInput}
                   onChangeText={setSearchInput}
@@ -145,7 +144,7 @@ export default function OrdersScreen() {
                 )}
               </View>
               <TouchableOpacity style={styles.lookupBtn} onPress={handleLookup} activeOpacity={0.85}>
-                <Text style={styles.lookupBtnText}>Tìm</Text>
+                <Text style={styles.lookupBtnText}>{t('search')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -155,12 +154,12 @@ export default function OrdersScreen() {
         {activeTab === 'my-orders' && !user && (
           <View style={styles.loginPrompt}>
             <Ionicons name="person-circle-outline" size={56} color="#D4D4D8" />
-            <Text style={styles.loginTitle}>Chưa đăng nhập</Text>
+            <Text style={styles.loginTitle}>{t('notLoggedIn')}</Text>
             <Text style={styles.loginDesc}>
-              Hãy đăng nhập để xem toàn bộ lịch sử đơn hàng và tích lũy điểm thưởng.
+              {t('loginPromptDesc')}
             </Text>
             <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login' as any)} activeOpacity={0.85}>
-              <Text style={styles.loginBtnText}>Đăng nhập ngay</Text>
+              <Text style={styles.loginBtnText}>{t('loginNow')}</Text>
               <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -170,7 +169,7 @@ export default function OrdersScreen() {
         {loading && (
           <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color="#111111" />
-            <Text style={styles.loadingText}>Đang tải dữ liệu đơn hàng...</Text>
+            <Text style={styles.loadingText}>{t('loadingOrders')}</Text>
           </View>
         )}
 
@@ -178,11 +177,11 @@ export default function OrdersScreen() {
         {!loading && hasSearched && orders.length === 0 && (
           <View style={styles.emptyWrap}>
             <Ionicons name="receipt-outline" size={44} color="#D4D4D8" />
-            <Text style={styles.emptyTitle}>Không tìm thấy đơn hàng</Text>
+            <Text style={styles.emptyTitle}>{t('noOrdersFound')}</Text>
             <Text style={styles.emptyDesc}>
               {activeTab === 'lookup'
-                ? 'Không có đơn hàng khớp. Vui lòng kiểm tra lại SĐT hoặc mã đơn.'
-                : 'Bạn chưa có đơn hàng nào. Hãy chọn đồ gốm và đặt hàng ngay!'}
+                ? t('noOrdersLookupDesc')
+                : t('noOrdersMyDesc')}
             </Text>
           </View>
         )}
@@ -190,7 +189,7 @@ export default function OrdersScreen() {
         {/* ── Danh sách đơn ── */}
         {!loading && orders.length > 0 && (
           <View style={styles.ordersList}>
-            <Text style={styles.resultsCount}>{orders.length} đơn hàng</Text>
+            <Text style={styles.resultsCount}>{orders.length} {t('ordersCount')}</Text>
 
             {orders.map((order, idx) => {
               const st = getStatusConfig(order.status);
@@ -199,14 +198,14 @@ export default function OrdersScreen() {
                   {/* Header: Mã đơn + Trạng thái */}
                   <View style={styles.cardHeader}>
                     <View>
-                      <Text style={styles.orderCodeLabel}>MÃ ĐƠN HÀNG</Text>
+                      <Text style={styles.orderCodeLabel}>{t('orderCodeLabel')}</Text>
                       <Text style={styles.orderCode}>
                         {order.orderCode || `#${String(order.id || '').slice(-6).toUpperCase()}`}
                       </Text>
                       <Text style={styles.orderDate}>Ngày đặt: {formatDate(order.orderDate)}</Text>
                     </View>
                     <View style={styles.cardHeaderRight}>
-                      <Text style={styles.statusLabel}>TRẠNG THÁI</Text>
+                      <Text style={styles.statusLabel}>{t('statusLabel')}</Text>
                       <View style={[styles.statusBadge, { backgroundColor: st.bg }]}>
                         <Text style={[styles.statusText, { color: st.color }]}>{st.label}</Text>
                       </View>
@@ -215,13 +214,13 @@ export default function OrdersScreen() {
 
                   {/* Progress Timeline */}
                   <View style={styles.timelineWrap}>
-                    {['Tiếp nhận', 'Đóng gói', 'Đang giao', 'Đã nhận'].map((step, sIdx) => {
+                    {[t('statusReceived') || 'Tiếp nhận', t('statusPacking') || 'Đóng gói', t('statusShipping') || 'Đang giao', t('statusDelivered') || 'Đã nhận'].map((step, sIdx) => {
                       let isActive = false;
-                      if (st.label === 'Đã hủy') {
+                      if (st.label === t('statusCancelled') || st.label === 'Đã hủy') {
                         isActive = sIdx === 0;
-                      } else if (st.label === 'Hoàn thành') {
+                      } else if (st.label === t('statusCompleted') || st.label === 'Hoàn thành') {
                         isActive = true;
-                      } else if (st.label === 'Đang giao') {
+                      } else if (st.label === t('statusShipping') || st.label === 'Đang giao') {
                         isActive = sIdx <= 2;
                       } else {
                         const original = (order.status || '').toLowerCase();
@@ -286,7 +285,7 @@ export default function OrdersScreen() {
                   <View style={styles.footerGrid}>
                     {/* Cột trái: Địa chỉ & Thanh toán */}
                     <View style={styles.footerLeft}>
-                      <Text style={styles.footerLabel}>Địa chỉ nhận hàng:</Text>
+                      <Text style={styles.footerLabel}>{t('shippingAddressLabel')}</Text>
                       <Text style={styles.footerTextBold}>
                         {order.customerName} - {order.shippingAddress?.phone?.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2')}
                       </Text>
@@ -310,14 +309,14 @@ export default function OrdersScreen() {
                         <Text style={styles.summaryValue}>{formatCurrency(order.subtotal || order.items?.reduce((acc, i) => acc + i.price * i.quantity, 0) || 0)}</Text>
                       </View>
                       <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Phí vận chuyển:</Text>
+                        <Text style={styles.summaryLabel}>{t('shippingFeeLabel')}</Text>
                         <Text style={[styles.summaryValue, order.shippingFee === 0 && { color: '#16A34A' }]}>
                           {order.shippingFee === 0 ? '0đ (Miễn phí)' : formatCurrency(order.shippingFee || 0)}
                         </Text>
                       </View>
                       {Boolean(order.discountAmount) && (
                         <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>Giảm giá:</Text>
+                          <Text style={styles.summaryLabel}>{t('discountLabel')}</Text>
                           <Text style={styles.summaryValue}>-{formatCurrency(order.discountAmount)}</Text>
                         </View>
                       )}
@@ -325,7 +324,7 @@ export default function OrdersScreen() {
                       <View style={styles.horizontalSep} />
                       
                       <View style={styles.summaryRow}>
-                        <Text style={styles.totalSumLabel}>Tổng thanh toán:</Text>
+                        <Text style={styles.totalSumLabel}>{t('totalPaymentLabel')}</Text>
                         <Text style={styles.totalSumValue}>{formatCurrency(order.totalAmount)}</Text>
                       </View>
                     </View>

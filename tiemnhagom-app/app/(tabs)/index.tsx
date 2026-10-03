@@ -37,6 +37,8 @@ import {
 import { getUserOrders } from '../../src/services/orderService';
 import { Product } from '../../src/types';
 import { useAuth } from '../../src/context/AuthContext';
+import { useSettings } from '../../src/context/SettingsContext';
+import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 import { auth } from '../../src/config/firebase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -52,11 +54,13 @@ const MEMBERSHIP_TIERS = [
 export default function HomeScreen() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
+  const { t } = useSettings();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [categories, setCategories] = useState<ProductCategoryItem[]>(DEFAULT_CATEGORIES);
+  const { products, news: realtimeNews, loadingProducts } = useRealtimeData();
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -190,27 +194,13 @@ export default function HomeScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [colRes, bestRes, newsRes, prodRes, catRes] = await Promise.allSettled([
+      const [colRes, catRes] = await Promise.allSettled([
         getCollections(),
-        getBestSellingProducts(10),
-        getNewsArticles(6),
-        getProducts({ maxItems: 30 }),
         getCategories(),
       ]);
 
       if (colRes.status === 'fulfilled') {
         setCollections(colRes.value);
-      }
-      if (bestRes.status === 'fulfilled') {
-        setBestSellers(bestRes.value);
-      }
-      if (newsRes.status === 'fulfilled') {
-        setNewsArticles(newsRes.value);
-      }
-      if (prodRes.status === 'fulfilled') {
-        const all = prodRes.value;
-        const feat = all.filter((p) => (p.sale && p.sale > 0) || p.salePrice).slice(0, 6);
-        setFeaturedProducts(feat.length > 0 ? feat : all.slice(0, 6));
       }
       if (catRes.status === 'fulfilled' && catRes.value.length > 0) {
         setCategories(catRes.value);
@@ -226,6 +216,29 @@ export default function HomeScreen() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    // Derive bestSellers and featuredProducts from realtime products
+    if (products.length > 0) {
+      const sortedByPopular = [...products].sort((a, b) => (b.sold || 0) - (a.sold || 0));
+      setBestSellers(sortedByPopular.slice(0, 10));
+      
+      const feat = products.filter((p) => (p.sale && p.sale > 0) || p.salePrice).slice(0, 6);
+      setFeaturedProducts(feat.length > 0 ? feat : products.slice(0, 6));
+    }
+  }, [products]);
+
+  useEffect(() => {
+    if (realtimeNews.length > 0) {
+      setNewsArticles(realtimeNews.slice(0, 6));
+    }
+  }, [realtimeNews]);
+
+  useEffect(() => {
+    if (!loadingProducts) {
+      setLoading(false);
+    }
+  }, [loadingProducts]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -322,16 +335,16 @@ export default function HomeScreen() {
               <View>
                 <View style={styles.overlineBadgeRow}>
                   <View style={styles.accentDot} />
-                  <Text style={styles.sectionOverline}>CHỦ ĐỀ ĐẶC TRƯNG</Text>
+                  <Text style={styles.sectionOverline}>{t('featuredThemes')}</Text>
                 </View>
-                <Text style={styles.sectionTitle}>Bộ Sưu Tập Tâm Đắc</Text>
+                <Text style={styles.sectionTitle}>{t('favoriteCollections')}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => router.push('/(tabs)/products')}
                 style={styles.seeAllBtn}
                 activeOpacity={0.8}
               >
-                <Text style={styles.seeAllText}>Tất cả</Text>
+                <Text style={styles.seeAllText}>{t('seeAll')}</Text>
                 <Ionicons name="arrow-forward" size={12} color="#18181B" />
               </TouchableOpacity>
             </View>
@@ -359,7 +372,7 @@ export default function HomeScreen() {
                       {col.name}
                     </Text>
                     <View style={styles.collectionActionRow}>
-                      <Text style={styles.collectionActionText}>Khám phá ngay</Text>
+                      <Text style={styles.collectionActionText}>{t('exploreNow')}</Text>
                       <Ionicons name="arrow-forward" size={12} color="#18181B" />
                     </View>
                   </View>
@@ -375,9 +388,9 @@ export default function HomeScreen() {
             <View>
               <View style={styles.overlineBadgeRow}>
                 <View style={styles.accentDot} />
-                <Text style={styles.sectionOverline}>DANH MỤC GỐM SỨ</Text>
+                <Text style={styles.sectionOverline}>{t('ceramicCategories')}</Text>
               </View>
-              <Text style={styles.sectionTitle}>Không Gian Tuyển Chọn</Text>
+              <Text style={styles.sectionTitle}>{t('curatedSpace')}</Text>
             </View>
             <TouchableOpacity
               onPress={() =>
@@ -393,7 +406,7 @@ export default function HomeScreen() {
               style={styles.seeAllBtn}
               activeOpacity={0.8}
             >
-              <Text style={styles.seeAllText}>Xem tất cả</Text>
+              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
               <Ionicons name="arrow-forward" size={12} color="#18181B" />
             </TouchableOpacity>
           </View>
@@ -456,7 +469,7 @@ export default function HomeScreen() {
                         selectedSubCategory === '' && styles.subCategoryTextActive,
                       ]}
                     >
-                      {activeGroup && activeGroup.id !== 'all' ? `Tất cả ${activeGroup.name}` : 'Tất cả'}
+                      {activeGroup && activeGroup.id !== 'all' ? `${t('all')} ${activeGroup.name}` : t('all')}
                     </Text>
                   </TouchableOpacity>
 
@@ -502,16 +515,16 @@ export default function HomeScreen() {
               <View style={styles.dealTitleWrap}>
                 <View style={styles.dealBadgeFire}>
                   <Ionicons name="flame" size={14} color="#DC2626" />
-                  <Text style={styles.dealBadgeFireText}>ƯU ĐÃI HÔM NAY</Text>
+                  <Text style={styles.dealBadgeFireText}>{t('todayDeals')}</Text>
                 </View>
-                <Text style={styles.dealMainTitle}>Flash Sale & Quà Tặng</Text>
+                <Text style={styles.dealMainTitle}>{t('flashSaleAndGifts')}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => router.push('/(tabs)/deals')}
                 style={styles.seeAllBtn}
                 activeOpacity={0.8}
               >
-                <Text style={styles.seeAllText}>Nhận mã</Text>
+                <Text style={styles.seeAllText}>{t('getCoupon')}</Text>
                 <Ionicons name="arrow-forward" size={12} color="#18181B" />
               </TouchableOpacity>
             </View>
@@ -536,9 +549,9 @@ export default function HomeScreen() {
             <View>
               <View style={styles.overlineBadgeRow}>
                 <View style={styles.accentDot} />
-                <Text style={styles.sectionOverline}>ĐƯỢC YÊU THÍCH NHẤT</Text>
+                <Text style={styles.sectionOverline}>{t('mostLoved')}</Text>
               </View>
-              <Text style={styles.sectionTitle}>Sản Phẩm Bán Chạy</Text>
+              <Text style={styles.sectionTitle}>{t('bestSellers')}</Text>
             </View>
             <TouchableOpacity
               onPress={() =>
@@ -550,7 +563,7 @@ export default function HomeScreen() {
               style={styles.seeAllBtn}
               activeOpacity={0.8}
             >
-              <Text style={styles.seeAllText}>Xem tất cả</Text>
+              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
               <Ionicons name="arrow-forward" size={12} color="#18181B" />
             </TouchableOpacity>
           </View>
@@ -558,7 +571,7 @@ export default function HomeScreen() {
           {loading ? (
             <View style={styles.loadingWrap}>
               <ActivityIndicator size="small" color="#18181B" />
-              <Text style={styles.loadingText}>Đang tải đồ gốm...</Text>
+              <Text style={styles.loadingText}>{t('loadingCeramics')}</Text>
             </View>
           ) : (
             <View style={styles.gridContainer}>
@@ -578,27 +591,26 @@ export default function HomeScreen() {
               contentFit="cover"
             />
             <View style={styles.editorialTagBadge}>
-              <Text style={styles.editorialTagBadgeText}>HOA TƯƠI NGHỆ THUẬT</Text>
+              <Text style={styles.editorialTagBadgeText}>{t('flowerArt')}</Text>
             </View>
           </View>
 
           <View style={styles.editorialBody}>
-            <Text style={styles.editorialOverline}>DỊCH VỤ HOA TƯƠI</Text>
-            <Text style={styles.editorialTitle}>Hoa Nhà Gốm</Text>
+            <Text style={styles.editorialOverline}>{t('flowerService')}</Text>
+            <Text style={styles.editorialTitle}>{t('flowerHome')}</Text>
             <Text style={styles.editorialDesc}>
-              Không chỉ có gốm, Tiệm mang đến những thiết kế hoa tươi tinh tế, giúp tô điểm thêm vẻ
-              đẹp cho không gian sống và những dịp đặc biệt của bạn.
+              {t('flowerDesc')}
             </Text>
 
             <View style={styles.pillTagRow}>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Hoa cưới</Text>
+                <Text style={styles.pillTagText}>{t('weddingFlower')}</Text>
               </View>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Bó hoa tặng</Text>
+                <Text style={styles.pillTagText}>{t('giftBouquet')}</Text>
               </View>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Giỏ hoa thiết kế</Text>
+                <Text style={styles.pillTagText}>{t('designBasket')}</Text>
               </View>
             </View>
 
@@ -607,7 +619,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
               onPress={() => setServiceModal({ visible: true, type: 'flower' })}
             >
-              <Text style={styles.primaryDarkBtnText}>Khám phá dịch vụ hoa</Text>
+              <Text style={styles.primaryDarkBtnText}>{t('exploreFlowerService')}</Text>
               <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -622,27 +634,26 @@ export default function HomeScreen() {
               contentFit="cover"
             />
             <View style={styles.editorialTagBadge}>
-              <Text style={styles.editorialTagBadgeText}>SETUP & WORKSHOP</Text>
+              <Text style={styles.editorialTagBadgeText}>{t('setupWorkshop')}</Text>
             </View>
           </View>
 
           <View style={styles.editorialBody}>
-            <Text style={styles.editorialOverline}>KHÔNG GIAN NGHỆ THUẬT</Text>
-            <Text style={styles.editorialTitle}>Trang trí Sự kiện</Text>
+            <Text style={styles.editorialOverline}>{t('artSpace')}</Text>
+            <Text style={styles.editorialTitle}>{t('eventDecor')}</Text>
             <Text style={styles.editorialDesc}>
-              Tiệm nhận thiết kế và setup không gian cho các buổi tiệc thân mật, workshop hay góc
-              check-in nghệ thuật, kết hợp tinh tế giữa hoa tươi và đồ gốm thủ công.
+              {t('eventDecorDesc')}
             </Text>
 
             <View style={styles.pillTagRow}>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Setup tiệc</Text>
+                <Text style={styles.pillTagText}>{t('partySetup')}</Text>
               </View>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Workshop decor</Text>
+                <Text style={styles.pillTagText}>{t('decorWorkshop')}</Text>
               </View>
               <View style={styles.pillTag}>
-                <Text style={styles.pillTagText}>Góc check-in</Text>
+                <Text style={styles.pillTagText}>{t('checkinCorner')}</Text>
               </View>
             </View>
 
@@ -651,7 +662,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
               onPress={() => setServiceModal({ visible: true, type: 'event' })}
             >
-              <Text style={styles.primaryDarkBtnText}>Xem dịch vụ trang trí</Text>
+              <Text style={styles.primaryDarkBtnText}>{t('viewDecorService')}</Text>
               <Ionicons name="sparkles-outline" size={15} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -666,15 +677,15 @@ export default function HomeScreen() {
               contentFit="cover"
             />
             <View style={styles.editorialTagBadge}>
-              <Text style={styles.editorialTagBadgeText}>HƠI THỞ CỦA ĐẤT & LỬA</Text>
+              <Text style={styles.editorialTagBadgeText}>{t('breathOfEarthAndFire')}</Text>
             </View>
           </View>
 
           <View style={styles.editorialBody}>
-            <Text style={styles.editorialOverline}>CÂU CHUYỆN XƯỞNG GỐM</Text>
-            <Text style={styles.editorialTitle}>Về Tiệm Nhà Gốm</Text>
+            <Text style={styles.editorialOverline}>{t('potteryStory')}</Text>
+            <Text style={styles.editorialTitle}>{t('aboutTiemNhaGom')}</Text>
             <Text style={styles.editorialDesc}>
-              Tại Tiệm Nhà Gốm, chúng tôi tin rằng những vật dụng hàng ngày cũng có linh hồn. Từng chiếc tách, từng bình hoa đều được tạo tác thủ công với tất cả sự tỉ mỉ và tâm huyết, mang hơi thở của đất và lửa vào không gian sống của bạn.
+              {t('aboutTiemNhaGomDesc')}
             </Text>
 
             <TouchableOpacity
@@ -682,7 +693,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
               onPress={() => setServiceModal({ visible: true, type: 'about' })}
             >
-              <Text style={styles.secondaryOutlineBtnText}>Tìm hiểu thêm về chúng tôi</Text>
+              <Text style={styles.secondaryOutlineBtnText}>{t('learnMoreAboutUs')}</Text>
               <Ionicons name="chevron-forward" size={15} color="#18181B" />
             </TouchableOpacity>
           </View>
@@ -695,9 +706,9 @@ export default function HomeScreen() {
               <View>
                 <View style={styles.overlineBadgeRow}>
                   <View style={styles.accentDot} />
-                  <Text style={styles.sectionOverline}>GÓC CHIA SẺ</Text>
+                  <Text style={styles.sectionOverline}>{t('sharingCorner')}</Text>
                 </View>
-                <Text style={styles.sectionTitle}>Bài Viết Mới Nhất</Text>
+                <Text style={styles.sectionTitle}>{t('latestArticles')}</Text>
               </View>
             </View>
 
@@ -721,7 +732,7 @@ export default function HomeScreen() {
                       cachePolicy="memory-disk"
                     />
                     <View style={styles.newsBadge}>
-                      <Text style={styles.newsBadgeText}>BLOG</Text>
+                      <Text style={styles.newsBadgeText}>{t('blog')}</Text>
                     </View>
                   </View>
 
@@ -736,7 +747,7 @@ export default function HomeScreen() {
                       {article.excerpt}
                     </Text>
                     <View style={styles.newsReadMore}>
-                      <Text style={styles.newsReadMoreText}>Đọc tiếp</Text>
+                      <Text style={styles.newsReadMoreText}>{t('readMore')}</Text>
                       <Ionicons name="arrow-forward" size={13} color="#18181B" />
                     </View>
                   </View>
@@ -748,11 +759,11 @@ export default function HomeScreen() {
 
         {/* 10. FOOTER TIỆM */}
         <View style={styles.footerWrap}>
-          <Text style={styles.footerBrand}>TIỆM NHÀ GỐM • CERAMICS & DECOR</Text>
-          <Text style={styles.footerInfo}>37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh</Text>
-          <Text style={styles.footerInfo}>Hotline: 0777709662</Text>
-          <Text style={styles.footerInfo}>Website: tiemnhagom.vn</Text>
-          <Text style={styles.footerCopyright}>© 2026 Tiệm Nhà Gốm. All rights reserved.</Text>
+          <Text style={styles.footerBrand}>{t('footerBrand')}</Text>
+          <Text style={styles.footerInfo}>{t('footerAddress')}</Text>
+          <Text style={styles.footerInfo}>{t('footerHotline')}</Text>
+          <Text style={styles.footerInfo}>{t('footerWebsite')}</Text>
+          <Text style={styles.footerCopyright}>{t('footerCopyright')}</Text>
         </View>
       </ScrollView>
 
@@ -812,8 +823,8 @@ export default function HomeScreen() {
 
               <View style={styles.memberPillRight}>
                 <View style={styles.memberPointsBox}>
-                  <Text style={styles.memberPointsLabel}>ĐIỂM TÍCH LŨY</Text>
-                  <Text style={styles.memberPointsVal}>{points} ĐIỂM</Text>
+                  <Text style={styles.memberPointsLabel}>{t('pointsLabel')}</Text>
+                  <Text style={styles.memberPointsVal}>{points}{t('pts')}</Text>
                 </View>
                 <View style={styles.memberArrowBtn}>
                   <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
@@ -831,18 +842,18 @@ export default function HomeScreen() {
                   <View style={styles.memberGreetingRow}>
                     <Text style={styles.memberBrandTag}>TIỆM NHÀ GỐM</Text>
                     <View style={[styles.memberTierBadge, styles.memberGuestBadge]}>
-                      <Text style={styles.memberGuestBadgeText}>ƯU ĐÃI THÀNH VIÊN</Text>
+                      <Text style={styles.memberGuestBadgeText}>{t('memberOffers')}</Text>
                     </View>
                   </View>
                   <Text style={styles.memberName} numberOfLines={1}>
-                    Đăng nhập / Đăng ký
+                    {t('loginRegister')}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.memberPillRight}>
                 <View style={styles.loginPillBadge}>
-                  <Text style={styles.loginPillBadgeText}>Đăng nhập</Text>
+                  <Text style={styles.loginPillBadgeText}>{t('login')}</Text>
                   <Ionicons name="arrow-forward" size={13} color="#18181B" />
                 </View>
               </View>
@@ -865,10 +876,10 @@ export default function HomeScreen() {
                 <Text style={styles.modalBrandTag}>TIỆM NHÀ GỐM</Text>
                 <Text style={styles.modalHeaderTitle}>
                   {serviceModal.type === 'flower'
-                    ? 'Hoa Nhà Gốm'
+                    ? t('serviceFlowerTitle')
                     : serviceModal.type === 'event'
-                    ? 'Trang Trí Sự Kiện'
-                    : 'Về Tiệm Nhà Gốm'}
+                    ? t('serviceEventTitle')
+                    : t('serviceAboutTitle')}
                 </Text>
               </View>
               <TouchableOpacity
@@ -884,25 +895,24 @@ export default function HomeScreen() {
               {serviceModal.type === 'flower' && (
                 <View>
                   <Text style={styles.modalDesc}>
-                    Hoa Nhà Gốm là sự kết hợp tinh tế giữa nghệ thuật cắm hoa hiện đại và các bình
-                    gốm thủ công mộc mạc từ Tiệm.
+                    {t('serviceFlowerDesc')}
                   </Text>
                   <View style={styles.modalFeatureList}>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Hoa cưới cầm tay & hoa cài áo</Text>
+                      <Text style={styles.modalFeatureText}>{t('flowerFeature1')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Bó hoa tặng sinh nhật, ngày kỷ niệm</Text>
+                      <Text style={styles.modalFeatureText}>{t('flowerFeature2')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Bình hoa gốm mix hoa tươi theo yêu cầu</Text>
+                      <Text style={styles.modalFeatureText}>{t('flowerFeature3')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Thiết kế hoa định kỳ cho quán cafe, nhà hàng</Text>
+                      <Text style={styles.modalFeatureText}>{t('flowerFeature4')}</Text>
                     </View>
                   </View>
                 </View>
@@ -911,25 +921,24 @@ export default function HomeScreen() {
               {serviceModal.type === 'event' && (
                 <View>
                   <Text style={styles.modalDesc}>
-                    Tiệm nhận tư vấn, thiết kế và trang trí không gian nghệ thuật với vật liệu chính
-                    là đồ gốm, hoa tươi và phong cách mộc mạc ấm cúng.
+                    {t('serviceEventDesc')}
                   </Text>
                   <View style={styles.modalFeatureList}>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Setup bàn tiệc thân mật (Dinner / Tea party)</Text>
+                      <Text style={styles.modalFeatureText}>{t('eventFeature1')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Tổ chức workshop gốm thủ công cuối tuần</Text>
+                      <Text style={styles.modalFeatureText}>{t('eventFeature2')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Thiết kế góc chụp ảnh check-in sự kiện</Text>
+                      <Text style={styles.modalFeatureText}>{t('eventFeature3')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
                       <Ionicons name="checkmark-circle" size={16} color="#18181B" />
-                      <Text style={styles.modalFeatureText}>Quà tặng doanh nghiệp khắc logo theo yêu cầu</Text>
+                      <Text style={styles.modalFeatureText}>{t('eventFeature4')}</Text>
                     </View>
                   </View>
                 </View>
@@ -957,7 +966,7 @@ export default function HomeScreen() {
               <View style={styles.modalActionRow}>
                 <TouchableOpacity style={styles.modalCallBtn} onPress={callHotline}>
                   <Ionicons name="call" size={16} color="#FFFFFF" />
-                  <Text style={styles.modalCallBtnText}>Liên hệ tư vấn (0777709662)</Text>
+                  <Text style={styles.modalCallBtnText}>{t('contactConsultTitle')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

@@ -14,9 +14,11 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
 import { formatCurrency } from '../src/utils/format';
+import { useSettings } from '../src/context/SettingsContext';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
+  const { t } = useSettings();
   const params = useLocalSearchParams<{
     orderCode: string;
     totalAmount: string;
@@ -42,25 +44,25 @@ export default function OrderSuccessScreen() {
           <Ionicons name="checkmark-circle" size={68} color={Colors.success} />
         </View>
 
-        <Text style={styles.title}>Đặt Hàng Thành Công!</Text>
+        <Text style={styles.title}>{t('orderSuccessTitle')}</Text>
         <Text style={styles.subtitle}>
-          Cảm ơn bạn đã tin yêu và lựa chọn sản phẩm gốm mộc tại Tiệm Nhà Gốm.
+          {t('orderSuccessDesc')}
         </Text>
 
         {/* Order Details Card */}
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.label}>Mã đơn hàng:</Text>
+            <Text style={styles.label}>{t('orderCodeText')}</Text>
             <Text style={styles.orderCode}>{orderCode}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Tổng tiền:</Text>
+            <Text style={styles.label}>{t('orderTotal')}</Text>
             <Text style={styles.price}>{formatCurrency(totalAmount)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Phương thức:</Text>
+            <Text style={styles.label}>{t('paymentMethod')}</Text>
             <Text style={styles.value}>
-              {isBanking ? 'Chuyển khoản VietQR' : 'Thanh toán tiền mặt khi nhận (COD)'}
+              {isBanking ? t('paymentTransfer') : t('paymentCOD')}
             </Text>
           </View>
         </View>
@@ -68,9 +70,9 @@ export default function OrderSuccessScreen() {
         {/* Bank Transfer QR section if banking */}
         {isBanking && (
           <View style={styles.bankingCard}>
-            <Text style={styles.bankingTitle}>Thông tin Chuyển khoản VietQR</Text>
+            <Text style={styles.bankingTitle}>{t('bankingInfoTitle')}</Text>
             <Text style={styles.bankingSubtitle}>
-              Mở app ngân hàng quét mã QR dưới đây hoặc chuyển khoản theo cú pháp:
+              {t('bankingInfoSubtitle')}
             </Text>
 
             <View style={styles.qrContainer}>
@@ -78,10 +80,10 @@ export default function OrderSuccessScreen() {
             </View>
 
             <View style={styles.bankInfoBox}>
-              <Text style={styles.bankInfoText}>• Ngân hàng: <Text style={styles.bold}>MB Bank (Quân Đội)</Text></Text>
-              <Text style={styles.bankInfoText}>• Số tài khoản: <Text style={styles.bold}>0909 123 456</Text></Text>
-              <Text style={styles.bankInfoText}>• Chủ tài khoản: <Text style={styles.bold}>TIEM NHA GOM</Text></Text>
-              <Text style={styles.bankInfoText}>• Nội dung CK: <Text style={styles.boldHighlight}>{orderCode}</Text></Text>
+              <Text style={styles.bankInfoText}>• {t('bankNameLabel')} <Text style={styles.bold}>MB Bank (Quân Đội)</Text></Text>
+              <Text style={styles.bankInfoText}>• {t('bankAccountLabel')} <Text style={styles.bold}>0909 123 456</Text></Text>
+              <Text style={styles.bankInfoText}>• {t('bankOwnerLabel')} <Text style={styles.bold}>TIEM NHA GOM</Text></Text>
+              <Text style={styles.bankInfoText}>• {t('transferContentLabel')} <Text style={styles.boldHighlight}>{orderCode}</Text></Text>
             </View>
           </View>
         )}
@@ -89,7 +91,7 @@ export default function OrderSuccessScreen() {
         <View style={styles.noticeBox}>
           <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
           <Text style={styles.noticeText}>
-            Tiệm sẽ liên hệ xác nhận đơn hàng và chuẩn bị đóng gói kỹ lưỡng với xốp chống sốc trước khi gửi đi.
+            {t('orderNoticeText')}
           </Text>
         </View>
 
@@ -101,7 +103,7 @@ export default function OrderSuccessScreen() {
             activeOpacity={0.88}
           >
             <Ionicons name="receipt-outline" size={20} color={Colors.textInverse} />
-            <Text style={styles.primaryBtnText}>Theo dõi đơn hàng</Text>
+            <Text style={styles.primaryBtnText}>{t('trackOrder')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -109,7 +111,7 @@ export default function OrderSuccessScreen() {
             onPress={() => router.replace('/(tabs)')}
             activeOpacity={0.8}
           >
-            <Text style={styles.secondaryBtnText}>Tiếp tục mua sắm</Text>
+            <Text style={styles.secondaryBtnText}>{t('continueShopping')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

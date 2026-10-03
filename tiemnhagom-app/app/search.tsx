@@ -20,12 +20,14 @@ import { Colors, Typography, Spacing, BorderRadius } from '../src/constants/them
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 import { removeVietnameseTones } from '../src/utils/format';
+import { useSettings } from '../src/context/SettingsContext';
 
 const RECENT_SEARCHES_KEY = 'tng_recent_searches';
 const MAX_RECENT_SEARCHES = 10;
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { t } = useSettings();
   const [searchText, setSearchText] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -98,7 +100,7 @@ export default function SearchScreen() {
         onSearchChange={setSearchText}
         onSubmitEditing={handleSearchSubmit}
         onClearSearch={() => setSearchText('')}
-        searchPlaceholder="Nhập tên, danh mục đồ gốm..."
+        searchPlaceholder={t('searchPlaceholder')}
         autoFocus={true}
       />
 
@@ -107,10 +109,10 @@ export default function SearchScreen() {
           // Hiển thị Lịch sử tìm kiếm
           <View style={styles.recentSection}>
             <View style={styles.recentHeader}>
-              <Text style={styles.recentTitle}>Tìm kiếm gần đây</Text>
+              <Text style={styles.recentTitle}>{t('recentSearches')}</Text>
               {recentSearches.length > 0 && (
                 <TouchableOpacity onPress={clearRecentSearches}>
-                  <Text style={styles.recentClearBtn}>Xóa tất cả</Text>
+                  <Text style={styles.recentClearBtn}>{t('clearAll')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -129,11 +131,11 @@ export default function SearchScreen() {
                 ))}
               </View>
             ) : (
-              <Text style={styles.recentEmptyText}>Chưa có lịch sử tìm kiếm.</Text>
+              <Text style={styles.recentEmptyText}>{t('noRecentSearches')}</Text>
             )}
             
             <View style={styles.suggestionSection}>
-              <Text style={styles.recentTitle}>Gợi ý từ khóa</Text>
+              <Text style={styles.recentTitle}>{t('suggestedKeywords')}</Text>
               <View style={styles.recentList}>
                 {['Bình hoa', 'Ấm chén', 'Chén cơm', 'Quà tặng', 'Lọ lộc bình'].map((term, idx) => (
                   <TouchableOpacity

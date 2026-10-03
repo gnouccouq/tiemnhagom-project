@@ -18,6 +18,7 @@ import { CartItemCard } from '../../src/components/CartItemCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
 import { useCart } from '../../src/context/CartContext';
+import { useSettings } from '../../src/context/SettingsContext';
 import { formatCurrency } from '../../src/utils/format';
 
 export default function CartScreen() {
@@ -37,6 +38,7 @@ export default function CartScreen() {
     shippingMethod,
     setShippingMethod,
   } = useCart();
+  const { t } = useSettings();
 
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
@@ -48,7 +50,7 @@ export default function CartScreen() {
       setCouponError('');
       setCouponInput('');
     } else {
-      setCouponError('Mã không hợp lệ. Thử GOMMOI, TIEMNHAGOM hoặc CHAOBAN');
+      setCouponError(t('invalidCoupon'));
     }
   };
 
@@ -58,9 +60,9 @@ export default function CartScreen() {
   };
 
   const confirmClearCart = () => {
-    Alert.alert('Xóa giỏ hàng', 'Bạn có chắc chắn muốn xóa toàn bộ sản phẩm khỏi giỏ hàng?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Xóa hết', style: 'destructive', onPress: clearCart },
+    Alert.alert(t('clearCartTitle'), t('clearCartMsg'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('clearAll'), style: 'destructive', onPress: clearCart },
     ]);
   };
 
@@ -77,14 +79,14 @@ export default function CartScreen() {
           >
             <Ionicons name="chevron-back" size={24} color="#111111" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Giỏ hàng</Text>
+          <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
           <View style={{ width: 40 }} />
         </View>
         <EmptyState
           icon="bag-handle-outline"
-          title="Giỏ hàng trống"
-          message="Bạn chưa có sản phẩm gốm nào trong giỏ. Hãy dạo quanh cửa hàng và chọn những món ưng ý nhé!"
-          buttonText="Khám phá đồ gốm ngay"
+          title={t('emptyCartTitle')}
+          message={t('emptyCartMsg')}
+          buttonText={t('exploreCeramics')}
           onButtonPress={() => router.push('/(tabs)/products')}
         />
       </SafeAreaView>
@@ -97,10 +99,10 @@ export default function CartScreen() {
       {/* Custom Header với nút back */}
       <View style={styles.customHeader}>
         <View style={{ width: 40 }} />
-        <Text style={styles.headerTitle}>Giỏ hàng</Text>
+        <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
         {cart.length > 0 ? (
           <TouchableOpacity onPress={confirmClearCart} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={styles.headerClearBtn}>Xóa</Text>
+            <Text style={styles.headerClearBtn}>{t('clear')}</Text>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 40 }} />
@@ -111,7 +113,7 @@ export default function CartScreen() {
         {/* Cart Header Action */}
         <View style={styles.cartTopBar}>
           <Text style={styles.cartTotalCount}>
-            {cart.reduce((a, b) => a + b.quantity, 0)} sản phẩm trong giỏ
+            {cart.reduce((a, b) => a + b.quantity, 0)} {t('productsInCart')}
           </Text>
         </View>
 
@@ -129,7 +131,7 @@ export default function CartScreen() {
 
         {/* Shipping Method Selector */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeaderTitle}>Phương thức giao hàng</Text>
+          <Text style={styles.sectionHeaderTitle}>{t('shippingMethod')}</Text>
 
           <TouchableOpacity
             style={[styles.shippingOption, shippingMethod === 'standard' && styles.shippingOptionActive]}
@@ -141,11 +143,11 @@ export default function CartScreen() {
               color={shippingMethod === 'standard' ? Colors.primary : Colors.textMuted}
             />
             <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>Giao hàng tiêu chuẩn (Toàn quốc)</Text>
-              <Text style={styles.shippingSub}>2-4 ngày làm việc • Bọc chống sốc kỹ càng</Text>
+              <Text style={styles.shippingTitle}>{t('standardDelivery')}</Text>
+              <Text style={styles.shippingSub}>{t('standardDeliveryDesc')}</Text>
             </View>
             <Text style={styles.shippingPrice}>
-              {subtotal >= 500000 ? 'Miễn phí' : '20.000 ₫'}
+              {subtotal >= 500000 ? t('free') : '20.000 ₫'}
             </Text>
           </TouchableOpacity>
 
@@ -159,8 +161,8 @@ export default function CartScreen() {
               color={shippingMethod === 'express_2h' ? Colors.primary : Colors.textMuted}
             />
             <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>Giao hỏa tốc 2 giờ (Nội thành TP.HCM)</Text>
-              <Text style={styles.shippingSub}>Nhận hàng ngay trong 2h</Text>
+              <Text style={styles.shippingTitle}>{t('expressDelivery')}</Text>
+              <Text style={styles.shippingSub}>{t('expressDeliveryDesc')}</Text>
             </View>
             <Text style={styles.shippingPrice}>35.000 ₫</Text>
           </TouchableOpacity>
@@ -175,8 +177,8 @@ export default function CartScreen() {
               color={shippingMethod === 'pickup' ? Colors.primary : Colors.textMuted}
             />
             <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>Nhận tại tiệm (Pick-up)</Text>
-              <Text style={styles.shippingSub}>Ghé tiệm nhận trực tiếp & kiểm tra sản phẩm</Text>
+              <Text style={styles.shippingTitle}>{t('pickup')}</Text>
+              <Text style={styles.shippingSub}>{t('pickupDesc')}</Text>
             </View>
             <Text style={styles.shippingPrice}>0 ₫</Text>
           </TouchableOpacity>
@@ -184,7 +186,7 @@ export default function CartScreen() {
 
         {/* Voucher / Mã giảm giá */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeaderTitle}>Mã giảm giá / Ưu đãi</Text>
+          <Text style={styles.sectionHeaderTitle}>{t('voucherDiscount')}</Text>
           {appliedCoupon ? (
             <View style={styles.appliedCouponRow}>
               <View style={styles.couponTag}>
@@ -192,7 +194,7 @@ export default function CartScreen() {
                 <Text style={styles.couponCodeText}>{appliedCoupon}</Text>
               </View>
               <TouchableOpacity onPress={removeCoupon} style={styles.removeCouponBtn}>
-                <Text style={styles.removeCouponText}>Gỡ bỏ</Text>
+                <Text style={styles.removeCouponText}>{t('remove')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -200,14 +202,14 @@ export default function CartScreen() {
               <View style={styles.couponInputRow}>
                 <TextInput
                   style={styles.couponInput}
-                  placeholder="Nhập mã (GOMMOI, TIEMNHAGOM...)"
+                  placeholder={t('enterCoupon')}
                   placeholderTextColor={Colors.textMuted}
                   value={couponInput}
                   onChangeText={setCouponInput}
                   autoCapitalize="characters"
                 />
                 <TouchableOpacity style={styles.applyCouponBtn} onPress={handleApplyCoupon}>
-                  <Text style={styles.applyCouponText}>Áp dụng</Text>
+                  <Text style={styles.applyCouponText}>{t('apply')}</Text>
                 </TouchableOpacity>
               </View>
               {couponError ? <Text style={styles.couponErrorText}>{couponError}</Text> : null}
@@ -218,20 +220,20 @@ export default function CartScreen() {
         {/* Price Breakdown */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tạm tính</Text>
+            <Text style={styles.summaryLabel}>{t('subtotal')}</Text>
             <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
+            <Text style={styles.summaryLabel}>{t('shippingFee')}</Text>
             <Text style={styles.summaryValue}>
-              {shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee)}
+              {shippingFee === 0 ? t('free') : formatCurrency(shippingFee)}
             </Text>
           </View>
 
           {discountAmount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>Giảm giá Voucher</Text>
+              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}</Text>
               <Text style={[styles.summaryValue, { color: Colors.badgeSale }]}>
                 -{formatCurrency(discountAmount)}
               </Text>
@@ -241,14 +243,14 @@ export default function CartScreen() {
           <View style={styles.divider} />
 
           <View style={styles.summaryRowTotal}>
-            <Text style={styles.totalLabel}>Tổng thanh toán</Text>
+            <Text style={styles.totalLabel}>{t('totalPayment')}</Text>
             <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
           </View>
         </View>
 
         {/* Checkout Button */}
         <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckoutPress} activeOpacity={0.88}>
-          <Text style={styles.checkoutBtnText}>Tiến hành đặt hàng</Text>
+          <Text style={styles.checkoutBtnText}>{t('proceedToCheckout')}</Text>
           <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
         </TouchableOpacity>
       </ScrollView>
@@ -352,7 +354,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.borderLight,
   },
   shippingOptionActive: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     paddingHorizontal: 8,
   },
@@ -376,13 +378,13 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.primary,
+    color: '#111111',
   },
   appliedCouponRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
@@ -397,7 +399,7 @@ const styles = StyleSheet.create({
   couponCodeText: {
     fontFamily: 'ElleGaborStd',
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: '#111111',
     fontSize: 13,
   },
   removeCouponBtn: {
@@ -405,7 +407,7 @@ const styles = StyleSheet.create({
   },
   removeCouponText: {
     fontFamily: 'ElleGaborStd',
-    color: '#C86432',
+    color: Colors.error,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
   },
   couponErrorText: {
     fontFamily: 'ElleGaborStd',
-    color: '#C86432',
+    color: Colors.error,
     fontSize: 11,
     marginTop: 6,
   },
@@ -494,7 +496,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.primary,
+    color: '#111111',
   },
   checkoutBtn: {
     backgroundColor: '#111111',

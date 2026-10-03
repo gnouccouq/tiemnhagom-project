@@ -20,6 +20,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { getUserOrders } from '../../src/services/orderService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
 import { formatCurrency } from '../../src/utils/format';
+import { useSettings } from '../../src/context/SettingsContext';
 
 // Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
 export const MEMBERSHIP_TIERS = [
@@ -94,6 +95,7 @@ type ActiveTab = 'vouchers' | 'tiers';
 
 export default function DealsScreen() {
   const router = useRouter();
+  const { t } = useSettings();
   const { user, userProfile } = useAuth();
 
   // State Tabs
@@ -235,8 +237,8 @@ export default function DealsScreen() {
             {/* Header thẻ */}
             <View style={styles.memberCardHeader}>
               <View>
-                <Text style={styles.brandTag}>TIỆM NHÀ GỐM</Text>
-                <Text style={styles.cardTypeTitle}>THẺ THÀNH VIÊN SỐ</Text>
+                <Text style={styles.brandTag}>{t('brandName')}</Text>
+                <Text style={styles.cardTypeTitle}>{t('digitalMemberCard')}</Text>
               </View>
               <View style={styles.tierPill}>
                 <Text style={styles.tierPillEmoji}>{currentTier.badge}</Text>
@@ -247,13 +249,13 @@ export default function DealsScreen() {
             {/* Thông tin chủ thẻ */}
             <View style={styles.memberInfoRow}>
               <View>
-                <Text style={styles.memberLabel}>CHỦ THẺ</Text>
+                <Text style={styles.memberLabel}>{t('cardHolder')}</Text>
                 <Text style={styles.memberName} numberOfLines={1}>
-                  {userProfile?.displayName || user?.displayName || (user ? 'Khách hàng thân thiết' : 'Chưa đăng nhập')}
+                  {userProfile?.displayName || user?.displayName || (user ? 'Khách hàng thân thiết' : t('notLoggedIn'))}
                 </Text>
               </View>
               <View style={styles.memberCodeBox}>
-                <Text style={styles.memberLabel}>MÃ HỘI VIÊN</Text>
+                <Text style={styles.memberLabel}>{t('memberCode')}</Text>
                 <Text style={styles.memberCodeText}>{user ? memberCode : 'TNG-GUEST'}</Text>
               </View>
             </View>
@@ -261,17 +263,17 @@ export default function DealsScreen() {
             {/* Thống kê chi tiêu & Đặc quyền */}
             <View style={styles.statsRow}>
               <View style={styles.statCol}>
-                <Text style={styles.statLabel}>Tổng chi tiêu</Text>
+                <Text style={styles.statLabel}>{t('totalSpentLabel')}</Text>
                 <Text style={styles.statValue}>{formatCurrency(totalSpent)}</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statCol}>
-                <Text style={styles.statLabel}>Điểm tích lũy</Text>
-                <Text style={styles.statValue}>{points} Điểm</Text>
+                <Text style={styles.statLabel}>{t('pointsLabel')}</Text>
+                <Text style={styles.statValue}>{points} {t('pointsLabel').split(' ')[0]}</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statCol}>
-                <Text style={styles.statLabel}>Ưu đãi đơn hàng</Text>
+                <Text style={styles.statLabel}>{t('orderDiscountLabel')}</Text>
                 <Text style={styles.statValueHighlight}>
                   {currentTier.discount > 0 ? `Giảm ${currentTier.discount}%` : 'Chuẩn'}
                 </Text>
@@ -367,13 +369,13 @@ export default function DealsScreen() {
             {loadingCoupons ? (
               <View style={styles.loadingWrap}>
                 <ActivityIndicator size="small" color="#111111" />
-                <Text style={styles.loadingText}>Đang tải mã ưu đãi từ Firestore...</Text>
+                <Text style={styles.loadingText}>{t('loadingVouchers')}</Text>
               </View>
             ) : filteredCoupons.length === 0 ? (
               <View style={styles.emptyWrap}>
                 <Ionicons name="ticket-outline" size={40} color="#AAAAAA" />
-                <Text style={styles.emptyTitle}>Chưa có mã giảm giá nào phù hợp</Text>
-                <Text style={styles.emptyDesc}>Các voucher khuyến mãi mới sẽ liên tục được cập nhật tại đây.</Text>
+                <Text style={styles.emptyTitle}>{t('noVouchersFound')}</Text>
+                <Text style={styles.emptyDesc}>{t('noVouchersDesc')}</Text>
               </View>
             ) : (
               filteredCoupons.map((voucher) => {
@@ -427,11 +429,11 @@ export default function DealsScreen() {
                         </Text>
                         {voucher.isUsed ? (
                           <View style={styles.usedBadge}>
-                            <Text style={styles.usedBadgeText}>ĐÃ DÙNG</Text>
+                            <Text style={styles.usedBadgeText}>{t('usedBadge')}</Text>
                           </View>
                         ) : (
                           <View style={styles.activeBadge}>
-                            <Text style={styles.activeBadgeText}>KHẢ DỤNG</Text>
+                            <Text style={styles.activeBadgeText}>{t('activeBadge')}</Text>
                           </View>
                         )}
                       </View>
@@ -502,7 +504,7 @@ export default function DealsScreen() {
         {activeTab === 'tiers' && (
           <View style={styles.tiersSection}>
             <View style={styles.tiersIntro}>
-              <Text style={styles.tiersIntroTitle}>Chính sách xếp hạng hội viên</Text>
+              <Text style={styles.tiersIntroTitle}>{t('memberTierPolicy')}</Text>
               <Text style={styles.tiersIntroDesc}>
                 Hệ thống tự động cộng dồn doanh số mua sắm từ Website và Ứng dụng để nâng hạng và mở khóa các đặc quyền
                 độc quyền.
@@ -528,7 +530,7 @@ export default function DealsScreen() {
                           <Text style={[styles.tierName, { color: tier.color }]}>{tier.name}</Text>
                           {isCurrent && (
                             <View style={styles.currentTag}>
-                              <Text style={styles.currentTagText}>Hạng hiện tại</Text>
+                              <Text style={styles.currentTagText}>{t('currentTierTag')}</Text>
                             </View>
                           )}
                         </View>
@@ -542,7 +544,7 @@ export default function DealsScreen() {
                       <Text style={styles.tierDiscountVal}>
                         {tier.discount > 0 ? `-${tier.discount}%` : 'Chuẩn'}
                       </Text>
-                      <Text style={styles.tierDiscountSub}>chiết khấu</Text>
+                      <Text style={styles.tierDiscountSub}>{t('discountSub')}</Text>
                     </View>
                   </View>
 

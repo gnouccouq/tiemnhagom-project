@@ -41,6 +41,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, userProfile, signOut, updateUserProfileData } = useAuth();
   const { favorites } = useWishlist();
+  const { t } = useSettings();
 
   // Loyalty calculations
   const [totalSpent, setTotalSpent] = useState<number>(0);
@@ -50,41 +51,7 @@ export default function ProfileScreen() {
   // Modal QR Thẻ Thành Viên
   const [qrModalVisible, setQrModalVisible] = useState(false);
 
-  // Cài đặt hệ thống (Settings Context)
-  const { language, fontSize, setLanguage, setFontSize, t } = useSettings();
-  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-  const [tempLanguage, setTempLanguage] = useState<Language>(language);
-  const [tempFontSize, setTempFontSize] = useState<FontSize>(fontSize);
-  const [savingSettings, setSavingSettings] = useState(false);
 
-  const openSettingsModal = () => {
-    setTempLanguage(language);
-    setTempFontSize(fontSize);
-    setSettingsModalVisible(true);
-  };
-
-  const handleSaveSettings = async () => {
-    setSavingSettings(true);
-    await setLanguage(tempLanguage);
-    await setFontSize(tempFontSize);
-    setSavingSettings(false);
-    setSettingsModalVisible(false);
-    Alert.alert(
-      tempLanguage === 'vi' ? 'Thành công' : 'Success',
-      tempLanguage === 'vi'
-        ? 'Đã cập nhật cài đặt hiển thị & ngôn ngữ.'
-        : 'Display and language settings updated successfully.'
-    );
-  };
-
-  const handleClearCache = () => {
-    Alert.alert(
-      tempLanguage === 'vi' ? 'Dọn dẹp bộ nhớ' : 'Clear Cache',
-      tempLanguage === 'vi'
-        ? 'Đã xóa bộ nhớ đệm và làm mới dữ liệu tạm của ứng dụng.'
-        : 'App cache and temporary data cleared successfully.'
-    );
-  };
 
   // Tính toán chi tiêu thực tế từ các đơn hàng để đồng bộ với web
   useEffect(() => {
@@ -140,45 +107,11 @@ export default function ProfileScreen() {
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || '1612').substring(0, 8).toUpperCase()}`;
 
 
-  const handleSignOut = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất tài khoản?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: signOut },
-    ]);
-  };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Xóa tài khoản',
-      'Bạn có chắc chắn muốn xóa tài khoản vĩnh viễn? Mọi dữ liệu (đơn hàng, yêu thích) sẽ không thể khôi phục.',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Xác nhận xóa', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              if (user && user.delete) {
-                await user.delete();
-              }
-              await signOut();
-              Alert.alert('Thành công', 'Tài khoản của bạn đã được xóa khỏi hệ thống.');
-            } catch (e: any) {
-              if (e.code === 'auth/requires-recent-login') {
-                Alert.alert('Yêu cầu xác thực', 'Vui lòng đăng xuất và đăng nhập lại trước khi xóa tài khoản để bảo mật dữ liệu.');
-              } else {
-                Alert.alert('Lỗi', e.message || 'Không thể xóa tài khoản lúc này.');
-              }
-            }
-          }
-        },
-      ]
-    );
-  };
 
   const openHotline = () => {
     Linking.openURL('tel:0909123456').catch(() => {
-      Alert.alert('Thông báo', 'Hotline hỗ trợ: 0909 123 456');
+      Alert.alert(t('notification'), t('supportHotline'));
     });
   };
 
@@ -189,7 +122,12 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
-      <Header title="Tài khoản" showSearch={false} />
+      <Header 
+        title={t('account')} 
+        showSearch={false} 
+        showSettings={true}
+        onSettingsPress={() => router.push('/settings')}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* 1. TOP USER GLASS PILL (Web Membership Style) */}
@@ -212,10 +150,10 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.userGlassInfo}>
                 <Text style={styles.userGlassName} numberOfLines={1}>
-                  {userProfile?.displayName || userProfile?.name || user?.displayName || 'Khách hàng'}
+                  {userProfile?.displayName || userProfile?.name || user?.displayName || t('guestCustomer')}
                 </Text>
                 <Text style={styles.userGlassEmail} numberOfLines={1}>
-                  {userProfile?.email || user?.email || userProfile?.phone || 'Hội viên gốm'}
+                  {userProfile?.email || user?.email || userProfile?.phone || t('guestMember')}
                 </Text>
               </View>
             </View>
@@ -235,16 +173,16 @@ export default function ProfileScreen() {
             <View style={styles.loginBannerIcon}>
               <Ionicons name="person-outline" size={30} color="#FFFFFF" />
             </View>
-            <Text style={styles.loginBannerTitle}>Chào mừng bạn đến với Tiệm Nhà Gốm</Text>
+            <Text style={styles.loginBannerTitle}>{t('welcomeTitle')}</Text>
             <Text style={styles.loginBannerSubtitle}>
-              Đăng nhập để nhận ưu đãi tích luỹ điểm, theo dõi đơn hàng và đồng bộ quyền lợi hội viên.
+              {t('welcomeSubtitle')}
             </Text>
             <TouchableOpacity
               style={styles.loginBtn}
               onPress={() => router.push('/auth/login')}
               activeOpacity={0.88}
             >
-              <Text style={styles.loginBtnText}>Đăng nhập / Đăng ký</Text>
+              <Text style={styles.loginBtnText}>{t('loginRegister')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -253,57 +191,57 @@ export default function ProfileScreen() {
         {(user || userProfile) && (
           <View style={styles.infoCard}>
             <View style={styles.infoHeaderRow}>
-              <Text style={styles.menuGroupHeader}>Thông tin tài khoản</Text>
+              <Text style={styles.menuGroupHeader}>{t('accountInfo')}</Text>
               <TouchableOpacity style={styles.editPillBtn} onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
                 <Ionicons name="create-outline" size={14} color="#18181B" />
-                <Text style={styles.editPillText}>Chỉnh sửa</Text>
+                <Text style={styles.editPillText}>{t('editInfo')}</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.infoRowsWrap}>
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Họ và tên</Text>
+                <Text style={styles.infoRowLabel}>{t('fullName')}</Text>
                 <Text style={styles.infoRowVal}>
-                  {userProfile?.displayName || userProfile?.name || user?.displayName || 'Chưa cập nhật'}
+                  {userProfile?.displayName || userProfile?.name || user?.displayName || t('notUpdated')}
                 </Text>
               </View>
 
               <View style={styles.rowDivider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Email</Text>
-                <Text style={styles.infoRowVal}>{userProfile?.email || user?.email || 'Chưa cập nhật'}</Text>
+                <Text style={styles.infoRowLabel}>{t('email')}</Text>
+                <Text style={styles.infoRowVal}>{userProfile?.email || user?.email || t('notUpdated')}</Text>
               </View>
 
               <View style={styles.rowDivider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Số điện thoại</Text>
-                <Text style={styles.infoRowVal}>{userProfile?.phone || 'Chưa cập nhật'}</Text>
+                <Text style={styles.infoRowLabel}>{t('phone')}</Text>
+                <Text style={styles.infoRowVal}>{userProfile?.phone || t('notUpdated')}</Text>
               </View>
 
               <View style={styles.rowDivider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Giới tính</Text>
-                <Text style={styles.infoRowVal}>{userProfile?.gender || 'Chưa cập nhật'}</Text>
+                <Text style={styles.infoRowLabel}>{t('gender')}</Text>
+                <Text style={styles.infoRowVal}>{userProfile?.gender || t('notUpdated')}</Text>
               </View>
 
               <View style={styles.rowDivider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Ngày sinh</Text>
+                <Text style={styles.infoRowLabel}>{t('dob')}</Text>
                 <Text style={styles.infoRowVal}>
-                  {userProfile?.dob || userProfile?.birthday || 'Chưa cập nhật'}
+                  {userProfile?.dob || userProfile?.birthday || t('notUpdated')}
                 </Text>
               </View>
 
               <View style={styles.rowDivider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoRowLabel}>Địa chỉ nhận hàng</Text>
+                <Text style={styles.infoRowLabel}>{t('shippingAddress')}</Text>
                 <Text style={styles.infoRowVal} numberOfLines={2}>
-                  {userProfile?.address || userProfile?.fullAddress || 'Chưa cập nhật'}
+                  {userProfile?.address || userProfile?.fullAddress || t('notUpdated')}
                 </Text>
               </View>
             </View>
@@ -312,7 +250,7 @@ export default function ProfileScreen() {
 
         {/* 3. ĐIỀU HƯỚNG NHANH (Orders, Favorites, Cart) */}
         <View style={styles.menuCard}>
-          <Text style={styles.menuGroupHeader}>Đơn hàng của tôi</Text>
+          <Text style={styles.menuGroupHeader}>{t('myOrders')}</Text>
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => router.push('/orders')}
@@ -320,7 +258,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="receipt-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Lịch sử & Tra cứu đơn hàng</Text>
+              <Text style={styles.menuTitle}>{t('orderHistory')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
           </TouchableOpacity>
@@ -334,7 +272,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="heart-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Sản phẩm yêu thích</Text>
+              <Text style={styles.menuTitle}>{t('favoriteProducts')}</Text>
             </View>
             <View style={styles.menuRight}>
               <Text style={styles.counterBadgeText}>{favorites.length}</Text>
@@ -351,47 +289,22 @@ export default function ProfileScreen() {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="bag-handle-outline" size={20} color="#18181B" />
-              <Text style={styles.menuTitle}>Giỏ hàng của tôi</Text>
+              <Text style={styles.menuTitle}>{t('myCart')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
           </TouchableOpacity>
         </View>
 
-        {/* 4. CÀI ĐẶT ỨNG DỤNG */}
-        <View style={styles.menuCard}>
-          <Text style={styles.menuGroupHeader}>
-            {language === 'vi' ? 'Cài đặt & Tiện ích' : 'Settings & Preferences'}
-          </Text>
 
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={openSettingsModal}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuLeft}>
-              <Ionicons name="settings-outline" size={20} color="#2D3B34" />
-              <View>
-                <Text style={styles.menuTitle}>
-                  {language === 'vi' ? 'Cài đặt hệ thống' : 'System Settings'}
-                </Text>
-                <Text style={styles.menuSubtitle}>
-                  {language === 'vi' ? 'Tiếng Việt' : 'English'} • {language === 'vi' ? 'Cỡ chữ ' : 'Font: '}
-                  {fontSize === 'small' ? (language === 'vi' ? 'Nhỏ (85%)' : 'Small (85%)') : fontSize === 'large' ? (language === 'vi' ? 'Lớn (125%)' : 'Large (125%)') : (language === 'vi' ? 'Vừa (100%)' : 'Medium (100%)')}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#7A827E" />
-          </TouchableOpacity>
-        </View>
 
         {/* 5. ĐIỀU KHOẢN & CHÍNH SÁCH */}
         <View style={styles.menuCard}>
-          <Text style={styles.menuGroupHeader}>Điều khoản & Chính sách</Text>
+          <Text style={styles.menuGroupHeader}>{t('termsPolicy')}</Text>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/privacy-policy.html', 'Chính sách Bảo mật')} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="shield-checkmark-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Chính sách quyền riêng tư</Text>
+              <Text style={styles.menuTitle}>{t('privacyPolicy')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
           </TouchableOpacity>
@@ -401,7 +314,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.menuItem} onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/terms-of-service.html', 'Điều khoản Dịch vụ')} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="document-text-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Điều khoản sử dụng dịch vụ</Text>
+              <Text style={styles.menuTitle}>{t('termOfService')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
           </TouchableOpacity>
@@ -409,12 +322,12 @@ export default function ProfileScreen() {
 
         {/* 6. HỖ TRỢ & LIÊN HỆ */}
         <View style={styles.menuCard}>
-          <Text style={styles.menuGroupHeader}>Hỗ trợ & Liên hệ</Text>
+          <Text style={styles.menuGroupHeader}>{t('supportContact')}</Text>
 
           <TouchableOpacity style={styles.menuItem} onPress={openHotline} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="call-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Hotline tư vấn</Text>
+              <Text style={styles.menuTitle}>{t('hotlineAdvisory')}</Text>
             </View>
             <Text style={styles.menuValue}>0777709662</Text>
           </TouchableOpacity>
@@ -424,7 +337,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.menuItem} onPress={openWebsite} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="mail-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Email liên hệ</Text>
+              <Text style={styles.menuTitle}>{t('contactEmail')}</Text>
             </View>
             <Text style={styles.menuValue}>tiemnhagom.contact@gmail.com</Text>
           </TouchableOpacity>
@@ -434,7 +347,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.menuItem} onPress={openWebsite} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
               <Ionicons name="globe-outline" size={20} color="#2D3B34" />
-              <Text style={styles.menuTitle}>Website chính thức</Text>
+              <Text style={styles.menuTitle}>{t('officialWebsite')}</Text>
             </View>
             <Text style={styles.menuValue}>tiemnhagom.vn</Text>
           </TouchableOpacity>
@@ -445,39 +358,12 @@ export default function ProfileScreen() {
             <View style={styles.menuLeft}>
               <Ionicons name="location-outline" size={20} color="#2D3B34" />
               <View>
-                <Text style={styles.menuTitle}>37 Nguyễn Duy, Phường Gia Định, Tp.Hồ Chí Minh</Text>
-                <Text style={styles.menuSubtitle}>Mở cửa 10:00 - 21:00</Text>
+                <Text style={styles.menuTitle}>{t('storeAddress')}</Text>
+                <Text style={styles.menuSubtitle}>{t('openingHours')}</Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
           </TouchableOpacity>
-        </View>
-
-        {/* 7. QUẢN LÝ TÀI KHOẢN */}
-        {(user || userProfile) && (
-          <View style={styles.menuCard}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleSignOut} activeOpacity={0.85}>
-              <View style={styles.menuLeft}>
-                <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
-                <Text style={[styles.menuTitle, { color: '#D32F2F' }]}>Đăng xuất tài khoản</Text>
-              </View>
-            </TouchableOpacity>
-
-            <View style={styles.rowDivider} />
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteAccount} activeOpacity={0.85}>
-              <View style={styles.menuLeft}>
-                <Ionicons name="trash-outline" size={20} color="#D32F2F" />
-                <Text style={[styles.menuTitle, { color: '#D32F2F' }]}>Yêu cầu xóa tài khoản</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Footer */}
-        <View style={styles.footerWrap}>
-          <Text style={styles.footerBrand}>©2026 Tiệm Nhà Gốm. All Rights Reserved</Text>
-          <Text style={styles.footerVersion}>Phiên bản 1.0.0</Text>
         </View>
       </ScrollView>
 
@@ -493,7 +379,7 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.qrCardModal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Mã Thành Viên</Text>
+              <Text style={styles.modalTitle}>{t('memberCodeTitle')}</Text>
               <TouchableOpacity
                 onPress={() => setQrModalVisible(false)}
                 style={styles.modalCloseBtn}
@@ -525,231 +411,13 @@ export default function ProfileScreen() {
               </View>
 
               <Text style={styles.qrHelpText}>
-                Đưa mã này cho nhân viên tại quầy Tiệm Nhà Gốm để tích điểm và hưởng ưu đãi hạng hội viên.
+                {t('scanAtCounter')}
               </Text>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* ========================================================================= */}
-      {/* MODAL 3: CÀI ĐẶT ỨNG DỤNG (SETTINGS MODAL: CỠ CHỮ & NGÔN NGỮ)             */}
-      {/* ========================================================================= */}
-      <Modal
-        visible={settingsModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSettingsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.settingsModalCard}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderTitleRow}>
-                <Ionicons name="settings-sharp" size={18} color="#2D3B34" />
-                <Text style={styles.modalTitle}>
-                  {tempLanguage === 'vi' ? 'Cài Đặt Hệ Thống' : 'System Settings'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setSettingsModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={22} color="#5D6160" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.settingsModalContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* PHẦN 1: NGÔN NGỮ HIỂN THỊ */}
-              <View style={styles.settingsGroup}>
-                <Text style={styles.settingsGroupTitle}>
-                  {tempLanguage === 'vi' ? 'Ngôn ngữ ứng dụng' : 'Display Language'}
-                </Text>
-                <Text style={styles.settingsGroupSubtitle}>
-                  {tempLanguage === 'vi'
-                    ? 'Chọn ngôn ngữ giao diện hiển thị cho toàn bộ ứng dụng'
-                    : 'Choose your preferred language for the application'}
-                </Text>
-
-                <View style={styles.optionsList}>
-                  {/* Tiếng Việt */}
-                  <TouchableOpacity
-                    style={[
-                      styles.settingOptionCard,
-                      tempLanguage === 'vi' && styles.settingOptionCardActive,
-                    ]}
-                    onPress={() => setTempLanguage('vi')}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.settingOptionLeft}>
-                      <Text style={styles.langFlagEmoji}>🇻🇳</Text>
-                      <View>
-                        <Text
-                          style={[
-                            styles.settingOptionName,
-                            tempLanguage === 'vi' && styles.settingOptionNameActive,
-                          ]}
-                        >
-                          Tiếng Việt
-                        </Text>
-                        <Text style={styles.settingOptionDesc}>Ngôn ngữ mặc định</Text>
-                      </View>
-                    </View>
-                    <View style={[styles.radioCircle, tempLanguage === 'vi' && styles.radioCircleActive]}>
-                      {tempLanguage === 'vi' && <View style={styles.radioDot} />}
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* English */}
-                  <TouchableOpacity
-                    style={[
-                      styles.settingOptionCard,
-                      tempLanguage === 'en' && styles.settingOptionCardActive,
-                    ]}
-                    onPress={() => setTempLanguage('en')}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.settingOptionLeft}>
-                      <Text style={styles.langFlagEmoji}>🇬🇧</Text>
-                      <View>
-                        <Text
-                          style={[
-                            styles.settingOptionName,
-                            tempLanguage === 'en' && styles.settingOptionNameActive,
-                          ]}
-                        >
-                          English
-                        </Text>
-                        <Text style={styles.settingOptionDesc}>English language</Text>
-                      </View>
-                    </View>
-                    <View style={[styles.radioCircle, tempLanguage === 'en' && styles.radioCircleActive]}>
-                      {tempLanguage === 'en' && <View style={styles.radioDot} />}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* PHẦN 2: CỠ CHỮ HIỂN THỊ */}
-              <View style={styles.settingsGroup}>
-                <Text style={styles.settingsGroupTitle}>
-                  {tempLanguage === 'vi' ? 'Cỡ chữ hiển thị' : 'Font Size'}
-                </Text>
-                <Text style={styles.settingsGroupSubtitle}>
-                  {tempLanguage === 'vi'
-                    ? 'Điều chỉnh kích thước cỡ chữ để đọc dễ dàng hơn'
-                    : 'Adjust font size for a comfortable reading experience'}
-                </Text>
-
-                <View style={styles.fontSizeGrid}>
-                  {[
-                    { id: 'small', label: tempLanguage === 'vi' ? 'Nhỏ' : 'Small', sub: '85%' },
-                    { id: 'normal', label: tempLanguage === 'vi' ? 'Vừa' : 'Medium', sub: '100%' },
-                    { id: 'large', label: tempLanguage === 'vi' ? 'Lớn' : 'Large', sub: '125%' },
-                  ].map((sizeOpt) => {
-                    const isSelected = tempFontSize === sizeOpt.id;
-                    return (
-                      <TouchableOpacity
-                        key={sizeOpt.id}
-                        style={[styles.fontSizeChip, isSelected && styles.fontSizeChipActive]}
-                        onPress={() => setTempFontSize(sizeOpt.id as FontSize)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={[styles.fontSizeChipLabel, isSelected && styles.fontSizeChipLabelActive]}>
-                          {sizeOpt.label}
-                        </Text>
-                        <Text style={[styles.fontSizeChipSub, isSelected && styles.fontSizeChipSubActive]}>
-                          {sizeOpt.sub}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Hộp xem trước văn bản trực tiếp */}
-                <View style={styles.previewBox}>
-                  <View style={styles.previewHeaderRow}>
-                    <Ionicons name="eye-outline" size={15} color="#5D6160" />
-                    <Text style={styles.previewHeaderLabel}>
-                      {tempLanguage === 'vi' ? 'Xem trước kích thước chữ' : 'Live Preview'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.previewSampleText,
-                      {
-                        fontSize:
-                          tempFontSize === 'small' ? 12 : tempFontSize === 'large' ? 16.5 : 14,
-                        lineHeight:
-                          tempFontSize === 'small' ? 18 : tempFontSize === 'large' ? 24 : 21,
-                      },
-                    ]}
-                  >
-                    {tempLanguage === 'vi'
-                      ? 'Tiệm Nhà Gốm - Nơi lưu giữ nét đẹp gốm mộc thủ công tinh tế. Mang hơi thở của đất và lửa vào không gian sống của bạn.'
-                      : 'Tiem Nha Gom - Preserving the beauty of handcrafted rustic ceramics. Bringing earth and fire into your living space.'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* PHẦN 3: BỘ NHỚ VÀ DỮ LIỆU */}
-              <View style={styles.settingsGroup}>
-                <Text style={styles.settingsGroupTitle}>
-                  {tempLanguage === 'vi' ? 'Tiện ích hệ thống' : 'System Utilities'}
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.cacheActionBtn}
-                  onPress={handleClearCache}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.cacheLeft}>
-                    <Ionicons name="trash-bin-outline" size={18} color="#5D6160" />
-                    <Text style={styles.cacheBtnText}>
-                      {tempLanguage === 'vi' ? 'Xóa bộ nhớ đệm (Cache)' : 'Clear Application Cache'}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#7A827E" />
-                </TouchableOpacity>
-              </View>
-
-              {/* ACTION BUTTONS */}
-              <View style={styles.settingsModalActions}>
-                <TouchableOpacity
-                  style={styles.saveSettingsBtn}
-                  onPress={handleSaveSettings}
-                  activeOpacity={0.85}
-                  disabled={savingSettings}
-                >
-                  {savingSettings ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-sharp" size={18} color="#FFFFFF" />
-                      <Text style={styles.saveSettingsBtnText}>
-                        {tempLanguage === 'vi' ? 'Lưu thay đổi & Áp dụng' : 'Save & Apply Changes'}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.cancelSettingsBtn}
-                  onPress={() => setSettingsModalVisible(false)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.cancelSettingsBtnText}>
-                    {tempLanguage === 'vi' ? 'Đóng' : 'Close'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

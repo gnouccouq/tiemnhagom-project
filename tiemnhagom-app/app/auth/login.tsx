@@ -22,8 +22,11 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
+import { useSettings } from '../../src/context/SettingsContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -37,7 +40,10 @@ export default function LoginScreen() {
     signUp,
     resetPassword,
     signInWithGoogleCredential,
+    signInWithAppleCredential,
   } = useAuth();
+  
+  const { t } = useSettings();
 
   // Chế độ: false = Đăng nhập (Sign In), true = Đăng ký (Sign Up)
   const [isSignUpMode, setIsSignUpMode] = useState(false);
@@ -57,13 +63,14 @@ export default function LoginScreen() {
   // Loading states
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   // Google OAuth Hook
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
-    webClientId: GOOGLE_CLIENT_ID,
-    iosClientId: GOOGLE_CLIENT_ID,
-    androidClientId: GOOGLE_CLIENT_ID,
+    webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
+    iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
+    androidClientId: '571834989973-2hceq95tg0suavnlkit7fhs2ce6iaaua.apps.googleusercontent.com',
     selectAccount: true,
   });
 
@@ -75,11 +82,11 @@ export default function LoginScreen() {
         setGoogleLoading(true);
         signInWithGoogleCredential(idToken)
           .then(() => {
-            Alert.alert('Thành công', 'Đăng nhập Google thành công!');
+            Alert.alert(t('success'), 'Đăng nhập Google thành công!');
             router.back();
           })
           .catch((err: any) => {
-            Alert.alert('Lỗi đăng nhập', err.message || 'Không thể xác thực tài khoản Google.');
+            Alert.alert(t('error'), err.message || 'Không thể xác thực tài khoản Google.');
           })
           .finally(() => {
             setGoogleLoading(false);
@@ -91,7 +98,7 @@ export default function LoginScreen() {
   // Submit form (Sign in / Sign up)
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ Email và Mật khẩu.');
+      Alert.alert(t('notification'), t('emailPasswordRequired'));
       return;
     }
 
@@ -99,33 +106,33 @@ export default function LoginScreen() {
     try {
       if (isSignUpMode) {
         if (password.length < 6) {
-          Alert.alert('Thông báo', 'Mật khẩu phải có tối thiểu 6 ký tự.');
+          Alert.alert(t('notification'), t('passwordLengthError'));
           setLoading(false);
           return;
         }
         const name = fullName.trim() || email.split('@')[0];
         await signUp(email.trim(), password, name, phone.trim());
-        Alert.alert('Thành công', 'Tạo tài khoản thành công! Tặng ngay 50 điểm chào mừng.', [
-          { text: 'Bắt đầu', onPress: () => router.back() },
+        Alert.alert(t('success'), t('registerSuccess'), [
+          { text: t('start'), onPress: () => router.back() },
         ]);
       } else {
         await signIn(email.trim(), password);
         router.back();
       }
     } catch (err: any) {
-      let message = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+      let message = t('genericError');
       if (
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/user-not-found'
       ) {
-        message = 'Sai email hoặc mật khẩu';
+        message = t('wrongPassword');
       } else if (err.code === 'auth/email-already-in-use') {
-        message = 'Email này đã được sử dụng. Vui lòng bấm đăng nhập.';
+        message = t('emailAlreadyInUse');
       } else if (err.code === 'auth/invalid-email') {
-        message = 'Định dạng email không hợp lệ.';
+        message = t('invalidEmail');
       }
-      Alert.alert('Lỗi', message);
+      Alert.alert(t('error'), message);
     } finally {
       setLoading(false);
     }
@@ -164,9 +171,45 @@ export default function LoginScreen() {
         await WebBrowser.openAuthSessionAsync(authUrl);
       }
     } catch (e: any) {
+      console.log('Google login error:', e);
       Alert.alert('Thông báo', 'Vui lòng kiểm tra kết nối Google hoặc đăng nhập bằng Email.');
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  // Apple Login
+  const handleAppleLogin = async () => {
+    setAppleLoading(true);
+    try {
+      const csrf = Math.random().toString(36).substring(2, 15);
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, nonce);
+      
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        state: csrf,
+        nonce: hashedNonce,
+      });
+
+      const { identityToken } = credential;
+      if (identityToken) {
+        await signInWithAppleCredential(identityToken, nonce);
+        Alert.alert('Thành công', 'Đăng nhập Apple thành công!');
+        router.back();
+      } else {
+        throw new Error('Không nhận được identityToken từ Apple.');
+      }
+    } catch (e: any) {
+      if (e.code !== 'ERR_REQUEST_CANCELED') {
+        console.log('Apple login error:', e);
+        Alert.alert('Lỗi', 'Không thể đăng nhập bằng Apple.');
+      }
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -176,7 +219,7 @@ export default function LoginScreen() {
 
       {/* FULLSCREEN BACKGROUND IMAGE */}
       <Image
-        source={require('../../assets/images/hero-bg.webp')}
+        source={require('../../assets/images/tiemnhagom.jpg')}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         priority="high"
@@ -207,13 +250,13 @@ export default function LoginScreen() {
               <View style={styles.authModalTitle}>
                 {!isSignUpMode ? (
                   <>
-                    <Text style={styles.mainTitleText}>welcome back,</Text>
-                    <Text style={styles.subTitleText}>we've missed you!</Text>
+                    <Text style={styles.mainTitleText}>{t('welcomeBack')}</Text>
+                    <Text style={styles.subTitleText}>{t('gladToSeeYou')}</Text>
                   </>
                 ) : (
                   <>
-                    <Text style={styles.mainTitleText}>create account,</Text>
-                    <Text style={styles.subTitleText}>join our pottery family!</Text>
+                    <Text style={styles.mainTitleText}>{t('createNewAccount')}</Text>
+                    <Text style={styles.subTitleText}>{t('joinPotteryStudio')}</Text>
                   </>
                 )}
               </View>
@@ -224,7 +267,7 @@ export default function LoginScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.authToggleLink}>
-                    {isSignUpMode ? 'sign in' : 'sign up'}
+                    {isSignUpMode ? t('login') : t('register')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -237,7 +280,7 @@ export default function LoginScreen() {
                 <View style={styles.authInputGroup}>
                   <TextInput
                     style={styles.authInput}
-                    placeholder="full name"
+                    placeholder={t('fullName')}
                     placeholderTextColor="#A0A0A0"
                     value={fullName}
                     onChangeText={setFullName}
@@ -248,7 +291,7 @@ export default function LoginScreen() {
                 <View style={styles.authInputGroup}>
                   <TextInput
                     style={styles.authInput}
-                    placeholder="phone number"
+                    placeholder={t('phonePlaceholder')}
                     placeholderTextColor="#A0A0A0"
                     value={phone}
                     onChangeText={setPhone}
@@ -261,7 +304,7 @@ export default function LoginScreen() {
             <View style={styles.authInputGroup}>
               <TextInput
                 style={styles.authInput}
-                placeholder="email"
+                placeholder={t('emailPlaceholder')}
                 placeholderTextColor="#A0A0A0"
                 value={email}
                 onChangeText={setEmail}
@@ -273,7 +316,7 @@ export default function LoginScreen() {
             <View style={styles.authInputGroup}>
               <TextInput
                 style={[styles.authInput, { paddingRight: 48 }]}
-                placeholder="password"
+                placeholder={t('passwordPlaceholder')}
                 placeholderTextColor="#A0A0A0"
                 value={password}
                 onChangeText={setPassword}
@@ -303,7 +346,7 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#111" size="small" />
               ) : (
                 <Text style={styles.btnAuthSubmitText}>
-                  {isSignUpMode ? 'create account' : 'sign in'}
+                  {isSignUpMode ? t('createAccount') : t('login')}
                 </Text>
               )}
             </TouchableOpacity>
@@ -324,10 +367,29 @@ export default function LoginScreen() {
                     style={styles.googleIcon}
                     contentFit="contain"
                   />
-                  <Text style={styles.btnGoogleAuthText}>continue with google</Text>
+                  <Text style={styles.btnGoogleAuthText}>{t('loginWithGoogle')}</Text>
                 </>
               )}
             </TouchableOpacity>
+
+            {/* APPLE LOGIN BUTTON */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[styles.btnGoogleAuth, { marginTop: 12, backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' }]}
+                onPress={handleAppleLogin}
+                disabled={appleLoading}
+                activeOpacity={0.88}
+              >
+                {appleLoading ? (
+                  <ActivityIndicator color="#111" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="logo-apple" size={19} color="#111" style={{ marginBottom: 2 }} />
+                    <Text style={[styles.btnGoogleAuthText, { color: '#111' }]}>{t('loginWithApple')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
             {/* FORGOT PASSWORD LINK (.btn-forgot-password) */}
             {!isSignUpMode && (
@@ -339,7 +401,7 @@ export default function LoginScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.btnForgotPassword}>forgot password?</Text>
+                  <Text style={styles.btnForgotPassword}>{t('forgotPassword')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -357,15 +419,15 @@ export default function LoginScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>forgot password?</Text>
+            <Text style={styles.modalTitle}>{t('forgotPassword')}</Text>
             <Text style={styles.modalSubtitle}>
-              enter your email to receive a password reset link from Tiệm Nhà Gốm.
+              {t('forgotPasswordDesc')}
             </Text>
 
             <View style={[styles.authInputGroup, { marginBottom: 18 }]}>
               <TextInput
                 style={styles.authInput}
-                placeholder="email"
+                placeholder={t('emailPlaceholder')}
                 placeholderTextColor="#a8b8b0"
                 value={forgotEmail}
                 onChangeText={setForgotEmail}
@@ -380,7 +442,7 @@ export default function LoginScreen() {
                 onPress={() => setForgotModalVisible(false)}
                 disabled={forgotLoading}
               >
-                <Text style={styles.modalCancelText}>cancel</Text>
+                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -391,7 +453,7 @@ export default function LoginScreen() {
                 {forgotLoading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.btnAuthSubmitText}>send link</Text>
+                  <Text style={styles.btnAuthSubmitText}>{t('sendLink')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -409,7 +471,7 @@ const styles = StyleSheet.create({
   },
   bgOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   topBar: {
     position: 'absolute',
@@ -437,7 +499,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingHorizontal: 24,
     paddingTop: 26,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    paddingBottom: Platform.OS === 'ios' ? 48 : 24,
   },
   authModalHeader: {
     flexDirection: 'row',

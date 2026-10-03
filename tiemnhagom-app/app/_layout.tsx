@@ -1,13 +1,16 @@
 // app/_layout.tsx
 import '../src/utils/textScaler';
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, Image } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import Constants from 'expo-constants';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
@@ -16,6 +19,9 @@ import { WishlistProvider } from '../src/context/WishlistContext';
 import { SettingsProvider, useSettings } from '../src/context/SettingsContext';
 import { Colors } from '../src/constants/theme';
 import { NotificationBadgeProvider } from '../src/context/NotificationBadgeContext';
+import ForceUpdateChecker from '../src/components/ForceUpdateChecker';
+import NetworkOverlay from '../src/components/NetworkOverlay';
+import { RealtimeDataProvider } from '../src/context/RealtimeDataContext';
 
 export {
   ErrorBoundary,
@@ -42,7 +48,7 @@ function NavigationRoot() {
       // Nếu đã đăng nhập thì ngầm định là đã qua onboarding
       const seenOnboarding = (value === 'true') || isAuth;
       const inAuthGroup = pathname.startsWith('/auth');
-      const inOnboarding = pathname === '/onboarding';
+      const inOnboarding = pathname === '/onboarding' || pathname === '/setup-preferences' || pathname === '/setup-permissions';
 
       if (!seenOnboarding && !inOnboarding) {
         // Chưa xem onboarding -> vào trang onboarding
@@ -60,7 +66,17 @@ function NavigationRoot() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9C7156" />
+        <Image 
+          source={require('../assets/images/LOGO_3_BLACK_PNG.png')} 
+          style={{ width: 360, height: 360 }} 
+          resizeMode="contain" 
+        />
+        <ActivityIndicator 
+          size="large" 
+          color={Colors.textPrimary} 
+          style={{ position: 'absolute', bottom: 100 }} 
+        />
+        <Text style={styles.versionText}>v{Constants.expoConfig?.version || '1.0.0'}</Text>
       </View>
     );
   }
@@ -79,6 +95,22 @@ function NavigationRoot() {
           headerShown: false,
           gestureEnabled: false,
           animation: 'fade',
+        }}
+      />
+      <Stack.Screen
+        name="setup-preferences"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="setup-permissions"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+          animation: 'slide_from_right',
         }}
       />
       {/* Trang Login riêng biệt, bắt buộc trước khi vào app */}
@@ -118,12 +150,97 @@ function NavigationRoot() {
   );
 }
 
+function AppLockGuard({ children }: { children: React.ReactNode }) {
+  const { isAppLockEnabled, language } = useSettings();
+  const [isLocked, setIsLocked] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const isAuthenticating = useRef(false);
+
+  const authenticate = async () => {
+    if (isAuthenticating.current) return;
+    
+    isAuthenticating.current = true;
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+    if (hasHardware && isEnrolled) {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: language === 'vi' ? 'Xác thực để mở khóa ứng dụng' : 'Authenticate to unlock app',
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        setIsLocked(false);
+      }
+    } else {
+      // Nếu không có phần cứng thì bỏ qua
+      setIsLocked(false);
+    }
+    
+    // Đợi 1 giây trước khi reset cờ để AppState có thời gian chuyển về 'active'
+    // tránh tình trạng nhận diện nhầm AppState thay đổi và loop gọi lại authenticate
+    setTimeout(() => {
+      isAuthenticating.current = false;
+    }, 1000);
+  };
+
+  useEffect(() => {
+    // Khi khởi động, nếu bật lock thì khóa ngay
+    if (isAppLockEnabled) {
+      setIsLocked(true);
+      authenticate();
+    }
+  }, [isAppLockEnabled]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // App goes to foreground
+        if (isAppLockEnabled && !isAuthenticating.current) {
+          setIsLocked(true);
+          authenticate();
+        }
+      } else if (nextAppState.match(/inactive|background/)) {
+        // App goes to background
+        if (isAppLockEnabled && !isAuthenticating.current) {
+          setIsLocked(true);
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAppLockEnabled]);
+
+  if (isLocked) {
+    return (
+      <View style={styles.lockContainer}>
+        <Ionicons name="lock-closed" size={60} color="#2D3B34" style={{ marginBottom: 20 }} />
+        <Text style={styles.lockTitle}>{language === 'vi' ? 'Ứng dụng đã khóa' : 'App Locked'}</Text>
+        <Text style={styles.lockSub}>{language === 'vi' ? 'Vui lòng xác thực để tiếp tục' : 'Please authenticate to continue'}</Text>
+        <TouchableOpacity style={styles.unlockBtn} onPress={authenticate}>
+          <Text style={styles.unlockBtnText}>{language === 'vi' ? 'Mở khóa' : 'Unlock'}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function AppWrapper() {
   const { fontSize, language } = useSettings();
 
   return (
     <View key={`${fontSize}-${language}`} style={styles.rootContainer}>
-      <NavigationRoot />
+      <AppLockGuard>
+        <NavigationRoot />
+      </AppLockGuard>
+      <NetworkOverlay />
     </View>
   );
 }
@@ -156,8 +273,11 @@ export default function RootLayout() {
           <CartProvider>
             <WishlistProvider>
               <NotificationBadgeProvider>
-                <StatusBar style="dark" />
-                <AppWrapper />
+                <RealtimeDataProvider>
+                  <StatusBar style="dark" />
+                  <AppWrapper />
+                  <ForceUpdateChecker />
+                </RealtimeDataProvider>
               </NotificationBadgeProvider>
             </WishlistProvider>
           </CartProvider>
@@ -177,5 +297,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F6F2',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  versionText: {
+    position: 'absolute',
+    bottom: 30,
+    fontSize: 12,
+    color: '#9E968D',
+    fontFamily: 'SpaceMono',
+  },
+  lockContainer: {
+    flex: 1,
+    backgroundColor: '#FAF8F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  lockTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2D3B34',
+    marginBottom: 8,
+  },
+  lockSub: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    color: '#7A827E',
+    marginBottom: 40,
+  },
+  unlockBtn: {
+    backgroundColor: '#2D3B34',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 24,
+  },
+  unlockBtnText: {
+    fontFamily: 'ElleGaborStd',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });
