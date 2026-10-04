@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
-  Alert,
+  Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, { FadeIn, FadeInDown, SlideInDown, ZoomIn } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';

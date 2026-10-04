@@ -8,13 +8,13 @@ import {
   ScrollView,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Modal,
   RefreshControl,
   Dimensions,
-  Alert,
+  Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';

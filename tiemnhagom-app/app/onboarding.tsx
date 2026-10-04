@@ -140,7 +140,7 @@ export default function OnboardingScreen() {
             )}
             <TouchableOpacity onPress={handleNext} style={styles.nextButton} activeOpacity={0.8}>
               <Text style={styles.nextText}>
-                {currentIndex === SLIDES.length - 1 ? t('next') : t('next')}
+                {currentIndex === SLIDES.length - 1 ? t('onboardingStart') : t('next')}
               </Text>
               {currentIndex === SLIDES.length - 1 && (
                 <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 4 }} />
@@ -155,7 +155,7 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.2)' },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.2)' },
   bottomGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: height * 0.5 },
   safeArea: { flex: 1, justifyContent: 'flex-end' },
   content: { paddingHorizontal: 24, paddingBottom: 100 },

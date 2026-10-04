@@ -97,7 +97,7 @@ export const zh = {
   notification: '通知',
   success: '成功',
   error: '错误',
-  start: '开始',
+  start_2: '开始',
 
   // Home Screen
   featuredThemes: '特色主题',
@@ -197,7 +197,7 @@ export const zh = {
   proceedToCheckout: '去结算',
 
   // Checkout Screen
-  error: '错误',
+  error_2: '错误',
   errMissingName: '请输入收件人全名。',
   errInvalidPhone: '请输入有效的送货电话号码。',
   errMissingAddress: '请输入完整的送货地址 (省/市和门牌号)。',

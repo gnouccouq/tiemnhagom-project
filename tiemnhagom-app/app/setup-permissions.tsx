@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'react-native';
+
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+let Notifications: any = null;
+if (!(isExpoGo && Platform.OS === 'android')) {
+  try {
+    Notifications = require('expo-notifications');
+  } catch (e) {
+    console.log('Failed to load expo-notifications', e);
+  }
+}
 import { useSettings } from '../src/context/SettingsContext';
 
 export default function SetupPermissionsScreen() {
@@ -23,7 +35,7 @@ export default function SetupPermissionsScreen() {
   };
 
   const requestNotificationPermission = async () => {
-    if (notificationGranted) return;
+    if (notificationGranted || !Notifications) return;
     const { status } = await Notifications.requestPermissionsAsync();
     if (status === 'granted') {
       setNotificationGranted(true);

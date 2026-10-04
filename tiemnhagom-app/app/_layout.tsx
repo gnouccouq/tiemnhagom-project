@@ -128,15 +128,7 @@ function NavigationRoot() {
       <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      {/* Cart: Stack screen riêng → hỗ trợ swipe-back iOS */}
-      <Stack.Screen
-        name="cart"
-        options={{
-          headerShown: false,
-          gestureEnabled: true,
-          animation: 'slide_from_right',
-        }}
-      />
+
       {/* WebView: mở từ dưới lên */}
       <Stack.Screen
         name="webview"

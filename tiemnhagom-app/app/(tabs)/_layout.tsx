@@ -6,18 +6,26 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const { unreadCount } = useNotificationBadge();
   const { cartCount } = useCart();
   const { t } = useSettings();
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#000000',
         tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 60 + (insets.bottom > 0 ? insets.bottom : 10),
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+          }
+        ],
         tabBarItemStyle: styles.tabBarItem,
         tabBarLabelStyle: styles.tabBarLabel,
       }}
@@ -112,9 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#EEEEEE',
-    height: Platform.OS === 'ios' ? 96 : 74,
     paddingTop: 5,
-    paddingBottom: Platform.OS === 'ios' ? 22 : 6,
     elevation: 6,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -2 },

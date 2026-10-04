@@ -6,20 +6,31 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   RefreshControl,
   Platform,
   Animated,
   PanResponder,
-  Dimensions,
+  Dimensions
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = 80;
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+let Notifications: any = null;
+if (!(isExpoGo && Platform.OS === 'android')) {
+  try {
+    Notifications = require('expo-notifications');
+  } catch (e) {
+    console.log('Failed to load expo-notifications', e);
+  }
+}
+
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../src/config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
@@ -330,7 +341,9 @@ export default function NotificationsScreen() {
 
   // Lắng nghe thông báo tới khi đang mở tab này
   React.useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
+    if (!Notifications) return;
+
+    const subscription = Notifications.addNotificationReceivedListener((notification: any) => {
       const title = notification.request.content.title || 'Thông báo mới';
       const body = notification.request.content.body || '';
 

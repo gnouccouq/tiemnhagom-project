@@ -1,23 +1,42 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { db } from '../config/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
-// Handle incoming notifications when the app is foregrounded
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Check if we are running inside Expo Go
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+let Notifications: any = null;
+
+// Only require expo-notifications if we are NOT in Expo Go on Android.
+// (Expo SDK 53 removed Android push notifications from Expo Go, causing a crash on import).
+if (!(isExpoGo && Platform.OS === 'android')) {
+  try {
+    Notifications = require('expo-notifications');
+    // Handle incoming notifications when the app is foregrounded
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    console.log('Failed to load expo-notifications', e);
+  }
+}
 
 export async function registerForPushNotificationsAsync(): Promise<string | undefined> {
   let token;
+
+  // If Notifications is null (e.g. Expo Go on Android), we can't register for push notifications.
+  if (!Notifications) {
+    console.log('Push notifications are not supported in Expo Go on Android (SDK 53+). Please use a development build.');
+    return undefined;
+  }
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
