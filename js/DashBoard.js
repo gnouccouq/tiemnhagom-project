@@ -4330,6 +4330,59 @@ window.calcComboVariantStock = function (variant) {
     };
 };
 
+window._comboSyncCooldown = window._comboSyncCooldown || new Map();
+
+// Tự động kiểm tra và đồng bộ tồn kho thực tế của các sản phẩm Combo dựa trên các món con
+window.syncAllComboStocks = async function (autoUpdateFirestore = true) {
+    if (typeof posProductsLocal === 'undefined' || !Array.isArray(posProductsLocal) || posProductsLocal.length === 0) return;
+
+    for (const p of posProductsLocal) {
+        if (!p.isCombo || !Array.isArray(p.comboVariants) || p.comboVariants.length === 0) continue;
+
+        let totalCalculatedStock = 0;
+        let hasChanges = false;
+
+        p.comboVariants.forEach(v => {
+            const calc = typeof window.calcComboVariantStock === 'function'
+                ? window.calcComboVariantStock(v)
+                : { stock: v.stock || 0, isOutOfStock: v.isOutOfStock };
+
+            const oldStock = Number(v.stock !== undefined ? v.stock : -1);
+            const oldIsOut = Boolean(v.isOutOfStock);
+
+            if (oldStock !== calc.stock || oldIsOut !== calc.isOutOfStock) {
+                hasChanges = true;
+                v.stock = calc.stock;
+                v.isOutOfStock = calc.isOutOfStock;
+            }
+            totalCalculatedStock += calc.stock;
+        });
+
+        if (Number(p.stock || 0) !== totalCalculatedStock) {
+            hasChanges = true;
+            p.stock = totalCalculatedStock;
+        }
+
+        if (hasChanges && autoUpdateFirestore) {
+            const now = Date.now();
+            const lastSync = window._comboSyncCooldown.get(p.id) || 0;
+            if (now - lastSync > 3000) {
+                window._comboSyncCooldown.set(p.id, now);
+                try {
+                    await updateDoc(doc(db, "products", p.id), {
+                        comboVariants: p.comboVariants,
+                        stock: totalCalculatedStock,
+                        isOutOfStock: totalCalculatedStock <= 0,
+                        updatedAt: new Date().toISOString()
+                    });
+                } catch (err) {
+                    console.warn(`Lỗi tự động đồng bộ tồn kho Combo ${p.id}:`, err);
+                }
+            }
+        }
+    }
+};
+
 window.toggleComboSection = function () {
     const checkedRadio = document.querySelector('input[name="product-type"]:checked');
     const type = checkedRadio ? checkedRadio.value : 'normal';
@@ -5290,6 +5343,11 @@ function initProductListener() {
             posProductsLocal.push({ id: doc.id, ...p });
         });
 
+        // Tự động đồng bộ và tính toán tồn kho thời gian thực cho các Combo
+        if (typeof window.syncAllComboStocks === 'function') {
+            window.syncAllComboStocks(true);
+        }
+
         renderAdminProductTable(); // Gọi hàm hiển thị bảng
         populateFlashSaleGroupSelect(); // Cập nhật dropdown chọn nhóm sale
         if (typeof populateHotspotProductSelect === 'function') populateHotspotProductSelect(); // Cập nhật dropdown ghim sản phẩm Lookbook
@@ -5394,24 +5452,54 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
         const hasPattern = p.patternVariants && p.patternVariants.length > 0;
         const hasCombo = p.isCombo && p.comboVariants && p.comboVariants.length > 0;
         const hasVariants = hasColor || hasPattern || hasCombo;
-        const inventoryValue = (p.stock || 0) * (p.cost || p.price || 0);
+
+        let liveTotalStock = p.stock || 0;
+        let comboHasDiff = false;
+        if (hasCombo) {
+            let comboSum = 0;
+            p.comboVariants.forEach(v => {
+                const calc = typeof window.calcComboVariantStock === 'function' ? window.calcComboVariantStock(v) : { stock: v.stock || 0, isOutOfStock: v.isOutOfStock };
+                if (v.stock !== calc.stock || v.isOutOfStock !== calc.isOutOfStock) {
+                    comboHasDiff = true;
+                    v.stock = calc.stock;
+                    v.isOutOfStock = calc.isOutOfStock;
+                }
+                comboSum += calc.stock;
+            });
+            liveTotalStock = comboSum;
+            if (p.stock !== liveTotalStock) {
+                comboHasDiff = true;
+                p.stock = liveTotalStock;
+            }
+            if (comboHasDiff) {
+                updateDoc(doc(db, "products", p.id), {
+                    comboVariants: p.comboVariants,
+                    stock: liveTotalStock,
+                    isOutOfStock: liveTotalStock <= 0,
+                    updatedAt: new Date().toISOString()
+                }).catch(err => console.warn("Lỗi tự động cập nhật Firestore cho combo:", err));
+            }
+        }
+        const inventoryValue = liveTotalStock * (p.cost || p.price || 0);
 
         let variantListHtml = '';
         if (hasVariants) {
             let varRows = '';
             if (hasColor) {
                 p.colorVariants.forEach(v => {
+                    const isOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock) || (v.stock || 0) <= 0;
                     varRows += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">🎨</span>`}
                                     <strong>${v.name}</strong>
+                                    ${isOut ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
                             </td>
                             <td style="padding: 8px 10px; color: #64748b;">Màu sắc</td>
                             <td style="padding: 8px 10px;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + ' đ' : 'Giá gốc'}</td>
-                            <td style="padding: 8px 10px; font-weight: 700; color: ${v.stock > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
+                            <td style="padding: 8px 10px; font-weight: 700; color: ${!isOut && (v.stock || 0) > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
                             <td style="padding: 8px 10px; font-weight: 700; color: #d97706;">${v.sold || 0}</td>
                         </tr>
                     `;
@@ -5419,17 +5507,19 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
             }
             if (hasPattern) {
                 p.patternVariants.forEach(v => {
+                    const isOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock) || (v.stock || 0) <= 0;
                     varRows += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">✨</span>`}
                                     <strong>${v.name}</strong>
+                                    ${isOut ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
                             </td>
                             <td style="padding: 8px 10px; color: #64748b;">Họa tiết</td>
                             <td style="padding: 8px 10px;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + ' đ' : 'Giá gốc'}</td>
-                            <td style="padding: 8px 10px; font-weight: 700; color: ${v.stock > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
+                            <td style="padding: 8px 10px; font-weight: 700; color: ${!isOut && (v.stock || 0) > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
                             <td style="padding: 8px 10px; font-weight: 700; color: #d97706;">${v.sold || 0}</td>
                         </tr>
                     `;
@@ -5437,17 +5527,24 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
             }
             if (hasCombo) {
                 p.comboVariants.forEach(v => {
+                    const calc = (typeof window.calcComboVariantStock === 'function')
+                        ? window.calcComboVariantStock(v)
+                        : { stock: v.stock || 0, isOutOfStock: v.isOutOfStock };
+                    const currentStock = calc.stock;
+                    const isOutOfStock = calc.isOutOfStock || currentStock <= 0;
+
                     varRows += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">📦</span>`}
                                     <strong>${v.name}</strong>
+                                    ${isOutOfStock ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
                             </td>
                             <td style="padding: 8px 10px; color: #64748b;">Combo</td>
                             <td style="padding: 8px 10px;">${v.price ? new Intl.NumberFormat('vi-VN').format(v.price) + ' đ' : 'Giá gốc'}</td>
-                            <td style="padding: 8px 10px; font-weight: 700; color: ${v.stock > 0 ? '#0284c7' : '#dc2626'};">${v.stock || 0}</td>
+                            <td style="padding: 8px 10px; font-weight: 700; color: ${!isOutOfStock && currentStock > 0 ? '#0284c7' : '#dc2626'};">${currentStock}</td>
                             <td style="padding: 8px 10px; font-weight: 700; color: #d97706;">${v.sold || 0}</td>
                         </tr>
                     `;
@@ -5484,7 +5581,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div style="background: #f0f7ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
                         <span style="color: #64748b; font-size: 0.78rem;">Tổng tồn kho hiện tại:</span>
-                        <div style="font-size: 1.2rem; font-weight: 700; color: #0066cc;">${p.stock || 0} sản phẩm</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #0066cc;">${liveTotalStock} sản phẩm</div>
                     </div>
                     <div style="background: #fcf5e5; border: 1px solid #fde68a; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
                         <span style="color: #64748b; font-size: 0.78rem;">Khách đã đặt / Đã bán:</span>
@@ -6564,6 +6661,11 @@ window.saveQuickStock = async function () {
         p.stock = newStock;
         if (hasColorVariants) p.colorVariants = updatedColorVariants;
         if (hasPatternVariants) p.patternVariants = updatedPatternVariants;
+
+        // Cập nhật tồn kho liên đới cho các sản phẩm Combo nếu có sản phẩm con này
+        if (typeof window.syncAllComboStocks === 'function') {
+            await window.syncAllComboStocks(true);
+        }
 
         showToast(`✅ Đã cập nhật tồn kho cho "${p.name || p.id}" thành công: ${newStock} sp!`, "success");
         window.closeQuickStockModal();

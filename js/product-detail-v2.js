@@ -402,20 +402,23 @@ function updateStockDisplay() {
     if (selectedComboVariant && currentProductData.comboVariants) {
         const cv = currentProductData.comboVariants.find(v => (v.name || v) === selectedComboVariant);
         if (cv) {
-            stock = cv.stock !== undefined ? cv.stock : stock;
-            isOut = cv.isOutOfStock || stock <= 0;
+            const hasOwn = cv.stock !== undefined && cv.stock !== null && cv.stock !== '';
+            stock = hasOwn ? Number(cv.stock) : stock;
+            isOut = Boolean(cv.manualOutOfStock) || Boolean(cv.isOutOfStock) || stock <= 0;
         }
     } else if (selectedColor && currentProductData.colorVariants) {
         const c = currentProductData.colorVariants.find(v => v.name === selectedColor);
         if (c) {
-            stock = c.stock !== undefined ? c.stock : stock;
-            isOut = c.isOutOfStock || stock <= 0;
+            const hasOwn = c.stock !== undefined && c.stock !== null && c.stock !== '';
+            stock = hasOwn ? Number(c.stock) : stock;
+            isOut = Boolean(c.manualOutOfStock) || Boolean(c.isOutOfStock) || stock <= 0;
         }
     } else if (selectedPattern && currentProductData.patternVariants) {
         const p = currentProductData.patternVariants.find(v => v.name === selectedPattern);
         if (p) {
-            stock = p.stock !== undefined ? p.stock : stock;
-            isOut = p.isOutOfStock || stock <= 0;
+            const hasOwn = p.stock !== undefined && p.stock !== null && p.stock !== '';
+            stock = hasOwn ? Number(p.stock) : stock;
+            isOut = Boolean(p.manualOutOfStock) || Boolean(p.isOutOfStock) || stock <= 0;
         }
     }
 
@@ -738,10 +741,11 @@ async function fetchProductDetailV2() {
                             ${p.comboVariants.map((v, i) => {
                                 const cName = v.name || `Combo ${i + 1}`;
                                 const isActive = cName === selectedComboVariant;
+                                const isOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock) || (v.stock !== undefined && v.stock !== null && v.stock !== '' && Number(v.stock) <= 0);
                                 return `
-                                    <div class="v2-combo-chip ${isActive ? 'active' : ''}" onclick="window.selectV2Combo(${i})">
+                                    <div class="v2-combo-chip ${isActive ? 'active' : ''} ${isOut ? 'disabled-variant' : ''}" onclick="window.selectV2Combo(${i})" title="${isOut ? 'Phân loại đã hết hàng' : ''}">
                                         ${v.imageUrl ? `<img src="${v.imageUrl}" alt="${escapeHTML(cName)}">` : ''}
-                                        <span>${escapeHTML(cName)}</span>
+                                        <span>${escapeHTML(cName)}${isOut ? ' (Hết)' : ''}</span>
                                     </div>
                                 `;
                             }).join('')}

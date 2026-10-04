@@ -82,10 +82,10 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
         // Expand variants
         const processVariant = (v: any, type: 'color' | 'pattern' | 'combo') => {
           if (!v || !v.showOnProductPage) return;
-          const rawVStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(data.stock) || 0);
+          const hasOwnStock = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+          const vStock = hasOwnStock ? Number(v.stock) : (Number(data.stock) || 0);
           const isManualOut = Boolean(v.manualOutOfStock);
-          const vStock = (!isManualOut && rawVStock <= 0 && (Number(data.stock) || 0) > 0) ? Number(data.stock) : rawVStock;
-          const vIsOutOfStock = isManualOut || (Boolean(v.isOutOfStock) && vStock <= 0) || vStock <= 0;
+          const vIsOutOfStock = isManualOut || Boolean(v.isOutOfStock) || vStock <= 0;
           const vSold = Number(v.sold) || 0;
           const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
           const vPrice = (v.price && Number(v.price) > 0) ? Number(v.price) : (Number(data.price) || 0);

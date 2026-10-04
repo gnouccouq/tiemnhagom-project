@@ -1433,10 +1433,10 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
     // Render independent color variants
     if (product.colorVariants && Array.isArray(product.colorVariants)) {
         product.colorVariants.forEach(v => {
-            const rawVStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+            const hasOwnStock = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+            const vStock = hasOwnStock ? Number(v.stock) : (Number(product.stock) || 0);
             const isManualOut = Boolean(v.manualOutOfStock);
-            const vStock = (!isManualOut && rawVStock <= 0 && (Number(product.stock) || 0) > 0) ? Number(product.stock) : rawVStock;
-            const vIsOutOfStock = isManualOut || (Boolean(v.isOutOfStock) && vStock <= 0) || vStock <= 0;
+            const vIsOutOfStock = isManualOut || Boolean(v.isOutOfStock) || vStock <= 0;
             const vSold = Number(v.sold) || 0;
             const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
             const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
@@ -1462,10 +1462,10 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
     // Render independent pattern variants
     if (product.patternVariants && Array.isArray(product.patternVariants)) {
         product.patternVariants.forEach(v => {
-            const rawVStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+            const hasOwnStock = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+            const vStock = hasOwnStock ? Number(v.stock) : (Number(product.stock) || 0);
             const isManualOut = Boolean(v.manualOutOfStock);
-            const vStock = (!isManualOut && rawVStock <= 0 && (Number(product.stock) || 0) > 0) ? Number(product.stock) : rawVStock;
-            const vIsOutOfStock = isManualOut || (Boolean(v.isOutOfStock) && vStock <= 0) || vStock <= 0;
+            const vIsOutOfStock = isManualOut || Boolean(v.isOutOfStock) || vStock <= 0;
             const vSold = Number(v.sold) || 0;
             const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
             const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
@@ -1490,10 +1490,10 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
     // Render independent combo variants
     if (product.comboVariants && Array.isArray(product.comboVariants)) {
         product.comboVariants.forEach(v => {
-            const rawVStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+            const hasOwnStock = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+            const vStock = hasOwnStock ? Number(v.stock) : (Number(product.stock) || 0);
             const isManualOut = Boolean(v.manualOutOfStock);
-            const vStock = (!isManualOut && rawVStock <= 0 && (Number(product.stock) || 0) > 0) ? Number(product.stock) : rawVStock;
-            const vIsOutOfStock = isManualOut || (Boolean(v.isOutOfStock) && vStock <= 0) || vStock <= 0;
+            const vIsOutOfStock = isManualOut || Boolean(v.isOutOfStock) || vStock <= 0;
             const vSold = Number(v.sold) || 0;
             const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
             const shouldShow = onlyBestSellers ? (v.showOnProductPage && vIsBestSeller) : v.showOnProductPage;
@@ -1558,7 +1558,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     let isOutOfStock = Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (product.stock || 0) <= 0;
     if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
         const hasAnyAvailable = product.comboVariants.some(v => {
-            const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+            const hasOwn = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+            const vStock = hasOwn ? Number(v.stock) : (Number(product.stock) || 0);
             const vOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock);
             return !vOut && vStock > 0;
         });
@@ -1566,13 +1567,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     }
     if (variantOverride) {
         const isManualOut = Boolean(variantOverride.manualOutOfStock);
-        const rawStock = (variantOverride.stock !== undefined && variantOverride.stock !== null)
-            ? Number(variantOverride.stock)
-            : (Number(product.stock) || 0);
-        const vStock = (!isManualOut && rawStock <= 0 && (Number(product.stock) || 0) > 0)
-            ? Number(product.stock)
-            : rawStock;
-        isOutOfStock = isManualOut || (Boolean(variantOverride.isOutOfStock) && vStock <= 0) || vStock <= 0;
+        const hasOwnStock = (variantOverride.stock !== undefined && variantOverride.stock !== null && variantOverride.stock !== '');
+        const vStock = hasOwnStock ? Number(variantOverride.stock) : (Number(product.stock) || 0);
+        isOutOfStock = isManualOut || Boolean(variantOverride.isOutOfStock) || vStock <= 0;
     }
     const effectiveSold = (variantOverride && variantOverride.sold !== undefined)
         ? (Number(variantOverride.sold) || 0)
