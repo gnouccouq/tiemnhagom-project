@@ -20,7 +20,7 @@ export default function OnboardingScreen() {
       id: '1',
       title: t('onboardingTitle1'),
       description: t('onboardingDesc1'),
-      image: require('../assets/images/hero-bg.webp'),
+      image: require('../assets/images/tiemnhagom_background.png'),
     },
     {
       id: '2',
@@ -30,9 +30,21 @@ export default function OnboardingScreen() {
     },
     {
       id: '3',
+      title: t('onboardingTitle4'),
+      description: t('onboardingDesc4'),
+      image: require('../assets/images/hoa-nha-gom.webp'),
+    },
+    {
+      id: '4',
+      title: t('onboardingTitle5'),
+      description: t('onboardingDesc5'),
+      image: require('../assets/images/decor-su-kien.jpg'),
+    },
+    {
+      id: '5',
       title: t('onboardingTitle3'),
       description: t('onboardingDesc3'),
-      image: require('../assets/images/decor-su-kien.jpg'),
+      image: require('../assets/images/tiemnhagom.png'),
     },
   ];
 

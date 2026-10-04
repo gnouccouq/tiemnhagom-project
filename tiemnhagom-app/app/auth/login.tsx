@@ -235,7 +235,7 @@ export default function LoginScreen() {
 
       {/* FULLSCREEN BACKGROUND IMAGE */}
       <Image
-        source={require('../../assets/images/tiemnhagom.jpg')}
+        source={require('../../assets/images/tiemnhagom.png')}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         priority="high"
