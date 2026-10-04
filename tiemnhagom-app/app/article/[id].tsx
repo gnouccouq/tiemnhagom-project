@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { getArticleById, NewsArticle } from '../../src/services/productService';
+import { ScalePressable } from '../../src/components/ScalePressable';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -80,25 +81,25 @@ export default function ArticleDetailScreen() {
 
       {/* Header bar */}
       <View style={styles.navBar}>
-        <TouchableOpacity
+        <ScalePressable
           style={styles.navBtn}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={24} color="#18181B" />
-        </TouchableOpacity>
+          <Ionicons name="chevron-back" size={22} color="#18181B" style={{ marginLeft: -1 }} />
+        </ScalePressable>
 
         <Text style={styles.navTitle} numberOfLines={1}>
           Tin Tức & Bài Viết
         </Text>
 
-        <TouchableOpacity
+        <ScalePressable
           style={styles.navBtn}
           onPress={handleShare}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="share-outline" size={22} color="#18181B" />
-        </TouchableOpacity>
+          <Ionicons name="share-outline" size={20} color="#18181B" />
+        </ScalePressable>
       </View>
 
       <ScrollView
@@ -166,11 +167,19 @@ const styles = StyleSheet.create({
   navBtn: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#EFEAE2',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   navTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: '#18181B',
@@ -283,15 +292,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   backButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     backgroundColor: '#3B4D45',
-    borderRadius: 20,
+    borderRadius: 24,
   },
   backButtonText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 13.5,
+    fontWeight: '700',
   },
 });

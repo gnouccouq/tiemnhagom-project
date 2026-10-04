@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ScalePressable } from './ScalePressable';
 import provincesData from '../../assets/data/provinces.json';
 
 interface AddressPickerProps {
@@ -88,16 +89,16 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         <View style={styles.modalContent}>
           <View style={styles.header}>
             {step === 'WARD' ? (
-              <TouchableOpacity onPress={() => setStep('PROVINCE')} style={styles.iconBtn}>
+              <ScalePressable onPress={() => setStep('PROVINCE')} style={styles.iconBtn}>
                 <Ionicons name="chevron-back" size={24} color="#18181B" />
-              </TouchableOpacity>
+              </ScalePressable>
             ) : (
               <View style={styles.iconBtn} />
             )}
             <Text style={styles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
+            <ScalePressable onPress={onClose} style={styles.iconBtn}>
               <Ionicons name="close" size={24} color="#18181B" />
-            </TouchableOpacity>
+            </ScalePressable>
           </View>
           
           <FlatList
@@ -151,6 +152,7 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 32,
     height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

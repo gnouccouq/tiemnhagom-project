@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#111111',
   },
   fontSizeChipLabel: {
-    fontFamily: 'ElleGaborStd',
     fontWeight: '600',
     color: '#333333',
   },

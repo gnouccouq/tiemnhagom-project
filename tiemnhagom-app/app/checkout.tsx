@@ -286,7 +286,10 @@ export default function CheckoutScreen() {
           {loading ? (
             <ActivityIndicator color={Colors.textInverse} />
           ) : (
-            <Text style={styles.submitBtnText}>{t('confirmOrder')}</Text>
+            <>
+              <Text style={styles.submitBtnText}>{t('confirmOrder')}</Text>
+              <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} style={{ marginLeft: 4 }} />
+            </>
           )}
         </TouchableOpacity>
       </View>
@@ -491,18 +494,24 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     backgroundColor: Colors.primary,
+    flexDirection: 'row',
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 14,
+    borderRadius: 24,
     minWidth: 160,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   submitBtnDisabled: {
     opacity: 0.6,
   },
   submitBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: Colors.textInverse,
     fontWeight: '700',
     fontSize: Typography.fontSize.base,

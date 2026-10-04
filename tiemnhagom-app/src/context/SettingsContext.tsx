@@ -49,9 +49,9 @@ const SettingsContext = createContext<SettingsContextType>({
 });
 
 const getScaleFromSize = (size: FontSize): number => {
-  if (size === 'large') return 1.32;
-  if (size === 'small') return 0.9;
-  return 1.1; // Tăng nhẹ kích thước chuẩn để toàn app luôn dễ đọc, không bị nhỏ xíu
+  if (size === 'large') return 1.18;
+  if (size === 'small') return 0.88;
+  return 1.0; // Kích thước chuẩn 1.0 cho normal vừa vặn, thanh lịch, không bị to
 };
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

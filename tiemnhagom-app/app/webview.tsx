@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import { ScalePressable } from '../src/components/ScalePressable';
 
 export default function WebViewScreen() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function WebViewScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <ScalePressable
           onPress={() => {
             if (canGoBack) {
               webViewRef.current?.goBack();
@@ -44,19 +45,19 @@ export default function WebViewScreen() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="chevron-back" size={24} color="#111111" />
-        </TouchableOpacity>
+        </ScalePressable>
 
         <Text style={styles.headerTitle} numberOfLines={1}>
           {pageTitle}
         </Text>
 
-        <TouchableOpacity
+        <ScalePressable
           onPress={() => router.back()}
           style={styles.closeBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="close" size={20} color="#111111" />
-        </TouchableOpacity>
+        </ScalePressable>
       </View>
 
       {/* Loading bar */}

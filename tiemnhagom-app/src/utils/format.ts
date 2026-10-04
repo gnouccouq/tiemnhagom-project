@@ -1,13 +1,13 @@
 // src/utils/format.ts
 
 /**
- * Định dạng tiền tệ VND (vd: 120.000 ₫)
+ * Định dạng tiền tệ VND (vd: 120.000 VND)
  */
 export function formatCurrency(amount?: number | null): string {
   if (amount === undefined || amount === null || isNaN(amount)) {
-    return '0 ₫';
+    return '0 VND';
   }
-  return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
+  return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' VND';
 }
 
 /**

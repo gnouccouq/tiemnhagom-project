@@ -102,8 +102,9 @@ export default function OrderSuccessScreen() {
             onPress={() => router.replace('/orders')}
             activeOpacity={0.88}
           >
-            <Ionicons name="receipt-outline" size={20} color={Colors.textInverse} />
+            <Ionicons name="receipt-outline" size={18} color={Colors.textInverse} />
             <Text style={styles.primaryBtnText}>{t('trackOrder')}</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} style={{ marginLeft: 2 }} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -269,29 +270,35 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   primaryBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#111111',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 14,
+    borderRadius: 24,
     gap: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   primaryBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: Colors.textInverse,
     fontWeight: '700',
     fontSize: Typography.fontSize.base,
   },
   secondaryBtn: {
     backgroundColor: 'transparent',
+    borderWidth: 1.2,
+    borderColor: '#E4E4E7',
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: 12,
   },
   secondaryBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     fontWeight: '600',
     fontSize: Typography.fontSize.sm,
   },

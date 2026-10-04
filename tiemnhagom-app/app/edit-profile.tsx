@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 
 import { useAuth } from '../src/context/AuthContext';
 import { AddressPicker } from '../src/components/AddressPicker';
+import { ScalePressable } from '../src/components/ScalePressable';
 import { Colors, Typography, Spacing } from '../src/constants/theme';
 
 export default function EditProfileScreen() {
@@ -122,13 +123,13 @@ export default function EditProfileScreen() {
       
       {/* Header Modal */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <ScalePressable
           onPress={() => router.back()}
           style={styles.headerBackBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="chevron-back" size={26} color="#18181B" />
-        </TouchableOpacity>
+        </ScalePressable>
         <Text style={styles.headerTitle}>Chỉnh Sửa Thông Tin</Text>
         <View style={{ width: 40 }} />
         {/* Balance */}
@@ -149,13 +150,12 @@ export default function EditProfileScreen() {
                   <Ionicons name="person" size={40} color="#7A827E" />
                 </View>
               )}
-              <TouchableOpacity
+              <ScalePressable
                 style={styles.cameraBtn}
-                activeOpacity={0.8}
                 onPress={handlePickAvatar}
               >
                 <Ionicons name="camera" size={16} color="#FFFFFF" />
-              </TouchableOpacity>
+              </ScalePressable>
             </View>
             <TouchableOpacity onPress={handlePickAvatar}>
               <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
@@ -450,7 +450,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   saveBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',

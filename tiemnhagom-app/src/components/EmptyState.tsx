@@ -27,8 +27,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
       {buttonText && onButtonPress && (
-        <TouchableOpacity style={styles.button} onPress={onButtonPress} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.button} onPress={onButtonPress} activeOpacity={0.85}>
           <Text style={styles.buttonText}>{buttonText}</Text>
+          <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} style={{ marginLeft: 6 }} />
         </TouchableOpacity>
       )}
     </View>
@@ -70,14 +71,22 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 13,
+    borderRadius: 24,
+    marginTop: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   buttonText: {
-    fontFamily: 'ElleGaborStd',
     color: Colors.textInverse,
-    fontWeight: '600',
-    fontSize: Typography.fontSize.base,
+    fontWeight: '700',
+    fontSize: 15,
   },
 });

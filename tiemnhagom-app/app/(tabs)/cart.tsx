@@ -70,15 +70,9 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-        {/* Custom Header với nút back */}
+        {/* Custom Header */}
         <View style={styles.customHeader}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerBackBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="chevron-back" size={24} color="#111111" />
-          </TouchableOpacity>
+          <View style={{ width: 40 }} />
           <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -96,7 +90,7 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      {/* Custom Header với nút back */}
+      {/* Custom Header */}
       <View style={styles.customHeader}>
         <View style={{ width: 40 }} />
         <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
@@ -147,7 +141,7 @@ export default function CartScreen() {
               <Text style={styles.shippingSub}>{t('standardDeliveryDesc')}</Text>
             </View>
             <Text style={styles.shippingPrice}>
-              {subtotal >= 500000 ? t('free') : '20.000 ₫'}
+              {subtotal >= 500000 ? t('free') : formatCurrency(20000)}
             </Text>
           </TouchableOpacity>
 
@@ -164,7 +158,7 @@ export default function CartScreen() {
               <Text style={styles.shippingTitle}>{t('expressDelivery')}</Text>
               <Text style={styles.shippingSub}>{t('expressDeliveryDesc')}</Text>
             </View>
-            <Text style={styles.shippingPrice}>35.000 ₫</Text>
+            <Text style={styles.shippingPrice}>{formatCurrency(35000)}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -180,7 +174,7 @@ export default function CartScreen() {
               <Text style={styles.shippingTitle}>{t('pickup')}</Text>
               <Text style={styles.shippingSub}>{t('pickupDesc')}</Text>
             </View>
-            <Text style={styles.shippingPrice}>0 ₫</Text>
+            <Text style={styles.shippingPrice}>{formatCurrency(0)}</Text>
           </TouchableOpacity>
         </View>
 
@@ -435,7 +429,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applyCouponText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 13,
@@ -513,7 +506,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   checkoutBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',

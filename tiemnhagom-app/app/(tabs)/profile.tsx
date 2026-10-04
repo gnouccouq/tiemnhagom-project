@@ -183,6 +183,7 @@ export default function ProfileScreen() {
               activeOpacity={0.88}
             >
               <Text style={styles.loginBtnText}>{t('loginRegister')}</Text>
+              <Ionicons name="arrow-forward" size={16} color="#000000" style={{ marginLeft: 6 }} />
             </TouchableOpacity>
           </View>
         )}
@@ -548,16 +549,23 @@ const styles = StyleSheet.create({
   },
   loginBtn: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 28,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 26,
+    paddingVertical: 13,
     borderRadius: 24,
     marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   loginBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#000000',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
   },
 
   // 2. Loyalty Tier Card (Phong cách thẻ hội viên website)
@@ -831,7 +839,6 @@ const styles = StyleSheet.create({
     borderColor: '#FFCDD2',
   },
   logoutBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#D32F2F',
     fontWeight: '700',
     fontSize: 13,

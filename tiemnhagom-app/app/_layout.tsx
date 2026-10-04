@@ -324,7 +324,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   unlockBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 16,

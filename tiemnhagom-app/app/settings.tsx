@@ -530,7 +530,6 @@ const styles = StyleSheet.create({
     borderColor: '#E1E8DF',
   },
   logoutBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#333333',
     fontWeight: '600',
     fontSize: 14,
@@ -547,7 +546,6 @@ const styles = StyleSheet.create({
     borderColor: '#FFCDD2',
   },
   deleteBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#D32F2F',
     fontWeight: '700',
     fontSize: 14,

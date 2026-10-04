@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '../constants/theme';
 import { useCart } from '../context/CartContext';
 import { useNotificationBadge } from '../context/NotificationBadgeContext';
+import { ScalePressable } from './ScalePressable';
 
 export interface HeaderProps {
   title?: string;
@@ -111,13 +112,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 1. Logo tiệm (logongang.webp) hoặc nút quay lại */}
           <View style={styles.leftSection}>
             {showBack ? (
-              <TouchableOpacity
+              <ScalePressable
                 style={styles.iconButton}
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
                 <Ionicons name="chevron-back" size={22} color="#18181B" />
-              </TouchableOpacity>
+              </ScalePressable>
             ) : (
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -192,9 +193,8 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 3. Nút Thông báo (Thay cho Giỏ hàng) */}
           {showCart && (
-            <TouchableOpacity
+            <ScalePressable
               style={styles.iconButton}
-              activeOpacity={0.8}
               onPress={() => router.push('/notifications')}
               accessibilityLabel="Thông báo"
             >
@@ -202,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
               {unreadCount > 0 && (
                 <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
               )}
-            </TouchableOpacity>
+            </ScalePressable>
           )}
         </View>
       ) : (
@@ -210,13 +210,13 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleHeaderRow}>
           <View style={styles.left}>
             {showBack ? (
-              <TouchableOpacity
+              <ScalePressable
                 style={styles.iconButton}
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
                 <Ionicons name="chevron-back" size={26} color="#18181B" />
-              </TouchableOpacity>
+              </ScalePressable>
             ) : (
               <Text style={styles.screenTitle}>{title}</Text>
             )}
@@ -232,19 +232,17 @@ export const Header: React.FC<HeaderProps> = ({
 
           <View style={styles.right}>
             {showSettings && (
-              <TouchableOpacity
+              <ScalePressable
                 style={[styles.iconButton, { marginRight: 8 }]}
-                activeOpacity={0.8}
                 onPress={onSettingsPress}
                 accessibilityLabel="Cài đặt"
               >
                 <Ionicons name="settings-outline" size={22} color="#18181B" />
-              </TouchableOpacity>
+              </ScalePressable>
             )}
             {showCart && (
-              <TouchableOpacity
+              <ScalePressable
                 style={styles.iconButton}
-                activeOpacity={0.8}
                 onPress={() => router.push('/notifications')}
                 accessibilityLabel="Thông báo"
               >
@@ -252,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {unreadCount > 0 && (
                   <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
                 )}
-              </TouchableOpacity>
+              </ScalePressable>
             )}
           </View>
         </View>

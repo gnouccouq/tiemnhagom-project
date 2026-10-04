@@ -1,7 +1,22 @@
 // src/utils/textScaler.ts
-import { Text, TextInput } from 'react-native';
+import { Platform, Text, TextInput } from 'react-native';
 
 let currentFontScale = 1.0;
+let forceSansSerif = true; // Bật chế độ font Sans-serif toàn bộ ứng dụng (SF Pro trên iOS, Roboto trên Android)
+
+export const SYSTEM_SANS_SERIF = Platform.select({
+  ios: undefined, // Trên iOS, không đặt fontFamily sẽ tự động dùng San Francisco (SF Pro) chuẩn Apple
+  android: 'sans-serif', // Trên Android, 'sans-serif' là Roboto chuẩn của Android
+  default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+});
+
+export function setForceSansSerif(enabled: boolean) {
+  forceSansSerif = enabled;
+}
+
+export function isForceSansSerif(): boolean {
+  return forceSansSerif;
+}
 
 export function getGlobalFontScale(): number {
   return currentFontScale;
@@ -10,7 +25,12 @@ export function getGlobalFontScale(): number {
 export function scaleStyle(style: any, scale: number): any {
   if (!style) {
     if (scale !== 1.0) {
-      return { fontSize: Math.round(14 * scale) };
+      const fallback: any = { fontSize: Math.round(14 * scale) };
+      if (forceSansSerif && SYSTEM_SANS_SERIF) fallback.fontFamily = SYSTEM_SANS_SERIF;
+      return fallback;
+    }
+    if (forceSansSerif && SYSTEM_SANS_SERIF) {
+      return { fontFamily: SYSTEM_SANS_SERIF };
     }
     return style;
   }
@@ -20,25 +40,53 @@ export function scaleStyle(style: any, scale: number): any {
   }
 
   if (typeof style === 'object') {
-    if (typeof style.fontSize === 'number') {
-      // Đảm bảo cỡ chữ nội dung tối thiểu là 13px để dễ đọc, nhưng giữ nguyên tỷ lệ nhãn nhỏ chuyên dụng như bottom bar (<= 10.5px)
-      const baseSize = style.fontSize <= 10.5 ? style.fontSize : (style.fontSize < 12 ? 13 : style.fontSize);
-      const newFontSize = Math.round(baseSize * scale);
-      const res: any = { ...style, fontSize: newFontSize };
-      if (typeof style.lineHeight === 'number') {
-        res.lineHeight = Math.max(newFontSize + 4, Math.round(style.lineHeight * scale));
+    let res: any = { ...style };
+
+    // Không can thiệp nếu là icon font (Ionicons, MaterialIcons, Feather, v.v.)
+    if (
+      res.fontFamily &&
+      res.fontFamily !== 'ElleGaborStd' &&
+      res.fontFamily !== 'ElleGaborStd-Light' &&
+      res.fontFamily !== 'serif' &&
+      res.fontFamily !== 'System' &&
+      res.fontFamily !== 'sans-serif'
+    ) {
+      return style;
+    }
+
+    // 1. Chuyển đổi font có chân (ElleGaborStd) sang font Sans-Serif hệ thống (SF Pro / Roboto)
+    if (forceSansSerif) {
+      if (
+        res.fontFamily === 'ElleGaborStd' ||
+        res.fontFamily === 'ElleGaborStd-Light' ||
+        res.fontFamily === 'serif'
+      ) {
+        if (SYSTEM_SANS_SERIF) {
+          res.fontFamily = SYSTEM_SANS_SERIF;
+        } else {
+          delete res.fontFamily;
+        }
       }
-      // Fake text stroke to make font appear slightly thicker (user requested)
-      if (!res.textShadowColor) {
-        // Sử dụng chính màu chữ hiện tại để làm bóng nét (nếu không có thì dùng đen nhạt)
+    }
+
+    // 2. Scale kích thước font & line height
+    if (typeof res.fontSize === 'number') {
+      const newFontSize = Math.round(res.fontSize * scale);
+      res.fontSize = newFontSize;
+      if (typeof res.lineHeight === 'number') {
+        res.lineHeight = Math.round(res.lineHeight * scale);
+      }
+      
+      // Nếu là font sans-serif chuẩn, chữ đã rất nét và dày dặn tự nhiên, không cần thêm textShadow stroke
+      if (!forceSansSerif && !res.textShadowColor) {
         const textColor = res.color || 'rgba(0,0,0,0.8)';
         res.textShadowColor = textColor;
         res.textShadowOffset = { width: 0.15, height: 0.15 };
         res.textShadowRadius = 0.8;
       }
-      
-      return res;
     }
+
+    return res;
   }
 
   return style;
@@ -67,12 +115,15 @@ export function setGlobalFontScale(scale: number) {
     const root = document.getElementById('root') || document.body;
     if (root) {
       (root.style as any).fontSize = `${Math.round(15 * scale)}px`;
+      if (forceSansSerif) {
+        (root.style as any).fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      }
     }
   }
 }
 
 /**
- * Khởi tạo Global Text Scaler để tự động áp dụng cỡ chữ toàn bộ ứng dụng
+ * Khởi tạo Global Text Scaler để tự động áp dụng cỡ chữ và font Sans-serif toàn bộ ứng dụng
  */
 export function initTextScaler(initialScale: number = 1.0) {
   currentFontScale = initialScale;
@@ -85,7 +136,7 @@ export function initTextScaler(initialScale: number = 1.0) {
     if (JsxDev && typeof JsxDev.jsxDEV === 'function' && !JsxDev.__isScaled) {
       const origJsxDev = JsxDev.jsxDEV;
       JsxDev.jsxDEV = function (type: any, props: any, key: any, isStatic: any, source: any, self: any) {
-        if (isTextComponent(type) && props && props.style) {
+        if (isTextComponent(type) && props) {
           const scaledStyle = scaleStyle(props.style, currentFontScale);
           return origJsxDev.call(this, type, { ...props, style: scaledStyle }, key, isStatic, source, self);
         }
@@ -104,7 +155,7 @@ export function initTextScaler(initialScale: number = 1.0) {
       const origJsxs = JsxProd.jsxs;
 
       JsxProd.jsx = function (type: any, props: any, key: any) {
-        if (isTextComponent(type) && props && props.style) {
+        if (isTextComponent(type) && props) {
           const scaledStyle = scaleStyle(props.style, currentFontScale);
           return origJsx.call(this, type, { ...props, style: scaledStyle }, key);
         }
@@ -113,7 +164,7 @@ export function initTextScaler(initialScale: number = 1.0) {
 
       if (typeof origJsxs === 'function') {
         JsxProd.jsxs = function (type: any, props: any, key: any) {
-          if (isTextComponent(type) && props && props.style) {
+          if (isTextComponent(type) && props) {
             const scaledStyle = scaleStyle(props.style, currentFontScale);
             return origJsxs.call(this, type, { ...props, style: scaledStyle }, key);
           }

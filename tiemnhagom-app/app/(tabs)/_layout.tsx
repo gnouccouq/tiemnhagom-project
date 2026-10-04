@@ -22,8 +22,9 @@ export default function TabLayout() {
         tabBarStyle: [
           styles.tabBar,
           {
-            height: 60 + (insets.bottom > 0 ? insets.bottom : 10),
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+            height: (Platform.OS === 'ios' ? 52 : 58) + (insets.bottom > 0 ? insets.bottom : 8),
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+            paddingTop: 6,
           }
         ],
         tabBarItemStyle: styles.tabBarItem,
@@ -38,7 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'home' : 'home-outline'}
-              size={focused ? 44 : 42}
+              size={24}
               color={color}
             />
           ),
@@ -53,7 +54,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'grid' : 'grid-outline'}
-              size={focused ? 42 : 40}
+              size={23}
               color={color}
             />
           ),
@@ -69,7 +70,7 @@ export default function TabLayout() {
             <View style={styles.iconWithBadge}>
               <Ionicons
                 name={focused ? 'cart' : 'cart-outline'}
-                size={focused ? 44 : 42}
+                size={24}
                 color={color}
               />
               {cartCount > 0 && (
@@ -90,7 +91,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'pricetag' : 'pricetag-outline'}
-              size={focused ? 42 : 40}
+              size={23}
               color={color}
             />
           ),
@@ -105,7 +106,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'person' : 'person-outline'}
-              size={focused ? 44 : 42}
+              size={24}
               color={color}
             />
           ),
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#EEEEEE',
-    paddingTop: 5,
     elevation: 6,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -2 },
@@ -128,16 +128,15 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   tabBarItem: {
-    paddingVertical: 1,
+    paddingVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabBarLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '600',
-    marginTop: 1,
-    letterSpacing: 0.2,
+    marginTop: 2,
+    letterSpacing: 0.1,
   },
   iconWithBadge: {
     position: 'relative',
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
   },
   badgeCount: {
     position: 'absolute',
-    top: -6,
+    top: -4,
     right: -8,
     minWidth: 16,
     height: 16,
@@ -162,6 +161,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
-    fontFamily: 'ElleGaborStd',
   },
 });

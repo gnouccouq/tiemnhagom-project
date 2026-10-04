@@ -7,6 +7,7 @@ import { Colors, Typography, Spacing } from '../src/constants/theme';
 import { useWishlist } from '../src/context/WishlistContext';
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
+import { ScalePressable } from '../src/components/ScalePressable';
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 
@@ -44,13 +45,13 @@ export default function FavoritesScreen() {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <ScalePressable
           style={styles.backBtn}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={22} color="#111111" />
-        </TouchableOpacity>
+          <Ionicons name="chevron-back" size={24} color="#18181B" />
+        </ScalePressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Sản phẩm yêu thích</Text>
         </View>
@@ -108,12 +109,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EFEFEF',
   },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F4F4F5',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerCenter: {
     flex: 1,
@@ -126,7 +134,7 @@ const styles = StyleSheet.create({
     color: '#111111',
   },
   headerRight: {
-    width: 38,
+    width: 40,
   },
   container: {
     flex: 1,

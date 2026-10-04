@@ -9,6 +9,7 @@ import { Product } from '../types';
 import { formatCurrency } from '../utils/format';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { ScalePressable } from './ScalePressable';
 
 interface ProductCardProps {
   product: Product;
@@ -99,10 +100,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Nút Yêu Thích Glassmorphism với animation nảy */}
         <Animated.View style={{ transform: [{ scale: heartScale }], position: 'absolute', top: 8, right: 8, zIndex: 12 }}>
-          <TouchableOpacity
+          <ScalePressable
             style={styles.favoriteButton}
             onPress={handleFavoritePress}
-            activeOpacity={0.75}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Thêm vào yêu thích"
           >
@@ -111,7 +111,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               size={16}
               color={favorite ? '#E11D48' : '#27272A'}
             />
-          </TouchableOpacity>
+          </ScalePressable>
         </Animated.View>
 
         {/* Huy Hiệu Badges Hình Tròn Chuẩn Web (.product-badge-circle) */}
@@ -192,15 +192,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </View>
 
           <Animated.View style={{ transform: [{ scale: addScale }] }}>
-            <TouchableOpacity
+            <ScalePressable
               style={[styles.quickAddButton, isSoldOut && styles.quickAddButtonDisabled]}
               onPress={handleQuickAdd}
               disabled={isSoldOut}
-              activeOpacity={0.8}
               accessibilityLabel="Thêm vào giỏ"
             >
               <Ionicons name="bag-add" size={15} color="#FFFFFF" />
-            </TouchableOpacity>
+            </ScalePressable>
           </Animated.View>
         </View>
       </View>
@@ -235,9 +234,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   favoriteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
     width: 30,
     height: 30,
@@ -326,7 +322,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   outOfStockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',

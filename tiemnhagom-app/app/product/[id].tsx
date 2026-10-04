@@ -22,6 +22,7 @@ import { Product, ProductVariant } from '../../src/types';
 import { formatCurrency, checkOutOfStock } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useWishlist } from '../../src/context/WishlistContext';
+import { ScalePressable } from '../../src/components/ScalePressable';
 
 const { width } = Dimensions.get('window');
 
@@ -202,27 +203,27 @@ export default function ProductDetailScreen() {
 
       {/* Floating Header */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
+        <ScalePressable style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        </ScalePressable>
 
         <View style={styles.headerRightGroup}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => toggleFavorite(product.id)}>
+          <ScalePressable style={styles.headerBtn} onPress={() => toggleFavorite(product.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons
               name={favorite ? 'heart' : 'heart-outline'}
               size={22}
               color={favorite ? Colors.badgeSale : Colors.textPrimary}
             />
-          </TouchableOpacity>
+          </ScalePressable>
 
-          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/cart')}>
+          <ScalePressable style={styles.headerBtn} onPress={() => router.push('/cart')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="cart-outline" size={28} color={Colors.textPrimary} />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
               </View>
             )}
-          </TouchableOpacity>
+          </ScalePressable>
         </View>
       </Animated.View>
 
@@ -500,6 +501,7 @@ export default function ProductDetailScreen() {
           activeOpacity={0.88}
         >
           <Text style={styles.buyNowText}>{isOutOfStock ? 'Tạm hết hàng' : 'Mua ngay'}</Text>
+          {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
         </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
@@ -933,7 +935,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   addToCartText: {
-    fontFamily: 'ElleGaborStd',
     color: '#18181B',
     fontWeight: '700',
     fontSize: 13,
@@ -943,11 +944,17 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: '#18181B',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   buyNowText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,

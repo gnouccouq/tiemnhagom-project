@@ -27,6 +27,7 @@ import * as Crypto from 'expo-crypto';
 import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
 import { useSettings } from '../../src/context/SettingsContext';
+import { ScalePressable } from '../../src/components/ScalePressable';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -178,8 +179,23 @@ export default function LoginScreen() {
     }
   };
 
+  // Facebook Login
+  const handleFacebookLogin = async () => {
+    Alert.alert(
+      t('notification') || 'Thông báo',
+      t('facebookComingSoon') || 'Tính năng đăng nhập bằng Facebook đang được hoàn thiện. Vui lòng sử dụng Google hoặc Apple để đăng nhập.'
+    );
+  };
+
   // Apple Login
   const handleAppleLogin = async () => {
+    if (Platform.OS !== 'ios') {
+      Alert.alert(
+        t('notification') || 'Thông báo',
+        t('appleIosOnly') || 'Đăng nhập bằng Apple chỉ hỗ trợ trên thiết bị iOS.'
+      );
+      return;
+    }
     setAppleLoading(true);
     try {
       const csrf = Math.random().toString(36).substring(2, 15);
@@ -198,7 +214,7 @@ export default function LoginScreen() {
       const { identityToken } = credential;
       if (identityToken) {
         await signInWithAppleCredential(identityToken, nonce);
-        Alert.alert('Thành công', 'Đăng nhập Apple thành công!');
+        Alert.alert(t('success') || 'Thành công', 'Đăng nhập Apple thành công!');
         router.back();
       } else {
         throw new Error('Không nhận được identityToken từ Apple.');
@@ -206,7 +222,7 @@ export default function LoginScreen() {
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') {
         console.log('Apple login error:', e);
-        Alert.alert('Lỗi', 'Không thể đăng nhập bằng Apple.');
+        Alert.alert(t('error') || 'Lỗi', 'Không thể đăng nhập bằng Apple.');
       }
     } finally {
       setAppleLoading(false);
@@ -263,6 +279,7 @@ export default function LoginScreen() {
 
               <View style={styles.authHeaderRight}>
                 <TouchableOpacity
+                  style={styles.authToggleBadge}
                   onPress={() => setIsSignUpMode(!isSignUpMode)}
                   activeOpacity={0.7}
                 >
@@ -340,56 +357,73 @@ export default function LoginScreen() {
               style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
               onPress={handleSubmit}
               disabled={loading}
-              activeOpacity={0.88}
+              activeOpacity={0.85}
             >
               {loading ? (
                 <ActivityIndicator color="#111" size="small" />
               ) : (
-                <Text style={styles.btnAuthSubmitText}>
-                  {isSignUpMode ? t('createAccount') : t('login')}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* GOOGLE LOGIN BUTTON (.btn-google-auth) */}
-            <TouchableOpacity
-              style={styles.btnGoogleAuth}
-              onPress={handleGoogleLogin}
-              disabled={googleLoading}
-              activeOpacity={0.88}
-            >
-              {googleLoading ? (
-                <ActivityIndicator color="#FFF" size="small" />
-              ) : (
                 <>
-                  <Image
-                    source={require('../../assets/images/logo-google.png')}
-                    style={styles.googleIcon}
-                    contentFit="contain"
-                  />
-                  <Text style={styles.btnGoogleAuthText}>{t('loginWithGoogle')}</Text>
+                  <Text style={styles.btnAuthSubmitText}>
+                    {isSignUpMode ? t('createAccount') : t('login')}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
                 </>
               )}
             </TouchableOpacity>
 
-            {/* APPLE LOGIN BUTTON */}
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={[styles.btnGoogleAuth, { marginTop: 12, backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' }]}
+            {/* SOCIAL LOGIN DIVIDER & BUTTONS */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{t('or') || 'Or'}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.socialButtonsRow}>
+              {/* FACEBOOK */}
+              <ScalePressable
+                style={styles.socialCircleBtn}
+                onPress={handleFacebookLogin}
+                accessibilityLabel="Login with Facebook"
+              >
+                <Image
+                  source={require('../../assets/images/logo-facebook.png')}
+                  style={styles.socialIconFb}
+                  contentFit="contain"
+                />
+              </ScalePressable>
+
+              {/* GOOGLE */}
+              <ScalePressable
+                style={styles.socialCircleBtn}
+                onPress={handleGoogleLogin}
+                disabled={googleLoading}
+                accessibilityLabel="Login with Google"
+              >
+                {googleLoading ? (
+                  <ActivityIndicator color="#4285F4" size="small" />
+                ) : (
+                  <Image
+                    source={require('../../assets/images/logo-google.png')}
+                    style={styles.socialIconGoogle}
+                    contentFit="contain"
+                  />
+                )}
+              </ScalePressable>
+
+              {/* APPLE */}
+              <ScalePressable
+                style={styles.socialCircleBtn}
                 onPress={handleAppleLogin}
                 disabled={appleLoading}
-                activeOpacity={0.88}
+                accessibilityLabel="Login with Apple"
               >
                 {appleLoading ? (
-                  <ActivityIndicator color="#111" size="small" />
+                  <ActivityIndicator color="#000" size="small" />
                 ) : (
-                  <>
-                    <Ionicons name="logo-apple" size={19} color="#111" style={{ marginBottom: 2 }} />
-                    <Text style={[styles.btnGoogleAuthText, { color: '#111' }]}>{t('loginWithApple')}</Text>
-                  </>
+                  <Ionicons name="logo-apple" size={26} color="#000" style={styles.socialIconApple} />
                 )}
-              </TouchableOpacity>
-            )}
+              </ScalePressable>
+            </View>
 
             {/* FORGOT PASSWORD LINK (.btn-forgot-password) */}
             {!isSignUpMode && (
@@ -441,19 +475,24 @@ export default function LoginScreen() {
                 style={styles.modalCancelBtn}
                 onPress={() => setForgotModalVisible(false)}
                 disabled={forgotLoading}
+                activeOpacity={0.8}
               >
                 <Text style={styles.modalCancelText}>{t('cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.btnAuthSubmit, { flex: 1, marginTop: 0 }]}
+                style={[styles.modalSubmitBtn, forgotLoading && styles.btnDisabled]}
                 onPress={handleSendResetPassword}
                 disabled={forgotLoading}
+                activeOpacity={0.85}
               >
                 {forgotLoading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.btnAuthSubmitText}>{t('sendLink')}</Text>
+                  <>
+                    <Text style={styles.modalSubmitBtnText}>{t('sendLink')}</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                  </>
                 )}
               </TouchableOpacity>
             </View>
@@ -525,13 +564,21 @@ const styles = StyleSheet.create({
   },
   authHeaderRight: {
     alignItems: 'flex-end',
-    paddingTop: 8,
+    paddingTop: 4,
+  },
+  authToggleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.24)',
   },
   authToggleLink: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
+    fontSize: 13.5,
     color: '#FFFFFF',
-    textDecorationLine: 'underline',
     fontWeight: '700',
   },
   authInputGroup: {
@@ -562,44 +609,72 @@ const styles = StyleSheet.create({
     height: 52,
     backgroundColor: '#FFFFFF',
     borderRadius: 26,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    marginBottom: 16,
+    marginBottom: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   btnAuthSubmitText: {
-    fontFamily: 'ElleGaborStd',
     color: '#111111',
     fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
   btnDisabled: {
     opacity: 0.65,
   },
-  // .btn-google-auth in app/app.css
-  btnGoogleAuth: {
-    width: '100%',
-    height: 48,
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#dce4da',
-    borderRadius: 24,
-    marginTop: 10,
+  dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    marginTop: 18,
+    marginBottom: 20,
   },
-  googleIcon: {
-    width: 18,
-    height: 18,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
-  btnGoogleAuthText: {
-    fontFamily: 'ElleGaborStd',
+  dividerText: {
     fontSize: 14,
-    color: '#3b4d45',
-    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.65)',
+    marginHorizontal: 16,
+    fontWeight: '500',
+  },
+  socialButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 10,
+  },
+  socialCircleBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  socialIconFb: {
+    width: 32,
+    height: 32,
+  },
+  socialIconGoogle: {
+    width: 27,
+    height: 27,
+  },
+  socialIconApple: {
+    marginTop: -2,
   },
   authFooterLinks: {
     marginTop: 14,
@@ -663,9 +738,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: '#687971',
     fontWeight: '600',
+  },
+  modalSubmitBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#111111',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  modalSubmitBtnText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

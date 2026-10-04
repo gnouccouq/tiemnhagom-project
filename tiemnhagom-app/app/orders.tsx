@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { EmptyState } from '../src/components/EmptyState';
+import { ScalePressable } from '../src/components/ScalePressable';
 import { lookupOrders, getUserOrders } from '../src/services/orderService';
 import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
@@ -77,13 +78,13 @@ export default function OrdersScreen() {
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <ScalePressable
           style={styles.backBtn}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={22} color="#111111" />
-        </TouchableOpacity>
+          <Ionicons name="chevron-back" size={24} color="#18181B" />
+        </ScalePressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{t('orderTitle')}</Text>
         </View>
@@ -311,7 +312,7 @@ export default function OrdersScreen() {
                       <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>{t('shippingFeeLabel')}</Text>
                         <Text style={[styles.summaryValue, order.shippingFee === 0 && { color: '#16A34A' }]}>
-                          {order.shippingFee === 0 ? '0đ (Miễn phí)' : formatCurrency(order.shippingFee || 0)}
+                          {order.shippingFee === 0 ? '0 VND (Miễn phí)' : formatCurrency(order.shippingFee || 0)}
                         </Text>
                       </View>
                       {Boolean(order.discountAmount) && (
@@ -359,12 +360,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EFEFEF',
   },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F4F4F5',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerCenter: {
     flex: 1,
@@ -377,7 +385,7 @@ const styles = StyleSheet.create({
     color: '#111111',
   },
   headerRight: {
-    width: 38,
+    width: 40,
   },
 
   // Tabs
@@ -488,17 +496,21 @@ const styles = StyleSheet.create({
   },
   lookupBtn: {
     backgroundColor: '#111111',
-    borderRadius: 12,
-    paddingHorizontal: 20,
+    borderRadius: 23,
+    paddingHorizontal: 22,
     height: 46,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   lookupBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 13.5,
   },
 
   // Login prompt
@@ -525,18 +537,23 @@ const styles = StyleSheet.create({
   loginBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
     backgroundColor: '#111111',
-    paddingHorizontal: 24,
+    paddingHorizontal: 26,
     paddingVertical: 13,
-    borderRadius: 14,
+    borderRadius: 24,
     marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   loginBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 14.5,
   },
 
   // Loading

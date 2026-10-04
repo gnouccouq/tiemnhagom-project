@@ -45,14 +45,23 @@ export const Colors = {
   skeleton: '#ECE7E0',
 };
 
+import { Platform } from 'react-native';
+
+export const SYSTEM_SANS_SERIF = Platform.select({
+  ios: undefined,
+  android: 'sans-serif',
+  default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+});
+
 export const Typography = {
   fontFamily: {
-    serif: 'ElleGaborStd',
-    brand: 'ElleGaborStd',
-    regular: 'ElleGaborStd',
-    medium: 'ElleGaborStd',
-    semiBold: 'ElleGaborStd',
-    bold: 'ElleGaborStd',
+    serif: SYSTEM_SANS_SERIF,
+    brand: SYSTEM_SANS_SERIF,
+    regular: SYSTEM_SANS_SERIF,
+    medium: SYSTEM_SANS_SERIF,
+    semiBold: SYSTEM_SANS_SERIF,
+    bold: SYSTEM_SANS_SERIF,
+    sans: SYSTEM_SANS_SERIF,
   },
   fontSize: {
     xs: 12.5,

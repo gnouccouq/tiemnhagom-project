@@ -56,7 +56,7 @@ export const vi = {
   onboardingTitle3: 'Mua sắm dễ dàng',
   onboardingDesc3: 'Trải nghiệm mua sắm tiện lợi, giao hàng tận nơi nhanh chóng và an toàn.',
   next: 'Tiếp tục',
-  start: 'Bắt đầu ngay',
+  onboardingStart: 'Bắt đầu ngay',
   skip: 'Bỏ qua',
 
   // Auth / Login
@@ -76,9 +76,12 @@ export const vi = {
   forgotPasswordDesc: 'nhập email của bạn để nhận liên kết đặt lại mật khẩu từ Tiệm Nhà Gốm.',
   cancel: 'hủy',
   sendLink: 'gửi liên kết',
+  or: 'Hoặc đăng nhập bằng',
   orLoginWith: 'Hoặc đăng nhập với',
   loginWithGoogle: 'đăng nhập bằng Google',
   loginWithApple: 'đăng nhập bằng Apple',
+  facebookComingSoon: 'Tính năng đăng nhập Facebook đang được hoàn thiện. Vui lòng sử dụng Google hoặc Apple để đăng nhập.',
+  appleIosOnly: 'Đăng nhập bằng Apple chỉ hỗ trợ trên thiết bị iOS.',
   welcomeBack: 'chào mừng trở lại,',
   gladToSeeYou: 'rất vui được gặp lại bạn!',
   createNewAccount: 'tạo tài khoản mới,',
