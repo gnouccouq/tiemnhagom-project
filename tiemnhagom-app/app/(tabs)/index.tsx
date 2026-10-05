@@ -23,6 +23,7 @@ import { Header } from '../../src/components/Header';
 import { BannerSlider } from '../../src/components/BannerSlider';
 import { ProductCard } from '../../src/components/ProductCard';
 import { CategoryChip } from '../../src/components/CategoryChip';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   DEFAULT_CATEGORIES,
   getCategories,
@@ -257,6 +258,7 @@ export default function HomeScreen() {
   };
 
   const [scrollY, setScrollY] = useState(0);
+  const topGradientOpacity = Math.max(0, 1 - scrollY / 65);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentY = event.nativeEvent.contentOffset.y;
@@ -304,6 +306,12 @@ export default function HomeScreen() {
         translucent
         backgroundColor="transparent"
       />
+      <View style={[styles.topGradientWrap, { opacity: topGradientOpacity }]} pointerEvents="none">
+        <LinearGradient
+          colors={['rgba(0,0,0,0.6)', 'transparent']}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       <Header transparent scrollY={scrollY} />
 
       <ScrollView
@@ -895,6 +903,14 @@ export default function HomeScreen() {
 }
 
 const getStyles = (Colors: any) => StyleSheet.create({
+  topGradientWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    zIndex: 90,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,

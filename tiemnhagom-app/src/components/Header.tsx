@@ -11,6 +11,7 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor, Typography, Spacing } from '../constants/theme';
 import { useCart } from '../context/CartContext';
@@ -100,14 +101,15 @@ export const Header: React.FC<HeaderProps> = ({
     >
       {/* Lớp nền mờ chuyển màu mượt mà theo tiến trình cuộn */}
       {transparent && (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            styles.headerBackdrop,
-            { opacity: progress },
-          ]}
-          pointerEvents="none"
-        />
+        <View style={[StyleSheet.absoluteFill, { opacity: progress }]} pointerEvents="none">
+          <BlurView
+            intensity={Platform.OS === 'ios' ? 95 : 85}
+            tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
+            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[StyleSheet.absoluteFill, styles.headerBackdrop]} />
+        </View>
       )}
 
       {isSearchHeader ? (
@@ -135,6 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <Image
                     source={require('../../assets/images/logongang.webp')}
                     style={[styles.logoImage, { opacity: isDark ? 0 : progress }]}
+                    tintColor={isDark ? undefined : Colors.textPrimary}
                     contentFit="contain"
                   />
                   {/* Logo trắng (mờ dần khi cuộn xuống) */}
@@ -150,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
                           : {}),
                       },
                     ]}
-                    tintColor={Colors.textInverse}
+                    tintColor="#FFFFFF"
                     contentFit="contain"
                   />
                 </View>
@@ -161,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 2. Thanh tìm kiếm con nhộng (Pill Capsule) */}
           {showSearch && (
             onSearchChange ? (
-              <View style={styles.searchPill}>
+              <View style={styles.searchPill}><BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'} style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} />
                 <TextInput
                   style={styles.searchInputInline}
                   placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
@@ -187,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={onSearchPress || (() => router.push('/search'))}
                 accessibilityLabel="Tìm kiếm sản phẩm"
               >
-                <Text style={styles.searchPlaceholder} numberOfLines={1}>
+                <BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'} style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} /><Text style={styles.searchPlaceholder} numberOfLines={1}>
                   {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
                 </Text>
                 <Ionicons name="search-outline" size={25} color={Colors.textMuted} />
@@ -286,7 +289,9 @@ const getStyles = (Colors: any) => StyleSheet.create({
     justifyContent: 'center',
   },
   headerBackdrop: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.cardBackground === '#FFFFFF' 
+      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.35)')
+      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.25)' : 'rgba(30,30,30,0.35)'),
     borderBottomWidth: 0,
     borderBottomColor: Colors.borderLight,
     shadowColor: Colors.textPrimary,
@@ -329,7 +334,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
   searchPill: {
     flex: 1,
     height: 39,
-    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -344,6 +348,18 @@ const getStyles = (Colors: any) => StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 5,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  searchPillOverlay: {
+    backgroundColor: Colors.cardBackground === '#FFFFFF' 
+      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)')
+      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
+    overflow: 'hidden',
+  },
+  searchPillOverlay: {
+    backgroundColor: Colors.cardBackground === '#FFFFFF' 
+      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)')
+      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
   },
   searchPlaceholder: {
     fontFamily: 'ElleGaborStd',

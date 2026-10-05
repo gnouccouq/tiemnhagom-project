@@ -178,9 +178,9 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
         <View style={styles.bar} {...panResponder.panHandlers}>
           {/* Frosted glass background */}
           <BlurView
-            intensity={Platform.OS === 'ios' ? 85 : 70}
+            intensity={Platform.OS === 'ios' ? 95 : 85}
             tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
-            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
+            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
             style={StyleSheet.absoluteFill}
           />
           <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />
@@ -263,8 +263,8 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   glassOverlay: {
     backgroundColor: Colors.cardBackground === '#FFFFFF' 
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.6)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.4)' : 'rgba(30,30,30,0.6)'),
+      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.35)')
+      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.25)' : 'rgba(30,30,30,0.35)'),
   },
   activePill: {
     position: 'absolute',

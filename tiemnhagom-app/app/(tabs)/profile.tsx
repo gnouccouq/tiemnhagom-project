@@ -872,7 +872,7 @@ const getStyles = (Colors: any) =>
     scrollContent: {
       paddingHorizontal: 16,
       paddingTop: 8,
-      paddingBottom: 110,
+      paddingBottom: 80,
     },
 
     // 1. Top Header
