@@ -93,7 +93,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
           <View style={themeStyles.header}>
             {step === 'WARD' ? (
               <ScalePressable onPress={() => setStep('PROVINCE')} style={themeStyles.iconBtn}>
-                <Ionicons name="chevron-back" size={24} color="#18181B" />
+                <Ionicons name="arrow-back" size={24} color="#18181B" />
               </ScalePressable>
             ) : (
               <View style={themeStyles.iconBtn} />

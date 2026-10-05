@@ -49,7 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userDocRef = doc(db, 'users', uid);
       const snap = await getDoc(userDocRef);
       if (snap.exists()) {
-        const data = { uid, ...(snap.data() as any) };
+        const rawData = snap.data() as any;
+        let sanitizedPoints = rawData.points !== undefined ? Number(rawData.points) : 0;
+        if (sanitizedPoints === 50 && (!rawData.totalSpent || Number(rawData.totalSpent) < 500000)) {
+          sanitizedPoints = Math.floor(Number(rawData.totalSpent || 0) / 10000);
+          try {
+            await setDoc(userDocRef, { points: sanitizedPoints }, { merge: true });
+          } catch (e) {
+            // ignore
+          }
+        }
+        const data = { uid, ...rawData, points: sanitizedPoints };
         setUserProfile(data);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
       } else {
@@ -76,6 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedProfileStr = await AsyncStorage.getItem(STORAGE_KEY_PROFILE);
         if (savedProfileStr) {
           const savedProfile = JSON.parse(savedProfileStr);
+          if (savedProfile.points === 50 && (!savedProfile.totalSpent || Number(savedProfile.totalSpent) < 500000)) {
+            savedProfile.points = Math.floor(Number(savedProfile.totalSpent || 0) / 10000);
+          }
           setUserProfile(savedProfile);
         }
       } catch (err) {
@@ -128,8 +141,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: cred.user.email,
         displayName: name,
         phone,
-        points: 50, // Tặng 50 điểm chào mừng thành viên mới
-        tier: 'bronze',
+        points: 0,
+        tier: 'standard',
       };
       await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() });
       setUserProfile(newProfile);
@@ -182,7 +195,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snap = await getDocs(q);
       if (!snap.empty) {
         const found = snap.docs[0];
-        setUserProfile({ uid: found.id, ...(found.data() as any) });
+        const raw = found.data() as any;
+        let sanitizedPoints = raw.points !== undefined ? Number(raw.points) : 0;
+        if (sanitizedPoints === 50 && (!raw.totalSpent || Number(raw.totalSpent) < 500000)) {
+          sanitizedPoints = Math.floor(Number(raw.totalSpent || 0) / 10000);
+        }
+        setUserProfile({ uid: found.id, ...raw, points: sanitizedPoints });
       } else {
         // Nếu chưa đăng nhập auth thật, đăng nhập anonymous để có UID an toàn
         let currentUid = auth.currentUser?.uid;
@@ -195,8 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: null,
           phone: phoneNumber,
           displayName: displayName || `Khách hàng ${phoneNumber.slice(-4)}`,
-          points: 50,
-          tier: 'bronze',
+          points: 0,
+          tier: 'standard',
         };
         await setDoc(doc(db, 'users', currentUid), { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
         setUserProfile(newProfile);

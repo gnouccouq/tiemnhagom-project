@@ -204,7 +204,7 @@ export default function ProductDetailScreen() {
       {/* Floating Header */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
         <ScalePressable style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
         </ScalePressable>
 
         <View style={styles.headerRightGroup}>
@@ -400,38 +400,38 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Specifications */}
-          {(product.details?.material || dimString || product.specs?.weight || product.specs?.capacity) && (
+          {Boolean(product.details?.material || dimString || product.specs?.weight || product.specs?.capacity) && (
             <View style={styles.descSection}>
               <Text style={styles.descTitle}>Thông số sản phẩm</Text>
               <View style={styles.specsContainer}>
-                {product.details?.material && (
+                {Boolean(product.details?.material) && (
                   <View style={styles.specRow}>
                     <Text style={styles.specLabel}>Chất liệu:</Text>
-                    <Text style={styles.specValue}>{product.details.material}</Text>
+                    <Text style={styles.specValue}>{product.details?.material}</Text>
                   </View>
                 )}
-                {product.details?.origin && (
+                {Boolean(product.details?.origin) && (
                   <View style={styles.specRow}>
                     <Text style={styles.specLabel}>Xuất xứ:</Text>
-                    <Text style={styles.specValue}>{product.details.origin}</Text>
+                    <Text style={styles.specValue}>{product.details?.origin}</Text>
                   </View>
                 )}
-                {dimString !== '' && (
+                {Boolean(dimString) && (
                   <View style={styles.specRow}>
                     <Text style={styles.specLabel}>Kích thước:</Text>
                     <Text style={styles.specValue}>{dimString}</Text>
                   </View>
                 )}
-                {product.specs?.weight && (
+                {Boolean(product.specs?.weight) && (
                   <View style={styles.specRow}>
                     <Text style={styles.specLabel}>Trọng lượng:</Text>
-                    <Text style={styles.specValue}>{product.specs.weight} g</Text>
+                    <Text style={styles.specValue}>{product.specs?.weight} g</Text>
                   </View>
                 )}
-                {product.specs?.capacity && (
+                {Boolean(product.specs?.capacity) && (
                   <View style={styles.specRow}>
                     <Text style={styles.specLabel}>Dung tích:</Text>
-                    <Text style={styles.specValue}>{product.specs.capacity} ml</Text>
+                    <Text style={styles.specValue}>{product.specs?.capacity} ml</Text>
                   </View>
                 )}
               </View>

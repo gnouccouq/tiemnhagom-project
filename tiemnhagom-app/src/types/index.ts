@@ -115,6 +115,7 @@ export interface UserProfile {
   spentTotal?: number;
   totalSpent?: number;
   tier?: 'standard' | 'bronze' | 'silver' | 'gold' | 'diamond' | string;
+  membershipTier?: string;
   createdAt?: any;
   updatedAt?: any;
   expoPushToken?: string;

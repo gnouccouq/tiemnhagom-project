@@ -46,10 +46,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website & Tab Ưu đãi
 const MEMBERSHIP_TIERS = [
-  { id: 'null', name: 'Gốm Mộc', badge: '🪵', min: 0, color: Colors.textMuted },
-  { id: 'new', name: 'Gốm Nung', badge: '🔥', min: 1000000, color: '#60A5FA' },
-  { id: 'mem', name: 'Gốm Men', badge: '✨', min: 5000000, color: '#FBBF24' },
-  { id: 'vip', name: 'Gốm Độc Bản', badge: '👑', min: 10000000, color: '#F87171' },
+  { id: 'null', name: 'Gốm Mộc', badge: '🪵', min: 0, color: '#8A5A2B' },
+  { id: 'new', name: 'Gốm Nung', badge: '🔥', min: 1000000, color: '#DC2626' },
+  { id: 'mem', name: 'Gốm Men', badge: '✨', min: 5000000, color: '#CA8A04' },
+  { id: 'vip', name: 'Gốm Độc Bản', badge: '👑', min: 10000000, color: '#EF4444' },
 ];
 
 export default function HomeScreen() {
@@ -120,12 +120,14 @@ export default function HomeScreen() {
 
   // Tính toán dữ liệu người dùng thực tế (chi tiêu, điểm, hạng)
   const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
 
   useEffect(() => {
     if (effectiveUid) {
       getUserOrders(effectiveUid)
         .then((orders) => {
           let spent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
+          let redeemed = 0;
           orders.forEach((o) => {
             const status = (o.status || '').toLowerCase();
             if (
@@ -136,7 +138,11 @@ export default function HomeScreen() {
             ) {
               spent += Number(o.totalAmount || 0);
             }
+            if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
+              redeemed += Number((o as any).pointsUsed);
+            }
           });
+          setRedeemedPoints(redeemed);
           setTotalSpent(spent);
         })
         .catch(() => {
@@ -144,6 +150,7 @@ export default function HomeScreen() {
         });
     } else {
       setTotalSpent(0);
+      setRedeemedPoints(0);
     }
   }, [effectiveUid, userProfile]);
 
@@ -164,10 +171,11 @@ export default function HomeScreen() {
     else if (t.includes('new') || t.includes('nung')) currentTier = MEMBERSHIP_TIERS[1];
   }
 
-  const points =
-    userProfile?.points !== undefined
-      ? Number(userProfile.points)
-      : Math.floor(totalSpent / 100000);
+  // Cứ 10.000đ = 1 điểm, trừ điểm đã dùng, bỏ thưởng chào mừng 50 điểm cũ
+  const earnedPoints = Math.floor(totalSpent / 10000);
+  const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
+  const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
+  const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
 
   const displayName =
     userProfile?.displayName ||

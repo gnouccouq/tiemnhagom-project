@@ -128,6 +128,8 @@ function NavigationRoot() {
       <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="membership-privileges" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="points-history" options={{ headerShown: false, animation: 'slide_from_right' }} />
 
       {/* WebView: mở từ dưới lên */}
       <Stack.Screen

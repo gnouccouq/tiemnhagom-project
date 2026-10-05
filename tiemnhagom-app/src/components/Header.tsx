@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
+                <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
               </BlurButton>
             ) : (
               <TouchableOpacity
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={26} color={Colors.textPrimary} />
+                <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
               </BlurButton>
             ) : (
               <Text style={styles.screenTitle}>{title}</Text>

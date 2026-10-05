@@ -278,11 +278,11 @@ async function loadUserData(user) {
             }
         });
 
-        // Điểm Dots: Lấy trực tiếp từ trường Điểm tích lũy (points) của khách hàng trong Firebase
-        if (userData.points !== undefined && userData.points !== null) {
+        // Điểm Dots: Lấy trực tiếp từ trường Điểm tích lũy (points) của khách hàng trong Firebase (bỏ 50đ chào mừng cũ nếu có)
+        if (userData.points !== undefined && userData.points !== null && userData.points !== 50) {
             points = Number(userData.points);
         } else if (points === 0 && totalSpent > 0) {
-            points = Math.floor(totalSpent / 100000);
+            points = Math.floor(totalSpent / 10000);
         }
 
 

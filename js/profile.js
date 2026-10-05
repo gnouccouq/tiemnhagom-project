@@ -969,6 +969,7 @@ async function fetchOrderHistory(userId) {
             const currentTier = getMembershipTier(totalSpent);
             const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
             const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];
+            const points = Math.floor(totalSpent / 10000);
             
             let progressHtml = '';
             if (nextTier) {
@@ -979,7 +980,7 @@ async function fetchOrderHistory(userId) {
                 progressHtml = `
                     <div style="margin-top: 15px;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #555;">
-                            <span>Đã chi tiêu: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ</span>
+                            <span>Đã chi tiêu: ${new Intl.NumberFormat('vi-VN').format(totalSpent)}đ (${points} điểm)</span>
                             <span>Mốc tiếp theo: ${new Intl.NumberFormat('vi-VN').format(nextTier.min)}đ</span>
                         </div>
                         <div class="progress-bar-bg" style="background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
@@ -993,7 +994,7 @@ async function fetchOrderHistory(userId) {
             } else {
                 progressHtml = `
                     <div style="margin-top: 15px; font-size: 0.85rem; color: #27ae60; font-weight: 600;">
-                        Bạn đã đạt hạng thẻ cao nhất!
+                        Bạn đã đạt hạng thẻ cao nhất! (${points} điểm)
                     </div>
                 `;
             }
@@ -1005,6 +1006,7 @@ async function fetchOrderHistory(userId) {
                         <div class="member-label">MEMBER TIER</div>
                         <div class="tier-name">${currentTier.name}</div>
                         <div class="tier-discount">Ưu đãi: Giảm ${currentTier.discount}% đơn hàng</div>
+                        <div class="tier-points" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600; color: #fff; opacity: 0.95;">💎 Điểm tích lũy: ${points} điểm</div>
                     </div>
                 </div>
                 ${progressHtml}

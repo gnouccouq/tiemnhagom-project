@@ -441,7 +441,7 @@ function initAuthObserver() {
                     }
                 }
 
-                if (points === 0 && totalSpent > 0) points = Math.floor(totalSpent / 100000);
+                if (points === 0 && totalSpent > 0) points = Math.floor(totalSpent / 10000);
 
                 if (barTier) barTier.innerText = currentTier.name.toLowerCase();
                 if (barPoints) barPoints.innerText = points;

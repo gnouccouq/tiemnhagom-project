@@ -1,6 +1,7 @@
 // src/constants/theme.ts
 
 import { useColorScheme } from 'react-native';
+import { useSettings } from '../context/SettingsContext';
 
 export const LightColors = {
   primary: '#111111',       
@@ -74,7 +75,17 @@ export const DarkColors = {
 export const Colors = LightColors;
 
 export function useThemeColor() {
-  const theme = useColorScheme() ?? 'light';
+  let themeMode: 'system' | 'light' | 'dark' = 'system';
+  try {
+    const settings = useSettings();
+    if (settings?.themeMode) {
+      themeMode = settings.themeMode;
+    }
+  } catch {
+    // fallback if outside context
+  }
+  const systemTheme = useColorScheme() ?? 'light';
+  const theme = themeMode === 'system' ? systemTheme : themeMode;
   return theme === 'dark' ? DarkColors : LightColors;
 }
 

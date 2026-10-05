@@ -421,9 +421,9 @@ async function fetchUserData(user) {
             }
         });
 
-        // Điểm mặc định = 1 điểm cho mỗi 100.000đ chi tiêu nếu chưa có custom points
+        // Điểm mặc định = 1 điểm cho mỗi 10.000đ chi tiêu nếu chưa có custom points
         if (points === 0 && totalSpent > 0) {
-            points = Math.floor(totalSpent / 100000);
+            points = Math.floor(totalSpent / 10000);
         }
 
         currentPoints = points;
@@ -570,7 +570,7 @@ function renderHistory(orders) {
 
     container.innerHTML = orders.map(order => {
         const date = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleDateString('vi-VN') : 'Gần đây';
-        const pointsEarned = Math.floor((order.totalAmount || 0) / 100000);
+        const pointsEarned = Math.floor((order.totalAmount || 0) / 10000);
         return `
             <div style="background: #fff; border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
                 <div>

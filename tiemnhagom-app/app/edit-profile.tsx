@@ -128,7 +128,7 @@ export default function EditProfileScreen() {
           style={styles.headerBackBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={26} color="#18181B" />
+          <Ionicons name="arrow-back" size={24} color="#18181B" />
         </ScalePressable>
         <Text style={styles.headerTitle}>Chỉnh Sửa Thông Tin</Text>
         <View style={{ width: 40 }} />

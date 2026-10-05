@@ -103,6 +103,7 @@ export default function DealsScreen() {
 
   // Loyalty calculations
   const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
   const [loadingLoyalty, setLoadingLoyalty] = useState<boolean>(true);
 
   // Vouchers state from Firestore
@@ -116,12 +117,14 @@ export default function DealsScreen() {
   const fetchLoyaltyData = useCallback(async () => {
     if (!user) {
       setTotalSpent(0);
+      setRedeemedPoints(0);
       setLoadingLoyalty(false);
       return;
     }
 
     try {
       let spent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
+      let redeemed = 0;
       const orders = await getUserOrders(user.uid);
       orders.forEach((o) => {
         const status = (o.status || '').toLowerCase();
@@ -133,7 +136,11 @@ export default function DealsScreen() {
         ) {
           spent += Number(o.totalAmount || 0);
         }
+        if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
+          redeemed += Number((o as any).pointsUsed);
+        }
       });
+      setRedeemedPoints(redeemed);
       setTotalSpent(spent);
     } catch {
       setTotalSpent(Number(userProfile?.totalSpent || userProfile?.spentTotal || 0));
@@ -202,7 +209,11 @@ export default function DealsScreen() {
       )
     : 100;
 
-  const points = userProfile?.points !== undefined ? userProfile.points : Math.floor(totalSpent / 100000);
+  // Cứ 10.000đ = 1 điểm, trừ điểm đã dùng, bỏ thưởng chào mừng 50 điểm cũ
+  const earnedPoints = Math.floor(totalSpent / 10000);
+  const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
+  const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
+  const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || 'GOM').substring(0, 8).toUpperCase()}`;
 
   // Lọc voucher

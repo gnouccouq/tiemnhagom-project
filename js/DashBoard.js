@@ -9349,7 +9349,7 @@ function getAllCustomersCombined() {
             isCompany: u.isCompany || false,
             totalSpent: userTotalSpentLocal[u.id] || u.totalSpent || 0,
             debt: u.debt || 0,
-            points: u.points || 0
+            points: (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor((userTotalSpentLocal[u.id] || u.totalSpent || 0) / 10000)
         });
     });
 
@@ -9374,7 +9374,7 @@ function getAllCustomersCombined() {
                 isCompany: !!(order.rentalInfo?.companyName),
                 totalSpent: spent,
                 debt: 0,
-                points: Math.floor(spent / 100000)
+                points: Math.floor(spent / 10000)
             });
         } else {
             const existing = userMap.get(userId);
@@ -9572,7 +9572,7 @@ function renderAdminUserRows(usersList, tableElement) {
     let htmlContent = '';
     usersList.forEach((u) => {
         const spent = userTotalSpentLocal[u.id] || u.totalSpent || 0;
-        const points = u.points || Math.floor(spent / 100000);
+        const points = (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor(spent / 10000);
         const tier = getMembershipTier(spent);
         const debt = u.debt || 0;
 
@@ -9622,7 +9622,7 @@ window.toggleUserQuickView = function (userId, event) {
     targetRow.classList.add('expanded');
 
     const spent = userTotalSpentLocal[userId] || u.totalSpent || 0;
-    const points = u.points || Math.floor(spent / 100000);
+    const points = (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor(spent / 10000);
     const tier = getMembershipTier(spent);
     const orderCount = userOrderCounts[userId] || 0;
 
