@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/LOGO.jpg",
     "scheme": "tiemnhagom",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#9C7156",
     "splash": {
       "image": "./assets/images/LOGO_3_BLACK_PNG.png",

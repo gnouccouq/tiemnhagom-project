@@ -36,6 +36,7 @@ import {
 } from '../../src/services/productService';
 import { getUserOrders } from '../../src/services/orderService';
 import { Product } from '../../src/types';
+import { useThemeColor, Colors } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
@@ -45,13 +46,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website & Tab Ưu đãi
 const MEMBERSHIP_TIERS = [
-  { id: 'null', name: 'Gốm Mộc', badge: '🪵', min: 0, color: '#A1A1AA' },
+  { id: 'null', name: 'Gốm Mộc', badge: '🪵', min: 0, color: Colors.textMuted },
   { id: 'new', name: 'Gốm Nung', badge: '🔥', min: 1000000, color: '#60A5FA' },
   { id: 'mem', name: 'Gốm Men', badge: '✨', min: 5000000, color: '#FBBF24' },
   { id: 'vip', name: 'Gốm Độc Bản', badge: '👑', min: 10000000, color: '#F87171' },
 ];
 
 export default function HomeScreen() {
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { t } = useSettings();
@@ -305,7 +308,7 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#18181B"
+            tintColor={Colors.textPrimary}
             colors={['#18181B']}
           />
         }
@@ -345,7 +348,7 @@ export default function HomeScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.seeAllText}>{t('seeAll')}</Text>
-                <Ionicons name="arrow-forward" size={12} color="#18181B" />
+                <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -373,7 +376,7 @@ export default function HomeScreen() {
                     </Text>
                     <View style={styles.collectionActionRow}>
                       <Text style={styles.collectionActionText}>{t('exploreNow')}</Text>
-                      <Ionicons name="arrow-forward" size={12} color="#18181B" />
+                      <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -407,7 +410,7 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-              <Ionicons name="arrow-forward" size={12} color="#18181B" />
+              <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -525,7 +528,7 @@ export default function HomeScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.seeAllText}>{t('getCoupon')}</Text>
-                <Ionicons name="arrow-forward" size={12} color="#18181B" />
+                <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -564,13 +567,13 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-              <Ionicons name="arrow-forward" size={12} color="#18181B" />
+              <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
           {loading ? (
             <View style={styles.loadingWrap}>
-              <ActivityIndicator size="small" color="#18181B" />
+              <ActivityIndicator size="small" color={Colors.textPrimary} />
               <Text style={styles.loadingText}>{t('loadingCeramics')}</Text>
             </View>
           ) : (
@@ -620,7 +623,7 @@ export default function HomeScreen() {
               onPress={() => setServiceModal({ visible: true, type: 'flower' })}
             >
               <Text style={styles.primaryDarkBtnText}>{t('exploreFlowerService')}</Text>
-              <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+              <Ionicons name="arrow-forward" size={15} color={Colors.textInverse} />
             </TouchableOpacity>
           </View>
         </View>
@@ -663,7 +666,7 @@ export default function HomeScreen() {
               onPress={() => setServiceModal({ visible: true, type: 'event' })}
             >
               <Text style={styles.primaryDarkBtnText}>{t('viewDecorService')}</Text>
-              <Ionicons name="sparkles-outline" size={15} color="#FFFFFF" />
+              <Ionicons name="sparkles-outline" size={15} color={Colors.textInverse} />
             </TouchableOpacity>
           </View>
         </View>
@@ -694,7 +697,7 @@ export default function HomeScreen() {
               onPress={() => setServiceModal({ visible: true, type: 'about' })}
             >
               <Text style={styles.secondaryOutlineBtnText}>{t('learnMoreAboutUs')}</Text>
-              <Ionicons name="chevron-forward" size={15} color="#18181B" />
+              <Ionicons name="chevron-forward" size={15} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -748,7 +751,7 @@ export default function HomeScreen() {
                     </Text>
                     <View style={styles.newsReadMore}>
                       <Text style={styles.newsReadMoreText}>{t('readMore')}</Text>
-                      <Ionicons name="arrow-forward" size={13} color="#18181B" />
+                      <Ionicons name="arrow-forward" size={13} color={Colors.textPrimary} />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -767,100 +770,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* ================= THANH MEMBER PILL CỐ ĐỊNH Ở TRÊN BOTTOM BAR (CHỈ RIÊNG TRANG CHỦ) VỚI ANIMATION ẨN HIỆN ================= */}
-      <Animated.View
-        style={[
-          styles.fixedMemberPillWrap,
-          {
-            transform: [{ translateY: pillTranslateY }],
-            opacity: pillOpacity,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.fixedMemberPill}
-          activeOpacity={0.9}
-          onPress={() => {
-            if (isLoggedIn) {
-              router.push('/(tabs)/deals');
-            } else {
-              router.push('/auth/login' as any);
-            }
-          }}
-        >
-          {isLoggedIn ? (
-            <>
-              <View style={styles.memberPillLeft}>
-                <View style={styles.memberAvatarWrap}>
-                  {avatarUrl ? (
-                    <Image
-                      source={{ uri: avatarUrl }}
-                      style={styles.memberAvatar}
-                    />
-                  ) : (
-                    <View style={styles.memberAvatarPlaceholder}>
-                      <Text style={styles.memberAvatarInitial}>
-                        {(displayName || 'G')[0]?.toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.memberTextWrap}>
-                  <View style={styles.memberGreetingRow}>
-                    <Text style={styles.memberBrandTag}>TIỆM NHÀ GỐM</Text>
-                    <View style={styles.memberTierBadge}>
-                      <Text style={styles.memberTierBadgeText}>
-                        {currentTier.badge} {currentTier.name.toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.memberName} numberOfLines={1}>
-                    {displayName || 'Khách hàng thân thiết'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.memberPillRight}>
-                <View style={styles.memberPointsBox}>
-                  <Text style={styles.memberPointsLabel}>{t('pointsLabel')}</Text>
-                  <Text style={styles.memberPointsVal}>{points}{t('pts')}</Text>
-                </View>
-                <View style={styles.memberArrowBtn}>
-                  <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-                </View>
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={styles.memberPillLeft}>
-                <View style={[styles.memberAvatarWrap, styles.memberAvatarGuest]}>
-                  <Ionicons name="person" size={17} color="#D4D4D8" />
-                </View>
-
-                <View style={styles.memberTextWrap}>
-                  <View style={styles.memberGreetingRow}>
-                    <Text style={styles.memberBrandTag}>TIỆM NHÀ GỐM</Text>
-                    <View style={[styles.memberTierBadge, styles.memberGuestBadge]}>
-                      <Text style={styles.memberGuestBadgeText}>{t('memberOffers')}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.memberName} numberOfLines={1}>
-                    {t('loginRegister')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.memberPillRight}>
-                <View style={styles.loginPillBadge}>
-                  <Text style={styles.loginPillBadgeText}>{t('login')}</Text>
-                  <Ionicons name="arrow-forward" size={13} color="#18181B" />
-                </View>
-              </View>
-            </>
-          )}
-        </TouchableOpacity>
-      </Animated.View>
 
       {/* SERVICE / ABOUT MODAL (Phong cách Deals Tab) */}
       <Modal
@@ -887,7 +796,7 @@ export default function HomeScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={styles.modalCloseBtn}
               >
-                <Ionicons name="close" size={20} color="#18181B" />
+                <Ionicons name="close" size={20} color={Colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -899,19 +808,19 @@ export default function HomeScreen() {
                   </Text>
                   <View style={styles.modalFeatureList}>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('flowerFeature1')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('flowerFeature2')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('flowerFeature3')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('flowerFeature4')}</Text>
                     </View>
                   </View>
@@ -925,19 +834,19 @@ export default function HomeScreen() {
                   </Text>
                   <View style={styles.modalFeatureList}>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('eventFeature1')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('eventFeature2')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('eventFeature3')}</Text>
                     </View>
                     <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#18181B" />
+                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
                       <Text style={styles.modalFeatureText}>{t('eventFeature4')}</Text>
                     </View>
                   </View>
@@ -955,7 +864,7 @@ export default function HomeScreen() {
                     khỏe, chịu nhiệt tốt và mang một dấu ấn độc bản riêng biệt.
                   </Text>
                   <View style={styles.modalStoreBox}>
-                    <Ionicons name="location-outline" size={18} color="#18181B" />
+                    <Ionicons name="location-outline" size={18} color={Colors.textPrimary} />
                     <Text style={styles.modalStoreText}>
                       37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh
                     </Text>
@@ -965,7 +874,7 @@ export default function HomeScreen() {
 
               <View style={styles.modalActionRow}>
                 <TouchableOpacity style={styles.modalCallBtn} onPress={callHotline}>
-                  <Ionicons name="call" size={16} color="#FFFFFF" />
+                  <Ionicons name="call" size={16} color={Colors.textInverse} />
                   <Text style={styles.modalCallBtnText}>{t('contactConsultTitle')}</Text>
                 </TouchableOpacity>
               </View>
@@ -977,10 +886,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: Colors.background,
   },
   scrollContent: {
     paddingBottom: 175, // Dành khoảng trống để không bị che bởi fixedMemberPill ở đáy
@@ -998,13 +907,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#18181B',
+    backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.16)',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.28,
     shadowRadius: 14,
@@ -1022,7 +931,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: '#3F3F46',
+    borderColor: Colors.textPrimary,
   },
   memberAvatar: {
     width: 36,
@@ -1032,7 +941,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#27272A',
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1043,7 +952,7 @@ const styles = StyleSheet.create({
     color: '#F4F4F5',
   },
   memberAvatarGuest: {
-    backgroundColor: '#27272A',
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1061,10 +970,10 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontWeight: '700',
     letterSpacing: 1.2,
-    color: '#A1A1AA',
+    color: Colors.textMuted,
   },
   memberTierBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: Colors.cardBackground,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 8,
@@ -1089,7 +998,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   memberPillRight: {
     flexDirection: 'row',
@@ -1102,7 +1011,7 @@ const styles = StyleSheet.create({
   memberPointsLabel: {
     fontFamily: 'ElleGaborStd',
     fontSize: 8,
-    color: '#A1A1AA',
+    color: Colors.textMuted,
     letterSpacing: 0.8,
   },
   memberPointsVal: {
@@ -1115,7 +1024,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#27272A',
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1132,7 +1041,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
 
   // SECTION TIÊU CHUẨN
@@ -1170,7 +1079,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
-    color: '#18181B',
+    color: Colors.textPrimary,
     letterSpacing: -0.4,
     lineHeight: 27,
   },
@@ -1178,17 +1087,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     paddingHorizontal: 11,
     paddingVertical: 5.5,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
   },
   seeAllText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: '#18181B',
+    color: Colors.textPrimary,
     fontWeight: '700',
   },
 
@@ -1202,10 +1111,10 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1218,18 +1127,18 @@ const styles = StyleSheet.create({
   collectionFooter: {
     height: 50,
     paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F4F4F5',
+    borderTopColor: Colors.borderLight,
   },
   collectionName: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
     flex: 1,
     marginRight: 8,
   },
@@ -1242,7 +1151,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '600',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
 
   // CATEGORIES
@@ -1262,36 +1171,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
     marginRight: 6,
   },
   subCategoryChipActive: {
-    backgroundColor: '#18181B',
-    borderColor: '#18181B',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.textPrimary,
   },
   subCategoryText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '600',
-    color: '#52525B',
+    color: Colors.textSecondary,
   },
   subCategoryTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontWeight: '700',
   },
 
   // DEAL SECTION CONTAINER (Theo chuẩn tab Ưu đãi)
   dealContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     marginHorizontal: 16,
     marginTop: 22,
     paddingVertical: 16,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1323,7 +1232,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 20,
     fontWeight: '800',
-    color: '#18181B',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   horizontalProducts: {
@@ -1350,7 +1259,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontFamily: 'ElleGaborStd',
-    color: '#71717A',
+    color: Colors.textMuted,
     fontSize: 12,
   },
 
@@ -1358,12 +1267,12 @@ const styles = StyleSheet.create({
   editorialCard: {
     marginHorizontal: 16,
     marginTop: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1373,7 +1282,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 185,
     position: 'relative',
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
   },
   editorialImage: {
     width: '100%',
@@ -1392,7 +1301,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     letterSpacing: 1,
   },
   editorialBody: {
@@ -1411,7 +1320,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
-    color: '#18181B',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     marginBottom: 6,
   },
@@ -1419,7 +1328,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     lineHeight: 20,
-    color: '#52525B',
+    color: Colors.textSecondary,
     marginBottom: 14,
   },
   pillTagRow: {
@@ -1429,9 +1338,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   pillTag: {
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
@@ -1439,7 +1348,7 @@ const styles = StyleSheet.create({
   pillTagText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: '#52525B',
+    color: Colors.textSecondary,
     fontWeight: '500',
   },
   primaryDarkBtn: {
@@ -1447,11 +1356,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#18181B',
+    backgroundColor: Colors.primary,
     paddingVertical: 13,
     paddingHorizontal: 20,
     borderRadius: 24,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1460,16 +1369,16 @@ const styles = StyleSheet.create({
   primaryDarkBtnText: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   secondaryOutlineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 24,
@@ -1477,7 +1386,7 @@ const styles = StyleSheet.create({
   secondaryOutlineBtnText: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
 
   // TIN TỨC BÀI VIẾT (Chuẩn Deals Tab)
@@ -1487,12 +1396,12 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     width: 240,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1502,7 +1411,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 130,
     position: 'relative',
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
   },
   newsImage: {
     width: '100%',
@@ -1512,7 +1421,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: '#18181B',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1521,7 +1430,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     letterSpacing: 0.8,
   },
   newsBody: {
@@ -1530,21 +1439,21 @@ const styles = StyleSheet.create({
   newsDate: {
     fontFamily: 'ElleGaborStd',
     fontSize: 10.5,
-    color: '#71717A',
+    color: Colors.textMuted,
     marginBottom: 4,
   },
   newsTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
     lineHeight: 18,
     marginBottom: 5,
   },
   newsExcerpt: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: '#52525B',
+    color: Colors.textSecondary,
     lineHeight: 16,
     marginBottom: 10,
   },
@@ -1557,7 +1466,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
 
   // FOOTER
@@ -1567,7 +1476,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E4E4E7',
+    borderTopColor: Colors.borderLight,
     alignItems: 'center',
     gap: 5,
   },
@@ -1575,19 +1484,19 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '800',
-    color: '#18181B',
+    color: Colors.textPrimary,
     letterSpacing: 1.5,
   },
   footerInfo: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#71717A',
+    color: Colors.textMuted,
     textAlign: 'center',
   },
   footerCopyright: {
     fontFamily: 'ElleGaborStd',
     fontSize: 10,
-    color: '#A1A1AA',
+    color: Colors.textMuted,
     marginTop: 4,
   },
 
@@ -1602,12 +1511,12 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxHeight: '80%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -1619,7 +1528,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F4F4F5',
+    borderBottomColor: Colors.borderLight,
     paddingBottom: 12,
   },
   modalBrandTag: {
@@ -1627,20 +1536,20 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 1.5,
-    color: '#71717A',
+    color: Colors.textMuted,
     marginBottom: 2,
   },
   modalHeaderTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
   modalCloseBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1651,16 +1560,16 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     lineHeight: 22,
-    color: '#3F3F46',
+    color: Colors.textPrimary,
   },
   modalFeatureList: {
     marginTop: 14,
     gap: 8,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
   },
   modalFeatureRow: {
     flexDirection: 'row',
@@ -1670,7 +1579,7 @@ const styles = StyleSheet.create({
   modalFeatureText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: '#27272A',
+    color: Colors.textPrimary,
     flex: 1,
   },
   modalStoreBox: {
@@ -1678,16 +1587,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 14,
-    backgroundColor: '#F4F4F5',
+    backgroundColor: Colors.surface,
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
   },
   modalStoreText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#27272A',
+    color: Colors.textPrimary,
     flex: 1,
   },
   modalActionRow: {
@@ -1698,7 +1607,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#18181B',
+    backgroundColor: Colors.primary,
     paddingVertical: 13,
     borderRadius: 22,
   },
@@ -1706,6 +1615,6 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
 });

@@ -1,3 +1,4 @@
+import { useThemeColor } from '../constants/theme';
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
@@ -10,6 +11,7 @@ import { formatCurrency } from '../utils/format';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { ScalePressable } from './ScalePressable';
+import { BlurButton } from './BlurButton';
 
 interface ProductCardProps {
   product: Product;
@@ -24,6 +26,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   cardWidth = DEFAULT_CARD_WIDTH,
 }) => {
   const router = useRouter();
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
 
@@ -109,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Ionicons
               name={favorite ? 'heart' : 'heart-outline'}
               size={16}
-              color={favorite ? '#E11D48' : '#27272A'}
+              color={favorite ? Colors.badgeSale : Colors.textPrimary}
             />
           </ScalePressable>
         </Animated.View>
@@ -198,7 +202,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               disabled={isSoldOut}
               accessibilityLabel="Thêm vào giỏ"
             >
-              <Ionicons name="bag-add" size={15} color="#FFFFFF" />
+              <Ionicons name="bag-add" size={15} color={Colors.textInverse} />
             </ScalePressable>
           </Animated.View>
         </View>
@@ -207,15 +211,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ECE7DF',
+    borderColor: Colors.border,
     overflow: 'hidden',
     marginBottom: 14,
-    shadowColor: '#18181B',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -224,29 +228,19 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     aspectRatio: 1.02,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: Colors.background,
     position: 'relative',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3EFE9',
+    borderBottomColor: Colors.borderLight,
   },
   image: {
     width: '100%',
     height: '100%',
   },
   favoriteButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     width: 30,
     height: 30,
     borderRadius: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
   },
   badgeContainer: {
     position: 'absolute',
@@ -274,7 +268,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 7.5,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     opacity: 0.9,
     lineHeight: 8.5,
     letterSpacing: 0.3,
@@ -284,7 +278,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     lineHeight: 11,
   },
   circleBadgeHot: {
@@ -296,7 +290,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(156, 54, 21, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -307,7 +301,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 7.5,
     fontWeight: '700',
-    color: '#9C3615',
+    color: Colors.badgeSale,
     opacity: 0.85,
     lineHeight: 8.5,
     letterSpacing: 0.3,
@@ -317,7 +311,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#9C3615',
+    color: Colors.badgeSale,
     lineHeight: 11,
     textTransform: 'uppercase',
   },
@@ -338,7 +332,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   outOfStockText: {
-    color: '#ffffff',
+    color: Colors.textInverse,
     fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',
@@ -368,7 +362,7 @@ const styles = StyleSheet.create({
   soldText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 10,
-    color: '#A1A1AA',
+    color: Colors.textMuted,
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -376,7 +370,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
     lineHeight: 18,
     minHeight: 36,
     marginBottom: 4,
@@ -392,11 +386,11 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
   },
   moreVariantsText: {
     fontSize: 9,
-    color: '#71717A',
+    color: Colors.textMuted,
     fontWeight: '600',
   },
   priceRow: {
@@ -412,30 +406,22 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '800',
-    color: '#18181B',
+    color: Colors.textPrimary,
   },
   originalPrice: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#A1A1AA',
+    color: Colors.textMuted,
     textDecorationLine: 'line-through',
     marginTop: 1,
   },
   quickAddButton: {
-    backgroundColor: '#18181B',
     width: 32,
     height: 32,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginLeft: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   quickAddButtonDisabled: {
-    backgroundColor: '#D4D4D8',
+    opacity: 0.5,
   },
 });

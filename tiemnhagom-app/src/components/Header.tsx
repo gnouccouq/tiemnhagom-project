@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View,
+  View, useColorScheme,
   Text,
   TextInput,
   StyleSheet,
@@ -12,10 +12,11 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing } from '../constants/theme';
+import { useThemeColor, Typography, Spacing } from '../constants/theme';
 import { useCart } from '../context/CartContext';
 import { useNotificationBadge } from '../context/NotificationBadgeContext';
 import { ScalePressable } from './ScalePressable';
+import { BlurButton } from './BlurButton';
 
 export interface HeaderProps {
   title?: string;
@@ -55,9 +56,12 @@ export const Header: React.FC<HeaderProps> = ({
   isScrolled = false,
 }) => {
   const router = useRouter();
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const { cartCount } = useCart();
   const { unreadCount } = useNotificationBadge();
   const insets = useSafeAreaInsets();
+  const isDark = useColorScheme() === 'dark';
 
   const statusBarHeight =
     insets.top > 0
@@ -112,13 +116,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 1. Logo tiệm (logongang.webp) hoặc nút quay lại */}
           <View style={styles.leftSection}>
             {showBack ? (
-              <ScalePressable
+              <BlurButton
                 style={styles.iconButton}
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={22} color="#18181B" />
-              </ScalePressable>
+                <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} />
+              </BlurButton>
             ) : (
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -130,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Logo đen (hiện dần khi cuộn xuống) */}
                   <Image
                     source={require('../../assets/images/logongang.webp')}
-                    style={[styles.logoImage, { opacity: progress }]}
+                    style={[styles.logoImage, { opacity: isDark ? 0 : progress }]}
                     contentFit="contain"
                   />
                   {/* Logo trắng (mờ dần khi cuộn xuống) */}
@@ -140,13 +144,13 @@ export const Header: React.FC<HeaderProps> = ({
                       styles.logoImage,
                       styles.logoOverlay,
                       {
-                        opacity: 1 - progress,
+                        opacity: isDark ? 1 : (1 - progress),
                         ...(Platform.OS === 'web'
                           ? ({ filter: 'brightness(0) invert(1)' } as any)
                           : {}),
                       },
                     ]}
-                    tintColor="#FFFFFF"
+                    tintColor={Colors.textInverse}
                     contentFit="contain"
                   />
                 </View>
@@ -161,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <TextInput
                   style={styles.searchInputInline}
                   placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
-                  placeholderTextColor="#71717A"
+                  placeholderTextColor={Colors.textMuted}
                   value={searchValue}
                   onChangeText={onSearchChange}
                   onSubmitEditing={onSubmitEditing}
@@ -170,10 +174,10 @@ export const Header: React.FC<HeaderProps> = ({
                 />
                 {searchValue && searchValue.length > 0 ? (
                   <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="close-circle" size={17} color="#71717A" />
+                    <Ionicons name="close-circle" size={17} color={Colors.textMuted} />
                   </TouchableOpacity>
                 ) : (
-                  <Ionicons name="search-outline" size={19} color="#71717A" />
+                  <Ionicons name="search-outline" size={19} color={Colors.textMuted} />
                 )}
               </View>
             ) : (
@@ -186,23 +190,23 @@ export const Header: React.FC<HeaderProps> = ({
                 <Text style={styles.searchPlaceholder} numberOfLines={1}>
                   {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
                 </Text>
-                <Ionicons name="search-outline" size={25} color="#71717A" />
+                <Ionicons name="search-outline" size={25} color={Colors.textMuted} />
               </TouchableOpacity>
             )
           )}
 
           {/* 3. Nút Thông báo (Thay cho Giỏ hàng) */}
           {showCart && (
-            <ScalePressable
-              style={styles.iconButton}
+            <BlurButton
+                style={styles.iconButton}
               onPress={() => router.push('/notifications')}
               accessibilityLabel="Thông báo"
             >
-              <Ionicons name="notifications-outline" size={22} color="#18181B" />
+              <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
               {unreadCount > 0 && (
                 <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
               )}
-            </ScalePressable>
+            </BlurButton>
           )}
         </View>
       ) : (
@@ -210,13 +214,13 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleHeaderRow}>
           <View style={styles.left}>
             {showBack ? (
-              <ScalePressable
+              <BlurButton
                 style={styles.iconButton}
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={26} color="#18181B" />
-              </ScalePressable>
+                <Ionicons name="chevron-back" size={26} color={Colors.textPrimary} />
+              </BlurButton>
             ) : (
               <Text style={styles.screenTitle}>{title}</Text>
             )}
@@ -232,25 +236,25 @@ export const Header: React.FC<HeaderProps> = ({
 
           <View style={styles.right}>
             {showSettings && (
-              <ScalePressable
+              <BlurButton
                 style={[styles.iconButton, { marginRight: 8 }]}
                 onPress={onSettingsPress}
                 accessibilityLabel="Cài đặt"
               >
-                <Ionicons name="settings-outline" size={22} color="#18181B" />
-              </ScalePressable>
+                <Ionicons name="settings-outline" size={22} color={Colors.textPrimary} />
+              </BlurButton>
             )}
             {showCart && (
-              <ScalePressable
+              <BlurButton
                 style={styles.iconButton}
                 onPress={() => router.push('/notifications')}
                 accessibilityLabel="Thông báo"
               >
-                <Ionicons name="notifications-outline" size={22} color="#18181B" />
+                <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
                 {unreadCount > 0 && (
                   <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
                 )}
-              </ScalePressable>
+              </BlurButton>
             )}
           </View>
         </View>
@@ -259,13 +263,13 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   container: {
     width: '100%',
   },
   containerDefault: {
     height: 56,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     paddingHorizontal: 14,
   },
@@ -282,14 +286,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerBackdrop: {
-    backgroundColor: 'rgba(250, 248, 245, 0.98)',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-    shadowColor: '#000',
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0,
+    borderBottomColor: Colors.borderLight,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 0,
   },
 
   // SEARCH HEADER (UNIQLO STYLE)
@@ -325,7 +329,7 @@ const styles = StyleSheet.create({
   searchPill: {
     flex: 1,
     height: 39,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -335,23 +339,23 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.08)',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0,
     shadowRadius: 5,
     elevation: 3,
   },
   searchPlaceholder: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#71717A',
+    color: Colors.textMuted,
     flex: 1,
     marginRight: 6,
   },
   searchInputInline: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: '#18181B',
+    color: Colors.textPrimary,
     flex: 1,
     paddingVertical: 0,
     marginRight: 6,
@@ -403,10 +407,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 3,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.textInverse,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontSize: 9.5,
     fontWeight: '700',
   },
@@ -426,7 +430,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 19,
     fontWeight: '700',
-    color: '#18181B',
+    color: Colors.textPrimary,
     letterSpacing: 0.5,
   },
   titleContainer: {
@@ -452,15 +456,5 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#F0ECE6',
   },
 });

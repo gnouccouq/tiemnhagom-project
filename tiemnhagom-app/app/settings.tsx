@@ -17,14 +17,19 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Header } from '../src/components/Header';
 import { useAuth } from '../src/context/AuthContext';
+import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 export default function SettingsScreen() {
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const router = useRouter();
   const { user, signOut } = useAuth();
   
-  const { 
+  const {
+    themeMode,
+    setThemeMode,
     language, 
     fontSize, 
     setLanguage, 
@@ -136,7 +141,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <Header 
         title={t('settingsTitle')} 
         showBack={true} 
@@ -145,7 +150,66 @@ export default function SettingsScreen() {
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        
+        {/* GIAO DIỆN */}
+        <View style={styles.settingsGroup}>
+          <Text style={styles.settingsGroupTitle}>{t('appTheme') || 'Giao diện'}</Text>
+          <Text style={styles.settingsGroupSubtitle}>
+            {t('chooseTheme') || 'Chọn chế độ hiển thị sáng/tối'}
+          </Text>
+          <View style={styles.optionsList}>
+            <TouchableOpacity 
+              style={[styles.settingOptionCard, themeMode === 'system' && styles.settingOptionCardActive]} 
+              activeOpacity={0.8}
+              onPress={() => setThemeMode('system')}
+            >
+              <View style={styles.settingOptionLeft}>
+                <Ionicons name="phone-portrait-outline" size={20} color={themeMode === 'system' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
+                <View>
+                  <Text style={[styles.settingOptionName, themeMode === 'system' && styles.settingOptionNameActive]}>{t('systemTheme') || 'Theo hệ thống'}</Text>
+                </View>
+              </View>
+              <View style={[styles.radioCircle, themeMode === 'system' && styles.radioCircleActive]}>
+                {themeMode === 'system' && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.settingOptionCard, themeMode === 'light' && styles.settingOptionCardActive]} 
+              activeOpacity={0.8}
+              onPress={() => setThemeMode('light')}
+            >
+              <View style={styles.settingOptionLeft}>
+                <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
+                <View>
+                  <Text style={[styles.settingOptionName, themeMode === 'light' && styles.settingOptionNameActive]}>{t('lightTheme') || 'Sáng (Light)'}</Text>
+                </View>
+              </View>
+              <View style={[styles.radioCircle, themeMode === 'light' && styles.radioCircleActive]}>
+                {themeMode === 'light' && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.settingOptionCard, themeMode === 'dark' && styles.settingOptionCardActive]} 
+              activeOpacity={0.8}
+              onPress={() => setThemeMode('dark')}
+            >
+              <View style={styles.settingOptionLeft}>
+                <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
+                <View>
+                  <Text style={[styles.settingOptionName, themeMode === 'dark' && styles.settingOptionNameActive]}>{t('darkTheme') || 'Tối (Dark)'}</Text>
+                </View>
+              </View>
+              <View style={[styles.radioCircle, themeMode === 'dark' && styles.radioCircleActive]}>
+                {themeMode === 'dark' && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* 1. BẢO MẬT */}
+
         <View style={styles.settingsGroup}>
           <Text style={styles.settingsGroupTitle}>{t('security')}</Text>
           <Text style={styles.settingsGroupSubtitle}>
@@ -153,7 +217,7 @@ export default function SettingsScreen() {
           </Text>
           <View style={styles.cacheActionBtn}>
             <View style={styles.cacheLeft}>
-              <Ionicons name="lock-closed-outline" size={18} color="#2D3B34" />
+              <Ionicons name="lock-closed-outline" size={18} color={Colors.textPrimary} />
               <Text style={styles.cacheBtnText}>
                 {t('appLockFeature')}
               </Text>
@@ -161,8 +225,8 @@ export default function SettingsScreen() {
             <Switch
               value={isAppLockEnabled}
               onValueChange={handleToggleAppLock}
-              trackColor={{ false: '#E1E8DF', true: '#3B4D45' }}
-              thumbColor={'#FFFFFF'}
+              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
+              thumbColor={Colors.textInverse}
             />
           </View>
         </View>
@@ -175,7 +239,7 @@ export default function SettingsScreen() {
           </Text>
           <View style={styles.cacheActionBtn}>
             <View style={styles.cacheLeft}>
-              <Ionicons name="notifications-outline" size={18} color="#2D3B34" />
+              <Ionicons name="notifications-outline" size={18} color={Colors.textPrimary} />
               <Text style={styles.cacheBtnText}>
                 {t('receivePush')}
               </Text>
@@ -183,8 +247,8 @@ export default function SettingsScreen() {
             <Switch
               value={isPushNotificationEnabled}
               onValueChange={handleTogglePushNotification}
-              trackColor={{ false: '#E1E8DF', true: '#3B4D45' }}
-              thumbColor={'#FFFFFF'}
+              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
+              thumbColor={Colors.textInverse}
             />
           </View>
         </View>
@@ -290,7 +354,7 @@ export default function SettingsScreen() {
           
           <View style={styles.previewBox}>
             <View style={styles.previewHeaderRow}>
-              <Ionicons name="eye-outline" size={14} color="#5D6160" />
+              <Ionicons name="eye-outline" size={14} color={Colors.textSecondary} />
               <Text style={styles.previewHeaderLabel}>{t('previewText')}</Text>
             </View>
             <Text style={[
@@ -310,7 +374,7 @@ export default function SettingsScreen() {
           </Text>
           <TouchableOpacity style={styles.cacheActionBtn} onPress={handleClearCache} activeOpacity={0.8}>
             <View style={styles.cacheLeft}>
-              <Ionicons name="trash-bin-outline" size={18} color="#2D3B34" />
+              <Ionicons name="trash-bin-outline" size={18} color={Colors.textPrimary} />
               <Text style={styles.cacheBtnText}>{t('clearAppCache')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#7A827E" />
@@ -344,10 +408,10 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: Colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -361,7 +425,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
-    color: '#2D3B34',
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   settingsGroupSubtitle: {
@@ -377,21 +441,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderWidth: 1.2,
-    borderColor: '#E1E8DF',
+    borderColor: Colors.borderLight,
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
   settingOptionCardActive: {
     borderColor: '#000000',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
   },
   settingOptionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  
+  themeIcon: {
+    marginRight: 8,
   },
   langFlagImage: {
     width: 28,
@@ -441,9 +509,9 @@ const styles = StyleSheet.create({
   },
   fontSizeChip: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderWidth: 1.2,
-    borderColor: '#E1E8DF',
+    borderColor: Colors.borderLight,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 6,
@@ -473,11 +541,11 @@ const styles = StyleSheet.create({
     color: '#D4D4D8',
   },
   previewBox: {
-    backgroundColor: '#EEF3EB',
+    backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E1E8DF',
+    borderColor: Colors.borderLight,
   },
   previewHeaderRow: {
     flexDirection: 'row',
@@ -489,20 +557,20 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '600',
-    color: '#5D6160',
+    color: Colors.textSecondary,
   },
   previewSampleText: {
     fontFamily: 'ElleGaborStd',
-    color: '#2D3B34',
+    color: Colors.textPrimary,
     lineHeight: 22,
   },
   cacheActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderWidth: 1,
-    borderColor: '#E1E8DF',
+    borderColor: Colors.borderLight,
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -522,12 +590,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     paddingVertical: 14,
     borderRadius: 24,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#E1E8DF',
+    borderColor: Colors.borderLight,
   },
   logoutBtnText: {
     color: '#333333',

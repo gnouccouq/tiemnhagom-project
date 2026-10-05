@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
 import { AddressPicker } from '../src/components/AddressPicker';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
@@ -24,6 +24,8 @@ import { createOrder } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
 
 export default function CheckoutScreen() {
+  const Colors = useThemeColor();
+  const themeStyles = getStyles(Colors);
   const router = useRouter();
   const { cart, subtotal, shippingFee, discountAmount, totalAmount, appliedCoupon, clearCart, shippingMethod } = useCart();
   const { user, userProfile } = useAuth();
@@ -101,22 +103,22 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={themeStyles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <Header title={t('checkoutTitle')} showBack showCart={false} showSearch={false} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={themeStyles.scrollContent}>
         {/* Recipient Information */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
+        <View style={themeStyles.card}>
+          <View style={themeStyles.cardHeader}>
             <Ionicons name="location-outline" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>{t('recipientInfo')}</Text>
+            <Text style={themeStyles.cardTitle}>{t('recipientInfo')}</Text>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>{t('fullNameReq')}</Text>
+          <View style={themeStyles.formGroup}>
+            <Text style={themeStyles.label}>{t('fullNameReq')}</Text>
             <TextInput
-              style={styles.input}
+              style={themeStyles.input}
               placeholder="Nguyễn Văn A"
               placeholderTextColor={Colors.textMuted}
               value={fullName}
@@ -124,10 +126,10 @@ export default function CheckoutScreen() {
             />
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>{t('phoneReq')}</Text>
+          <View style={themeStyles.formGroup}>
+            <Text style={themeStyles.label}>{t('phoneReq')}</Text>
             <TextInput
-              style={styles.input}
+              style={themeStyles.input}
               placeholder="0901234567"
               placeholderTextColor={Colors.textMuted}
               value={phone}
@@ -136,24 +138,24 @@ export default function CheckoutScreen() {
             />
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>{t('provinceWardReq')}</Text>
+          <View style={themeStyles.formGroup}>
+            <Text style={themeStyles.label}>{t('provinceWardReq')}</Text>
             <TouchableOpacity
-              style={styles.locationSelector}
+              style={themeStyles.locationSelector}
               onPress={() => setAddressPickerVisible(true)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.locationText, !locationName && styles.locationPlaceholder]}>
+              <Text style={[themeStyles.locationText, !locationName && themeStyles.locationPlaceholder]}>
                 {locationName || t('selectDeliveryArea')}
               </Text>
               <Ionicons name="chevron-down" size={20} color={Colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>{t('streetNameReq')}</Text>
+          <View style={themeStyles.formGroup}>
+            <Text style={themeStyles.label}>{t('streetNameReq')}</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[themeStyles.input, themeStyles.textArea]}
               placeholder={t('streetNamePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={streetAddress}
@@ -163,10 +165,10 @@ export default function CheckoutScreen() {
             />
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>{t('orderNote')}</Text>
+          <View style={themeStyles.formGroup}>
+            <Text style={themeStyles.label}>{t('orderNote')}</Text>
             <TextInput
-              style={styles.input}
+              style={themeStyles.input}
               placeholder={t('orderNotePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={note}
@@ -176,14 +178,14 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Payment Method */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
+        <View style={themeStyles.card}>
+          <View style={themeStyles.cardHeader}>
             <Ionicons name="card-outline" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>{t('paymentMethodTitle')}</Text>
+            <Text style={themeStyles.cardTitle}>{t('paymentMethodTitle')}</Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.paymentOption, paymentMethod === 'cod' && styles.paymentOptionActive]}
+            style={[themeStyles.paymentOption, paymentMethod === 'cod' && themeStyles.paymentOptionActive]}
             onPress={() => setPaymentMethod('cod')}
           >
             <Ionicons
@@ -191,14 +193,14 @@ export default function CheckoutScreen() {
               size={18}
               color={paymentMethod === 'cod' ? Colors.primary : Colors.textMuted}
             />
-            <View style={styles.paymentTextWrap}>
-              <Text style={styles.paymentName}>{t('cod')}</Text>
-              <Text style={styles.paymentDesc}>{t('codDesc')}</Text>
+            <View style={themeStyles.paymentTextWrap}>
+              <Text style={themeStyles.paymentName}>{t('cod')}</Text>
+              <Text style={themeStyles.paymentDesc}>{t('codDesc')}</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.paymentOption, paymentMethod === 'banking' && styles.paymentOptionActive]}
+            style={[themeStyles.paymentOption, paymentMethod === 'banking' && themeStyles.paymentOptionActive]}
             onPress={() => setPaymentMethod('banking')}
           >
             <Ionicons
@@ -206,23 +208,23 @@ export default function CheckoutScreen() {
               size={18}
               color={paymentMethod === 'banking' ? Colors.primary : Colors.textMuted}
             />
-            <View style={styles.paymentTextWrap}>
-              <Text style={styles.paymentName}>{t('vietQR')}</Text>
-              <Text style={styles.paymentDesc}>{t('vietQRDesc')}</Text>
+            <View style={themeStyles.paymentTextWrap}>
+              <Text style={themeStyles.paymentName}>{t('vietQR')}</Text>
+              <Text style={themeStyles.paymentDesc}>{t('vietQRDesc')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Order Items Preview */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{t('orderTitle')} ({cart.length} {t('itemsCount')})</Text>
-          <View style={styles.itemsWrap}>
+        <View style={themeStyles.card}>
+          <Text style={themeStyles.cardTitle}>{t('orderTitle')} ({cart.length} {t('itemsCount')})</Text>
+          <View style={themeStyles.itemsWrap}>
             {cart.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <Text style={styles.itemName} numberOfLines={1}>
+              <View key={item.id} style={themeStyles.itemRow}>
+                <Text style={themeStyles.itemName} numberOfLines={1}>
                   {item.name} {item.variant?.name ? `(${item.variant.name})` : ''}
                 </Text>
-                <Text style={styles.itemDetail}>
+                <Text style={themeStyles.itemDetail}>
                   x{item.quantity} • {formatCurrency(item.price * item.quantity)}
                 </Text>
               </View>
@@ -231,29 +233,29 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Summary Card */}
-        <View style={styles.card}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>{t('subtotal')}:</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+        <View style={themeStyles.card}>
+          <View style={themeStyles.summaryRow}>
+            <Text style={themeStyles.summaryLabel}>{t('subtotal')}:</Text>
+            <Text style={themeStyles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>{t('shippingFee')}:</Text>
-            <Text style={styles.summaryValue}>
+          <View style={themeStyles.summaryRow}>
+            <Text style={themeStyles.summaryLabel}>{t('shippingFee')}:</Text>
+            <Text style={themeStyles.summaryValue}>
               {shippingFee === 0 ? t('free') : formatCurrency(shippingFee)}
             </Text>
           </View>
           {discountAmount > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}:</Text>
-              <Text style={[styles.summaryValue, { color: Colors.badgeSale }]}>
+            <View style={themeStyles.summaryRow}>
+              <Text style={[themeStyles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}:</Text>
+              <Text style={[themeStyles.summaryValue, { color: Colors.badgeSale }]}>
                 -{formatCurrency(discountAmount)}
               </Text>
             </View>
           )}
-          <View style={styles.divider} />
-          <View style={styles.summaryRowTotal}>
-            <Text style={styles.totalLabel}>{t('totalToPay')}</Text>
-            <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
+          <View style={themeStyles.divider} />
+          <View style={themeStyles.summaryRowTotal}>
+            <Text style={themeStyles.totalLabel}>{t('totalToPay')}</Text>
+            <Text style={themeStyles.totalValue}>{formatCurrency(totalAmount)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -271,14 +273,14 @@ export default function CheckoutScreen() {
       />
 
       {/* Submit Button */}
-      <View style={styles.bottomBar}>
-        <View style={styles.bottomTotal}>
-          <Text style={styles.bottomTotalLabel}>{t('totalPayment')}</Text>
-          <Text style={styles.bottomTotalValue}>{formatCurrency(totalAmount)}</Text>
+      <View style={themeStyles.bottomBar}>
+        <View style={themeStyles.bottomTotal}>
+          <Text style={themeStyles.bottomTotalLabel}>{t('totalPayment')}</Text>
+          <Text style={themeStyles.bottomTotalValue}>{formatCurrency(totalAmount)}</Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+          style={[themeStyles.submitBtn, loading && themeStyles.submitBtnDisabled]}
           onPress={handleSubmitOrder}
           disabled={loading}
           activeOpacity={0.88}
@@ -287,7 +289,7 @@ export default function CheckoutScreen() {
             <ActivityIndicator color={Colors.textInverse} />
           ) : (
             <>
-              <Text style={styles.submitBtnText}>{t('confirmOrder')}</Text>
+              <Text style={themeStyles.submitBtnText}>{t('confirmOrder')}</Text>
               <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} style={{ marginLeft: 4 }} />
             </>
           )}
@@ -297,7 +299,7 @@ export default function CheckoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -383,7 +385,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   paymentOptionActive: {
-    backgroundColor: '#FAF5F1',
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xs,
     paddingHorizontal: 6,
   },
@@ -502,7 +504,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 6,

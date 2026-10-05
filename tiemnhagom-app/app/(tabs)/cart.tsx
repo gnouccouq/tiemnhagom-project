@@ -16,12 +16,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
 import { CartItemCard } from '../../src/components/CartItemCard';
 import { EmptyState } from '../../src/components/EmptyState';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { formatCurrency } from '../../src/utils/format';
 
 export default function CartScreen() {
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const router = useRouter();
   const {
     cart,
@@ -252,7 +254,7 @@ export default function CartScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -271,10 +273,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -286,7 +288,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
-    color: '#111111',
+    color: Colors.textPrimary,
   },
   headerClearBtn: {
     fontFamily: 'ElleGaborStd',
@@ -321,13 +323,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 24,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1.2,
     borderColor: Colors.border,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 5,
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.borderLight,
   },
   shippingOptionActive: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     paddingHorizontal: 8,
   },
@@ -372,13 +374,13 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: '#111111',
+    color: Colors.textPrimary,
   },
   appliedCouponRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
@@ -393,7 +395,7 @@ const styles = StyleSheet.create({
   couponCodeText: {
     fontFamily: 'ElleGaborStd',
     fontWeight: '700',
-    color: '#111111',
+    color: Colors.textPrimary,
     fontSize: 13,
   },
   removeCouponBtn: {
@@ -422,14 +424,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   applyCouponBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: Colors.primary,
     borderRadius: 20,
     paddingHorizontal: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   applyCouponText: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -440,13 +442,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   summaryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 24,
     padding: 18,
     marginBottom: 20,
     borderWidth: 1.2,
     borderColor: Colors.border,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 5,
@@ -489,24 +491,24 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '800',
-    color: '#111111',
+    color: Colors.textPrimary,
   },
   checkoutBtn: {
-    backgroundColor: '#111111',
+    backgroundColor: Colors.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 24,
     gap: 8,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
   },
   checkoutBtnText: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontSize: 14,
     fontWeight: '700',
   },

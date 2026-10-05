@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { CartItem } from '../types';
 import { formatCurrency } from '../utils/format';
 
@@ -18,37 +18,39 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   onUpdateQuantity,
   onRemove,
 }) => {
+  const Colors = useThemeColor();
+  const themeStyles = getStyles(Colors);
   const imageUri = item.variant?.imageUrl || item.imageUrl || 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=300&auto=format&fit=crop';
 
   return (
-    <View style={styles.card}>
-      <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />
+    <View style={themeStyles.card}>
+      <Image source={{ uri: imageUri }} style={themeStyles.image} contentFit="cover" />
 
-      <View style={styles.info}>
-        <View style={styles.topRow}>
-          <Text style={styles.name} numberOfLines={2}>
+      <View style={themeStyles.info}>
+        <View style={themeStyles.topRow}>
+          <Text style={themeStyles.name} numberOfLines={2}>
             {item.name}
           </Text>
-          <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
+          <TouchableOpacity onPress={onRemove} style={themeStyles.removeButton}>
             <Ionicons name="trash-outline" size={18} color={Colors.textMuted} />
           </TouchableOpacity>
         </View>
 
         {item.variant && item.variant.name && (
-          <View style={styles.variantBadge}>
-            <Text style={styles.variantText}>
+          <View style={themeStyles.variantBadge}>
+            <Text style={themeStyles.variantText}>
               {item.variant.type === 'color' ? 'Màu sắc' : item.variant.type === 'pattern' ? 'Họa tiết' : item.variant.type === 'combo' ? 'Combo' : 'Phân loại'}: {item.variant.name}
             </Text>
           </View>
         )}
 
-        <View style={styles.bottomRow}>
-          <Text style={styles.price}>{formatCurrency(item.price)}</Text>
+        <View style={themeStyles.bottomRow}>
+          <Text style={themeStyles.price}>{formatCurrency(item.price)}</Text>
 
           {/* Stepper */}
-          <View style={styles.stepper}>
+          <View style={themeStyles.stepper}>
             <TouchableOpacity
-              style={styles.stepBtn}
+              style={themeStyles.stepBtn}
               onPress={() => onUpdateQuantity(item.quantity - 1)}
               disabled={item.quantity <= 1}
             >
@@ -59,10 +61,10 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
               />
             </TouchableOpacity>
 
-            <Text style={styles.qtyText}>{item.quantity}</Text>
+            <Text style={themeStyles.qtyText}>{item.quantity}</Text>
 
             <TouchableOpacity
-              style={styles.stepBtn}
+              style={themeStyles.stepBtn}
               onPress={() => onUpdateQuantity(item.quantity + 1)}
               disabled={item.quantity >= item.maxStock}
             >
@@ -79,16 +81,16 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 22,
     padding: 14,
     marginBottom: 14,
     borderWidth: 1.2,
     borderColor: '#E1E8DF',
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 5,
@@ -98,7 +100,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: '#EEF3EB',
+    backgroundColor: Colors.surface,
   },
   info: {
     flex: 1,
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '600',
-    color: '#2D3B34',
+    color: Colors.textPrimary,
     lineHeight: 18,
     marginRight: Spacing.sm,
   },
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   variantBadge: {
-    backgroundColor: '#EEF3EB',
+    backgroundColor: Colors.surface,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
   variantText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#5D6160',
+    color: Colors.textSecondary,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -145,12 +147,12 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
-    color: '#3B4D45',
+    color: Colors.textPrimary,
   },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF3EB',
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1.2,
     borderColor: '#E1E8DF',

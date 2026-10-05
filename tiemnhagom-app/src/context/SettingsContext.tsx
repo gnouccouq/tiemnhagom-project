@@ -2,10 +2,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type ThemeMode = 'system' | 'light' | 'dark';
 export type Language = 'vi' | 'en' | 'zh';
 export type FontSize = 'small' | 'normal' | 'large';
 
 interface SettingsContextType {
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
   language: Language;
   fontSize: FontSize;
   fontScale: number;
@@ -21,6 +24,7 @@ interface SettingsContextType {
 import { setGlobalFontScale } from '../utils/textScaler';
 
 const STORAGE_KEY_LANGUAGE = '@tiemnhagom_language';
+const STORAGE_KEY_THEME_MODE = '@tiemnhagom_theme_mode';
 const STORAGE_KEY_FONT_SIZE = '@tiemnhagom_font_size';
 const STORAGE_KEY_APP_LOCK = '@tiemnhagom_app_lock';
 const STORAGE_KEY_PUSH_NOTI = '@tiemnhagom_push_noti';
@@ -36,6 +40,8 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
 };
 
 const SettingsContext = createContext<SettingsContextType>({
+  themeMode: 'system',
+  setThemeMode: async () => {},
   language: 'vi',
   fontSize: 'normal',
   fontScale: 1.0,
@@ -56,6 +62,7 @@ const getScaleFromSize = (size: FontSize): number => {
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('vi');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [fontSize, setFontSizeState] = useState<FontSize>('normal');
   const [isAppLockEnabled, setIsAppLockEnabled] = useState<boolean>(false);
   const [isPushNotificationEnabled, setIsPushNotificationEnabled] = useState<boolean>(true);
@@ -67,6 +74,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Phục hồi cài đặt từ AsyncStorage khi mở app
     const loadSettings = async () => {
       try {
+        const savedTheme = await AsyncStorage.getItem(STORAGE_KEY_THEME_MODE);
+        if (savedTheme === 'system' || savedTheme === 'light' || savedTheme === 'dark') {
+          setThemeModeState(savedTheme);
+        }
         const savedLang = await AsyncStorage.getItem(STORAGE_KEY_LANGUAGE);
         if (savedLang === 'vi' || savedLang === 'en') {
           setLanguageState(savedLang);
@@ -90,6 +101,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
     loadSettings();
   }, []);
+
+  const setThemeMode = async (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY_THEME_MODE, mode);
+    } catch (err) {
+      console.warn('Lỗi lưu themeMode:', err);
+    }
+  };
 
   const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
@@ -137,6 +157,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   return (
     <SettingsContext.Provider
       value={{
+        themeMode,
+        setThemeMode,
         language,
         fontSize,
         fontScale,

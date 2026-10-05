@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ScalePressable } from './ScalePressable';
 import provincesData from '../../assets/data/provinces.json';
+import { useThemeColor } from '../constants/theme';
 
 interface AddressPickerProps {
   visible: boolean;
@@ -29,6 +30,8 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   initialProvinceCode,
   initialWardCode,
 }) => {
+  const Colors = useThemeColor();
+  const themeStyles = getStyles(Colors);
   const [step, setStep] = useState<'PROVINCE' | 'WARD'>('PROVINCE');
   const [selectedProv, setSelectedProv] = useState<any>(null);
 
@@ -68,10 +71,10 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
 
     return (
       <TouchableOpacity
-        style={styles.itemRow}
+        style={themeStyles.itemRow}
         onPress={() => (isProvStep ? handleSelectProvince(item) : handleSelectWard(item))}
       >
-        <Text style={[styles.itemText, isSelected && styles.itemTextActive]}>{name}</Text>
+        <Text style={[themeStyles.itemText, isSelected && themeStyles.itemTextActive]}>{name}</Text>
         {isSelected && <Ionicons name="checkmark" size={20} color="#18181B" />}
       </TouchableOpacity>
     );
@@ -81,22 +84,22 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.overlay}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={themeStyles.overlay}>
         <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.backdrop} />
+          <View style={themeStyles.backdrop} />
         </TouchableWithoutFeedback>
         
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
+        <View style={themeStyles.modalContent}>
+          <View style={themeStyles.header}>
             {step === 'WARD' ? (
-              <ScalePressable onPress={() => setStep('PROVINCE')} style={styles.iconBtn}>
+              <ScalePressable onPress={() => setStep('PROVINCE')} style={themeStyles.iconBtn}>
                 <Ionicons name="chevron-back" size={24} color="#18181B" />
               </ScalePressable>
             ) : (
-              <View style={styles.iconBtn} />
+              <View style={themeStyles.iconBtn} />
             )}
-            <Text style={styles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
-            <ScalePressable onPress={onClose} style={styles.iconBtn}>
+            <Text style={themeStyles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
+            <ScalePressable onPress={onClose} style={themeStyles.iconBtn}>
               <Ionicons name="close" size={24} color="#18181B" />
             </ScalePressable>
           </View>
@@ -106,7 +109,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
             keyExtractor={(item) => (step === 'PROVINCE' ? item.province_code : item.ward_code)}
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
+            contentContainerStyle={themeStyles.listContainer}
           />
         </View>
       </KeyboardAvoidingView>
@@ -114,7 +117,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -128,7 +131,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '70%',

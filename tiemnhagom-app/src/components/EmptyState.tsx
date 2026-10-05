@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius } from '../constants/theme';
 
 interface EmptyStateProps {
   icon?: string;
@@ -19,16 +19,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   buttonText,
   onButtonPress,
 }) => {
+  const Colors = useThemeColor();
+  const themeStyles = getStyles(Colors);
   return (
-    <View style={styles.container}>
-      <View style={styles.iconCircle}>
+    <View style={themeStyles.container}>
+      <View style={themeStyles.iconCircle}>
         <Ionicons name={icon as any} size={48} color={Colors.primary} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      {message && <Text style={styles.message}>{message}</Text>}
+      <Text style={themeStyles.title}>{title}</Text>
+      {message && <Text style={themeStyles.message}>{message}</Text>}
       {buttonText && onButtonPress && (
-        <TouchableOpacity style={styles.button} onPress={onButtonPress} activeOpacity={0.85}>
-          <Text style={styles.buttonText}>{buttonText}</Text>
+        <TouchableOpacity style={themeStyles.button} onPress={onButtonPress} activeOpacity={0.85}>
+          <Text style={themeStyles.buttonText}>{buttonText}</Text>
           <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} style={{ marginLeft: 6 }} />
         </TouchableOpacity>
       )}
@@ -36,7 +38,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   container: {
     padding: Spacing.xxl,
     alignItems: 'center',
@@ -78,7 +80,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 24,
     marginTop: Spacing.sm,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,

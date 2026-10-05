@@ -2,7 +2,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { useThemeColor, Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 
 interface CategoryChipProps {
   id: string;
@@ -18,9 +18,11 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
   isSelected,
   onPress,
 }) => {
+  const Colors = useThemeColor();
+  const themeStyles = getStyles(Colors);
   return (
     <TouchableOpacity
-      style={[styles.chip, isSelected && styles.selectedChip]}
+      style={[themeStyles.chip, isSelected && themeStyles.selectedChip]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -29,37 +31,37 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
           name={icon as any}
           size={16}
           color={isSelected ? Colors.textInverse : Colors.textSecondary}
-          style={styles.icon}
+          style={themeStyles.icon}
         />
       )}
-      <Text style={[styles.text, isSelected && styles.selectedText]}>
+      <Text style={[themeStyles.text, isSelected && themeStyles.selectedText]}>
         {name}
       </Text>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 9.5,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: Colors.border,
     marginRight: 8,
-    shadowColor: '#000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 3,
     elevation: 1,
   },
   selectedChip: {
-    backgroundColor: '#18181B',
-    borderColor: '#18181B',
-    shadowColor: '#000',
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -71,12 +73,14 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: '#52525B',
+    color: Colors.textSecondary,
     fontWeight: '600',
   },
   selectedText: {
     fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontWeight: '700',
   },
 });
+
+// fix cache

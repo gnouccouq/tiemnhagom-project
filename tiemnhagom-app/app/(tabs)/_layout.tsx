@@ -1,34 +1,27 @@
 // app/(tabs)/_layout.tsx
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { House, SquaresFour, Handbag, Tag, User } from 'phosphor-react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import FloatingTabBar from '../../src/components/FloatingTabBar';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColor } from '../../src/constants/theme';
+
 export default function TabLayout() {
+  const Colors = useThemeColor();
+  const styles = getStyles(Colors);
   const { unreadCount } = useNotificationBadge();
   const { cartCount } = useCart();
   const { t } = useSettings();
-  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#000000',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            height: (Platform.OS === 'ios' ? 52 : 58) + (insets.bottom > 0 ? insets.bottom : 8),
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-            paddingTop: 6,
-          }
-        ],
-        tabBarItemStyle: styles.tabBarItem,
-        tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
       {/* 1. Trang chủ */}
@@ -37,11 +30,7 @@ export default function TabLayout() {
         options={{
           title: t('home'),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={24}
-              color={color}
-            />
+            <House size={25} color={color as string} weight={focused ? 'fill' : 'regular'} />
           ),
         }}
       />
@@ -52,11 +41,7 @@ export default function TabLayout() {
         options={{
           title: t('categories'),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'grid' : 'grid-outline'}
-              size={23}
-              color={color}
-            />
+            <SquaresFour size={25} color={color as string} weight={focused ? 'fill' : 'regular'} />
           ),
         }}
       />
@@ -68,11 +53,7 @@ export default function TabLayout() {
           title: t('cartTab'),
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.iconWithBadge}>
-              <Ionicons
-                name={focused ? 'cart' : 'cart-outline'}
-                size={24}
-                color={color}
-              />
+              <Handbag size={25} color={color as string} weight={focused ? 'fill' : 'regular'} />
               {cartCount > 0 && (
                 <View style={styles.badgeCount}>
                   <Text style={styles.badgeCountText}>{cartCount > 99 ? '99+' : cartCount}</Text>
@@ -89,11 +70,7 @@ export default function TabLayout() {
         options={{
           title: t('deals'),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'pricetag' : 'pricetag-outline'}
-              size={23}
-              color={color}
-            />
+            <Tag size={25} color={color as string} weight={focused ? 'fill' : 'regular'} />
           ),
         }}
       />
@@ -104,11 +81,7 @@ export default function TabLayout() {
         options={{
           title: t('profile'),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'person' : 'person-outline'}
-              size={24}
-              color={color}
-            />
+            <User size={25} color={color as string} weight={focused ? 'fill' : 'regular'} />
           ),
         }}
       />
@@ -116,13 +89,13 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any) => StyleSheet.create({
   tabBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
+    borderTopColor: Colors.border,
     elevation: 6,
-    shadowColor: '#000000',
+    shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -150,15 +123,15 @@ const styles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#111111',
+    backgroundColor: Colors.badgeSale,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.cardBackground,
   },
   badgeCountText: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontSize: 9,
     fontWeight: '700',
   },
