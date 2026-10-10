@@ -356,11 +356,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
       : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
     overflow: 'hidden',
   },
-  searchPillOverlay: {
-    backgroundColor: Colors.cardBackground === '#FFFFFF' 
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
-  },
   searchPlaceholder: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,

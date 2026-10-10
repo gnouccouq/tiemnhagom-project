@@ -25,7 +25,7 @@ export default function SettingsScreen() {
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   
   const {
     themeMode,
@@ -381,7 +381,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {user && (
+        {(user || userProfile) && (
           <View style={[styles.settingsGroup, { marginTop: 10 }]}>
             <Text style={styles.settingsGroupTitle}>{t('accountManagement')}</Text>
             <View style={{ gap: 12, marginTop: 10 }}>

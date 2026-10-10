@@ -49,6 +49,7 @@ interface NotificationItem {
   icon: keyof typeof Ionicons.glyphMap;
   iconBg: string;
   iconColor: string;
+  imageUrl?: string;
 }
 
 const INITIAL_NOTIFICATIONS: NotificationItem[] = [
@@ -99,6 +100,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     icon: 'sparkles',
     iconBg: '#F3E5DC',
     iconColor: '#C86432',
+    imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-app.appspot.com/o/banners%2Fbanner_promo_1.jpg?alt=media', // placeholder image
   },
   {
     id: '5',
@@ -407,9 +409,18 @@ export default function NotificationsScreen() {
   const handlePressItem = (item: NotificationItem) => {
     const updated = notifications.map((n) => (n.id === item.id ? { ...n, isRead: true } : n));
     saveNotifications(updated);
-    if (item.link) {
-      router.push(item.link as any);
-    }
+    
+    // Mở modal chi tiết thông báo
+    router.push({
+      pathname: '/notification-detail',
+      params: {
+        title: item.title,
+        message: item.message,
+        type: item.type,
+        imageUrl: item.imageUrl || '',
+        link: item.link || '',
+      }
+    });
   };
 
   const handleDeleteItem = (id: string) => {

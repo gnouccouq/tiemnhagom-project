@@ -140,6 +140,16 @@ function NavigationRoot() {
           animation: 'slide_from_bottom',
         }}
       />
+      
+      {/* Notification Detail Modal */}
+      <Stack.Screen
+        name="notification-detail"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
     </Stack>
   );
 }

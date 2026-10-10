@@ -200,13 +200,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (sanitizedPoints === 50 && (!raw.totalSpent || Number(raw.totalSpent) < 500000)) {
           sanitizedPoints = Math.floor(Number(raw.totalSpent || 0) / 10000);
         }
-        setUserProfile({ uid: found.id, ...raw, points: sanitizedPoints });
+        const userProfileData = { uid: found.id, ...raw, points: sanitizedPoints };
+        setUserProfile(userProfileData);
+        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(userProfileData));
+        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: found.id, email: null }));
       } else {
-        // Nếu chưa đăng nhập auth thật, đăng nhập anonymous để có UID an toàn
+        // Tạo pseudo UID thay vì signInAnonymously (tránh lỗi auth/admin-restricted-operation)
         let currentUid = auth.currentUser?.uid;
         if (!currentUid) {
-          const anonCred = await signInAnonymously(auth);
-          currentUid = anonCred.user.uid;
+          currentUid = 'phone_' + phoneNumber.replace(/\D/g, '') + '_' + Date.now().toString();
         }
         const newProfile: UserProfile = {
           uid: currentUid,
@@ -218,6 +220,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         await setDoc(doc(db, 'users', currentUid), { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
         setUserProfile(newProfile);
+        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(newProfile));
+        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: currentUid, email: null }));
       }
     } catch (e) {
       console.warn('Lỗi phiên đăng nhập số điện thoại:', e);

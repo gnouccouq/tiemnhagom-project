@@ -122,9 +122,9 @@ export default function ProfileScreen() {
   // Tính toán chi tiêu thực tế từ các đơn hàng đã hoàn thành để đồng bộ chuẩn xác với web
   useEffect(() => {
     const profileSpent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
-    if (user) {
+    if (user || userProfile) {
       setLoadingOrders(true);
-      getUserOrders(user.uid)
+      getUserOrders(user?.uid || userProfile?.uid || '')
         .then((orders) => {
           let orderSpent = 0;
           let redeemed = 0;
@@ -240,9 +240,9 @@ export default function ProfileScreen() {
 
           <View style={styles.userNameBlock}>
             <Text style={styles.userNameText} numberOfLines={1}>
-              {user ? displayName : (t('loginRegister') || `${t('login')} / ${t('register')}`)}
+              {(user || userProfile) ? displayName : (t('loginRegister') || `${t('login')} / ${t('register')}`)}
             </Text>
-            {user ? (
+            {(user || userProfile) ? (
               <Text style={styles.userTierSubText}>
                 {getTierName(currentTier)} • {points} {t('pointUnit') || 'Điểm'}
               </Text>

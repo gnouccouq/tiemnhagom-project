@@ -1,5 +1,5 @@
 // app/auth/login.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,10 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+import { app as firebaseApp, auth, db } from '../../src/config/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useSettings } from '../../src/context/SettingsContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 
@@ -42,12 +46,18 @@ export default function LoginScreen() {
     resetPassword,
     signInWithGoogleCredential,
     signInWithAppleCredential,
+    signInWithPhoneSession,
   } = useAuth();
   
   const { t } = useSettings();
 
   // Chế độ: false = Đăng nhập (Sign In), true = Đăng ký (Sign Up)
   const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const recaptchaVerifier = useRef(null);
+  const [verificationId, setVerificationId] = useState('');
+  const [otp, setOtp] = useState('');
+  const [isOtpMode, setIsOtpMode] = useState(false);
 
   // Form Fields
   const [fullName, setFullName] = useState('');
@@ -97,7 +107,65 @@ export default function LoginScreen() {
   }, [response]);
 
   // Submit form (Sign in / Sign up)
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      Alert.alert(t('notification') || 'Thông báo', 'Vui lòng nhập mã OTP');
+      return;
+    }
+    setLoading(true);
+    try {
+      const cred = PhoneAuthProvider.credential(verificationId, otp);
+      const userCred = await signInWithCredential(auth, cred);
+      
+      const userDocRef = doc(db, 'users', userCred.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) {
+        const newProfile = {
+          uid: userCred.user.uid,
+          email: null,
+          phone: phone.trim(),
+          displayName: `Khách hàng ${phone.slice(-4)}`,
+          points: 0,
+          tier: 'standard',
+        };
+        await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
+      }
+      
+      router.back();
+    } catch (err: any) {
+      Alert.alert(t('error') || 'Lỗi', 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (loginMethod === 'phone' && !isSignUpMode) {
+      if (!phone.trim()) {
+        Alert.alert(t('notification') || 'Thông báo', 'Vui lòng nhập số điện thoại');
+        return;
+      }
+      setLoading(true);
+      try {
+        let formattedPhone = phone.trim();
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '+84' + formattedPhone.slice(1);
+        } else if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+84' + formattedPhone;
+        }
+
+        const phoneProvider = new PhoneAuthProvider(auth);
+        const vid = await phoneProvider.verifyPhoneNumber(formattedPhone, recaptchaVerifier.current);
+        setVerificationId(vid);
+        setIsOtpMode(true);
+      } catch (err: any) {
+        Alert.alert(t('error') || 'Lỗi', err.message || t('genericError'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       Alert.alert(t('notification'), t('emailPasswordRequired'));
       return;
@@ -231,6 +299,12 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebaseApp.options}
+        attemptInvisibleVerification={true}
+        firebaseVersion="10.7.1"
+      />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {/* FULLSCREEN BACKGROUND IMAGE */}
@@ -292,6 +366,7 @@ export default function LoginScreen() {
 
             <Animated.View entering={FadeInDown.duration(600).delay(300)}>
             {/* FORM INPUTS (.auth-input-group & .auth-input) */}
+            
             {isSignUpMode && (
               <>
                 <View style={styles.authInputGroup}>
@@ -318,44 +393,71 @@ export default function LoginScreen() {
               </>
             )}
 
-            <View style={styles.authInputGroup}>
-              <TextInput
-                style={styles.authInput}
-                placeholder={t('emailPlaceholder')}
-                placeholderTextColor="#A0A0A0"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.authInputGroup}>
-              <TextInput
-                style={[styles.authInput, { paddingRight: 48 }]}
-                placeholder={t('passwordPlaceholder')}
-                placeholderTextColor="#A0A0A0"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                style={styles.authPasswordToggle}
-                onPress={() => setShowPassword(!showPassword)}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={19}
-                  color="#FFF"
+            {isOtpMode ? (
+              <View style={styles.authInputGroup}>
+                <TextInput
+                  style={styles.authInput}
+                  placeholder="Nhập mã OTP (6 số)"
+                  placeholderTextColor="#A0A0A0"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="number-pad"
+                  maxLength={6}
                 />
-              </TouchableOpacity>
-            </View>
+              </View>
+            ) : (!isSignUpMode && loginMethod === 'phone') ? (
+              <View style={styles.authInputGroup}>
+                <TextInput
+                  style={styles.authInput}
+                  placeholder={t('phonePlaceholder') || 'Số điện thoại'}
+                  placeholderTextColor="#A0A0A0"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+            ) : (
+              <>
+                <View style={styles.authInputGroup}>
+                  <TextInput
+                    style={styles.authInput}
+                    placeholder={t('emailPlaceholder')}
+                    placeholderTextColor="#A0A0A0"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.authInputGroup}>
+                  <TextInput
+                    style={[styles.authInput, { paddingRight: 48 }]}
+                    placeholder={t('passwordPlaceholder')}
+                    placeholderTextColor="#A0A0A0"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                  />
+                  <TouchableOpacity
+                    style={styles.authPasswordToggle}
+                    onPress={() => setShowPassword(!showPassword)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={19}
+                      color="#FFF"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
 
             {/* SUBMIT BUTTON */}
             <TouchableOpacity
               style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
-              onPress={handleSubmit}
+              onPress={isOtpMode ? handleVerifyOtp : handleSubmit}
               disabled={loading}
               activeOpacity={0.85}
             >
@@ -379,6 +481,21 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.socialButtonsRow}>
+              {/* PHONE/EMAIL TOGGLE */}
+              {!isSignUpMode && (
+                <ScalePressable
+                  style={styles.socialCircleBtn}
+                  onPress={() => setLoginMethod(loginMethod === 'email' ? 'phone' : 'email')}
+                  accessibilityLabel="Toggle login method"
+                >
+                  <Ionicons 
+                    name={loginMethod === 'email' ? 'call' : 'mail'} 
+                    size={24} 
+                    color="#000" 
+                  />
+                </ScalePressable>
+              )}
+
               {/* FACEBOOK */}
               <ScalePressable
                 style={styles.socialCircleBtn}
