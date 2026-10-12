@@ -1,7 +1,7 @@
-// src/components/CategoryChip.tsx
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ScalePressable } from './ScalePressable';
 import { useThemeColor, Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 
 interface CategoryChipProps {
@@ -21,10 +21,10 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
   const Colors = useThemeColor();
   const themeStyles = getStyles(Colors);
   return (
-    <TouchableOpacity
+    <ScalePressable
       style={[themeStyles.chip, isSelected && themeStyles.selectedChip]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeScale={0.92}
     >
       {icon && (
         <Ionicons
@@ -37,7 +37,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
       <Text style={[themeStyles.text, isSelected && themeStyles.selectedText]}>
         {name}
       </Text>
-    </TouchableOpacity>
+    </ScalePressable>
   );
 };
 

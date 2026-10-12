@@ -192,16 +192,16 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     if (config.icon) {
       return {
         name: config.icon,
-        color: isDark ? '#7FA689' : '#4A6B53',
-        bg: isDark ? '#223226' : '#EDF2EE',
+        color: isDark ? '#D89E3A' : '#9C7156',
+        bg: isDark ? '#2E2218' : '#F6F4EC',
       };
     }
     switch (config.type) {
       case 'success':
         return {
           name: 'checkmark-circle' as const,
-          color: isDark ? '#7FA689' : '#4A6B53',
-          bg: isDark ? '#223226' : '#EDF2EE',
+          color: isDark ? '#D89E3A' : '#9C7156',
+          bg: isDark ? '#2E2218' : '#F6F4EC',
         };
       case 'error':
         return {
@@ -218,14 +218,14 @@ export function DialogProvider({ children }: { children: ReactNode }) {
       case 'confirm':
         return {
           name: 'help-circle' as const,
-          color: isDark ? '#9AB067' : '#7B8854',
-          bg: isDark ? '#2E351E' : '#F4F6EE',
+          color: isDark ? '#D89E3A' : '#9C7156',
+          bg: isDark ? '#2E2218' : '#F6F4EC',
         };
       default:
         return {
           name: 'information-circle' as const,
-          color: isDark ? '#9AB067' : '#7B8854',
-          bg: isDark ? '#2E351E' : '#F4F6EE',
+          color: isDark ? '#D89E3A' : '#9C7156',
+          bg: isDark ? '#2E2218' : '#F6F4EC',
         };
     }
   };
@@ -256,7 +256,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
           <BlurView
             intensity={Platform.OS === 'ios' ? 45 : 35}
             tint="dark"
-            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
             style={StyleSheet.absoluteFill}
           />
 
@@ -413,8 +413,8 @@ const getStyles = (Colors: any) => {
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     primaryBtn: {
-      backgroundColor: isDark ? '#5E8B69' : '#4A6B53', // Men xanh rêu đồng bộ chuẩn
-      shadowColor: '#4A6B53',
+      backgroundColor: '#9C7156', // Nâu Đất Nung chuẩn brand
+      shadowColor: '#9C7156',
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: isDark ? 0 : 0.22,
       shadowRadius: 6,

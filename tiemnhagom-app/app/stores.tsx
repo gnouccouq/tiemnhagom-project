@@ -158,7 +158,7 @@ export default function StoresScreen() {
                 onPress={() => handleOpenMap(branch.mapUrl)}
               >
                 <View style={styles.iconCircle}>
-                  <Ionicons name="location" size={18} color="#7B8854" />
+                  <Ionicons name="location" size={18} color="#9C7156" />
                 </View>
                 <View style={styles.infoTextCol}>
                   <Text style={styles.infoLabel}>
@@ -166,7 +166,7 @@ export default function StoresScreen() {
                   </Text>
                   <Text style={styles.infoValue}>{branch.address}</Text>
                 </View>
-                <Ionicons name="navigate-outline" size={18} color="#7B8854" />
+                <Ionicons name="navigate-outline" size={18} color="#9C7156" />
               </TouchableOpacity>
 
               {/* Hàng Giờ mở cửa */}
@@ -210,7 +210,7 @@ export default function StoresScreen() {
                 <View style={styles.featuresList}>
                   {branch.features.map((feat, fIdx) => (
                     <View key={fIdx} style={styles.featureItem}>
-                      <Ionicons name={feat.icon} size={15} color="#4A6B53" style={{ marginRight: 6 }} />
+                      <Ionicons name={feat.icon} size={15} color="#9C7156" style={{ marginRight: 6 }} />
                       <Text style={styles.featureLabel}>
                         {t(feat.labelKey) || feat.defaultLabel}
                       </Text>
@@ -288,7 +288,7 @@ const getStyles = (Colors: any) => {
       fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
-      color: Colors.accentOlive || '#7B8854',
+      color: '#9C7156',
       letterSpacing: 1,
       marginBottom: 4,
     },
@@ -436,11 +436,11 @@ const getStyles = (Colors: any) => {
       flex: 1,
       height: 48,
       borderRadius: 24,
-      backgroundColor: isDark ? (Colors.accentGreen || '#5E8B69') : '#4A6B53',
+      backgroundColor: '#9C7156',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#4A6B53',
+      shadowColor: '#9C7156',
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: isDark ? 0 : 0.2,
       shadowRadius: 6,

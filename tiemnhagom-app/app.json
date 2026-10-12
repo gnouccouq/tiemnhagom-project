@@ -29,7 +29,8 @@
         "backgroundColor": "#9C7156",
         "foregroundImage": "./assets/images/LOGO.jpg"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "largeHeap": true
     },
     "web": {
       "bundler": "metro",

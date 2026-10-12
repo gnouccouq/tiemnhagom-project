@@ -74,8 +74,8 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isRead: false,
     link: '/orders',
     icon: 'cube',
-    iconBg: '#EEF3EB',
-    iconColor: '#3B4D45',
+    iconBg: '#F6F4EC',
+    iconColor: '#9C7156',
   },
   {
     id: '3',
@@ -111,8 +111,8 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isRead: true,
     link: '/orders',
     icon: 'checkmark-circle',
-    iconBg: '#E8F5E9',
-    iconColor: '#2E7D32',
+    iconBg: '#F6F4EC',
+    iconColor: '#9C7156',
   },
   {
     id: '6',
@@ -319,8 +319,8 @@ export default function NotificationsScreen() {
         const notifType = (data.type || 'promo') as 'promo' | 'order' | 'system';
         const iconName: keyof typeof Ionicons.glyphMap = 
           notifType === 'order' ? 'cube' : (notifType === 'system' ? 'shield-checkmark' : 'sparkles');
-        const iconBg = notifType === 'order' ? '#EEF3EB' : (notifType === 'system' ? '#F1F5F9' : '#F3E5DC');
-        const iconColor = notifType === 'order' ? '#3B4D45' : (notifType === 'system' ? '#475569' : '#C86432');
+        const iconBg = notifType === 'order' ? '#F6F4EC' : (notifType === 'system' ? '#F1F5F9' : '#F3E5DC');
+        const iconColor = notifType === 'order' ? '#9C7156' : (notifType === 'system' ? '#475569' : '#C86432');
 
         return {
           id: doc.id,

@@ -19,7 +19,9 @@ interface CartContextType {
   removeCoupon: () => void;
   shippingMethod: 'standard' | 'express_2h' | 'pickup';
   setShippingMethod: (method: 'standard' | 'express_2h' | 'pickup') => void;
+  cartBounceKey: number;
 }
+
 
 const CART_STORAGE_KEY = '@tiemnhagom_cart_v1';
 const CartContext = createContext<CartContextType>({} as CartContextType);
@@ -28,6 +30,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express_2h' | 'pickup'>('standard');
+  const [cartBounceKey, setCartBounceKey] = useState<number>(0);
 
   // Load cart from storage on mount
   useEffect(() => {
@@ -55,6 +58,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [cart]);
 
   const addToCart = (product: Product, quantity = 1, variant?: ProductVariant) => {
+    setCartBounceKey((k) => k + 1);
     setCart((prev) => {
       const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
       const itemId = `${product.id}${variantKey}`;
@@ -182,11 +186,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeCoupon,
         shippingMethod,
         setShippingMethod,
+        cartBounceKey,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
 
 export const useCart = () => useContext(CartContext);

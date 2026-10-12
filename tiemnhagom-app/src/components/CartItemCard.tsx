@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { ScalePressable } from './ScalePressable';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { CartItem } from '../types';
 import { formatCurrency } from '../utils/format';
@@ -31,9 +32,9 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
           <Text style={themeStyles.name} numberOfLines={2}>
             {item.name}
           </Text>
-          <TouchableOpacity onPress={onRemove} style={themeStyles.removeButton}>
+          <ScalePressable onPress={onRemove} style={themeStyles.removeButton} activeScale={0.85}>
             <Ionicons name="trash-outline" size={18} color={Colors.textMuted} />
-          </TouchableOpacity>
+          </ScalePressable>
         </View>
 
         {item.variant && item.variant.name && (
@@ -47,33 +48,35 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
         <View style={themeStyles.bottomRow}>
           <Text style={themeStyles.price}>{formatCurrency(item.price)}</Text>
 
-          {/* Stepper */}
+          {/* Stepper with Spring Pressable */}
           <View style={themeStyles.stepper}>
-            <TouchableOpacity
+            <ScalePressable
               style={themeStyles.stepBtn}
               onPress={() => onUpdateQuantity(item.quantity - 1)}
               disabled={item.quantity <= 1}
+              activeScale={0.82}
             >
               <Ionicons
                 name="remove"
                 size={14}
                 color={item.quantity <= 1 ? Colors.textMuted : Colors.textPrimary}
               />
-            </TouchableOpacity>
+            </ScalePressable>
 
             <Text style={themeStyles.qtyText}>{item.quantity}</Text>
 
-            <TouchableOpacity
+            <ScalePressable
               style={themeStyles.stepBtn}
               onPress={() => onUpdateQuantity(item.quantity + 1)}
               disabled={item.quantity >= item.maxStock}
+              activeScale={0.82}
             >
               <Ionicons
                 name="add"
                 size={14}
                 color={item.quantity >= item.maxStock ? Colors.textMuted : Colors.textPrimary}
               />
-            </TouchableOpacity>
+            </ScalePressable>
           </View>
         </View>
       </View>
@@ -99,12 +102,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
   image: {
     width: 80,
     height: 80,
-    borderRadius: 16,
-    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    backgroundColor: '#F3EFEA',
   },
   info: {
     flex: 1,
-    marginLeft: Spacing.md,
+    marginLeft: 14,
     justifyContent: 'space-between',
   },
   topRow: {
@@ -113,63 +116,71 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   name: {
-    fontFamily: 'ElleGaborStd',
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.sm,
     color: Colors.textPrimary,
     lineHeight: 18,
-    marginRight: Spacing.sm,
+    marginRight: 8,
   },
   removeButton: {
-    padding: 2,
+    padding: 4,
+    marginRight: -4,
+    marginTop: -4,
   },
   variantBadge: {
-    backgroundColor: Colors.surface,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FAF8F5',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
+    borderRadius: 8,
     marginVertical: 4,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
   },
   variantText: {
-    fontFamily: 'ElleGaborStd',
+    fontFamily: Typography.fontFamily.medium,
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 4,
   },
   price: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.md,
     color: Colors.textPrimary,
   },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1.2,
-    borderColor: '#E1E8DF',
-    overflow: 'hidden',
+    backgroundColor: '#FAF8F5',
+    borderRadius: 18,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
   },
   stepBtn: {
     width: 28,
     height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   qtyText: {
-    fontFamily: 'ElleGaborStd',
+    fontFamily: Typography.fontFamily.bold,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textPrimary,
     minWidth: 26,
     textAlign: 'center',
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
-    color: Colors.textPrimary,
   },
 });

@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -312,7 +313,7 @@ export default function PointsHistoryScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={isDark ? 'dark' : 'light'}
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -609,7 +610,7 @@ export default function PointsHistoryScreen() {
           <View style={styles.rulesSheetModal}>
             <View style={styles.modalTopHeader}>
               <View style={styles.rulesTitleRow}>
-                <Ionicons name="flame" size={20} color="#E5B869" />
+                <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
                 <Text style={styles.modalTitleText}>
                   {t('potteryPointsModalTitle') || 'Điểm Thưởng Gốm'}
                 </Text>
@@ -641,21 +642,21 @@ export default function PointsHistoryScreen() {
 
               <View style={styles.pointsRulesList}>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>
                     {t('pointRuleText1') ||
                       'Mỗi 10.000đ thanh toán hoàn tất tích ngay 1 Điểm Gốm.'}
                   </Text>
                 </View>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>
                     {t('pointRuleText2') ||
                       'Điểm có thể dùng để khấu trừ trực tiếp khi thanh toán đơn hàng tiếp theo.'}
                   </Text>
                 </View>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>
                     {t('pointRuleText3') ||
                       'Điểm không hết hạn theo năm và được bảo lưu trọn đời tài khoản.'}

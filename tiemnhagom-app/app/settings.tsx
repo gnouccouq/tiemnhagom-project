@@ -717,7 +717,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: '#7B8854',
+    color: '#9C7156',
   },
   logoutBtn: {
     flexDirection: 'row',

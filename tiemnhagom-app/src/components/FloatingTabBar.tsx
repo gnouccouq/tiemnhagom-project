@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCart } from '../context/CartContext';
 
 const BAR_HEIGHT = 64;
 const BAR_PADDING = 6;
@@ -43,6 +44,28 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
   const barRef = useRef<View>(null);
   const barPageX = useRef(0);
   const isDragging = useRef(false);
+
+  const { cartBounceKey } = useCart();
+  const cartIconScale = useRef(new Animated.Value(1)).current;
+
+  // Hiệu ứng nảy giỏ hàng (Cart Bounce Pop) khi thêm sản phẩm thành công
+  useEffect(() => {
+    if (cartBounceKey > 0) {
+      Animated.sequence([
+        Animated.timing(cartIconScale, {
+          toValue: 1.45,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cartIconScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [cartBounceKey]);
 
   // Zoom of the whole bar: subtle on tap, bouncy while dragging
   const zoomBar = (mode: 'tap' | 'drag' | 'release') => {
@@ -180,7 +203,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
           <BlurView
             intensity={Platform.OS === 'ios' ? 95 : 85}
             tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
-            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
             style={StyleSheet.absoluteFill}
           />
           <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />
@@ -220,7 +243,13 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
                 onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
                 style={styles.item}
               >
-                {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
+                {route.name === 'cart' ? (
+                  <Animated.View style={{ transform: [{ scale: cartIconScale }] }}>
+                    {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
+                  </Animated.View>
+                ) : (
+                  options.tabBarIcon?.({ focused: isFocused, color, size: 24 })
+                )}
                 <Text
                   numberOfLines={1}
                   style={[styles.label, { color, fontWeight: isFocused ? '700' : '500' }]}
@@ -230,6 +259,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
               </Pressable>
             );
           })}
+
         </View>
       </Animated.View>
     </View>

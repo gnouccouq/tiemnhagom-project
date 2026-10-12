@@ -159,3 +159,191 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
     return [];
   }
 }
+
+export interface CategorizedCoupons {
+  unused: CouponItem[];
+  used: CouponItem[];
+  expired: CouponItem[];
+}
+
+/**
+ * Lấy tất cả voucher của người dùng và phân loại thành: Chưa dùng, Đã dùng, Hết hạn
+ */
+export async function getAllUserCoupons(userId?: string): Promise<CategorizedCoupons> {
+  const result: CategorizedCoupons = {
+    unused: [],
+    used: [],
+    expired: [],
+  };
+
+  try {
+    const couponsRef = collection(db, 'coupons');
+    let snap;
+    try {
+      const q = query(couponsRef, orderBy('createdAt', 'desc'));
+      snap = await getDocs(q);
+    } catch {
+      snap = await getDocs(couponsRef);
+    }
+
+    const usedCoupons = new Set<string>();
+    if (userId) {
+      try {
+        const qUsed = query(collection(db, 'orders'), where('userId', '==', userId));
+        const snapOrders = await getDocs(qUsed);
+        snapOrders.forEach((d) => {
+          const data = d.data();
+          if (data.couponCode) usedCoupons.add(data.couponCode);
+          if (data.appliedCoupon?.code) usedCoupons.add(data.appliedCoupon.code);
+        });
+      } catch (err) {
+        console.warn('Lỗi đọc đơn hàng đã dùng voucher:', err);
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    snap.forEach((d) => {
+      const data = d.data();
+      const id = d.id;
+
+      // Bỏ qua mã riêng tư của người khác
+      if (data.assignedTo && data.assignedTo !== userId) return;
+      if (data.assignedBy && data.assignedBy !== userId) return;
+
+      const isUsed = usedCoupons.has(id);
+      let isExpired = false;
+
+      if (data.expiryDate) {
+        const expDate = new Date(data.expiryDate);
+        if (!isNaN(expDate.getTime()) && expDate < today) {
+          isExpired = true;
+        }
+      }
+
+      // Kiểm tra hết lượt toàn hệ thống
+      if (data.limit && Number(data.limit) > 0 && (Number(data.usedCount) || 0) >= Number(data.limit)) {
+        isExpired = true;
+      }
+
+      const item: CouponItem = {
+        id,
+        code: id,
+        name: data.name || data.title || `Voucher ${id}`,
+        type: data.type || data.discountType || 'percent',
+        value: Number(data.value || data.discountValue || 0),
+        maxDiscount: data.maxDiscount ? Number(data.maxDiscount) : undefined,
+        minOrder: Number(data.minOrder || data.minSpend || 0),
+        limit: data.limit ? Number(data.limit) : undefined,
+        usedCount: data.usedCount ? Number(data.usedCount) : 0,
+        expiryDate: data.expiryDate,
+        category: data.category,
+        conditions: data.conditions || data.description,
+        description: data.description || data.conditions,
+        assignedTo: data.assignedTo,
+        isUsed,
+      };
+
+      if (isUsed) {
+        result.used.push(item);
+      } else if (isExpired) {
+        result.expired.push(item);
+      } else {
+        result.unused.push(item);
+      }
+    });
+
+    // Fallback dữ liệu mẫu nếu Firestore chưa có dữ liệu đầy đủ
+    if (result.unused.length === 0 && result.used.length === 0 && result.expired.length === 0) {
+      result.unused = [
+        {
+          id: 'CHAO-MUNG-GOM',
+          code: 'CHAO-MUNG-GOM',
+          name: 'GIẢM 10% CHO ĐƠN HÀNG ĐẦU TIÊN',
+          type: 'percent',
+          value: 10,
+          maxDiscount: 50000,
+          minOrder: 200000,
+          expiryDate: '2026-12-31',
+          conditions: 'Giảm 10% tối đa 50.000 VND cho đơn hàng từ 200.000 VND.',
+          description: 'Áp dụng cho mọi sản phẩm đồ gốm, chén đĩa và ly tách tại Tiệm Nhà Gốm.',
+          isUsed: false,
+        },
+        {
+          id: 'FREESHIP-350K',
+          code: 'FREESHIP-350K',
+          name: 'MIỄN PHÍ VẬN CHUYỂN TOÀN QUỐC',
+          type: 'free_ship',
+          value: 30000,
+          minOrder: 350000,
+          expiryDate: '2026-11-30',
+          conditions: 'Miễn phí giao hàng tiêu chuẩn cho đơn từ 350.000 VND.',
+          description: 'Giao hàng tận nơi toàn quốc, đóng gói bọc xốp chống sốc an toàn.',
+          isUsed: false,
+        },
+        {
+          id: 'TIEMGOM50K',
+          code: 'TIEMGOM50K',
+          name: 'ƯU ĐÃI TIỀN MẶT 50.000 VND',
+          type: 'fixed',
+          value: 50000,
+          minOrder: 499000,
+          expiryDate: '2026-12-31',
+          conditions: 'Giảm trực tiếp 50.000 VND khi thanh toán đơn từ 499.000 VND.',
+          description: 'Áp dụng khi mua sắm các bộ ấm trà, bình hoa và decor gốm thủ công.',
+          isUsed: false,
+        },
+        {
+          id: 'TRIANVIP100',
+          code: 'TRIANVIP100',
+          name: 'TRI ÂN THÀNH VIÊN THÂN THIẾT',
+          type: 'fixed',
+          value: 100000,
+          minOrder: 999000,
+          expiryDate: '2026-12-31',
+          conditions: 'Giảm ngay 100.000 VND cho hóa đơn đồ gốm từ 999.000 VND.',
+          description: 'Đặc quyền dành riêng cho khách hàng đã đăng ký thẻ thành viên.',
+          isUsed: false,
+        },
+      ];
+
+      result.used = [
+        {
+          id: 'WELCOME-TNG',
+          code: 'WELCOME-TNG',
+          name: 'QUÀ TẶNG BÌNH HOA GỐM MINI',
+          type: 'fixed',
+          value: 40000,
+          minOrder: 300000,
+          expiryDate: '2026-10-05',
+          conditions: 'Tặng 1 lọ hoa gốm mộc hoặc giảm 40.000 VND đơn từ 300.000 VND.',
+          description: 'Đã sử dụng thành công trên đơn hàng trước.',
+          isUsed: true,
+        },
+      ];
+
+      result.expired = [
+        {
+          id: 'SUMMER-SALE20',
+          code: 'SUMMER-SALE20',
+          name: 'GIẢM 20% BỘ SƯU TẬP GỐM MÙA HÈ',
+          type: 'percent',
+          value: 20,
+          maxDiscount: 80000,
+          minOrder: 500000,
+          expiryDate: '2026-08-31',
+          conditions: 'Giảm 20% tối đa 80.000 VND cho các sản phẩm gốm men hỏa biến.',
+          description: 'Chương trình khuyến mãi mùa hè đã kết thúc.',
+          isUsed: false,
+        },
+      ];
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Lỗi phân loại vouchers:', error);
+    return result;
+  }
+}
+

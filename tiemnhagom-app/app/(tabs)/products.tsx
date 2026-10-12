@@ -21,6 +21,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Colors } from '../../src/constants/theme';
+import { ProductCard } from '../../src/components/ProductCard';
+import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
 import { Product } from '../../src/types';
 import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
@@ -31,6 +33,7 @@ import { useDialog } from '../../src/context/DialogContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2;
 
 // Icon → emoji mapping
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -119,169 +122,6 @@ const bubbleStyles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 15,
-  },
-});
-
-// ─── Product Row Item (list view like reference) ──────────────────────────────
-function ProductRow({ product }: { product: Product }) {
-  const router = useRouter();
-  const { addToCart } = useCart();
-  const { t } = useSettings();
-  const dialog = useDialog();
-
-  const img = product.images?.[0] || product.imageUrl;
-  const price = (product.salePrice !== undefined && product.salePrice !== null) ? product.salePrice : product.price;
-  const hasDiscount = Boolean(product.salePrice && product.salePrice < product.price);
-
-  return (
-    <TouchableOpacity
-      style={rowStyles.wrap}
-      activeOpacity={0.85}
-      onPress={() => {
-        const targetId = product.parentProductId || product.id;
-        router.push({
-          pathname: '/product/[id]',
-          params: {
-            id: targetId,
-            ...(product.selectedVariant?.name ? { variant: product.selectedVariant.name } : {}),
-          },
-        } as any);
-      }}
-    >
-      <View style={rowStyles.imgWrap}>
-        {img ? (
-          <Image source={{ uri: img }} style={rowStyles.img} contentFit="cover" />
-        ) : (
-          <View style={[rowStyles.img, rowStyles.imgPlaceholder]}>
-            <Ionicons name="image-outline" size={28} color="#C8B89A" />
-          </View>
-        )}
-        {hasDiscount && (
-          <View style={rowStyles.saleBadge}>
-            <Text style={rowStyles.saleBadgeText}>SALE</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={rowStyles.info}>
-        <Text style={rowStyles.name} numberOfLines={2}>{product.name}</Text>
-        <View style={rowStyles.priceRow}>
-          <Text style={rowStyles.price}>{formatCurrency(price)}</Text>
-          {hasDiscount && (
-            <Text style={rowStyles.oldPrice}>{formatCurrency(product.price)}</Text>
-          )}
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={rowStyles.addBtn}
-        onPress={() => {
-          addToCart(product, 1);
-          dialog.showDialog({
-            title: t('success') || 'Thành công',
-            message: `${t('addedToCart') || 'Đã thêm vào giỏ hàng'}: ${product.name}`,
-            buttons: [
-              {
-                text: t('ok') || 'Đã hiểu',
-                style: 'default',
-              },
-              {
-                text: t('viewCart') || 'Xem giỏ hàng',
-                style: 'cancel',
-                onPress: () => router.push('/(tabs)/cart'),
-              },
-            ],
-          });
-        }}
-      >
-        <Ionicons name="add" size={22} color="#FFFFFF" />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-}
-
-const rowStyles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  imgWrap: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  img: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: '#F5F0EB',
-  },
-  imgPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saleBadge: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    backgroundColor: '#E53935',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  saleBadgeText: {
-    color: '#FFF',
-    fontSize: 9,
-    fontWeight: '800',
-    fontFamily: 'ElleGaborStd',
-  },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  price: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111111',
-  },
-  oldPrice: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: '#9CA3AF',
-    textDecorationLine: 'line-through',
-  },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#111111',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
   },
 });
 
@@ -434,7 +274,7 @@ export default function ProductsScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -479,17 +319,25 @@ export default function ProductsScreen() {
         </View>
       </View>
 
-      {/* ── Product FlatList with ListHeaderComponent ── */}
+      {/* ── Product FlatList dạng lưới 2 cột card dọc chuẩn trang chủ ── */}
       <FlatList
+        key="products-2-col-grid"
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         data={loading ? [] : products}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => <ProductRow product={item} />}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ProductCard product={item} cardWidth={CARD_WIDTH} />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: 110 }}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
+        windowSize={5}
+        maxToRenderPerBatch={6}
+        initialNumToRender={6}
+        removeClippedSubviews={Platform.OS === 'android'}
+        updateCellsBatchingPeriod={50}
         ListHeaderComponent={
           <View>
             {/* ── Category Bubbles: 1 hàng ngang cuộn ── */}
@@ -566,9 +414,10 @@ export default function ProductsScreen() {
         }
         ListEmptyComponent={
           loading ? (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator size="large" color="#111111" />
-              <Text style={styles.loadingText}>{t('loadingProducts')}</Text>
+            <View style={styles.skeletonGrid}>
+              {[1, 2, 3, 4, 5, 6].map((key) => (
+                <ProductCardSkeleton key={key} cardWidth={CARD_WIDTH} />
+              ))}
             </View>
           ) : (
             <View style={styles.emptyWrap}>
@@ -826,6 +675,19 @@ const styles = StyleSheet.create({
   sortTextActive: {
     color: '#9A7B4F',
     fontWeight: '700',
+  },
+
+  // Lưới 2 cột & Skeleton Grid
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  skeletonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 6,
   },
 
   // Loading / Empty

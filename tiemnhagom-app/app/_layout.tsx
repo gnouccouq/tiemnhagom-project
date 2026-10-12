@@ -1,7 +1,12 @@
 // app/_layout.tsx
 import '../src/utils/textScaler';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, Image, LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  'expo-notifications: Android Push notifications',
+  '`expo-notifications` functionality is not fully supported in Expo Go',
+]);
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +28,7 @@ import ForceUpdateChecker from '../src/components/ForceUpdateChecker';
 import NetworkOverlay from '../src/components/NetworkOverlay';
 import { RealtimeDataProvider } from '../src/context/RealtimeDataContext';
 import { DialogProvider } from '../src/context/DialogContext';
+import { initMemoryManager } from '../src/utils/memoryManager';
 
 export {
   ErrorBoundary,
@@ -131,6 +137,8 @@ function NavigationRoot() {
       <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="membership-privileges" options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="points-history" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="vouchers" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="order-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
 
       {/* WebView: mở từ dưới lên */}
       <Stack.Screen
@@ -265,6 +273,13 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
+
+  useEffect(() => {
+    const cleanup = initMemoryManager();
+    return () => {
+      cleanup?.();
+    };
+  }, []);
 
   if (!loaded) {
     return null;

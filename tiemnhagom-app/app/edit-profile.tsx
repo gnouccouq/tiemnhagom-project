@@ -140,7 +140,7 @@ export default function EditProfileScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View

@@ -28,6 +28,7 @@ import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { BlurButton } from '../../src/components/BlurButton';
+import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
 
 // Cấu hình hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
 const MEMBERSHIP_TIERS = [
@@ -39,6 +40,7 @@ const MEMBERSHIP_TIERS = [
     discount: 0,
     color: '#8A5A2B',
     gradientColors: ['#543824', '#3E2718', '#28170D'] as [string, string, ...string[]],
+    watercolorBlobs: ['#8A5A2B', '#A16207', '#6B4226', '#B45309'],
     logoTint: '#E8D5C4',
     accentColor: '#D97706',
     flameColor: '#FDE68A',
@@ -54,6 +56,7 @@ const MEMBERSHIP_TIERS = [
     discount: 1,
     color: '#DC2626',
     gradientColors: ['#A31D1D', '#821414', '#520B0B'] as [string, string, ...string[]],
+    watercolorBlobs: ['#DC2626', '#E11D48', '#D97706', '#991B1B'],
     logoTint: '#FFFFFF',
     accentColor: '#EF4444',
     flameColor: '#FDE68A',
@@ -69,6 +72,7 @@ const MEMBERSHIP_TIERS = [
     discount: 3,
     color: '#CA8A04',
     gradientColors: ['#B45309', '#92400E', '#5C2D07'] as [string, string, ...string[]],
+    watercolorBlobs: ['#F59E0B', '#D97706', '#B45309', '#CA8A04'],
     logoTint: '#FEF08A',
     accentColor: '#FACC15',
     flameColor: '#FEF08A',
@@ -84,6 +88,7 @@ const MEMBERSHIP_TIERS = [
     discount: 5,
     color: '#EF4444',
     gradientColors: ['#27272A', '#18181B', '#09090B'] as [string, string, ...string[]],
+    watercolorBlobs: ['#52525B', '#3F3F46', '#71717A', '#3F3F46'],
     logoTint: '#EF4444',
     accentColor: '#EF4444',
     flameColor: '#F59E0B',
@@ -237,7 +242,7 @@ export default function ProfileScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -328,10 +333,10 @@ export default function ProfileScreen() {
         {/* 2. PRIMARY HERO CARD: VIP MEMBERSHIP CARD (2-COLUMN HIGHLANDS LAYOUT)     */}
         {/* ========================================================================= */}
         <View style={[styles.cardShadowWrap, { shadowColor: currentTier.gradientColors[0] }]}>
-          <LinearGradient
-            colors={currentTier.gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <GlazeFluidCard
+            gradientColors={currentTier.gradientColors}
+            blobs={currentTier.watercolorBlobs}
+            borderRadius={20}
             style={styles.membershipCard}
           >
             <View style={styles.cardTwoColumns}>
@@ -417,7 +422,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </LinearGradient>
+          </GlazeFluidCard>
         </View>
 
         {/* ========================================================================= */}
@@ -500,7 +505,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => router.push('/deals')}
+              onPress={() => router.push('/vouchers')}
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="gift-outline" size={24} color="#8A5A2B" />
@@ -860,7 +865,7 @@ export default function ProfileScreen() {
           <View style={styles.tierSheetModal}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderTitleRow}>
-                <Ionicons name="flame" size={20} color="#E5B869" />
+                <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
                 <Text style={styles.modalTitle}>{t('potteryPointsModalTitle')}</Text>
               </View>
               <TouchableOpacity
@@ -882,15 +887,15 @@ export default function ProfileScreen() {
 
               <View style={styles.pointsRulesList}>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>{t('pointRuleText1')}</Text>
                 </View>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>{t('pointRuleText2')}</Text>
                 </View>
                 <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
                   <Text style={styles.ruleText}>{t('pointRuleText3')}</Text>
                 </View>
               </View>
@@ -1581,7 +1586,7 @@ const getStyles = (Colors: any) =>
     pointsEquivText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 12,
-      color: '#16A34A',
+      color: '#9C7156',
       fontWeight: '600',
       marginTop: 8,
     },

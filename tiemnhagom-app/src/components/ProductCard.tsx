@@ -21,7 +21,7 @@ interface ProductCardProps {
 const { width } = Dimensions.get('window');
 const DEFAULT_CARD_WIDTH = (width - 32 - 12) / 2;
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   product,
   cardWidth = DEFAULT_CARD_WIDTH,
 }) => {
@@ -87,10 +87,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const isSoldOut = checkOutOfStock(product);
 
   return (
-    <TouchableOpacity
+    <ScalePressable
       style={[styles.card, { width: cardWidth }]}
       onPress={handleCardPress}
-      activeOpacity={0.88}
+      activeScale={0.96}
     >
       {/* 1. KHU VỰC HÌNH ẢNH SẢN PHẨM */}
       <View style={styles.imageContainer}>
@@ -98,8 +98,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           source={{ uri: imageUri }}
           style={styles.image}
           contentFit="cover"
-          transition={250}
-          cachePolicy="memory-disk"
+          transition={150}
+          cachePolicy="disk"
+          recyclingKey={imageUri}
         />
 
         {/* Nút Yêu Thích Glassmorphism với animation nảy */}
@@ -138,7 +139,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Overlay Hết hàng */}
         {isSoldOut && (
           <View style={styles.outOfStockOverlay}>
-            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} experimentalBlurMethod="dimezisBlurView">
+            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} blurMethod="dimezisBlurView">
               <Text style={styles.outOfStockText}>Hết hàng</Text>
             </BlurView>
           </View>
@@ -207,9 +208,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </Animated.View>
         </View>
       </View>
-    </TouchableOpacity>
+    </ScalePressable>
   );
-};
+});
 
 const getStyles = (Colors: any) => StyleSheet.create({
   card: {

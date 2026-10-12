@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF3EB',
+    backgroundColor: '#F6F4EC',
   },
   qtyNumber: {
     fontFamily: 'ElleGaborStd',
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   descText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: '#3B4D45',
+    color: '#2B2928',
     lineHeight: 22,
   },
   specsContainer: {
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: '#3B4D45',
+    color: '#2B2928',
     fontWeight: '600',
   },
   careGrid: {
@@ -881,7 +881,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
-    color: '#3B4D45',
+    color: '#9C7156',
     marginBottom: 4,
   },
   careText: {
@@ -892,13 +892,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   guaranteeBox: {
-    backgroundColor: '#EEF3EB',
+    backgroundColor: '#F6F4EC',
     padding: 16,
     borderRadius: 20,
     gap: 10,
     marginTop: Spacing.md,
     borderWidth: 1.2,
-    borderColor: '#E1E8DF',
+    borderColor: '#E8CCB2',
   },
   guaranteeItem: {
     flexDirection: 'row',
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
   guaranteeText: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.xs,
-    color: '#3B4D45',
+    color: '#2B2928',
     flex: 1,
   },
   bottomBar: {

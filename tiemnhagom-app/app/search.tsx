@@ -260,12 +260,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: '#E8EFEA',
+    borderColor: '#E8CCB2',
   },
   suggestionChipText: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.sm,
-    color: '#3B4D45',
+    color: '#2B2928',
     fontWeight: '500',
   },
   listContent: {

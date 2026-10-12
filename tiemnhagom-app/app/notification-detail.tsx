@@ -124,9 +124,9 @@ export default function NotificationDetailScreen() {
         return {
           label: 'Đơn hàng',
           icon: 'cube-outline' as const,
-          bgColor: '#EEF3EB',
-          textColor: '#2E7D32',
-          borderColor: '#C8E6C9',
+          bgColor: '#F6F4EC',
+          textColor: '#9C7156',
+          borderColor: '#E8CCB2',
           actionText: 'Xem đơn hàng',
           actionIcon: 'receipt-outline' as const,
         };

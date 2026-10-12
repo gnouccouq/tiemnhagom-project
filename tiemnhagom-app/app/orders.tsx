@@ -1,366 +1,931 @@
-// app/(tabs)/orders.tsx
-import React, { useState, useEffect } from 'react';
+// app/orders.tsx
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   StatusBar,
   Platform,
   Animated,
+  Modal,
+  TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { EmptyState } from '../src/components/EmptyState';
+import { collection, getDocs, limit, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
-import { lookupOrders, getUserOrders } from '../src/services/orderService';
+import { OrderCardSkeleton } from '../src/components/ShimmerSkeleton';
 import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
 import { useSettings } from '../src/context/SettingsContext';
-import { Order } from '../src/types';
+import { useCart } from '../src/context/CartContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
-import { formatCurrency, formatDate } from '../src/utils/format';
+import { formatDate } from '../src/utils/format';
+import { lookupOrders } from '../src/services/orderService';
+
+// Bảng màu quy chuẩn Tiệm Nhà Gốm (GEMINI.md & Brand Guidelines)
+const BRAND = {
+  primary: '#9C7156', // Nâu Đất Nung / Gốm Mộc
+  textPrimary: '#2B2928', // Nâu Đen Than Chì
+  bgCream: '#FAF8F5', // Kem Gốm Mộc Sáng
+  warmBeige: '#E8CCB2', // Men Gốm Be Ấm
+  cardWhite: '#FFFFFF',
+  mutedText: '#6E665D',
+  borderSoft: '#E8E1D8',
+  tabInactiveBg: '#F3ECE3',
+  tabInactiveText: '#716B64',
+  danger: '#DC2626',
+  dangerBg: '#FEF2F2',
+  dangerBorder: '#FECACA',
+};
+
+// Định dạng giá tiền dạng "70.000đ"
+const formatDisplayPrice = (amount?: number | null) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return '0đ';
+  return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + 'đ';
+};
+
+// Định dạng ngày ngắn DD/MM/YYYY
+const formatShortDate = (dateInput: any) => {
+  if (!dateInput) return '';
+  try {
+    let d: Date;
+    if (typeof dateInput.toDate === 'function') {
+      d = dateInput.toDate();
+    } else if (dateInput instanceof Date) {
+      d = dateInput;
+    } else if (typeof dateInput === 'number' || typeof dateInput === 'string') {
+      d = new Date(dateInput);
+    } else if (dateInput.seconds) {
+      d = new Date(dateInput.seconds * 1000);
+    } else {
+      return '';
+    }
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return '';
+  }
+};
+
+// Kiểm tra URL ảnh có phải là ảnh placeholder không hợp lệ không
+const isInvalidImage = (url?: string | null) => {
+  if (!url || typeof url !== 'string') return true;
+  const lower = url.trim().toLowerCase();
+  return (
+    lower === '' ||
+    lower.includes('placehold.co') ||
+    lower.includes('placeholder') ||
+    lower.includes('no+image') ||
+    lower.includes('no-image')
+  );
+};
+
+// Khôi phục URL Firebase Storage nếu bị giải mã nhầm qua router params
+export const sanitizeFirebaseStorageUrl = (url?: string | null): string => {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed.includes('firebasestorage.googleapis.com')) return trimmed;
+
+  try {
+    const parts = trimmed.split('/o/');
+    if (parts.length === 2) {
+      const base = parts[0];
+      const rest = parts[1];
+      const queryIdx = rest.indexOf('?');
+      let pathPart = queryIdx !== -1 ? rest.substring(0, queryIdx) : rest;
+      const queryPart = queryIdx !== -1 ? rest.substring(queryIdx) : '';
+
+      if (pathPart.includes('/')) {
+        pathPart = pathPart
+          .split('/')
+          .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+          .join('%2F');
+      } else {
+        pathPart = encodeURIComponent(decodeURIComponent(pathPart));
+      }
+      return `${base}/o/${pathPart}${queryPart}`;
+    }
+  } catch {}
+  return trimmed;
+};
+
+const FALLBACK_CERAMIC_IMAGE =
+  'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d';
+
+/**
+ * HÀM GIẢI QUYẾT ẢNH CHÍNH XÁC CHO TỪNG SẢN PHẨM TRONG ĐƠN:
+ * 1. Ưu tiên tuyệt đối ảnh biến thể (họa tiết hoặc màu sắc)
+ * 2. Tra cứu trong danh mục sản phẩm Firestore (patternVariants, colorVariants, comboVariants)
+ * 3. Lấy ảnh thật từ item (item.image, item.imageUrl)
+ * 4. Lấy ảnh sản phẩm từ catalog
+ */
+export const resolveItemImage = (item: any, productsCatalog: any[] = []): string => {
+  if (!item) return FALLBACK_CERAMIC_IMAGE;
+
+  // 1. Kiểm tra ảnh trực tiếp từ item
+  if (item.resolvedImage && !isInvalidImage(item.resolvedImage)) {
+    return sanitizeFirebaseStorageUrl(item.resolvedImage);
+  }
+  if (item.imageUrl && !isInvalidImage(item.imageUrl)) {
+    return sanitizeFirebaseStorageUrl(item.imageUrl);
+  }
+  if (item.image && !isInvalidImage(item.image)) {
+    return sanitizeFirebaseStorageUrl(item.image);
+  }
+  if (item.thumbUrl && !isInvalidImage(item.thumbUrl)) {
+    return sanitizeFirebaseStorageUrl(item.thumbUrl);
+  }
+
+  // 2. Kiểm tra ảnh biến thể lưu trực tiếp trên item
+  if (item.variant?.imageUrl && !isInvalidImage(item.variant.imageUrl)) {
+    return sanitizeFirebaseStorageUrl(item.variant.imageUrl);
+  }
+  if (item.variant?.thumbUrl && !isInvalidImage(item.variant.thumbUrl)) {
+    return sanitizeFirebaseStorageUrl(item.variant.thumbUrl);
+  }
+
+  const prodId = item.productId || item.id;
+  const catalogProduct = productsCatalog.find(
+    (p) =>
+      p &&
+      (p.id === prodId ||
+        (item.id && p.id?.startsWith(item.id)) ||
+        (prodId && p.id?.includes(prodId)) ||
+        (p.name && item.name && p.name.trim().toLowerCase() === item.name.trim().toLowerCase()))
+  );
+
+  const variantName =
+    item.variant?.name ||
+    item.selectedPattern ||
+    item.pattern ||
+    item.selectedColor ||
+    item.color ||
+    item.variantName ||
+    '';
+
+  // 3. Tra cứu trong các biến thể của catalog Firestore
+  if (catalogProduct && variantName) {
+    const cleanVarName = String(variantName).trim().toLowerCase();
+
+    // 2.1 Biến thể Họa Tiết (patternVariants)
+    if (Array.isArray(catalogProduct.patternVariants)) {
+      const matchPattern = catalogProduct.patternVariants.find(
+        (v: any) => v && v.name && v.name.trim().toLowerCase() === cleanVarName
+      );
+      if (matchPattern) {
+        const vImg = matchPattern.imageUrl || matchPattern.thumbUrl;
+        if (!isInvalidImage(vImg)) return vImg;
+      }
+    }
+
+    // 2.2 Biến thể Màu Sắc (colorVariants)
+    if (Array.isArray(catalogProduct.colorVariants)) {
+      const matchColor = catalogProduct.colorVariants.find(
+        (v: any) => v && v.name && v.name.trim().toLowerCase() === cleanVarName
+      );
+      if (matchColor) {
+        const vImg = matchColor.imageUrl || matchColor.thumbUrl;
+        if (!isInvalidImage(vImg)) return vImg;
+      }
+    }
+
+    // 2.3 Biến thể Combo (comboVariants)
+    if (Array.isArray(catalogProduct.comboVariants)) {
+      const matchCombo = catalogProduct.comboVariants.find(
+        (v: any) => v && v.name && v.name.trim().toLowerCase() === cleanVarName
+      );
+      if (matchCombo) {
+        const vImg = matchCombo.imageUrl || matchCombo.thumbUrl;
+        if (!isInvalidImage(vImg)) return vImg;
+      }
+    }
+  }
+
+  // 3. Ảnh trực tiếp của item trong đơn (item.image hoặc item.imageUrl) nếu không phải placeholder
+  if (item.imageUrl && !isInvalidImage(item.imageUrl)) {
+    return item.imageUrl;
+  }
+  if (item.image && !isInvalidImage(item.image)) {
+    return item.image;
+  }
+  if (item.thumbUrl && !isInvalidImage(item.thumbUrl)) {
+    return item.thumbUrl;
+  }
+
+  // 4. Lấy ảnh chính của sản phẩm trong catalog Firestore
+  if (catalogProduct) {
+    if (catalogProduct.imageUrl && !isInvalidImage(catalogProduct.imageUrl)) {
+      return catalogProduct.imageUrl;
+    }
+    if (Array.isArray(catalogProduct.images) && catalogProduct.images.length > 0) {
+      const validFirst = catalogProduct.images.find((img: string) => !isInvalidImage(img));
+      if (validFirst) return validFirst;
+    }
+
+    // Nếu product có biến thể nào có ảnh thật thì lấy ảnh đó
+    const allVariants = [
+      ...(catalogProduct.patternVariants || []),
+      ...(catalogProduct.colorVariants || []),
+      ...(catalogProduct.comboVariants || []),
+    ];
+    const firstVarWithImg = allVariants.find(
+      (v: any) => v && (v.imageUrl || v.thumbUrl) && !isInvalidImage(v.imageUrl || v.thumbUrl)
+    );
+    if (firstVarWithImg) {
+      return firstVarWithImg.imageUrl || firstVarWithImg.thumbUrl;
+    }
+  }
+
+  // Fallback an toàn về ảnh men gốm Tiệm Nhà Gốm
+  return FALLBACK_CERAMIC_IMAGE;
+};
+
+// Lấy nhãn biến thể để hiển thị chi tiết (vd: "Họa tiết: Gấu Nâu" hoặc "Màu sắc: Men Rạn")
+const getVariantDisplayLabel = (item: any): string => {
+  if (item.selectedPattern || item.pattern) {
+    return `Họa tiết: ${item.selectedPattern || item.pattern}`;
+  }
+  if (item.selectedColor || item.color) {
+    return `Màu sắc: ${item.selectedColor || item.color}`;
+  }
+  if (item.variant?.name) {
+    const typeLabel =
+      item.variant.type === 'color'
+        ? 'Màu sắc'
+        : item.variant.type === 'pattern'
+        ? 'Họa tiết'
+        : item.variant.type === 'combo'
+        ? 'Combo'
+        : 'Phân loại';
+    return `${typeLabel}: ${item.variant.name}`;
+  }
+  return '';
+};
+
+type MainTab = 'ongoing' | 'completed' | 'cancelled';
 
 export default function OrdersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useSettings();
   const { user } = useAuth();
-  const { orders: realtimeOrders } = useRealtimeData();
-  const [activeTab, setActiveTab] = useState<'lookup' | 'my-orders'>('lookup');
+  const { products: productsCatalog, orders: realtimeOrders } = useRealtimeData();
+  const { addToCart } = useCart();
+
+  // Tab lọc chính (Đang diễn ra | Hoàn thành | Đã hủy)
+  const [activeTab, setActiveTab] = useState<MainTab>('completed');
+
+  // Lọc phụ (Thời gian | Cửa hàng)
+  const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '3months' | '6months' | '2026'>('all');
+  const [storeFilter, setStoreFilter] = useState<'all' | 'gia-dinh' | 'online' | 'pickup'>('all');
+
+  // Đơn hàng lấy trực tiếp từ Firestore
+  const [firestoreOrders, setFirestoreOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  // Modals
+  const [timeModalVisible, setTimeModalVisible] = useState(false);
+  const [storeModalVisible, setStoreModalVisible] = useState(false);
+  const [lookupModalVisible, setLookupModalVisible] = useState(false);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<any | null>(null);
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [ratingOrder, setRatingOrder] = useState<any | null>(null);
+  const [starCount, setStarCount] = useState(5);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewTags, setReviewTags] = useState<string[]>(['Men gốm tinh xảo']);
+
+  // Tra cứu đơn
   const [searchInput, setSearchInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResults, setLookupResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  useEffect(() => {
-    if (activeTab === 'my-orders') {
-      setOrders(realtimeOrders);
-      setHasSearched(true);
-    } else if (activeTab === 'lookup') {
-      setOrders([]);
-      setHasSearched(false);
-    }
-  }, [activeTab, realtimeOrders]);
-
-  const handleLookup = async () => {
-    if (!searchInput.trim()) return;
-    setLoading(true);
-    setHasSearched(true);
-    try {
-      const res = await lookupOrders(searchInput);
-      setOrders(res);
-    } catch (e) {
-      console.warn('Lỗi tra cứu đơn: ' + String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusConfig = (status: string) => {
-    const s = (status || '').toLowerCase();
-    if (s.includes('hoàn thành') || s.includes('thành công') || s.includes('completed')) {
-      return { bg: '#F0FDF4', color: '#16A34A', icon: 'checkmark-circle' as const, label: t('statusCompleted') };
-    }
-    if (s.includes('đang giao') || s.includes('shipping') || s.includes('delivery')) {
-      return { bg: '#EFF6FF', color: '#2563EB', icon: 'bicycle' as const, label: t('statusShipping') };
-    }
-    if (s.includes('hủy') || s.includes('cancelled') || s.includes('cancel')) {
-      return { bg: '#FEF2F2', color: '#DC2626', icon: 'close-circle' as const, label: t('statusCancelled') };
-    }
-    return { bg: '#F5F3FF', color: '#7C3AED', icon: 'time' as const, label: status || t('statusProcessing') };
-  };
-
+  // Hiệu ứng cuộn và vào trang
   const [scrollY, setScrollY] = useState(0);
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+  const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 35 });
 
-  const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: 15, delay: 30 });
+  // ── LẤY ĐƠN HÀNG TRỰC TIẾP TỪ FIRESTORE ──
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const loadOrdersFromFirestore = async () => {
+      setLoadingOrders(true);
+      try {
+        const ordersRef = collection(db, 'orders');
+
+        // Nếu user đã đăng nhập, ưu tiên tải đơn của user
+        if (user?.uid) {
+          const qUser = query(ordersRef, where('userId', '==', user.uid), limit(50));
+          const snapUser = await getDocs(qUser);
+          const userOrdersList: any[] = [];
+          snapUser.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
+
+          // Tìm thêm với trường `user` (trong các đơn bán từ POS)
+          if (userOrdersList.length === 0) {
+            const qUserPos = query(ordersRef, where('user', '==', user.uid), limit(50));
+            const snapPos = await getDocs(qUserPos);
+            snapPos.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
+          }
+
+          if (userOrdersList.length > 0) {
+            userOrdersList.sort((a, b) => {
+              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+              return timeB - timeA;
+            });
+            setFirestoreOrders(userOrdersList);
+            setLoadingOrders(false);
+            return;
+          }
+        }
+
+        // Lấy danh sách đơn hàng thực tế mới nhất từ Firestore (ngay cả khi chưa đăng nhập / test)
+        const qRecent = query(ordersRef, limit(35));
+        unsubscribe = onSnapshot(
+          qRecent,
+          (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((d) => {
+              list.push({ id: d.id, ...d.data() });
+            });
+
+            // Sắp xếp đơn mới nhất lên đầu theo timestamp thực tế trong Firestore
+            list.sort((a, b) => {
+              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+              return timeB - timeA;
+            });
+
+            setFirestoreOrders(list);
+            setLoadingOrders(false);
+          },
+          (err) => {
+            console.warn('Lỗi lắng nghe đơn hàng Firestore:', err);
+            setLoadingOrders(false);
+          }
+        );
+      } catch (e) {
+        console.warn('Lỗi đọc đơn hàng từ Firestore:', e);
+        setLoadingOrders(false);
+      }
+    };
+
+    loadOrdersFromFirestore();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [user]);
+
+  // ── CHUẨN HÓA ĐƠN HÀNG LẤY ĐÚNG MÃ TRONG FIRESTORE & ĐÚNG ẢNH SẢN PHẨM / BIẾN THỂ ──
+  const allOrders = useMemo(() => {
+    // Ưu tiên danh sách đơn tải trực tiếp từ Firestore, sau đó là realtimeOrders
+    const rawList =
+      firestoreOrders.length > 0
+        ? firestoreOrders
+        : Array.isArray(realtimeOrders) && realtimeOrders.length > 0
+        ? realtimeOrders
+        : [];
+
+    return rawList.map((item: any) => {
+      // 1. MÃ ĐƠN HÀNG PHẢI LẤY ĐÚNG TRONG FIRESTORE (orderCode hoặc orderId hoặc doc.id)
+      const exactOrderCode = item.orderCode || item.orderId || item.code || item.id || '';
+      const upperCode = exactOrderCode.toUpperCase();
+
+      const orderDate = item.orderDate || item.createdAt || new Date();
+      const statusRaw = item.status || 'Đã hoàn thành';
+
+      // Hình thức nhận hàng theo quy tắc:
+      // - Nếu là đơn từ máy POS (mã POS-xxxx, source: pos): để là "Mua tại cửa hàng"
+      // - Nếu là mã TNG-xxxx hoặc đơn trực tuyến: để là "Mua online"
+      let orderMethod = item.orderMethod;
+      if (upperCode.startsWith('POS') || item.source === 'pos' || item.channel === 'pos' || item.inStore) {
+        orderMethod = 'Mua tại cửa hàng';
+      } else if (upperCode.startsWith('TNG')) {
+        orderMethod = 'Mua online';
+      } else if (item.shippingMethod === 'pickup' || item.deliveryMethod === 'pickup') {
+        orderMethod = 'Tự đến lấy';
+      } else if (!orderMethod) {
+        orderMethod = 'Mua online';
+      }
+
+      // Tên chi nhánh / showroom
+      let storeName = item.storeName;
+      if (!storeName) {
+        if (orderMethod === 'Mua tại cửa hàng' || upperCode.startsWith('POS')) {
+          storeName = 'Tiệm Nhà Gốm — 37 Nguyễn Duy, Gia Định';
+        } else if (orderMethod === 'Tự đến lấy') {
+          storeName = 'Tiệm Nhà Gốm — Showroom Gia Định';
+        } else {
+          storeName = 'Tiệm Nhà Gốm — Đặt hàng Trực tuyến';
+        }
+      }
+
+      // Danh sách sản phẩm kèm ảnh chính xác (biến thể hoạ tiết / màu sắc / combo)
+      const items = Array.isArray(item.items)
+        ? item.items.map((it: any) => {
+            const resolvedImg = resolveItemImage(it, productsCatalog);
+            const variantText = getVariantDisplayLabel(it);
+            return {
+              ...it,
+              resolvedImage: resolvedImg,
+              variantDisplay: variantText,
+            };
+          })
+        : [];
+
+      // Tóm tắt danh sách tên sản phẩm
+      let summaryName = item.summaryName;
+      if (!summaryName) {
+        if (Array.isArray(item.productNames) && item.productNames.length > 0) {
+          summaryName = item.productNames.join(', ');
+        } else if (items.length > 0) {
+          summaryName = items.map((i: any) => i.name).filter(Boolean).join(', ');
+        }
+      }
+
+      return {
+        ...item,
+        id: item.id || exactOrderCode,
+        orderCode: exactOrderCode, // Giữ nguyên 100% mã đơn hàng từ Firestore
+        orderDate,
+        orderMethod,
+        storeName,
+        items,
+        summaryName: summaryName || 'Sản phẩm gốm thủ công Tiệm Nhà Gốm',
+        statusRaw,
+      };
+    });
+  }, [firestoreOrders, realtimeOrders, productsCatalog]);
+
+  // Phân loại đơn theo 3 Tab chính (Đang diễn ra | Hoàn thành | Đã hủy)
+  const filteredOrders = useMemo(() => {
+    return allOrders.filter((order) => {
+      const s = (order.statusRaw || '').toLowerCase();
+      const isCancelled = s.includes('hủy') || s.includes('cancel');
+      const isCompleted =
+        s.includes('hoàn') ||
+        s.includes('complete') ||
+        s.includes('giao thành công') ||
+        s.includes('đã nhận');
+      const isOngoing = !isCancelled && !isCompleted;
+
+      // 1. Lọc theo Tab chính
+      if (activeTab === 'ongoing' && !isOngoing) return false;
+      if (activeTab === 'completed' && !isCompleted) return false;
+      if (activeTab === 'cancelled' && !isCancelled) return false;
+
+      // 2. Lọc theo Thời gian
+      if (timeFilter !== 'all') {
+        const orderTime = order.orderDate?.seconds
+          ? order.orderDate.seconds * 1000
+          : new Date(order.orderDate).getTime();
+        const now = Date.now();
+        const diffDays = (now - orderTime) / (1000 * 60 * 60 * 24);
+        if (timeFilter === '30days' && diffDays > 30) return false;
+        if (timeFilter === '3months' && diffDays > 90) return false;
+        if (timeFilter === '6months' && diffDays > 180) return false;
+      }
+
+      // 3. Lọc theo Cửa hàng
+      if (storeFilter !== 'all') {
+        if (storeFilter === 'gia-dinh' && order.orderMethod !== 'Mua tại cửa hàng') return false;
+        if (storeFilter === 'online' && order.orderMethod !== 'Mua online') return false;
+        if (storeFilter === 'pickup' && order.orderMethod !== 'Tự đến lấy') return false;
+      }
+
+      return true;
+    });
+  }, [allOrders, activeTab, timeFilter, storeFilter]);
+
+  // Nhãn hiển thị Dropdown Thời Gian
+  const timeFilterLabel = useMemo(() => {
+    switch (timeFilter) {
+      case '30days':
+        return t('timeFilter30Days') || '30 ngày qua';
+      case '3months':
+        return t('timeFilter3Months') || '3 tháng qua';
+      case '6months':
+        return t('timeFilter6Months') || '6 tháng qua';
+      case '2026':
+        return '2026';
+      default:
+        return t('timeFilterAll') || 'Thời gian';
+    }
+  }, [timeFilter, t]);
+
+  // Nhãn hiển thị Dropdown Cửa Hàng
+  const storeFilterLabel = useMemo(() => {
+    switch (storeFilter) {
+      case 'gia-dinh':
+        return t('inStorePurchase') || 'Tại cửa hàng';
+      case 'online':
+        return t('onlinePurchase') || 'Mua online';
+      case 'pickup':
+        return t('pickupPurchase') || 'Tự đến lấy';
+      default:
+        return t('storeLabel') || 'Cửa hàng';
+    }
+  }, [storeFilter, t]);
+
+
+  // Xử lý nút "Đặt lại món quen"
+  const handleReorder = (order: any) => {
+    if (!order.items || order.items.length === 0) {
+      Alert.alert('Thông báo', 'Đơn hàng này không có danh sách sản phẩm để đặt lại.');
+      return;
+    }
+
+    let count = 0;
+    order.items.forEach((item: any) => {
+      const productObj: any = {
+        id: item.productId || item.id,
+        name: item.name,
+        price: item.price,
+        stock: 50,
+        imageUrl: item.resolvedImage || item.image || item.imageUrl,
+      };
+      addToCart(productObj, item.quantity || 1, item.variant);
+      count += item.quantity || 1;
+    });
+
+    Alert.alert(
+      'Đã thêm vào giỏ hàng',
+      `Đã đưa ${count} sản phẩm từ đơn hàng #${order.orderCode} vào giỏ hàng của bạn. Bạn có muốn đến giỏ hàng ngay không?`,
+      [
+        { text: 'Tiếp tục xem', style: 'cancel' },
+        { text: 'Đến Giỏ Hàng', onPress: () => router.push('/(tabs)/cart') },
+      ]
+    );
+  };
+
+  // Mở modal Đánh giá
+  const handleOpenRating = (order: any) => {
+    setRatingOrder(order);
+    setStarCount(5);
+    setReviewNote('');
+    setReviewTags(['Men gốm tinh xảo', 'Đóng gói cẩn thận']);
+    setRatingModalVisible(true);
+  };
+
+  // Gửi đánh giá
+  const handleSubmitRating = () => {
+    setRatingModalVisible(false);
+    Alert.alert(
+      'Cảm ơn bạn! ✨',
+      `Đánh giá ${starCount} sao cho đơn #${ratingOrder?.orderCode} đã được ghi nhận. Tiệm Nhà Gốm rất trân quý phản hồi từ bạn.`
+    );
+  };
+
+  // Tra cứu đơn hàng theo mã hoặc SĐT
+  const handleLookup = async () => {
+    if (!searchInput.trim()) return;
+    setLookupLoading(true);
+    setHasSearched(true);
+    try {
+      const res = await lookupOrders(searchInput.trim());
+      setLookupResults(res);
+    } catch (e) {
+      console.warn('Lỗi tra cứu đơn:', e);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Cấu hình nhãn và màu sắc badge trạng thái (TUYỆT ĐỐI KHÔNG DÙNG MÀU XANH LÁ)
+  const getBadgeStyle = (status: string) => {
+    const s = (status || '').toLowerCase();
+    if (s.includes('hủy') || s.includes('cancel')) {
+      return {
+        bg: BRAND.dangerBg,
+        borderColor: BRAND.dangerBorder,
+        textColor: BRAND.danger,
+        label: 'Đã hủy',
+      };
+    }
+    if (s.includes('giao') || s.includes('ship')) {
+      return {
+        bg: '#FAF4ED',
+        borderColor: BRAND.warmBeige,
+        textColor: '#8A5A2B',
+        label: 'Đang giao',
+      };
+    }
+    if (s.includes('xác nhận') || s.includes('xử lý') || s.includes('chuẩn bị')) {
+      return {
+        bg: '#F5F3EF',
+        borderColor: BRAND.borderSoft,
+        textColor: BRAND.mutedText,
+        label: 'Đang chuẩn bị',
+      };
+    }
+    // Hoàn tất: Tông kem gốm sang trọng, viền men gốm ấm, chữ nâu đất nung
+    return {
+      bg: '#F6F4EC',
+      borderColor: BRAND.warmBeige,
+      textColor: BRAND.primary,
+      label: 'Hoàn tất',
+    };
+  };
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+      <StatusBar barStyle="dark-content" backgroundColor={BRAND.bgCream} />
 
-      {/* ── Header ── */}
+      {/* ── HEADER CHUẨN THIẾT KẾ TIỆM NHÀ GỐM (KHÔNG VẠCH KẺ ĐÁY) ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
         {blurProgress > 0 && (
           <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor:
-                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
-                },
-              ]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(250, 248, 245, 0.7)' }]} />
           </View>
         )}
+
+        {/* Nút quay lại tròn đều 40x40 chuẩn quy tắc */}
         <ScalePressable
-          style={styles.backBtn}
+          style={styles.backCircleBtn}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={24} color="#18181B" />
+          <Ionicons name="arrow-back" size={22} color={BRAND.textPrimary} />
         </ScalePressable>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('orderTitle')}</Text>
+
+        {/* Tiêu đề chính giữa */}
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitleText}>{t('orderHistoryTitle') || 'Lịch sử mua hàng'}</Text>
         </View>
-        <View style={styles.headerRight} />
+
+        {/* Nút tìm kiếm / tra cứu đơn hàng nhanh */}
+        <ScalePressable
+          style={styles.searchCircleBtn}
+          onPress={() => setLookupModalVisible(true)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="search-outline" size={20} color={BRAND.textPrimary} />
+        </ScalePressable>
       </View>
 
+      {/* ── KHỐI BỘ LỌC CỐ ĐỊNH TRÊN CÙNG (3 TABS + HÀNG THỜI GIAN/CỬA HÀNG) ── */}
+      <View style={[styles.fixedFilterContainer, { paddingTop: insets.top + 54 }]}>
+        {/* 1. Hàng 3 Tab Viên Thuốc: Đang diễn ra | Hoàn thành | Đã hủy */}
+        <View style={styles.tabsRow}>
+          <TouchableOpacity
+            style={[styles.tabPill, activeTab === 'ongoing' ? styles.tabPillActive : styles.tabPillInactive]}
+            activeOpacity={0.85}
+            onPress={() => setActiveTab('ongoing')}
+          >
+            <Text style={[styles.tabText, activeTab === 'ongoing' ? styles.tabTextActive : styles.tabTextInactive]}>
+              {t('tabOngoing') || 'Đang diễn ra'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabPill, activeTab === 'completed' ? styles.tabPillActive : styles.tabPillInactive]}
+            activeOpacity={0.85}
+            onPress={() => setActiveTab('completed')}
+          >
+            <Text style={[styles.tabText, activeTab === 'completed' ? styles.tabTextActive : styles.tabTextInactive]}>
+              {t('tabCompleted') || 'Hoàn thành'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabPill, activeTab === 'cancelled' ? styles.tabPillActive : styles.tabPillInactive]}
+            activeOpacity={0.85}
+            onPress={() => setActiveTab('cancelled')}
+          >
+            <Text style={[styles.tabText, activeTab === 'cancelled' ? styles.tabTextActive : styles.tabTextInactive]}>
+              {t('tabCancelled') || 'Đã hủy'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 2. Hàng Dropdown Lọc Phụ: Thời gian | Cửa hàng */}
+        <View style={styles.subFilterRow}>
+          <TouchableOpacity
+            style={[styles.filterDropdownTouch, timeFilter !== 'all' && styles.filterDropdownTouchActive]}
+            activeOpacity={0.7}
+            onPress={() => setTimeModalVisible(true)}
+          >
+            <Text style={[styles.filterDropdownText, timeFilter !== 'all' && styles.filterDropdownTextActive]}>
+              {timeFilterLabel}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={15}
+              color={timeFilter !== 'all' ? BRAND.primary : BRAND.textPrimary}
+              style={{ marginLeft: 4 }}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterDropdownTouch, storeFilter !== 'all' && styles.filterDropdownTouchActive]}
+            activeOpacity={0.7}
+            onPress={() => setStoreModalVisible(true)}
+          >
+            <Text style={[styles.filterDropdownText, storeFilter !== 'all' && styles.filterDropdownTextActive]}>
+              {storeFilterLabel}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={15}
+              color={storeFilter !== 'all' ? BRAND.primary : BRAND.textPrimary}
+              style={{ marginLeft: 4 }}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ── NỘI DUNG DANH SÁCH CUỘN ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 6 }]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollListContent}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
-        {/* ── Tab Switcher ── */}
-        <View style={styles.tabWrap}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'lookup' && styles.tabActive]}
-            onPress={() => setActiveTab('lookup')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="search-outline" size={14} color={activeTab === 'lookup' ? '#FFFFFF' : '#71717A'} />
-            <Text style={[styles.tabText, activeTab === 'lookup' && styles.tabTextActive]}>{t('lookupOrder')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'my-orders' && styles.tabActive]}
-            onPress={() => setActiveTab('my-orders')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="receipt-outline" size={14} color={activeTab === 'my-orders' ? '#FFFFFF' : '#71717A'} />
-            <Text style={[styles.tabText, activeTab === 'my-orders' && styles.tabTextActive]}>{t('myOrders')}</Text>
-          </TouchableOpacity>
-        </View>
-        {/* ── Tra cứu ── */}
-        {activeTab === 'lookup' && (
-          <View style={styles.lookupCard}>
-            <View style={styles.lookupIconWrap}>
-              <Ionicons name="search" size={22} color="#111111" />
-            </View>
-            <Text style={styles.lookupTitle}>{t('lookupOrderTitle')}</Text>
-            <Text style={styles.lookupDesc}>
-              {t('lookupOrderDesc')}
-            </Text>
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrap}>
-                <Ionicons name="call-outline" size={16} color="#9CA3AF" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t('lookupOrderPlaceholder')}
-                  placeholderTextColor="#9CA3AF"
-                  value={searchInput}
-                  onChangeText={setSearchInput}
-                  returnKeyType="search"
-                  onSubmitEditing={handleLookup}
-                />
-                {searchInput.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchInput('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="close-circle" size={16} color="#9CA3AF" />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <TouchableOpacity style={styles.lookupBtn} onPress={handleLookup} activeOpacity={0.85}>
-                <Text style={styles.lookupBtnText}>{t('search')}</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Skeleton Shimmer Loading thay cho vòng xoay đơn điệu */}
+        {loadingOrders && firestoreOrders.length === 0 ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
           </View>
-        )}
+        ) : filteredOrders.length === 0 ? (
+          /* TRƯỜNG HỢP: KHÔNG CÓ ĐƠN HÀNG (EMPTY STATE CHUẨN ẢNH 1) */
+          <View style={styles.emptyContainer}>
+            <View style={styles.boxIllustrationWrap}>
+              <View style={styles.boxAura} />
+              <View style={styles.boxArtIcon}>
+                <Ionicons name="cube-outline" size={76} color={BRAND.primary} />
+                <View style={styles.boxBubbleBadge}>
+                  <Ionicons name="chatbubble-ellipses" size={24} color={BRAND.primary} />
+                </View>
+                <Ionicons name="sparkles" size={18} color={BRAND.primary} style={styles.boxSparkleTop} />
+              </View>
+            </View>
 
-        {/* ── Chưa đăng nhập ── */}
-        {activeTab === 'my-orders' && !user && (
-          <View style={styles.loginPrompt}>
-            <Ionicons name="person-circle-outline" size={56} color="#D4D4D8" />
-            <Text style={styles.loginTitle}>{t('notLoggedIn')}</Text>
-            <Text style={styles.loginDesc}>
-              {t('loginPromptDesc')}
+            <Text style={styles.emptyMainText}>
+              {activeTab === 'ongoing'
+                ? t('emptyOrdersOngoing') || 'Không có đơn hàng nào đang diễn ra'
+                : activeTab === 'completed'
+                ? t('emptyOrdersCompleted') || 'Bạn chưa có đơn hàng nào đã hoàn tất'
+                : t('emptyOrdersCancelled') || 'Không có đơn hàng nào bị hủy'}
             </Text>
-            <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login' as any)} activeOpacity={0.85}>
-              <Text style={styles.loginBtnText}>{t('loginNow')}</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+
+            <Text style={styles.emptySubText}>
+              {t('emptyOrdersDesc') || 'Hãy khám phá các tác phẩm gốm mộc tinh xảo và chọn cho mình những món đồ ưng ý nhé!'}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.emptyExploreBtn}
+              activeOpacity={0.85}
+              onPress={() => router.push('/(tabs)/products')}
+            >
+              <Text style={styles.emptyExploreBtnText}>{t('exploreCeramicsNow') || 'Khám phá đồ gốm ngay'}</Text>
+              <Ionicons name="arrow-forward" size={17} color="#FFFFFF" style={{ marginLeft: 6 }} />
             </TouchableOpacity>
           </View>
-        )}
+        ) : (
+          /* TRƯỜNG HỢP: CÓ ĐƠN HÀNG (DANH SÁCH THẺ ĐƠN HÀNG CHUẨN ẢNH 2) */
+          <View style={styles.ordersListWrap}>
 
-        {/* ── Loading ── */}
-        {loading && (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#111111" />
-            <Text style={styles.loadingText}>{t('loadingOrders')}</Text>
-          </View>
-        )}
+            {filteredOrders.map((order, index) => {
+              const badge = getBadgeStyle(order.statusRaw);
+              const itemsList = order.items || [];
+              const previewThumbnails = itemsList.slice(0, 4);
+              const extraCount = Math.max(0, itemsList.length - 4);
 
-        {/* ── Không tìm thấy ── */}
-        {!loading && hasSearched && orders.length === 0 && (
-          <View style={styles.emptyWrap}>
-            <Ionicons name="receipt-outline" size={44} color="#D4D4D8" />
-            <Text style={styles.emptyTitle}>{t('noOrdersFound')}</Text>
-            <Text style={styles.emptyDesc}>
-              {activeTab === 'lookup'
-                ? t('noOrdersLookupDesc')
-                : t('noOrdersMyDesc')}
-            </Text>
-          </View>
-        )}
-
-        {/* ── Danh sách đơn ── */}
-        {!loading && orders.length > 0 && (
-          <View style={styles.ordersList}>
-            <Text style={styles.resultsCount}>{orders.length} {t('ordersCount')}</Text>
-
-            {orders.map((order, idx) => {
-              const st = getStatusConfig(order.status);
               return (
-                <View key={order.id || idx} style={styles.orderCard}>
-                  {/* Header: Mã đơn + Trạng thái */}
-                  <View style={styles.cardHeader}>
-                    <View>
-                      <Text style={styles.orderCodeLabel}>{t('orderCodeLabel')}</Text>
-                      <Text style={styles.orderCode}>
-                        {order.orderCode || `#${String(order.id || '').slice(-6).toUpperCase()}`}
+                <TouchableOpacity
+                  key={order.id || index}
+                  style={styles.orderCard}
+                  activeOpacity={0.92}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/order-detail',
+                      params: { orderId: order.id, orderData: JSON.stringify(order) },
+                    });
+                  }}
+                >
+                  {/* ── HÀNG 1: THÔNG TIN HÌNH THỨC, NGÀY ĐẶT & MÃ ĐƠN CHUẨN FIRESTORE ── */}
+                  <View style={styles.cardTopRow}>
+                    <View style={styles.cardTopLeft}>
+                      <Text style={styles.orderMethodDateText}>
+                        {order.orderMethod} | {formatShortDate(order.orderDate)}
                       </Text>
-                      <Text style={styles.orderDate}>Ngày đặt: {formatDate(order.orderDate)}</Text>
+                      {/* Hiển thị chính xác 100% mã đơn hàng từ Firestore */}
+                      <Text style={styles.orderCodeText} numberOfLines={1}>
+                        Mã đơn hàng: {order.orderCode}
+                      </Text>
                     </View>
-                    <View style={styles.cardHeaderRight}>
-                      <Text style={styles.statusLabel}>{t('statusLabel')}</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: st.bg }]}>
-                        <Text style={[styles.statusText, { color: st.color }]}>{st.label}</Text>
-                      </View>
+
+                    {/* Badge trạng thái */}
+                    <View style={[styles.statusBadge, { backgroundColor: badge.bg, borderColor: badge.borderColor }]}>
+                      <Text style={[styles.statusBadgeText, { color: badge.textColor }]}>{badge.label}</Text>
                     </View>
                   </View>
 
-                  {/* Progress Timeline */}
-                  <View style={styles.timelineWrap}>
-                    {[t('statusReceived') || 'Tiếp nhận', t('statusPacking') || 'Đóng gói', t('statusShipping') || 'Đang giao', t('statusDelivered') || 'Đã nhận'].map((step, sIdx) => {
-                      let isActive = false;
-                      if (st.label === t('statusCancelled') || st.label === 'Đã hủy') {
-                        isActive = sIdx === 0;
-                      } else if (st.label === t('statusCompleted') || st.label === 'Hoàn thành') {
-                        isActive = true;
-                      } else if (st.label === t('statusShipping') || st.label === 'Đang giao') {
-                        isActive = sIdx <= 2;
-                      } else {
-                        const original = (order.status || '').toLowerCase();
-                        if (original.includes('xác nhận') || original.includes('đóng gói')) {
-                          isActive = sIdx <= 1;
-                        } else {
-                          isActive = sIdx === 0;
-                        }
-                      }
+                  {/* ── HÀNG 2: TÊN CỬA HÀNG / CHI NHÁNH ── */}
+                  <Text style={styles.storeNameTitle} numberOfLines={1}>
+                    {order.storeName}
+                  </Text>
 
-                      return (
-                        <View key={step} style={styles.timelineStep}>
-                          <View style={styles.timelineIconWrap}>
-                            <View style={[styles.timelineIcon, isActive && styles.timelineIconActive]}>
-                              {isActive && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
-                            </View>
-                            {sIdx < 3 && <View style={[styles.timelineLine, isActive && styles.timelineLineActive]} />}
-                          </View>
-                          <Text style={[styles.timelineText, isActive && styles.timelineTextActive]}>{step}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
+                  {/* ── HÀNG 3: DANH SÁCH THUMBNAIL ẢNH SẢN PHẨM & BIẾN THỂ CHUẨN XÁC ── */}
+                  {itemsList.length > 0 && (
+                    <View style={styles.thumbnailsRow}>
+                      {previewThumbnails.map((item: any, thumbIdx: number) => {
+                        const imgUri = item.resolvedImage;
 
-                  <View style={styles.sep} />
-
-                  {/* Sản phẩm */}
-                  <View style={styles.itemsSection}>
-                    <Text style={styles.itemsSectionLabel}>SẢN PHẨM ({order.items?.length || 0})</Text>
-                    {order.items?.map((item, itemIdx) => (
-                      <View key={itemIdx} style={styles.itemRow}>
-                        <View style={styles.itemImageWrap}>
-                          {item.variant?.imageUrl || item.imageUrl ? (
+                        return (
+                          <View key={thumbIdx} style={styles.thumbnailWrapper}>
                             <Image
-                              source={{ uri: item.variant?.imageUrl || item.imageUrl }}
-                              style={styles.itemImage}
+                              source={{ uri: imgUri }}
+                              style={styles.productThumbnail}
                               contentFit="cover"
+                              transition={150}
+                              cachePolicy="disk"
+                              recyclingKey={imgUri}
                             />
-                          ) : (
-                            <Ionicons name="image-outline" size={20} color="#D4D4D8" />
-                          )}
-                        </View>
-                        <View style={styles.itemInfo}>
-                          <Text style={styles.itemName} numberOfLines={2}>
-                            {item.name}
-                          </Text>
-                          {item.variant?.name ? (
-                            <Text style={styles.itemVariant}>
-                              {item.variant.type === 'color' ? 'Màu sắc' : item.variant.type === 'pattern' ? 'Họa tiết' : item.variant.type === 'combo' ? 'Combo' : 'Phân loại'}: {item.variant.name}
-                            </Text>
-                          ) : null}
-                          <Text style={styles.itemQty}>SL: x{item.quantity}</Text>
-                        </View>
-                        <View style={styles.itemRight}>
-                          <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
-                        </View>
-                      </View>
-                    ))}
+                            {/* Ô cuối cùng có hiển thị số lượng món còn lại nếu > 4 */}
+                            {thumbIdx === 3 && extraCount > 0 && (
+                              <View style={styles.extraCountOverlay}>
+                                <Text style={styles.extraCountText}>+{extraCount}</Text>
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* ── HÀNG 4: TÊN SẢN PHẨM TÓM TẮT & TỔNG TIỀN ĐƠN ── */}
+                  <View style={styles.summaryAndPriceRow}>
+                    <Text style={styles.summaryItemsText} numberOfLines={1}>
+                      {order.summaryName}
+                    </Text>
+                    <Text style={styles.totalPriceBoldText}>
+                      {formatDisplayPrice(order.totalAmount)}
+                    </Text>
                   </View>
 
-                  {/* Footer Details */}
-                  <View style={styles.footerGrid}>
-                    {/* Cột trái: Địa chỉ & Thanh toán */}
-                    <View style={styles.footerLeft}>
-                      <Text style={styles.footerLabel}>{t('shippingAddressLabel')}</Text>
-                      <Text style={styles.footerTextBold}>
-                        {order.customerName} - {order.shippingAddress?.phone?.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2')}
-                      </Text>
-                      {Boolean(order.shippingAddress?.address) && (
-                        <Text style={styles.footerText} numberOfLines={2}>
-                          {order.shippingAddress?.address}
-                        </Text>
-                      )}
-                      <Text style={[styles.footerText, { marginTop: 8 }]}>
-                        Hình thức thanh toán: {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận (COD)' : 'Chuyển khoản / Trực tiếp'}
-                      </Text>
-                    </View>
+                  {/* ── HÀNG 5: CÁC NÚT HÀNH ĐỘNG DẠNG VIÊN THUỐC ── */}
+                  <View style={styles.cardActionsRow}>
+                    {/* Nút Đánh giá (Hiện khi đơn đã hoàn thành) */}
+                    {activeTab === 'completed' && (
+                      <TouchableOpacity
+                        style={styles.reviewBtn}
+                        activeOpacity={0.8}
+                        onPress={() => handleOpenRating(order)}
+                      >
+                        <Text style={styles.reviewBtnText}>{t('reviewAction') || 'Đánh giá'}</Text>
+                      </TouchableOpacity>
+                    )}
 
-                    {/* Dấu phân cách dọc */}
-                    <View style={styles.verticalSep} />
-
-                    {/* Cột phải: Tổng kết tiền */}
-                    <View style={styles.footerRight}>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Tạm tính ({order.items?.length || 0} món):</Text>
-                        <Text style={styles.summaryValue}>{formatCurrency(order.subtotal || order.items?.reduce((acc, i) => acc + i.price * i.quantity, 0) || 0)}</Text>
-                      </View>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>{t('shippingFeeLabel')}</Text>
-                        <Text style={[styles.summaryValue, order.shippingFee === 0 && { color: '#16A34A' }]}>
-                          {order.shippingFee === 0 ? '0 VND (Miễn phí)' : formatCurrency(order.shippingFee || 0)}
-                        </Text>
-                      </View>
-                      {Boolean(order.discountAmount) && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>{t('discountLabel')}</Text>
-                          <Text style={styles.summaryValue}>-{formatCurrency(order.discountAmount)}</Text>
-                        </View>
-                      )}
-                      
-                      <View style={styles.horizontalSep} />
-                      
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.totalSumLabel}>{t('totalPaymentLabel')}</Text>
-                        <Text style={styles.totalSumValue}>{formatCurrency(order.totalAmount)}</Text>
-                      </View>
-                    </View>
+                    {/* Nút Đặt lại món quen (Cho đơn hoàn thành hoặc đã hủy) */}
+                    {activeTab !== 'ongoing' ? (
+                      <TouchableOpacity
+                        style={styles.reorderBtn}
+                        activeOpacity={0.8}
+                        onPress={() => handleReorder(order)}
+                      >
+                        <Text style={styles.reorderBtnText}>{t('reorderAction') || 'Đặt lại món quen'}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      /* Đơn đang diễn ra: Nút Theo dõi tiến trình / Xem chi tiết */
+                      <TouchableOpacity
+                        style={styles.trackOrderBtn}
+                        activeOpacity={0.85}
+                        onPress={() => {
+                          router.push({
+                            pathname: '/order-detail',
+                            params: { orderId: order.id, orderData: JSON.stringify(order) },
+                          });
+                        }}
+                      >
+                        <Ionicons name="time-outline" size={16} color="#FFFFFF" style={{ marginRight: 5 }} />
+                        <Text style={styles.trackOrderBtnText}>{t('trackOrderAction') || 'Theo dõi đơn hàng'}</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                </View>
+
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -368,6 +933,329 @@ export default function OrdersScreen() {
 
         <View style={{ height: 60 }} />
       </ScrollView>
+
+      {/* ── MODAL LỌC THỜI GIAN (BOTTOM SHEET) ── */}
+      <Modal visible={timeModalVisible} transparent animationType="fade" onRequestClose={() => setTimeModalVisible(false)}>
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setTimeModalVisible(false)}>
+          <View style={styles.sheetContent}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Chọn khoảng thời gian</Text>
+
+            {[
+              { key: 'all', label: 'Tất cả thời gian' },
+              { key: '30days', label: '30 ngày gần đây' },
+              { key: '3months', label: '3 tháng gần đây' },
+              { key: '6months', label: '6 tháng gần đây' },
+              { key: '2026', label: 'Năm 2026' },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.key}
+                style={[styles.sheetOptionRow, timeFilter === opt.key && styles.sheetOptionRowActive]}
+                onPress={() => {
+                  setTimeFilter(opt.key as any);
+                  setTimeModalVisible(false);
+                }}
+              >
+                <Text style={[styles.sheetOptionText, timeFilter === opt.key && styles.sheetOptionTextActive]}>
+                  {opt.label}
+                </Text>
+                {timeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── MODAL LỌC CỬA HÀNG (BOTTOM SHEET) ── */}
+      <Modal visible={storeModalVisible} transparent animationType="fade" onRequestClose={() => setStoreModalVisible(false)}>
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setStoreModalVisible(false)}>
+          <View style={styles.sheetContent}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Chọn cửa hàng & hình thức</Text>
+
+            {[
+              { key: 'all', label: 'Tất cả cửa hàng & hình thức' },
+              { key: 'gia-dinh', label: 'Mua tại cửa hàng (Mã POS)' },
+              { key: 'online', label: 'Mua online (Mã TNG)' },
+              { key: 'pickup', label: 'Tự đến lấy tại Showroom' },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.key}
+                style={[styles.sheetOptionRow, storeFilter === opt.key && styles.sheetOptionRowActive]}
+                onPress={() => {
+                  setStoreFilter(opt.key as any);
+                  setStoreModalVisible(false);
+                }}
+              >
+                <Text style={[styles.sheetOptionText, storeFilter === opt.key && styles.sheetOptionTextActive]}>
+                  {opt.label}
+                </Text>
+                {storeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── MODAL TRA CỨU ĐƠN HÀNG NHANH (MÃ ĐƠN HOẶC SĐT TỪ FIRESTORE) ── */}
+      <Modal visible={lookupModalVisible} transparent animationType="slide" onRequestClose={() => setLookupModalVisible(false)}>
+        <View style={styles.lookupModalOverlay}>
+          <View style={styles.lookupModalCard}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderLeft}>
+                <Ionicons name="search" size={20} color={BRAND.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.modalHeaderTitle}>Tra cứu đơn hàng</Text>
+              </View>
+              <TouchableOpacity onPress={() => setLookupModalVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.lookupIntroText}>
+              Nhập mã đơn hàng hoặc số điện thoại người nhận để tìm kiếm thông tin đơn hàng nhanh chóng trong hệ thống:
+            </Text>
+
+            <View style={styles.lookupInputWrap}>
+              <Ionicons name="receipt-outline" size={18} color="#9E968D" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.lookupInput}
+                placeholder="VD: POS-1784293830832 hoặc SĐT"
+                placeholderTextColor="#9E968D"
+                value={searchInput}
+                onChangeText={setSearchInput}
+                returnKeyType="search"
+                onSubmitEditing={handleLookup}
+              />
+              {searchInput.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchInput('')}>
+                  <Ionicons name="close-circle" size={18} color="#9E968D" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <TouchableOpacity style={styles.lookupSubmitBtn} activeOpacity={0.85} onPress={handleLookup}>
+              {lookupLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.lookupSubmitBtnText}>Tìm kiếm đơn</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Kết quả tra cứu */}
+            {hasSearched && (
+              <View style={{ marginTop: 16 }}>
+                {lookupResults.length === 0 ? (
+                  <Text style={styles.noLookupText}>Không tìm thấy đơn hàng nào khớp với từ khóa.</Text>
+                ) : (
+                  <Text style={styles.foundLookupText}>Tìm thấy {lookupResults.length} đơn hàng liên quan.</Text>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (RATING & REVIEW) ── */}
+      <Modal visible={ratingModalVisible} transparent animationType="slide" onRequestClose={() => setRatingModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.ratingSheetCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalHeaderTitle}>Đánh giá trải nghiệm</Text>
+              <TouchableOpacity onPress={() => setRatingModalVisible(false)}>
+                <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.ratingSubtitle}>
+              Bạn cảm thấy thế nào về đơn hàng #{ratingOrder?.orderCode}?
+            </Text>
+
+            {/* 5 sao đánh giá */}
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setStarCount(star)} activeOpacity={0.7} style={{ padding: 6 }}>
+                  <Ionicons
+                    name={star <= starCount ? 'star' : 'star-outline'}
+                    size={36}
+                    color={star <= starCount ? '#E5B869' : '#D1C7BD'}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Các tags cảm nhận */}
+            <View style={styles.tagsWrap}>
+              {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Tư vấn nhiệt tình', 'Hài lòng 100%'].map((tag) => {
+                const isSelected = reviewTags.includes(tag);
+                return (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.tagPill, isSelected && styles.tagPillActive]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setReviewTags(reviewTags.filter((t) => t !== tag));
+                      } else {
+                        setReviewTags([...reviewTags, tag]);
+                      }
+                    }}
+                  >
+                    <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Ô ghi chú cảm nghĩ */}
+            <TextInput
+              style={styles.reviewTextInput}
+              placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
+              placeholderTextColor="#9E968D"
+              multiline
+              numberOfLines={3}
+              value={reviewNote}
+              onChangeText={setReviewNote}
+            />
+
+            {/* Nút gửi đánh giá */}
+            <TouchableOpacity style={styles.submitReviewBtn} activeOpacity={0.85} onPress={handleSubmitRating}>
+              <Text style={styles.submitReviewBtnText}>Gửi đánh giá</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── MODAL CHI TIẾT ĐƠN HÀNG ĐẦY ĐỦ ── */}
+      <Modal
+        visible={Boolean(selectedOrderDetail)}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedOrderDetail(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.detailSheetCard}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalHeaderTitle}>Chi tiết đơn hàng</Text>
+                {/* Hiển thị chuẩn xác mã đơn Firestore */}
+                <Text style={styles.detailCodeSub}>#{selectedOrderDetail?.orderCode}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedOrderDetail(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={24} color={BRAND.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520, marginTop: 12 }}>
+              {/* Trạng thái & ngày giờ */}
+              <View style={styles.detailMetaBox}>
+                <View style={styles.detailMetaRow}>
+                  <Text style={styles.detailMetaLabel}>Trạng thái:</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      {
+                        backgroundColor: getBadgeStyle(selectedOrderDetail?.statusRaw).bg,
+                        borderColor: getBadgeStyle(selectedOrderDetail?.statusRaw).borderColor,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusBadgeText,
+                        { color: getBadgeStyle(selectedOrderDetail?.statusRaw).textColor },
+                      ]}
+                    >
+                      {getBadgeStyle(selectedOrderDetail?.statusRaw).label}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.detailMetaRow}>
+                  <Text style={styles.detailMetaLabel}>Ngày đặt hàng:</Text>
+                  <Text style={styles.detailMetaVal}>{formatDate(selectedOrderDetail?.orderDate)}</Text>
+                </View>
+                <View style={styles.detailMetaRow}>
+                  <Text style={styles.detailMetaLabel}>Hình thức:</Text>
+                  <Text style={styles.detailMetaVal}>{selectedOrderDetail?.orderMethod || 'Giao tận nơi'}</Text>
+                </View>
+              </View>
+
+              {/* Danh sách từng món với ảnh sản phẩm/biến thể đúng từ Firestore */}
+              <Text style={styles.detailSectionTitle}>SẢN PHẨM ({selectedOrderDetail?.items?.length || 0})</Text>
+              {selectedOrderDetail?.items?.map((item: any, idx: number) => (
+                <View key={idx} style={styles.detailItemRow}>
+                  <Image
+                    source={{ uri: item.resolvedImage }}
+                    style={styles.detailItemThumb}
+                    contentFit="cover"
+                  />
+                  <View style={styles.detailItemInfo}>
+                    <Text style={styles.detailItemName} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                    {Boolean(item.variantDisplay) && (
+                      <Text style={styles.detailItemVariantBadge}>{item.variantDisplay}</Text>
+                    )}
+                    <Text style={styles.detailItemQty}>Số lượng: x{item.quantity || 1}</Text>
+                  </View>
+                  <Text style={styles.detailItemPrice}>
+                    {formatDisplayPrice((item.price || 0) * (item.quantity || 1))}
+                  </Text>
+                </View>
+              ))}
+
+              {/* Thông tin nhận hàng */}
+              <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>THÔNG TIN NHẬN HÀNG</Text>
+              <View style={styles.detailAddressBox}>
+                <Text style={styles.detailCustomerName}>
+                  {selectedOrderDetail?.shippingAddress?.fullName ||
+                    selectedOrderDetail?.customerName ||
+                    'Khách hàng Tiệm Nhà Gốm'}
+                </Text>
+                <Text style={styles.detailCustomerPhone}>
+                  {selectedOrderDetail?.shippingAddress?.phone || '0777709662'}
+                </Text>
+                <Text style={styles.detailCustomerAddress}>
+                  {selectedOrderDetail?.shippingAddress?.address || 'Tại showroom Tiệm Nhà Gốm (37 Nguyễn Duy)'}
+                </Text>
+              </View>
+
+              {/* Tóm tắt thanh toán */}
+              <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>CHI TIẾT THANH TOÁN</Text>
+              <View style={styles.detailSummaryBox}>
+                <View style={styles.summaryLine}>
+                  <Text style={styles.summaryLineLabel}>Tạm tính:</Text>
+                  <Text style={styles.summaryLineVal}>
+                    {formatDisplayPrice(selectedOrderDetail?.subtotal || selectedOrderDetail?.totalAmount)}
+                  </Text>
+                </View>
+                <View style={styles.summaryLine}>
+                  <Text style={styles.summaryLineLabel}>Phí giao hàng:</Text>
+                  <Text style={styles.summaryLineVal}>
+                    {selectedOrderDetail?.shippingFee ? formatDisplayPrice(selectedOrderDetail.shippingFee) : 'Miễn phí'}
+                  </Text>
+                </View>
+                <View style={[styles.summaryLine, styles.totalLineBorder]}>
+                  <Text style={styles.totalLineLabel}>Tổng cộng:</Text>
+                  <Text style={styles.totalLineVal}>
+                    {formatDisplayPrice(selectedOrderDetail?.totalAmount)}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Nút đặt lại món quen */}
+            <TouchableOpacity
+              style={styles.detailReorderBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                setSelectedOrderDetail(null);
+                handleReorder(selectedOrderDetail);
+              }}
+            >
+              <Text style={styles.detailReorderBtnText}>Đặt lại đơn hàng này</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Animated.View>
   );
 }
@@ -375,10 +1263,10 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: BRAND.bgCream,
   },
 
-  // Header
+  // ── HEADER ──
   header: {
     position: 'absolute',
     top: 0,
@@ -391,517 +1279,790 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 10,
     backgroundColor: 'transparent',
+    borderBottomWidth: 0, // Tuyệt đối không có vạch kẻ đáy
   },
-  backBtn: {
+  backCircleBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: BRAND.cardWhite,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#F0ECE6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111111',
-  },
-  headerRight: {
-    width: 40,
-  },
-
-  // Tabs
-  tabWrap: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 6,
-    backgroundColor: '#F4F4F5',
-    borderRadius: 14,
-    padding: 3,
-    gap: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 11,
-    gap: 5,
-  },
-  tabActive: {
-    backgroundColor: '#111111',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#71717A',
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-  },
-
-  // Lookup
-  lookupCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-    marginBottom: 16,
-  },
-  lookupIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F4F4F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  lookupTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111111',
-    marginBottom: 6,
-  },
-  lookupDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: '#71717A',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-  },
-  inputWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF8F5',
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    paddingHorizontal: 16,
-    height: 52,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
-  input: {
-    fontFamily: 'ElleGaborStd',
-    flex: 1,
-    fontSize: 14,
-    color: '#111111',
-    paddingVertical: 0,
-  },
-  lookupBtn: {
-    backgroundColor: '#111111',
-    borderRadius: 26,
-    paddingHorizontal: 22,
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: BRAND.borderSoft,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  lookupBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14.5,
-  },
-
-  // Login prompt
-  loginPrompt: {
+  headerTitleWrap: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    gap: 10,
+    justifyContent: 'center',
   },
-  loginTitle: {
+  headerTitleText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
-    color: '#111111',
-    marginTop: 8,
+    color: BRAND.textPrimary,
   },
-  loginDesc: {
+  searchCircleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: BRAND.cardWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  // ── KHỐI FILTER CỐ ĐỊNH ──
+  fixedFilterContainer: {
+    paddingHorizontal: 16,
+    backgroundColor: BRAND.bgCream,
+    paddingBottom: 6,
+    zIndex: 40,
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+  },
+  tabPill: {
+    height: 42,
+    borderRadius: 21,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabPillActive: {
+    backgroundColor: '#FFFDF9',
+    borderWidth: 1.4,
+    borderColor: BRAND.primary,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  tabPillInactive: {
+    backgroundColor: BRAND.tabInactiveBg,
+    borderWidth: 0,
+  },
+  tabText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+  },
+  tabTextActive: {
+    color: BRAND.textPrimary,
+    fontWeight: '700',
+  },
+  tabTextInactive: {
+    color: BRAND.tabInactiveText,
+    fontWeight: '600',
+  },
+
+  // Dropdowns lọc phụ
+  subFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  filterDropdownTouch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  filterDropdownTouchActive: {
+    opacity: 1,
+  },
+  filterDropdownText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '600',
+    color: BRAND.textPrimary,
+  },
+  filterDropdownTextActive: {
+    color: BRAND.primary,
+    fontWeight: '700',
+  },
+
+  // ── DANH SÁCH CUỘN ──
+  scrollListContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+  loadingWrap: {
+    paddingVertical: 50,
+    alignItems: 'center',
+    gap: 10,
+  },
+  loadingText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: '#71717A',
+    color: BRAND.mutedText,
+  },
+
+  // ── EMPTY STATE ──
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 70,
+    paddingHorizontal: 24,
+  },
+  boxIllustrationWrap: {
+    width: 140,
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  boxAura: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F3ECE3',
+    opacity: 0.6,
+  },
+  boxArtIcon: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxBubbleBadge: {
+    position: 'absolute',
+    top: 4,
+    right: -4,
+  },
+  boxSparkleTop: {
+    position: 'absolute',
+    top: -10,
+    left: 20,
+  },
+  emptyMainText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  emptySubText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    color: BRAND.mutedText,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 24,
   },
-  loginBtn: {
+  emptyExploreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#111111',
-    paddingHorizontal: 28,
-    height: 52,
-    borderRadius: 26,
-    marginTop: 8,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: BRAND.primary,
+    paddingHorizontal: 24,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
   },
-  loginBtnText: {
+  emptyExploreBtnText: {
     fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontWeight: '700',
     fontSize: 15,
-  },
-
-  // Loading
-  loadingWrap: {
-    padding: 48,
-    alignItems: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#9CA3AF',
-    fontSize: 13,
-  },
-
-  // Empty
-  emptyWrap: {
-    alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  emptyTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
-  },
-  emptyDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 20,
+    color: '#FFFFFF',
   },
 
-  // Order list
-  ordersList: {
+  // ── THẺ ĐƠN HÀNG CHUẨN ẢNH MẪU ──
+  ordersListWrap: {
     gap: 14,
-  },
-  resultsCount: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#9CA3AF',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-
-  // Order card
-  orderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  orderCodeLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    color: '#9CA3AF',
-    marginBottom: 4,
-    letterSpacing: 1,
-  },
-  orderCode: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111111',
-  },
-  orderDate: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#9CA3AF',
     marginTop: 4,
   },
-  cardHeaderRight: {
-    alignItems: 'flex-end',
+  orderCard: {
+    backgroundColor: BRAND.cardWhite,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  statusLabel: {
+
+  // Hàng trên cùng của thẻ
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  cardTopLeft: {
+    flex: 1,
+    marginRight: 10,
+  },
+  orderMethodDateText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    color: '#9CA3AF',
-    marginBottom: 4,
-    letterSpacing: 1,
+    fontSize: 12.5,
+    color: BRAND.mutedText,
+    marginBottom: 2,
+  },
+  orderCodeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#5C544D',
   },
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
   },
-  statusText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  sep: {
-    height: 1,
-    backgroundColor: '#F4F4F5',
-    marginHorizontal: 16,
-  },
-
-  // Timeline
-  timelineWrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    position: 'relative',
-  },
-  timelineStep: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  timelineIconWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    position: 'relative',
-    height: 24,
-  },
-  timelineIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E4E4E7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -12,
-    zIndex: 2,
-  },
-  timelineIconActive: {
-    backgroundColor: '#16A34A',
-  },
-  timelineLine: {
-    position: 'absolute',
-    height: 2,
-    backgroundColor: '#E4E4E7',
-    top: 11,
-    left: '50%',
-    right: '-50%',
-    zIndex: 1,
-  },
-  timelineLineActive: {
-    backgroundColor: '#16A34A',
-  },
-  timelineText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  timelineTextActive: {
-    color: '#111111',
-    fontWeight: '600',
-  },
-
-  // Items
-  itemsSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  itemsSectionLabel: {
+  statusBadgeText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: '#374151',
+  },
+
+  // Tiêu đề cửa hàng
+  storeNameTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 15.5,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
     marginBottom: 12,
   },
-  itemRow: {
+
+  // Danh sách thumbnails ảnh sản phẩm
+  thumbnailsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FAFAFA',
-  },
-  itemImageWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 6,
-    backgroundColor: '#F4F4F5',
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
     alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginRight: 12,
+    gap: 8,
+    marginBottom: 10,
   },
-  itemImage: {
+  thumbnailWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    backgroundColor: '#FAF8F5',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  productThumbnail: {
     width: '100%',
     height: '100%',
   },
-  itemInfo: {
-    flex: 1,
+  extraCountOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(43, 41, 40, 0.65)',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  itemName: {
+  extraCountText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Dòng tóm tắt tên món & giá tiền
+  summaryAndPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  summaryItemsText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
+    color: BRAND.mutedText,
+    flex: 1,
+    marginRight: 12,
+  },
+  totalPriceBoldText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16.5,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+  },
+
+  // Hàng nút hành động dưới đáy thẻ
+  cardActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  reviewBtn: {
+    height: 38,
+    borderRadius: 19,
+    paddingHorizontal: 16,
+    borderWidth: 1.2,
+    borderColor: BRAND.warmBeige,
+    backgroundColor: BRAND.cardWhite,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
     fontWeight: '600',
-    color: '#111111',
-    lineHeight: 18,
-    marginBottom: 4,
+    color: BRAND.textPrimary,
   },
-  itemVariant: {
+  reorderBtn: {
+    height: 38,
+    borderRadius: 19,
+    paddingHorizontal: 18,
+    borderWidth: 1.2,
+    borderColor: BRAND.primary,
+    backgroundColor: '#FFFDF9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reorderBtnText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#71717A',
-    marginBottom: 2,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: BRAND.primary,
   },
-  itemQty: {
+  trackOrderBtn: {
+    flexDirection: 'row',
+    height: 38,
+    borderRadius: 19,
+    paddingHorizontal: 18,
+    backgroundColor: BRAND.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  trackOrderBtnText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#9CA3AF',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  itemRight: {
-    alignItems: 'flex-end',
+
+  // ── BOTTOM SHEET MODALS ──
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
-    minWidth: 80,
-    marginTop: 20,
   },
-  itemPrice: {
+  sheetContent: {
+    backgroundColor: BRAND.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 36,
+    paddingTop: 12,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#DDD5CC',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16.5,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  sheetOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F4EFEA',
+  },
+  sheetOptionRowActive: {
+    backgroundColor: '#FCFAF7',
+  },
+  sheetOptionText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14.5,
+    color: BRAND.textPrimary,
+  },
+  sheetOptionTextActive: {
+    fontWeight: '700',
+    color: BRAND.primary,
+  },
+
+  // ── MODAL TRA CỨU ĐƠN ──
+  lookupModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  lookupModalCard: {
+    backgroundColor: BRAND.cardWhite,
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalHeaderTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 17,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+  },
+  lookupIntroText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: BRAND.mutedText,
+    marginTop: 10,
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  lookupInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  lookupInput: {
+    flex: 1,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    color: BRAND.textPrimary,
+  },
+  lookupSubmitBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: BRAND.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  lookupSubmitBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  noLookupText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: BRAND.mutedText,
+    textAlign: 'center',
+  },
+  foundLookupText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: BRAND.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  // ── MODAL ĐÁNH GIÁ ──
+  ratingSheetCard: {
+    backgroundColor: BRAND.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 36,
+  },
+  ratingSubtitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: BRAND.mutedText,
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tagsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  tagPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+  },
+  tagPillActive: {
+    backgroundColor: '#FFFDF9',
+    borderColor: BRAND.primary,
+  },
+  tagText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: BRAND.mutedText,
+  },
+  tagTextActive: {
+    color: BRAND.primary,
+    fontWeight: '700',
+  },
+  reviewTextInput: {
+    height: 72,
+    borderRadius: 16,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: BRAND.textPrimary,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  submitReviewBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: BRAND.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  submitReviewBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // ── MODAL CHI TIẾT ĐƠN ──
+  detailSheetCard: {
+    backgroundColor: BRAND.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  detailCodeSub: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: '#111111',
+    color: BRAND.primary,
+    marginTop: 2,
   },
-
-  // Footer Details
-  footerGrid: {
-    flexDirection: 'row',
-    backgroundColor: '#FAFAFA',
-    padding: 16,
-    gap: 16,
-  },
-  footerLeft: {
-    flex: 1,
-  },
-  footerLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#71717A',
-    marginBottom: 4,
-  },
-  footerTextBold: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111111',
-    marginBottom: 2,
-  },
-  footerText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#71717A',
-    lineHeight: 16,
-  },
-  verticalSep: {
-    width: 1,
-    backgroundColor: '#E4E4E7',
-  },
-  footerRight: {
-    flex: 1,
+  detailMetaBox: {
+    backgroundColor: '#FAF8F5',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
     gap: 8,
+    marginBottom: 14,
   },
-  summaryRow: {
+  detailMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  summaryLabel: {
+  detailMetaLabel: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#71717A',
+    fontSize: 13,
+    color: BRAND.mutedText,
   },
-  summaryValue: {
+  detailMetaVal: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111111',
+    fontSize: 13,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
   },
-  horizontalSep: {
-    height: 1,
-    backgroundColor: '#E4E4E7',
-    marginVertical: 4,
-  },
-  totalSumLabel: {
+  detailSectionTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#DC2626',
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#8A847C',
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
-  totalSumValue: {
+  detailItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5EFE9',
+  },
+  detailItemThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    marginRight: 10,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+  },
+  detailItemInfo: {
+    flex: 1,
+  },
+  detailItemName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: BRAND.textPrimary,
+  },
+  detailItemVariantBadge: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    color: BRAND.primary,
+    marginTop: 2,
+  },
+  detailItemQty: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11.5,
+    color: BRAND.mutedText,
+    marginTop: 2,
+  },
+  detailItemPrice: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+  },
+  detailAddressBox: {
+    backgroundColor: '#FAF8F5',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    gap: 3,
+  },
+  detailCustomerName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+  },
+  detailCustomerPhone: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: BRAND.mutedText,
+  },
+  detailCustomerAddress: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: BRAND.textPrimary,
+    lineHeight: 17,
+  },
+  detailSummaryBox: {
+    backgroundColor: '#FAF8F5',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BRAND.borderSoft,
+    gap: 6,
+    marginBottom: 16,
+  },
+  summaryLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLineLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: BRAND.mutedText,
+  },
+  summaryLineVal: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    fontWeight: '600',
+    color: BRAND.textPrimary,
+  },
+  totalLineBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#E8E1D8',
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  totalLineLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '700',
+    color: BRAND.textPrimary,
+  },
+  totalLineVal: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '800',
+    color: BRAND.primary,
+  },
+  detailReorderBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: BRAND.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailReorderBtnText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
-    fontWeight: '800',
-    color: '#DC2626',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
-

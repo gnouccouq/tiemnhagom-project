@@ -148,13 +148,14 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => 
                 },
               ]}
             >
-              <Image
-                source={{ uri: bannerSource }}
-                style={styles.bannerImage}
-                contentFit="cover"
-                priority={index === 0 ? 'high' : 'normal'}
-                cachePolicy="memory-disk"
-              />
+                <Image
+                  source={{ uri: bannerSource }}
+                  style={styles.bannerImage}
+                  contentFit="cover"
+                  priority={index === 0 ? 'high' : 'normal'}
+                  cachePolicy="disk"
+                  recyclingKey={bannerSource}
+                />
             </Animated.View>
           );
         })}

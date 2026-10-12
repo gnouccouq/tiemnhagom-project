@@ -51,7 +51,7 @@ export default function ArticleDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#3B4D45" />
+        <ActivityIndicator size="large" color="#9C7156" />
         <Text style={styles.loadingText}>Đang tải bài viết...</Text>
       </View>
     );
@@ -92,7 +92,7 @@ export default function ArticleDetailScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -164,7 +164,7 @@ export default function ArticleDetailScreen() {
           </Text>
 
           <View style={styles.brandBox}>
-            <Ionicons name="leaf" size={20} color="#3B4D45" />
+            <Ionicons name="sparkles" size={18} color="#9C7156" />
             <Text style={styles.brandBoxTitle}>Tiệm Nhà Gốm • Ceramics & Decor</Text>
             <Text style={styles.brandBoxDesc}>
               37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh • Hotline: 0777709662
@@ -238,18 +238,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tagPill: {
-    backgroundColor: '#EEF3EB',
+    backgroundColor: '#F6F4EC',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E1E8DF',
+    borderColor: '#E8CCB2',
   },
   tagText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
-    color: '#3B4D45',
+    color: '#9C7156',
     letterSpacing: 0.5,
   },
   dateText: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#3B4D45',
+    color: '#9C7156',
   },
   brandBoxDesc: {
     fontFamily: 'ElleGaborStd',

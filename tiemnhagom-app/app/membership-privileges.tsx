@@ -22,6 +22,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { openWebLink } from '../src/utils/openWebLink';
 import { getUserOrders } from '../src/services/orderService';
 import { BlurButton } from '../src/components/BlurButton';
+import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { useThemeColor } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -48,6 +49,7 @@ interface TierConfig {
   spendRangeKey: string;
   min: number;
   gradientColors: [string, string, ...string[]];
+  watercolorBlobs: string[];
   bottomColor: string;
   logoTint: string;
   accentColor: string;
@@ -66,6 +68,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
     spendRangeKey: 'spendRangeMoc',
     min: 0,
     gradientColors: ['#543824', '#3E2718', '#28170D'],
+    watercolorBlobs: ['#8A5A2B', '#A16207', '#6B4226', '#B45309'],
     bottomColor: '#28170D',
     logoTint: '#E8D5C4',
     accentColor: '#D97706',
@@ -98,6 +101,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
     spendRangeKey: 'spendRangeNung',
     min: 1000000,
     gradientColors: ['#A31D1D', '#821414', '#520B0B'],
+    watercolorBlobs: ['#DC2626', '#E11D48', '#D97706', '#991B1B'],
     bottomColor: '#520B0B',
     logoTint: '#FFFFFF',
     accentColor: '#EF4444',
@@ -141,6 +145,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
     spendRangeKey: 'spendRangeMen',
     min: 5000000,
     gradientColors: ['#B45309', '#92400E', '#5C2D07'],
+    watercolorBlobs: ['#F59E0B', '#D97706', '#B45309', '#CA8A04'],
     bottomColor: '#5C2D07',
     logoTint: '#FEF08A',
     accentColor: '#FACC15',
@@ -197,6 +202,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
     spendRangeKey: 'spendRangeDocBan',
     min: 10000000,
     gradientColors: ['#27272A', '#18181B', '#09090B'],
+    watercolorBlobs: ['#52525B', '#3F3F46', '#71717A', '#3F3F46'],
     bottomColor: '#09090B',
     logoTint: '#EF4444',
     accentColor: '#EF4444',
@@ -533,12 +539,14 @@ export default function MembershipPrivilegesScreen() {
               ]}
               pointerEvents="none"
             >
-              <LinearGradient
-                colors={tier.gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
+              <GlazeFluidCard
+                gradientColors={tier.gradientColors}
+                blobs={tier.watercolorBlobs}
+                borderRadius={0}
                 style={StyleSheet.absoluteFill}
-              />
+              >
+                <View />
+              </GlazeFluidCard>
             </Animated.View>
           );
         })}
@@ -609,47 +617,49 @@ export default function MembershipPrivilegesScreen() {
                 <View key={item.id} style={styles.heroSlide}>
                   <Animated.View
                     style={[
-                      styles.heroSlideInner,
+                      styles.heroSlideWrapper,
                       {
                         opacity: slideOpacity,
                         transform: [{ scale: slideScale }],
                       },
                     ]}
                   >
-                    {/* CỘT TRÁI: HẠNG + TÊN + PILL MỨC TIỀN */}
-                    <View style={styles.heroLeftCol}>
-                      <View style={styles.tierPrefixRow}>
-                        <Text style={styles.tierPrefixText}>
-                          {t('tierPrefix') || 'Hạng'}
+                    <View style={styles.heroSlideCard}>
+                      {/* CỘT TRÁI: HẠNG + TÊN + PILL MỨC TIỀN */}
+                      <View style={styles.heroLeftCol}>
+                        <View style={styles.tierPrefixRow}>
+                          <Text style={styles.tierPrefixText}>
+                            {t('tierPrefix') || 'Hạng'}
+                          </Text>
+                          {isUserCurrentTier && (
+                            <View style={styles.userTierBadge}>
+                              <Text style={styles.userTierBadgeText}>
+                                {t('yourTierBadge') || t('currentTierBadge') || 'Hạng của bạn'}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <Text style={styles.tierNameText} numberOfLines={1}>
+                          {t(item.nameKey) || item.name}
                         </Text>
-                        {isUserCurrentTier && (
-                          <View style={styles.userTierBadge}>
-                            <Text style={styles.userTierBadgeText}>
-                              {t('yourTierBadge') || t('currentTierBadge') || 'Hạng của bạn'}
-                            </Text>
-                          </View>
-                        )}
+
+                        <View style={styles.spendPill}>
+                          <Text style={styles.spendPillText}>
+                            {t(item.spendRangeKey) || item.spendRange}
+                          </Text>
+                        </View>
                       </View>
 
-                      <Text style={styles.tierNameText} numberOfLines={1}>
-                        {t(item.nameKey) || item.name}
-                      </Text>
-
-                      <View style={styles.spendPill}>
-                        <Text style={styles.spendPillText}>
-                          {t(item.spendRangeKey) || item.spendRange}
-                        </Text>
+                      {/* CỘT PHẢI: LOGO TIỆM NHÀ GỐM KIM LOẠI */}
+                      <View style={styles.heroRightCol}>
+                        <Image
+                          source={require('../assets/images/textlogo.webp')}
+                          style={styles.heroLogoImg}
+                          contentFit="contain"
+                          tintColor={item.logoTint}
+                        />
                       </View>
-                    </View>
-
-                    {/* CỘT PHẢI: LOGO TIỆM NHÀ GỐM KIM LOẠI */}
-                    <View style={styles.heroRightCol}>
-                      <Image
-                        source={require('../assets/images/textlogo.webp')}
-                        style={styles.heroLogoImg}
-                        contentFit="contain"
-                        tintColor={item.logoTint}
-                      />
                     </View>
                   </Animated.View>
                 </View>
@@ -816,15 +826,30 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     heroSlide: {
       width: SCREEN_WIDTH,
-      paddingHorizontal: 22,
+      paddingHorizontal: 16,
       paddingVertical: 10,
       justifyContent: 'center',
     },
-    heroSlideInner: {
+    heroSlideWrapper: {
       width: '100%',
+      borderRadius: 24,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.25,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    heroSlideCard: {
+      width: '100%',
+      paddingVertical: 18,
+      paddingHorizontal: 20,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.16)',
     },
     heroLeftCol: {
       flex: 1.1,

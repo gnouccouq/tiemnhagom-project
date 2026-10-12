@@ -54,13 +54,32 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
 
 ---
 
-## 5. Màu sắc & Tinh thần Thương hiệu (Brand Identity)
-* **Nền tổng thể (Background):** Kem gốm ấm mộc mạc `#FAF8F5`.
-* **Màu chữ chính (Text Primary):** Nâu đen gốm trầm `#231B15`.
+## 5. Màu sắc & Tinh thần Thương hiệu (Brand Identity — Trích xuất từ Brand Guidelines PDF)
+Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy định nghiêm ngặt từ tài liệu `TiemNhaGom_Brand Guideline.pdf` (Màu sắc Logo & Nhận diện):
+
+### 5.1. Bảng màu Logo & Nhận diện Thương hiệu Chuẩn (Official Brand Palette):
+* **`#9C7156` — Nâu Đất Nung / Gốm Mộc (Primary Terracotta Brand Color):**
+  * Màu đại diện cốt lõi của thương hiệu Tiệm Nhà Gốm.
+  * Sử dụng cho: Logo chính thức, nét vẽ biểu tượng chiếc bình gốm (Elements & Pattern), các nút nhấn CTA, icon nổi bật, tiêu đề nhấn mạnh.
+* **`#2B2928` — Nâu Đen Than Chì / Gốm Trầm (Deep Charcoal Earth — Text Primary):**
+  * Màu nhận diện phiên bản tối và màu chữ chuẩn.
+  * Sử dụng cho: Chữ chính (Text Primary), heading cao cấp, logo trên nền sáng cần độ tương phản cao tuyệt đối.
+* **`#F6F4EC` — Kem Gốm Mộc Sáng (Official Brand Cream / Canvas Background):**
+  * Màu nền chủ đạo theo đúng tiêu chuẩn Brand Guidelines.
+  * Sử dụng cho: Nền toàn bộ màn hình, canvas hiển thị, nền tổng thể app và web (thay thế hoặc phối hợp hài hòa cùng `#FAF8F5`).
+* **`#E8CCB2` — Men Gốm Be Ấm (Warm Ceramic Sand / Secondary Beige):**
+  * Màu đệm trung gian mang sắc thái men gốm tự nhiên.
+  * Sử dụng cho: Nền badge, chip phân loại, viền border mềm mại, nền khối card phụ, họa tiết gốm.
+* **`#FFFFFF` — Trắng Men Tinh Khiết (Pure Glaze White):**
+  * Sử dụng cho: Nền các khối Card bo tròn 20px, nút bấm nổi, màu chữ/icon khi đặt trên nền nâu đất nung `#9C7156` hoặc nền tối `#2B2928`.
+
+### 5.2. Các quy tắc cấm khi áp dụng nhận diện thương hiệu (Trang 6 Brand Guidelines):
+* **Tuyệt đối không dùng màu khác ngoài bảng màu Brand:** Giữ trọn vẹn tinh thần gốm thủ công mộc mạc, tránh dùng các màu quá tươi, màu neon hoặc các dải màu lệch khỏi bảng mã màu quy chuẩn.
+* **Tuyệt đối KHÔNG sử dụng màu xanh (xanh lá, xanh rêu, xanh lam, olive):** Nghiêm cấm sử dụng các màu xanh trong toàn bộ giao diện app và web.
+* **Bảo toàn tính tương phản:** Không đặt logo hoặc chữ trên nền màu không đủ độ tương phản; không đặt logo trực tiếp lên ảnh chụp có nhiều chi tiết gây rối mắt.
+* **Không làm biến dạng logo:** Không xoay méo, không đổ bóng đậm (drop shadow) lên logo, không cắt xén, không tạo viền outline thô kệch.
+
+### 5.3. Màu bổ trợ & Điểm nhấn giao diện (UI Functional Accents):
 * **Màu chữ phụ (Text Secondary / Muted):** `#6E665D` / `#9E968D`.
-* **Viền tiêu chuẩn (Borders):** Men gốm `#E8E1D8`.
-* **Điểm nhấn (Accents):**
-  * Men xanh rêu: `#4A6B53`.
-  * Men rêu sẫm / Olive: `#7B8854`.
-  * Men vàng gốm: `#D89E3A`.
-  * Đất nung / Terracotta: `#C86432`.
+* **Viền tiêu chuẩn giao diện:** `#E8E1D8` / `#E8CCB2`.
+* **Trạng thái Thành công / Tích điểm / Đơn hoàn tất:** Sử dụng màu Nâu Đất Nung `#9C7156`, Men Be `#E8CCB2` hoặc Nâu Trầm `#2B2928` để biểu thị, thay thế hoàn toàn cho màu xanh.

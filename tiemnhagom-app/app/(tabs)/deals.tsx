@@ -8,21 +8,21 @@ import {
   TouchableOpacity,
   StatusBar,
   RefreshControl,
-  ActivityIndicator,
-  Platform
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
-import { Colors } from '../../src/constants/theme';
+import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
 import { useAuth } from '../../src/context/AuthContext';
 import { getUserOrders } from '../../src/services/orderService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
 import { formatCurrency } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
 
-// Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
+// Cấu hình 4 hạng thành viên đồng bộ chuẩn xác với trang Profile & Trang Đặc quyền
 export const MEMBERSHIP_TIERS = [
   {
     id: 'null',
@@ -30,14 +30,11 @@ export const MEMBERSHIP_TIERS = [
     min: 0,
     discount: 0,
     badge: '🪵',
-    color: '#52525B',
-    bgColor: '#F4F4F5',
-    borderColor: '#E4E4E7',
-    benefits: [
-      'Hạng khởi đầu dành cho mọi khách hàng đăng ký tài khoản.',
-      'Tích lũy chi tiêu trên từng đơn hàng để thăng hạng tự động.',
-      'Nhận thông báo sớm các chương trình ưu đãi và bộ sưu tập mới.',
-    ],
+    gradientColors: ['#543824', '#3E2718', '#28170D'] as [string, string, ...string[]],
+    watercolorBlobs: ['#8A5A2B', '#A16207', '#6B4226', '#B45309'],
+    logoTint: '#FFFFFF',
+    accentColor: '#D97706',
+    flameColor: '#FFFFFF',
   },
   {
     id: 'new',
@@ -45,15 +42,11 @@ export const MEMBERSHIP_TIERS = [
     min: 1000000,
     discount: 1,
     badge: '🔥',
-    color: '#2563EB',
-    bgColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-    benefits: [
-      'Giảm giá trực tiếp 1% trên toàn bộ đơn hàng.',
-      'Tặng voucher 50.000 VND khi lên hạng.',
-      'Tặng voucher sinh nhật trị giá 50.000 VND.',
-      'Giảm thêm 0.5% - 1% các nhóm hàng KitchenWare & HomeDecor.',
-    ],
+    gradientColors: ['#A31D1D', '#821414', '#520B0B'] as [string, string, ...string[]],
+    watercolorBlobs: ['#DC2626', '#E11D48', '#D97706', '#991B1B'],
+    logoTint: '#FFFFFF',
+    accentColor: '#EF4444',
+    flameColor: '#FFFFFF',
   },
   {
     id: 'mem',
@@ -61,16 +54,11 @@ export const MEMBERSHIP_TIERS = [
     min: 5000000,
     discount: 3,
     badge: '✨',
-    color: '#D97706',
-    bgColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-    benefits: [
-      'Giảm giá trực tiếp 3% trên toàn bộ đơn hàng.',
-      'Miễn phí vận chuyển toàn quốc cho mọi đơn hàng.',
-      'Tặng voucher 100.000 VND khi lên hạng.',
-      'Tặng phiếu sinh nhật trị giá 200.000 VND.',
-      'Tặng voucher 10% (tối đa 150k) cho người thân, bạn bè.',
-    ],
+    gradientColors: ['#B45309', '#92400E', '#5C2D07'] as [string, string, ...string[]],
+    watercolorBlobs: ['#F59E0B', '#D97706', '#B45309', '#CA8A04'],
+    logoTint: '#FFFFFF',
+    accentColor: '#FACC15',
+    flameColor: '#FFFFFF',
   },
   {
     id: 'vip',
@@ -78,20 +66,13 @@ export const MEMBERSHIP_TIERS = [
     min: 10000000,
     discount: 5,
     badge: '👑',
-    color: '#DC2626',
-    bgColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    benefits: [
-      'Giảm giá trực tiếp 5% vĩnh viễn trên mọi đơn hàng.',
-      'Miễn phí giao hàng toàn quốc.',
-      'Tặng voucher 300.000 VND khi lên hạng.',
-      'Ưu đãi sinh nhật: Tặng phiếu quà tặng 500.000 VND.',
-      'Ưu tiên đặt trước các tác phẩm gốm mộc độc bản số lượng giới hạn.',
-    ],
+    gradientColors: ['#27272A', '#18181B', '#09090B'] as [string, string, ...string[]],
+    watercolorBlobs: ['#52525B', '#3F3F46', '#71717A', '#3F3F46'],
+    logoTint: '#FFFFFF',
+    accentColor: '#EF4444',
+    flameColor: '#FFFFFF',
   },
 ];
-
-type ActiveTab = 'vouchers' | 'tiers';
 
 export default function DealsScreen() {
   const router = useRouter();
@@ -99,20 +80,18 @@ export default function DealsScreen() {
   const { t } = useSettings();
   const { user, userProfile } = useAuth();
 
-  // State Tabs
-  const [activeTab, setActiveTab] = useState<ActiveTab>('vouchers');
-
   // Loyalty calculations
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
-  const [loadingLoyalty, setLoadingLoyalty] = useState<boolean>(true);
+  const [, setLoadingLoyalty] = useState<boolean>(true);
 
   // Vouchers state from Firestore
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
-  const [loadingCoupons, setLoadingCoupons] = useState<boolean>(true);
-  const [voucherFilter, setVoucherFilter] = useState<string>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [, setLoadingCoupons] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // Modal QR mã thành viên
+  const [qrModalVisible, setQrModalVisible] = useState<boolean>(false);
 
   // 1. Tải tổng chi tiêu thực tế từ các đơn hàng hoàn thành
   const fetchLoyaltyData = useCallback(async () => {
@@ -163,28 +142,15 @@ export default function DealsScreen() {
     }
   }, [user]);
 
-  // Tải dữ liệu ban đầu
   useEffect(() => {
     fetchLoyaltyData();
     fetchCouponsData();
   }, [fetchLoyaltyData, fetchCouponsData]);
 
-  // Kéo xuống làm mới (Pull-to-refresh)
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([fetchLoyaltyData(), fetchCouponsData()]);
     setRefreshing(false);
-  };
-
-  // Sao chép mã voucher
-  const handleCopyCode = (code: string, id: string) => {
-    setCopiedId(id);
-    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(code);
-    }
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 2000);
   };
 
   // Xác định hạng hội viên theo tổng chi tiêu
@@ -199,39 +165,29 @@ export default function DealsScreen() {
     }
   }
 
-  // % thanh tiến độ thăng hạng
-  const progressPercent = nextTier
-    ? Math.min(
-        100,
-        Math.max(
-          5,
-          Math.round(((totalSpent - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
-        )
-      )
-    : 100;
-
-  // Cứ 10.000đ = 1 điểm, trừ điểm đã dùng, bỏ thưởng chào mừng 50 điểm cũ
+  // Cứ 10.000đ = 1 điểm
   const earnedPoints = Math.floor(totalSpent / 10000);
-  const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
-  const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
+  const rawProfilePoints =
+    userProfile?.points !== undefined && userProfile?.points !== null
+      ? Number(userProfile.points)
+      : 0;
+  const cleanProfilePoints = rawProfilePoints === 50 && totalSpent < 500000 ? 0 : rawProfilePoints;
   const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || 'GOM').substring(0, 8).toUpperCase()}`;
-
-  // Lọc voucher
-  const filteredCoupons = coupons.filter((c) => {
-    if (voucherFilter === 'all') return true;
-    if (voucherFilter === 'percent') return c.type === 'percent';
-    if (voucherFilter === 'fixed') return c.type === 'fixed';
-    if (voucherFilter === 'shipping') return c.type === 'free_ship';
-    return true;
-  });
 
   const [scrollY, setScrollY] = useState(0);
 
   return (
     <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
-      <Header title="Ưu đãi & Thành viên" showSearch={false} transparent scrollY={scrollY} />
+      <Header
+        title="Ưu đãi"
+        showBack={false}
+        showSearch={false}
+        showCart={true}
+        transparent
+        scrollY={scrollY}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -242,344 +198,222 @@ export default function DealsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#000000"
-            colors={['#000000']}
+            tintColor={currentTier.gradientColors[0]}
+            colors={[currentTier.gradientColors[0]]}
           />
         }
       >
-        {/* ================= THẺ THÀNH VIÊN SỐ (DIGITAL MEMBER CARD) ================= */}
-        <View style={styles.memberCardWrapper}>
-          <View style={styles.memberCard}>
-            {/* Header thẻ */}
-            <View style={styles.memberCardHeader}>
-              <View>
-                <Text style={styles.brandTag}>{t('brandName')}</Text>
-                <Text style={styles.cardTypeTitle}>{t('digitalMemberCard')}</Text>
-              </View>
-              <View style={styles.tierPill}>
-                <Text style={styles.tierPillEmoji}>{currentTier.badge}</Text>
-                <Text style={styles.tierPillText}>{currentTier.name}</Text>
-              </View>
-            </View>
-
-            {/* Thông tin chủ thẻ */}
-            <View style={styles.memberInfoRow}>
-              <View>
-                <Text style={styles.memberLabel}>{t('cardHolder')}</Text>
-                <Text style={styles.memberName} numberOfLines={1}>
-                  {userProfile?.displayName || user?.displayName || (user ? 'Khách hàng thân thiết' : t('notLoggedIn'))}
-                </Text>
-              </View>
-              <View style={styles.memberCodeBox}>
-                <Text style={styles.memberLabel}>{t('memberCode')}</Text>
-                <Text style={styles.memberCodeText}>{user ? memberCode : 'TNG-GUEST'}</Text>
-              </View>
-            </View>
-
-            {/* Thống kê chi tiêu & Đặc quyền */}
-            <View style={styles.statsRow}>
-              <View style={styles.statCol}>
-                <Text style={styles.statLabel}>{t('totalSpentLabel')}</Text>
-                <Text style={styles.statValue}>{formatCurrency(totalSpent)}</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statCol}>
-                <Text style={styles.statLabel}>{t('pointsLabel')}</Text>
-                <Text style={styles.statValue}>{points} {t('pointsLabel').split(' ')[0]}</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statCol}>
-                <Text style={styles.statLabel}>{t('orderDiscountLabel')}</Text>
-                <Text style={styles.statValueHighlight}>
-                  {currentTier.discount > 0 ? `Giảm ${currentTier.discount}%` : 'Chuẩn'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Tiến trình lên hạng tiếp theo */}
-            <View style={styles.progressContainer}>
-              <View style={styles.progressLabelRow}>
-                <Text style={styles.progressTextLeft}>
-                  {nextTier ? `Tiến độ lên ${nextTier.name}` : 'Đã đạt hạng cao nhất'}
-                </Text>
-                <Text style={styles.progressTextRight}>{progressPercent}%</Text>
-              </View>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
-              </View>
-              {nextTier && (
-                <Text style={styles.progressHint}>
-                  Chi thêm {formatCurrency(Math.max(0, nextTier.min - totalSpent))} để nâng lên hạng{' '}
-                  <Text style={styles.boldText}>{nextTier.name}</Text> ({nextTier.discount}% off).
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* ================= TAB SWITCHER ================= */}
-        <View style={styles.tabSwitcher}>
+        {/* ================= KHỐI TỔNG QUAN ĐẦU TRANG (HIỆU ỨNG DÒNG CHẢY MEN GỐM / MÀU NƯỚC LOANG) ================= */}
+        <View style={styles.topSummaryRow}>
+          {/* Card 1: Hạng thành viên & Điểm tích lũy */}
           <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'vouchers' && styles.tabBtnActive]}
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('vouchers')}
+            style={styles.tierPointsTouch}
+            activeOpacity={0.88}
+            onPress={() => router.push('/membership-privileges')}
           >
-            <Ionicons
-              name={activeTab === 'vouchers' ? 'pricetag' : 'pricetag-outline'}
-              size={16}
-              color={activeTab === 'vouchers' ? '#000000' : '#888888'}
-            />
-            <Text style={[styles.tabBtnText, activeTab === 'vouchers' && styles.tabBtnTextActive]}>
-              Mã Voucher ({coupons.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'tiers' && styles.tabBtnActive]}
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('tiers')}
-          >
-            <Ionicons
-              name={activeTab === 'tiers' ? 'shield-checkmark' : 'shield-checkmark-outline'}
-              size={16}
-              color={activeTab === 'tiers' ? '#000000' : '#888888'}
-            />
-            <Text style={[styles.tabBtnText, activeTab === 'tiers' && styles.tabBtnTextActive]}>
-              Quyền lợi hội viên
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ================= TAB 1: DANH SÁCH VOUCHER (FIRESTORE) ================= */}
-        {activeTab === 'vouchers' && (
-          <View style={styles.vouchersSection}>
-            {/* Filter chips */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.voucherFilterScroll}
+            <GlazeFluidCard
+              gradientColors={currentTier.gradientColors}
+              blobs={currentTier.watercolorBlobs}
+              borderRadius={20}
+              style={styles.tierPointsCard}
             >
-              {[
-                { id: 'all', label: 'Tất cả mã' },
-                { id: 'percent', label: 'Giảm theo %' },
-                { id: 'fixed', label: 'Giảm tiền mặt' },
-                { id: 'shipping', label: 'Freeship' },
-              ].map((f) => {
-                const isSelected = voucherFilter === f.id;
-                return (
-                  <TouchableOpacity
-                    key={f.id}
-                    style={[styles.filterChip, isSelected && styles.filterChipSelected]}
-                    onPress={() => setVoucherFilter(f.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.filterChipLabel, isSelected && styles.filterChipLabelSelected]}>
-                      {f.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+              <View style={styles.tierPointsLeft}>
+                {/* Logo Tiệm Nhà Gốm đồng bộ chuẩn xác như trang chủ */}
+                <Image
+                  source={require('../../assets/images/logongang.webp')}
+                  style={styles.headerBrandLogo}
+                  contentFit="contain"
+                  tintColor="#FFFFFF"
+                />
 
-            {/* List vouchers */}
-            {loadingCoupons ? (
-              <View style={styles.loadingWrap}>
-                <ActivityIndicator size="small" color="#111111" />
-                <Text style={styles.loadingText}>{t('loadingVouchers')}</Text>
+                <Text style={styles.tierNameLabel}>Hạng {currentTier.name}</Text>
+
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsNumber}>{points}</Text>
+                  {/* Icon ngọn lửa phẳng chuẩn vector */}
+                  <Ionicons
+                    name="flame"
+                    size={18}
+                    color="#FFFFFF"
+                    style={styles.flameIcon}
+                  />
+                </View>
               </View>
-            ) : filteredCoupons.length === 0 ? (
-              <View style={styles.emptyWrap}>
-                <Ionicons name="ticket-outline" size={40} color="#AAAAAA" />
-                <Text style={styles.emptyTitle}>{t('noVouchersFound')}</Text>
-                <Text style={styles.emptyDesc}>{t('noVouchersDesc')}</Text>
+
+              {/* Nút tròn xem QR / Mã vạch thẻ */}
+              <TouchableOpacity
+                style={styles.qrScanBtn}
+                activeOpacity={0.8}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setQrModalVisible(true);
+                }}
+              >
+                <Ionicons name="qr-code-outline" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            </GlazeFluidCard>
+          </TouchableOpacity>
+
+          {/* Card 2: Kho quà (Hiệu ứng dòng chảy men gốm đồng bộ, chuyển sang /vouchers) */}
+          <TouchableOpacity
+            style={styles.giftVaultTouch}
+            activeOpacity={0.88}
+            onPress={() => router.push('/vouchers')}
+          >
+            <GlazeFluidCard
+              gradientColors={currentTier.gradientColors}
+              blobs={currentTier.watercolorBlobs}
+              borderRadius={20}
+              style={styles.giftVaultCard}
+            >
+              <Text style={styles.giftVaultTitle}>Kho quà</Text>
+
+              {/* Hàng số lượng quà: Sử dụng icon quà phẳng vector đồng bộ */}
+              <View style={styles.giftVaultCountRow}>
+                <Text style={styles.giftVaultCount}>{coupons.length || 0}</Text>
+                <Ionicons name="gift-outline" size={17} color="#FFFFFF" style={styles.giftFlatIcon} />
+                <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
               </View>
-            ) : (
-              filteredCoupons.map((voucher) => {
-                const isCopied = copiedId === voucher.id;
-                const valueText =
-                  voucher.type === 'percent'
-                    ? `Giảm ${voucher.value}%`
-                    : voucher.type === 'free_ship'
-                    ? 'Miễn phí giao hàng'
-                    : `Giảm ${formatCurrency(voucher.value)}`;
+            </GlazeFluidCard>
+          </TouchableOpacity>
+        </View>
 
-                return (
-                  <View key={voucher.id} style={[styles.ticketCard, voucher.isUsed && styles.ticketCardUsed]}>
-                    {/* Phần trái cuống vé */}
-                    <TouchableOpacity
-                      style={styles.ticketLeft}
-                      activeOpacity={0.7}
-                      onPress={() => handleCopyCode(voucher.code, voucher.id)}
-                    >
-                      <View style={styles.ticketIconWrap}>
-                        <Ionicons
-                          name={
-                            voucher.type === 'free_ship'
-                              ? 'bicycle'
-                              : voucher.type === 'percent'
-                              ? 'pie-chart'
-                              : 'cash'
-                          }
-                          size={18}
-                          color="#111111"
-                        />
-                      </View>
-                      <Text style={styles.ticketCodeText} numberOfLines={1}>
-                        {voucher.code}
-                      </Text>
-                      <Text style={styles.ticketStubHint}>Chạm chép</Text>
-                    </TouchableOpacity>
-
-                    {/* Vết cắt đứt giữa hai phần cuống vé */}
-                    <View style={styles.cutoutWrap}>
-                      <View style={styles.cutoutTop} />
-                      <View style={styles.dashedDivider} />
-                      <View style={styles.cutoutBottom} />
-                    </View>
-
-                    {/* Phần thân vé bên phải */}
-                    <View style={styles.ticketRight}>
-                      <View style={styles.ticketHeader}>
-                        <Text style={styles.ticketName} numberOfLines={1}>
-                          {voucher.name}
-                        </Text>
-                        {voucher.isUsed ? (
-                          <View style={styles.usedBadge}>
-                            <Text style={styles.usedBadgeText}>{t('usedBadge')}</Text>
-                          </View>
-                        ) : (
-                          <View style={styles.activeBadge}>
-                            <Text style={styles.activeBadgeText}>{t('activeBadge')}</Text>
-                          </View>
-                        )}
-                      </View>
-
-                      <Text style={styles.ticketDiscount}>{valueText}</Text>
-
-                      {voucher.conditions ? (
-                        <Text style={styles.ticketDesc} numberOfLines={2}>
-                          {voucher.conditions}
-                        </Text>
-                      ) : voucher.minOrder ? (
-                        <Text style={styles.ticketDesc} numberOfLines={1}>
-                          Áp dụng cho đơn hàng từ {formatCurrency(voucher.minOrder)}
-                        </Text>
-                      ) : null}
-
-                      <View style={styles.ticketFooter}>
-                        <View style={styles.ticketExpiryRow}>
-                          <Ionicons name="time-outline" size={12} color="#71717A" />
-                          <Text style={styles.ticketExpiry} numberOfLines={1} ellipsizeMode="tail">
-                            {voucher.expiryDate
-                              ? `HSD: ${new Date(voucher.expiryDate).toLocaleDateString('vi-VN')}`
-                              : 'Hạn dùng: Vô thời hạn'}
-                          </Text>
-                        </View>
-
-                        <View style={styles.ticketActionButtons}>
-                          <TouchableOpacity
-                            style={[styles.ticketCopyBtn, isCopied && styles.ticketCopyBtnSuccess]}
-                            activeOpacity={0.8}
-                            onPress={() => handleCopyCode(voucher.code, voucher.id)}
-                          >
-                            <Ionicons
-                              name={isCopied ? 'checkmark' : 'copy-outline'}
-                              size={12}
-                              color={isCopied ? '#FFFFFF' : '#111111'}
-                            />
-                            <Text
-                              style={[styles.ticketCopyText, isCopied && styles.ticketCopyTextSuccess]}
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                            >
-                              {isCopied ? 'Đã lưu' : 'Sao chép'}
-                            </Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.ticketUseBtn}
-                            activeOpacity={0.8}
-                            onPress={() => router.push('/(tabs)/products')}
-                          >
-                            <Text style={styles.ticketUseText} numberOfLines={1} ellipsizeMode="tail">
-                              Dùng ngay
-                            </Text>
-                            <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </View>
-        )}
-
-        {/* ================= TAB 2: QUYỀN LỢI TỪNG HẠNG HỘI VIÊN ================= */}
-        {activeTab === 'tiers' && (
-          <View style={styles.tiersSection}>
-            <View style={styles.tiersIntro}>
-              <Text style={styles.tiersIntroTitle}>{t('memberTierPolicy')}</Text>
-              <Text style={styles.tiersIntroDesc}>
-                Hệ thống tự động cộng dồn doanh số mua sắm từ Website và Ứng dụng để nâng hạng và mở khóa các đặc quyền
-                độc quyền.
+        {/* ================= THANH BANNER ĐẶC QUYỀN HỘI VIÊN (CHUYỂN SANG /membership-privileges) ================= */}
+        <TouchableOpacity
+          style={styles.membershipBanner}
+          activeOpacity={0.85}
+          onPress={() => router.push('/membership-privileges')}
+        >
+          <View style={styles.membershipBannerLeft}>
+            <View style={[styles.bannerIconCircle, { backgroundColor: '#FAF4EE' }]}>
+              <Ionicons name="flame" size={18} color={currentTier.gradientColors[0]} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.membershipBannerTitle}>
+                {nextTier
+                  ? `Chi thêm ${formatCurrency(Math.max(0, nextTier.min - totalSpent))} để lên ${nextTier.name}`
+                  : 'Đã đạt hạng hội viên cao nhất'}
+              </Text>
+              <Text style={styles.membershipBannerSub}>
+                Ưu đãi giảm giá {currentTier.discount}% • Xem chi tiết đặc quyền hội viên &gt;
               </Text>
             </View>
-
-            {MEMBERSHIP_TIERS.map((tier) => {
-              const isCurrent = currentTier.id === tier.id;
-              return (
-                <View
-                  key={tier.id}
-                  style={[
-                    styles.tierCard,
-                    { borderColor: isCurrent ? '#000000' : tier.borderColor },
-                    isCurrent && styles.tierCardCurrent,
-                  ]}
-                >
-                  <View style={styles.tierCardHeader}>
-                    <View style={styles.tierTitleWrap}>
-                      <Text style={styles.tierEmoji}>{tier.badge}</Text>
-                      <View>
-                        <View style={styles.tierNameRow}>
-                          <Text style={[styles.tierName, { color: tier.color }]}>{tier.name}</Text>
-                          {isCurrent && (
-                            <View style={styles.currentTag}>
-                              <Text style={styles.currentTagText}>{t('currentTierTag')}</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={styles.tierMinSpend}>
-                          {tier.min === 0 ? 'Dành cho mọi thành viên' : `Tổng chi tiêu từ ${formatCurrency(tier.min)}`}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.tierDiscountBadge}>
-                      <Text style={styles.tierDiscountVal}>
-                        {tier.discount > 0 ? `-${tier.discount}%` : 'Chuẩn'}
-                      </Text>
-                      <Text style={styles.tierDiscountSub}>{t('discountSub')}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.tierDivider} />
-
-                  <View style={styles.tierBenefitsList}>
-                    {tier.benefits.map((b, i) => (
-                      <View key={i} style={styles.benefitRow}>
-                        <Ionicons name="checkmark-circle" size={16} color={tier.color} style={styles.benefitIcon} />
-                        <Text style={styles.benefitText}>{b}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
           </View>
-        )}
+          <Ionicons name="gift-outline" size={16} color={currentTier.gradientColors[0]} />
+        </TouchableOpacity>
+
+        {/* ================= PHÂN MỤC: ƯU ĐÃI MỚI (CHỮ SẮP RA MẮT CHÍNH GIỮA) ================= */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Ưu đãi mới</Text>
+        </View>
+
+        {/* Khối chính giữa hiển thị thông báo "Sắp ra mắt" với icon phẳng */}
+        <View style={styles.comingSoonCenterCard}>
+          <View style={styles.comingSoonIconCircle}>
+            <Ionicons name="gift-outline" size={38} color={currentTier.gradientColors[0]} />
+          </View>
+
+          <Text style={styles.comingSoonMainTitle}>SẮP RA MẮT</Text>
+
+          <Text style={styles.comingSoonSubDesc}>
+            Tính năng đổi điểm lấy quà tặng & voucher ưu đãi đang được hoàn thiện. Hãy tiếp tục mua
+            sắm để tích lũy thêm điểm gốm nhé!
+          </Text>
+
+          {/* Badge hiển thị điểm gốm khả dụng */}
+          <View style={styles.userPointsBadge}>
+            <Ionicons name="flame" size={16} color={currentTier.gradientColors[0]} />
+            <Text style={styles.userPointsBadgeText}>
+              Bạn hiện có <Text style={styles.userPointsBold}>{points} Điểm gốm</Text> khả dụng
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.explorePrivilegesBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push('/membership-privileges')}
+          >
+            <GlazeFluidCard
+              gradientColors={currentTier.gradientColors}
+              blobs={currentTier.watercolorBlobs}
+              borderRadius={26}
+              style={styles.explorePrivilegesGradient}
+            >
+              <Text style={styles.explorePrivilegesText}>
+                Khám phá đặc quyền hạng {currentTier.name}
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </GlazeFluidCard>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* ================= MODAL: MÃ THÀNH VIÊN SỐ (QR & BARCODE) ================= */}
+      <Modal
+        visible={qrModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setQrModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.qrCardModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Thẻ Thành Viên Số</Text>
+              <TouchableOpacity
+                onPress={() => setQrModalVisible(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={20} color="#2B2928" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.qrModalBody}>
+              <View style={styles.qrBox}>
+                <Ionicons name="qr-code" size={140} color="#2B2928" />
+              </View>
+
+              <Text style={styles.qrCodeLabel}>{memberCode}</Text>
+              <Text style={styles.qrTierName}>
+                {userProfile?.displayName || user?.displayName || 'Khách hàng thân thiết'} • Hạng {currentTier.name} • {points} Điểm
+              </Text>
+
+              {/* Barcode giả lập */}
+              <View style={styles.barcodePlaceholder}>
+                <View style={styles.barcodeLinesRow}>
+                  {Array.from({ length: 32 }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.barcodeBar,
+                        { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
+                      ]}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <Text style={styles.qrModalHint}>
+                Đưa mã này cho nhân viên thu ngân tại quầy Tiệm Nhà Gốm để tích điểm và hưởng ưu đãi
+                hạng thành viên.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.qrCloseActionBtn}
+                onPress={() => setQrModalVisible(false)}
+              >
+                <GlazeFluidCard
+                  gradientColors={currentTier.gradientColors}
+                  blobs={currentTier.watercolorBlobs}
+                  borderRadius={26}
+                  style={styles.qrCloseActionGradient}
+                >
+                  <Text style={styles.qrCloseActionText}>Đóng</Text>
+                </GlazeFluidCard>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -590,629 +424,391 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF8F5',
   },
   scrollContent: {
-    paddingBottom: 125,
+    paddingBottom: 110,
   },
-  // THẺ THÀNH VIÊN
-  memberCardWrapper: {
+
+  // ================= KHỐI TỔNG QUAN ĐẦU TRANG =================
+  topSummaryRow: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 8,
-  },
-  memberCard: {
-    backgroundColor: '#18181B',
-    borderRadius: 20,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  memberCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  brandTag: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: '#A1A1AA',
-  },
-  cardTypeTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
-  tierPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  tierPillEmoji: {
-    fontSize: 13,
-  },
-  tierPillText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  memberInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  memberLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 9.5,
-    color: '#71717A',
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-  memberName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    maxWidth: 190,
-  },
-  memberCodeBox: {
-    alignItems: 'flex-end',
-  },
-  memberCodeText: {
-    fontFamily: 'monospace',
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#E4E4E7',
-    letterSpacing: 1,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: '#27272A',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  statCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    color: '#A1A1AA',
-    marginBottom: 2,
-  },
-  statValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  statValueHighlight: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FBBF24',
-  },
-  statDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: '#3F3F46',
-  },
-  progressContainer: {
-    marginTop: 2,
-  },
-  progressLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  progressTextLeft: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#D4D4D8',
-    fontWeight: '600',
-  },
-  progressTextRight: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  progressBarBg: {
-    height: 6,
-    backgroundColor: '#3F3F46',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 3,
-  },
-  progressHint: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10.5,
-    color: '#A1A1AA',
-    marginTop: 6,
-    lineHeight: 15,
-  },
-  boldText: {
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  loginHintBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#27272A',
-    borderWidth: 1,
-    borderColor: '#3F3F46',
-    marginTop: 14,
-    height: 44,
-    borderRadius: 22,
-  },
-  loginHintText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
-  // TAB SWITCHER
-  tabSwitcher: {
-    flexDirection: 'row',
-    backgroundColor: '#EAE6DF',
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 14,
-    padding: 3,
-    borderRadius: 14,
-  },
-  tabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 11,
-  },
-  tabBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  tabBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#666666',
-  },
-  tabBtnTextActive: {
-    fontWeight: '700',
-    color: '#000000',
-  },
-
-  // VOUCHERS SECTION
-  vouchersSection: {
-    paddingHorizontal: 16,
-  },
-  voucherFilterScroll: {
-    gap: 8,
-    paddingBottom: 12,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-  },
-  filterChipSelected: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
-  },
-  filterChipLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11.5,
-    color: '#555555',
-    fontWeight: '500',
-  },
-  filterChipLabelSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  loadingWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    gap: 8,
-  },
-  loadingText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: '#71717A',
-  },
-  emptyWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 50,
-    gap: 6,
-  },
-  emptyTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333333',
-  },
-  emptyDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11.5,
-    color: '#888888',
-    textAlign: 'center',
-  },
-
-  // TICKET CARD
-  ticketCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  ticketCardUsed: {
-    opacity: 0.6,
-    backgroundColor: '#FAFAFA',
-  },
-  ticketLeft: {
-    width: 68,
-    backgroundColor: '#F5F5F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 2,
-  },
-  ticketIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    marginBottom: 4,
-  },
-  ticketCodeText: {
-    fontFamily: 'monospace',
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#1C1917',
-    textAlign: 'center',
-  },
-  ticketStubHint: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 8.5,
-    color: '#888888',
-    marginTop: 2,
-  },
-  cutoutWrap: {
-    width: 1,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cutoutTop: {
-    position: 'absolute',
-    top: -7,
-    left: -6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    zIndex: 3,
-  },
-  cutoutBottom: {
-    position: 'absolute',
-    bottom: -7,
-    left: -6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    zIndex: 3,
-  },
-  dashedDivider: {
-    flex: 1,
-    width: 1,
-    borderWidth: 1,
-    borderColor: '#D6D3D1',
-    borderStyle: 'dashed',
-  },
-  ticketRight: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-  },
-  ticketHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  ticketName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#18181B',
-    flex: 1,
-    marginRight: 6,
-  },
-  activeBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  activeBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#15803D',
-  },
-  usedBadge: {
-    backgroundColor: '#F4F4F5',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  usedBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#71717A',
-  },
-  ticketDiscount: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#C86432',
-    marginBottom: 2,
-  },
-  ticketDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#52525B',
-    lineHeight: 16,
-    marginBottom: 4,
-  },
-  ticketFooter: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F0ECE6',
-    paddingTop: 7,
-    marginTop: 5,
-    gap: 6,
-  },
-  ticketExpiryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minWidth: 0,
-  },
-  ticketExpiry: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10.5,
-    color: '#71717A',
-    flexShrink: 1,
-  },
-  ticketActionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    width: '100%',
-    minWidth: 0,
-  },
-  ticketCopyBtn: {
-    flex: 1,
-    minWidth: 0,
-    height: 38,
-    borderRadius: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
-    borderColor: '#000000',
-    paddingHorizontal: 6,
-  },
-  ticketCopyBtnSuccess: {
-    backgroundColor: '#000000',
-  },
-  ticketCopyText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#000000',
-    flexShrink: 1,
-  },
-  ticketCopyTextSuccess: {
-    color: '#FFFFFF',
-  },
-  ticketUseBtn: {
-    flex: 1.1,
-    minWidth: 0,
-    height: 38,
-    borderRadius: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    backgroundColor: '#000000',
-    paddingHorizontal: 6,
-  },
-  ticketUseText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    flexShrink: 1,
-  },
-
-  // TIERS SECTION
-  tiersSection: {
-    paddingHorizontal: 16,
     gap: 12,
+    height: 104,
   },
-  tiersIntro: {
-    marginBottom: 4,
-  },
-  tiersIntroTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#18181B',
-    marginBottom: 2,
-  },
-  tiersIntroDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11.5,
-    color: '#71717A',
-    lineHeight: 17,
-  },
-  tierCard: {
-    backgroundColor: '#FFFFFF',
+  // Card 1: Hạng & Điểm
+  tierPointsTouch: {
+    flex: 1.85,
     borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  tierCardCurrent: {
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    height: 104,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
     elevation: 4,
   },
-  tierCardHeader: {
+  tierPointsCard: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderRadius: 20,
+    height: 104,
   },
-  tierTitleWrap: {
+  tierPointsLeft: {
+    flex: 1,
+    justifyContent: 'space-between',
+    height: '100%',
+  },
+  headerBrandLogo: {
+    width: 86,
+    height: 22,
+    marginTop: 2,
+  },
+  tierNameLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11.5,
+    color: 'rgba(255, 255, 255, 0.92)',
+    fontWeight: '600',
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  pointsNumber: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  flameIcon: {
+    width: 18,
+    height: 18,
+    marginLeft: 2,
+  },
+  qrScanBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+
+  // Card 2: Kho quà
+  giftVaultTouch: {
+    flex: 1,
+    borderRadius: 20,
+    height: 104,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  giftVaultCard: {
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    justifyContent: 'space-between',
+    borderRadius: 20,
+    height: 104,
+  },
+  giftVaultTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.92)',
+  },
+  giftVaultCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 2,
+  },
+  giftVaultCount: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  giftFlatIcon: {
+    marginHorizontal: 1,
+  },
+
+  // BANNER HỘI VIÊN
+  membershipBanner: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  membershipBannerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
   },
-  tierEmoji: {
-    fontSize: 26,
+  bannerIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
   },
-  tierNameRow: {
+  membershipBannerTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  membershipBannerSub: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    color: '#6E665D',
+    marginTop: 2,
+  },
+
+  // SECTION HEADER
+  sectionHeaderRow: {
+    paddingHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+
+  // ================= KHỐI CHÍNH GIỮA "SẮP RA MẮT" =================
+  comingSoonCenterCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  comingSoonIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FAF8F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    marginBottom: 16,
+  },
+  comingSoonMainTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2B2928',
+    letterSpacing: 1.5,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  comingSoonSubDesc: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: '#6E665D',
+    textAlign: 'center',
+    lineHeight: 19,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+  },
+  userPointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: '#F6F4EC',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 24,
   },
-  tierName: {
+  userPointsBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: '#6E665D',
+  },
+  userPointsBold: {
+    fontFamily: 'ElleGaborStd',
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  explorePrivilegesBtn: {
+    width: '100%',
+    borderRadius: 26,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  explorePrivilegesGradient: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    width: '100%',
+  },
+  explorePrivilegesText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
-  },
-  currentTag: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 8,
-  },
-  currentTagText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 9,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
-  tierMinSpend: {
+
+  // ================= MODAL QR CODE =================
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0ECE6',
+  },
+  modalTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F6F4EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrCardModal: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  qrModalBody: {
+    alignItems: 'center',
+    paddingTop: 16,
+    width: '100%',
+  },
+  qrBox: {
+    backgroundColor: '#F6F4EC',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    marginBottom: 12,
+  },
+  qrCodeLabel: {
+    fontFamily: 'monospace',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2B2928',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  qrTierName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    color: '#6E665D',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  barcodePlaceholder: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  barcodeLinesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 40,
+    paddingHorizontal: 16,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+  },
+  barcodeBar: {
+    backgroundColor: '#2B2928',
+    borderRadius: 1,
+  },
+  qrModalHint: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#71717A',
-    marginTop: 2,
+    color: '#6E665D',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 18,
+    paddingHorizontal: 8,
   },
-  tierDiscountBadge: {
+  qrCloseActionBtn: {
+    width: '100%',
+    borderRadius: 26,
+    overflow: 'hidden',
+  },
+  qrCloseActionGradient: {
+    height: 52,
     alignItems: 'center',
-    backgroundColor: '#F4F4F5',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    justifyContent: 'center',
+    width: '100%',
   },
-  tierDiscountVal: {
+  qrCloseActionText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
-    color: '#18181B',
-  },
-  tierDiscountSub: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 9,
-    color: '#71717A',
-  },
-  tierDivider: {
-    height: 1,
-    backgroundColor: '#F0ECE6',
-    marginVertical: 12,
-  },
-  tierBenefitsList: {
-    gap: 8,
-  },
-  benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  benefitIcon: {
-    marginTop: 1,
-  },
-  benefitText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: '#3F3F46',
-    lineHeight: 18,
-    flex: 1,
+    color: '#FFFFFF',
   },
 });

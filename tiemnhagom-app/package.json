@@ -15,7 +15,6 @@
     "expo-crypto": "~57.0.3",
     "expo-dev-client": "~57.0.19",
     "expo-device": "~57.0.2",
-    "expo-firebase-recaptcha": "^2.3.1",
     "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-image-picker": "~57.0.20",

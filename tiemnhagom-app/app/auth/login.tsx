@@ -15,7 +15,7 @@ import {
   Dimensions,
   ScrollView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -26,7 +26,6 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { app as firebaseApp, auth, db } from '../../src/config/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -149,17 +148,8 @@ export default function LoginScreen() {
       }
       setLoading(true);
       try {
-        let formattedPhone = phone.trim();
-        if (formattedPhone.startsWith('0')) {
-          formattedPhone = '+84' + formattedPhone.slice(1);
-        } else if (!formattedPhone.startsWith('+')) {
-          formattedPhone = '+84' + formattedPhone;
-        }
-
-        const phoneProvider = new PhoneAuthProvider(auth);
-        const vid = await phoneProvider.verifyPhoneNumber(formattedPhone, recaptchaVerifier.current as any);
-        setVerificationId(vid);
-        setIsOtpMode(true);
+        await signInWithPhoneSession(phone.trim());
+        router.back();
       } catch (err: any) {
         dialog.alert(t('error') || 'Lỗi', err.message || t('genericError'));
       } finally {
@@ -306,12 +296,6 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={firebaseApp.options}
-        attemptInvisibleVerification={true}
-        firebaseVersion="10.7.1"
-      />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {/* FULLSCREEN BACKGROUND IMAGE */}
@@ -821,9 +805,11 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#eef3eb',
+    backgroundColor: '#FAF8F5',
     borderRadius: 24,
     padding: 24,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
@@ -834,14 +820,14 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
-    color: '#3b4d45',
+    color: '#2B2928',
     marginBottom: 4,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: '#687971',
+    color: '#6E665D',
     marginBottom: 18,
     textAlign: 'center',
     lineHeight: 18,

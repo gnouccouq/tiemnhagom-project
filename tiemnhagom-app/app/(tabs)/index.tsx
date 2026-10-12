@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
 import { BannerSlider } from '../../src/components/BannerSlider';
 import { ProductCard } from '../../src/components/ProductCard';
+import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { CategoryChip } from '../../src/components/CategoryChip';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -588,9 +589,11 @@ export default function HomeScreen() {
           </View>
 
           {loading ? (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator size="small" color={Colors.textPrimary} />
-              <Text style={styles.loadingText}>{t('loadingCeramics')}</Text>
+            <View style={styles.gridContainer}>
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
             </View>
           ) : (
             <View style={styles.gridContainer}>

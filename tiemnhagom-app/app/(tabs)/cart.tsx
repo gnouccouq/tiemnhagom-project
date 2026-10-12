@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,6 +24,7 @@ import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../..
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
+import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { formatCurrency } from '../../src/utils/format';
 
 export default function CartScreen() {
@@ -51,6 +53,7 @@ export default function CartScreen() {
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [scrollY, setScrollY] = useState(0);
+  const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: 10, delay: 40 });
 
   const handleApplyCoupon = () => {
     if (!couponInput.trim()) return;
@@ -103,7 +106,7 @@ export default function CartScreen() {
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
 
   return (
-    <View style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       {/* Custom Header */}
       <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
@@ -112,7 +115,7 @@ export default function CartScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -299,7 +302,7 @@ export default function CartScreen() {
           <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 
