@@ -71,8 +71,15 @@ export const Header: React.FC<HeaderProps> = ({
       ? StatusBar.currentHeight || 24
       : 44;
 
-  // Khi không transparent (các màn bình thường), luôn hiển thị màu đen đậm chuẩn xác (progress = 1)
-  // Khi transparent (đầu trang chủ), progress chuyển dần từ 0 (trắng) -> 1 (đen) theo scrollY
+  // blurProgress:
+  // - Nếu transparent: tiến trình từ 0 -> 1 dựa vào scrollY
+  // - Nếu không transparent:
+  //   * Khi ở đầu trang (scrollY <= 5 và !isScrolled): 0 (nền trong suốt để lộ màu background)
+  //   * Khi cuộn xuống (scrollY > 5 hoặc isScrolled): tiến trình mờ dần và kích hoạt BlurView frosted glass
+  const blurProgress = transparent
+    ? (scrollY !== undefined ? Math.min(1, Math.max(0, scrollY / 65)) : isScrolled ? 1 : 0)
+    : (scrollY !== undefined ? Math.min(1, Math.max(0, scrollY / 30)) : isScrolled ? 1 : 0);
+
   const progress = !transparent
     ? 1
     : scrollY !== undefined
@@ -80,6 +87,8 @@ export const Header: React.FC<HeaderProps> = ({
     : isScrolled
     ? 1
     : 0;
+
+  const showBlurBackground = transparent || blurProgress > 0;
 
   // Nếu không có title (hoặc trang chủ / tìm kiếm), hiển thị Header phong cách Uniqlo: Logo + Thanh tìm kiếm con nhộng + Giỏ hàng
   const isSearchHeader = !title;
@@ -100,10 +109,10 @@ export const Header: React.FC<HeaderProps> = ({
       ]}
     >
       {/* Lớp nền mờ chuyển màu mượt mà theo tiến trình cuộn */}
-      {transparent && (
-        <View style={[StyleSheet.absoluteFill, { opacity: progress }]} pointerEvents="none">
+      {showBlurBackground && (
+        <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
           <BlurView
-            intensity={Platform.OS === 'ios' ? 95 : 85}
+            intensity={Platform.OS === 'ios' ? 85 : 75}
             tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
             experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
             style={StyleSheet.absoluteFill}
@@ -207,7 +216,11 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
               {unreadCount > 0 && (
-                <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
               )}
             </BlurButton>
           )}
@@ -255,7 +268,11 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
                 {unreadCount > 0 && (
-                  <View style={[styles.badge, { width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
                 )}
               </BlurButton>
             )}
@@ -290,8 +307,8 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   headerBackdrop: {
     backgroundColor: Colors.cardBackground === '#FFFFFF' 
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.35)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.25)' : 'rgba(30,30,30,0.35)'),
+      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)')
+      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)'),
     borderBottomWidth: 0,
     borderBottomColor: Colors.borderLight,
     shadowColor: Colors.textPrimary,
@@ -333,24 +350,25 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   searchPill: {
     flex: 1,
-    height: 39,
-    borderRadius: 20,
+    height: 42,
+    borderRadius: 21,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 14,
-    paddingRight: 11,
+    paddingLeft: 16,
+    paddingRight: 12,
     marginHorizontal: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.08)',
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0,
+    shadowOpacity: 0.04,
     shadowRadius: 5,
     elevation: 3,
     overflow: 'hidden',
   },
   searchPillOverlay: {
+    borderRadius: 21,
     backgroundColor: Colors.cardBackground === '#FFFFFF' 
       ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)')
       : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
@@ -406,24 +424,45 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: {
+  notificationBadge: {
     position: 'absolute',
-    top: 1,
-    right: 1,
-    backgroundColor: '#E53935',
-    borderRadius: 9,
-    minWidth: 17,
-    height: 17,
+    top: -2,
+    right: -2,
+    backgroundColor: '#B91C1C',
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
     borderWidth: 1.5,
-    borderColor: Colors.textInverse,
+    borderColor: Colors.background || '#FAF8F5',
+    zIndex: 10,
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#B91C1C',
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: Colors.background || '#FAF8F5',
+    zIndex: 10,
   },
   badgeText: {
-    color: Colors.textInverse,
-    fontSize: 9.5,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
   },
 
   // TITLE HEADER

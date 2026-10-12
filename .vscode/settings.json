@@ -1,4 +1,7 @@
 {
+    "typescript.tsdk": "tiemnhagom-app/node_modules/typescript/lib",
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "cSpell.enabled": false,
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive"
 }

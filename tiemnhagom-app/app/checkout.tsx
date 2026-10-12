@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
@@ -20,6 +20,7 @@ import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../sr
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
+import { useDialog } from '../src/context/DialogContext';
 import { createOrder } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
 
@@ -27,6 +28,7 @@ export default function CheckoutScreen() {
   const Colors = useThemeColor();
   const themeStyles = getStyles(Colors);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { cart, subtotal, shippingFee, discountAmount, totalAmount, appliedCoupon, clearCart, shippingMethod } = useCart();
   const { user, userProfile } = useAuth();
 
@@ -41,22 +43,23 @@ export default function CheckoutScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'banking'>('cod');
   const [loading, setLoading] = useState(false);
   const { t } = useSettings();
+  const dialog = useDialog();
 
   const handleSubmitOrder = async () => {
     if (!fullName.trim()) {
-      Alert.alert(t('error'), t('errMissingName'));
+      dialog.alert(t('error') || 'Thiếu thông tin', t('errMissingName') || 'Vui lòng nhập họ và tên nhận hàng.');
       return;
     }
     if (!phone.trim() || phone.trim().length < 9) {
-      Alert.alert(t('error'), t('errInvalidPhone'));
+      dialog.alert(t('error') || 'Thiếu thông tin', t('errInvalidPhone') || 'Số điện thoại không hợp lệ.');
       return;
     }
     if (!streetAddress.trim() || !locationName) {
-      Alert.alert(t('error'), t('errMissingAddress'));
+      dialog.alert(t('error') || 'Thiếu thông tin', t('errMissingAddress') || 'Vui lòng chọn địa chỉ giao hàng.');
       return;
     }
     if (cart.length === 0) {
-      Alert.alert(t('error'), t('errEmptyCart'));
+      dialog.alert(t('error') || 'Giỏ hàng rỗng', t('errEmptyCart') || 'Giỏ hàng của bạn đang trống.');
       return;
     }
 
@@ -93,21 +96,35 @@ export default function CheckoutScreen() {
           },
         });
       } else {
-        Alert.alert(t('error'), result.error || t('errCreateOrderFailed'));
+        dialog.alert(t('error') || 'Lỗi đặt hàng', result.error || t('errCreateOrderFailed'));
       }
     } catch (e: any) {
-      Alert.alert(t('error'), e.message || t('errOrderProcess'));
+      dialog.alert(t('error') || 'Lỗi đặt hàng', e.message || t('errOrderProcess'));
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <SafeAreaView style={themeStyles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      <Header title={t('checkoutTitle')} showBack showCart={false} showSearch={false} />
+  const [scrollY, setScrollY] = useState(0);
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={themeStyles.scrollContent}>
+  return (
+    <View style={themeStyles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <Header 
+        title={t('checkoutTitle')} 
+        showBack 
+        showCart={false} 
+        showSearch={false} 
+        transparent
+        scrollY={scrollY}
+      />
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[themeStyles.scrollContent, { paddingTop: insets.top + 54 + 10 }]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
+      >
         {/* Recipient Information */}
         <View style={themeStyles.card}>
           <View style={themeStyles.cardHeader}>
@@ -295,7 +312,7 @@ export default function CheckoutScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -311,18 +328,25 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    borderRadius: 20,
+    padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
+    paddingBottom: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',
@@ -331,45 +355,48 @@ const getStyles = (Colors: any) => StyleSheet.create({
     color: Colors.textPrimary,
   },
   formGroup: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   label: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.xs,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textSecondary,
-    marginBottom: 4,
+    marginBottom: 6,
+    marginLeft: 4,
   },
   input: {
     fontFamily: 'ElleGaborStd',
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background || '#FAF8F5',
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.md,
-    height: 42,
-    fontSize: Typography.fontSize.sm,
+    borderRadius: 26,
+    paddingHorizontal: 18,
+    height: 52,
+    fontSize: 14.5,
     color: Colors.textPrimary,
   },
   textArea: {
-    height: 60,
-    paddingTop: Spacing.sm,
+    minHeight: 84,
+    borderRadius: 20,
+    paddingTop: 12,
+    paddingHorizontal: 18,
     textAlignVertical: 'top',
   },
   locationSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background || '#FAF8F5',
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.md,
-    height: 42,
+    borderRadius: 26,
+    paddingHorizontal: 18,
+    height: 52,
   },
   locationText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
+    fontSize: 14.5,
     color: Colors.textPrimary,
     flex: 1,
   },
@@ -379,15 +406,17 @@ const getStyles = (Colors: any) => StyleSheet.create({
   paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.borderLight,
     gap: Spacing.sm,
   },
   paymentOptionActive: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: 6,
+    borderColor: Colors.border,
+    borderWidth: 1,
   },
   paymentTextWrap: {
     flex: 1,
@@ -395,7 +424,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   paymentName: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   paymentDesc: {
@@ -497,21 +526,21 @@ const getStyles = (Colors: any) => StyleSheet.create({
   submitBtn: {
     backgroundColor: Colors.primary,
     flexDirection: 'row',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: 14,
-    borderRadius: 24,
-    minWidth: 160,
+    paddingHorizontal: 22,
+    height: 52,
+    borderRadius: 26,
+    minWidth: 165,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitBtnDisabled: {
-    opacity: 0.6,
+    opacity: 0.65,
   },
   submitBtnText: {
     color: Colors.textInverse,

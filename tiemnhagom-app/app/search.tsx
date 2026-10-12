@@ -8,7 +8,7 @@ import {
   Keyboard,
   StatusBar
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +27,7 @@ const MAX_RECENT_SEARCHES = 10;
 
 export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useSettings();
   const [searchText, setSearchText] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -89,8 +90,10 @@ export default function SearchScreen() {
     });
   }, [searchText, allProducts]);
 
+  const [scrollY, setScrollY] = useState(0);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <Header
         title=""
@@ -103,9 +106,11 @@ export default function SearchScreen() {
         onClearSearch={() => setSearchText('')}
         searchPlaceholder={t('searchPlaceholder')}
         autoFocus={true}
+        transparent
+        scrollY={scrollY}
       />
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top + 54 }]}>
         {!searchText.trim() ? (
           // Hiển thị Lịch sử tìm kiếm
           <View style={styles.recentSection}>
@@ -162,6 +167,8 @@ export default function SearchScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             onScrollBeginDrag={() => Keyboard.dismiss()}
+            onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+            scrollEventThrottle={16}
             renderItem={({ item }) => (
               <View style={styles.productCardWrapper}>
                 <ProductCard product={item} />
@@ -184,7 +191,7 @@ export default function SearchScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -8,22 +8,27 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { Header } from '../../src/components/Header';
+import { BlurButton } from '../../src/components/BlurButton';
 import { CartItemCard } from '../../src/components/CartItemCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
+import { useDialog } from '../../src/context/DialogContext';
 import { formatCurrency } from '../../src/utils/format';
 
 export default function CartScreen() {
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const {
     cart,
@@ -41,9 +46,11 @@ export default function CartScreen() {
     setShippingMethod,
   } = useCart();
   const { t } = useSettings();
+  const dialog = useDialog();
 
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
+  const [scrollY, setScrollY] = useState(0);
 
   const handleApplyCoupon = () => {
     if (!couponInput.trim()) return;
@@ -62,15 +69,19 @@ export default function CartScreen() {
   };
 
   const confirmClearCart = () => {
-    Alert.alert(t('clearCartTitle'), t('clearCartMsg'), [
-      { text: t('cancel'), style: 'cancel' },
-      { text: t('clearAll'), style: 'destructive', onPress: clearCart },
-    ]);
+    dialog.confirm(
+      t('clearCartTitle') || 'Xóa toàn bộ giỏ hàng',
+      t('clearCartMsg') || 'Bạn có chắc muốn xóa tất cả sản phẩm đang có trong giỏ hàng không?',
+      clearCart,
+      t('clearAll') || 'Xóa ngay',
+      t('cancel') || 'Hủy',
+      true
+    );
   };
 
   if (cart.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
         {/* Custom Header */}
         <View style={styles.customHeader}>
@@ -85,27 +96,65 @@ export default function CartScreen() {
           buttonText={t('exploreCeramics')}
           onButtonPress={() => router.push('/(tabs)/products')}
         />
-      </SafeAreaView>
+      </View>
     );
   }
 
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       {/* Custom Header */}
-      <View style={styles.customHeader}>
+      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Colors.cardBackground === '#FFFFFF'
+                      ? Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)'
+                      : Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <View style={{ width: 40 }} />
         <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
         {cart.length > 0 ? (
-          <TouchableOpacity onPress={confirmClearCart} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={styles.headerClearBtn}>{t('clear')}</Text>
-          </TouchableOpacity>
+          <BlurButton
+            style={styles.roundClearBtn}
+            onPress={confirmClearCart}
+            accessibilityLabel={t('clear') || 'Xóa tất cả'}
+          >
+            <Ionicons name="trash-outline" size={19} color={Colors.error || '#DC2626'} />
+          </BlurButton>
         ) : (
           <View style={{ width: 40 }} />
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[
+          styles.scrollContent,
+          { 
+            paddingTop: insets.top + 54 + 8,
+            paddingBottom: Math.max(insets.bottom, 16) + 120,
+          }
+        ]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
+      >
         {/* Cart Header Action */}
         <View style={styles.cartTopBar}>
           <Text style={styles.cartTotalCount}>
@@ -250,7 +299,7 @@ export default function CartScreen() {
           <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -260,14 +309,17 @@ const getStyles = (Colors: any) => StyleSheet.create({
     backgroundColor: Colors.background,
   },
   customHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    paddingBottom: 10,
+    backgroundColor: 'transparent',
   },
   headerBackBtn: {
     width: 40,
@@ -289,6 +341,21 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
+  },
+  roundClearBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.cardBackground || '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerClearBtn: {
     fontFamily: 'ElleGaborStd',
@@ -410,30 +477,38 @@ const getStyles = (Colors: any) => StyleSheet.create({
   couponInputRow: {
     flexDirection: 'row',
     gap: 10,
+    alignItems: 'center',
   },
   couponInput: {
     fontFamily: 'ElleGaborStd',
     flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    height: 44,
-    fontSize: 13,
+    backgroundColor: Colors.background || '#FAF8F5',
+    borderRadius: 26,
+    paddingHorizontal: 18,
+    height: 52,
+    fontSize: 14,
     color: Colors.textPrimary,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: Colors.border,
   },
   applyCouponBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 20,
-    paddingHorizontal: 18,
+    borderRadius: 26,
+    paddingHorizontal: 22,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   applyCouponText: {
+    fontFamily: 'ElleGaborStd',
     color: Colors.textInverse,
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 14,
   },
   couponErrorText: {
     fontFamily: 'ElleGaborStd',
@@ -443,16 +518,16 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   summaryCard: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 18,
     marginBottom: 20,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: Colors.textPrimary,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -498,18 +573,19 @@ const getStyles = (Colors: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 14,
-    borderRadius: 24,
+    height: 52,
+    borderRadius: 26,
     gap: 8,
-    shadowColor: Colors.textPrimary,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.16,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
   checkoutBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: Colors.textInverse,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
 });

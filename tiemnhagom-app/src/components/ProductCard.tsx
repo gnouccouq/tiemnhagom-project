@@ -214,7 +214,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 const getStyles = (Colors: any) => StyleSheet.create({
   card: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',

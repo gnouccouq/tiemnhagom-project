@@ -12,10 +12,11 @@ import {
   Modal,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColor } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
@@ -25,6 +26,7 @@ import { getUserOrders } from '../../src/services/orderService';
 import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
+import { useDialog } from '../../src/context/DialogContext';
 import { BlurButton } from '../../src/components/BlurButton';
 
 // Cấu hình hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
@@ -98,10 +100,12 @@ export default function ProfileScreen() {
   const router = useRouter();
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
+  const insets = useSafeAreaInsets();
   const { user, userProfile } = useAuth();
   const { favorites } = useWishlist();
   const { unreadCount } = useNotificationBadge();
   const { t } = useSettings();
+  const dialog = useDialog();
 
   // Helper dịch hạng thành viên & quyền lợi
   const getTierName = (tier: (typeof MEMBERSHIP_TIERS)[0]) => t(tier.nameKey) || tier.defaultName;
@@ -208,18 +212,51 @@ export default function ProfileScreen() {
 
   const openHotline = () => {
     Linking.openURL('tel:0777709662').catch(() => {
-      Alert.alert(t('notification') || 'Thông báo', 'Hotline: 0777 709 662');
+      dialog.alert(t('notification') || 'Thông báo', 'Hotline: 0777 709 662');
     });
   };
 
+  const [scrollY, setScrollY] = useState(0);
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle={Colors.cardBackground === '#1E1E1E' ? 'light-content' : 'dark-content'} />
 
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: AVATAR + USER NAME + ROUND SETTINGS & NOTIFICATIONS BTNS  */}
       {/* ========================================================================= */}
-      <View style={styles.topHeader}>
+      <View
+        style={[
+          styles.topHeader,
+          { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) },
+        ]}
+      >
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Colors.cardBackground === '#FFFFFF'
+                      ? Platform.OS === 'ios'
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(250,248,245,0.45)'
+                      : Platform.OS === 'ios'
+                      ? 'rgba(30,30,30,0.12)'
+                      : 'rgba(30,30,30,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <TouchableOpacity
           style={styles.userInfoRow}
           activeOpacity={0.8}
@@ -283,7 +320,9 @@ export default function ProfileScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 60 }]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
       >
         {/* ========================================================================= */}
         {/* 2. PRIMARY HERO CARD: VIP MEMBERSHIP CARD (2-COLUMN HIGHLANDS LAYOUT)     */}
@@ -517,7 +556,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => openWebLink('https://maps.app.goo.gl/7Jxw7yJyaQG8wkHeA', t('storeLocationsUtility'))}
+              onPress={() => router.push('/stores')}
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="storefront-outline" size={24} color="#8A5A2B" />
@@ -859,7 +898,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -871,19 +910,22 @@ const getStyles = (Colors: any) =>
     },
     scrollContent: {
       paddingHorizontal: 16,
-      paddingTop: 8,
       paddingBottom: 80,
     },
 
     // 1. Top Header
     topHeader: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 50,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingTop: Platform.OS === 'android' ? 10 : 6,
       paddingBottom: 8,
-      backgroundColor: Colors.background || '#FAF8F5',
+      backgroundColor: 'transparent',
     },
     userInfoRow: {
       flexDirection: 'row',

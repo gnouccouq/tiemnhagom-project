@@ -13,7 +13,7 @@ import {
   PanResponder,
   Dimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = 80;
@@ -254,6 +254,7 @@ const swipeStyles = StyleSheet.create({
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -468,67 +469,27 @@ export default function NotificationsScreen() {
     return n.type === filter;
   });
 
+  const [scrollY, setScrollY] = useState(0);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
-      <Header title="Thông báo" showSearch={false} showBack={true} showCart={false} />
-
-      {/* Top Bar Actions */}
-      <View style={styles.topActionsBar}>
-        <View style={styles.unreadInfo}>
-          {/* Bỏ chữ Hộp thư thông báo */}
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount} mới</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          {unreadCount > 0 && (
-            <TouchableOpacity
-              style={styles.markAllBtn}
-              onPress={handleMarkAllRead}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="checkmark-done" size={15} color="#111111" />
-              <Text style={styles.markAllText}>Đã đọc</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.filterWrap}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          {[
-            { id: 'all', label: 'Tất cả' },
-            { id: 'promo', label: 'Khuyến mãi' },
-            { id: 'order', label: 'Đơn hàng' },
-            { id: 'system', label: 'Hệ thống' },
-          ].map((f) => {
-            const isActive = filter === f.id;
-            return (
-              <TouchableOpacity
-                key={f.id}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
-                onPress={() => setFilter(f.id as FilterType)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <Header 
+        title="Thông báo" 
+        showSearch={false} 
+        showBack={true} 
+        showCart={false} 
+        transparent
+        scrollY={scrollY}
+      />
 
       {/* Notification List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 54 }]}
         scrollEnabled={scrollEnabled}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -538,6 +499,56 @@ export default function NotificationsScreen() {
           />
         }
       >
+        {/* Top Bar Actions */}
+        <View style={styles.topActionsBar}>
+          <View style={styles.unreadInfo}>
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>{unreadCount} mới</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            {unreadCount > 0 && (
+              <TouchableOpacity
+                style={styles.markAllBtn}
+                onPress={handleMarkAllRead}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="checkmark-done" size={15} color="#111111" />
+                <Text style={styles.markAllText}>Đã đọc</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Filter Tabs */}
+        <View style={styles.filterWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            {[
+              { id: 'all', label: 'Tất cả' },
+              { id: 'promo', label: 'Khuyến mãi' },
+              { id: 'order', label: 'Đơn hàng' },
+              { id: 'system', label: 'Hệ thống' },
+            ].map((f) => {
+              const isActive = filter === f.id;
+              return (
+                <TouchableOpacity
+                  key={f.id}
+                  style={[styles.filterChip, isActive && styles.filterChipActive]}
+                  onPress={() => setFilter(f.id as FilterType)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
         {filteredItems.length === 0 ? (
           <View style={styles.emptyWrap}>
             <View style={styles.emptyIconCircle}>
@@ -558,7 +569,7 @@ export default function NotificationsScreen() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -601,18 +612,18 @@ const styles = StyleSheet.create({
   markAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   markAllText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 11.5,
+    fontWeight: '700',
     color: '#111111',
   },
   filterWrap: {
@@ -628,7 +639,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E8E1D8',
   },
   filterChipActive: {
     backgroundColor: '#000000',
@@ -652,15 +663,15 @@ const styles = StyleSheet.create({
   itemCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#E8E1D8',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   itemCardUnread: {
     backgroundColor: '#FFFFFF',

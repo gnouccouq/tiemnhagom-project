@@ -11,9 +11,10 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
@@ -59,6 +60,7 @@ const formatVND = (num: number) => {
 
 export default function PointsHistoryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
@@ -292,6 +294,9 @@ export default function PointsHistoryScreen() {
     }
   };
 
+  const [scrollY, setScrollY] = useState(0);
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -301,7 +306,27 @@ export default function PointsHistoryScreen() {
       />
 
       {/* TOP HEADER: NÚT BACK BO TRÒN VÀ TIÊU ĐỀ LỊCH SỬ ĐIỂM */}
-      <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
+      <View style={[styles.headerSafeArea, { paddingTop: insets.top }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint={isDark ? 'dark' : 'light'}
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: isDark
+                    ? Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)'
+                    : Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <View style={styles.headerRow}>
           <BlurButton
             style={styles.roundBackBtn}
@@ -387,13 +412,15 @@ export default function PointsHistoryScreen() {
             />
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
 
       {/* DANH SÁCH CÁC THẺ GIAO DỊCH ĐIỂM (CARD LAYOUT CHUẨN XÁC THEO ẢNH) */}
       <ScrollView
         style={styles.contentScrollView}
-        contentContainerStyle={styles.scrollContentContainer}
+        contentContainerStyle={[styles.scrollContentContainer, { paddingTop: insets.top + 105 }]}
         showsVerticalScrollIndicator={false}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
       >
         {loading ? (
           <View style={styles.loadingBox}>
@@ -647,17 +674,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDark ? (Colors.background || '#121212') : '#F8F7F4',
+      backgroundColor: isDark ? (Colors.background || '#121212') : '#FAF8F5',
     },
     headerSafeArea: {
-      backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: isDark ? '#2A2A2A' : '#E5E7EB',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: isDark ? 0.2 : 0.03,
-      shadowRadius: 3,
-      elevation: 2,
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 50,
+      backgroundColor: 'transparent',
+      elevation: 0,
+      shadowOpacity: 0,
     },
     headerRow: {
       flexDirection: 'row',

@@ -12,12 +12,14 @@ import {
   Modal,
   RefreshControl,
   Dimensions,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { Colors } from '../../src/constants/theme';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
 import { Product } from '../../src/types';
@@ -25,6 +27,7 @@ import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useSettings } from '../../src/context/SettingsContext';
+import { useDialog } from '../../src/context/DialogContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -124,6 +127,7 @@ function ProductRow({ product }: { product: Product }) {
   const router = useRouter();
   const { addToCart } = useCart();
   const { t } = useSettings();
+  const dialog = useDialog();
 
   const img = product.images?.[0] || product.imageUrl;
   const price = (product.salePrice !== undefined && product.salePrice !== null) ? product.salePrice : product.price;
@@ -173,7 +177,21 @@ function ProductRow({ product }: { product: Product }) {
         style={rowStyles.addBtn}
         onPress={() => {
           addToCart(product, 1);
-          Alert.alert('✓', t('addedToCart'), [{ text: t('ok') }]);
+          dialog.showDialog({
+            title: t('success') || 'Thành công',
+            message: `${t('addedToCart') || 'Đã thêm vào giỏ hàng'}: ${product.name}`,
+            buttons: [
+              {
+                text: t('ok') || 'Đã hiểu',
+                style: 'default',
+              },
+              {
+                text: t('viewCart') || 'Xem giỏ hàng',
+                style: 'cancel',
+                onPress: () => router.push('/(tabs)/cart'),
+              },
+            ],
+          });
         }}
       >
         <Ionicons name="add" size={22} color="#FFFFFF" />
@@ -187,13 +205,15 @@ const rowStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     marginHorizontal: 16,
-    marginBottom: 10,
-    padding: 10,
+    marginBottom: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
   },
@@ -267,6 +287,7 @@ const rowStyles = StyleSheet.create({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProductsScreen() {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string; search?: string; collection?: string }>();
   const router = useRouter();
   const { t } = useSettings();
@@ -399,12 +420,34 @@ export default function ProductsScreen() {
   const activeCat = categories.find(c => c.id === selectedCategory);
   const subs = activeCat?.subs || [];
 
+  const [scrollY, setScrollY] = useState(0);
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
 
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint="light"
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <TouchableOpacity style={styles.headerTitle} onPress={() => setModalVisible(true)} activeOpacity={0.7}>
           <View style={styles.headerDots}>
             <View style={[styles.dot, { backgroundColor: '#E8A87C' }]} />
@@ -426,121 +469,131 @@ export default function ProductsScreen() {
           <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications' as any)}>
             <Ionicons name="notifications-outline" size={22} color="#1F2937" />
             {unreadCount > 0 && (
-              <View style={[styles.badge, { position: 'absolute', width: 10, height: 10, borderRadius: 5, paddingHorizontal: 0, minWidth: 10, top: -2, right: -2 }]} />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* ── Category Bubbles: 1 hàng ngang cuộn ── */}
-      <View style={styles.bubblesSection}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.bubbleRow}
-        >
-          {allCatsWithAll.map(cat => (
-            <CategoryBubble
-              key={cat.id}
-              cat={cat}
-              isSelected={selectedCategory === cat.id}
-              onPress={() => {
-                setSelectedCategory(cat.id);
-                setSelectedSubCategory('');
-              }}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* ── Sub-category chips ── */}
-      {subs.length > 0 && (
-        <View style={{ backgroundColor: '#FAF8F5' }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.subChipList}
-          >
-            <TouchableOpacity
-              style={[styles.subChip, selectedSubCategory === '' && styles.subChipActive]}
-              onPress={() => setSelectedSubCategory('')}
-            >
-              <Text style={[styles.subChipText, selectedSubCategory === '' && styles.subChipTextActive]}>
-                {t('all')}
-              </Text>
-            </TouchableOpacity>
-            {subs.map((sub, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[styles.subChip, selectedSubCategory === sub && styles.subChipActive]}
-                onPress={() => setSelectedSubCategory(selectedSubCategory === sub ? '' : sub)}
+      {/* ── Product FlatList with ListHeaderComponent ── */}
+      <FlatList
+        data={loading ? [] : products}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => <ProductRow product={item} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: 110 }}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListHeaderComponent={
+          <View>
+            {/* ── Category Bubbles: 1 hàng ngang cuộn ── */}
+            <View style={styles.bubblesSection}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.bubbleRow}
               >
-                <Text style={[styles.subChipText, selectedSubCategory === sub && styles.subChipTextActive]}>
-                  {sub}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+                {allCatsWithAll.map(cat => (
+                  <CategoryBubble
+                    key={cat.id}
+                    cat={cat}
+                    isSelected={selectedCategory === cat.id}
+                    onPress={() => {
+                      setSelectedCategory(cat.id);
+                      setSelectedSubCategory('');
+                    }}
+                  />
+                ))}
+              </ScrollView>
+            </View>
 
-      {/* ── Section Title + Sort ── */}
-      <Text style={styles.sectionTitle}>
-        {selectedSubCategory || (activeCatName === t('all') ? t('allProducts') : activeCatName)}
-      </Text>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.countText}>{allProducts.length} {t('productsCount')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
-          {SORT_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.id}
-              style={[styles.sortChip, sortBy === opt.id && styles.sortChipActive]}
-              onPress={() => setSortBy(opt.id as any)}
-            >
-              <Text style={[styles.sortText, sortBy === opt.id && styles.sortTextActive]}>{opt.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* ── Product List ── */}
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="#111111" />
-          <Text style={styles.loadingText}>{t('loadingProducts')}</Text>
-        </View>
-      ) : products.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <Ionicons name="cube-outline" size={48} color="#C8B89A" />
-          <Text style={styles.emptyTitle}>{t('noProducts')}</Text>
-          <Text style={styles.emptyDesc}>{t('noProductsDesc')}</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={products}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <ProductRow product={item} />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: 8, paddingBottom: 110 }}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color="#111111" />
+            {/* ── Sub-category chips ── */}
+            {subs.length > 0 && (
+              <View style={{ backgroundColor: '#FAF8F5' }}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.subChipList}
+                >
+                  <TouchableOpacity
+                    style={[styles.subChip, selectedSubCategory === '' && styles.subChipActive]}
+                    onPress={() => setSelectedSubCategory('')}
+                  >
+                    <Text style={[styles.subChipText, selectedSubCategory === '' && styles.subChipTextActive]}>
+                      {t('all')}
+                    </Text>
+                  </TouchableOpacity>
+                  {subs.map((sub, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      style={[styles.subChip, selectedSubCategory === sub && styles.subChipActive]}
+                      onPress={() => setSelectedSubCategory(selectedSubCategory === sub ? '' : sub)}
+                    >
+                      <Text style={[styles.subChipText, selectedSubCategory === sub && styles.subChipTextActive]}>
+                        {sub}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
-            ) : null
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#111111"
-              colors={['#111111']}
-            />
-          }
-        />
-      )}
+            )}
+
+            {/* ── Section Title + Sort ── */}
+            <Text style={styles.sectionTitle}>
+              {selectedSubCategory || (activeCatName === t('all') ? t('allProducts') : activeCatName)}
+            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.countText}>{allProducts.length} {t('productsCount')}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+                {SORT_OPTIONS.map(opt => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[styles.sortChip, sortBy === opt.id && styles.sortChipActive]}
+                    onPress={() => setSortBy(opt.id as any)}
+                  >
+                    <Text style={[styles.sortText, sortBy === opt.id && styles.sortTextActive]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="large" color="#111111" />
+              <Text style={styles.loadingText}>{t('loadingProducts')}</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="cube-outline" size={48} color="#C8B89A" />
+              <Text style={styles.emptyTitle}>{t('noProducts')}</Text>
+              <Text style={styles.emptyDesc}>{t('noProductsDesc')}</Text>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#111111" />
+            </View>
+          ) : null
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#111111"
+            colors={['#111111']}
+          />
+        }
+      />
 
       {/* ── Modal: Toàn bộ danh mục dạng grid 4 cột ── */}
       <Modal
@@ -549,7 +602,7 @@ export default function ProductsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <SafeAreaView style={modalStyles.safeArea}>
+        <View style={[modalStyles.safeArea, { paddingTop: Platform.OS === 'android' ? 24 : insets.top }]}>
           <View style={modalStyles.header}>
             <Text style={modalStyles.title}>{t('categories')}</Text>
             <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -587,9 +640,9 @@ export default function ProductsScreen() {
               );
             })}
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -601,12 +654,16 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    height: 56,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     flexDirection: 'row',
@@ -651,6 +708,27 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: '#F0ECE6',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#B91C1C',
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#FAF8F5',
+    zIndex: 10,
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
   },
   badge: {
     backgroundColor: '#E53935',

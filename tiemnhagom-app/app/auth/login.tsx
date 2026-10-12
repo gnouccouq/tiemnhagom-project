@@ -31,6 +31,7 @@ import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { app as firebaseApp, auth, db } from '../../src/config/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useSettings } from '../../src/context/SettingsContext';
+import { useDialog } from '../../src/context/DialogContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -50,6 +51,7 @@ export default function LoginScreen() {
   } = useAuth();
   
   const { t } = useSettings();
+  const dialog = useDialog();
 
   // Chế độ: false = Đăng nhập (Sign In), true = Đăng ký (Sign Up)
   const [isSignUpMode, setIsSignUpMode] = useState(false);
@@ -93,11 +95,11 @@ export default function LoginScreen() {
         setGoogleLoading(true);
         signInWithGoogleCredential(idToken)
           .then(() => {
-            Alert.alert(t('success'), 'Đăng nhập Google thành công!');
+            dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
             router.back();
           })
           .catch((err: any) => {
-            Alert.alert(t('error'), err.message || 'Không thể xác thực tài khoản Google.');
+            dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể xác thực tài khoản Google.');
           })
           .finally(() => {
             setGoogleLoading(false);
@@ -109,7 +111,7 @@ export default function LoginScreen() {
   // Submit form (Sign in / Sign up)
   const handleVerifyOtp = async () => {
     if (!otp.trim()) {
-      Alert.alert(t('notification') || 'Thông báo', 'Vui lòng nhập mã OTP');
+      dialog.alert(t('notification') || 'Thông báo', 'Vui lòng nhập mã OTP');
       return;
     }
     setLoading(true);
@@ -133,7 +135,7 @@ export default function LoginScreen() {
       
       router.back();
     } catch (err: any) {
-      Alert.alert(t('error') || 'Lỗi', 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+      dialog.alert(t('error') || 'Lỗi', 'Mã OTP không hợp lệ hoặc đã hết hạn.');
     } finally {
       setLoading(false);
     }
@@ -142,7 +144,7 @@ export default function LoginScreen() {
   const handleSubmit = async () => {
     if (loginMethod === 'phone' && !isSignUpMode) {
       if (!phone.trim()) {
-        Alert.alert(t('notification') || 'Thông báo', 'Vui lòng nhập số điện thoại');
+        dialog.alert(t('notification') || 'Thông báo', 'Vui lòng nhập số điện thoại');
         return;
       }
       setLoading(true);
@@ -155,11 +157,11 @@ export default function LoginScreen() {
         }
 
         const phoneProvider = new PhoneAuthProvider(auth);
-        const vid = await phoneProvider.verifyPhoneNumber(formattedPhone, recaptchaVerifier.current);
+        const vid = await phoneProvider.verifyPhoneNumber(formattedPhone, recaptchaVerifier.current as any);
         setVerificationId(vid);
         setIsOtpMode(true);
       } catch (err: any) {
-        Alert.alert(t('error') || 'Lỗi', err.message || t('genericError'));
+        dialog.alert(t('error') || 'Lỗi', err.message || t('genericError'));
       } finally {
         setLoading(false);
       }
@@ -167,7 +169,7 @@ export default function LoginScreen() {
     }
 
     if (!email.trim() || !password.trim()) {
-      Alert.alert(t('notification'), t('emailPasswordRequired'));
+      dialog.alert(t('notification') || 'Thông báo', t('emailPasswordRequired'));
       return;
     }
 
@@ -175,15 +177,20 @@ export default function LoginScreen() {
     try {
       if (isSignUpMode) {
         if (password.length < 6) {
-          Alert.alert(t('notification'), t('passwordLengthError'));
+          dialog.alert(t('notification') || 'Thông báo', t('passwordLengthError'));
           setLoading(false);
           return;
         }
         const name = fullName.trim() || email.split('@')[0];
         await signUp(email.trim(), password, name, phone.trim());
-        Alert.alert(t('success'), t('registerSuccess'), [
-          { text: t('start'), onPress: () => router.back() },
-        ]);
+        dialog.showDialog({
+          title: t('success') || 'Thành công',
+          message: t('registerSuccess') || 'Đăng ký tài khoản thành công!',
+          type: 'success',
+          buttons: [
+            { text: t('start') || 'Bắt đầu', style: 'primary', onPress: () => router.back() },
+          ],
+        });
       } else {
         await signIn(email.trim(), password);
         router.back();
@@ -201,7 +208,7 @@ export default function LoginScreen() {
       } else if (err.code === 'auth/invalid-email') {
         message = t('invalidEmail');
       }
-      Alert.alert(t('error'), message);
+      dialog.alert(t('error') || 'Lỗi', message);
     } finally {
       setLoading(false);
     }
@@ -210,7 +217,7 @@ export default function LoginScreen() {
   // Quên mật khẩu
   const handleSendResetPassword = async () => {
     if (!forgotEmail.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập email để nhận liên kết');
+      dialog.alert('Thông báo', 'Vui lòng nhập email để nhận liên kết');
       return;
     }
 
@@ -218,12 +225,12 @@ export default function LoginScreen() {
     try {
       await resetPassword(forgotEmail.trim());
       setForgotModalVisible(false);
-      Alert.alert(
+      dialog.alert(
         'Đã gửi liên kết',
         'Link đặt lại mật khẩu đã được gửi vào Email của bạn. Vui lòng kiểm tra hộp thư đến (và mục Spam).'
       );
     } catch (e: any) {
-      Alert.alert('Lỗi', e.message || 'Không tìm thấy tài khoản');
+      dialog.alert('Lỗi', e.message || 'Không tìm thấy tài khoản');
     } finally {
       setForgotLoading(false);
     }
@@ -241,7 +248,7 @@ export default function LoginScreen() {
       }
     } catch (e: any) {
       console.log('Google login error:', e);
-      Alert.alert('Thông báo', 'Vui lòng kiểm tra kết nối Google hoặc đăng nhập bằng Email.');
+      dialog.alert('Thông báo', 'Vui lòng kiểm tra kết nối Google hoặc đăng nhập bằng Email.');
     } finally {
       setGoogleLoading(false);
     }
@@ -249,7 +256,7 @@ export default function LoginScreen() {
 
   // Facebook Login
   const handleFacebookLogin = async () => {
-    Alert.alert(
+    dialog.alert(
       t('notification') || 'Thông báo',
       t('facebookComingSoon') || 'Tính năng đăng nhập bằng Facebook đang được hoàn thiện. Vui lòng sử dụng Google hoặc Apple để đăng nhập.'
     );
@@ -258,7 +265,7 @@ export default function LoginScreen() {
   // Apple Login
   const handleAppleLogin = async () => {
     if (Platform.OS !== 'ios') {
-      Alert.alert(
+      dialog.alert(
         t('notification') || 'Thông báo',
         t('appleIosOnly') || 'Đăng nhập bằng Apple chỉ hỗ trợ trên thiết bị iOS.'
       );
@@ -282,7 +289,7 @@ export default function LoginScreen() {
       const { identityToken } = credential;
       if (identityToken) {
         await signInWithAppleCredential(identityToken, nonce);
-        Alert.alert(t('success') || 'Thành công', 'Đăng nhập Apple thành công!');
+        dialog.alert(t('success') || 'Thành công', 'Đăng nhập Apple thành công!');
         router.back();
       } else {
         throw new Error('Không nhận được identityToken từ Apple.');
@@ -290,7 +297,7 @@ export default function LoginScreen() {
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') {
         console.log('Apple login error:', e);
-        Alert.alert(t('error') || 'Lỗi', 'Không thể đăng nhập bằng Apple.');
+        dialog.alert(t('error') || 'Lỗi', 'Không thể đăng nhập bằng Apple.');
       }
     } finally {
       setAppleLoading(false);

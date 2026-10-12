@@ -23,6 +23,8 @@ import { formatCurrency, checkOutOfStock } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useWishlist } from '../../src/context/WishlistContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
+import { BlurButton } from '../../src/components/BlurButton';
+import { useDialog } from '../../src/context/DialogContext';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +35,7 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { addToCart, cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
+  const dialog = useDialog();
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -164,19 +167,24 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (isOutOfStock) {
-      Alert.alert('Thông báo', 'Sản phẩm hoặc phân loại này hiện đã tạm hết hàng.');
+      dialog.alert('Thông báo', 'Sản phẩm hoặc phân loại này hiện đã tạm hết hàng.');
       return;
     }
     addToCart(product, quantity, selectedVariant);
-    Alert.alert('Thành công', 'Đã thêm sản phẩm vào giỏ hàng!', [
-      { text: 'Tiếp tục xem', style: 'cancel' },
-      { text: 'Xem giỏ hàng', onPress: () => router.push('/cart') },
-    ]);
+    dialog.showDialog({
+      title: 'Đã thêm vào giỏ hàng',
+      message: `Đã thêm ${quantity}x "${product.name}" vào giỏ hàng của bạn.`,
+      type: 'success',
+      buttons: [
+        { text: 'Tiếp tục xem', style: 'cancel' },
+        { text: 'Xem giỏ hàng', style: 'primary', onPress: () => router.push('/cart') },
+      ],
+    });
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) {
-      Alert.alert('Thông báo', 'Sản phẩm hoặc phân loại này hiện đã tạm hết hàng.');
+      dialog.alert('Thông báo', 'Sản phẩm hoặc phân loại này hiện đã tạm hết hàng.');
       return;
     }
     addToCart(product, quantity, selectedVariant);
@@ -203,27 +211,27 @@ export default function ProductDetailScreen() {
 
       {/* Floating Header */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
-        <ScalePressable style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
-        </ScalePressable>
+        <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
+          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+        </BlurButton>
 
         <View style={styles.headerRightGroup}>
-          <ScalePressable style={styles.headerBtn} onPress={() => toggleFavorite(product.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <BlurButton style={styles.headerBtn} onPress={() => toggleFavorite(product.id)} accessibilityLabel="Yêu thích">
             <Ionicons
               name={favorite ? 'heart' : 'heart-outline'}
-              size={22}
+              size={21}
               color={favorite ? Colors.badgeSale : Colors.textPrimary}
             />
-          </ScalePressable>
+          </BlurButton>
 
-          <ScalePressable style={styles.headerBtn} onPress={() => router.push('/cart')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="cart-outline" size={28} color={Colors.textPrimary} />
+          <BlurButton style={styles.headerBtn} onPress={() => router.push('/cart')} accessibilityLabel="Giỏ hàng">
+            <Ionicons name="cart-outline" size={24} color={Colors.textPrimary} />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
               </View>
             )}
-          </ScalePressable>
+          </BlurButton>
         </View>
       </Animated.View>
 
@@ -924,8 +932,8 @@ const styles = StyleSheet.create({
   },
   addToCartBtn: {
     flex: 1,
-    height: 48,
-    borderRadius: 24,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 1.5,
     borderColor: '#18181B',
     flexDirection: 'row',
@@ -935,29 +943,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   addToCartText: {
+    fontFamily: 'ElleGaborStd',
     color: '#18181B',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 13.5,
   },
   buyNowBtn: {
     flex: 1.2,
-    height: 48,
-    borderRadius: 24,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#18181B',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buyNowText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 14.5,
   },
   btnDisabled: {
     opacity: 0.5,

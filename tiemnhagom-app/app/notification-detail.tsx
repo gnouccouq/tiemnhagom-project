@@ -155,6 +155,8 @@ export default function NotificationDetailScreen() {
 
   const badgeConfig = getTypeBadgeConfig();
 
+  const [scrollY, setScrollY] = useState(0);
+
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
@@ -165,6 +167,7 @@ export default function NotificationDetailScreen() {
         showBack={true}
         showSearch={false}
         showCart={false}
+        scrollY={scrollY}
       />
 
       {loading ? (
@@ -182,6 +185,8 @@ export default function NotificationDetailScreen() {
             { paddingBottom: Math.max(insets.bottom, 24) + 80 },
           ]}
           showsVerticalScrollIndicator={false}
+          onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+          scrollEventThrottle={16}
         >
           {/* Card nội dung chính */}
           <View style={[styles.mainCard, { backgroundColor: Colors.cardBackground, borderColor: Colors.border }]}>
@@ -383,7 +388,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 220,
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#F3E5DC',
     marginBottom: 18,
@@ -402,7 +407,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   supportBox: {
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     padding: 16,
     gap: 8,
@@ -439,23 +444,29 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     flex: 1,
-    height: 48,
-    borderRadius: 24,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#111111',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
-    fontSize: 14.5,
+    fontSize: 15,
     fontWeight: '700',
   },
   secondaryBtn: {
-    height: 48,
-    paddingHorizontal: 18,
-    borderRadius: 24,
+    height: 52,
+    paddingHorizontal: 20,
+    borderRadius: 26,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -463,7 +474,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   secondaryBtnText: {
-    fontSize: 13.5,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

@@ -79,7 +79,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           setThemeModeState(savedTheme);
         }
         const savedLang = await AsyncStorage.getItem(STORAGE_KEY_LANGUAGE);
-        if (savedLang === 'vi' || savedLang === 'en') {
+        if (savedLang === 'vi' || savedLang === 'en' || savedLang === 'zh') {
           setLanguageState(savedLang);
         }
         const savedFontSize = await AsyncStorage.getItem(STORAGE_KEY_FONT_SIZE);

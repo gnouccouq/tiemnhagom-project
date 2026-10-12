@@ -8,10 +8,13 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  StatusBar
+  StatusBar,
+  Platform,
+  Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { EmptyState } from '../src/components/EmptyState';
@@ -21,10 +24,12 @@ import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { Order } from '../src/types';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { formatCurrency, formatDate } from '../src/utils/format';
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useSettings();
   const { user } = useAuth();
   const { orders: realtimeOrders } = useRealtimeData();
@@ -72,12 +77,36 @@ export default function OrdersScreen() {
     return { bg: '#F5F3FF', color: '#7C3AED', icon: 'time' as const, label: status || t('statusProcessing') };
   };
 
+  const [scrollY, setScrollY] = useState(0);
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
+  const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: 15, delay: 30 });
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
 
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint="light"
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <ScalePressable
           style={styles.backBtn}
           onPress={() => router.back()}
@@ -91,31 +120,32 @@ export default function OrdersScreen() {
         <View style={styles.headerRight} />
       </View>
 
-      {/* ── Tab Switcher ── */}
-      <View style={styles.tabWrap}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'lookup' && styles.tabActive]}
-          onPress={() => setActiveTab('lookup')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="search-outline" size={14} color={activeTab === 'lookup' ? '#FFFFFF' : '#71717A'} />
-          <Text style={[styles.tabText, activeTab === 'lookup' && styles.tabTextActive]}>{t('lookupOrder')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'my-orders' && styles.tabActive]}
-          onPress={() => setActiveTab('my-orders')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="receipt-outline" size={14} color={activeTab === 'my-orders' ? '#FFFFFF' : '#71717A'} />
-          <Text style={[styles.tabText, activeTab === 'my-orders' && styles.tabTextActive]}>{t('myOrders')}</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 6 }]}
         keyboardShouldPersistTaps="handled"
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
       >
+        {/* ── Tab Switcher ── */}
+        <View style={styles.tabWrap}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'lookup' && styles.tabActive]}
+            onPress={() => setActiveTab('lookup')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="search-outline" size={14} color={activeTab === 'lookup' ? '#FFFFFF' : '#71717A'} />
+            <Text style={[styles.tabText, activeTab === 'lookup' && styles.tabTextActive]}>{t('lookupOrder')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'my-orders' && styles.tabActive]}
+            onPress={() => setActiveTab('my-orders')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="receipt-outline" size={14} color={activeTab === 'my-orders' ? '#FFFFFF' : '#71717A'} />
+            <Text style={[styles.tabText, activeTab === 'my-orders' && styles.tabTextActive]}>{t('myOrders')}</Text>
+          </TouchableOpacity>
+        </View>
         {/* ── Tra cứu ── */}
         {activeTab === 'lookup' && (
           <View style={styles.lookupCard}>
@@ -338,7 +368,7 @@ export default function OrdersScreen() {
 
         <View style={{ height: 60 }} />
       </ScrollView>
-    </SafeAreaView>
+    </Animated.View>
   );
 }
 
@@ -350,14 +380,17 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FAF8F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    paddingBottom: 10,
+    backgroundColor: 'transparent',
   },
   backBtn: {
     width: 40,
@@ -472,17 +505,18 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     gap: 10,
+    alignItems: 'center',
   },
   inputWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E4E4E7',
-    paddingHorizontal: 12,
-    height: 46,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 16,
+    height: 52,
   },
   inputIcon: {
     marginRight: 8,
@@ -490,27 +524,28 @@ const styles = StyleSheet.create({
   input: {
     fontFamily: 'ElleGaborStd',
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
     color: '#111111',
     paddingVertical: 0,
   },
   lookupBtn: {
     backgroundColor: '#111111',
-    borderRadius: 23,
+    borderRadius: 26,
     paddingHorizontal: 22,
-    height: 46,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   lookupBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 13.5,
+    fontSize: 14.5,
   },
 
   // Login prompt
@@ -540,20 +575,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: '#111111',
-    paddingHorizontal: 26,
-    paddingVertical: 13,
-    borderRadius: 24,
+    paddingHorizontal: 28,
+    height: 52,
+    borderRadius: 26,
     marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   loginBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14.5,
+    fontSize: 15,
   },
 
   // Loading

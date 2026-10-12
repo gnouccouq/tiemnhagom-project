@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
@@ -95,6 +95,7 @@ type ActiveTab = 'vouchers' | 'tiers';
 
 export default function DealsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useSettings();
   const { user, userProfile } = useAuth();
 
@@ -225,14 +226,18 @@ export default function DealsScreen() {
     return true;
   });
 
+  const [scrollY, setScrollY] = useState(0);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
-      <Header title="Ưu đãi & Thành viên" showSearch={false} />
+      <Header title="Ưu đãi & Thành viên" showSearch={false} transparent scrollY={scrollY} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 }]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -575,7 +580,7 @@ export default function DealsScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -764,13 +769,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3F3F46',
     marginTop: 14,
-    paddingVertical: 9,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 22,
   },
   loginHintText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 
@@ -876,15 +881,15 @@ const styles = StyleSheet.create({
   ticketCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E8E1D8',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2,
   },
   ticketCardUsed: {
@@ -1047,6 +1052,8 @@ const styles = StyleSheet.create({
   ticketCopyBtn: {
     flex: 1,
     minWidth: 0,
+    height: 38,
+    borderRadius: 19,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1054,14 +1061,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.2,
     borderColor: '#000000',
-    paddingVertical: 7,
     paddingHorizontal: 6,
-    borderRadius: 14,
   },
   ticketCopyBtnSuccess: {
     backgroundColor: '#000000',
   },
   ticketCopyText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#000000',
@@ -1073,16 +1079,17 @@ const styles = StyleSheet.create({
   ticketUseBtn: {
     flex: 1.1,
     minWidth: 0,
+    height: 38,
+    borderRadius: 19,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
     backgroundColor: '#000000',
-    paddingVertical: 7,
     paddingHorizontal: 6,
-    borderRadius: 14,
   },
   ticketUseText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1112,12 +1119,12 @@ const styles = StyleSheet.create({
   },
   tierCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
   },

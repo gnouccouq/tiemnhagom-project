@@ -22,6 +22,7 @@ import { NotificationBadgeProvider } from '../src/context/NotificationBadgeConte
 import ForceUpdateChecker from '../src/components/ForceUpdateChecker';
 import NetworkOverlay from '../src/components/NetworkOverlay';
 import { RealtimeDataProvider } from '../src/context/RealtimeDataContext';
+import { DialogProvider } from '../src/context/DialogContext';
 
 export {
   ErrorBoundary,
@@ -277,9 +278,11 @@ export default function RootLayout() {
             <WishlistProvider>
               <NotificationBadgeProvider>
                 <RealtimeDataProvider>
-                  <StatusBar style="dark" />
-                  <AppWrapper />
-                  <ForceUpdateChecker />
+                  <DialogProvider>
+                    <StatusBar style="dark" />
+                    <AppWrapper />
+                    <ForceUpdateChecker />
+                  </DialogProvider>
                 </RealtimeDataProvider>
               </NotificationBadgeProvider>
             </WishlistProvider>

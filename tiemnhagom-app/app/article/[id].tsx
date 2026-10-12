@@ -9,12 +9,14 @@ import {
   Dimensions,
   ActivityIndicator,
   StatusBar,
-  Share
+  Share,
+  Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { getArticleById, NewsArticle } from '../../src/services/productService';
 import { ScalePressable } from '../../src/components/ScalePressable';
 
@@ -23,8 +25,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -46,22 +50,22 @@ export default function ArticleDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color="#3B4D45" />
         <Text style={styles.loadingText}>Đang tải bài viết...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!article) {
     return (
-      <SafeAreaView style={styles.notFoundContainer}>
+      <View style={[styles.notFoundContainer, { paddingTop: insets.top }]}>
         <Ionicons name="document-text-outline" size={54} color="#7A827E" />
         <Text style={styles.notFoundTitle}>Bài viết không tồn tại</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Quay lại</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -75,12 +79,33 @@ export default function ArticleDetailScreen() {
         .trim()
     : '';
 
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
 
       {/* Header bar */}
-      <View style={styles.navBar}>
+      <View style={[styles.navBar, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint="light"
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <ScalePressable
           style={styles.navBtn}
           onPress={() => router.back()}
@@ -104,7 +129,9 @@ export default function ArticleDetailScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 }]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
       >
         {/* Featured Image */}
         {article.imageUrl ? (
@@ -145,24 +172,27 @@ export default function ArticleDetailScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF8F5',
   },
   navBar: {
-    height: 56,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0ECE4',
-    backgroundColor: '#FFFFFF',
+    paddingBottom: 10,
+    backgroundColor: 'transparent',
   },
   navBtn: {
     width: 40,
@@ -172,17 +202,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#EFEAE2',
+    borderColor: '#E8E1D8',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
   navTitle: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
-    color: '#18181B',
+    color: '#231B15',
   },
   scrollContent: {
     paddingBottom: 40,
@@ -208,9 +239,11 @@ const styles = StyleSheet.create({
   },
   tagPill: {
     backgroundColor: '#EEF3EB',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E1E8DF',
   },
   tagText: {
     fontFamily: 'ElleGaborStd',
@@ -228,34 +261,39 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 22,
     fontWeight: '700',
-    color: '#18181B',
+    color: '#231B15',
     lineHeight: 30,
     marginBottom: 16,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0ECE4',
+    backgroundColor: '#E8E1D8',
     marginVertical: 14,
   },
   bodyText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
     lineHeight: 25,
-    color: '#2D3B34',
+    color: '#231B15',
   },
   brandBox: {
     marginTop: 36,
     padding: 18,
-    borderRadius: 16,
-    backgroundColor: '#F8F6F0',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAE5DC',
+    borderColor: '#E8E1D8',
     alignItems: 'center',
     gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   brandBoxTitle: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '700',
     color: '#3B4D45',
   },
@@ -269,7 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF8F5',
   },
   loadingText: {
     fontFamily: 'ElleGaborStd',
@@ -281,25 +319,33 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF8F5',
     padding: 20,
-    gap: 12,
+    gap: 14,
   },
   notFoundTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
-    color: '#18181B',
-    fontWeight: '600',
+    color: '#231B15',
+    fontWeight: '700',
   },
   backButton: {
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    backgroundColor: '#3B4D45',
-    borderRadius: 24,
+    paddingHorizontal: 26,
+    height: 52,
+    backgroundColor: '#111111',
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   backButtonText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: 14.5,
     fontWeight: '700',
   },
 });

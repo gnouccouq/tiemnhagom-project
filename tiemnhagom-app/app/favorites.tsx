@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, FlatList, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, FlatList, ActivityIndicator, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { Colors, Typography, Spacing } from '../src/constants/theme';
 import { useWishlist } from '../src/context/WishlistContext';
 import { ProductCard } from '../src/components/ProductCard';
@@ -10,9 +11,11 @@ import { EmptyState } from '../src/components/EmptyState';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { favorites } = useWishlist();
   const [loading, setLoading] = useState(true);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -39,12 +42,36 @@ export default function FavoritesScreen() {
     }
   };
 
+  const [scrollY, setScrollY] = useState(0);
+  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+
+  const { pageStyle } = usePageAnimation();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        {blurProgress > 0 && (
+          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 85 : 75}
+              tint="light"
+              experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                },
+              ]}
+            />
+          </View>
+        )}
         <ScalePressable
           style={styles.backBtn}
           onPress={() => router.back()}
@@ -60,7 +87,7 @@ export default function FavoritesScreen() {
 
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.loadingWrap}>
+          <View style={[styles.loadingWrap, { paddingTop: insets.top + 80 }]}>
             <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.loadingText}>Đang tải sản phẩm...</Text>
           </View>
@@ -70,8 +97,10 @@ export default function FavoritesScreen() {
             keyExtractor={(item) => item.id}
             numColumns={2}
             columnWrapperStyle={styles.listColumnWrapper}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 54 + 10 }]}
             showsVerticalScrollIndicator={false}
+            onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+            scrollEventThrottle={16}
             renderItem={({ item }) => (
               <View style={styles.productCardWrapper}>
                 <ProductCard product={item} />
@@ -89,7 +118,7 @@ export default function FavoritesScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </Animated.View>
   );
 }
 
@@ -99,14 +128,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF8F5',
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FAF8F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    paddingBottom: 10,
+    backgroundColor: 'transparent',
   },
   backBtn: {
     width: 40,
