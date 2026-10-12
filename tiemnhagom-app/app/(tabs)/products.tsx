@@ -14,13 +14,14 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { Colors } from '../../src/constants/theme';
+import { ScalePressable } from '../../src/components/ScalePressable';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
@@ -46,15 +47,15 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'Value Packs': '🎁',
 };
 
-// Màu nền bubble
+// Màu nền gốm men mộc chuẩn Brand Guidelines Tiệm Nhà Gốm
 const CATEGORY_BG: Record<string, string> = {
-  'all': '#E8E8E8',
-  'Dining Decor': '#FFF3E0',
-  'Teatime & Drinks': '#E8F5E9',
-  'Home Decor': '#FCE4EC',
-  'Kitchenware': '#FBE9E7',
-  'Lifestyle': '#EDE7F6',
-  'Value Packs': '#E3F2FD',
+  'all': '#F3ECE3',
+  'Dining Decor': '#F7EFE6',
+  'Teatime & Drinks': '#F4EAE0',
+  'Home Decor': '#FBF6F0',
+  'Kitchenware': '#EFE4D8',
+  'Lifestyle': '#F5ECE3',
+  'Value Packs': '#EEDECF',
 };
 
 const SORT_OPTIONS = [
@@ -75,28 +76,43 @@ function CategoryBubble({
   onPress: () => void;
 }) {
   const emoji = CATEGORY_EMOJI[cat.id] || '📦';
-  const bg = isSelected ? '#111111' : (CATEGORY_BG[cat.id] || '#F3E5DC');
-  const textColor = isSelected ? '#FFFFFF' : '#1F2937';
+  const bg = CATEGORY_BG[cat.id] || '#F3ECE3';
 
   return (
-    <TouchableOpacity style={bubbleStyles.wrap} onPress={onPress} activeOpacity={0.8}>
-      <View style={[bubbleStyles.circle, { backgroundColor: bg }]}>
+    <ScalePressable style={bubbleStyles.wrap} onPress={onPress} activeScale={0.92}>
+      <View
+        style={[
+          bubbleStyles.circle,
+          { backgroundColor: bg },
+          isSelected ? bubbleStyles.circleActive : bubbleStyles.circleInactive,
+        ]}
+      >
         {cat.imageUrl ? (
           <Image source={{ uri: cat.imageUrl }} style={bubbleStyles.image} contentFit="cover" />
         ) : (
           <Text style={bubbleStyles.emoji}>{emoji}</Text>
         )}
       </View>
-      <Text style={[bubbleStyles.label, { color: isSelected ? '#111111' : '#52525B', fontWeight: isSelected ? '700' : '500' }]} numberOfLines={2}>
+      <Text
+        style={[
+          bubbleStyles.label,
+          {
+            color: isSelected ? '#9C7156' : '#6E665D',
+            fontWeight: isSelected ? '700' : '500',
+          },
+        ]}
+        numberOfLines={2}
+      >
         {cat.name}
       </Text>
-    </TouchableOpacity>
+      {isSelected && <View style={bubbleStyles.activeIndicator} />}
+    </ScalePressable>
   );
 }
 
 const bubbleStyles = StyleSheet.create({
   wrap: {
-    width: 70,
+    width: 72,
     alignItems: 'center',
     marginRight: 12,
   },
@@ -108,20 +124,42 @@ const bubbleStyles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  circleInactive: {
+    borderWidth: 1.5,
+    borderColor: '#E8E1D8',
+    backgroundColor: '#FAF8F5',
+  },
+  circleActive: {
+    borderWidth: 2.5,
+    borderColor: '#9C7156',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   image: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
   },
   emoji: {
-    fontSize: 28,
+    fontSize: 26,
   },
   label: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
+    fontSize: 11.5,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 15,
+  },
+  activeIndicator: {
+    width: 14,
+    height: 2.5,
+    borderRadius: 1.5,
+    backgroundColor: '#9C7156',
+    marginTop: 3,
   },
 });
 
@@ -151,6 +189,74 @@ export default function ProductsScreen() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
   const [modalVisible, setModalVisible] = useState(false);
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(340)).current;
+  const sheetScale = useRef(new Animated.Value(0.96)).current;
+  const itemsAnim = useRef(new Animated.Value(0)).current;
+
+  const openCategoryModal = useCallback(() => {
+    setModalVisible(true);
+    backdropAnim.setValue(0);
+    sheetTranslateY.setValue(340);
+    sheetScale.setValue(0.96);
+    itemsAnim.setValue(0);
+
+    Animated.parallel([
+      Animated.timing(backdropAnim, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(sheetTranslateY, {
+        toValue: 0,
+        damping: 22,
+        stiffness: 260,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+      Animated.spring(sheetScale, {
+        toValue: 1,
+        damping: 22,
+        stiffness: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(itemsAnim, {
+        toValue: 1,
+        duration: 280,
+        delay: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [backdropAnim, sheetTranslateY, sheetScale, itemsAnim]);
+
+  const closeCategoryModal = useCallback((callback?: () => void) => {
+    Animated.parallel([
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 340,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetScale, {
+        toValue: 0.96,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(itemsAnim, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setModalVisible(false);
+      if (callback) callback();
+    });
+  }, [backdropAnim, sheetTranslateY, sheetScale, itemsAnim]);
+
   const [searchVisible, setSearchVisible] = useState(false);
   const { unreadCount } = useNotificationBadge();
 
@@ -288,7 +394,7 @@ export default function ProductsScreen() {
             />
           </View>
         )}
-        <TouchableOpacity style={styles.headerTitle} onPress={() => setModalVisible(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.headerTitle} onPress={openCategoryModal} activeOpacity={0.7}>
           <View style={styles.headerDots}>
             <View style={[styles.dot, { backgroundColor: '#E8A87C' }]} />
             <View style={[styles.dot, { backgroundColor: '#9A7B4F' }]} />
@@ -363,51 +469,60 @@ export default function ProductsScreen() {
 
             {/* ── Sub-category chips ── */}
             {subs.length > 0 && (
-              <View style={{ backgroundColor: '#FAF8F5' }}>
+              <View style={styles.subChipsContainer}>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.subChipList}
                 >
-                  <TouchableOpacity
+                  <ScalePressable
                     style={[styles.subChip, selectedSubCategory === '' && styles.subChipActive]}
                     onPress={() => setSelectedSubCategory('')}
+                    activeScale={0.93}
                   >
                     <Text style={[styles.subChipText, selectedSubCategory === '' && styles.subChipTextActive]}>
                       {t('all')}
                     </Text>
-                  </TouchableOpacity>
+                  </ScalePressable>
                   {subs.map((sub, i) => (
-                    <TouchableOpacity
+                    <ScalePressable
                       key={i}
                       style={[styles.subChip, selectedSubCategory === sub && styles.subChipActive]}
                       onPress={() => setSelectedSubCategory(selectedSubCategory === sub ? '' : sub)}
+                      activeScale={0.93}
                     >
                       <Text style={[styles.subChipText, selectedSubCategory === sub && styles.subChipTextActive]}>
                         {sub}
                       </Text>
-                    </TouchableOpacity>
+                    </ScalePressable>
                   ))}
                 </ScrollView>
               </View>
             )}
 
             {/* ── Section Title + Sort ── */}
-            <Text style={styles.sectionTitle}>
-              {selectedSubCategory || (activeCatName === t('all') ? t('allProducts') : activeCatName)}
-            </Text>
-            <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>
+                {selectedSubCategory || (activeCatName === t('all') ? t('allProducts') : activeCatName)}
+              </Text>
               <Text style={styles.countText}>{allProducts.length} {t('productsCount')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
-                {SORT_OPTIONS.map(opt => (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[styles.sortChip, sortBy === opt.id && styles.sortChipActive]}
-                    onPress={() => setSortBy(opt.id as any)}
-                  >
-                    <Text style={[styles.sortText, sortBy === opt.id && styles.sortTextActive]}>{opt.label}</Text>
-                  </TouchableOpacity>
-                ))}
+            </View>
+            <View style={styles.sortContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortRow}>
+                {SORT_OPTIONS.map(opt => {
+                  const isActive = sortBy === opt.id;
+                  return (
+                    <ScalePressable
+                      key={opt.id}
+                      style={[styles.sortChip, isActive && styles.sortChipActive]}
+                      onPress={() => setSortBy(opt.id as any)}
+                      activeScale={0.93}
+                    >
+                      {isActive && <View style={styles.sortActiveDot} />}
+                      <Text style={[styles.sortText, isActive && styles.sortTextActive]}>{opt.label}</Text>
+                    </ScalePressable>
+                  );
+                })}
               </ScrollView>
             </View>
           </View>
@@ -444,52 +559,114 @@ export default function ProductsScreen() {
         }
       />
 
-      {/* ── Modal: Toàn bộ danh mục dạng grid 4 cột ── */}
+      {/* ── Modal: Toàn bộ danh mục dạng Bottom Sheet có Animation UX mượt mà ── */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setModalVisible(false)}
+        transparent
+        animationType="none"
+        onRequestClose={() => closeCategoryModal()}
       >
-        <View style={[modalStyles.safeArea, { paddingTop: Platform.OS === 'android' ? 24 : insets.top }]}>
-          <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>{t('categories')}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close" size={24} color="#1F2937" />
-            </TouchableOpacity>
-          </View>
+        <Animated.View style={[modalStyles.backdrop, { opacity: backdropAnim }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => closeCategoryModal()}
+          />
+          <Animated.View
+            style={[
+              modalStyles.sheet,
+              {
+                paddingBottom: Math.max(insets.bottom, 16) + 12,
+                transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
+              },
+            ]}
+          >
+            {/* Thanh kéo nhỏ (Handle bar) */}
+            <View style={modalStyles.handle} />
 
-          <ScrollView contentContainerStyle={modalStyles.grid} showsVerticalScrollIndicator={false}>
-            {allCatsWithAll.map(cat => {
-              const emoji = CATEGORY_EMOJI[cat.id] || '📦';
-              const bg = CATEGORY_BG[cat.id] || '#F3E5DC';
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={modalStyles.item}
-                  onPress={() => {
-                    setSelectedCategory(cat.id);
-                    setSelectedSubCategory('');
-                    setModalVisible(false);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={[modalStyles.circle, { backgroundColor: isSelected ? '#111111' : bg }]}>
-                    {cat.imageUrl ? (
-                      <Image source={{ uri: cat.imageUrl }} style={modalStyles.circleImg} contentFit="cover" />
-                    ) : (
-                      <Text style={{ fontSize: 30 }}>{emoji}</Text>
-                    )}
-                  </View>
-                  <Text style={[modalStyles.label, isSelected && { fontWeight: '700', color: '#111111' }]} numberOfLines={2}>
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+            <View style={modalStyles.header}>
+              <Text style={modalStyles.title}>{t('categories')}</Text>
+              <ScalePressable
+                onPress={() => closeCategoryModal()}
+                style={modalStyles.closeBtn}
+                activeScale={0.9}
+              >
+                <Ionicons name="close" size={18} color="#2B2928" />
+              </ScalePressable>
+            </View>
+
+            <View style={modalStyles.grid}>
+              {allCatsWithAll.map(cat => {
+                const emoji = CATEGORY_EMOJI[cat.id] || '📦';
+                const bg = CATEGORY_BG[cat.id] || '#F3ECE3';
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <Animated.View
+                    key={cat.id}
+                    style={[
+                      modalStyles.item,
+                      {
+                        opacity: itemsAnim,
+                        transform: [
+                          {
+                            translateY: itemsAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [16, 0],
+                            }),
+                          },
+                          {
+                            scale: itemsAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.92, 1],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <ScalePressable
+                      style={{ alignItems: 'center' }}
+                      onPress={() => {
+                        closeCategoryModal(() => {
+                          setSelectedCategory(cat.id);
+                          setSelectedSubCategory('');
+                        });
+                      }}
+                      activeScale={0.92}
+                    >
+                      <View
+                        style={[
+                          modalStyles.circle,
+                          { backgroundColor: bg },
+                          isSelected ? modalStyles.circleActive : modalStyles.circleInactive,
+                        ]}
+                      >
+                        {cat.imageUrl ? (
+                          <Image source={{ uri: cat.imageUrl }} style={modalStyles.circleImg} contentFit="cover" />
+                        ) : (
+                          <Text style={{ fontSize: 24 }}>{emoji}</Text>
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          modalStyles.label,
+                          {
+                            color: isSelected ? '#9C7156' : '#6E665D',
+                            fontWeight: isSelected ? '700' : '500',
+                          },
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {cat.name}
+                      </Text>
+                      {isSelected && <View style={modalStyles.activeIndicator} />}
+                    </ScalePressable>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
     </View>
   );
@@ -590,9 +767,8 @@ const styles = StyleSheet.create({
   // Bubbles
   bubblesSection: {
     paddingTop: 8,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EEEEEE',
+    paddingBottom: 8,
+    backgroundColor: '#FAF8F5',
   },
   bubbleRow: {
     paddingHorizontal: 16,
@@ -600,80 +776,118 @@ const styles = StyleSheet.create({
   },
 
   // Sub-category chips
+  subChipsContainer: {
+    backgroundColor: '#FAF8F5',
+    paddingVertical: 2,
+  },
   subChipList: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 6,
     flexDirection: 'row',
+    alignItems: 'center',
   },
   subChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#F4F4F5',
+    height: 38,
+    borderRadius: 19,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E4E4E7',
+    borderColor: '#E8E1D8',
     marginRight: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   subChipActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    backgroundColor: '#9C7156',
+    borderColor: '#9C7156',
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    elevation: 3,
   },
   subChipText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#52525B',
+    color: '#6E665D',
   },
   subChipTextActive: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
 
-  // Section Header
-  sectionTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#1F2937',
+  // Section Header + Sort
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EEEEEE',
-    marginBottom: 6,
+  sectionTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2B2928',
   },
   countText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#9CA3AF',
-    minWidth: 70,
+    color: '#9E968D',
+    fontWeight: '500',
+  },
+  sortContainer: {
+    paddingBottom: 8,
+  },
+  sortRow: {
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   sortChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
+    height: 34,
+    borderRadius: 17,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'transparent',
-    backgroundColor: 'transparent',
-    marginRight: 6,
+    borderColor: '#E8E1D8',
+    marginRight: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sortChipActive: {
-    backgroundColor: '#F3E5DC',
-    borderColor: '#E8A87C',
+    backgroundColor: '#F6F4EC',
+    borderWidth: 1.5,
+    borderColor: '#9C7156',
+  },
+  sortActiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#9C7156',
+    marginRight: 6,
   },
   sortText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: '#9CA3AF',
+    fontSize: 12,
+    color: '#6E665D',
+    fontWeight: '500',
   },
   sortTextActive: {
-    color: '#9A7B4F',
+    color: '#9C7156',
     fontWeight: '700',
   },
 
@@ -725,57 +939,114 @@ const styles = StyleSheet.create({
 });
 
 const modalStyles = StyleSheet.create({
-  safeArea: {
+  backdrop: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#FAF8F5',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D8CFBF',
+    alignSelf: 'center',
+    marginBottom: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E8E1D8',
   },
   title: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#2B2928',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 60,
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 4,
   },
   item: {
-    width: (SCREEN_WIDTH - 32) / 4,
+    width: (SCREEN_WIDTH - 24) / 4,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   circle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  circleInactive: {
+    borderWidth: 1.5,
+    borderColor: '#E8E1D8',
+    backgroundColor: '#FAF8F5',
+  },
+  circleActive: {
+    borderWidth: 2,
+    borderColor: '#9C7156',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    elevation: 3,
+  },
   circleImg: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   label: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#52525B',
+    color: '#6E665D',
     textAlign: 'center',
-    marginTop: 7,
-    lineHeight: 15,
+    marginTop: 5,
+    lineHeight: 14,
     paddingHorizontal: 4,
+  },
+  activeIndicator: {
+    width: 12,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#9C7156',
+    marginTop: 2,
   },
 });
