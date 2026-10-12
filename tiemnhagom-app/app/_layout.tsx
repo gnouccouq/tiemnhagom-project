@@ -141,13 +141,12 @@ function NavigationRoot() {
         }}
       />
       
-      {/* Notification Detail Modal */}
+      {/* Trang chi tiết thông báo riêng biệt */}
       <Stack.Screen
         name="notification-detail"
         options={{
           headerShown: false,
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          animation: 'slide_from_right',
         }}
       />
     </Stack>

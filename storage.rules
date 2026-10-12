@@ -59,6 +59,12 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    // Ảnh Thông báo gửi từ Dashboard (notifications)
+    match /notifications/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
       allow create, update, delete: if request.auth != null && request.auth.uid == userId;

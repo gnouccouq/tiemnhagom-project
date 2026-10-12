@@ -288,21 +288,51 @@ export default function NotificationsScreen() {
       let localNotis: NotificationItem[] = saved ? JSON.parse(saved) : [];
 
       // 3. Tải thông báo In-App từ Firebase (Dashboard gửi xuống)
-      const q = query(collection(db, 'global_notifications'), orderBy('createdAt', 'desc'), limit(15));
+      const q = query(collection(db, 'global_notifications'), orderBy('createdAt', 'desc'), limit(25));
       const snapshot = await getDocs(q);
 
       const firestoreNotis: NotificationItem[] = snapshot.docs.map(doc => {
         const data = doc.data();
+        let timeStr = 'Mới';
+        if (data.createdAt) {
+          try {
+            const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMin = Math.floor(diffMs / (1000 * 60));
+            const diffHr = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHr / 24);
+            if (diffMin < 1) timeStr = 'Vừa xong';
+            else if (diffMin < 60) timeStr = `${diffMin} phút trước`;
+            else if (diffHr < 24) timeStr = `${diffHr} giờ trước`;
+            else if (diffDay < 7) timeStr = `${diffDay} ngày trước`;
+            else {
+              const day = String(date.getDate()).padStart(2, '0');
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              timeStr = `${day}/${month}/${year}`;
+            }
+          } catch {}
+        }
+
+        const notifType = (data.type || 'promo') as 'promo' | 'order' | 'system';
+        const iconName: keyof typeof Ionicons.glyphMap = 
+          notifType === 'order' ? 'cube' : (notifType === 'system' ? 'shield-checkmark' : 'sparkles');
+        const iconBg = notifType === 'order' ? '#EEF3EB' : (notifType === 'system' ? '#F1F5F9' : '#F3E5DC');
+        const iconColor = notifType === 'order' ? '#3B4D45' : (notifType === 'system' ? '#475569' : '#C86432');
+
         return {
           id: doc.id,
-          type: data.type || 'promo',
-          title: data.title || 'Thông báo',
+          type: notifType,
+          title: data.title || 'Thông báo từ Tiệm Nhà Gốm',
           message: data.body || '',
-          time: 'Mới',
+          time: timeStr,
           isRead: readIds.has(doc.id),  // ← áp dụng trạng thái đã đọc đã lưu
-          icon: 'sparkles',
-          iconBg: '#F3E5DC',
-          iconColor: '#C86432',
+          icon: iconName,
+          iconBg: iconBg,
+          iconColor: iconColor,
+          imageUrl: data.imageUrl || undefined,
+          link: data.link || (notifType === 'promo' ? '/(tabs)/deals' : undefined),
         };
       });
 
@@ -348,10 +378,11 @@ export default function NotificationsScreen() {
     const subscription = Notifications.addNotificationReceivedListener((notification: any) => {
       const title = notification.request.content.title || 'Thông báo mới';
       const body = notification.request.content.body || '';
+      const dataPayload = notification.request.content.data || {};
 
       const newNoti: NotificationItem = {
         id: Date.now().toString(),
-        type: 'promo',
+        type: dataPayload.type || 'promo',
         title: title,
         message: body,
         time: 'Vừa xong',
@@ -359,6 +390,8 @@ export default function NotificationsScreen() {
         icon: 'notifications',
         iconBg: '#F3E5DC',
         iconColor: '#C86432',
+        imageUrl: dataPayload.imageUrl || undefined,
+        link: dataPayload.url || undefined,
       };
 
       setNotifications(prev => {
@@ -410,12 +443,14 @@ export default function NotificationsScreen() {
     const updated = notifications.map((n) => (n.id === item.id ? { ...n, isRead: true } : n));
     saveNotifications(updated);
     
-    // Mở modal chi tiết thông báo
+    // Điều hướng sang trang chi tiết thông báo riêng biệt
     router.push({
       pathname: '/notification-detail',
       params: {
+        id: item.id,
         title: item.title,
         message: item.message,
+        time: item.time,
         type: item.type,
         imageUrl: item.imageUrl || '',
         link: item.link || '',

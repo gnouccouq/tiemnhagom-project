@@ -13332,12 +13332,13 @@ input:checked + .slider:before {
    2. Two-Column Sections: Lock the left sidebar in place & scroll the right side independently
    ========================================================================== */
 
-/* 1. Single-Column Sections (Overview, Online Users, Maintenance, POS, Flash Sale) */
+/* 1. Single-Column Sections (Overview, Online Users, Maintenance, POS, Flash Sale, Push Notification) */
 #online-users-section,
 #overview-section,
 #maintenance-section,
 #pos-section,
-#flash-sale-settings-section {
+#flash-sale-settings-section,
+#push-notification-section {
     display: none !important;
     width: 100% !important;
     height: 100% !important;
@@ -13351,7 +13352,8 @@ input:checked + .slider:before {
 #overview-section.active,
 #maintenance-section.active,
 #pos-section.active,
-#flash-sale-settings-section.active {
+#flash-sale-settings-section.active,
+#push-notification-section.active {
     display: block !important;
     overflow-y: auto !important;
     height: 100% !important;
