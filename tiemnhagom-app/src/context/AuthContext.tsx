@@ -487,7 +487,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 xhr.onload = () => resolve(xhr.response);
                 xhr.onerror = () => reject(new TypeError('Network request failed'));
                 xhr.responseType = 'blob';
-                xhr.open('GET', data.photoURL, true);
+                xhr.open('GET', String(data.photoURL), true);
                 xhr.send(null);
               });
               uploadSnapshot = await uploadBytes(avatarStorageRef, blob);

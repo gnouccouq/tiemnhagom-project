@@ -118,6 +118,8 @@ export interface UserProfile {
   membershipTier?: string;
   createdAt?: any;
   updatedAt?: any;
+  metadata?: any;
+  identifiers?: string[];
   expoPushToken?: string;
 }
 
