@@ -100,3 +100,31 @@ export function checkOutOfStock(product: any, variantOverride?: any): boolean {
   
   return isOutOfStock;
 }
+
+/**
+ * Chuẩn hoá số điện thoại Việt Nam (vd: +8497..., 8497... -> 097...)
+ */
+export function formatPhoneNumber(phone?: string | null): string {
+  if (!phone) return '';
+  let cleaned = phone.toString().replace(/[^\d+]/g, '');
+  if (cleaned.startsWith('+84')) {
+    return '0' + cleaned.substring(3);
+  }
+  if (cleaned.startsWith('84') && cleaned.length >= 10) {
+    return '0' + cleaned.substring(2);
+  }
+  if (/^[1-9]/.test(cleaned) && cleaned.length >= 9 && cleaned.length <= 11) {
+    return '0' + cleaned;
+  }
+  return cleaned;
+}
+
+/**
+ * Lấy các biến thể số điện thoại để tra cứu đồng bộ (ví dụ: 0777709662 và +84777709662)
+ */
+export function getPhoneVariants(phone?: string | null): string[] {
+  const p0 = formatPhoneNumber(phone);
+  if (!p0) return [];
+  const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+  return Array.from(new Set([p0, p84, phone ? phone.trim() : ''])).filter(Boolean);
+}

@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScalePressable } from './ScalePressable';
@@ -81,7 +82,21 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
     );
   };
 
-  const data = step === 'PROVINCE' ? provincesData : selectedProv?.wards || [];
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setSearchQuery('');
+  }, [step, visible]);
+
+  const rawData = step === 'PROVINCE' ? provincesData : selectedProv?.wards || [];
+  const filteredData = React.useMemo(() => {
+    if (!searchQuery.trim()) return rawData;
+    const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return rawData.filter((item: any) => {
+      const n = (item.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return n.includes(q);
+    });
+  }, [rawData, searchQuery]);
 
   return (
     <AnimatedBottomSheetModal
@@ -93,7 +108,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
     >
       <View style={themeStyles.header}>
         {step === 'WARD' ? (
-          <ScalePressable onPress={() => setStep('PROVINCE')} style={themeStyles.iconBtn} activeScale={0.88}>
+          <ScalePressable onPress={() => { setStep('PROVINCE'); setSearchQuery(''); }} style={themeStyles.iconBtn} activeScale={0.88}>
             <Ionicons name="arrow-back" size={22} color="#18181B" />
           </ScalePressable>
         ) : (
@@ -104,13 +119,41 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
           <Ionicons name="close" size={22} color="#18181B" />
         </ScalePressable>
       </View>
+
+      {/* Thanh tìm kiếm nhanh */}
+      <View style={themeStyles.searchBoxWrapper}>
+        <Ionicons name="search-outline" size={18} color="#9E968D" style={{ marginRight: 8 }} />
+        <TextInput
+          style={themeStyles.searchInput}
+          placeholder={step === 'PROVINCE' ? 'Gõ tìm Tỉnh / Thành phố...' : 'Gõ tìm Phường / Xã...'}
+          placeholderTextColor="#9E968D"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing"
+          autoCorrect={false}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="close-circle" size={18} color="#9E968D" />
+          </TouchableOpacity>
+        )}
+      </View>
       
       <FlatList
-        data={data}
+        data={filteredData}
         keyExtractor={(item) => (step === 'PROVINCE' ? item.province_code : item.ward_code)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={themeStyles.listContainer}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <View style={{ paddingVertical: 30, alignItems: 'center' }}>
+            <Ionicons name="search" size={32} color="#D1C7BD" style={{ marginBottom: 8 }} />
+            <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 14, color: '#9E968D' }}>
+              Không tìm thấy kết quả phù hợp
+            </Text>
+          </View>
+        }
       />
     </AnimatedBottomSheetModal>
   );
@@ -157,6 +200,25 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  searchBoxWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF8F5',
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    color: '#2B2928',
+    paddingVertical: 0,
   },
   listContainer: {
     paddingHorizontal: 16,

@@ -22,6 +22,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { useDialog } from '../src/context/DialogContext';
 import { AddressPicker } from '../src/components/AddressPicker';
 import { ScalePressable } from '../src/components/ScalePressable';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { Colors, Typography, Spacing } from '../src/constants/theme';
 
 export default function EditProfileScreen() {
@@ -38,16 +39,68 @@ export default function EditProfileScreen() {
   const [wardCode, setWardCode] = useState<string | undefined>();
   const [locationName, setLocationName] = useState('');
   const [addressPickerVisible, setAddressPickerVisible] = useState(false);
-  
   const [editAvatar, setEditAvatar] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [joinDate, setJoinDate] = useState('');
+
+  // States cho bộ chọn ngày sinh
+  const now = new Date();
+  const [calYear, setCalYear] = useState<number>(now.getFullYear() - 20);
+  const [calMonth, setCalMonth] = useState<number>(now.getMonth());
+  const [calDay, setCalDay] = useState<number>(1);
 
   useEffect(() => {
     // Khởi tạo dữ liệu
     setEditName(userProfile?.displayName || userProfile?.name || user?.displayName || '');
     setEditPhone(userProfile?.phone || '');
+    setUserEmail(user?.email || userProfile?.email || '');
+
+    // Ngày tham gia tính từ metadata creationTime hoặc createdAt của userProfile
+    const createdTimestamp =
+      user?.metadata?.creationTime ||
+      userProfile?.createdAt ||
+      userProfile?.metadata?.creationTime;
+    if (createdTimestamp) {
+      try {
+        const parsedDate = new Date(createdTimestamp);
+        if (!isNaN(parsedDate.getTime())) {
+          setJoinDate(parsedDate.toLocaleDateString('vi-VN'));
+        } else {
+          setJoinDate('Thành viên');
+        }
+      } catch {
+        setJoinDate('Thành viên');
+      }
+    } else {
+      setJoinDate('Thành viên');
+    }
+
     setEditGender(userProfile?.gender || 'Nam');
-    setEditDob(userProfile?.dob || userProfile?.birthday || '');
+    const existingDob = userProfile?.dob || userProfile?.birthday || '';
+    setEditDob(existingDob);
+
+    if (existingDob) {
+      if (existingDob.includes('-')) {
+        // YYYY-MM-DD
+        const [y, m, d] = existingDob.split('-').map(Number);
+        if (y && m && d) {
+          setCalYear(y);
+          setCalMonth(m - 1);
+          setCalDay(d);
+        }
+      } else if (existingDob.includes('/')) {
+        // DD/MM/YYYY
+        const [d, m, y] = existingDob.split('/').map(Number);
+        if (y && m && d) {
+          setCalYear(y);
+          setCalMonth(m - 1);
+          setCalDay(d);
+        }
+      }
+    }
+
     setEditStreet(userProfile?.streetAddress || userProfile?.address || userProfile?.fullAddress || '');
     setProvinceCode(userProfile?.provinceCode);
     setWardCode(userProfile?.wardCode);
@@ -230,6 +283,19 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
+            {/* Form Input: Email (Tương tự web, hiển thị thông tin tài khoản) */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <View style={[styles.pillInputWrapper, styles.disabledPillWrapper]}>
+                <Ionicons name="mail-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.pillInput, styles.disabledInput]}
+                  value={userEmail || 'Chưa liên kết email'}
+                  editable={false}
+                />
+              </View>
+            </View>
+
             {/* Form Input: Giới tính */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Giới tính</Text>
@@ -249,17 +315,31 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
-            {/* Form Input: Ngày sinh */}
-            <View style={[styles.inputGroup, { marginBottom: 6 }]}>
+            {/* Form Input: Ngày sinh với Modal chọn lịch */}
+            <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Ngày sinh</Text>
-              <View style={styles.pillInputWrapper}>
+              <TouchableOpacity
+                style={styles.pillInputWrapper}
+                activeOpacity={0.75}
+                onPress={() => setDatePickerVisible(true)}
+              >
                 <Ionicons name="calendar-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <Text style={[styles.pillInput, { lineHeight: 50, color: editDob ? '#2B2928' : '#A0A8A4' }]}>
+                  {editDob || 'Chọn ngày sinh nhật...'}
+                </Text>
+                <Ionicons name="chevron-down" size={18} color="#7A827E" style={{ marginRight: 16 }} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Form Input: Ngày tham gia (Tương tự web) */}
+            <View style={[styles.inputGroup, { marginBottom: 6 }]}>
+              <Text style={styles.inputLabel}>Ngày tham gia</Text>
+              <View style={[styles.pillInputWrapper, styles.disabledPillWrapper]}>
+                <Ionicons name="time-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <TextInput
-                  style={styles.pillInput}
-                  placeholder="DD/MM/YYYY"
-                  placeholderTextColor="#A0A8A4"
-                  value={editDob}
-                  onChangeText={setEditDob}
+                  style={[styles.pillInput, styles.disabledInput]}
+                  value={joinDate}
+                  editable={false}
                 />
               </View>
             </View>
@@ -314,6 +394,126 @@ export default function EditProfileScreen() {
             setLocationName(`${ward.name}, ${prov.name}`);
           }}
         />
+
+        {/* Modal Chọn Ngày Sinh Nhật (Lịch) */}
+        <AnimatedBottomSheetModal
+          visible={datePickerVisible}
+          onClose={() => setDatePickerVisible(false)}
+          contentStyle={styles.calendarModalContent}
+          showHandle={true}
+        >
+          <View style={styles.calendarHeader}>
+            <Text style={styles.calendarTitle}>Chọn Ngày Sinh Nhật</Text>
+            <TouchableOpacity onPress={() => setDatePickerVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Ionicons name="close" size={22} color="#18181B" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Month & Year Selectors */}
+          <View style={styles.calendarControlsRow}>
+            {/* Year selector */}
+            <View style={styles.calControlGroup}>
+              <TouchableOpacity
+                onPress={() => setCalYear(prev => Math.max(1940, prev - 1))}
+                style={styles.calNavBtn}
+              >
+                <Ionicons name="chevron-back" size={16} color="#9C7156" />
+              </TouchableOpacity>
+              <Text style={styles.calNavLabel}>Năm {calYear}</Text>
+              <TouchableOpacity
+                onPress={() => setCalYear(prev => Math.min(new Date().getFullYear(), prev + 1))}
+                style={styles.calNavBtn}
+              >
+                <Ionicons name="chevron-forward" size={16} color="#9C7156" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Month selector */}
+            <View style={styles.calControlGroup}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (calMonth === 0) {
+                    setCalMonth(11);
+                    setCalYear(prev => prev - 1);
+                  } else {
+                    setCalMonth(prev => prev - 1);
+                  }
+                }}
+                style={styles.calNavBtn}
+              >
+                <Ionicons name="chevron-back" size={16} color="#9C7156" />
+              </TouchableOpacity>
+              <Text style={styles.calNavLabel}>Tháng {calMonth + 1}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (calMonth === 11) {
+                    setCalMonth(0);
+                    setCalYear(prev => prev + 1);
+                  } else {
+                    setCalMonth(prev => prev + 1);
+                  }
+                }}
+                style={styles.calNavBtn}
+              >
+                <Ionicons name="chevron-forward" size={16} color="#9C7156" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Day of Week Headers */}
+          <View style={styles.weekRow}>
+            {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((w, idx) => (
+              <Text key={w} style={[styles.weekDayText, idx === 0 && { color: '#C86432' }]}>{w}</Text>
+            ))}
+          </View>
+
+          {/* Days Grid */}
+          <View style={styles.daysGrid}>
+            {(() => {
+              const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+              const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+              const items = [];
+
+              for (let i = 0; i < firstDayOfWeek; i++) {
+                items.push(<View key={`empty-${i}`} style={styles.dayCell} />);
+              }
+
+              for (let d = 1; d <= daysInMonth; d++) {
+                const isSelected = calDay === d;
+                items.push(
+                  <TouchableOpacity
+                    key={`day-${d}`}
+                    style={[styles.dayCell, isSelected && styles.dayCellSelected]}
+                    onPress={() => setCalDay(d)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.dayCellText, isSelected && styles.dayCellTextSelected]}>{d}</Text>
+                  </TouchableOpacity>
+                );
+              }
+
+              return items;
+            })()}
+          </View>
+
+          {/* Confirm Button */}
+          <View style={{ marginTop: 18, marginBottom: 10 }}>
+            <TouchableOpacity
+              style={styles.btnConfirmDate}
+              onPress={() => {
+                const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+                const formatted = `${calYear}-${pad(calMonth + 1)}-${pad(calDay)}`;
+                setEditDob(formatted);
+                setDatePickerVisible(false);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.btnConfirmDateText}>
+                Xác nhận ngày {calDay}/{calMonth + 1}/{calYear}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </AnimatedBottomSheetModal>
 
         {/* Bottom CTA Action Button */}
         <View style={styles.footerAction}>
@@ -421,6 +621,8 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarPickerImg: {
     width: 88,
@@ -428,6 +630,7 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     borderWidth: 2,
     borderColor: '#E8E1D8',
+    resizeMode: 'cover',
   },
   avatarPickerPlaceholder: {
     width: 88,
@@ -487,6 +690,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
+  disabledPillWrapper: {
+    backgroundColor: '#F3EFEA',
+    borderColor: '#DFD8CE',
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -496,6 +703,9 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     color: '#231B15',
     height: '100%',
+  },
+  disabledInput: {
+    color: '#7D756C',
   },
   locationPill: {
     height: 52,
@@ -589,6 +799,125 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Calendar Modal Styles (Bo tròn 24px, chuẩn GEMINI.md)
+  calendarModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0ECE6',
+  },
+  calendarTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  calendarControlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 14,
+    gap: 10,
+  },
+  calControlGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FAF8F5',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  calNavBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+  },
+  calNavLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  weekDayText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6E665D',
+    width: 38,
+    textAlign: 'center',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+    borderRadius: 20,
+  },
+  dayCellSelected: {
+    backgroundColor: '#9C7156',
+  },
+  dayCellText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    color: '#2B2928',
+    fontWeight: '600',
+  },
+  dayCellTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  btnConfirmDate: {
+    backgroundColor: '#9C7156',
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  btnConfirmDateText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
   },

@@ -11,7 +11,9 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
-  signInAnonymously
+  signInAnonymously,
+  linkWithCredential,
+  unlink
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -19,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db, storage } from '../config/firebase';
 import { UserProfile } from '../types';
 import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../services/notificationService';
+import { formatPhoneNumber, getPhoneVariants } from '../utils/format';
 
 interface AuthContextType {
   user: User | null;
@@ -33,6 +36,9 @@ interface AuthContextType {
   signInWithAppleCredential: (idToken: string, rawNonce: string) => Promise<void>;
   signInWithPhoneSession: (phone: string, displayName?: string) => Promise<void>;
   updateUserProfileData: (data: Partial<UserProfile>) => Promise<void>;
+  linkGoogleAccount: (idToken: string) => Promise<void>;
+  linkAppleAccount: (idToken: string, rawNonce: string) => Promise<void>;
+  unlinkProvider: (providerId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -51,6 +57,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const snap = await getDoc(userDocRef);
       if (snap.exists()) {
         const rawData = snap.data() as any;
+
+        // Nếu tài khoản này đã được gộp/chuyển tiếp sang tài khoản chính (mergedTo)
+        if (rawData.mergedTo && rawData.mergedTo !== uid) {
+          const primarySnap = await getDoc(doc(db, 'users', rawData.mergedTo));
+          if (primarySnap.exists()) {
+            const primaryData = primarySnap.data() as any;
+            let sanitizedPoints = primaryData.points !== undefined ? Number(primaryData.points) : 0;
+            if (sanitizedPoints === 50 && (!primaryData.totalSpent || Number(primaryData.totalSpent) < 500000)) {
+              sanitizedPoints = Math.floor(Number(primaryData.totalSpent || 0) / 10000);
+            }
+            const primaryAvatar = primaryData.photoURL || primaryData.avatar || auth.currentUser?.photoURL || null;
+            const resolvedProfile = {
+              uid: rawData.mergedTo,
+              ...primaryData,
+              points: sanitizedPoints,
+              photoURL: primaryAvatar,
+              avatar: primaryAvatar,
+            };
+            setUserProfile(resolvedProfile);
+            await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(resolvedProfile));
+            await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: rawData.mergedTo, email: primaryData.email || null }));
+            return;
+          }
+        }
+
+        // Nếu tài khoản hiện tại không có email nhưng có SĐT, kiểm tra xem có tài khoản Email nào đã đăng ký SĐT này trước đó không
+        if (!rawData.email && rawData.phone) {
+          const variants = getPhoneVariants(rawData.phone);
+          let primaryDocSnap: any = null;
+          for (const p of variants) {
+            const qP = query(collection(db, 'users'), where('phone', '==', p));
+            const sP = await getDocs(qP);
+            const foundEmail = sP.docs.find(d => d.id !== uid && d.data().email);
+            if (foundEmail) {
+              primaryDocSnap = foundEmail;
+              break;
+            }
+          }
+          if (primaryDocSnap) {
+            // Sáp nhập tài khoản phụ vào tài khoản chính có email
+            await setDoc(userDocRef, { isMerged: true, mergedTo: primaryDocSnap.id, updatedAt: new Date().toISOString() }, { merge: true });
+            const pData = primaryDocSnap.data() as any;
+            let sanitizedPoints = pData.points !== undefined ? Number(pData.points) : 0;
+            if (sanitizedPoints === 50 && (!pData.totalSpent || Number(pData.totalSpent) < 500000)) {
+              sanitizedPoints = Math.floor(Number(pData.totalSpent || 0) / 10000);
+            }
+            const pAvatar = pData.photoURL || pData.avatar || auth.currentUser?.photoURL || null;
+            const resolvedProfile = {
+              uid: primaryDocSnap.id,
+              ...pData,
+              points: sanitizedPoints,
+              photoURL: pAvatar,
+              avatar: pAvatar,
+            };
+            setUserProfile(resolvedProfile);
+            await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(resolvedProfile));
+            await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: primaryDocSnap.id, email: pData.email || null }));
+            return;
+          }
+        }
+
         let sanitizedPoints = rawData.points !== undefined ? Number(rawData.points) : 0;
         if (sanitizedPoints === 50 && (!rawData.totalSpent || Number(rawData.totalSpent) < 500000)) {
           sanitizedPoints = Math.floor(Number(rawData.totalSpent || 0) / 10000);
@@ -60,7 +127,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // ignore
           }
         }
-        const data = { uid, ...rawData, points: sanitizedPoints };
+        // Đồng bộ 2 chiều giữa avatar (Web) và photoURL (App & Firebase Auth)
+        const effectiveAvatar = rawData.photoURL || rawData.avatar || auth.currentUser?.photoURL || null;
+        const data = {
+          uid,
+          ...rawData,
+          points: sanitizedPoints,
+          photoURL: effectiveAvatar,
+          avatar: effectiveAvatar,
+        };
         setUserProfile(data);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
       } else {
@@ -191,38 +266,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUserProfile(cred.user.uid);
   };
 
-  const signInWithPhoneSession = async (phoneNumber: string, displayName?: string) => {
-    // Tìm hoặc tạo profile gắn với số điện thoại
+  const signInWithPhoneSession = async (rawPhoneNumber: string, displayName?: string) => {
+    // Chuẩn hoá và lấy các biến thể số điện thoại (+84... và 0...)
+    const p0 = formatPhoneNumber(rawPhoneNumber);
+    const variants = getPhoneVariants(rawPhoneNumber);
+    if (!p0) {
+      throw new Error('Số điện thoại không hợp lệ');
+    }
+
     try {
-      const q = query(collection(db, 'users'), where('phone', '==', phoneNumber));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const found = snap.docs[0];
-        const raw = found.data() as any;
+      let foundDoc: any = null;
+
+      // 1. Tìm tất cả user theo phone chuẩn hoặc biến thể
+      const candidateDocs: any[] = [];
+      for (const p of variants) {
+        const q = query(collection(db, 'users'), where('phone', '==', p));
+        const snap = await getDocs(q);
+        candidateDocs.push(...snap.docs);
+      }
+
+      // 2. Nếu chưa thấy, tìm tiếp theo identifiers array
+      if (candidateDocs.length === 0) {
+        for (const p of variants) {
+          const qId = query(collection(db, 'users'), where('identifiers', 'array-contains', p));
+          const snapId = await getDocs(qId);
+          candidateDocs.push(...snapId.docs);
+        }
+      }
+
+      // Lọc trùng lặp doc
+      const uniqueDocs = Array.from(new Map(candidateDocs.map(d => [d.id, d])).values());
+
+      // Ưu tiên:
+      // 1. Tài khoản không bị isMerged và CÓ email (tài khoản gốc tạo bằng email/google)
+      // 2. Hoặc tài khoản không bị isMerged
+      // 3. Nếu tài khoản có mergedTo, theo link mergedTo đến tài khoản chính
+      if (uniqueDocs.length > 0) {
+        let bestDoc = uniqueDocs.find(d => !d.data().isMerged && !!d.data().email);
+        if (!bestDoc) {
+          bestDoc = uniqueDocs.find(d => !d.data().isMerged);
+        }
+        if (!bestDoc) {
+          bestDoc = uniqueDocs[0];
+        }
+
+        let raw = bestDoc.data() as any;
+        let finalDocId = bestDoc.id;
+
+        // Nếu doc được chọn trỏ tới mergedTo
+        if (raw.mergedTo && raw.mergedTo !== bestDoc.id) {
+          const pSnap = await getDoc(doc(db, 'users', raw.mergedTo));
+          if (pSnap.exists()) {
+            finalDocId = pSnap.id;
+            raw = pSnap.data() as any;
+          }
+        }
+        foundDoc = { id: finalDocId, data: () => raw };
+      }
+
+      if (foundDoc) {
+        const raw = foundDoc.data() as any;
         let sanitizedPoints = raw.points !== undefined ? Number(raw.points) : 0;
         if (sanitizedPoints === 50 && (!raw.totalSpent || Number(raw.totalSpent) < 500000)) {
           sanitizedPoints = Math.floor(Number(raw.totalSpent || 0) / 10000);
         }
-        const userProfileData = { uid: found.id, ...raw, points: sanitizedPoints };
+        // Đảm bảo số điện thoại được chuẩn hoá và lưu variants
+        const allIdentifiers = Array.from(new Set([...(raw.identifiers || []), ...variants])).filter(Boolean);
+        try {
+          await setDoc(
+            doc(db, 'users', foundDoc.id),
+            { phone: p0, identifiers: allIdentifiers, lastLogin: new Date().toISOString() },
+            { merge: true }
+          );
+        } catch (e) {
+          // ignore
+        }
+
+        const userProfileData = {
+          uid: foundDoc.id,
+          ...raw,
+          phone: p0,
+          points: sanitizedPoints,
+          identifiers: allIdentifiers,
+        };
         setUserProfile(userProfileData);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(userProfileData));
-        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: found.id, email: null }));
+        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: foundDoc.id, email: raw.email || null }));
       } else {
-        // Tạo pseudo UID thay vì signInAnonymously (tránh lỗi auth/admin-restricted-operation)
+        // Tạo UID mới cho phiên đăng nhập SĐT
         let currentUid = auth.currentUser?.uid;
         if (!currentUid) {
-          currentUid = 'phone_' + phoneNumber.replace(/\D/g, '') + '_' + Date.now().toString();
+          currentUid = 'phone_' + p0.replace(/\D/g, '') + '_' + Date.now().toString();
         }
         const newProfile: UserProfile = {
           uid: currentUid,
           email: null,
-          phone: phoneNumber,
-          displayName: displayName || `Khách hàng ${phoneNumber.slice(-4)}`,
+          phone: p0,
+          displayName: displayName || `Khách hàng ${p0.slice(-4)}`,
           points: 0,
           tier: 'standard',
         };
-        await setDoc(doc(db, 'users', currentUid), { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
-        setUserProfile(newProfile);
+        await setDoc(
+          doc(db, 'users', currentUid),
+          { ...newProfile, identifiers: variants, createdAt: serverTimestamp(), lastLogin: new Date().toISOString() },
+          { merge: true }
+        );
+        setUserProfile({ ...newProfile, identifiers: variants } as any);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(newProfile));
         await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: currentUid, email: null }));
       }
@@ -248,7 +397,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload.displayName = cleanName;
         payload.name = cleanName;
       }
-      if (data.phone !== undefined) payload.phone = data.phone;
+      if (data.phone !== undefined) {
+        const normalizedPhone = formatPhoneNumber(data.phone);
+        const variants = getPhoneVariants(data.phone);
+        payload.phone = normalizedPhone;
+        payload.identifiers = Array.from(new Set([...(userProfile?.identifiers || []), ...variants])).filter(Boolean);
+      }
       if (data.gender !== undefined) payload.gender = data.gender;
       if (data.dob !== undefined || data.birthday !== undefined) {
         const d = data.dob || data.birthday;
@@ -260,19 +414,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload.address = a;
         payload.fullAddress = a;
       }
+      if (data.streetAddress !== undefined) payload.streetAddress = data.streetAddress;
+      if (data.provinceCode !== undefined) payload.provinceCode = data.provinceCode;
+      if (data.wardCode !== undefined) payload.wardCode = data.wardCode;
+      if (data.locationName !== undefined) payload.locationName = data.locationName;
+
+      // Đồng bộ sổ địa chỉ (addresses) để Web có thể hiển thị đồng nhất
+      if (data.address || data.streetAddress || data.fullAddress) {
+        const addrDetail = (data.streetAddress || data.address || data.fullAddress || '').trim();
+        const locParts = (data.locationName || '').split(',').map((s: string) => s.trim());
+        const wardPart = locParts[0] || '';
+        const provPart = locParts[1] || '';
+
+        const newAddrItem = {
+          fullName: cleanName || userProfile?.displayName || userProfile?.name || 'Khách hàng',
+          phone: data.phone || userProfile?.phone || '',
+          provinceName: provPart,
+          wardName: wardPart,
+          address: addrDetail,
+          isDefault: true,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const existingAddresses = Array.isArray(userProfile?.addresses) ? [...userProfile.addresses] : [];
+        if (existingAddresses.length === 0) {
+          existingAddresses.push(newAddrItem);
+        } else {
+          existingAddresses[0] = { ...existingAddresses[0], ...newAddrItem };
+        }
+        payload.addresses = existingAddresses;
+      }
 
       // Xử lý upload avatar lên Firebase Storage nếu là base64 hoặc local file uri
       let finalPhotoURL = data.photoURL;
-      if (data.photoURL && (data.photoURL.startsWith('data:image') || data.photoURL.startsWith('file://'))) {
+      if (data.photoURL && (data.photoURL.startsWith('data:image') || data.photoURL.startsWith('file://') || data.photoURL.startsWith('content://'))) {
         try {
           const avatarStorageRef = ref(storage, `avatars/${currentUid}/${Date.now()}_avatar.jpg`);
           let uploadSnapshot;
+
           if (data.photoURL.startsWith('data:image')) {
             uploadSnapshot = await uploadString(avatarStorageRef, data.photoURL, 'data_url');
           } else {
-            const resp = await fetch(data.photoURL);
-            const blob = await resp.blob();
-            uploadSnapshot = await uploadBytes(avatarStorageRef, blob);
+            // Đọc file thành base64 an toàn trên React Native / Expo thay vì resp.blob() gây lỗi ArrayBuffer
+            let base64Data = '';
+            try {
+              const FileSystem = require('expo-file-system/legacy') || require('expo-file-system');
+              if (FileSystem && FileSystem.readAsStringAsync) {
+                base64Data = await FileSystem.readAsStringAsync(data.photoURL, {
+                  encoding: FileSystem.EncodingType?.Base64 || 'base64',
+                });
+              }
+            } catch (fsErr) {
+              // fallback nếu require legacy khác
+              try {
+                const FileSystem = require('expo-file-system');
+                if (FileSystem && FileSystem.readAsStringAsync) {
+                  base64Data = await FileSystem.readAsStringAsync(data.photoURL, {
+                    encoding: 'base64',
+                  });
+                }
+              } catch (e) {
+                // ignore
+              }
+            }
+
+            if (base64Data) {
+              uploadSnapshot = await uploadString(avatarStorageRef, `data:image/jpeg;base64,${base64Data}`, 'data_url');
+            } else {
+              // Fallback dùng XMLHttpRequest tạo Blob chuẩn React Native
+              const blob: Blob = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = () => resolve(xhr.response);
+                xhr.onerror = () => reject(new TypeError('Network request failed'));
+                xhr.responseType = 'blob';
+                xhr.open('GET', data.photoURL, true);
+                xhr.send(null);
+              });
+              uploadSnapshot = await uploadBytes(avatarStorageRef, blob);
+            }
           }
           finalPhotoURL = await getDownloadURL(uploadSnapshot.ref);
         } catch (uploadErr) {
@@ -305,6 +524,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userDocRef = doc(db, 'users', currentUid);
       await setDoc(userDocRef, payload, { merge: true });
 
+      // Nếu cập nhật SĐT, tìm xem có tài khoản cũ/ghost record nào mang SĐT này không để sáp nhập điểm và thông tin
+      if (data.phone) {
+        const p0 = formatPhoneNumber(data.phone);
+        const variants = getPhoneVariants(data.phone);
+        try {
+          let oldDocSnap: any = null;
+          for (const p of variants) {
+            const qP = query(collection(db, 'users'), where('phone', '==', p));
+            const sP = await getDocs(qP);
+            const foundOther = sP.docs.find(d => d.id !== currentUid);
+            if (foundOther) {
+              oldDocSnap = foundOther;
+              break;
+            }
+          }
+          if (oldDocSnap) {
+            const oldData = oldDocSnap.data() as any;
+            const curSnap = await getDoc(userDocRef);
+            const curData = curSnap.data() as any || {};
+
+            const mergedPoints = Math.max(Number(curData.points || 0), Number(oldData.points || 0));
+            const mergedSpent = Math.max(Number(curData.totalSpent || 0), Number(oldData.totalSpent || 0));
+
+            await setDoc(
+              userDocRef,
+              {
+                points: mergedPoints,
+                totalSpent: mergedSpent,
+                mergedAccounts: Array.from(new Set([...(curData.mergedAccounts || []), oldDocSnap.id])),
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+
+            // Đánh dấu tài khoản cũ đã được sáp nhập
+            await setDoc(
+              oldDocSnap.ref,
+              { isMerged: true, mergedTo: currentUid, updatedAt: new Date().toISOString() },
+              { merge: true }
+            );
+          }
+        } catch (mergeErr) {
+          console.warn('Lỗi auto-merge tài khoản theo SĐT:', mergeErr);
+        }
+      }
+
       // 3. Cập nhật state nội bộ và AsyncStorage
       const updatedProfile: UserProfile = {
         ...(userProfile || { uid: currentUid, email: auth.currentUser?.email || null, displayName: cleanName }),
@@ -318,6 +583,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.warn('Lỗi cập nhật user profile:', e);
       throw e;
+    }
+  };
+
+  const linkGoogleAccount = async (idToken: string) => {
+    if (!auth.currentUser) throw new Error('Vui lòng đăng nhập trước khi liên kết tài khoản');
+    const credential = GoogleAuthProvider.credential(idToken);
+    try {
+      await linkWithCredential(auth.currentUser, credential);
+      await fetchUserProfile(auth.currentUser.uid);
+    } catch (err: any) {
+      if (err.code === 'auth/credential-already-in-use') {
+        throw new Error('Tài khoản Google này đã được liên kết với một tài khoản khác');
+      }
+      throw err;
+    }
+  };
+
+  const linkAppleAccount = async (idToken: string, rawNonce: string) => {
+    if (!auth.currentUser) throw new Error('Vui lòng đăng nhập trước khi liên kết tài khoản');
+    const provider = new OAuthProvider('apple.com');
+    const credential = provider.credential({
+      idToken,
+      rawNonce,
+    });
+    try {
+      await linkWithCredential(auth.currentUser, credential);
+      await fetchUserProfile(auth.currentUser.uid);
+    } catch (err: any) {
+      if (err.code === 'auth/credential-already-in-use') {
+        throw new Error('Tài khoản Apple này đã được liên kết với một tài khoản khác');
+      }
+      throw err;
+    }
+  };
+
+  const unlinkProvider = async (providerId: string) => {
+    if (!auth.currentUser) throw new Error('Vui lòng đăng nhập');
+    try {
+      await unlink(auth.currentUser, providerId);
+      await fetchUserProfile(auth.currentUser.uid);
+    } catch (err: any) {
+      throw err;
     }
   };
 
@@ -336,6 +643,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithAppleCredential,
         signInWithPhoneSession,
         updateUserProfileData,
+        linkGoogleAccount,
+        linkAppleAccount,
+        unlinkProvider,
       }}
     >
       {children}

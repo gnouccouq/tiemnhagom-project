@@ -483,8 +483,126 @@ export default function SettingsScreen() {
 
         {(user || userProfile) && (
           <View style={[styles.settingsGroup, { marginTop: 10 }]}>
-            <Text style={styles.settingsGroupTitle}>{t('accountManagement')}</Text>
-            <View style={{ gap: 12, marginTop: 10 }}>
+            <Text style={styles.settingsGroupTitle}>Tài khoản liên kết</Text>
+            <Text style={styles.settingsGroupSubtitle}>
+              Liên kết để đăng nhập nhanh bằng Google hoặc Apple ID
+            </Text>
+
+            <View style={styles.linkedAccountsCard}>
+              {/* GOOGLE LINK */}
+              {(() => {
+                const isGoogleLinked = user?.providerData?.some(p => p.providerId === 'google.com') || (userProfile?.email && userProfile.email.endsWith('@gmail.com'));
+                const googleEmail = user?.providerData?.find(p => p.providerId === 'google.com')?.email || (isGoogleLinked ? userProfile?.email : null);
+
+                return (
+                  <View style={styles.linkedRow}>
+                    <View style={styles.linkedRowLeft}>
+                      <View style={[styles.linkedIconWrap, { backgroundColor: '#F2F2F2' }]}>
+                        <Ionicons name="logo-google" size={20} color="#EA4335" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.linkedProviderName}>Google</Text>
+                        <Text style={styles.linkedProviderStatus} numberOfLines={1}>
+                          {isGoogleLinked ? (googleEmail || 'Đã liên kết') : 'Chưa liên kết'}
+                        </Text>
+                      </View>
+                    </View>
+                    {isGoogleLinked ? (
+                      <View style={styles.linkedActiveBadge}>
+                        <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                        <Text style={styles.linkedActiveText}>Đã nối</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.btnLinkAction}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          dialog.alert('Liên kết Google', 'Vui lòng đăng xuất và đăng nhập bằng Google trên màn hình đăng nhập để tự động liên kết với tài khoản này.');
+                        }}
+                      >
+                        <Text style={styles.btnLinkActionText}>Liên kết</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })()}
+
+              <View style={styles.linkedDivider} />
+
+              {/* APPLE LINK */}
+              {(() => {
+                const isAppleLinked = user?.providerData?.some(p => p.providerId === 'apple.com');
+                const appleEmail = user?.providerData?.find(p => p.providerId === 'apple.com')?.email;
+
+                return (
+                  <View style={styles.linkedRow}>
+                    <View style={styles.linkedRowLeft}>
+                      <View style={[styles.linkedIconWrap, { backgroundColor: '#000000' }]}>
+                        <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.linkedProviderName}>Apple ID</Text>
+                        <Text style={styles.linkedProviderStatus} numberOfLines={1}>
+                          {isAppleLinked ? (appleEmail || 'Đã liên kết') : 'Chưa liên kết'}
+                        </Text>
+                      </View>
+                    </View>
+                    {isAppleLinked ? (
+                      <View style={styles.linkedActiveBadge}>
+                        <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                        <Text style={styles.linkedActiveText}>Đã nối</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.btnLinkAction}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          dialog.alert('Liên kết Apple', 'Tính năng liên kết Apple khả dụng trên thiết bị iOS.');
+                        }}
+                      >
+                        <Text style={styles.btnLinkActionText}>Liên kết</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })()}
+
+              {/* THÔNG TIN THAM GIA */}
+              {(() => {
+                const createdTimestamp =
+                  user?.metadata?.creationTime ||
+                  userProfile?.createdAt ||
+                  userProfile?.metadata?.creationTime;
+                let joinDateFormatted = '';
+                if (createdTimestamp) {
+                  try {
+                    const pDate = new Date(createdTimestamp);
+                    if (!isNaN(pDate.getTime())) {
+                      joinDateFormatted = pDate.toLocaleDateString('vi-VN');
+                    }
+                  } catch {
+                    // ignore
+                  }
+                }
+
+                if (!joinDateFormatted) return null;
+
+                return (
+                  <>
+                    <View style={styles.linkedDivider} />
+                    <View style={styles.joinDateCardRow}>
+                      <View style={styles.joinDateLeft}>
+                        <Ionicons name="sparkles-outline" size={17} color="#9C7156" />
+                        <Text style={styles.joinDateLabel}>Ngày tham gia Tiệm</Text>
+                      </View>
+                      <Text style={styles.joinDateValue}>{joinDateFormatted}</Text>
+                    </View>
+                  </>
+                );
+              })()}
+            </View>
+
+            <View style={{ gap: 12, marginTop: 16 }}>
               <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut} activeOpacity={0.85}>
                 <Ionicons name="log-out-outline" size={20} color="#333333" />
                 <Text style={styles.logoutBtnText}>{t('signOutAccount')}</Text>
@@ -718,6 +836,110 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#9C7156',
+  },
+  linkedAccountsCard: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  linkedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  linkedRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    marginRight: 12,
+  },
+  linkedIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkedProviderName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  linkedProviderStatus: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    color: '#6E665D',
+    marginTop: 2,
+  },
+  linkedActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F6F4EC',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+  },
+  linkedActiveText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9C7156',
+  },
+  btnLinkAction: {
+    backgroundColor: '#FAF8F5',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+  },
+  btnLinkActionText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#9C7156',
+  },
+  joinDateCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+  },
+  joinDateLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  joinDateLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: Colors.textSecondary || '#6E665D',
+    fontWeight: '600',
+  },
+  joinDateValue: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: '#9C7156',
+    fontWeight: '700',
+  },
+  linkedDivider: {
+    height: 1,
+    backgroundColor: '#F0ECE6',
   },
   logoutBtn: {
     flexDirection: 'row',

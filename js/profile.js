@@ -3,7 +3,7 @@ import {
     showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, generateAutomaticVouchers, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification, escapeHTML,
     showModalConfirm, showModalAlert
 } from "./utils.js";
-import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, GoogleAuthProvider, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -426,12 +426,24 @@ async function handleProfileAuth(user) {
 
     if (user) {
         // Tải thêm thông tin từ Firestore (users collection)
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? userSnap.data() : {};
+        let effectiveUid = user.uid;
+        let userRef = doc(db, "users", user.uid);
+        let userSnap = await getDoc(userRef);
+        let userData = userSnap.exists() ? userSnap.data() : {};
+
+        // Nếu tài khoản này đã được liên kết vào tài khoản chính
+        if (userData.mergedTo && userData.mergedTo !== user.uid) {
+            const primarySnap = await getDoc(doc(db, "users", userData.mergedTo));
+            if (primarySnap.exists()) {
+                effectiveUid = userData.mergedTo;
+                userRef = doc(db, "users", effectiveUid);
+                userSnap = primarySnap;
+                userData = primarySnap.data();
+            }
+        }
         
         // Cập nhật thông tin trên Sidebar
-        document.getElementById('sidebar-name').innerText = user.displayName || 'Khách hàng';
+        document.getElementById('sidebar-name').innerText = userData.displayName || user.displayName || 'Khách hàng';
         const userAvatarUrl = userData.avatar || user.photoURL;
         const avatarImg = document.getElementById('sidebar-avatar');
         avatarImg.src = userAvatarUrl || '../Asset/images/default-avatar.png';
@@ -503,8 +515,12 @@ async function handleProfileAuth(user) {
                     const snapshot = await uploadBytesResumable(storageRef, file);
                     const downloadURL = await getDownloadURL(snapshot.ref);
                     
-                    // Cập nhật Firestore
-                    await setDoc(userRef, { avatar: downloadURL }, { merge: true });
+                    // Cập nhật Firestore: đồng bộ cả 2 trường avatar (Web) và photoURL (App)
+                    await setDoc(userRef, {
+                        avatar: downloadURL,
+                        photoURL: downloadURL,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
                     // Cập nhật Firebase Auth
                     await updateProfile(user, { photoURL: downloadURL });
                     
@@ -537,6 +553,57 @@ async function handleProfileAuth(user) {
                     btnEditAvatar.innerText = 'Sửa ảnh đại diện';
                 }
             };
+        }
+
+        // Hiển thị trạng thái Tài khoản liên kết Google
+        const linkedGoogleStatus = document.getElementById('linked-google-status');
+        const linkedGoogleAction = document.getElementById('linked-google-action');
+        if (linkedGoogleStatus && linkedGoogleAction) {
+            const isGoogleLinked = user.providerData?.some(p => p.providerId === 'google.com') || (userData.email && userData.email.endsWith('@gmail.com'));
+            const googleEmail = user.providerData?.find(p => p.providerId === 'google.com')?.email || (isGoogleLinked ? userData.email : null);
+
+            if (isGoogleLinked) {
+                linkedGoogleStatus.innerText = googleEmail || 'Đã liên kết thành công';
+                linkedGoogleStatus.style.color = '#9C7156';
+                linkedGoogleAction.innerHTML = `
+                    <span style="display: inline-flex; align-items: center; gap: 4px; background: #F6F4EC; color: #9C7156; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; border: 1px solid #E8CCB2;">
+                        ✓ Đã nối
+                    </span>
+                `;
+            } else {
+                linkedGoogleStatus.innerText = 'Chưa liên kết tài khoản';
+                linkedGoogleStatus.style.color = '#6E665D';
+                linkedGoogleAction.innerHTML = `
+                    <button type="button" id="btn-link-google-account" class="btn-dark" style="font-size: 0.8rem; padding: 6px 14px; border-radius: 16px; width: auto; margin: 0; min-width: auto; background: #9C7156;">
+                        Liên kết ngay
+                    </button>
+                `;
+                const btnLinkGoogle = document.getElementById('btn-link-google-account');
+                if (btnLinkGoogle) {
+                    btnLinkGoogle.onclick = async () => {
+                        try {
+                            btnLinkGoogle.disabled = true;
+                            btnLinkGoogle.innerText = 'Đang xử lý...';
+                            const provider = new GoogleAuthProvider();
+                            await linkWithPopup(auth.currentUser, provider);
+                            showToast('Liên kết tài khoản Google thành công!');
+                            handleProfileAuth(auth.currentUser);
+                        } catch (linkErr) {
+                            console.error('Lỗi link Google:', linkErr);
+                            if (linkErr.code === 'auth/credential-already-in-use') {
+                                showToast('Tài khoản Google này đã được liên kết với một tài khoản khác!', 'error');
+                            } else if (linkErr.code === 'auth/popup-closed-by-user') {
+                                // Người dùng đóng popup
+                            } else {
+                                showToast('Lỗi liên kết: ' + (linkErr.message || 'Thử lại sau'), 'error');
+                            }
+                        } finally {
+                            btnLinkGoogle.disabled = false;
+                            btnLinkGoogle.innerText = 'Liên kết ngay';
+                        }
+                    };
+                }
+            }
         }
 
         // Kiểm tra quyền Admin
@@ -710,10 +777,10 @@ async function handleProfileAuth(user) {
             };
         }
 
-        fetchFavorites(user.uid);
-        fetchOrderHistory(user.uid);
-        fetchAddresses(user.uid);
-        fetchUserVouchers(user.uid);
+        fetchFavorites(effectiveUid);
+        fetchOrderHistory(effectiveUid);
+        fetchAddresses(effectiveUid);
+        fetchUserVouchers(effectiveUid);
     } else {
         profileLayout.style.display = 'none';
         document.getElementById('order-history-list').innerHTML = '';
@@ -999,14 +1066,18 @@ async function fetchOrderHistory(userId) {
                 `;
             }
 
+            const joinDateWeb = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
+            const memberSinceWeb = joinDateWeb && !isNaN(joinDateWeb.getTime()) ? `${joinDateWeb.getMonth() + 1}/${joinDateWeb.getFullYear()}` : '';
+
             cardContainer.innerHTML = `
-                <div class="membership-card tier-${currentTier.id}">
+                <div class="membership-card tier-${currentTier.id}" style="position: relative;">
                     <div class="membership-card-chip"></div>
                     <div>
                         <div class="member-label">MEMBER TIER</div>
                         <div class="tier-name">${currentTier.name}</div>
                         <div class="tier-discount">Ưu đãi: Giảm ${currentTier.discount}% đơn hàng</div>
                         <div class="tier-points" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600; color: #fff; opacity: 0.95;">💎 Điểm tích lũy: ${points} điểm</div>
+                        ${memberSinceWeb ? `<div style="margin-top: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.85); font-style: italic;">📅 Thành viên từ: ${memberSinceWeb}</div>` : ''}
                     </div>
                 </div>
                 ${progressHtml}
@@ -1220,6 +1291,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const phoneInput = document.getElementById('new-addr-phone');
             if (nameInput && !nameInput.value && currentName) nameInput.value = currentName;
             if (phoneInput && !phoneInput.value && currentPhone) phoneInput.value = currentPhone;
+
+            // Nạp danh sách Tỉnh/Thành phố vào datalist
+            (async () => {
+                try {
+                    const res = await fetch('../provinces.json');
+                    if (res.ok) {
+                        const provData = await res.json();
+                        const provDatalist = document.getElementById('province-datalist');
+                        const wardDatalist = document.getElementById('ward-datalist');
+                        const provInput = document.getElementById('new-addr-province');
+                        const wardInput = document.getElementById('new-addr-ward');
+
+                        if (provDatalist && provInput) {
+                            provDatalist.innerHTML = provData.map(p => `<option value="${p.name}"></option>`).join('');
+                            
+                            provInput.onchange = () => {
+                                const selectedProv = provData.find(p => p.name === provInput.value.trim());
+                                if (selectedProv && selectedProv.wards && wardDatalist) {
+                                    wardDatalist.innerHTML = selectedProv.wards.map(w => `<option value="${w.name}"></option>`).join('');
+                                    if (wardInput) wardInput.value = '';
+                                }
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Lỗi tải provinces.json:', e);
+                }
+            })();
 
             addressModal.style.display = 'block';
             setTimeout(() => {

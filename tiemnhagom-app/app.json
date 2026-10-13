@@ -4,15 +4,10 @@
     "slug": "tiemnhagom",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/LOGO.jpg",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "tiemnhagom",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#9C7156",
-    "splash": {
-      "image": "./assets/images/LOGO_3_BLACK_PNG.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F7F6F2"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "vn.tiemnhagom.app",
@@ -27,10 +22,9 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#9C7156",
-        "foregroundImage": "./assets/images/LOGO.jpg"
+        "foregroundImage": "./assets/images/app-icon.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "largeHeap": true
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",

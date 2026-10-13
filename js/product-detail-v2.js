@@ -187,16 +187,60 @@ window.renderComboItemsHTML = (items) => {
 
     return `
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
-            ${items.map(it => `
-                <div style="display: flex; gap: 12px; padding: 12px; background: #fafaf8; border-radius: 8px; border: 1px solid #ebe8e2; align-items: center;">
-                    <img src="${it.imageUrl || it.image || '../Asset/icons/favicon.png'}" alt="${escapeHTML(it.name)}" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+            ${items.map(it => {
+                // Xác định ảnh chuẩn của biến thể sản phẩm con
+                let displayImg = it.thumbUrl || it.imageUrl || it.image || '../Asset/icons/favicon.png';
+
+                // 1. Kiểm tra họa tiết (Pattern variant)
+                let availablePatterns = (it.patternVariants && it.patternVariants.length > 0) ? it.patternVariants : (it.patterns || []);
+                if (it.selectedPattern && availablePatterns.length > 0) {
+                    const patternMatch = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === it.selectedPattern);
+                    if (patternMatch && typeof patternMatch === 'object') {
+                        const pImg = patternMatch.imageUrl || patternMatch.thumbUrl || patternMatch.image;
+                        if (pImg) displayImg = pImg;
+                    }
+                }
+
+                // 2. Kiểm tra màu sắc (Color variant) nếu chưa có ảnh hoặc ưu tiên màu sắc được chọn
+                if (it.selectedColor && Array.isArray(it.colorVariants)) {
+                    const colorMatch = it.colorVariants.find(v => (v.name || v) === it.selectedColor);
+                    if (colorMatch && typeof colorMatch === 'object') {
+                        const cImg = colorMatch.imageUrl || colorMatch.thumbUrl || colorMatch.image;
+                        if (cImg && (!it.selectedPattern || !displayImg || displayImg.includes('favicon'))) {
+                            displayImg = cImg;
+                        }
+                    }
+                }
+
+                const variantBadges = [];
+                if (it.selectedColor) {
+                    variantBadges.push(`<span style="font-size: 0.73rem; background: #f5ede6; padding: 2px 7px; border-radius: 4px; color: #9C7156; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Màu: <strong>${escapeHTML(it.selectedColor)}</strong></span>`);
+                }
+                if (it.selectedPattern) {
+                    variantBadges.push(`<span style="font-size: 0.73rem; background: #eef2f5; padding: 2px 7px; border-radius: 4px; color: #3b5998; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Họa tiết: <strong>${escapeHTML(it.selectedPattern)}</strong></span>`);
+                }
+
+                const priceStr = it.price ? `<span style="font-size: 0.78rem; color: #9C7156; font-weight: 600;"> • ${new Intl.NumberFormat('vi-VN').format(it.price)}₫</span>` : '';
+
+                return `
+                <div style="display: flex; gap: 12px; padding: 12px; background: #FAF8F5; border-radius: 10px; border: 1px solid #E8E1D8; align-items: center; transition: transform 0.2s, box-shadow 0.2s;">
+                    <a href="${it.id ? `../product/?id=${it.id}` : '#'}" target="_blank" style="flex-shrink: 0; display: block; overflow: hidden; border-radius: 8px; border: 1px solid #E8E1D8; width: 60px; height: 60px; background: #fff;">
+                        <img src="${displayImg}" alt="${escapeHTML(it.name)}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.src='../Asset/icons/favicon.png'">
+                    </a>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 600; font-size: 0.88rem; color: #222; margin-bottom: 2px;">${escapeHTML(it.name)}</div>
-                        <div style="font-size: 0.78rem; color: #666;">Số lượng: <strong>${it.quantity || 1}</strong></div>
-                        ${it.selectedColor ? `<span style="font-size: 0.72rem; background: #eef2f5; padding: 2px 6px; border-radius: 4px; color: #475569; display: inline-block; margin-top: 4px;">Màu: ${escapeHTML(it.selectedColor)}</span>` : ''}
+                        <a href="${it.id ? `../product/?id=${it.id}` : '#'}" target="_blank" style="font-weight: 600; font-size: 0.88rem; color: #2B2928; margin-bottom: 3px; display: block; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(it.name)}">
+                            ${escapeHTML(it.name)}
+                        </a>
+                        <div style="font-size: 0.78rem; color: #6E665D;">Số lượng: <strong style="color: #2B2928;">x${it.quantity || 1}</strong>${priceStr}</div>
+                        ${variantBadges.length > 0 ? `
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;">
+                                ${variantBadges.join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 };
@@ -522,6 +566,49 @@ async function fetchProductDetailV2() {
         if (p.colorVariants?.length > 0) selectedColor = p.colorVariants[0].name;
         if (p.patternVariants?.length > 0) selectedPattern = p.patternVariants[0].name;
         if (p.comboVariants?.length > 0) selectedComboVariant = p.comboVariants[0].name;
+
+        // Nếu là sản phẩm Combo, nạp chi tiết các sản phẩm con để lấy đúng ảnh và tên biến thể mới nhất
+        if (p.isCombo && Array.isArray(p.comboVariants) && p.comboVariants.length > 0) {
+            try {
+                const subItemIds = new Set();
+                p.comboVariants.forEach(cv => {
+                    if (Array.isArray(cv.items)) {
+                        cv.items.forEach(it => {
+                            if (it && it.id) subItemIds.add(it.id);
+                        });
+                    }
+                });
+
+                if (subItemIds.size > 0) {
+                    const subDocs = await Promise.all(
+                        Array.from(subItemIds).map(id => getDoc(doc(db, "products", id)).catch(() => null))
+                    );
+                    const subProductsMap = new Map();
+                    subDocs.forEach(d => {
+                        if (d && d.exists()) subProductsMap.set(d.id, d.data());
+                    });
+
+                    // Bổ sung dữ liệu biến thể đầy đủ vào từng combo item
+                    p.comboVariants.forEach(cv => {
+                        if (Array.isArray(cv.items)) {
+                            cv.items.forEach(it => {
+                                const subP = subProductsMap.get(it.id);
+                                if (subP) {
+                                    if (!it.colorVariants && subP.colorVariants) it.colorVariants = subP.colorVariants;
+                                    if (!it.patternVariants && subP.patternVariants) it.patternVariants = subP.patternVariants;
+                                    if (!it.patterns && subP.patterns) it.patterns = subP.patterns;
+                                    if (!it.imageUrl && (subP.imageUrl || subP.thumbUrl)) it.imageUrl = subP.imageUrl || subP.thumbUrl;
+                                    if (!it.name && subP.name) it.name = subP.name;
+                                    if (it.price === undefined && subP.price !== undefined) it.price = subP.price;
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (errSub) {
+                console.warn("Lỗi tải thông tin sản phẩm con trong combo:", errSub);
+            }
+        }
 
         // SEO and Title
         document.title = `${p.name} | Tiệm Nhà Gốm`;

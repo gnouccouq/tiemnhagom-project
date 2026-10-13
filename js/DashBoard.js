@@ -9337,19 +9337,45 @@ function getAllCustomersCombined() {
 
     // 1. Dữ liệu tài khoản trong collection `users`
     (posUsersLocal || []).forEach(u => {
+        if (u.isMerged) return; // Bỏ qua tài khoản phụ đã được gộp
+
+        const spent = userTotalSpentLocal[u.id] || (u.phone && userTotalSpentLocal[u.phone]) || (u.phoneNumber && userTotalSpentLocal[u.phoneNumber]) || u.totalSpent || 0;
+        const rawPoints = u.points !== undefined && u.points !== null ? Number(u.points) : undefined;
+        // Nếu user có lưu points rõ ràng (khác 0 hoặc là điểm thực tế), lấy points đó. Nếu không, tính từ chi tiêu 10k = 1 điểm
+        let finalPoints = 0;
+        if (rawPoints !== undefined && rawPoints > 0 && rawPoints !== 50) {
+            finalPoints = rawPoints;
+        } else if (rawPoints !== undefined && rawPoints !== 50 && spent === 0) {
+            finalPoints = rawPoints;
+        } else {
+            finalPoints = Math.max(rawPoints || 0, Math.floor(spent / 10000));
+        }
+
+        const effectiveAvatar = u.photoURL || u.avatar || '';
+        let fullAddr = u.address || (u.shippingAddress ? u.shippingAddress.address : '');
+        if (!fullAddr && Array.isArray(u.addresses) && u.addresses.length > 0) {
+            const firstA = u.addresses[0];
+            fullAddr = [firstA.address, firstA.wardName, firstA.provinceName].filter(Boolean).join(', ');
+        }
+        if (!fullAddr && u.locationName) {
+            fullAddr = [u.streetAddress, u.locationName].filter(Boolean).join(', ');
+        }
+
         userMap.set(u.id, {
             id: u.id,
-            displayName: u.displayName || u.fullName || u.email || 'Khách hàng',
+            displayName: u.displayName || u.fullName || u.name || u.email || 'Khách hàng',
             phone: u.phoneNumber || u.phone || '',
             email: u.email || '',
-            address: u.address || (u.shippingAddress ? u.shippingAddress.address : ''),
+            address: fullAddr,
             gender: u.gender || '',
-            birthday: u.birthday || '',
-            createdAt: u.createdAt || null,
+            birthday: u.dob || u.birthday || '',
+            createdAt: u.createdAt || (u.metadata && u.metadata.creationTime ? u.metadata.creationTime : null),
             isCompany: u.isCompany || false,
-            totalSpent: userTotalSpentLocal[u.id] || u.totalSpent || 0,
+            totalSpent: spent,
             debt: u.debt || 0,
-            points: (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor((userTotalSpentLocal[u.id] || u.totalSpent || 0) / 10000)
+            points: finalPoints,
+            avatar: effectiveAvatar,
+            photoURL: effectiveAvatar
         });
     });
 
@@ -9386,7 +9412,63 @@ function getAllCustomersCombined() {
         }
     });
 
-    return Array.from(userMap.values());
+    // 3. Tự động gom nhóm khách hàng trùng Số Điện Thoại (Ưu tiên giữ tài khoản chính có email)
+    const phoneMap = new Map();
+    const finalCustomers = [];
+
+    const normalizePhoneStr = (p) => {
+        if (!p) return '';
+        let cleaned = String(p).replace(/\D/g, '');
+        if (cleaned.startsWith('84')) cleaned = '0' + cleaned.slice(2);
+        return cleaned;
+    };
+
+    userMap.forEach(customer => {
+        const normPhone = normalizePhoneStr(customer.phone);
+        if (!normPhone) {
+            finalCustomers.push(customer);
+            return;
+        }
+
+        if (!phoneMap.has(normPhone)) {
+            phoneMap.set(normPhone, customer);
+        } else {
+            const existing = phoneMap.get(normPhone);
+            // Quyết định ai là tài khoản chính: Ưu tiên có email, hoặc tổng chi tiêu / điểm cao hơn
+            const existingHasEmail = !!(existing.email && existing.email.includes('@'));
+            const currentHasEmail = !!(customer.email && customer.email.includes('@'));
+
+            let primary = existing;
+            let secondary = customer;
+
+            if (!existingHasEmail && currentHasEmail) {
+                primary = customer;
+                secondary = existing;
+            } else if (existingHasEmail === currentHasEmail && (customer.totalSpent > existing.totalSpent || customer.points > existing.points)) {
+                primary = customer;
+                secondary = existing;
+            }
+
+            // Gộp thông tin
+            primary.totalSpent = Math.max(primary.totalSpent || 0, secondary.totalSpent || 0);
+            primary.points = Math.max(primary.points || 0, secondary.points || 0);
+            primary.debt = Math.max(primary.debt || 0, secondary.debt || 0);
+            if (!primary.email && secondary.email) primary.email = secondary.email;
+            if ((!primary.displayName || primary.displayName === 'Khách hàng') && secondary.displayName) primary.displayName = secondary.displayName;
+            if (!primary.address && secondary.address) primary.address = secondary.address;
+            if (!primary.gender && secondary.gender) primary.gender = secondary.gender;
+            if (!primary.birthday && secondary.birthday) primary.birthday = secondary.birthday;
+            if (!primary.avatar && secondary.avatar) {
+                primary.avatar = secondary.avatar;
+                primary.photoURL = secondary.photoURL;
+            }
+
+            phoneMap.set(normPhone, primary);
+        }
+    });
+
+    phoneMap.forEach(c => finalCustomers.push(c));
+    return finalCustomers;
 }
 
 window.currentCustomerSortCol = 'spent';
@@ -9571,16 +9653,21 @@ window.renderAdminUserTable = function renderAdminUserTable() {
 function renderAdminUserRows(usersList, tableElement) {
     let htmlContent = '';
     usersList.forEach((u) => {
-        const spent = userTotalSpentLocal[u.id] || u.totalSpent || 0;
-        const points = (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor(spent / 10000);
+        const spent = u.totalSpent !== undefined ? u.totalSpent : (userTotalSpentLocal[u.id] || 0);
+        const points = u.points !== undefined && u.points !== null ? u.points : Math.floor(spent / 10000);
         const tier = getMembershipTier(spent);
         const debt = u.debt || 0;
 
         const custCode = u.id || 'N/A';
-        const custName = u.displayName || u.fullName || u.email || 'Khách vãng lai';
+        const custName = u.displayName || u.fullName || u.name || u.email || 'Khách vãng lai';
         const phone = formatPhoneNumber(u.phoneNumber || u.phone) || '---';
+        const avatarUrl = u.photoURL || u.avatar || '';
 
         const tierBadge = `<span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-size: 0.70rem;">${tier.name}</span>`;
+
+        const avatarThumb = avatarUrl
+            ? `<img src="${avatarUrl}" alt="${custName}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1.5px solid #cbd5e1; vertical-align: middle; flex-shrink: 0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';"><div style="display: none; width: 28px; height: 28px; border-radius: 50%; background: ${tier.color}; color: #fff; font-size: 0.75rem; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0;">${custName.charAt(0).toUpperCase()}</div>`
+            : `<div style="display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: ${tier.color}; color: #fff; font-size: 0.75rem; font-weight: bold; align-items: center; justify-content: center; flex-shrink: 0;">${custName.charAt(0).toUpperCase()}</div>`;
 
         htmlContent += `
             <tr class="product-row user-row" data-user-id="${u.id}" onclick="window.toggleUserQuickView('${u.id}', event)" style="cursor: pointer;">
@@ -9588,7 +9675,10 @@ function renderAdminUserRows(usersList, tableElement) {
                 <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
                 <td style="white-space: nowrap;"><strong style="color: #0066cc; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${u.id}">${custCode}</strong></td>
                 <td>
-                    <strong style="color: #0f172a; font-size: 0.76rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;" title="${custName}">${custName}</strong>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${avatarThumb}
+                        <strong style="color: #0f172a; font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;" title="${custName}">${custName}</strong>
+                    </div>
                 </td>
                 <td style="color: #475569; font-size: 0.72rem; white-space: nowrap;">${phone}</td>
                 <td style="white-space: nowrap;">${tierBadge}</td>
@@ -9613,27 +9703,34 @@ window.toggleUserQuickView = function (userId, event) {
         return;
     }
 
-    document.querySelectorAll('.kiot-detail-row').forEach(row => row.remove());
-    document.querySelectorAll('.user-row').forEach(row => row.classList.remove('expanded'));
-
-    const u = posUsersLocal.find(user => user.id === userId);
-    if (!u || !targetRow) return;
+    const u = posUsersLocal.find(user => user.id === userId) || {};
+    if (!targetRow) return;
 
     targetRow.classList.add('expanded');
 
-    const spent = userTotalSpentLocal[userId] || u.totalSpent || 0;
-    const points = (u.points !== undefined && u.points !== null && u.points !== 50) ? u.points : Math.floor(spent / 10000);
+    const allCusts = typeof getAllCustomersCombined === 'function' ? getAllCustomersCombined() : [];
+    const custData = allCusts.find(c => c.id === userId) || u;
+
+    const spent = custData.totalSpent !== undefined ? custData.totalSpent : (userTotalSpentLocal[userId] || u.totalSpent || 0);
+    const rawPoints = u.points !== undefined && u.points !== null ? Number(u.points) : undefined;
+    const points = custData.points !== undefined ? custData.points : ((rawPoints !== undefined && rawPoints !== 50) ? rawPoints : Math.floor(spent / 10000));
     const tier = getMembershipTier(spent);
     const orderCount = userOrderCounts[userId] || 0;
 
-    const custCode = u.id || 'N/A';
-    const custName = u.displayName || u.fullName || u.email || 'Khách vãng lai';
-    const phone = formatPhoneNumber(u.phoneNumber || u.phone) || 'Chưa có SĐT';
-    const email = u.email || 'Chưa có email';
-    const address = u.address || (u.shippingAddress ? u.shippingAddress.address : 'Chưa có địa chỉ');
-    const birthday = u.birthday ? new Date(u.birthday).toLocaleDateString('vi-VN') : 'Chưa có';
-    const gender = u.gender || 'Chưa có';
-    const createdAt = u.createdAt ? (u.createdAt.toDate ? new Date(u.createdAt.toDate()).toLocaleDateString('vi-VN') : new Date(u.createdAt).toLocaleDateString('vi-VN')) : '07/08/2026';
+    const custCode = custData.id || u.id || 'N/A';
+    const custName = custData.displayName || custData.fullName || custData.name || u.displayName || u.fullName || u.email || 'Khách vãng lai';
+    const phone = formatPhoneNumber(custData.phone || custData.phoneNumber || u.phoneNumber || u.phone) || 'Chưa có SĐT';
+    const email = custData.email || u.email || 'Chưa có email';
+    const address = custData.address || u.address || (u.shippingAddress ? u.shippingAddress.address : 'Chưa có địa chỉ');
+    const birthday = (custData.birthday || custData.dob || u.birthday || u.dob) ? new Date(custData.birthday || custData.dob || u.birthday || u.dob).toLocaleDateString('vi-VN') : 'Chưa có';
+    const gender = custData.gender || u.gender || 'Chưa có';
+    const rawCreated = custData.createdAt || u.createdAt;
+    const createdAt = rawCreated ? (rawCreated.toDate ? new Date(rawCreated.toDate()).toLocaleDateString('vi-VN') : new Date(rawCreated).toLocaleDateString('vi-VN')) : 'Chưa rõ';
+    const avatarUrl = custData.photoURL || custData.avatar || u.photoURL || u.avatar || '';
+
+    const avatarBig = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${custName}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2.5px solid ${tier.color}; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div style="display: none; width: 80px; height: 80px; border-radius: 50%; background: ${tier.color}; color: #ffffff; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">${custName.charAt(0).toUpperCase()}</div>`
+        : `<div style="width: 80px; height: 80px; border-radius: 50%; background: ${tier.color}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">${custName.charAt(0).toUpperCase()}</div>`;
 
     const detailRow = document.createElement('tr');
     detailRow.id = `user-detail-row-${userId}`;
@@ -9645,12 +9742,10 @@ window.toggleUserQuickView = function (userId, event) {
                     <button type="button" class="qv-tab-item active">Thông tin khách hàng</button>
                 </div>
 
-                <div class="quickview-body order-qv-info-body" style="padding: 20px; display: grid; grid-template-columns: 100px 1fr; gap: 20px; align-items: flex-start;">
+                <div class="quickview-body order-qv-info-body" style="padding: 20px; display: grid; grid-template-columns: 110px 1fr; gap: 20px; align-items: flex-start;">
                     <!-- Left Avatar & Rank Badge -->
                     <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;">
-                        <div style="width: 80px; height: 80px; border-radius: 50%; background: ${tier.color}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                            ${custName.charAt(0).toUpperCase()}
-                        </div>
+                        ${avatarBig}
                         <span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; padding: 3px 10px; border-radius: 20px; font-weight: 700; font-size: 0.75rem;">${tier.name}</span>
                     </div>
 
@@ -9661,7 +9756,7 @@ window.toggleUserQuickView = function (userId, event) {
                                 <strong style="font-size: 1.1rem; color: #0066cc;">${custName}</strong>
                                 <span style="font-size: 0.85rem; color: #64748b; margin-left: 10px;">${custCode}</span>
                             </div>
-                            <div style="font-size: 0.82rem; color: #64748b;">Tạo ngày: <strong>${createdAt}</strong></div>
+                            <div style="font-size: 0.82rem; color: #64748b;">Ngày tham gia: <strong>${createdAt}</strong></div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
@@ -9669,8 +9764,7 @@ window.toggleUserQuickView = function (userId, event) {
                             <div><span style="color: #64748b;">Sinh nhật:</span> <strong>${birthday}</strong></div>
                             <div><span style="color: #64748b;">Giới tính:</span> <strong>${gender}</strong></div>
                             <div><span style="color: #64748b;">Email:</span> <strong>${email}</strong></div>
-                            <div><span style="color: #64748b;">Địa chỉ:</span> <strong>${address}</strong></div>
-                            <div><span style="color: #64748b;">Facebook:</span> <span>Chưa có</span></div>
+                            <div style="grid-column: span 2;"><span style="color: #64748b;">Địa chỉ:</span> <strong>${address}</strong></div>
                         </div>
 
                         <div style="background: #f0f7ff; padding: 10px 14px; border-radius: 6px; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
@@ -9688,7 +9782,6 @@ window.toggleUserQuickView = function (userId, event) {
                     </div>
                     <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
                         <button type="button" class="kiot-btn-primary" onclick="event.stopPropagation(); window.viewAdminUserDetail('${userId}')">✏️ Chỉnh sửa hồ sơ</button>
-                        <button type="button" class="kiot-btn-outline" onclick="event.stopPropagation(); window.viewUserOrders('${userId}')">📜 Xem đơn hàng (${orderCount})</button>
                     </div>
                 </div>
             </div>
@@ -9740,15 +9833,18 @@ window.viewAdminUserDetail = async (uid) => {
         document.body.appendChild(modal);
     }
 
+    const avatarUrl = user.photoURL || user.avatar || '';
+    const avatarHeader = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${user.displayName || 'Avatar'}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid ${tier.color}; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div style="display: none; background: ${tier.color}; color: #fff; width: 60px; height: 60px; border-radius: 50%; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg></div>`
+        : `<div style="background: ${tier.color}; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg></div>`;
+
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
             <h3 style="margin-bottom: 1.5rem; font-family: var(--font-serif);">Hồ sơ khách hàng</h3>
             
             <div style="background: #fcfbf8; padding: 20px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
-                <div style="background: ${tier.color}; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${tier.icon}</svg>
-                </div>
+                ${avatarHeader}
                 <div>
                     <div style="font-weight: 700; color: ${tier.color}; font-size: 1.1rem;">${tier.name}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Tổng chi tiêu: <strong>${new Intl.NumberFormat('vi-VN').format(spent)} VND</strong></div>
@@ -9827,26 +9923,44 @@ window.viewAdminUserDetail = async (uid) => {
     };
 };
 
-// Lắng nghe tất cả đơn hàng để đếm số lượng đơn của từng khách hàng (phục vụ POS)
+// Lắng nghe tất cả đơn hàng để đếm số lượng đơn và tổng chi tiêu của từng khách hàng (phục vụ POS & Khách hàng)
 function initUserOrderCountListener() {
     if (!db) return;
-    // Lắng nghe toàn bộ collection orders để duy trì bộ đếm thời gian thực
+    // Lắng nghe toàn bộ collection orders để duy trì bộ đếm và chi tiêu thời gian thực
     onSnapshot(collection(db, "orders"), (snapshot) => {
         const counts = {};
         const spent = {};
         snapshot.forEach(doc => {
             const data = doc.data();
             const userId = data.userId;
-            // Bỏ qua đơn khách vãng lai nếu cần, hoặc đếm theo SĐT nếu muốn phức tạp hơn
+            const phone = data.customerPhone || data.shippingAddress?.phone || data.phone || '';
+            const status = (data.status || '').toLowerCase();
+            const isCompleted = status.includes('hoàn thành') || status.includes('thành công') || status.includes('completed');
+
+            // Bỏ qua đơn khách vãng lai không định danh
             if (userId && userId !== 'guest') {
                 counts[userId] = (counts[userId] || 0) + 1;
-                if (data.status === "Đã hoàn thành") {
-                    spent[userId] = (spent[userId] || 0) + (data.totalAmount || 0);
+                if (isCompleted) {
+                    spent[userId] = (spent[userId] || 0) + (Number(data.totalAmount) || 0);
+                }
+            }
+            if (phone) {
+                const phoneId = 'KH_' + phone;
+                counts[phoneId] = (counts[phoneId] || 0) + 1;
+                counts[phone] = (counts[phone] || 0) + 1;
+                if (isCompleted) {
+                    spent[phoneId] = (spent[phoneId] || 0) + (Number(data.totalAmount) || 0);
+                    spent[phone] = (spent[phone] || 0) + (Number(data.totalAmount) || 0);
                 }
             }
         });
         userOrderCounts = counts;
         userTotalSpentLocal = spent;
+
+        // Tự động re-render bảng khách hàng khi đơn hàng cập nhật
+        if (typeof window.renderAdminUserTable === 'function') {
+            window.renderAdminUserTable();
+        }
     });
 }
 

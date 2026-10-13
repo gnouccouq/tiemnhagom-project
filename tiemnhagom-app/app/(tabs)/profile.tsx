@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -22,6 +23,7 @@ import { useThemeColor } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
 import { useWishlist } from '../../src/context/WishlistContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
+import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { getUserOrders } from '../../src/services/orderService';
 import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
@@ -218,6 +220,25 @@ export default function ProfileScreen() {
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || '1612').substring(0, 8).toUpperCase()}`;
   const displayName = userProfile?.displayName || userProfile?.name || user?.displayName || 'Nguyễn Cường';
 
+  // Định dạng ngày tham gia (Member Since)
+  const createdTimestamp =
+    user?.metadata?.creationTime ||
+    userProfile?.createdAt ||
+    userProfile?.metadata?.creationTime;
+  let memberSince = '';
+  let fullJoinDate = '';
+  if (createdTimestamp) {
+    try {
+      const pDate = new Date(createdTimestamp);
+      if (!isNaN(pDate.getTime())) {
+        memberSince = `${pDate.getMonth() + 1}/${pDate.getFullYear()}`;
+        fullJoinDate = pDate.toLocaleDateString('vi-VN');
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const openHotline = () => {
     Linking.openURL('tel:0777709662').catch(() => {
       dialog.alert(t('notification') || 'Thông báo', 'Hotline: 0777 709 662');
@@ -226,9 +247,10 @@ export default function ProfileScreen() {
 
   const [scrollY, setScrollY] = useState(0);
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+  const { pageStyle } = usePageAnimation();
 
   return (
-    <View style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={Colors.cardBackground === '#1E1E1E' ? 'light-content' : 'dark-content'} />
 
       {/* ========================================================================= */}
@@ -356,6 +378,11 @@ export default function ProfileScreen() {
                 <Text style={styles.tierNameUnderEmblem} numberOfLines={1}>
                   {t('tierPrefix')} {getTierName(currentTier)}
                 </Text>
+                {!!memberSince && (
+                  <Text style={styles.memberSinceText}>
+                    {t('memberSince') || 'Từ'} {memberSince}
+                  </Text>
+                )}
               </View>
 
               {/* CỘT PHẢI: ĐIỂM, QR, THANH TIẾN ĐỘ & DẢI THĂNG HẠNG */}
@@ -765,6 +792,11 @@ export default function ProfileScreen() {
           <Text style={styles.qrTierName}>
             {displayName} • {t('tierPrefix')} {getTierName(currentTier)} • {points} {t('pointUnit') || 'Điểm'}
           </Text>
+          {!!fullJoinDate && (
+            <Text style={styles.qrJoinDateSub}>
+              Ngày tham gia: {fullJoinDate}
+            </Text>
+          )}
 
           <View style={styles.barcodePlaceholder}>
             <View style={styles.barcodeLinesRow}>
@@ -894,7 +926,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </AnimatedBottomSheetModal>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -938,10 +970,13 @@ const getStyles = (Colors: any) =>
       backgroundColor: '#E4E4E7',
       borderWidth: 1.5,
       borderColor: Colors.border || '#E8E1D8',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     avatarImg: {
       width: 44,
       height: 44,
+      resizeMode: 'cover',
     },
     avatarPlaceholder: {
       width: 44,
@@ -1043,6 +1078,14 @@ const getStyles = (Colors: any) =>
       color: '#FFFFFF',
       textAlign: 'center',
       marginTop: 6,
+      letterSpacing: 0.2,
+    },
+    memberSinceText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 10,
+      color: 'rgba(255, 255, 255, 0.75)',
+      textAlign: 'center',
+      marginTop: 2,
       letterSpacing: 0.2,
     },
     cardRightCol: {
@@ -1436,8 +1479,16 @@ const getStyles = (Colors: any) =>
       fontSize: 12.5,
       color: Colors.textMuted || '#9E968D',
       marginTop: 4,
-      marginBottom: 14,
+      marginBottom: 6,
       textAlign: 'center',
+    },
+    qrJoinDateSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      color: '#8A5A2B',
+      marginBottom: 12,
+      textAlign: 'center',
+      fontWeight: '600',
     },
     barcodePlaceholder: {
       paddingVertical: 8,

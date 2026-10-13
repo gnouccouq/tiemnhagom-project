@@ -32,6 +32,7 @@ import { useNotificationBadge } from '../../src/context/NotificationBadgeContext
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
+import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2;
@@ -368,9 +369,10 @@ export default function ProductsScreen() {
 
   const [scrollY, setScrollY] = useState(0);
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+  const { pageStyle } = usePageAnimation();
 
   return (
-    <View style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
 
       {/* ── Header ── */}
@@ -668,7 +670,7 @@ export default function ProductsScreen() {
           </Animated.View>
         </Animated.View>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }
 

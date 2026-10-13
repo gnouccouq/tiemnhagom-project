@@ -28,7 +28,8 @@ import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated'
 import { useAuth } from '../../src/context/AuthContext';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { app as firebaseApp, auth, db } from '../../src/config/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
+import { formatPhoneNumber, getPhoneVariants } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
@@ -118,19 +119,72 @@ export default function LoginScreen() {
     try {
       const cred = PhoneAuthProvider.credential(verificationId, otp);
       const userCred = await signInWithCredential(auth, cred);
-      
+      const p0 = formatPhoneNumber(phone.trim());
+      const variants = getPhoneVariants(phone.trim());
+
       const userDocRef = doc(db, 'users', userCred.user.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (!userDocSnap.exists()) {
-        const newProfile = {
-          uid: userCred.user.uid,
-          email: null,
-          phone: phone.trim(),
-          displayName: `Khách hàng ${phone.slice(-4)}`,
-          points: 0,
-          tier: 'standard',
-        };
-        await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
+        // Tìm xem SĐT này đã được gắn vào tài khoản nào trước đó chưa
+        const candidateDocs: any[] = [];
+        for (const p of variants) {
+          const qP = query(collection(db, 'users'), where('phone', '==', p));
+          const sP = await getDocs(qP);
+          candidateDocs.push(...sP.docs.filter(d => d.id !== userCred.user.uid));
+        }
+        if (candidateDocs.length === 0) {
+          for (const p of variants) {
+            const qId = query(collection(db, 'users'), where('identifiers', 'array-contains', p));
+            const sId = await getDocs(qId);
+            candidateDocs.push(...sId.docs.filter(d => d.id !== userCred.user.uid));
+          }
+        }
+
+        // Lọc unique và ưu tiên tài khoản có email (tài khoản chính ban đầu)
+        const uniqueMatches = Array.from(new Map(candidateDocs.map(d => [d.id, d])).values());
+        let primaryAccountSnap = uniqueMatches.find(d => !d.data().isMerged && !!d.data().email);
+        if (!primaryAccountSnap) {
+          primaryAccountSnap = uniqueMatches.find(d => !d.data().isMerged);
+        }
+        if (!primaryAccountSnap && uniqueMatches.length > 0) {
+          primaryAccountSnap = uniqueMatches[0];
+        }
+
+        if (primaryAccountSnap) {
+          // Lấy ID tài khoản gốc (nếu doc này từng trỏ mergedTo thì lấy mergedTo)
+          const pData = primaryAccountSnap.data();
+          const targetPrimaryUid = pData.mergedTo || primaryAccountSnap.id;
+
+          // Đánh dấu UID phone này là tài khoản phụ trỏ về tài khoản chính
+          await setDoc(userDocRef, {
+            uid: userCred.user.uid,
+            phone: p0,
+            identifiers: Array.from(new Set([...(pData.identifiers || []), ...variants])).filter(Boolean),
+            isMerged: true,
+            mergedTo: targetPrimaryUid,
+            createdAt: serverTimestamp(),
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+
+          // Cập nhật SĐT chuẩn và danh sách mergedAccounts vào tài khoản chính
+          await setDoc(doc(db, 'users', targetPrimaryUid), {
+            phone: p0,
+            identifiers: Array.from(new Set([...(pData.identifiers || []), ...variants])).filter(Boolean),
+            mergedAccounts: Array.from(new Set([...(pData.mergedAccounts || []), userCred.user.uid])),
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        } else {
+          const newProfile = {
+            uid: userCred.user.uid,
+            email: null,
+            phone: p0,
+            identifiers: variants,
+            displayName: `Khách hàng ${p0.slice(-4)}`,
+            points: 0,
+            tier: 'standard',
+          };
+          await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
+        }
       }
       
       router.back();

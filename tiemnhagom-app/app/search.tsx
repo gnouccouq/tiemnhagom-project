@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   FlatList,
   Keyboard,
-  StatusBar
+  StatusBar,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -21,6 +22,7 @@ import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 import { removeVietnameseTones } from '../src/utils/format';
 import { useSettings } from '../src/context/SettingsContext';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
 
 const RECENT_SEARCHES_KEY = 'tng_recent_searches';
 const MAX_RECENT_SEARCHES = 10;
@@ -91,9 +93,10 @@ export default function SearchScreen() {
   }, [searchText, allProducts]);
 
   const [scrollY, setScrollY] = useState(0);
+  const { pageStyle } = usePageAnimation();
 
   return (
-    <View style={styles.safeArea}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       <Header
         title=""
@@ -191,7 +194,7 @@ export default function SearchScreen() {
           />
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

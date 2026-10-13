@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -23,6 +24,7 @@ import { BlurButton } from '../src/components/BlurButton';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { ScalePressable } from '../src/components/ScalePressable';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { Order } from '../src/types';
 import { getUserOrders } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
@@ -253,9 +255,10 @@ export default function PointsHistoryScreen() {
 
   const [scrollY, setScrollY] = useState(0);
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+  const { pageStyle } = usePageAnimation();
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, pageStyle]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -609,7 +612,7 @@ export default function PointsHistoryScreen() {
           </View>
         </View>
       </AnimatedBottomSheetModal>
-    </View>
+    </Animated.View>
   );
 }
 

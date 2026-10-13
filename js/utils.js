@@ -2025,36 +2025,96 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
                     // Đồng bộ dữ liệu & ghost records
                     await syncLocalToCloud(user.uid);
+                    let targetUid = user.uid;
                     const userRef = doc(db, "users", user.uid);
-                    const userSnap = await getDoc(userRef);
+                    let userSnap = await getDoc(userRef);
+
+                    // Nếu tài khoản hiện tại đã được gộp sang tài khoản chính
+                    if (userSnap.exists() && userSnap.data().mergedTo) {
+                        targetUid = userSnap.data().mergedTo;
+                        const targetSnap = await getDoc(doc(db, "users", targetUid));
+                        if (targetSnap.exists()) {
+                            userSnap = targetSnap;
+                        }
+                    }
+
                     if (!userSnap.exists()) {
-                        const identifiers = [];
-                        if (user.email) identifiers.push(user.email);
-                        if (user.phoneNumber) {
-                            const p0 = formatPhoneNumber(user.phoneNumber);
-                            const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
-                            identifiers.push(p0, p84);
+                        const rawPhone = user.phoneNumber || '';
+                        const p0 = rawPhone ? formatPhoneNumber(rawPhone) : '';
+                        const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+                        const phoneVariants = [p0, p84].filter(Boolean);
+
+                        // Tìm xem SĐT này đã có tài khoản gốc (đặc biệt là tài khoản Email) tạo trước đó chưa
+                        let existingPrimaryDoc = null;
+                        if (phoneVariants.length > 0) {
+                            for (const p of phoneVariants) {
+                                const qP = query(collection(db, "users"), where("phone", "==", p));
+                                const sP = await getDocs(qP);
+                                const found = sP.docs.find(d => d.id !== user.uid && d.data().email);
+                                if (found) {
+                                    existingPrimaryDoc = found;
+                                    break;
+                                }
+                            }
+                            if (!existingPrimaryDoc) {
+                                for (const p of phoneVariants) {
+                                    const qP = query(collection(db, "users"), where("identifiers", "array-contains", p));
+                                    const sP = await getDocs(qP);
+                                    const found = sP.docs.find(d => d.id !== user.uid && d.data().email);
+                                    if (found) {
+                                        existingPrimaryDoc = found;
+                                        break;
+                                    }
+                                }
+                            }
                         }
 
-                        await setDoc(userRef, {
-                            uid: user.uid,
-                            email: user.email,
-                            phone: user.phoneNumber ? formatPhoneNumber(user.phoneNumber) : '',
-                            identifiers: identifiers,
-                            isGhost: false,
-                            lastLogin: new Date().toISOString()
-                        }, { merge: true });
+                        if (existingPrimaryDoc) {
+                            // Gán tài khoản SĐT mới này liên kết vào tài khoản chính có Email
+                            targetUid = existingPrimaryDoc.data().mergedTo || existingPrimaryDoc.id;
+                            await setDoc(userRef, {
+                                uid: user.uid,
+                                phone: p0,
+                                identifiers: phoneVariants,
+                                isMerged: true,
+                                mergedTo: targetUid,
+                                createdAt: new Date().toISOString(),
+                                lastLogin: new Date().toISOString()
+                            }, { merge: true });
 
-                        // Liên kết đơn hàng cho user mới nếu có SĐT (ví dụ login bằng phone)
-                        if (user.phoneNumber) await autoLinkOrdersByPhone(user.uid, user.phoneNumber);
+                            // Cập nhật SĐT vào tài khoản chính nếu chưa có
+                            await setDoc(doc(db, "users", targetUid), {
+                                phone: p0,
+                                identifiers: Array.from(new Set([...(existingPrimaryDoc.data().identifiers || []), ...phoneVariants])),
+                                mergedAccounts: Array.from(new Set([...(existingPrimaryDoc.data().mergedAccounts || []), user.uid])),
+                                updatedAt: new Date().toISOString()
+                            }, { merge: true });
+
+                            userSnap = await getDoc(doc(db, "users", targetUid));
+                        } else {
+                            const identifiers = [];
+                            if (user.email) identifiers.push(user.email);
+                            if (phoneVariants.length > 0) identifiers.push(...phoneVariants);
+
+                            await setDoc(userRef, {
+                                uid: user.uid,
+                                email: user.email,
+                                phone: p0,
+                                identifiers: identifiers,
+                                isGhost: false,
+                                lastLogin: new Date().toISOString()
+                            }, { merge: true });
+
+                            if (p0) await autoLinkOrdersByPhone(user.uid, p0);
+                        }
                     } else {
                         const userData = userSnap.data();
-                        await updateDoc(userRef, { lastLogin: new Date().toISOString() });
+                        await updateDoc(doc(db, "users", targetUid), { lastLogin: new Date().toISOString() });
                         // Tự động cập nhật liên kết đơn hàng nếu user đã có SĐT lưu sẵn
-                        if (userData.phone) await autoLinkOrdersByPhone(user.uid, userData.phone);
+                        if (userData.phone) await autoLinkOrdersByPhone(targetUid, userData.phone);
 
-                        // Cập nhật avatar từ Firestore nếu có
-                        const latestAvatar = userData.avatar || user.photoURL;
+                        // Cập nhật avatar từ Firestore nếu có (Đồng bộ 2 chiều giữa App photoURL và Web avatar)
+                        const latestAvatar = userData.photoURL || userData.avatar || user.photoURL;
                         if (latestAvatar) {
                             localStorage.setItem('tng_user_hint', JSON.stringify({
                                 loggedIn: true,
