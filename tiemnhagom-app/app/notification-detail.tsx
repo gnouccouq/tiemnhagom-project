@@ -25,6 +25,8 @@ export default function NotificationDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const params = useLocalSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -124,9 +126,9 @@ export default function NotificationDetailScreen() {
         return {
           label: 'Đơn hàng',
           icon: 'cube-outline' as const,
-          bgColor: '#F6F4EC',
-          textColor: '#9C7156',
-          borderColor: '#E8CCB2',
+          bgColor: isDark ? '#2C2C2C' : '#F6F4EC',
+          textColor: isDark ? '#E8CCB2' : '#9C7156',
+          borderColor: isDark ? 'transparent' : '#E8CCB2',
           actionText: 'Xem đơn hàng',
           actionIcon: 'receipt-outline' as const,
         };
@@ -134,9 +136,9 @@ export default function NotificationDetailScreen() {
         return {
           label: 'Hệ thống',
           icon: 'shield-checkmark-outline' as const,
-          bgColor: '#F1F5F9',
-          textColor: '#475569',
-          borderColor: '#E2E8F0',
+          bgColor: isDark ? '#2C2C2C' : '#F1F5F9',
+          textColor: isDark ? '#B0B0B0' : '#475569',
+          borderColor: isDark ? 'transparent' : '#E2E8F0',
           actionText: 'Xem tài khoản',
           actionIcon: 'person-outline' as const,
         };
@@ -144,9 +146,9 @@ export default function NotificationDetailScreen() {
         return {
           label: 'Ưu đãi & Khuyến mãi',
           icon: 'sparkles-outline' as const,
-          bgColor: '#FDF4ED',
-          textColor: '#C86432',
-          borderColor: '#F8D8C3',
+          bgColor: isDark ? '#2C2C2C' : '#FDF4ED',
+          textColor: isDark ? '#E8CCB2' : '#C86432',
+          borderColor: isDark ? 'transparent' : '#F8D8C3',
           actionText: 'Khám phá ưu đãi ngay',
           actionIcon: 'bag-handle-outline' as const,
         };
@@ -159,7 +161,7 @@ export default function NotificationDetailScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: Colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* Header chuẩn trang trong app với nút quay lại */}
       <Header
@@ -172,7 +174,7 @@ export default function NotificationDetailScreen() {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C86432" />
+          <ActivityIndicator size="large" color="#9C7156" />
           <Text style={[styles.loadingText, { color: Colors.textSecondary }]}>
             Đang tải thông báo...
           </Text>
@@ -189,7 +191,7 @@ export default function NotificationDetailScreen() {
           scrollEventThrottle={16}
         >
           {/* Card nội dung chính */}
-          <View style={[styles.mainCard, { backgroundColor: Colors.cardBackground, borderColor: Colors.border }]}>
+          <View style={styles.mainCard}>
             {/* Meta row: Huy hiệu loại thông báo & Thời gian & Nút chia sẻ */}
             <View style={styles.metaRow}>
               <View
@@ -213,7 +215,7 @@ export default function NotificationDetailScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.shareBtn, { borderColor: Colors.border }]}
+                  style={[styles.shareBtn, { borderColor: isDark ? 'transparent' : Colors.border, backgroundColor: isDark ? '#2C2C2C' : 'transparent' }]}
                   onPress={handleShare}
                   activeOpacity={0.7}
                   accessibilityLabel="Chia sẻ thông báo"
@@ -229,7 +231,7 @@ export default function NotificationDetailScreen() {
             </Text>
 
             {/* Đường phân cách nhẹ */}
-            <View style={[styles.divider, { backgroundColor: Colors.border }]} />
+            <View style={[styles.divider, { backgroundColor: isDark ? '#2A2A2A' : Colors.border }]} />
 
             {/* Hình ảnh thông báo đính kèm (nếu có) */}
             {Boolean(detailData.imageUrl) && (
@@ -252,9 +254,9 @@ export default function NotificationDetailScreen() {
           </View>
 
           {/* Hộp gợi ý dịch vụ & hỗ trợ */}
-          <View style={[styles.supportBox, { backgroundColor: Colors.cardBackground, borderColor: Colors.border }]}>
+          <View style={styles.supportBox}>
             <View style={styles.supportHeader}>
-              <Ionicons name="chatbubbles-outline" size={18} color="#C86432" />
+              <Ionicons name="chatbubbles-outline" size={18} color="#9C7156" />
               <Text style={[styles.supportTitle, { color: Colors.textPrimary }]}>
                 Cần hỗ trợ về thông báo này?
               </Text>
@@ -272,8 +274,6 @@ export default function NotificationDetailScreen() {
           style={[
             styles.bottomBar,
             {
-              backgroundColor: Colors.cardBackground,
-              borderTopColor: Colors.border,
               paddingBottom: Math.max(insets.bottom, 14),
             },
           ]}
@@ -288,7 +288,7 @@ export default function NotificationDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.secondaryBtn, { borderColor: Colors.border }]}
+            style={styles.secondaryBtn}
             onPress={handleGoBack}
             activeOpacity={0.7}
           >
@@ -303,179 +303,188 @@ export default function NotificationDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 16,
-  },
-  mainCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  metaRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  timeWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeText: {
-    fontSize: 12,
-  },
-  shareBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontFamily: Typography.fontFamily.bold,
-    fontSize: 21,
-    lineHeight: 28,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    marginBottom: 16,
-  },
-  imageContainer: {
-    width: '100%',
-    height: 220,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: '#F3E5DC',
-    marginBottom: 18,
-  },
-  notifImage: {
-    width: '100%',
-    height: '100%',
-  },
-  bodyWrap: {
-    paddingVertical: 4,
-  },
-  message: {
-    fontFamily: Typography.fontFamily.regular,
-    fontSize: 15.5,
-    lineHeight: 25,
-    letterSpacing: 0.2,
-  },
-  supportBox: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 16,
-    gap: 8,
-  },
-  supportHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  supportTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  supportDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  primaryBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#111111',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  secondaryBtn: {
-    height: 52,
-    paddingHorizontal: 20,
-    borderRadius: 26,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  secondaryBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+    },
+    loadingText: {
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: 16,
+      gap: 16,
+    },
+    mainCard: {
+      borderRadius: 20,
+      backgroundColor: Colors.cardBackground,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+      padding: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 12,
+      elevation: isDark ? 0 : 2,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      borderWidth: isDark ? 0 : 1,
+    },
+    badgeText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    metaRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    timeWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    timeText: {
+      fontSize: 12,
+    },
+    shareBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: isDark ? 0 : 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontFamily: Typography.fontFamily.bold,
+      fontSize: 21,
+      lineHeight: 28,
+      fontWeight: '700',
+      marginBottom: 16,
+    },
+    divider: {
+      height: 1,
+      marginBottom: 16,
+    },
+    imageContainer: {
+      width: '100%',
+      height: 220,
+      borderRadius: 20,
+      overflow: 'hidden',
+      backgroundColor: isDark ? '#2C2C2C' : '#F3E5DC',
+      marginBottom: 18,
+    },
+    notifImage: {
+      width: '100%',
+      height: '100%',
+    },
+    bodyWrap: {
+      paddingVertical: 4,
+    },
+    message: {
+      fontFamily: Typography.fontFamily.regular,
+      fontSize: 15.5,
+      lineHeight: 25,
+      letterSpacing: 0.2,
+    },
+    supportBox: {
+      borderRadius: 20,
+      backgroundColor: Colors.cardBackground,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+      padding: 16,
+      gap: 8,
+    },
+    supportHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    supportTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    supportDesc: {
+      fontSize: 13,
+      lineHeight: 19,
+    },
+    bottomBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: Colors.cardBackground,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#2A2A2A' : (Colors.border || '#E8E1D8'),
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      flexDirection: 'row',
+      gap: 12,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -3 },
+      shadowOpacity: isDark ? 0 : 0.05,
+      shadowRadius: 8,
+      elevation: isDark ? 0 : 8,
+    },
+    primaryBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: '#9C7156',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    primaryBtnText: {
+      fontFamily: 'ElleGaborStd',
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    secondaryBtn: {
+      height: 52,
+      paddingHorizontal: 20,
+      borderRadius: 26,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+      backgroundColor: isDark ? '#2C2C2C' : 'transparent',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+    },
+    secondaryBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '600',
+    },
+  });

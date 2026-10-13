@@ -186,7 +186,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   };
 
   // Xác định icon & màu đại diện dựa trên type đồng bộ thương hiệu Tiệm Nhà Gốm
-  const isDark = Colors.cardBackground === '#1E1E1E';
+  const isDark = Colors.cardBackground !== '#FFFFFF';
 
   const getIconConfig = () => {
     if (config.icon) {
@@ -343,19 +343,19 @@ export function useDialog() {
 }
 
 const getStyles = (Colors: any) => {
-  const isDark = Colors.cardBackground === '#1E1E1E';
+  const isDark = Colors.cardBackground !== '#FFFFFF';
 
   return StyleSheet.create({
     fullScreen: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.55)',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 24,
     },
     cardContainer: {
       width: Math.min(SCREEN_WIDTH - 44, 350),
-      backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+      backgroundColor: isDark ? '#121212' : '#FFFFFF',
       borderRadius: 24,
       paddingHorizontal: 20,
       paddingTop: 24,
@@ -441,7 +441,7 @@ const getStyles = (Colors: any) => {
       color: '#FFFFFF',
     },
     cancelBtn: {
-      backgroundColor: isDark ? '#2C2C2C' : '#FAF8F5',
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? 'transparent' : '#E8E1D8',
     },

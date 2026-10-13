@@ -12,6 +12,8 @@ import {
   Platform,
 } from 'react-native';
 
+import { useThemeColor } from '../constants/theme';
+
 export interface AnimatedCenterModalProps {
   visible: boolean;
   onClose: () => void;
@@ -31,6 +33,9 @@ export const AnimatedCenterModal: React.FC<AnimatedCenterModalProps> = ({
   dismissOnBackdropPress = true,
   avoidKeyboard = false,
 }) => {
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const [isRendered, setIsRendered] = useState(visible);
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
@@ -137,10 +142,10 @@ export const AnimatedCenterModal: React.FC<AnimatedCenterModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -151,13 +156,14 @@ const styles = StyleSheet.create({
   dialogCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDark ? '#121212' : '#FFFFFF',
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
+    shadowOpacity: isDark ? 0.4 : 0.18,
     shadowRadius: 16,
     elevation: 8,
+    borderWidth: 0,
   },
 });

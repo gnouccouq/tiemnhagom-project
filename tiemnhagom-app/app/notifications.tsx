@@ -35,7 +35,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../src/config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Header } from '../src/components/Header';
-import { Colors, Typography } from '../src/constants/theme';
+import { useThemeColor, Typography } from '../src/constants/theme';
 import { useNotificationBadge } from '../src/context/NotificationBadgeContext';
 
 interface NotificationItem {
@@ -139,11 +139,15 @@ function SwipeableNotifItem({
   onPress,
   onDelete,
   setScrollEnabled,
+  styles,
+  isDark,
 }: {
   item: NotificationItem;
   onPress: () => void;
   onDelete: () => void;
   setScrollEnabled: (v: boolean) => void;
+  styles: any;
+  isDark: boolean;
 }) {
   const translateX = useRef(new Animated.Value(0)).current;
   const deleteOpacity = useRef(new Animated.Value(0)).current;
@@ -203,8 +207,8 @@ function SwipeableNotifItem({
           activeOpacity={0.85}
           onPress={onPress}
         >
-          <View style={[styles.iconWrap, { backgroundColor: item.iconBg }]}>
-            <Ionicons name={item.icon} size={20} color={item.iconColor} />
+          <View style={[styles.iconWrap, { backgroundColor: isDark ? '#2C2C2C' : item.iconBg }]}>
+            <Ionicons name={item.icon} size={20} color={isDark ? '#E8CCB2' : item.iconColor} />
           </View>
           <View style={styles.itemBody}>
             <View style={styles.itemHeader}>
@@ -219,7 +223,7 @@ function SwipeableNotifItem({
               {item.link && (
                 <View style={styles.linkRow}>
                   <Text style={styles.linkText}>Xem chi tiết</Text>
-                  <Ionicons name="chevron-forward" size={12} color="#111111" />
+                  <Ionicons name="chevron-forward" size={12} color={isDark ? '#E8CCB2' : '#111111'} />
                 </View>
               )}
             </View>
@@ -471,9 +475,13 @@ export default function NotificationsScreen() {
 
   const [scrollY, setScrollY] = useState(0);
 
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
+
   return (
     <View style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       <Header 
         title="Thông báo" 
         showSearch={false} 
@@ -494,8 +502,8 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#000000"
-            colors={['#000000']}
+            tintColor={isDark ? "#E8CCB2" : "#9C7156"}
+            colors={[isDark ? "#E8CCB2" : "#9C7156"]}
           />
         }
       >
@@ -516,7 +524,7 @@ export default function NotificationsScreen() {
                 onPress={handleMarkAllRead}
                 activeOpacity={0.7}
               >
-                <Ionicons name="checkmark-done" size={15} color="#111111" />
+                <Ionicons name="checkmark-done" size={15} color={Colors.textPrimary} />
                 <Text style={styles.markAllText}>Đã đọc</Text>
               </TouchableOpacity>
             )}
@@ -552,7 +560,7 @@ export default function NotificationsScreen() {
         {filteredItems.length === 0 ? (
           <View style={styles.emptyWrap}>
             <View style={styles.emptyIconCircle}>
-              <Ionicons name="notifications-off-outline" size={32} color="#8E8E93" />
+              <Ionicons name="notifications-off-outline" size={32} color={isDark ? "#9E968D" : "#8E8E93"} />
             </View>
             <Text style={styles.emptyTitle}>Không có thông báo nào</Text>
             <Text style={styles.emptyDesc}>Các thông báo về đơn hàng và ưu đãi sẽ xuất hiện tại đây.</Text>
@@ -565,6 +573,8 @@ export default function NotificationsScreen() {
               onPress={() => handlePressItem(item)}
               onDelete={() => handleDeleteItem(item.id)}
               setScrollEnabled={setScrollEnabled}
+              styles={styles}
+              isDark={isDark}
             />
           ))
         )}
@@ -573,10 +583,10 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: Colors.background,
   },
   topActionsBar: {
     flexDirection: 'row',
@@ -595,10 +605,10 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
-    color: '#111111',
+    color: Colors.textPrimary,
   },
   unreadBadge: {
-    backgroundColor: '#000000',
+    backgroundColor: isDark ? '#9C7156' : '#000000',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
@@ -613,9 +623,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -624,7 +634,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#111111',
+    color: Colors.textPrimary,
   },
   filterWrap: {
     paddingVertical: 8,
@@ -637,22 +647,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   filterChipActive: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
+    backgroundColor: isDark ? '#2C2C2C' : '#000000',
+    borderWidth: 1.2,
+    borderColor: isDark ? '#9C7156' : '#000000',
   },
   filterChipText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '500',
-    color: '#666666',
+    color: isDark ? '#9E968D' : '#666666',
   },
   filterChipTextActive: {
-    color: '#FFFFFF',
+    color: isDark ? '#E8CCB2' : '#FFFFFF',
     fontWeight: '700',
   },
   listContent: {
@@ -662,20 +673,20 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   itemCardUnread: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#000000',
+    backgroundColor: Colors.cardBackground,
+    borderColor: isDark ? '#9C7156' : '#000000',
     borderWidth: 1.2,
   },
   iconWrap: {
@@ -699,24 +710,24 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
-    color: '#333333',
+    color: isDark ? '#B0B0B0' : '#333333',
     flex: 1,
   },
   itemTitleUnread: {
     fontWeight: '700',
-    color: '#000000',
+    color: Colors.textPrimary,
   },
   dotUnread: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#E53935',
+    backgroundColor: '#9C7156',
     marginLeft: 6,
   },
   itemMessage: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#666666',
+    color: isDark ? '#9E968D' : '#666666',
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -728,7 +739,7 @@ const styles = StyleSheet.create({
   itemTime: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    color: '#999999',
+    color: isDark ? '#777777' : '#999999',
   },
   linkRow: {
     flexDirection: 'row',
@@ -739,7 +750,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '600',
-    color: '#111111',
+    color: isDark ? '#E8CCB2' : '#111111',
   },
   emptyWrap: {
     alignItems: 'center',
@@ -750,22 +761,24 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#F0ECE6',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F0ECE6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8CCB2',
   },
   emptyTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
-    color: '#333333',
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   emptyDesc: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#8E8E93',
+    color: isDark ? '#9E968D' : '#8E8E93',
     textAlign: 'center',
     paddingHorizontal: 32,
   },

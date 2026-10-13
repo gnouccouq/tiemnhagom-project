@@ -25,11 +25,13 @@ import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
+import { BlurButton } from '../src/components/BlurButton';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
+import { useThemeColor } from '../src/constants/theme';
 
 // Cấu hình hạng thành viên đồng bộ chuẩn xác từ Profile & Hệ thống Tiệm Nhà Gốm
 const MEMBERSHIP_TIERS = [
@@ -536,9 +538,13 @@ export default function OrderDetailScreen() {
     return t('noVoucherApplied') || 'Không áp dụng ưu đãi';
   }, [order, t]);
 
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = useMemo(() => getStyles(Colors, isDark), [Colors, isDark]);
+
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle={isDark ? 'light-content' : 'light-content'} backgroundColor="transparent" translucent />
 
       {/* ── HEADER CỐ ĐỊNH TRÊN CÙNG (KHÔNG VẠCH KẺ ĐÁY, PHỦ TRÊN HERO BANNER) ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
@@ -554,14 +560,14 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
-        {/* Nút quay lại tròn chuẩn quy cách 40x40 */}
-        <ScalePressable
-          style={styles.backCircleBtn}
+        {/* Nút quay lại tròn chuẩn quy cách BlurButton */}
+        <BlurButton
           onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={t('back') || 'Quay lại'}
+          style={{ width: 40, height: 40, borderRadius: 20 }}
         >
           <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
-        </ScalePressable>
+        </BlurButton>
 
         <View style={styles.headerTitleWrap}>
           <Text style={styles.headerTitleText}>{t('orderDetailTitle') || 'Đơn hàng'}</Text>
@@ -973,617 +979,608 @@ export default function OrderDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: BRAND.bgCream,
-  },
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
 
-  // ── HEADER ──
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
-  },
-  backCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(43, 41, 40, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  headerTitleWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
+    // ── HEADER ──
+    header: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 60,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 0,
+    },
+    headerTitleWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerTitleText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
 
-  // ── CUỘN NỘI DUNG ──
-  scrollContent: {
-    paddingBottom: 50,
-  },
+    // ── CUỘN NỘI DUNG ──
+    scrollContent: {
+      paddingBottom: 50,
+    },
 
-  // ── 1. HERO BANNER HẠNG HỘI VIÊN FULL TRÀN QUA HEADER ──
-  heroBannerWrap: {
-    height: 250,
-    overflow: 'hidden',
-  },
-  heroFluidBackground: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-  },
-  heroContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  heroLeft: {
-    justifyContent: 'center',
-  },
-  heroTierSub: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    opacity: 0.9,
-  },
-  heroTierTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  heroRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  heroBrandLogo: {
-    width: 140,
-    height: 52,
-  },
+    // ── 1. HERO BANNER HẠNG HỘI VIÊN FULL TRÀN QUA HEADER ──
+    heroBannerWrap: {
+      height: 250,
+      overflow: 'hidden',
+    },
+    heroFluidBackground: {
+      flex: 1,
+      paddingHorizontal: 20,
+      justifyContent: 'center',
+    },
+    heroContentRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    heroLeft: {
+      justifyContent: 'center',
+    },
+    heroTierSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      color: '#FFFFFF',
+      fontWeight: '600',
+      opacity: 0.9,
+    },
+    heroTierTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 28,
+      fontWeight: '800',
+      color: '#FFFFFF',
+      letterSpacing: 0.5,
+    },
+    heroRight: {
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    heroBrandLogo: {
+      width: 140,
+      height: 52,
+    },
 
-  // ── 2. THẺ 1: TRẠNG THÁI & MÃ ĐƠN (OVERLAPPING CARD) ──
-  overlapCardContainer: {
-    marginTop: -38,
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-  orderStatusCard: {
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  statusCardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  statusCardCodeLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginBottom: 2,
-  },
-  statusCardDateSub: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: BRAND.mutedText,
-  },
-  copyCodeTouch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF8F5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-  },
-  statusCardCodeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    maxWidth: 130,
-  },
-  statusStateTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 20,
-    fontWeight: '800',
-    color: BRAND.textPrimary,
-    marginTop: 6,
-    marginBottom: 16,
-  },
+    // ── 2. THẺ 1: TRẠNG THÁI & MÃ ĐƠN (OVERLAPPING CARD) ──
+    overlapCardContainer: {
+      marginTop: -38,
+      paddingHorizontal: 16,
+      zIndex: 10,
+    },
+    orderStatusCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 18,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0 : 0.06,
+      shadowRadius: 10,
+      elevation: isDark ? 0 : 3,
+    },
+    statusCardTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 10,
+    },
+    statusCardCodeLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 2,
+    },
+    statusCardDateSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+    },
+    copyCodeTouch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+    },
+    statusCardCodeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      maxWidth: 130,
+    },
+    statusStateTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 20,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+      marginTop: 6,
+      marginBottom: 16,
+    },
 
-  // Timeline
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  timelineStepWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  timelineIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#EBE5DE',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timelineIconCircleActive: {
-    backgroundColor: BRAND.primary,
-  },
-  timelineTrackLine: {
-    flex: 1,
-    height: 2.5,
-    backgroundColor: '#EBE5DE',
-    marginHorizontal: -4,
-    zIndex: 1,
-  },
-  timelineTrackLineActive: {
-    backgroundColor: BRAND.primary,
-  },
+    // Timeline
+    timelineRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      marginBottom: 20,
+    },
+    timelineStepWrap: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2,
+    },
+    timelineIconCircle: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: isDark ? '#2C2C2C' : '#EBE5DE',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    timelineIconCircleActive: {
+      backgroundColor: BRAND.primary,
+    },
+    timelineTrackLine: {
+      flex: 1,
+      height: 2.5,
+      backgroundColor: isDark ? '#2C2C2C' : '#EBE5DE',
+      marginHorizontal: -4,
+      zIndex: 1,
+    },
+    timelineTrackLineActive: {
+      backgroundColor: BRAND.primary,
+    },
 
-  // Nút hành động
-  statusActionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  reviewPillBtn: {
-    flex: 1,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.2,
-    borderColor: BRAND.warmBeige,
-    backgroundColor: BRAND.cardWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reviewPillBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-  },
-  reorderPillBtn: {
-    flex: 1,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.2,
-    borderColor: BRAND.primary,
-    backgroundColor: '#FFFDF9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reorderPillBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: BRAND.primary,
-  },
+    // Nút hành động
+    statusActionsRow: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    reviewPillBtn: {
+      flex: 1,
+      height: 42,
+      borderRadius: 21,
+      borderWidth: isDark ? 0 : 1.2,
+      borderColor: isDark ? 'transparent' : BRAND.warmBeige,
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : BRAND.cardWhite,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reviewPillBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    reorderPillBtn: {
+      flex: 1,
+      height: 42,
+      borderRadius: 21,
+      borderWidth: 1.2,
+      borderColor: BRAND.primary,
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reorderPillBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : BRAND.primary,
+    },
 
-  // ── PHÂN KHU CHUNG ──
-  sectionBlock: {
-    paddingHorizontal: 16,
-    marginTop: 22,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sectionHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-  },
-  sectionHeaderTitleNoIcon: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginBottom: 10,
-  },
+    // ── PHÂN KHU CHUNG ──
+    sectionBlock: {
+      paddingHorizontal: 16,
+      marginTop: 22,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    sectionHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    sectionHeaderTitleNoIcon: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 10,
+    },
 
-  // Card thông tin địa chỉ / chi nhánh
-  infoCard: {
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  storeBranchNameTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginBottom: 6,
-  },
-  storeAddressRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-  },
-  storeAddressText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: BRAND.mutedText,
-    lineHeight: 18,
-    flex: 1,
-  },
-  expectedTimeTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginBottom: 4,
-  },
-  expectedTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  expectedTimeVal: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: BRAND.textPrimary,
-  },
+    // Card thông tin địa chỉ / chi nhánh
+    infoCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    storeBranchNameTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 6,
+    },
+    storeAddressRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 14,
+    },
+    storeAddressText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+      lineHeight: 18,
+      flex: 1,
+    },
+    expectedTimeTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 4,
+    },
+    expectedTimeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    expectedTimeVal: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textPrimary,
+    },
 
-  // Thẻ thời gian viên thuốc
-  timePillCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  timePillText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '600',
-    color: BRAND.textPrimary,
-  },
+    // Thẻ thời gian viên thuốc
+    timePillCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.03,
+      shadowRadius: 5,
+      elevation: isDark ? 0 : 1,
+    },
+    timePillText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+    },
 
-  // ── DANH SÁCH MÓN ──
-  itemsListContainer: {
-    gap: 12,
-  },
-  itemDetailCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  itemCardThumb: {
-    width: 68,
-    height: 68,
-    borderRadius: 12,
-    marginRight: 14,
-    backgroundColor: '#FAF8F5',
-    overflow: 'hidden',
-  },
-  itemCardCenter: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  itemCardName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    lineHeight: 20,
-    marginBottom: 2,
-  },
-  itemCardVariant: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12.5,
-    color: BRAND.mutedText,
-    marginBottom: 4,
-  },
-  itemCardQuantity: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '600',
-    color: BRAND.textPrimary,
-  },
-  itemCardPrice: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginLeft: 10,
-  },
+    // ── DANH SÁCH MÓN ──
+    itemsListContainer: {
+      gap: 12,
+    },
+    itemDetailCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    itemCardThumb: {
+      width: 68,
+      height: 68,
+      borderRadius: 12,
+      marginRight: 14,
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+      overflow: 'hidden',
+    },
+    itemCardCenter: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    itemCardName: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      lineHeight: 20,
+      marginBottom: 2,
+    },
+    itemCardVariant: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+      marginBottom: 4,
+    },
+    itemCardQuantity: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+    },
+    itemCardPrice: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginLeft: 10,
+    },
 
-  // ── ƯU ĐÃI ──
-  voucherCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  voucherCodeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    flex: 1,
-    letterSpacing: 0.3,
-  },
+    // ── ƯU ĐÃI ──
+    voucherCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.03,
+      shadowRadius: 5,
+      elevation: isDark ? 0 : 1,
+    },
+    voucherCodeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      flex: 1,
+      letterSpacing: 0.3,
+    },
 
-  // ── PHƯƠNG THỨC THANH TOÁN ──
-  paymentMethodCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRAND.cardWhite,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  paymentIconWrap: {
-    marginRight: 10,
-  },
-  paymentMethodText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-  },
+    // ── PHƯƠNG THỨC THANH TOÁN ──
+    paymentMethodCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.03,
+      shadowRadius: 5,
+      elevation: isDark ? 0 : 1,
+    },
+    paymentIconWrap: {
+      marginRight: 10,
+    },
+    paymentMethodText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
 
-  // ── CHI TIẾT THANH TOÁN ──
-  billBreakdownWrap: {
-    paddingTop: 4,
-  },
-  billLineRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  billLineLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    color: BRAND.mutedText,
-  },
-  billLineVal: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    fontWeight: '600',
-    color: BRAND.textPrimary,
-  },
-  discountVal: {
-    color: BRAND.danger,
-    fontWeight: '700',
-  },
-  totalPaymentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 14,
-  },
-  totalPaymentLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-    marginBottom: 2,
-  },
-  vatSubtext: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    color: BRAND.mutedText,
-  },
-  totalPaymentAmount: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 20,
-    fontWeight: '800',
-    color: BRAND.textPrimary,
-  },
-  rewardPointsLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFDF9',
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: BRAND.warmBeige,
-    marginTop: 8,
-    marginBottom: 18,
-  },
-  rewardPointsText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: BRAND.textPrimary,
-  },
-  rewardPointsBold: {
-    fontWeight: '700',
-    color: BRAND.primary,
-  },
-  supportLinkTouch: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-  },
-  supportLinkText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: BRAND.primary,
-    textDecorationLine: 'underline',
-  },
+    // ── CHI TIẾT THANH TOÁN ──
+    billBreakdownWrap: {
+      paddingTop: 4,
+    },
+    billLineRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    billLineLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+    },
+    billLineVal: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+    },
+    discountVal: {
+      color: BRAND.danger,
+      fontWeight: '700',
+    },
+    totalPaymentRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 6,
+      marginBottom: 14,
+    },
+    totalPaymentLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 2,
+    },
+    vatSubtext: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+    },
+    totalPaymentAmount: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 20,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+    },
+    rewardPointsLine: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
+      borderRadius: 16,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.warmBeige,
+      marginTop: 8,
+      marginBottom: 18,
+    },
+    rewardPointsText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textPrimary,
+    },
+    rewardPointsBold: {
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : BRAND.primary,
+    },
+    supportLinkTouch: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 6,
+    },
+    supportLinkText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : BRAND.primary,
+      textDecorationLine: 'underline',
+    },
 
-  // ── MODAL ĐÁNH GIÁ ──
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'flex-end',
-  },
-  ratingSheetCard: {
-    backgroundColor: BRAND.cardWhite,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 36,
-  },
-  modalHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 17,
-    fontWeight: '700',
-    color: BRAND.textPrimary,
-  },
-  ratingSubtitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13.5,
-    color: BRAND.mutedText,
-    marginTop: 6,
-    marginBottom: 12,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  tagsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  tagPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 18,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-  },
-  tagPillActive: {
-    backgroundColor: '#FFFDF9',
-    borderColor: BRAND.primary,
-  },
-  tagText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12.5,
-    color: BRAND.mutedText,
-  },
-  tagTextActive: {
-    color: BRAND.primary,
-    fontWeight: '700',
-  },
-  reviewTextInput: {
-    height: 72,
-    borderRadius: 16,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13.5,
-    color: BRAND.textPrimary,
-    textAlignVertical: 'top',
-    marginBottom: 16,
-  },
-  submitReviewBtn: {
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: BRAND.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  submitReviewBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-});
+    // ── MODAL ĐÁNH GIÁ ──
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'flex-end',
+    },
+    ratingSheetCard: {
+      backgroundColor: Colors.cardBackground,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 36,
+    },
+    modalHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    modalHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 17,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    ratingSubtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+      marginTop: 6,
+      marginBottom: 12,
+    },
+    starsRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 16,
+    },
+    tagsWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 14,
+    },
+    tagPill: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 18,
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+    },
+    tagPillActive: {
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
+      borderColor: BRAND.primary,
+    },
+    tagText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      color: isDark ? '#9E968D' : BRAND.mutedText,
+    },
+    tagTextActive: {
+      color: BRAND.primary,
+      fontWeight: '700',
+    },
+    reviewTextInput: {
+      height: 72,
+      borderRadius: 16,
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      color: Colors.textPrimary,
+      textAlignVertical: 'top',
+      marginBottom: 16,
+    },
+    submitReviewBtn: {
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: BRAND.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0 : 0.16,
+      shadowRadius: 8,
+      elevation: isDark ? 0 : 3,
+    },
+    submitReviewBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+  });

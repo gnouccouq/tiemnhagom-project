@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
 import { AddressPicker } from '../src/components/AddressPicker';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -23,6 +24,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
 import { createOrder } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
+import { UserAddress } from '../src/types';
 
 export default function CheckoutScreen() {
   const Colors = useThemeColor();
@@ -32,18 +34,40 @@ export default function CheckoutScreen() {
   const { cart, subtotal, shippingFee, discountAmount, totalAmount, appliedCoupon, clearCart, shippingMethod } = useCart();
   const { user, userProfile } = useAuth();
 
-  const [fullName, setFullName] = useState(userProfile?.displayName || '');
-  const [phone, setPhone] = useState(userProfile?.phone || '');
-  const [streetAddress, setStreetAddress] = useState(userProfile?.streetAddress || userProfile?.address || '');
-  const [locationName, setLocationName] = useState(userProfile?.locationName || '');
-  const [provinceCode, setProvinceCode] = useState<string | undefined>(userProfile?.provinceCode);
-  const [wardCode, setWardCode] = useState<string | undefined>(userProfile?.wardCode);
+  const savedAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? userProfile.addresses : [];
+  const defaultSavedAddress = savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+
+  const [fullName, setFullName] = useState(defaultSavedAddress?.fullName || userProfile?.displayName || '');
+  const [phone, setPhone] = useState(defaultSavedAddress?.phone || userProfile?.phone || '');
+  const [streetAddress, setStreetAddress] = useState(defaultSavedAddress?.address || userProfile?.streetAddress || userProfile?.address || '');
+  const [locationName, setLocationName] = useState(
+    defaultSavedAddress?.locationName ||
+    (defaultSavedAddress?.wardName && defaultSavedAddress?.provinceName ? `${defaultSavedAddress.wardName}, ${defaultSavedAddress.provinceName}` : '') ||
+    userProfile?.locationName ||
+    ''
+  );
+  const [provinceCode, setProvinceCode] = useState<string | undefined>(defaultSavedAddress?.provinceCode || userProfile?.provinceCode);
+  const [wardCode, setWardCode] = useState<string | undefined>(defaultSavedAddress?.wardCode || userProfile?.wardCode);
   const [addressPickerVisible, setAddressPickerVisible] = useState(false);
+  const [addressSheetVisible, setAddressSheetVisible] = useState(false);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(defaultSavedAddress ? 0 : null);
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'banking'>('cod');
   const [loading, setLoading] = useState(false);
   const { t } = useSettings();
   const dialog = useDialog();
+
+  const handleSelectSavedAddress = (item: UserAddress, index: number) => {
+    setSelectedAddressIndex(index);
+    if (item.fullName) setFullName(item.fullName);
+    if (item.phone) setPhone(item.phone);
+    if (item.address) setStreetAddress(item.address);
+    const loc = item.locationName || (item.wardName && item.provinceName ? `${item.wardName}, ${item.provinceName}` : '');
+    if (loc) setLocationName(loc);
+    if (item.provinceCode) setProvinceCode(item.provinceCode);
+    if (item.wardCode) setWardCode(item.wardCode);
+    setAddressSheetVisible(false);
+  };
 
   const handleSubmitOrder = async () => {
     if (!fullName.trim()) {
@@ -127,10 +151,66 @@ export default function CheckoutScreen() {
       >
         {/* Recipient Information */}
         <View style={themeStyles.card}>
-          <View style={themeStyles.cardHeader}>
-            <Ionicons name="location-outline" size={20} color={Colors.primary} />
-            <Text style={themeStyles.cardTitle}>{t('recipientInfo')}</Text>
+          <View style={themeStyles.cardHeaderRow}>
+            <View style={themeStyles.cardHeaderLeft}>
+              <Ionicons name="location-outline" size={20} color={Colors.primary} />
+              <Text style={themeStyles.cardTitle}>{t('recipientInfo')}</Text>
+            </View>
+            {savedAddresses.length > 0 && (
+              <TouchableOpacity
+                style={themeStyles.addressBookQuickBtn}
+                onPress={() => setAddressSheetVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="bookmarks-outline" size={15} color="#9C7156" style={{ marginRight: 4 }} />
+                <Text style={themeStyles.addressBookQuickText}>
+                  {t('selectFromAddressBook') || 'Sổ địa chỉ'} ({savedAddresses.length})
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Quick chips if has addresses */}
+          {savedAddresses.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={themeStyles.quickAddressScroll}
+              style={{ marginBottom: 12 }}
+            >
+              {savedAddresses.map((addr, idx) => {
+                const isSelected =
+                  fullName === addr.fullName &&
+                  phone === addr.phone &&
+                  streetAddress === addr.address;
+                return (
+                  <TouchableOpacity
+                    key={addr.id || `quick-addr-${idx}`}
+                    style={[themeStyles.quickAddressChip, isSelected && themeStyles.quickAddressChipActive]}
+                    onPress={() => handleSelectSavedAddress(addr, idx)}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                      size={14}
+                      color={isSelected ? '#9C7156' : '#9E968D'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[themeStyles.quickAddressName, isSelected && themeStyles.quickAddressNameActive]}>
+                      {addr.fullName}
+                    </Text>
+                    {addr.isDefault && (
+                      <View style={themeStyles.quickDefaultBadge}>
+                        <Text style={themeStyles.quickDefaultBadgeText}>
+                          {t('defaultAddressBadge') || 'Mặc định'}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
 
           <View style={themeStyles.formGroup}>
             <Text style={themeStyles.label}>{t('fullNameReq')}</Text>
@@ -289,6 +369,69 @@ export default function CheckoutScreen() {
         }}
       />
 
+      {/* Sổ địa chỉ Selection Modal */}
+      <AnimatedBottomSheetModal
+        visible={addressSheetVisible}
+        onClose={() => setAddressSheetVisible(false)}
+      >
+        <View style={themeStyles.addressSheetHeader}>
+          <Text style={themeStyles.addressSheetTitle}>{t('selectFromAddressBook') || 'Chọn địa chỉ nhận hàng'}</Text>
+          <TouchableOpacity
+            onPress={() => setAddressSheetVisible(false)}
+            style={themeStyles.sheetCloseBtn}
+          >
+            <Ionicons name="close" size={20} color="#2B2928" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380, marginVertical: 10 }}>
+          {savedAddresses.map((addr, idx) => {
+            const isSelected =
+              fullName === addr.fullName &&
+              phone === addr.phone &&
+              streetAddress === addr.address;
+            const fullArea = addr.locationName || [addr.wardName, addr.provinceName].filter(Boolean).join(', ');
+
+            return (
+              <TouchableOpacity
+                key={addr.id || `sheet-addr-${idx}`}
+                style={[themeStyles.sheetAddressCard, isSelected && themeStyles.sheetAddressCardActive]}
+                onPress={() => handleSelectSavedAddress(addr, idx)}
+                activeOpacity={0.8}
+              >
+                <View style={themeStyles.sheetAddressTopRow}>
+                  <View style={themeStyles.sheetUserInfo}>
+                    <Text style={themeStyles.sheetUserName}>{addr.fullName}</Text>
+                    <View style={themeStyles.sheetDot} />
+                    <Text style={themeStyles.sheetUserPhone}>{addr.phone}</Text>
+                  </View>
+                  {addr.isDefault && (
+                    <View style={themeStyles.sheetDefaultBadge}>
+                      <Text style={themeStyles.sheetDefaultBadgeText}>{t('defaultAddressBadge') || 'Mặc định'}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <Text style={themeStyles.sheetStreetText}>{addr.address}</Text>
+                {!!fullArea && <Text style={themeStyles.sheetAreaText}>{fullArea}</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <TouchableOpacity
+          style={themeStyles.manageAddressBtn}
+          onPress={() => {
+            setAddressSheetVisible(false);
+            router.push('/address-book');
+          }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add-circle-outline" size={18} color="#9C7156" style={{ marginRight: 6 }} />
+          <Text style={themeStyles.manageAddressBtnText}>{t('addNewAddress') || 'Thêm / Quản lý sổ địa chỉ'}</Text>
+        </TouchableOpacity>
+      </AnimatedBottomSheetModal>
+
       {/* Submit Button */}
       <View style={themeStyles.bottomBar}>
         <View style={themeStyles.bottomTotal}>
@@ -347,6 +490,181 @@ const getStyles = (Colors: any) => StyleSheet.create({
     paddingBottom: Spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+    paddingBottom: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  addressBookQuickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F6F4EC',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  addressBookQuickText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9C7156',
+  },
+  quickAddressScroll: {
+    gap: 8,
+    paddingVertical: 2,
+  },
+  quickAddressChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
+  },
+  quickAddressChipActive: {
+    backgroundColor: '#F6F4EC',
+    borderColor: '#9C7156',
+  },
+  quickAddressName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: '#2B2928',
+    fontWeight: '600',
+  },
+  quickAddressNameActive: {
+    color: '#9C7156',
+  },
+  quickDefaultBadge: {
+    backgroundColor: '#E8CCB2',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 6,
+  },
+  quickDefaultBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 10,
+    color: '#2B2928',
+    fontWeight: '700',
+  },
+  addressSheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0ECE6',
+  },
+  addressSheetTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  sheetCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F6F4EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetAddressCard: {
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+  },
+  sheetAddressCardActive: {
+    borderColor: '#9C7156',
+    backgroundColor: '#F6F4EC',
+  },
+  sheetAddressTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  sheetUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sheetUserName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2B2928',
+  },
+  sheetDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#9E968D',
+    marginHorizontal: 6,
+  },
+  sheetUserPhone: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: '#6E665D',
+  },
+  sheetDefaultBadge: {
+    backgroundColor: '#E8CCB2',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  sheetDefaultBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 10,
+    color: '#2B2928',
+    fontWeight: '700',
+  },
+  sheetStreetText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#2B2928',
+    lineHeight: 18,
+  },
+  sheetAreaText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: '#6E665D',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  manageAddressBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.2,
+    borderColor: '#9C7156',
+    backgroundColor: '#FFFFFF',
+    marginTop: 6,
+  },
+  manageAddressBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9C7156',
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',

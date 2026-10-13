@@ -651,5 +651,24 @@ export const en = {
   confirmAddToCart: 'Confirm Add to Cart',
   confirmBuyNow: 'Confirm Buy Now',
   selectVariantRequired: 'Please choose a product option.',
+
+  // Address Book
+  addressBookTitle: 'Address Book',
+  addressBookDesc: 'Manage your shipping addresses for fast checkout',
+  addNewAddress: 'Add New Address',
+  editAddress: 'Edit Address',
+  emptyAddressList: 'No saved shipping addresses yet',
+  emptyAddressListSub: 'Add an address to make your next orders even faster',
+  defaultAddressBadge: 'Default',
+  setDefaultAddressAction: 'Set as Default',
+  deleteAddressConfirmTitle: 'Delete Address',
+  deleteAddressConfirmMsg: 'Are you sure you want to remove this address?',
+  addressSavedSuccess: 'Address saved successfully',
+  addressDeletedSuccess: 'Address deleted',
+  setDefaultAddressSuccess: 'Set as default address',
+  selectFromAddressBook: 'Select from Address Book',
+  useThisAddress: 'Use this address',
+  setAsDefaultLabel: 'Set as default shipping address',
+  saveAddressAction: 'Save Address',
 };
 

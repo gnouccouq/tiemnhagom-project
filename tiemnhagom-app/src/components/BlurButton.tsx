@@ -40,20 +40,21 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'transparent',
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0.3 : 0.1,
+    shadowOpacity: isDark ? 0 : 0.08,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   inner: {
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : StyleSheet.hairlineWidth,
+    borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : undefined,
   },
   glassOverlay: {
     backgroundColor: isDark 
-      ? (Platform.OS === 'ios' ? 'rgba(30, 30, 30, 0.45)' : 'rgba(30, 30, 30, 0.65)')
+      ? 'transparent'
       : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.65)'),
   },
   content: {

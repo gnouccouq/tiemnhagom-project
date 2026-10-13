@@ -20,7 +20,8 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   onRemove,
 }) => {
   const Colors = useThemeColor();
-  const themeStyles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const themeStyles = getStyles(Colors, isDark);
   const imageUri = item.variant?.imageUrl || item.imageUrl || 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=300&auto=format&fit=crop';
 
   return (
@@ -84,26 +85,26 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: Colors.cardBackground,
     borderRadius: 22,
     padding: 14,
     marginBottom: 14,
-    borderWidth: 1.2,
-    borderColor: '#E1E8DF',
+    borderWidth: isDark ? 0 : 1.2,
+    borderColor: isDark ? 'transparent' : '#E1E8DF',
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 5,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   image: {
     width: 80,
     height: 80,
     borderRadius: 14,
-    backgroundColor: '#F3EFEA',
+    backgroundColor: isDark ? '#2C2C2C' : '#F3EFEA',
   },
   info: {
     flex: 1,
@@ -130,18 +131,18 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   variantBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? '#2C2C2C' : '#FAF8F5',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
     marginVertical: 4,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   variantText: {
     fontFamily: Typography.fontFamily.medium,
     fontSize: 11,
-    color: Colors.textMuted,
+    color: isDark ? '#B0B0B0' : Colors.textMuted,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -157,24 +158,24 @@ const getStyles = (Colors: any) => StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? '#2C2C2C' : '#FAF8F5',
     borderRadius: 18,
     padding: 3,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   stepBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : Colors.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: isDark ? 0 : 0.05,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: isDark ? 0 : 1,
   },
   qtyText: {
     fontFamily: Typography.fontFamily.bold,

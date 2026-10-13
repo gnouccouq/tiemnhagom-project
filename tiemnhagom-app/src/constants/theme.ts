@@ -48,11 +48,11 @@ export const DarkColors = {
   primaryDark: '#E5E5E5',
   primaryLight: '#333333',
   primaryHover: '#DDDDDD',
-  background: '#121212',    
-  cardBackground: '#1E1E1E',
-  surface: '#2C2C2C',
-  border: '#333333',
-  borderLight: '#2A2A2A',
+  background: '#000000',    // Đen sâu OLED thuần khiết (Pure Black OLED)
+  cardBackground: '#121212', // Khối Card nổi khối nhẹ trên nền đen sâu
+  surface: '#1E1E1E',       // Surface phụ / Chip / Vòng tròn icon
+  border: '#242424',
+  borderLight: '#1C1C1C',
   textPrimary: '#F5F5F5',   
   textSecondary: '#B0B0B0', 
   textMuted: '#888888',
@@ -65,19 +65,19 @@ export const DarkColors = {
   warning: '#FF9800',
   error: '#EF5350',
   info: '#9C7156',
-  sageLight: '#2C2A28',     
-  sageBorder: '#3A3633',    
+  sageLight: '#1E1D1C',     
+  sageBorder: '#2E2B28',    
   sageDark: '#E8CCB2',      
   slateDark: '#a1a6a5',     
-  glassBg: 'rgba(30, 30, 30, 0.82)',
-  glassDark: 'rgba(26, 26, 25, 0.88)',
-  glassBorder: 'rgba(255, 255, 255, 0.1)',
-  overlay: 'rgba(0, 0, 0, 0.6)',
-  divider: '#333333',
-  skeleton: '#2C2C2C',
+  glassBg: 'rgba(18, 18, 18, 0.85)',
+  glassDark: 'rgba(0, 0, 0, 0.92)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  overlay: 'rgba(0, 0, 0, 0.75)',
+  divider: '#222222',
+  skeleton: '#1A1A1A',
   // Official Brand Guidelines Palette (TiemNhaGom_Brand Guideline.pdf)
   brandTerracotta: '#C86432',
-  brandCharcoal: '#1A1817',
+  brandCharcoal: '#121212',
   brandCream: '#F6F4EC',
   brandSand: '#E8CCB2',
   brandWhite: '#FFFFFF',
@@ -99,6 +99,13 @@ export function useThemeColor() {
   const systemTheme = useColorScheme() ?? 'light';
   const theme = themeMode === 'system' ? systemTheme : themeMode;
   return theme === 'dark' ? DarkColors : LightColors;
+}
+
+/**
+ * Kiểm tra xem theme hiện tại có phải là Dark Mode hay không
+ */
+export function checkIsDark(colors: typeof LightColors | typeof DarkColors): boolean {
+  return colors.cardBackground !== '#FFFFFF';
 }
 
 

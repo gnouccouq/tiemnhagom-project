@@ -4,11 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { Colors, Typography, Spacing } from '../src/constants/theme';
+import { Colors, Typography, Spacing, useThemeColor } from '../src/constants/theme';
 import { useWishlist } from '../src/context/WishlistContext';
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
-import { ScalePressable } from '../src/components/ScalePressable';
+import { Header } from '../src/components/Header';
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
@@ -16,6 +16,8 @@ import { usePageAnimation } from '../src/hooks/usePageAnimation';
 export default function FavoritesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const ThemeColors = useThemeColor();
+  const isDark = ThemeColors.cardBackground !== '#FFFFFF';
   const { favorites } = useWishlist();
   const [loading, setLoading] = useState(true);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -43,47 +45,22 @@ export default function FavoritesScreen() {
   };
 
   const [scrollY, setScrollY] = useState(0);
-  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
 
   const { pageStyle } = usePageAnimation();
 
   return (
-    <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+    <Animated.View style={[styles.safeArea, { backgroundColor: ThemeColors.background }, pageStyle]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={ThemeColors.background} />
       
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint="light"
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor:
-                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
-                },
-              ]}
-            />
-          </View>
-        )}
-        <ScalePressable
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#18181B" />
-        </ScalePressable>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Sản phẩm yêu thích</Text>
-        </View>
-        <View style={styles.headerRight} />
-      </View>
+      {/* Header chuẩn app Tiệm Nhà Gốm */}
+      <Header
+        title="Sản phẩm yêu thích"
+        showBack={true}
+        showSearch={false}
+        showCart={false}
+        transparent={true}
+        scrollY={scrollY}
+      />
 
       <View style={styles.container}>
         {loading ? (
@@ -126,47 +103,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FAF8F5',
-  },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    backgroundColor: 'transparent',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F0ECE6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111111',
-  },
-  headerRight: {
-    width: 40,
   },
   container: {
     flex: 1,

@@ -58,11 +58,11 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const Colors = useThemeColor();
-  const styles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { cartCount } = useCart();
   const { unreadCount } = useNotificationBadge();
   const insets = useSafeAreaInsets();
-  const isDark = useColorScheme() === 'dark';
 
   const statusBarHeight =
     insets.top > 0
@@ -283,7 +283,7 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   container: {
     width: '100%',
   },
@@ -306,9 +306,9 @@ const getStyles = (Colors: any) => StyleSheet.create({
     justifyContent: 'center',
   },
   headerBackdrop: {
-    backgroundColor: Colors.cardBackground === '#FFFFFF' 
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)'),
+    backgroundColor: isDark 
+      ? (Platform.OS === 'ios' ? 'rgba(18,18,18,0.85)' : 'rgba(18,18,18,0.95)')
+      : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.85)' : 'rgba(250,248,245,0.95)'),
     borderBottomWidth: 0,
     borderBottomColor: Colors.borderLight,
     shadowColor: Colors.textPrimary,
@@ -358,20 +358,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 12,
     marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : 'rgba(0, 0, 0, 0.08)',
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 5,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
     overflow: 'hidden',
   },
   searchPillOverlay: {
     borderRadius: 21,
-    backgroundColor: Colors.cardBackground === '#FFFFFF' 
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.45)' : 'rgba(30,30,30,0.6)'),
+    backgroundColor: isDark 
+      ? (Platform.OS === 'ios' ? 'rgba(30,30,30,0.6)' : 'rgba(30,30,30,0.8)')
+      : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)'),
     overflow: 'hidden',
   },
   searchPlaceholder: {

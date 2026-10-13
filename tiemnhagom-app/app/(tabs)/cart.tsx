@@ -29,7 +29,8 @@ import { formatCurrency } from '../../src/utils/format';
 
 export default function CartScreen() {
   const Colors = useThemeColor();
-  const styles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const {
@@ -81,8 +82,6 @@ export default function CartScreen() {
       true
     );
   };
-
-  const isDark = Colors.cardBackground !== '#FFFFFF';
 
   if (cart.length === 0) {
     return (
@@ -310,7 +309,7 @@ export default function CartScreen() {
   );
 }
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -338,16 +337,16 @@ const getStyles = (Colors: any) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : Colors.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: isDark ? 0 : 0.08,
     shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    elevation: isDark ? 0 : 2,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : Colors.borderLight,
   },
   headerTitle: {
     fontFamily: 'ElleGaborStd',
@@ -361,20 +360,20 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.cardBackground || '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : (Colors.cardBackground || '#FFFFFF'),
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: isDark ? 0 : 0.06,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   headerClearBtn: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.error,
+    color: '#9C7156',
     paddingHorizontal: 8,
   },
   scrollContent: {
@@ -396,7 +395,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   clearAllBtn: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.xs,
-    color: Colors.error,
+    color: '#9C7156',
     fontWeight: '600',
   },
   itemList: {
@@ -407,13 +406,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderRadius: 24,
     padding: 16,
     marginBottom: 16,
-    borderWidth: 1.2,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : 1.2,
+    borderColor: isDark ? 'transparent' : Colors.border,
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 5,
-    elevation: 1,
+    elevation: isDark ? 0 : 1,
   },
   sectionHeaderTitle: {
     fontFamily: 'ElleGaborStd',
@@ -427,10 +426,10 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: isDark ? '#2A2A2A' : Colors.borderLight,
   },
   shippingOptionActive: {
-    backgroundColor: Colors.surface,
+    backgroundColor: isDark ? '#2C2C2C' : Colors.surface,
     borderRadius: 16,
     paddingHorizontal: 8,
   },
@@ -460,12 +459,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: isDark ? '#2C2C2C' : Colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : Colors.border,
   },
   couponTag: {
     flexDirection: 'row',
@@ -475,7 +474,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   couponCodeText: {
     fontFamily: 'ElleGaborStd',
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: isDark ? '#E8CCB2' : Colors.textPrimary,
     fontSize: 13,
   },
   removeCouponBtn: {
@@ -483,7 +482,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   removeCouponText: {
     fontFamily: 'ElleGaborStd',
-    color: Colors.error,
+    color: '#9C7156',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -495,17 +494,17 @@ const getStyles = (Colors: any) => StyleSheet.create({
   couponInput: {
     fontFamily: 'ElleGaborStd',
     flex: 1,
-    backgroundColor: Colors.background || '#FAF8F5',
+    backgroundColor: isDark ? '#2C2C2C' : (Colors.background || '#FAF8F5'),
     borderRadius: 26,
     paddingHorizontal: 18,
     height: 52,
     fontSize: 14,
     color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : Colors.border,
   },
   applyCouponBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#9C7156',
     borderRadius: 26,
     paddingHorizontal: 22,
     height: 52,
@@ -513,19 +512,19 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: isDark ? 0 : 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   applyCouponText: {
     fontFamily: 'ElleGaborStd',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
   },
   couponErrorText: {
     fontFamily: 'ElleGaborStd',
-    color: Colors.error,
+    color: '#9C7156',
     fontSize: 11,
     marginTop: 6,
   },
@@ -534,13 +533,13 @@ const getStyles = (Colors: any) => StyleSheet.create({
     borderRadius: 20,
     padding: 18,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : Colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -560,7 +559,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.divider,
+    backgroundColor: isDark ? '#2A2A2A' : Colors.divider,
     marginVertical: 10,
   },
   summaryRowTotal: {
@@ -582,7 +581,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     color: Colors.textPrimary,
   },
   checkoutBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#9C7156',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -597,7 +596,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   checkoutBtnText: {
     fontFamily: 'ElleGaborStd',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },

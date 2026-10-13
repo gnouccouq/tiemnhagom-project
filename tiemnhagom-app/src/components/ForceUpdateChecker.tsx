@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AnimatedCenterModal } from './AnimatedCenterModal';
@@ -22,6 +22,9 @@ function compareVersions(v1: string, v2: string) {
 }
 
 export default function ForceUpdateChecker() {
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const [isUpdateRequired, setIsUpdateRequired] = useState(false);
   const [storeUrl, setStoreUrl] = useState('');
 
@@ -62,7 +65,7 @@ export default function ForceUpdateChecker() {
       contentStyle={styles.modalContainer}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="cloud-download-outline" size={48} color={Colors.textPrimary} />
+        <Ionicons name="cloud-download-outline" size={48} color={isDark ? '#E8CCB2' : '#9C7156'} />
       </View>
       <Text style={styles.title}>Cập nhật bản mới</Text>
       <Text style={styles.message}>
@@ -79,20 +82,21 @@ export default function ForceUpdateChecker() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   modalContainer: {
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: isDark ? '#121212' : Colors.cardBackground,
     borderRadius: BorderRadius.xl,
     padding: Spacing.xxxl,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 0,
     ...Shadows.lg,
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.surface,
+    backgroundColor: isDark ? '#1E1E1E' : Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,
@@ -113,7 +117,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   button: {
-    backgroundColor: Colors.textPrimary,
+    backgroundColor: '#9C7156',
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xxl,
     borderRadius: BorderRadius.pill,
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: Typography.fontFamily.bold,
-    color: Colors.textInverse,
+    color: '#FFFFFF',
     fontSize: Typography.fontSize.md,
   },
 });

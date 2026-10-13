@@ -23,11 +23,15 @@ import { useDialog } from '../src/context/DialogContext';
 import { AddressPicker } from '../src/components/AddressPicker';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
-import { Colors, Typography, Spacing } from '../src/constants/theme';
+import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
+import { Header } from '../src/components/Header';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { user, userProfile, updateUserProfileData } = useAuth();
 
   const [editName, setEditName] = useState('');
@@ -184,39 +188,16 @@ export default function EditProfileScreen() {
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       
-      {/* Header Modal */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint="light"
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor:
-                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
-                },
-              ]}
-            />
-          </View>
-        )}
-        <ScalePressable
-          onPress={() => router.back()}
-          style={styles.headerBackBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="arrow-back" size={22} color="#18181B" />
-        </ScalePressable>
-        <Text style={styles.headerTitle}>Chỉnh Sửa Thông Tin</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <Header
+        title="Chỉnh Sửa Thông Tin"
+        showBack={true}
+        showSearch={false}
+        showCart={false}
+        transparent={true}
+        scrollY={scrollY}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -240,12 +221,13 @@ export default function EditProfileScreen() {
                     <Ionicons name="person" size={40} color="#7A827E" />
                   </View>
                 )}
-                <ScalePressable
+                <TouchableOpacity
                   style={styles.cameraBtn}
+                  activeOpacity={0.85}
                   onPress={handlePickAvatar}
                 >
                   <Ionicons name="camera" size={15} color="#FFFFFF" />
-                </ScalePressable>
+                </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.7}>
                 <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
@@ -325,7 +307,13 @@ export default function EditProfileScreen() {
               >
                 <Ionicons name="calendar-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <Text style={[styles.pillInput, { lineHeight: 50, color: editDob ? '#2B2928' : '#A0A8A4' }]}>
-                  {editDob || 'Chọn ngày sinh nhật...'}
+                  {editDob ? (() => {
+                    if (editDob.includes('-')) {
+                      const parts = editDob.split('-');
+                      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    return editDob;
+                  })() : 'Chọn ngày sinh nhật...'}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#7A827E" style={{ marginRight: 16 }} />
               </TouchableOpacity>
@@ -348,7 +336,7 @@ export default function EditProfileScreen() {
           {/* Card 2: Địa chỉ giao hàng */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionCardHeader}>
-              <Ionicons name="location-outline" size={18} color="#18181B" />
+              <Ionicons name="location-outline" size={18} color={isDark ? '#E8CCB2' : '#9C7156'} />
               <Text style={styles.sectionCardTitle}>Địa chỉ giao hàng</Text>
             </View>
 
@@ -405,7 +393,7 @@ export default function EditProfileScreen() {
           <View style={styles.calendarHeader}>
             <Text style={styles.calendarTitle}>Chọn Ngày Sinh Nhật</Text>
             <TouchableOpacity onPress={() => setDatePickerVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close" size={22} color="#18181B" />
+              <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -536,44 +524,10 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
-  },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    backgroundColor: 'transparent',
-  },
-  headerBackBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-  },
-  headerTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#231B15',
+    backgroundColor: Colors.background,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -581,19 +535,19 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // 1. Nhóm Card chuẩn Profile (Bo tròn 20px, bóng nhẹ)
+  // 1. Nhóm Card chuẩn Profile (Bo tròn 20px, không viền ở Dark Mode)
   sectionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   sectionCardHeader: {
     flexDirection: 'row',
@@ -602,13 +556,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0ECE6',
+    borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
   },
   sectionCardTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
-    color: '#231B15',
+    color: Colors.textPrimary,
   },
 
   // Avatar Section
@@ -629,70 +583,70 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 2,
-    borderColor: '#E8E1D8',
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     resizeMode: 'cover',
   },
   avatarPickerPlaceholder: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#F4EFEB',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F4EFEB',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1.5,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   cameraBtn: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    backgroundColor: '#111111',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    backgroundColor: '#9C7156',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    elevation: 3,
-    shadowColor: '#000',
+    borderWidth: 2.5,
+    borderColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
+    elevation: 4,
+    shadowColor: '#2B2928',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: isDark ? 0 : 0.2,
     shadowRadius: 3,
   },
   changeAvatarText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
-    color: '#111111',
+    color: isDark ? '#E8CCB2' : '#111111',
     textDecorationLine: 'underline',
   },
 
-  // 2. Input Fields chuẩn Login (Dạng viên thuốc height: 52px, borderRadius: 26px)
+  // 2. Input Fields chuẩn Login
   inputGroup: {
     marginBottom: 16,
   },
   inputLabel: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: '#6E665D',
+    color: Colors.textSecondary || '#6E665D',
     fontWeight: '700',
     marginBottom: 6,
     marginLeft: 4,
   },
   pillInputWrapper: {
     height: 52,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     borderRadius: 26,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
   disabledPillWrapper: {
-    backgroundColor: '#F3EFEA',
-    borderColor: '#DFD8CE',
+    backgroundColor: isDark ? '#222222' : '#F3EFEA',
+    borderColor: isDark ? 'transparent' : '#DFD8CE',
   },
   inputIcon: {
     marginRight: 10,
@@ -701,17 +655,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
-    color: '#231B15',
+    color: Colors.textPrimary,
     height: '100%',
   },
   disabledInput: {
-    color: '#7D756C',
+    color: Colors.textMuted || '#7D756C',
   },
   locationPill: {
     height: 52,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     borderRadius: 26,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -721,22 +675,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'ElleGaborStd',
-    color: '#231B15',
+    color: Colors.textPrimary,
   },
   locationPlaceholder: {
-    color: '#A0A8A4',
+    color: Colors.textMuted || '#A0A8A4',
   },
   textAreaInput: {
     minHeight: 84,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 12,
     fontSize: 14,
     fontFamily: 'ElleGaborStd',
-    color: '#231B15',
+    color: Colors.textPrimary,
     textAlignVertical: 'top',
   },
 
@@ -749,20 +703,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 42,
     borderRadius: 21,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
   },
   genderPillActive: {
-    backgroundColor: '#111111',
-    borderColor: '#111111',
+    backgroundColor: isDark ? '#9C7156' : '#2B2928',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#2B2928',
   },
   genderText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: '#6E665D',
+    color: Colors.textSecondary || '#6E665D',
     fontWeight: '600',
   },
   genderTextActive: {
@@ -770,28 +725,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // 3. Bottom CTA Button chuẩn Login (height: 52px, borderRadius: 26px, nổi khối)
+  // 3. Bottom CTA Button
   footerAction: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 24 : 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: '#E8E1D8',
+    borderTopColor: isDark ? (Colors.divider || '#2A2A2A') : '#E8E1D8',
   },
   saveBtn: {
     width: '100%',
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#111111',
+    backgroundColor: '#9C7156',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
+    shadowOpacity: isDark ? 0 : 0.16,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: isDark ? 0 : 4,
   },
   saveBtnDisabled: {
     opacity: 0.65,
@@ -803,9 +758,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Calendar Modal Styles (Bo tròn 24px, chuẩn GEMINI.md)
+  // Calendar Modal Styles
   calendarModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 16,
@@ -818,13 +773,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0ECE6',
+    borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
   },
   calendarTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
-    color: '#2B2928',
+    color: Colors.textPrimary,
   },
   calendarControlsRow: {
     flexDirection: 'row',
@@ -838,10 +793,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
@@ -849,23 +804,23 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   calNavLabel: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: '#2B2928',
+    color: Colors.textPrimary,
   },
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 8,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderRadius: 12,
     marginBottom: 8,
   },
@@ -873,7 +828,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: '#6E665D',
+    color: Colors.textSecondary || '#6E665D',
     width: 38,
     textAlign: 'center',
   },
@@ -896,7 +851,7 @@ const styles = StyleSheet.create({
   dayCellText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: '#2B2928',
+    color: Colors.textPrimary,
     fontWeight: '600',
   },
   dayCellTextSelected: {
@@ -911,9 +866,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
+    shadowOpacity: isDark ? 0 : 0.15,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   btnConfirmDateText: {
     fontFamily: 'ElleGaborStd',

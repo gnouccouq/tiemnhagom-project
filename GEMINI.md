@@ -84,3 +84,26 @@ Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy đị
 * **Viền tiêu chuẩn giao diện:** `#E8E1D8` / `#E8CCB2`.
 * **Trạng thái Thành công / Tích điểm / Đơn hoàn tất:** Sử dụng màu Nâu Đất Nung `#9C7156`, Men Be `#E8CCB2` hoặc Nâu Trầm `#2B2928` để biểu thị, thay thế hoàn toàn cho màu xanh.
 
+---
+
+## 6. Quy chuẩn Giao diện Dark Mode (Lấy chuẩn từ trang Stores — `app/stores.tsx`)
+Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản tốt, không bị thô ráp hay chói mắt, sử dụng tông màu Đen Sâu OLED thuần khiết:
+
+### 6.1. Bảng màu & Bố cục Dark Mode:
+* **Màu nền toàn trang:** `#000000` (Pure Black OLED — `Colors.background`).
+* **Màu nền Card View:** `#121212` (`Colors.cardBackground`), nổi khối thanh thoát trên nền đen sâu.
+* **Màu nền Surface phụ / Icon Circle / Chip không active:** `#1E1E1E` (`Colors.surface`).
+* **Màu chữ chính:** `#F5F5F5` (`Colors.textPrimary`), chữ phụ `#B0B0B0` / `#9E968D`, điểm nhấn men gốm `#E8CCB2` hoặc `#9C7156`.
+* **Đường kẻ phân cách (Divider):** `#222222` (`Colors.divider`).
+
+### 6.2. Quy tắc Viền (Border) & Nút Back ở Dark Mode:
+* **Tuyệt đối KHÔNG có viền trắng / xám sáng xung quanh các khối Card:**
+  * Toàn bộ Card View ở Dark Mode phải bỏ viền cứng hoặc đặt viền trong suốt: `borderWidth: isDark ? 0 : 1`, `borderColor: isDark ? 'transparent' : ...`.
+  * Tắt shadow sáng màu (`shadowOpacity: isDark ? 0 : ...`, `elevation: isDark ? 0 : ...`).
+* **Nút Back (và nút icon tròn trên Header):**
+  * Bỏ viền trắng sáng xung quanh (`borderWidth: isDark ? 0 : ...`, `borderColor: 'transparent'`).
+  * Đổi màu nền nút tròn sang màu đồng nhất với Card View: `backgroundColor: isDark ? (Colors.cardBackground || '#121212') : ...`.
+  * Tắt hoàn toàn shadow trắng để không tạo cảm giác viền phát sáng lem luốc.
+* **Thẻ / Chip đang được chọn (Active State):**
+  * Nền chuyển sang `#1E1E1E` (hoặc `#121212`), viền bằng màu Nâu Đất Nung `#9C7156` (`borderWidth: 1.2, borderColor: '#9C7156'`). Tuyệt đối không dùng viền trắng hay viền đen chìm.
+

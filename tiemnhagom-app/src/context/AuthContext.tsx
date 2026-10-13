@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { auth, db, storage } from '../config/firebase';
-import { UserProfile } from '../types';
+import { UserProfile, UserAddress } from '../types';
 import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../services/notificationService';
 import { formatPhoneNumber, getPhoneVariants } from '../utils/format';
 
@@ -38,6 +38,11 @@ interface AuthContextType {
   signInWithAppleCredential: (idToken: string, rawNonce: string) => Promise<void>;
   signInWithPhoneSession: (phone: string, displayName?: string) => Promise<void>;
   updateUserProfileData: (data: Partial<UserProfile>) => Promise<void>;
+  saveAddresses: (addresses: UserAddress[]) => Promise<void>;
+  addAddress: (address: UserAddress) => Promise<void>;
+  updateAddress: (index: number, address: UserAddress) => Promise<void>;
+  deleteAddress: (index: number) => Promise<void>;
+  setDefaultAddress: (index: number) => Promise<void>;
   linkGoogleAccount: (idToken: string) => Promise<void>;
   linkAppleAccount: (idToken: string, rawNonce: string) => Promise<void>;
   unlinkProvider: (providerId: string) => Promise<void>;
@@ -70,9 +75,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               sanitizedPoints = Math.floor(Number(primaryData.totalSpent || 0) / 10000);
             }
             const primaryAvatar = primaryData.photoURL || primaryData.avatar || auth.currentUser?.photoURL || null;
+            const pDob = primaryData.dob || primaryData.birthday || '';
             const resolvedProfile = {
               uid: rawData.mergedTo,
               ...primaryData,
+              dob: pDob,
+              birthday: pDob,
               points: sanitizedPoints,
               photoURL: primaryAvatar,
               avatar: primaryAvatar,
@@ -106,9 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               sanitizedPoints = Math.floor(Number(pData.totalSpent || 0) / 10000);
             }
             const pAvatar = pData.photoURL || pData.avatar || auth.currentUser?.photoURL || null;
+            const pDob = pData.dob || pData.birthday || '';
             const resolvedProfile = {
               uid: primaryDocSnap.id,
               ...pData,
+              dob: pDob,
+              birthday: pDob,
               points: sanitizedPoints,
               photoURL: pAvatar,
               avatar: pAvatar,
@@ -131,9 +142,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         // Đồng bộ 2 chiều giữa avatar (Web) và photoURL (App & Firebase Auth)
         const effectiveAvatar = rawData.photoURL || rawData.avatar || auth.currentUser?.photoURL || null;
+        const effectiveDob = rawData.dob || rawData.birthday || '';
         const data = {
           uid,
           ...rawData,
+          dob: effectiveDob,
+          birthday: effectiveDob,
           points: sanitizedPoints,
           photoURL: effectiveAvatar,
           avatar: effectiveAvatar,
@@ -164,6 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedProfileStr = await AsyncStorage.getItem(STORAGE_KEY_PROFILE);
         if (savedProfileStr) {
           const savedProfile = JSON.parse(savedProfileStr);
+          const savedDob = savedProfile.dob || savedProfile.birthday || '';
+          savedProfile.dob = savedDob;
+          savedProfile.birthday = savedDob;
           if (savedProfile.points === 50 && (!savedProfile.totalSpent || Number(savedProfile.totalSpent) < 500000)) {
             savedProfile.points = Math.floor(Number(savedProfile.totalSpent || 0) / 10000);
           }
@@ -535,8 +552,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 2. Ghi trực tiếp lên Firestore `users/{uid}` (Đồng bộ trực tiếp với Web App)
+      // Cập nhật tất cả các UID liên quan (current UID, auth UID, userProfile UID, và mergedTo)
+      const uidsToUpdate = new Set<string>();
+      if (currentUid) uidsToUpdate.add(currentUid);
+      if (auth.currentUser?.uid) uidsToUpdate.add(auth.currentUser.uid);
+      if (userProfile?.uid) uidsToUpdate.add(userProfile.uid);
+      if ((userProfile as any)?.mergedTo) uidsToUpdate.add((userProfile as any).mergedTo);
+
       const userDocRef = doc(db, 'users', currentUid);
-      await setDoc(userDocRef, payload, { merge: true });
+      for (const targetUid of Array.from(uidsToUpdate)) {
+        try {
+          const docRef = doc(db, 'users', targetUid);
+          await setDoc(docRef, payload, { merge: true });
+        } catch (setErr) {
+          console.warn(`Lỗi ghi Firestore user ${targetUid}:`, setErr);
+        }
+      }
 
       // Nếu cập nhật SĐT, tìm xem có tài khoản cũ/ghost record nào mang SĐT này không để sáp nhập điểm và thông tin
       if (data.phone) {
@@ -585,9 +616,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 3. Cập nhật state nội bộ và AsyncStorage
+      const effectiveDob = payload.dob || payload.birthday || (userProfile as any)?.dob || (userProfile as any)?.birthday || '';
       const updatedProfile: UserProfile = {
         ...(userProfile || { uid: currentUid, email: auth.currentUser?.email || null, displayName: cleanName }),
         ...data,
+        dob: effectiveDob,
+        birthday: effectiveDob,
         photoURL: finalPhotoURL !== undefined ? finalPhotoURL : (userProfile?.photoURL ?? null),
         displayName: cleanName || userProfile?.displayName || null,
         name: cleanName || userProfile?.name,
@@ -598,6 +632,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Lỗi cập nhật user profile:', e);
       throw e;
     }
+  };
+
+  const saveAddresses = async (addresses: UserAddress[]) => {
+    await updateUserProfileData({ addresses });
+  };
+
+  const addAddress = async (newAddress: UserAddress) => {
+    const currentAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? [...userProfile.addresses] : [];
+    if (newAddress.isDefault) {
+      currentAddresses.forEach((item) => {
+        item.isDefault = false;
+      });
+      currentAddresses.unshift(newAddress);
+    } else {
+      if (currentAddresses.length === 0) {
+        newAddress.isDefault = true;
+      }
+      currentAddresses.push(newAddress);
+    }
+    await updateUserProfileData({ addresses: currentAddresses });
+  };
+
+  const updateAddress = async (index: number, updatedAddress: UserAddress) => {
+    const currentAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? [...userProfile.addresses] : [];
+    if (index < 0 || index >= currentAddresses.length) return;
+
+    if (updatedAddress.isDefault) {
+      currentAddresses.forEach((item, idx) => {
+        if (idx !== index) item.isDefault = false;
+      });
+    }
+    currentAddresses[index] = updatedAddress;
+    await updateUserProfileData({ addresses: currentAddresses });
+  };
+
+  const deleteAddress = async (index: number) => {
+    const currentAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? [...userProfile.addresses] : [];
+    if (index < 0 || index >= currentAddresses.length) return;
+
+    const wasDefault = currentAddresses[index].isDefault;
+    currentAddresses.splice(index, 1);
+    if (wasDefault && currentAddresses.length > 0) {
+      currentAddresses[0].isDefault = true;
+    }
+    await updateUserProfileData({ addresses: currentAddresses });
+  };
+
+  const setDefaultAddress = async (index: number) => {
+    const currentAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? [...userProfile.addresses] : [];
+    if (index < 0 || index >= currentAddresses.length) return;
+
+    currentAddresses.forEach((item, idx) => {
+      item.isDefault = idx === index;
+    });
+    // Đưa địa chỉ mặc định lên đầu danh sách để dễ thao tác
+    const [defaultItem] = currentAddresses.splice(index, 1);
+    currentAddresses.unshift(defaultItem);
+
+    await updateUserProfileData({ addresses: currentAddresses });
   };
 
   const linkGoogleAccount = async (idToken: string) => {
@@ -657,6 +750,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithAppleCredential,
         signInWithPhoneSession,
         updateUserProfileData,
+        saveAddresses,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        setDefaultAddress,
         linkGoogleAccount,
         linkAppleAccount,
         unlinkProvider,

@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Header } from '../src/components/Header';
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
-import { Colors, Typography, Spacing, BorderRadius } from '../src/constants/theme';
+import { useThemeColor, Typography, Spacing, BorderRadius } from '../src/constants/theme';
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 import { removeVietnameseTones } from '../src/utils/format';
@@ -30,6 +30,9 @@ const MAX_RECENT_SEARCHES = 10;
 export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const [searchText, setSearchText] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -97,7 +100,7 @@ export default function SearchScreen() {
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       <Header
         title=""
         showBack
@@ -152,7 +155,7 @@ export default function SearchScreen() {
                     style={styles.suggestionChip}
                     onPress={() => handleSelectRecent(term)}
                   >
-                    <Ionicons name="search-outline" size={14} color="#556B5C" style={{ marginRight: 6 }} />
+                    <Ionicons name="search-outline" size={14} color="#9C7156" style={{ marginRight: 6 }} />
                     <Text style={styles.suggestionChipText}>{term}</Text>
                   </TouchableOpacity>
                 ))}
@@ -198,94 +201,95 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  recentSection: {
-    padding: Spacing.lg,
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  recentTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  recentClearBtn: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.error,
-  },
-  recentList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  recentChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  recentChipText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textPrimary,
-  },
-  recentEmptyText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-  },
-  suggestionSection: {
-    marginTop: 32,
-  },
-  suggestionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F6F4',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
-  },
-  suggestionChipText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: '#2B2928',
-    fontWeight: '500',
-  },
-  listContent: {
-    padding: Spacing.md,
-    paddingBottom: 40,
-  },
-  listColumnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  productCardWrapper: {
-    width: '48%',
-  },
-  resultCountText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.md,
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    recentSection: {
+      padding: Spacing.lg,
+    },
+    recentHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    recentTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.lg,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    recentClearBtn: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: '#9C7156',
+    },
+    recentList: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    recentChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.surface,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: BorderRadius.full,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : Colors.borderLight,
+    },
+    recentChipText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: Colors.textPrimary,
+    },
+    recentEmptyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: Colors.textMuted,
+      fontStyle: 'italic',
+    },
+    suggestionSection: {
+      marginTop: 32,
+    },
+    suggestionChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#2C2C2C' : '#F3F6F4',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: BorderRadius.full,
+      borderWidth: isDark ? 1.2 : 1,
+      borderColor: isDark ? '#9C7156' : '#E8CCB2',
+    },
+    suggestionChipText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: isDark ? '#E8CCB2' : '#2B2928',
+      fontWeight: '500',
+    },
+    listContent: {
+      padding: Spacing.md,
+      paddingBottom: 40,
+    },
+    listColumnWrapper: {
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    productCardWrapper: {
+      width: '48%',
+    },
+    resultCountText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: Colors.textSecondary,
+      marginBottom: Spacing.md,
+    },
+  });

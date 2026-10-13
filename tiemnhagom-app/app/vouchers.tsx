@@ -32,6 +32,8 @@ type TabType = 'unused' | 'used' | 'expired';
 export default function VouchersScreen() {
   const router = useRouter();
   const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { user } = useAuth();
   const dialog = useDialog();
 
@@ -106,7 +108,7 @@ export default function VouchersScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: Colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* Header chuẩn app Tiệm Nhà Gốm */}
       <Header
@@ -264,7 +266,7 @@ export default function VouchersScreen() {
                       <Text
                         style={[
                           styles.voucherTitle,
-                          { color: isExpired ? '#888888' : '#2B2928' },
+                          { color: isExpired ? (Colors.textMuted || '#888888') : Colors.textPrimary },
                         ]}
                         numberOfLines={2}
                       >
@@ -294,12 +296,12 @@ export default function VouchersScreen() {
                       <Ionicons
                         name={copiedCode === item.code ? 'checkmark-circle' : 'copy-outline'}
                         size={14}
-                        color={copiedCode === item.code ? '#2B2928' : '#9C7156'}
+                        color={copiedCode === item.code ? (isDark ? '#E8CCB2' : '#2B2928') : '#9C7156'}
                       />
                       <Text
                         style={[
                           styles.codeBadgeText,
-                          copiedCode === item.code && { color: '#2B2928' },
+                          copiedCode === item.code && { color: isDark ? '#E8CCB2' : '#2B2928' },
                         ]}
                       >
                         {copiedCode === item.code ? 'Đã sao chép!' : item.code}
@@ -441,7 +443,7 @@ export default function VouchersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
   },
@@ -463,29 +465,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabPillActive: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
+    borderWidth: 1.2,
     borderColor: '#9C7156',
     shadowColor: '#9C7156',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: isDark ? 0 : 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   tabPillInactive: {
-    backgroundColor: '#F6F4EC',
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#F6F4EC',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8CCB2',
   },
   tabText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
   },
   tabTextActive: {
-    color: '#2B2928',
+    color: isDark ? '#E8CCB2' : '#2B2928',
     fontWeight: '700',
   },
   tabTextInactive: {
-    color: '#6E665D',
+    color: Colors.textMuted || '#6E665D',
     fontWeight: '500',
   },
   loadingContainer: {
@@ -495,7 +498,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   loadingText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 14,
+    color: Colors.textSecondary,
   },
   scrollView: {
     flex: 1,
@@ -508,14 +513,14 @@ const styles = StyleSheet.create({
   // Voucher Card
   voucherCard: {
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -651,31 +656,38 @@ const styles = StyleSheet.create({
   // Empty State
   emptyContainer: {
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 2,
   },
   emptyIconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#F6F4EC',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F6F4EC',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8CCB2',
   },
   emptyTitle: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptyDesc: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -693,11 +705,12 @@ const styles = StyleSheet.create({
     gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: isDark ? 0 : 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   emptyActionBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 13.5,
     fontWeight: '700',
@@ -705,7 +718,7 @@ const styles = StyleSheet.create({
   // Modal
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -717,11 +730,13 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     position: 'relative',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
+    shadowOpacity: isDark ? 0 : 0.15,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: isDark ? 0 : 8,
   },
   modalCloseBtn: {
     position: 'absolute',
@@ -730,7 +745,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F6F4EC',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F6F4EC',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -765,10 +780,10 @@ const styles = StyleSheet.create({
   },
   modalCodeBox: {
     width: '100%',
-    backgroundColor: '#F6F4EC',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F6F4EC',
     borderRadius: 16,
-    borderWidth: 1.2,
-    borderColor: '#E8CCB2',
+    borderWidth: isDark ? 0 : 1.2,
+    borderColor: isDark ? 'transparent' : '#E8CCB2',
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -777,15 +792,17 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   modalCodeLabel: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '600',
-    color: '#9C7156',
+    color: isDark ? '#E8CCB2' : '#9C7156',
     letterSpacing: 0.5,
   },
   modalCodeVal: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '800',
-    color: '#2B2928',
+    color: Colors.textPrimary || '#2B2928',
     letterSpacing: 0.5,
   },
   modalCopyBtn: {
@@ -798,9 +815,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   modalCopyBtnDone: {
-    backgroundColor: '#2B2928',
+    backgroundColor: isDark ? '#121212' : '#2B2928',
   },
   modalCopyBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
@@ -816,6 +834,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modalDetailText: {
+    fontFamily: 'ElleGaborStd',
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
@@ -831,11 +850,12 @@ const styles = StyleSheet.create({
     gap: 8,
     shadowColor: '#9C7156',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowOpacity: isDark ? 0 : 0.25,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   modalPrimaryBtnText: {
+    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',

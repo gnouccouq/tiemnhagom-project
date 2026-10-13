@@ -675,23 +675,24 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 18,
       paddingVertical: 7,
       borderRadius: 22,
-      borderWidth: 1,
-      borderColor: isDark ? '#333333' : '#D1D5DB',
-      backgroundColor: isDark ? '#232326' : '#FFFFFF',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#D1D5DB',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
     },
     filterPillActive: {
-      borderColor: isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B',
-      backgroundColor: isDark ? 'rgba(239, 192, 80, 0.12)' : 'rgba(138, 90, 43, 0.08)',
+      borderWidth: 1.2,
+      borderColor: '#9C7156',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : 'rgba(156, 113, 86, 0.1)',
     },
     filterPillText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
-      color: isDark ? '#9CA3AF' : '#4B5563',
+      color: isDark ? Colors.textMuted : '#4B5563',
     },
     filterPillTextActive: {
       fontWeight: '700',
-      color: isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B',
+      color: isDark ? '#E8CCB2' : '#9C7156',
     },
     datePill: {
       flexDirection: 'row',
@@ -699,16 +700,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 14,
       paddingVertical: 7,
       borderRadius: 22,
-      borderWidth: 1,
-      borderColor: isDark ? '#333333' : '#D1D5DB',
-      backgroundColor: isDark ? '#232326' : '#FFFFFF',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#D1D5DB',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
       marginLeft: 'auto',
     },
     datePillText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '500',
-      color: isDark ? '#D1D5DB' : '#374151',
+      color: isDark ? Colors.textPrimary : '#374151',
     },
 
     // Content ScrollView
@@ -728,13 +729,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 18,
       paddingVertical: 16,
       marginBottom: 14,
-      borderWidth: 1.2,
-      borderColor: isDark ? (Colors.borderLight || '#2A2A2A') : '#F0ECE6',
+      borderWidth: isDark ? 0 : 1.2,
+      borderColor: isDark ? 'transparent' : '#F0ECE6',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0.25 : 0.035,
+      shadowOpacity: isDark ? 0 : 0.035,
       shadowRadius: 6,
-      elevation: isDark ? 2 : 1,
+      elevation: isDark ? 0 : 1,
     },
     cardHeaderRow: {
       flexDirection: 'row',
@@ -755,10 +756,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       letterSpacing: 0.2,
     },
     pointsEarnText: {
-      color: isDark ? (Colors.accentGold || '#EFC050') : '#78350F',
+      color: isDark ? '#E8CCB2' : '#9C7156',
     },
     pointsRedeemText: {
-      color: '#DC2626',
+      color: '#EF5350',
     },
     cardInfoRow: {
       flexDirection: 'row',
@@ -768,7 +769,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     cardInfoLabel: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
-      color: isDark ? '#9CA3AF' : '#6B7280',
+      color: isDark ? Colors.textMuted : '#6B7280',
       width: 124,
       lineHeight: 20,
     },
@@ -784,7 +785,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
-      color: isDark ? '#EF4444' : '#7A1A1A',
+      color: isDark ? '#E8CCB2' : '#9C7156',
       flex: 1,
       lineHeight: 20,
     },
@@ -812,7 +813,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     emptyDesc: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
-      color: isDark ? '#9CA3AF' : '#6B7280',
+      color: isDark ? Colors.textMuted : '#6B7280',
       textAlign: 'center',
       lineHeight: 20,
     },
@@ -820,7 +821,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     // Modal 1: Date Range Picker
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.48)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 24,
@@ -832,13 +833,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 22,
       paddingHorizontal: 20,
       paddingVertical: 18,
-      borderWidth: 1,
-      borderColor: isDark ? '#333333' : '#E5E7EB',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E5E7EB',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.25,
+      shadowOpacity: isDark ? 0 : 0.25,
       shadowRadius: 16,
-      elevation: 6,
+      elevation: isDark ? 0 : 6,
     },
     modalTopHeader: {
       flexDirection: 'row',
@@ -846,7 +847,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
       paddingBottom: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: isDark ? '#2F2F33' : '#E5E7EB',
+      borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#E5E7EB',
     },
     modalTitleText: {
       fontFamily: 'ElleGaborStd',
@@ -870,7 +871,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 14,
     },
     presetItemActive: {
-      backgroundColor: isDark ? 'rgba(239, 192, 80, 0.12)' : 'rgba(138, 90, 43, 0.08)',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : 'rgba(156, 113, 86, 0.1)',
     },
     presetItemLabel: {
       fontFamily: 'ElleGaborStd',
@@ -880,13 +881,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     presetItemLabelActive: {
       fontWeight: '700',
-      color: isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B',
+      color: isDark ? '#E8CCB2' : '#9C7156',
     },
 
     // Modal 2: Rules Sheet
     modalOverlayBottom: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.48)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
       justifyContent: 'flex-end',
     },
     rulesSheetModal: {
@@ -896,8 +897,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 20,
       paddingTop: 18,
       paddingBottom: Platform.OS === 'ios' ? 44 : 28,
-      borderTopWidth: 1,
-      borderColor: isDark ? '#333333' : '#F0ECE6',
+      borderTopWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#F0ECE6',
     },
     rulesTitleRow: {
       flexDirection: 'row',
@@ -911,23 +912,23 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
       paddingVertical: 18,
       borderRadius: 18,
-      backgroundColor: isDark ? '#27272A' : '#FAF8F5',
-      borderWidth: 1,
-      borderColor: isDark ? '#333338' : '#F0ECE6',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#F0ECE6',
       marginBottom: 16,
     },
     pointsBigNumber: {
       fontFamily: 'ElleGaborStd',
       fontSize: 42,
       fontWeight: '800',
-      color: isDark ? (Colors.accentGold || '#EFC050') : '#78350F',
+      color: isDark ? '#E8CCB2' : '#9C7156',
       lineHeight: 48,
     },
     pointsUnitLabel: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
-      color: isDark ? '#A1A1AA' : '#6B7280',
+      color: isDark ? Colors.textMuted : '#6B7280',
       marginTop: 2,
     },
     pointsEquivText: {
@@ -948,7 +949,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     ruleText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
-      color: isDark ? '#D1D5DB' : '#4B5563',
+      color: isDark ? Colors.textSecondary : '#4B5563',
       lineHeight: 19,
       flex: 1,
     },

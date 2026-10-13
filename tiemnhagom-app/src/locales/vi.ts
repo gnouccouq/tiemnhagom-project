@@ -651,5 +651,24 @@ export const vi = {
   confirmAddToCart: 'Xác nhận thêm vào giỏ',
   confirmBuyNow: 'Xác nhận mua ngay',
   selectVariantRequired: 'Vui lòng chọn biến thể sản phẩm.',
+
+  // Sổ địa chỉ (Address Book)
+  addressBookTitle: 'Sổ Địa Chỉ',
+  addressBookDesc: 'Quản lý địa chỉ giao hàng để đặt hàng nhanh chóng',
+  addNewAddress: 'Thêm địa chỉ mới',
+  editAddress: 'Chỉnh sửa địa chỉ',
+  emptyAddressList: 'Bạn chưa lưu địa chỉ nhận hàng nào',
+  emptyAddressListSub: 'Thêm địa chỉ để đặt hàng nhanh chóng hơn ở các đơn tiếp theo',
+  defaultAddressBadge: 'Mặc định',
+  setDefaultAddressAction: 'Đặt làm mặc định',
+  deleteAddressConfirmTitle: 'Xóa địa chỉ',
+  deleteAddressConfirmMsg: 'Bạn có chắc chắn muốn xóa địa chỉ này khỏi sổ địa chỉ không?',
+  addressSavedSuccess: 'Đã lưu địa chỉ thành công',
+  addressDeletedSuccess: 'Đã xóa địa chỉ',
+  setDefaultAddressSuccess: 'Đã đặt làm địa chỉ mặc định',
+  selectFromAddressBook: 'Chọn từ Sổ địa chỉ',
+  useThisAddress: 'Sử dụng địa chỉ này',
+  setAsDefaultLabel: 'Đặt làm địa chỉ mặc định',
+  saveAddressAction: 'Lưu địa chỉ',
 };
 

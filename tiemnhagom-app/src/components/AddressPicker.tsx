@@ -39,16 +39,11 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
 
   useEffect(() => {
     if (visible) {
+      setStep('PROVINCE');
       if (initialProvinceCode) {
         const p = provincesData.find((prov) => prov.province_code === initialProvinceCode);
-        if (p) {
-          setSelectedProv(p);
-          setStep('WARD');
-        } else {
-          setStep('PROVINCE');
-        }
+        setSelectedProv(p || null);
       } else {
-        setStep('PROVINCE');
         setSelectedProv(null);
       }
     }
@@ -64,6 +59,8 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
     onClose();
   };
 
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+
   const renderItem = ({ item }: { item: any }) => {
     const isProvStep = step === 'PROVINCE';
     const name = item.name;
@@ -77,7 +74,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         onPress={() => (isProvStep ? handleSelectProvince(item) : handleSelectWard(item))}
       >
         <Text style={[themeStyles.itemText, isSelected && themeStyles.itemTextActive]}>{name}</Text>
-        {isSelected && <Ionicons name="checkmark" size={20} color="#18181B" />}
+        {isSelected && <Ionicons name="checkmark" size={20} color={isDark ? '#F5F5F5' : '#18181B'} />}
       </TouchableOpacity>
     );
   };
@@ -109,24 +106,24 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
       <View style={themeStyles.header}>
         {step === 'WARD' ? (
           <ScalePressable onPress={() => { setStep('PROVINCE'); setSearchQuery(''); }} style={themeStyles.iconBtn} activeScale={0.88}>
-            <Ionicons name="arrow-back" size={22} color="#18181B" />
+            <Ionicons name="arrow-back" size={22} color={isDark ? '#F5F5F5' : '#18181B'} />
           </ScalePressable>
         ) : (
           <View style={themeStyles.iconBtn} />
         )}
         <Text style={themeStyles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
         <ScalePressable onPress={onClose} style={themeStyles.iconBtn} activeScale={0.88}>
-          <Ionicons name="close" size={22} color="#18181B" />
+          <Ionicons name="close" size={22} color={isDark ? '#F5F5F5' : '#18181B'} />
         </ScalePressable>
       </View>
 
       {/* Thanh tìm kiếm nhanh */}
       <View style={themeStyles.searchBoxWrapper}>
-        <Ionicons name="search-outline" size={18} color="#9E968D" style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={18} color={isDark ? '#888888' : '#9E968D'} style={{ marginRight: 8 }} />
         <TextInput
           style={themeStyles.searchInput}
           placeholder={step === 'PROVINCE' ? 'Gõ tìm Tỉnh / Thành phố...' : 'Gõ tìm Phường / Xã...'}
-          placeholderTextColor="#9E968D"
+          placeholderTextColor={isDark ? '#777777' : '#9E968D'}
           value={searchQuery}
           onChangeText={setSearchQuery}
           clearButtonMode="while-editing"
@@ -134,7 +131,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close-circle" size={18} color="#9E968D" />
+            <Ionicons name="close-circle" size={18} color={isDark ? '#888888' : '#9E968D'} />
           </TouchableOpacity>
         )}
       </View>
@@ -148,8 +145,8 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={{ paddingVertical: 30, alignItems: 'center' }}>
-            <Ionicons name="search" size={32} color="#D1C7BD" style={{ marginBottom: 8 }} />
-            <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 14, color: '#9E968D' }}>
+            <Ionicons name="search" size={32} color={isDark ? '#333333' : '#D1C7BD'} style={{ marginBottom: 8 }} />
+            <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 14, color: isDark ? '#888888' : '#9E968D' }}>
               Không tìm thấy kết quả phù hợp
             </Text>
           </View>
@@ -159,86 +156,92 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   );
 };
 
-const getStyles = (Colors: any) => StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  modalContent: {
-    backgroundColor: Colors.cardBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: '70%',
-    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0ECE6',
-  },
-  title: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  iconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchBoxWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF8F5',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 14,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    color: '#2B2928',
-    paddingVertical: 0,
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F0ECE6',
-  },
-  itemText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    color: '#2D3B34',
-  },
-  itemTextActive: {
-    fontWeight: '700',
-    color: '#18181B',
-  },
-});
+const getStyles = (Colors: any) => {
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)',
+    },
+    modalContent: {
+      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      height: '70%',
+      paddingHorizontal: 0,
+      paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+      borderWidth: 0,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#222222' : '#F0ECE6',
+    },
+    title: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: isDark ? '#F5F5F5' : '#18181B',
+    },
+    iconBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    searchBoxWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      marginHorizontal: 16,
+      marginVertical: 12,
+      paddingHorizontal: 14,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+    },
+    searchInput: {
+      flex: 1,
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      color: isDark ? '#F5F5F5' : '#2B2928',
+      paddingVertical: 0,
+    },
+    listContainer: {
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+    },
+    itemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? '#222222' : '#F0ECE6',
+    },
+    itemText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      color: isDark ? '#CCCCCC' : '#2D3B34',
+    },
+    itemTextActive: {
+      fontWeight: '700',
+      color: isDark ? '#FFFFFF' : '#18181B',
+    },
+  });
+};

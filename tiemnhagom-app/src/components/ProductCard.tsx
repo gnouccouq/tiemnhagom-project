@@ -28,7 +28,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 }) => {
   const router = useRouter();
   const Colors = useThemeColor();
-  const styles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const { addToCart, flyToCart } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
@@ -232,27 +233,27 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   );
 });
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   card: {
     backgroundColor: Colors.cardBackground,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
     overflow: 'hidden',
     marginBottom: 14,
     shadowColor: Colors.textPrimary,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
+    shadowOpacity: isDark ? 0 : 0.05,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   imageContainer: {
     width: '100%',
     aspectRatio: 1.02,
-    backgroundColor: Colors.background,
+    backgroundColor: isDark ? '#2C2C2C' : Colors.background,
     position: 'relative',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomWidth: isDark ? 0 : 1,
+    borderBottomColor: isDark ? 'transparent' : (Colors.borderLight || '#E8E1D8'),
   },
   image: {
     width: '100%',
@@ -262,16 +263,16 @@ const getStyles = (Colors: any) => StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: isDark ? 0 : 0.12,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   badgeContainer: {
     position: 'absolute',

@@ -24,12 +24,14 @@ import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
+import { BlurButton } from '../src/components/BlurButton';
 import { OrderCardSkeleton } from '../src/components/ShimmerSkeleton';
 import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useCart } from '../src/context/CartContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
+import { useThemeColor } from '../src/constants/theme';
 import { formatDate } from '../src/utils/format';
 import { lookupOrders } from '../src/services/orderService';
 
@@ -283,6 +285,9 @@ type MainTab = 'ongoing' | 'completed' | 'cancelled';
 export default function OrdersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const { user } = useAuth();
   const { products: productsCatalog, orders: realtimeOrders } = useRealtimeData();
@@ -594,40 +599,40 @@ export default function OrdersScreen() {
     const s = (status || '').toLowerCase();
     if (s.includes('hủy') || s.includes('cancel')) {
       return {
-        bg: BRAND.dangerBg,
-        borderColor: BRAND.dangerBorder,
-        textColor: BRAND.danger,
+        bg: isDark ? 'rgba(220, 38, 38, 0.15)' : BRAND.dangerBg,
+        borderColor: isDark ? 'transparent' : BRAND.dangerBorder,
+        textColor: '#EF5350',
         label: 'Đã hủy',
       };
     }
     if (s.includes('giao') || s.includes('ship')) {
       return {
-        bg: '#FAF4ED',
-        borderColor: BRAND.warmBeige,
-        textColor: '#8A5A2B',
+        bg: isDark ? (Colors.surface || '#2C2C2C') : '#FAF4ED',
+        borderColor: isDark ? 'transparent' : BRAND.warmBeige,
+        textColor: isDark ? '#E8CCB2' : '#8A5A2B',
         label: 'Đang giao',
       };
     }
     if (s.includes('xác nhận') || s.includes('xử lý') || s.includes('chuẩn bị')) {
       return {
-        bg: '#F5F3EF',
-        borderColor: BRAND.borderSoft,
-        textColor: BRAND.mutedText,
+        bg: isDark ? (Colors.surface || '#2C2C2C') : '#F5F3EF',
+        borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+        textColor: Colors.textMuted || BRAND.mutedText,
         label: 'Đang chuẩn bị',
       };
     }
     // Hoàn tất: Tông kem gốm sang trọng, viền men gốm ấm, chữ nâu đất nung
     return {
-      bg: '#F6F4EC',
-      borderColor: BRAND.warmBeige,
-      textColor: BRAND.primary,
+      bg: isDark ? 'rgba(156, 113, 86, 0.2)' : '#F6F4EC',
+      borderColor: isDark ? 'transparent' : BRAND.warmBeige,
+      textColor: isDark ? '#E8CCB2' : BRAND.primary,
       label: 'Hoàn tất',
     };
   };
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="dark-content" backgroundColor={BRAND.bgCream} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* ── HEADER CHUẨN THIẾT KẾ TIỆM NHÀ GỐM (KHÔNG VẠCH KẺ ĐÁY) ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
@@ -635,22 +640,31 @@ export default function OrdersScreen() {
           <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint="light"
+              tint={isDark ? "dark" : "light"}
               blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(250, 248, 245, 0.7)' }]} />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: isDark
+                    ? (Platform.OS === 'ios' ? 'rgba(30, 30, 30, 0.15)' : 'rgba(18, 18, 18, 0.6)')
+                    : 'rgba(250, 248, 245, 0.7)',
+                },
+              ]}
+            />
           </View>
         )}
 
         {/* Nút quay lại tròn đều 40x40 chuẩn quy tắc */}
-        <ScalePressable
+        <BlurButton
           style={styles.backCircleBtn}
           onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Quay lại"
         >
-          <Ionicons name="arrow-back" size={22} color={BRAND.textPrimary} />
-        </ScalePressable>
+          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+        </BlurButton>
 
         {/* Tiêu đề chính giữa */}
         <View style={styles.headerTitleWrap}>
@@ -658,13 +672,13 @@ export default function OrdersScreen() {
         </View>
 
         {/* Nút tìm kiếm / tra cứu đơn hàng nhanh */}
-        <ScalePressable
+        <BlurButton
           style={styles.searchCircleBtn}
           onPress={() => setLookupModalVisible(true)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Tra cứu đơn hàng"
         >
-          <Ionicons name="search-outline" size={20} color={BRAND.textPrimary} />
-        </ScalePressable>
+          <Ionicons name="search-outline" size={20} color={Colors.textPrimary} />
+        </BlurButton>
       </View>
 
       {/* ── KHỐI BỘ LỌC CỐ ĐỊNH TRÊN CÙNG (3 TABS + HÀNG THỜI GIAN/CỬA HÀNG) ── */}
@@ -1243,10 +1257,10 @@ export default function OrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: BRAND.bgCream,
+    backgroundColor: Colors.background,
   },
 
   // ── HEADER ──
@@ -1268,16 +1282,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: BRAND.cardWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
   headerTitleWrap: {
     flex: 1,
@@ -1288,28 +1292,18 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   searchCircleBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: BRAND.cardWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   // ── KHỐI FILTER CỐ ĐỊNH ──
   fixedFilterContainer: {
     paddingHorizontal: 16,
-    backgroundColor: BRAND.bgCream,
+    backgroundColor: Colors.background,
     paddingBottom: 6,
     zIndex: 40,
   },
@@ -1327,29 +1321,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabPillActive: {
-    backgroundColor: '#FFFDF9',
-    borderWidth: 1.4,
-    borderColor: BRAND.primary,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
+    borderWidth: 1.2,
+    borderColor: '#9C7156',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: isDark ? 0 : 0.05,
     shadowRadius: 4,
-    elevation: 1,
+    elevation: isDark ? 0 : 1,
   },
   tabPillInactive: {
-    backgroundColor: BRAND.tabInactiveBg,
-    borderWidth: 0,
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : BRAND.tabInactiveBg,
+    borderWidth: isDark ? 0 : 0,
   },
   tabText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
   },
   tabTextActive: {
-    color: BRAND.textPrimary,
+    color: isDark ? '#E8CCB2' : Colors.textPrimary,
     fontWeight: '700',
   },
   tabTextInactive: {
-    color: BRAND.tabInactiveText,
+    color: Colors.textMuted || BRAND.tabInactiveText,
     fontWeight: '600',
   },
 
@@ -1373,10 +1367,10 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '600',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   filterDropdownTextActive: {
-    color: BRAND.primary,
+    color: '#9C7156',
     fontWeight: '700',
   },
 
@@ -1394,7 +1388,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: Colors.textMuted,
   },
 
   // ── EMPTY STATE ──
@@ -1416,7 +1410,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#F3ECE3',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#F3ECE3',
     opacity: 0.6,
   },
   boxArtIcon: {
@@ -1438,14 +1432,14 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 6,
   },
   emptySubText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: BRAND.mutedText,
+    color: Colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -1460,9 +1454,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
+    shadowOpacity: isDark ? 0 : 0.16,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   emptyExploreBtnText: {
     fontFamily: 'ElleGaborStd',
@@ -1477,16 +1471,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   orderCard: {
-    backgroundColor: BRAND.cardWhite,
+    backgroundColor: Colors.cardBackground,
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
 
   // Hàng trên cùng của thẻ
@@ -1503,20 +1497,20 @@ const styles = StyleSheet.create({
   orderMethodDateText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: BRAND.mutedText,
+    color: Colors.textMuted,
     marginBottom: 2,
   },
   orderCodeText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#5C544D',
+    color: isDark ? '#E8CCB2' : '#5C544D',
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: isDark ? 0 : 1,
   },
   statusBadgeText: {
     fontFamily: 'ElleGaborStd',
@@ -1529,7 +1523,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 15.5,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
 
@@ -1544,9 +1538,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
-    backgroundColor: '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -1577,7 +1571,7 @@ const styles = StyleSheet.create({
   summaryItemsText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: Colors.textMuted,
     flex: 1,
     marginRight: 12,
   },
@@ -1585,7 +1579,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 16.5,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
 
   // Hàng nút hành động dưới đáy thẻ
@@ -1598,9 +1592,9 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     paddingHorizontal: 16,
-    borderWidth: 1.2,
-    borderColor: BRAND.warmBeige,
-    backgroundColor: BRAND.cardWhite,
+    borderWidth: isDark ? 0 : 1.2,
+    borderColor: isDark ? 'transparent' : BRAND.warmBeige,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : BRAND.cardWhite,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1608,7 +1602,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   reorderBtn: {
     height: 38,
@@ -1616,7 +1610,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderWidth: 1.2,
     borderColor: BRAND.primary,
-    backgroundColor: '#FFFDF9',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1624,7 +1618,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: BRAND.primary,
+    color: isDark ? '#E8CCB2' : BRAND.primary,
   },
   trackOrderBtn: {
     flexDirection: 'row',
@@ -1636,9 +1630,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: isDark ? 0 : 0.12,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: isDark ? 0 : 2,
   },
   trackOrderBtnText: {
     fontFamily: 'ElleGaborStd',
@@ -1650,11 +1644,11 @@ const styles = StyleSheet.create({
   // ── BOTTOM SHEET MODALS ──
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   sheetContent: {
-    backgroundColor: BRAND.cardWhite,
+    backgroundColor: Colors.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -1665,7 +1659,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#DDD5CC',
+    backgroundColor: isDark ? '#444444' : '#DDD5CC',
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -1673,7 +1667,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 16.5,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -1683,15 +1677,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F4EFEA',
+    borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F4EFEA',
   },
   sheetOptionRowActive: {
-    backgroundColor: '#FCFAF7',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FCFAF7',
   },
   sheetOptionText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   sheetOptionTextActive: {
     fontWeight: '700',
@@ -1701,19 +1695,21 @@ const styles = StyleSheet.create({
   // ── MODAL TRA CỨU ĐƠN ──
   lookupModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
   lookupModalCard: {
-    backgroundColor: BRAND.cardWhite,
+    backgroundColor: Colors.cardBackground,
     borderRadius: 24,
     padding: 20,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
+    shadowOpacity: isDark ? 0 : 0.16,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: isDark ? 0 : 6,
   },
   modalHeaderRow: {
     flexDirection: 'row',
@@ -1728,12 +1724,12 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 17,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   lookupIntroText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 10,
     marginBottom: 14,
     lineHeight: 18,
@@ -1743,9 +1739,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     paddingHorizontal: 16,
     marginBottom: 14,
   },
@@ -1753,7 +1749,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   lookupSubmitBtn: {
     height: 48,
@@ -1763,9 +1759,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
+    shadowOpacity: isDark ? 0 : 0.15,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   lookupSubmitBtnText: {
     fontFamily: 'ElleGaborStd',
@@ -1776,7 +1772,7 @@ const styles = StyleSheet.create({
   noLookupText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
     textAlign: 'center',
   },
   foundLookupText: {
@@ -1789,7 +1785,7 @@ const styles = StyleSheet.create({
 
   // ── MODAL ĐÁNH GIÁ ──
   ratingSheetCard: {
-    backgroundColor: BRAND.cardWhite,
+    backgroundColor: Colors.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -1799,7 +1795,7 @@ const styles = StyleSheet.create({
   ratingSubtitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 6,
     marginBottom: 12,
   },
@@ -1820,18 +1816,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 18,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
   },
   tagPillActive: {
-    backgroundColor: '#FFFDF9',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFDF9',
     borderColor: BRAND.primary,
   },
   tagText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   tagTextActive: {
     color: BRAND.primary,
@@ -1840,14 +1836,14 @@ const styles = StyleSheet.create({
   reviewTextInput: {
     height: 72,
     borderRadius: 16,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
     textAlignVertical: 'top',
     marginBottom: 16,
   },
@@ -1859,9 +1855,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
+    shadowOpacity: isDark ? 0 : 0.16,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   submitReviewBtnText: {
     fontFamily: 'ElleGaborStd',
@@ -1872,7 +1868,7 @@ const styles = StyleSheet.create({
 
   // ── MODAL CHI TIẾT ĐƠN ──
   detailSheetCard: {
-    backgroundColor: BRAND.cardWhite,
+    backgroundColor: Colors.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -1887,11 +1883,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   detailMetaBox: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderRadius: 16,
     padding: 12,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     gap: 8,
     marginBottom: 14,
   },
@@ -1903,19 +1899,19 @@ const styles = StyleSheet.create({
   detailMetaLabel: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   detailMetaVal: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   detailSectionTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
-    color: '#8A847C',
+    color: isDark ? '#9E968D' : '#8A847C',
     letterSpacing: 0.8,
     marginBottom: 8,
   },
@@ -1924,16 +1920,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5EFE9',
+    borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F5EFE9',
   },
   detailItemThumb: {
     width: 48,
     height: 48,
     borderRadius: 10,
     marginRight: 10,
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
   },
   detailItemInfo: {
     flex: 1,
@@ -1942,7 +1938,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   detailItemVariantBadge: {
     fontFamily: 'ElleGaborStd',
@@ -1953,46 +1949,46 @@ const styles = StyleSheet.create({
   detailItemQty: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 2,
   },
   detailItemPrice: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   detailAddressBox: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderRadius: 14,
     padding: 12,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     gap: 3,
   },
   detailCustomerName: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   detailCustomerPhone: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   detailCustomerAddress: {
     fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
     lineHeight: 17,
   },
   detailSummaryBox: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FAF8F5',
     borderRadius: 14,
     padding: 12,
-    borderWidth: 1,
-    borderColor: BRAND.borderSoft,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     gap: 6,
     marginBottom: 16,
   },
@@ -2004,17 +2000,17 @@ const styles = StyleSheet.create({
   summaryLineLabel: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
-    color: BRAND.mutedText,
+    color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   summaryLineVal: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   totalLineBorder: {
     borderTopWidth: 1,
-    borderTopColor: '#E8E1D8',
+    borderTopColor: isDark ? (Colors.divider || '#2A2A2A') : '#E8E1D8',
     paddingTop: 8,
     marginTop: 4,
   },
@@ -2022,7 +2018,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
-    color: BRAND.textPrimary,
+    color: Colors.textPrimary,
   },
   totalLineVal: {
     fontFamily: 'ElleGaborStd',
@@ -2038,9 +2034,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
+    shadowOpacity: isDark ? 0 : 0.16,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: isDark ? 0 : 3,
   },
   detailReorderBtnText: {
     fontFamily: 'ElleGaborStd',

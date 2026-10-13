@@ -629,5 +629,24 @@ export const zh = {
   confirmAddToCart: '确定加入购物车',
   confirmBuyNow: '确定立即购买',
   selectVariantRequired: '请选择商品规格。',
+
+  // Address Book
+  addressBookTitle: '收货地址',
+  addressBookDesc: '管理您的收货地址，快速完成结算',
+  addNewAddress: '添加新地址',
+  editAddress: '编辑地址',
+  emptyAddressList: '您还没有保存任何收货地址',
+  emptyAddressListSub: '添加地址以便在后续订单中快速选择',
+  defaultAddressBadge: '默认',
+  setDefaultAddressAction: '设为默认',
+  deleteAddressConfirmTitle: '删除地址',
+  deleteAddressConfirmMsg: '您确定要从地址簿中删除此地址吗？',
+  addressSavedSuccess: '地址保存成功',
+  addressDeletedSuccess: '已删除地址',
+  setDefaultAddressSuccess: '已设为默认地址',
+  selectFromAddressBook: '从地址簿选择',
+  useThisAddress: '使用此地址',
+  setAsDefaultLabel: '设为默认收货地址',
+  saveAddressAction: '保存地址',
 };
 

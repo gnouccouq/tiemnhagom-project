@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useThemeColor } from '../constants/theme';
+
 export interface AnimatedBottomSheetModalProps {
   visible: boolean;
   onClose: () => void;
@@ -36,6 +38,9 @@ export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> =
   avoidKeyboard = false,
 }) => {
   const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const [isRendered, setIsRendered] = useState(visible);
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(360)).current;
@@ -93,81 +98,92 @@ export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> =
 
   if (!isRendered) return null;
 
-  const content = (
-    <Animated.View
-      style={[
-        styles.backdrop,
-        backdropStyle,
-        { opacity: backdropAnim },
-      ]}
-    >
-      <TouchableOpacity
-        style={StyleSheet.absoluteFill}
-        activeOpacity={1}
-        onPress={dismissOnBackdropPress ? onClose : undefined}
-      />
-      <Animated.View
-        style={[
-          styles.sheet,
-          {
-            paddingBottom: Math.max(insets.bottom, 16) + 8,
-            transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
-          },
-          contentStyle,
-        ]}
-      >
-        {showHandle && <View style={styles.handle} />}
-        {children}
-      </Animated.View>
-    </Animated.View>
-  );
-
   return (
     <Modal
       visible={isRendered}
       transparent
       animationType="none"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
-      {avoidKeyboard ? (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardWrap}
-        >
-          {content}
-        </KeyboardAvoidingView>
-      ) : (
-        content
-      )}
+      <Animated.View
+        style={[
+          styles.backdrop,
+          backdropStyle,
+          { opacity: backdropAnim },
+        ]}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={dismissOnBackdropPress ? onClose : undefined}
+        />
+        {avoidKeyboard ? (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+          >
+            <Animated.View
+              style={[
+                styles.sheet,
+                {
+                  paddingBottom: Math.max(insets.bottom, 16) + 8,
+                  transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
+                },
+                contentStyle,
+              ]}
+            >
+              {showHandle && <View style={styles.handle} />}
+              {children}
+            </Animated.View>
+          </KeyboardAvoidingView>
+        ) : (
+          <Animated.View
+            style={[
+              styles.sheet,
+              {
+                paddingBottom: Math.max(insets.bottom, 16) + 8,
+                transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
+              },
+              contentStyle,
+            ]}
+          >
+            {showHandle && <View style={styles.handle} />}
+            {children}
+          </Animated.View>
+        )}
+      </Animated.View>
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
   },
   keyboardWrap: {
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: isDark ? '#121212' : '#FAF8F5',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 10,
+    paddingHorizontal: 16,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: isDark ? 0.35 : 0.1,
     shadowRadius: 12,
     elevation: 10,
+    borderWidth: 0,
   },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D8CFBF',
+    backgroundColor: isDark ? '#333333' : '#D8CFBF',
     alignSelf: 'center',
     marginBottom: 10,
   },

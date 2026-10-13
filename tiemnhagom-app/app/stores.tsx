@@ -86,7 +86,7 @@ export default function StoresScreen() {
     } catch { }
   };
 
-  const isDark = Colors.cardBackground === '#1E1E1E';
+  const isDark = Colors.cardBackground !== '#FFFFFF';
   const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: STORE_BRANCHES.length + 3 });
 
   return (
@@ -261,7 +261,7 @@ export default function StoresScreen() {
 }
 
 const getStyles = (Colors: any) => {
-  const isDark = Colors.cardBackground === '#1E1E1E';
+  const isDark = Colors.cardBackground !== '#FFFFFF';
 
   return StyleSheet.create({
     safeArea: {

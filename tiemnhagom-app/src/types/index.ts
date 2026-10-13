@@ -93,6 +93,19 @@ export interface Order {
   canceledAt?: any;
 }
 
+export interface UserAddress {
+  id?: string;
+  fullName: string;
+  phone: string;
+  address: string;
+  provinceName?: string;
+  provinceCode?: string;
+  wardName?: string;
+  wardCode?: string;
+  locationName?: string;
+  isDefault?: boolean;
+}
+
 export interface UserProfile {
   uid: string;
   email: string | null;
@@ -110,7 +123,7 @@ export interface UserProfile {
   provinceCode?: string;
   wardCode?: string;
   locationName?: string;
-  addresses?: any[];
+  addresses?: UserAddress[];
   points?: number;
   spentTotal?: number;
   totalSpent?: number;

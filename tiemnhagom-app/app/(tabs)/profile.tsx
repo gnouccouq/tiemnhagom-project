@@ -251,7 +251,7 @@ export default function ProfileScreen() {
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle={Colors.cardBackground === '#1E1E1E' ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={Colors.cardBackground !== '#FFFFFF' ? 'light-content' : 'dark-content'} />
 
       {/* ========================================================================= */}
       {/* 1. TOP HEADER: AVATAR + USER NAME + ROUND SETTINGS & NOTIFICATIONS BTNS  */}
@@ -602,7 +602,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => (user ? router.push('/edit-profile') : router.push('/auth/login'))}
+              onPress={() => (user ? router.push('/address-book') : router.push('/auth/login'))}
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="location-outline" size={24} color="#8A5A2B" />
@@ -930,11 +930,13 @@ export default function ProfileScreen() {
   );
 }
 
-const getStyles = (Colors: any) =>
-  StyleSheet.create({
+const getStyles = (Colors: any) => {
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+
+  return StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: Colors.background || '#FAF8F5',
+      backgroundColor: Colors.background || (isDark ? '#121212' : '#FAF8F5'),
     },
     scrollContent: {
       paddingHorizontal: 16,
@@ -967,9 +969,9 @@ const getStyles = (Colors: any) =>
       height: 44,
       borderRadius: 22,
       overflow: 'hidden',
-      backgroundColor: '#E4E4E7',
-      borderWidth: 1.5,
-      borderColor: Colors.border || '#E8E1D8',
+      backgroundColor: isDark ? '#2C2C2C' : '#E4E4E7',
+      borderWidth: isDark ? 0 : 1.5,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -983,7 +985,7 @@ const getStyles = (Colors: any) =>
       height: 44,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#E4E4E7',
+      backgroundColor: isDark ? '#2C2C2C' : '#E4E4E7',
     },
     userNameBlock: {
       flex: 1,
@@ -992,7 +994,7 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     userTierSubText: {
       fontFamily: 'ElleGaborStd',
@@ -1025,7 +1027,7 @@ const getStyles = (Colors: any) =>
       justifyContent: 'center',
       paddingHorizontal: 3,
       borderWidth: 1.5,
-      borderColor: Colors.background || '#FAF8F5',
+      borderColor: Colors.background || (isDark ? '#121212' : '#FAF8F5'),
       zIndex: 10,
     },
     notificationBadgeText: {
@@ -1038,9 +1040,9 @@ const getStyles = (Colors: any) =>
     cardShadowWrap: {
       borderRadius: 20,
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.28,
+      shadowOpacity: isDark ? 0.15 : 0.28,
       shadowRadius: 12,
-      elevation: 6,
+      elevation: isDark ? 2 : 6,
       marginBottom: 16,
     },
     membershipCard: {
@@ -1048,8 +1050,8 @@ const getStyles = (Colors: any) =>
       paddingHorizontal: 16,
       paddingVertical: 14,
       overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.14)',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : 'rgba(255, 255, 255, 0.14)',
     },
     cardTwoColumns: {
       flexDirection: 'row',
@@ -1159,20 +1161,20 @@ const getStyles = (Colors: any) =>
 
     // 3. Secondary Card (Thẻ Tiệm Nhà Gốm)
     secondaryCard: {
-      backgroundColor: Colors.cardBackground || '#FFFFFF',
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
       borderRadius: 20,
       padding: 16,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: 16,
-      borderWidth: 1,
-      borderColor: Colors.border || '#E8E1D8',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
+      shadowOpacity: isDark ? 0 : 0.04,
       shadowRadius: 6,
-      elevation: 2,
+      elevation: isDark ? 0 : 2,
     },
     secondaryCardLeft: {
       flex: 1.3,
@@ -1181,7 +1183,7 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
       marginBottom: 12,
     },
     secondaryActionsRow: {
@@ -1194,18 +1196,18 @@ const getStyles = (Colors: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      backgroundColor: Colors.background || '#FAF8F5',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : (Colors.background || '#FAF8F5'),
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 20,
-      borderWidth: 1,
-      borderColor: Colors.border || '#E8E1D8',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
     },
     pillActionText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     manageCardLink: {
       flexDirection: 'row',
@@ -1216,7 +1218,7 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
-      color: '#8A5A2B',
+      color: isDark ? '#E8CCB2' : '#8A5A2B',
     },
     secondaryCardRight: {
       flex: 0.9,
@@ -1230,18 +1232,18 @@ const getStyles = (Colors: any) =>
 
     // 4. Utility Actions Grid (4 columns)
     gridCard: {
-      backgroundColor: Colors.cardBackground || '#FFFFFF',
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
       borderRadius: 20,
       paddingVertical: 14,
       paddingHorizontal: 8,
       marginBottom: 20,
-      borderWidth: 1,
-      borderColor: Colors.border || '#E8E1D8',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
+      shadowOpacity: isDark ? 0 : 0.04,
       shadowRadius: 6,
-      elevation: 2,
+      elevation: isDark ? 0 : 2,
       gap: 16,
     },
     gridRow: {
@@ -1258,7 +1260,7 @@ const getStyles = (Colors: any) =>
       width: 44,
       height: 44,
       borderRadius: 22,
-      backgroundColor: Colors.background || '#FAF8F5',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : (Colors.background || '#FAF8F5'),
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 6,
@@ -1284,7 +1286,7 @@ const getStyles = (Colors: any) =>
     gridLabel: {
       fontFamily: 'ElleGaborStd',
       fontSize: 11,
-      color: Colors.textSecondary || '#6E665D',
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       textAlign: 'center',
       fontWeight: '500',
       lineHeight: 14,
@@ -1299,21 +1301,21 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     supportListCard: {
-      backgroundColor: Colors.cardBackground || '#FFFFFF',
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
       borderRadius: 20,
       paddingVertical: 6,
       paddingHorizontal: 16,
       marginBottom: 20,
-      borderWidth: 1,
-      borderColor: Colors.border || '#E8E1D8',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
+      shadowOpacity: isDark ? 0 : 0.04,
       shadowRadius: 6,
-      elevation: 2,
+      elevation: isDark ? 0 : 2,
     },
     supportListItem: {
       flexDirection: 'row',
@@ -1325,7 +1327,7 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '500',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     supportItemLeft: {
       flexDirection: 'row',
@@ -1341,7 +1343,7 @@ const getStyles = (Colors: any) =>
     currentLangText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
-      color: '#8A5A2B',
+      color: isDark ? '#E8CCB2' : '#8A5A2B',
       fontWeight: '600',
     },
     hotlineLeft: {
@@ -1353,19 +1355,19 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
-      color: '#8A5A2B',
+      color: isDark ? '#E8CCB2' : '#8A5A2B',
     },
     itemDivider: {
       height: StyleSheet.hairlineWidth,
-      backgroundColor: Colors.borderLight || '#F0ECE6',
+      backgroundColor: isDark ? (Colors.divider || '#2A2A2A') : (Colors.borderLight || '#F0ECE6'),
     },
     logoutBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#FEF2F2',
+      backgroundColor: isDark ? 'rgba(239, 83, 80, 0.12)' : '#FEF2F2',
       borderWidth: 1,
-      borderColor: '#FCA5A5',
+      borderColor: isDark ? 'rgba(239, 83, 80, 0.3)' : '#FCA5A5',
       borderRadius: 20,
       paddingVertical: 14,
       gap: 8,
@@ -1376,7 +1378,7 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
-      color: '#DC2626',
+      color: '#EF5350',
     },
 
     // Footer
@@ -1388,12 +1390,12 @@ const getStyles = (Colors: any) =>
       width: 110,
       height: 40,
       marginBottom: 6,
-      opacity: 0.85,
+      opacity: isDark ? 0.7 : 0.85,
     },
     footerVersion: {
       fontFamily: 'ElleGaborStd',
       fontSize: 10,
-      color: Colors.textMuted || '#9E968D',
+      color: Colors.textMuted || '#888888',
       marginTop: 2,
     },
 
@@ -1402,14 +1404,14 @@ const getStyles = (Colors: any) =>
     // =========================================================================
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
     },
     modalOverlayBottom: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
       justifyContent: 'flex-end',
     },
     modalHeader: {
@@ -1420,7 +1422,7 @@ const getStyles = (Colors: any) =>
       paddingTop: 18,
       paddingBottom: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: Colors.border || '#E8E1D8',
+      borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : (Colors.border || '#E8E1D8'),
     },
     modalHeaderTitleRow: {
       flexDirection: 'row',
@@ -1431,24 +1433,26 @@ const getStyles = (Colors: any) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
-      color: Colors.textPrimary || '#231B15',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     modalCloseBtn: {
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: Colors.background || '#FAF8F5',
+      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : (Colors.background || '#FAF8F5'),
       alignItems: 'center',
       justifyContent: 'center',
     },
 
     // QR Modal
     qrCardModal: {
-      backgroundColor: Colors.cardBackground || '#FFFFFF',
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
       width: '100%',
       maxWidth: 340,
       borderRadius: 24,
       overflow: 'hidden',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.25,
@@ -1719,3 +1723,4 @@ const getStyles = (Colors: any) =>
       backgroundColor: '#8A5A2B',
     },
   });
+};
