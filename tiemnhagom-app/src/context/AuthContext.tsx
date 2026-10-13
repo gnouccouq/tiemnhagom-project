@@ -18,6 +18,8 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { auth, db, storage } from '../config/firebase';
 import { UserProfile } from '../types';
 import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../services/notificationService';
@@ -447,53 +449,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Xử lý upload avatar lên Firebase Storage nếu là base64 hoặc local file uri
       let finalPhotoURL = data.photoURL;
-      if (data.photoURL && (data.photoURL.startsWith('data:image') || data.photoURL.startsWith('file://') || data.photoURL.startsWith('content://'))) {
+      if (data.photoURL && (data.photoURL.startsWith('data:image') || data.photoURL.startsWith('file://') || data.photoURL.startsWith('content://') || data.photoURL.startsWith('ph://'))) {
         try {
-          const avatarStorageRef = ref(storage, `avatars/${currentUid}/${Date.now()}_avatar.jpg`);
-          let uploadSnapshot;
+          const filePath = `avatars/${currentUid}/${Date.now()}_avatar.jpg`;
+          const avatarStorageRef = ref(storage, filePath);
 
-          if (data.photoURL.startsWith('data:image')) {
-            uploadSnapshot = await uploadString(avatarStorageRef, data.photoURL, 'data_url');
-          } else {
-            // Đọc file thành base64 an toàn trên React Native / Expo thay vì resp.blob() gây lỗi ArrayBuffer
-            let base64Data = '';
-            try {
-              const FileSystem = require('expo-file-system/legacy') || require('expo-file-system');
-              if (FileSystem && FileSystem.readAsStringAsync) {
-                base64Data = await FileSystem.readAsStringAsync(data.photoURL, {
-                  encoding: FileSystem.EncodingType?.Base64 || 'base64',
-                });
-              }
-            } catch (fsErr) {
-              // fallback nếu require legacy khác
-              try {
-                const FileSystem = require('expo-file-system');
-                if (FileSystem && FileSystem.readAsStringAsync) {
-                  base64Data = await FileSystem.readAsStringAsync(data.photoURL, {
-                    encoding: 'base64',
-                  });
-                }
-              } catch (e) {
-                // ignore
-              }
-            }
-
-            if (base64Data) {
-              uploadSnapshot = await uploadString(avatarStorageRef, `data:image/jpeg;base64,${base64Data}`, 'data_url');
+          if (Platform.OS === 'web') {
+            let uploadSnapshot;
+            if (data.photoURL.startsWith('data:image')) {
+              uploadSnapshot = await uploadString(avatarStorageRef, data.photoURL, 'data_url');
             } else {
-              // Fallback dùng XMLHttpRequest tạo Blob chuẩn React Native
-              const blob: Blob = await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.onload = () => resolve(xhr.response);
-                xhr.onerror = () => reject(new TypeError('Network request failed'));
-                xhr.responseType = 'blob';
-                xhr.open('GET', String(data.photoURL), true);
-                xhr.send(null);
-              });
+              const resp = await fetch(data.photoURL);
+              const blob = await resp.blob();
               uploadSnapshot = await uploadBytes(avatarStorageRef, blob);
             }
+            finalPhotoURL = await getDownloadURL(uploadSnapshot.ref);
+          } else {
+            // Trên Mobile (React Native Hermes):
+            // Firebase JS SDK (uploadBytes/uploadString) kích hoạt lỗi "Creating blobs from 'ArrayBuffer' are not supported"
+            // do RN Hermes không hỗ trợ new Blob([Uint8Array]).
+            // Sử dụng native HTTP stream của FileSystem.uploadAsync đẩy thẳng lên Firebase Storage REST API.
+            let localFileUri = data.photoURL;
+            let createdTempFile = false;
+
+            if (localFileUri.startsWith('data:image')) {
+              localFileUri = `${FileSystem.cacheDirectory}avatar_${Date.now()}.jpg`;
+              const base64Clean = data.photoURL.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
+              await FileSystem.writeAsStringAsync(localFileUri, base64Clean, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              createdTempFile = true;
+            }
+
+            const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+            const bucket = (storage.app.options as any)?.storageBucket || 'tiemnhagom-project.firebasestorage.app';
+            const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(filePath)}`;
+
+            const headers: Record<string, string> = {
+              'Content-Type': 'image/jpeg',
+            };
+            if (idToken) {
+              headers['Authorization'] = `Firebase ${idToken}`;
+            }
+
+            const uploadRes = await FileSystem.uploadAsync(uploadUrl, localFileUri, {
+              httpMethod: 'POST',
+              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+              headers,
+            });
+
+            if (createdTempFile) {
+              FileSystem.deleteAsync(localFileUri, { idempotent: true }).catch(() => {});
+            }
+
+            if (uploadRes.status >= 200 && uploadRes.status < 300) {
+              finalPhotoURL = await getDownloadURL(avatarStorageRef);
+            } else {
+              console.warn('Upload avatar status:', uploadRes.status, uploadRes.body);
+            }
           }
-          finalPhotoURL = await getDownloadURL(uploadSnapshot.ref);
         } catch (uploadErr) {
           console.warn('Lỗi upload ảnh lên Storage, bỏ qua cập nhật auth photoURL:', uploadErr);
         }
