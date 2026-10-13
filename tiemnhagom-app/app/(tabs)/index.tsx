@@ -24,11 +24,14 @@ import { BannerSlider } from '../../src/components/BannerSlider';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { CategoryChip } from '../../src/components/CategoryChip';
+import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
+import { ScalePressable } from '../../src/components/ScalePressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   DEFAULT_CATEGORIES,
   getCategories,
   ProductCategoryItem,
+  getCategoryDisplayName,
   getProducts,
   getCollections,
   getBestSellingProducts,
@@ -45,6 +48,28 @@ import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 import { auth } from '../../src/config/firebase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Icon → emoji mapping đồng bộ từ tab danh mục
+const CATEGORY_EMOJI: Record<string, string> = {
+  'all': '🏷️',
+  'Dining Decor': '🍜',
+  'Teatime & Drinks': '🍵',
+  'Home Decor': '🌸',
+  'Kitchenware': '🔥',
+  'Lifestyle': '✨',
+  'Value Packs': '🎁',
+};
+
+// Màu nền gốm men mộc chuẩn Brand Guidelines Tiệm Nhà Gốm
+const CATEGORY_BG: Record<string, string> = {
+  'all': '#F3ECE3',
+  'Dining Decor': '#F7EFE6',
+  'Teatime & Drinks': '#F4EAE0',
+  'Home Decor': '#FBF6F0',
+  'Kitchenware': '#EFE4D8',
+  'Lifestyle': '#F5ECE3',
+  'Value Packs': '#EEDECF',
+};
 
 // Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website & Tab Ưu đãi
 const MEMBERSHIP_TIERS = [
@@ -71,50 +96,6 @@ export default function HomeScreen() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // Animation ẩn/hiện thanh VIP Member Pill khi cuộn
-  const lastScrollY = useRef(0);
-  const isPillVisible = useRef(true);
-  const pillTranslateY = useRef(new Animated.Value(0)).current;
-  const pillOpacity = useRef(new Animated.Value(1)).current;
-
-  const showPill = () => {
-    if (!isPillVisible.current) {
-      isPillVisible.current = true;
-      Animated.parallel([
-        Animated.spring(pillTranslateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 65,
-          friction: 11,
-        }),
-        Animated.timing(pillOpacity, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
-
-  const hidePill = () => {
-    if (isPillVisible.current) {
-      isPillVisible.current = false;
-      Animated.parallel([
-        Animated.spring(pillTranslateY, {
-          toValue: 90,
-          useNativeDriver: true,
-          tension: 70,
-          friction: 12,
-        }),
-        Animated.timing(pillOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
 
   // Xác định trạng thái đăng nhập thực tế (đồng bộ từ user, userProfile và Firebase Auth)
   const isLoggedIn = Boolean(user || userProfile || auth.currentUser);
@@ -264,21 +245,6 @@ export default function HomeScreen() {
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentY = event.nativeEvent.contentOffset.y;
     setScrollY(currentY);
-
-    const diff = currentY - lastScrollY.current;
-
-    // Khi ở gần đầu trang (currentY <= 40), luôn hiện lại thanh user
-    if (currentY <= 40) {
-      showPill();
-    } else if (diff > 6 && currentY > 50) {
-      // Đang lướt xuống -> Ẩn thanh user
-      hidePill();
-    } else if (diff < -6) {
-      // Đang cuộn lên -> Hiện lại thanh user
-      showPill();
-    }
-
-    lastScrollY.current = currentY;
   };
 
   const handleCategoryPress = (catId: string) => {
@@ -431,110 +397,65 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Hàng 1: Danh mục cha (Parent Categories) */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesScroll}
-          >
-            {categories.map((cat) => (
-              <CategoryChip
-                key={cat.id}
-                id={cat.id}
-                name={cat.name}
-                icon={cat.icon}
-                isSelected={selectedCategory === cat.id}
-                onPress={() => {
-                  setSelectedCategory(cat.id);
-                  setSelectedSubCategory('');
-                }}
-              />
-            ))}
-          </ScrollView>
+          {/* Lưới 3 cột Không Gian Tuyển Chọn (Icon gốm tròn bo cong đồng bộ với tab Danh mục) */}
+          <View style={styles.curatedGridCard}>
+            <View style={styles.curatedGrid}>
+              {categories
+                .filter((cat) => cat.id !== 'all' && cat.name.toLowerCase() !== 'tất cả')
+                .slice(0, 9)
+                .map((cat) => {
+                  const isSelected = selectedCategory === cat.id;
+                  const emoji = CATEGORY_EMOJI[cat.id] || '🏺';
+                  const bg = CATEGORY_BG[cat.id] || '#F3ECE3';
+                  const displayName = getCategoryDisplayName(cat.name);
 
-          {/* Hàng 2: Danh mục con (Subcategories) đầy đủ */}
-          {(() => {
-            const activeGroup = categories.find((c) => c.id === selectedCategory);
-            const subsToShow =
-              activeGroup && activeGroup.subs && activeGroup.subs.length > 0
-                ? activeGroup.subs
-                : Array.from(new Set(categories.flatMap((c) => c.subs || []))).slice(0, 10);
-
-            if (!subsToShow || subsToShow.length === 0) return null;
-
-            return (
-              <View style={styles.subCategoriesWrap}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.subCategoriesScroll}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.subCategoryChip,
-                      selectedSubCategory === '' && styles.subCategoryChipActive,
-                    ]}
-                    onPress={() => {
-                      setSelectedSubCategory('');
-                      router.push({
-                        pathname: '/(tabs)/products',
-                        params: { category: selectedCategory === 'all' ? '' : selectedCategory },
-                      });
-                    }}
-                    activeOpacity={0.75}
-                  >
-                    <Text
-                      style={[
-                        styles.subCategoryText,
-                        selectedSubCategory === '' && styles.subCategoryTextActive,
-                      ]}
+                  return (
+                    <ScalePressable
+                      key={cat.id}
+                      style={styles.curatedGridItem}
+                      onPress={() => handleCategoryPress(cat.id)}
+                      activeScale={0.92}
                     >
-                      {activeGroup && activeGroup.id !== 'all' ? `${t('all')} ${activeGroup.name}` : t('all')}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {subsToShow.map((sub, idx) => {
-                    const isSelected = selectedSubCategory === sub;
-                    return (
-                      <TouchableOpacity
-                        key={idx}
+                      <View
                         style={[
-                          styles.subCategoryChip,
-                          isSelected && styles.subCategoryChipActive,
+                          styles.curatedIconCircle,
+                          { backgroundColor: bg },
+                          isSelected ? styles.curatedIconCircleActive : styles.curatedIconCircleInactive,
                         ]}
-                        onPress={() => {
-                          setSelectedSubCategory(sub);
-                          router.push({
-                            pathname: '/(tabs)/products',
-                            params: { category: sub },
-                          });
-                        }}
-                        activeOpacity={0.75}
                       >
-                        <Text
-                          style={[
-                            styles.subCategoryText,
-                            isSelected && styles.subCategoryTextActive,
-                          ]}
-                        >
-                          {sub}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            );
-          })()}
+                        {cat.imageUrl ? (
+                          <Image
+                            source={{ uri: cat.imageUrl }}
+                            style={styles.curatedImage}
+                            contentFit="cover"
+                          />
+                        ) : (
+                          <Text style={styles.curatedEmoji}>{emoji}</Text>
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.curatedItemName,
+                          isSelected && styles.curatedItemNameSelected,
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {displayName}
+                      </Text>
+                    </ScalePressable>
+                  );
+                })}
+            </View>
+          </View>
         </View>
 
-        {/* 4. FLASH SALE / ƯU ĐÃI HÔM NAY (Phong cách thẻ Deals) */}
+        {/* 4. FLASH SALE / ƯU ĐÃI HÔM NAY (Phong cách thẻ Deals đồng bộ màu gốm) */}
         {featuredProducts.length > 0 && (
           <View style={styles.dealContainer}>
             <View style={styles.dealHeader}>
               <View style={styles.dealTitleWrap}>
                 <View style={styles.dealBadgeFire}>
-                  <Ionicons name="flame" size={14} color="#DC2626" />
+                  <Ionicons name="flame" size={14} color="#9C7156" />
                   <Text style={styles.dealBadgeFireText}>{t('todayDeals')}</Text>
                 </View>
                 <Text style={styles.dealMainTitle}>{t('flashSaleAndGifts')}</Text>
@@ -791,116 +712,112 @@ export default function HomeScreen() {
 
 
       {/* SERVICE / ABOUT MODAL (Phong cách Deals Tab) */}
-      <Modal
+      <AnimatedCenterModal
         visible={serviceModal.visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setServiceModal({ ...serviceModal, visible: false })}
+        onClose={() => setServiceModal({ ...serviceModal, visible: false })}
+        contentStyle={styles.modalCard}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalBrandTag}>TIỆM NHÀ GỐM</Text>
-                <Text style={styles.modalHeaderTitle}>
-                  {serviceModal.type === 'flower'
-                    ? t('serviceFlowerTitle')
-                    : serviceModal.type === 'event'
-                    ? t('serviceEventTitle')
-                    : t('serviceAboutTitle')}
+        <View style={styles.modalHeader}>
+          <View>
+            <Text style={styles.modalBrandTag}>TIỆM NHÀ GỐM</Text>
+            <Text style={styles.modalHeaderTitle}>
+              {serviceModal.type === 'flower'
+                ? t('serviceFlowerTitle')
+                : serviceModal.type === 'event'
+                ? t('serviceEventTitle')
+                : t('serviceAboutTitle')}
+            </Text>
+          </View>
+          <ScalePressable
+            onPress={() => setServiceModal({ ...serviceModal, visible: false })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.modalCloseBtn}
+            activeScale={0.9}
+          >
+            <Ionicons name="close" size={20} color={Colors.textPrimary} />
+          </ScalePressable>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+          {serviceModal.type === 'flower' && (
+            <View>
+              <Text style={styles.modalDesc}>
+                {t('serviceFlowerDesc')}
+              </Text>
+              <View style={styles.modalFeatureList}>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('flowerFeature1')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('flowerFeature2')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('flowerFeature3')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('flowerFeature4')}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {serviceModal.type === 'event' && (
+            <View>
+              <Text style={styles.modalDesc}>
+                {t('serviceEventDesc')}
+              </Text>
+              <View style={styles.modalFeatureList}>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('eventFeature1')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('eventFeature2')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('eventFeature3')}</Text>
+                </View>
+                <View style={styles.modalFeatureRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
+                  <Text style={styles.modalFeatureText}>{t('eventFeature4')}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {serviceModal.type === 'about' && (
+            <View>
+              <Text style={styles.modalDesc}>
+                Tiệm Nhà Gốm khởi đầu từ tình yêu với đất nung và mong muốn gìn giữ nét đẹp thủ
+                công truyền thống trong nhịp sống hiện đại.
+              </Text>
+              <Text style={[styles.modalDesc, { marginTop: 10 }]}>
+                Mỗi sản phẩm đều được người thợ gốm nung ở nhiệt độ cao 1280°C, an toàn cho sức
+                khỏe, chịu nhiệt tốt và mang một dấu ấn độc bản riêng biệt.
+              </Text>
+              <View style={styles.modalStoreBox}>
+                <Ionicons name="location-outline" size={18} color={Colors.textPrimary} />
+                <Text style={styles.modalStoreText}>
+                  37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => setServiceModal({ ...serviceModal, visible: false })}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color={Colors.textPrimary} />
-              </TouchableOpacity>
             </View>
+          )}
 
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
-              {serviceModal.type === 'flower' && (
-                <View>
-                  <Text style={styles.modalDesc}>
-                    {t('serviceFlowerDesc')}
-                  </Text>
-                  <View style={styles.modalFeatureList}>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('flowerFeature1')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('flowerFeature2')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('flowerFeature3')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('flowerFeature4')}</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {serviceModal.type === 'event' && (
-                <View>
-                  <Text style={styles.modalDesc}>
-                    {t('serviceEventDesc')}
-                  </Text>
-                  <View style={styles.modalFeatureList}>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('eventFeature1')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('eventFeature2')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('eventFeature3')}</Text>
-                    </View>
-                    <View style={styles.modalFeatureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={Colors.textPrimary} />
-                      <Text style={styles.modalFeatureText}>{t('eventFeature4')}</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {serviceModal.type === 'about' && (
-                <View>
-                  <Text style={styles.modalDesc}>
-                    Tiệm Nhà Gốm khởi đầu từ tình yêu với đất nung và mong muốn gìn giữ nét đẹp thủ
-                    công truyền thống trong nhịp sống hiện đại.
-                  </Text>
-                  <Text style={[styles.modalDesc, { marginTop: 10 }]}>
-                    Mỗi sản phẩm đều được người thợ gốm nung ở nhiệt độ cao 1280°C, an toàn cho sức
-                    khỏe, chịu nhiệt tốt và mang một dấu ấn độc bản riêng biệt.
-                  </Text>
-                  <View style={styles.modalStoreBox}>
-                    <Ionicons name="location-outline" size={18} color={Colors.textPrimary} />
-                    <Text style={styles.modalStoreText}>
-                      37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh
-                    </Text>
-                  </View>
-                </View>
-              )}
-
-              <View style={styles.modalActionRow}>
-                <TouchableOpacity style={styles.modalCallBtn} onPress={callHotline}>
-                  <Ionicons name="call" size={16} color={Colors.textInverse} />
-                  <Text style={styles.modalCallBtnText}>{t('contactConsultTitle')}</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
+          <View style={styles.modalActionRow}>
+            <ScalePressable style={styles.modalCallBtn} onPress={callHotline} activeScale={0.96}>
+              <Ionicons name="call" size={16} color={Colors.textInverse} />
+              <Text style={styles.modalCallBtnText}>{t('contactConsultTitle')}</Text>
+            </ScalePressable>
           </View>
-        </View>
-      </Modal>
+        </ScrollView>
+      </AnimatedCenterModal>
     </View>
   );
 }
@@ -919,161 +836,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 175, // Dành khoảng trống để không bị che bởi fixedMemberPill ở đáy
+    paddingBottom: 40,
   },
 
-  // THẺ THÀNH VIÊN SỐ CỐ ĐỊNH Ở ĐÁY TRANG CHỦ (TRÊN BOTTOM BAR)
-  fixedMemberPillWrap: {
-    position: 'absolute',
-    bottom: 12,
-    left: 14,
-    right: 14,
-    zIndex: 99,
-  },
-  fixedMemberPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  memberPillLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 10,
-  },
-  memberAvatarWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: Colors.textPrimary,
-  },
-  memberAvatar: {
-    width: 36,
-    height: 36,
-  },
-  memberAvatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memberAvatarInitial: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#F4F4F5',
-  },
-  memberAvatarGuest: {
-    backgroundColor: Colors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memberTextWrap: {
-    flex: 1,
-  },
-  memberGreetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  memberBrandTag: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 8.5,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    color: Colors.textMuted,
-  },
-  memberTierBadge: {
-    backgroundColor: Colors.cardBackground,
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 8,
-  },
-  memberTierBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 8.5,
-    fontWeight: '700',
-    color: '#FBBF24',
-  },
-  memberGuestBadge: {
-    backgroundColor: 'rgba(251, 191, 36, 0.2)',
-  },
-  memberGuestBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 8,
-    fontWeight: '700',
-    color: '#FBBF24',
-    letterSpacing: 0.5,
-  },
-  memberName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textInverse,
-  },
-  memberPillRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  memberPointsBox: {
-    alignItems: 'flex-end',
-  },
-  memberPointsLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 8,
-    color: Colors.textMuted,
-    letterSpacing: 0.8,
-  },
-  memberPointsVal: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FBBF24',
-  },
-  memberArrowBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginPillBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FBBF24',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  loginPillBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  // SECTION TIÊU CHUẨN
+  // SECTION TIÊU CHUẨN (Chuẩn khoảng cách 26px - 28px)
   sectionWrap: {
-    marginTop: 26,
+    marginTop: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1106,7 +874,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: '#2B2928',
     letterSpacing: -0.4,
     lineHeight: 27,
   },
@@ -1114,34 +882,39 @@ const getStyles = (Colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 11,
-    paddingVertical: 5.5,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   seeAllText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: Colors.textPrimary,
+    color: '#9C7156',
     fontWeight: '700',
   },
 
-  // BỘ SƯU TẬP TÂM ĐẮC
+  // BỘ SƯU TẬP TÂM ĐẮC (Bo cong chuẩn 20px)
   collectionsScroll: {
     paddingHorizontal: 16,
     gap: 12,
   },
   collectionCard: {
     width: 240,
-    height: 160,
-    borderRadius: 18,
+    height: 164,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.textPrimary,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1149,23 +922,23 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   collectionImage: {
     width: '100%',
-    height: 110,
+    height: 114,
   },
   collectionFooter: {
     height: 50,
-    paddingHorizontal: 12,
-    backgroundColor: Colors.cardBackground,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: '#F0ECE6',
   },
   collectionName: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#2B2928',
     flex: 1,
     marginRight: 8,
   },
@@ -1177,60 +950,99 @@ const getStyles = (Colors: any) => StyleSheet.create({
   collectionActionText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+    fontWeight: '700',
+    color: '#9C7156',
   },
 
-  // CATEGORIES
+  // CATEGORIES - LƯỚI KHÔNG GIAN TUYỂN CHỌN
+  curatedGridCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    borderRadius: 20,
+    paddingTop: 18,
+    paddingBottom: 14,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  curatedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 16,
+  },
+  curatedGridItem: {
+    width: '33.33%',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  curatedIconCircle: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  curatedIconCircleInactive: {
+    borderWidth: 1.5,
+    borderColor: '#E8E1D8',
+  },
+  curatedIconCircleActive: {
+    borderWidth: 2.5,
+    borderColor: '#9C7156',
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  curatedImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+  },
+  curatedEmoji: {
+    fontSize: 26,
+  },
+  curatedItemName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#6E665D',
+    textAlign: 'center',
+    lineHeight: 15,
+    minHeight: 30,
+    width: '100%',
+  },
+  curatedItemNameSelected: {
+    color: '#9C7156',
+    fontWeight: '700',
+  },
   categoriesScroll: {
     paddingHorizontal: 16,
     paddingVertical: 4,
   },
-  subCategoriesWrap: {
-    marginTop: 8,
-  },
-  subCategoriesScroll: {
-    paddingHorizontal: 16,
-    paddingVertical: 2,
-    gap: 6,
-  },
-  subCategoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginRight: 6,
-  },
-  subCategoryChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.textPrimary,
-  },
-  subCategoryText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  subCategoryTextActive: {
-    color: Colors.textInverse,
-    fontWeight: '700',
-  },
 
-  // DEAL SECTION CONTAINER (Theo chuẩn tab Ưu đãi)
+  // DEAL SECTION CONTAINER (Thẻ Ưu Đãi đồng bộ bo cong 20px và màu Gốm Mộc)
   dealContainer: {
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
-    marginTop: 22,
+    marginTop: 28,
     paddingVertical: 16,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   dealHeader: {
@@ -1238,28 +1050,33 @@ const getStyles = (Colors: any) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   dealTitleWrap: {
-    gap: 2,
+    gap: 3,
   },
   dealBadgeFire: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    backgroundColor: '#FAF4EF',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   dealBadgeFireText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
     letterSpacing: 1.2,
-    color: '#DC2626',
+    color: '#9C7156',
   },
   dealMainTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 20,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: '#2B2928',
     letterSpacing: -0.3,
   },
   horizontalProducts: {
@@ -1286,30 +1103,30 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   loadingText: {
     fontFamily: 'ElleGaborStd',
-    color: Colors.textMuted,
+    color: '#9E968D',
     fontSize: 12,
   },
 
-  // EDITORIAL CARDS (Hoa Nhà Gốm, Trang Trí Sự Kiện, Về Tiệm - Chuẩn Deals Tab)
+  // EDITORIAL CARDS (Bo cong 20px chuẩn GEMINI.md, nút bấm & tag đồng bộ bảng màu)
   editorialCard: {
     marginHorizontal: 16,
-    marginTop: 22,
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
+    marginTop: 26,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   editorialImageWrap: {
     width: '100%',
     height: 185,
     position: 'relative',
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FAF8F5',
   },
   editorialImage: {
     width: '100%',
@@ -1319,7 +1136,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: 'rgba(24, 24, 27, 0.85)',
+    backgroundColor: 'rgba(43, 41, 40, 0.82)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
@@ -1328,11 +1145,11 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '700',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
   editorialBody: {
-    padding: 16,
+    padding: 18,
   },
   editorialOverline: {
     fontFamily: 'ElleGaborStd',
@@ -1347,7 +1164,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: '#2B2928',
     letterSpacing: -0.3,
     marginBottom: 6,
   },
@@ -1355,7 +1172,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13,
     lineHeight: 20,
-    color: Colors.textSecondary,
+    color: '#6E665D',
     marginBottom: 14,
   },
   pillTagRow: {
@@ -1365,70 +1182,72 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: 16,
   },
   pillTag: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderColor: '#E8E1D8',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     borderRadius: 16,
   },
   pillTagText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: Colors.textSecondary,
-    fontWeight: '500',
+    color: '#6E665D',
+    fontWeight: '600',
   },
   primaryDarkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#9C7156',
     paddingVertical: 13,
     paddingHorizontal: 20,
-    borderRadius: 24,
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 26,
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 3,
   },
   primaryDarkBtnText: {
-    fontSize: 13.5,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
     fontWeight: '700',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
   },
   secondaryOutlineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#9C7156',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 24,
+    borderRadius: 26,
   },
   secondaryOutlineBtnText: {
-    fontSize: 13.5,
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#9C7156',
   },
 
-  // TIN TỨC BÀI VIẾT (Chuẩn Deals Tab)
+  // TIN TỨC BÀI VIẾT (Bo cong 20px)
   newsScroll: {
     paddingHorizontal: 16,
     gap: 12,
   },
   newsCard: {
     width: 240,
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.textPrimary,
+    borderColor: '#E8E1D8',
+    shadowColor: '#2B2928',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1438,7 +1257,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     width: '100%',
     height: 130,
     position: 'relative',
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FAF8F5',
   },
   newsImage: {
     width: '100%',
@@ -1448,7 +1267,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#9C7156',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1457,7 +1276,7 @@ const getStyles = (Colors: any) => StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 9,
     fontWeight: '800',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
     letterSpacing: 0.8,
   },
   newsBody: {
@@ -1466,21 +1285,21 @@ const getStyles = (Colors: any) => StyleSheet.create({
   newsDate: {
     fontFamily: 'ElleGaborStd',
     fontSize: 10.5,
-    color: Colors.textMuted,
+    color: '#9E968D',
     marginBottom: 4,
   },
   newsTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#2B2928',
     lineHeight: 18,
     marginBottom: 5,
   },
   newsExcerpt: {
     fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
-    color: Colors.textSecondary,
+    color: '#6E665D',
     lineHeight: 16,
     marginBottom: 10,
   },
@@ -1491,9 +1310,9 @@ const getStyles = (Colors: any) => StyleSheet.create({
   },
   newsReadMoreText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#9C7156',
   },
 
   // FOOTER

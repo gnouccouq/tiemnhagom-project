@@ -203,7 +203,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
           <BlurView
             intensity={Platform.OS === 'ios' ? 95 : 85}
             tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
-            blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            blurMethod="none"
             style={StyleSheet.absoluteFill}
           />
           <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />

@@ -1,6 +1,6 @@
 // src/components/EmptyState.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor, Typography, Spacing, BorderRadius } from '../constants/theme';
 
@@ -10,6 +10,7 @@ interface EmptyStateProps {
   message?: string;
   buttonText?: string;
   onButtonPress?: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -18,11 +19,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   message,
   buttonText,
   onButtonPress,
+  style,
 }) => {
   const Colors = useThemeColor();
   const themeStyles = getStyles(Colors);
   return (
-    <View style={themeStyles.container}>
+    <View style={[themeStyles.container, style]}>
       <View style={themeStyles.iconCircle}>
         <Ionicons name={icon as any} size={48} color={Colors.primary} />
       </View>

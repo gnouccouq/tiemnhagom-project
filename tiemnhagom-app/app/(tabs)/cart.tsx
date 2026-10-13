@@ -82,23 +82,27 @@ export default function CartScreen() {
     );
   };
 
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+
   if (cart.length === 0) {
     return (
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <View style={styles.safeArea}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
         {/* Custom Header */}
-        <View style={styles.customHeader}>
+        <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
           <View style={{ width: 40 }} />
           <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
           <View style={{ width: 40 }} />
         </View>
-        <EmptyState
-          icon="bag-handle-outline"
-          title={t('emptyCartTitle')}
-          message={t('emptyCartMsg')}
-          buttonText={t('exploreCeramics')}
-          onButtonPress={() => router.push('/(tabs)/products')}
-        />
+        <View style={styles.emptyContainer}>
+          <EmptyState
+            icon="bag-handle-outline"
+            title={t('emptyCartTitle')}
+            message={t('emptyCartMsg')}
+            buttonText={t('exploreCeramics')}
+            onButtonPress={() => router.push('/(tabs)/products')}
+          />
+        </View>
       </View>
     );
   }
@@ -115,7 +119,7 @@ export default function CartScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -310,6 +314,12 @@ const getStyles = (Colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 40,
   },
   customHeader: {
     position: 'absolute',

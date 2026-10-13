@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScalePressable } from './ScalePressable';
+import { AnimatedBottomSheetModal } from './AnimatedBottomSheetModal';
 import provincesData from '../../assets/data/provinces.json';
 import { useThemeColor } from '../constants/theme';
 
@@ -83,37 +84,35 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   const data = step === 'PROVINCE' ? provincesData : selectedProv?.wards || [];
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={themeStyles.overlay}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={themeStyles.backdrop} />
-        </TouchableWithoutFeedback>
-        
-        <View style={themeStyles.modalContent}>
-          <View style={themeStyles.header}>
-            {step === 'WARD' ? (
-              <ScalePressable onPress={() => setStep('PROVINCE')} style={themeStyles.iconBtn}>
-                <Ionicons name="arrow-back" size={24} color="#18181B" />
-              </ScalePressable>
-            ) : (
-              <View style={themeStyles.iconBtn} />
-            )}
-            <Text style={themeStyles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
-            <ScalePressable onPress={onClose} style={themeStyles.iconBtn}>
-              <Ionicons name="close" size={24} color="#18181B" />
-            </ScalePressable>
-          </View>
-          
-          <FlatList
-            data={data}
-            keyExtractor={(item) => (step === 'PROVINCE' ? item.province_code : item.ward_code)}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={themeStyles.listContainer}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <AnimatedBottomSheetModal
+      visible={visible}
+      onClose={onClose}
+      contentStyle={themeStyles.modalContent}
+      avoidKeyboard
+      showHandle={true}
+    >
+      <View style={themeStyles.header}>
+        {step === 'WARD' ? (
+          <ScalePressable onPress={() => setStep('PROVINCE')} style={themeStyles.iconBtn} activeScale={0.88}>
+            <Ionicons name="arrow-back" size={22} color="#18181B" />
+          </ScalePressable>
+        ) : (
+          <View style={themeStyles.iconBtn} />
+        )}
+        <Text style={themeStyles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
+        <ScalePressable onPress={onClose} style={themeStyles.iconBtn} activeScale={0.88}>
+          <Ionicons name="close" size={22} color="#18181B" />
+        </ScalePressable>
+      </View>
+      
+      <FlatList
+        data={data}
+        keyExtractor={(item) => (step === 'PROVINCE' ? item.province_code : item.ward_code)}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={themeStyles.listContainer}
+      />
+    </AnimatedBottomSheetModal>
   );
 };
 

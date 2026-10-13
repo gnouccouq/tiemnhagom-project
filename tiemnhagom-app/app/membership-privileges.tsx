@@ -27,9 +27,20 @@ import { useThemeColor } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Bật LayoutAnimation cho Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+// LayoutAnimation is enabled by default in React Native New Architecture (Fabric)
+// In older architectures, setLayoutAnimationEnabledExperimental was used
+if (
+  Platform.OS === 'android' &&
+  typeof UIManager !== 'undefined' &&
+  UIManager &&
+  typeof (UIManager as any).setLayoutAnimationEnabledExperimental === 'function' &&
+  typeof (globalThis as any)._IS_FABRIC === 'undefined'
+) {
+  try {
+    (UIManager as any).setLayoutAnimationEnabledExperimental(true);
+  } catch {
+    // no-op
+  }
 }
 
 interface BenefitItem {

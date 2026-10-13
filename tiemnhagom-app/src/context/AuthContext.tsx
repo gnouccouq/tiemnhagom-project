@@ -14,8 +14,9 @@ import {
   signInAnonymously
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
+import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db } from '../config/firebase';
+import { auth, db, storage } from '../config/firebase';
 import { UserProfile } from '../types';
 import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../services/notificationService';
 
@@ -154,6 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.removeItem(STORAGE_KEY_SESSION);
       await AsyncStorage.removeItem(STORAGE_KEY_PROFILE);
       await AsyncStorage.removeItem('has_seen_onboarding');
+      await AsyncStorage.removeItem('@tiemnhagom_cart_guest');
+      await AsyncStorage.removeItem('@tiemnhagom_wishlist_guest');
     } catch (e) {
       console.warn('Lỗi xóa AsyncStorage khi logout:', e);
     }
@@ -246,7 +249,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload.name = cleanName;
       }
       if (data.phone !== undefined) payload.phone = data.phone;
-      if (data.photoURL !== undefined) payload.photoURL = data.photoURL;
       if (data.gender !== undefined) payload.gender = data.gender;
       if (data.dob !== undefined || data.birthday !== undefined) {
         const d = data.dob || data.birthday;
@@ -259,13 +261,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload.fullAddress = a;
       }
 
-      // 1. Cập nhật Firebase Auth nếu có tên hoặc avatar
+      // Xử lý upload avatar lên Firebase Storage nếu là base64 hoặc local file uri
+      let finalPhotoURL = data.photoURL;
+      if (data.photoURL && (data.photoURL.startsWith('data:image') || data.photoURL.startsWith('file://'))) {
+        try {
+          const avatarStorageRef = ref(storage, `avatars/${currentUid}/${Date.now()}_avatar.jpg`);
+          let uploadSnapshot;
+          if (data.photoURL.startsWith('data:image')) {
+            uploadSnapshot = await uploadString(avatarStorageRef, data.photoURL, 'data_url');
+          } else {
+            const resp = await fetch(data.photoURL);
+            const blob = await resp.blob();
+            uploadSnapshot = await uploadBytes(avatarStorageRef, blob);
+          }
+          finalPhotoURL = await getDownloadURL(uploadSnapshot.ref);
+        } catch (uploadErr) {
+          console.warn('Lỗi upload ảnh lên Storage, bỏ qua cập nhật auth photoURL:', uploadErr);
+        }
+      }
+
+      if (finalPhotoURL !== undefined) {
+        payload.photoURL = finalPhotoURL;
+        payload.avatar = finalPhotoURL; // đồng bộ field avatar với web
+      }
+
+      // 1. Cập nhật Firebase Auth nếu có tên hoặc avatar hợp lệ (Firebase Auth giới hạn photoURL < 2048 ký tự)
       if (auth.currentUser) {
         const authUpdates: { displayName?: string; photoURL?: string } = {};
         if (cleanName) authUpdates.displayName = cleanName;
-        if (data.photoURL) authUpdates.photoURL = data.photoURL;
+        if (finalPhotoURL && !finalPhotoURL.startsWith('data:image') && finalPhotoURL.length < 2000) {
+          authUpdates.photoURL = finalPhotoURL;
+        }
         if (Object.keys(authUpdates).length > 0) {
-          await updateProfile(auth.currentUser, authUpdates);
+          try {
+            await updateProfile(auth.currentUser, authUpdates);
+          } catch (authErr) {
+            console.warn('Lỗi cập nhật Auth profile:', authErr);
+          }
         }
       }
 
@@ -277,6 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedProfile: UserProfile = {
         ...(userProfile || { uid: currentUid, email: auth.currentUser?.email || null, displayName: cleanName }),
         ...data,
+        photoURL: finalPhotoURL !== undefined ? finalPhotoURL : (userProfile?.photoURL ?? null),
         displayName: cleanName || userProfile?.displayName || null,
         name: cleanName || userProfile?.name,
       };

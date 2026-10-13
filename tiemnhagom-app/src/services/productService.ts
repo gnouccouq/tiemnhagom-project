@@ -353,6 +353,10 @@ export async function getProducts(options?: {
         isFeatured: Boolean(data.isFeatured),
         rating: Number(data.rating) || 5,
         createdAt: data.createdAt,
+        dimensions: data.dimensions,
+        details: data.details,
+        specs: data.specs,
+        usage: data.usage,
       };
       items.push(baseProduct);
 

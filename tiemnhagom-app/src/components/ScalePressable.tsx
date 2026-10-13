@@ -5,6 +5,7 @@ import {
   Pressable,
   PressableProps,
   StyleProp,
+  StyleSheet,
   ViewStyle,
 } from 'react-native';
 
@@ -66,8 +67,17 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
     onPressOut?.(e);
   };
 
+  const flatStyle = (StyleSheet.flatten(style) as ViewStyle) || {};
+  const pressableStyle: ViewStyle = {};
+  if (flatStyle.flex !== undefined) pressableStyle.flex = flatStyle.flex;
+  if (flatStyle.flexGrow !== undefined) pressableStyle.flexGrow = flatStyle.flexGrow;
+  if (flatStyle.flexShrink !== undefined) pressableStyle.flexShrink = flatStyle.flexShrink;
+  if (flatStyle.flexBasis !== undefined) pressableStyle.flexBasis = flatStyle.flexBasis;
+  if (flatStyle.alignSelf !== undefined) pressableStyle.alignSelf = flatStyle.alignSelf;
+
   return (
     <Pressable
+      style={Object.keys(pressableStyle).length > 0 ? pressableStyle : undefined}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
@@ -76,6 +86,7 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
       <Animated.View
         style={[
           style,
+          flatStyle.flex !== undefined && { width: '100%' },
           {
             transform: [{ scale: scaleAnim }],
             opacity: opacityAnim,

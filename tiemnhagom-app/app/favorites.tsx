@@ -58,7 +58,7 @@ export default function FavoritesScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View

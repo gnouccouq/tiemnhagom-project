@@ -256,7 +256,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
           <BlurView
             intensity={Platform.OS === 'ios' ? 45 : 35}
             tint="dark"
-            blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            blurMethod="none"
             style={StyleSheet.absoluteFill}
           />
 

@@ -19,9 +19,13 @@ import { BlurView } from 'expo-blur';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
-import { getUserOrders } from '../src/services/orderService';
 import { BlurButton } from '../src/components/BlurButton';
+import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
+import { ScalePressable } from '../src/components/ScalePressable';
 import { Order } from '../src/types';
+import { getUserOrders } from '../src/services/orderService';
+import { formatCurrency } from '../src/utils/format';
 
 interface PointTransaction {
   id: string;
@@ -85,8 +89,7 @@ export default function PointsHistoryScreen() {
   useEffect(() => {
     const fetchHistory = async () => {
       if (!user) {
-        // Dữ liệu mẫu chuẩn bố cục Tiệm Nhà Gốm giống ảnh Highlands
-        setTransactions(getDefaultDemoTransactions());
+        setTransactions([]);
         return;
       }
 
@@ -159,11 +162,11 @@ export default function PointsHistoryScreen() {
           list.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
           setTransactions(list);
         } else {
-          // Chưa có đơn hàng -> hiển thị mẫu trực quan chuẩn bố cục
-          setTransactions(getDefaultDemoTransactions());
+          // Chưa có đơn hàng -> để mảng rỗng để hiển thị EmptyState thực tế
+          setTransactions([]);
         }
       } catch (err) {
-        setTransactions(getDefaultDemoTransactions());
+        setTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -183,58 +186,11 @@ export default function PointsHistoryScreen() {
 
   const availablePoints = useMemo(() => {
     if (!user) {
-      // Chế độ demo: điểm hiện có cân đối chính xác (+7 +7 -14 = 0 điểm)
-      return Math.max(0, totalEarnedInHistory - totalRedeemedInHistory);
+      return 0;
     }
     const base = Math.max(earnedPoints, cleanProfilePoints, totalEarnedInHistory);
     return Math.max(0, base - totalRedeemedInHistory);
   }, [user, earnedPoints, cleanProfilePoints, totalEarnedInHistory, totalRedeemedInHistory]);
-
-  // Bộ dữ liệu mẫu chuẩn theo bố cục ảnh Highlands mẫu
-  function getDefaultDemoTransactions(): PointTransaction[] {
-    const now = new Date();
-    const d1 = new Date(now);
-    d1.setDate(now.getDate()); // Hôm nay
-
-    const d2 = new Date(now);
-    d2.setDate(now.getDate() - 3); // 3 ngày trước
-
-    const d3 = new Date(now);
-    d3.setDate(now.getDate() - 8); // 8 ngày trước
-
-    return [
-      {
-        id: 'demo_1',
-        type: 'earn',
-        points: 7,
-        date: formatDisplayDate(d1),
-        dateTimestamp: d1.getTime(),
-        orderCode: '2107012647664951296',
-        store: 'Tiệm Nhà Gốm - 37 Nguyễn Duy, Bình Thạnh',
-        orderValue: '70.000đ',
-      },
-      {
-        id: 'demo_2',
-        type: 'earn',
-        points: 7,
-        date: formatDisplayDate(d2),
-        dateTimestamp: d2.getTime(),
-        orderCode: '2105897459670786048',
-        store: 'Tiệm Nhà Gốm - Chi nhánh Thủ Đức',
-        orderValue: '79.000đ',
-      },
-      {
-        id: 'demo_3',
-        type: 'redeem',
-        points: 14,
-        date: formatDisplayDate(d3),
-        dateTimestamp: d3.getTime(),
-        orderCode: '2104598123490123512',
-        store: 'Tiệm Nhà Gốm - Online Store',
-        orderValue: '14.000đ',
-      },
-    ];
-  }
 
   // Tính toán khoảng ngày hiển thị trên nút Pill theo DatePreset
   const dateRangeDisplay = useMemo(() => {
@@ -313,7 +269,7 @@ export default function PointsHistoryScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={isDark ? 'dark' : 'light'}
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -513,160 +469,146 @@ export default function PointsHistoryScreen() {
       {/* ========================================================================= */}
       {/* MODAL 1: CHỌN KHOẢNG THỜI GIAN LỌC (DATE RANGE PICKER PRESETS)             */}
       {/* ========================================================================= */}
-      <Modal
+      <AnimatedCenterModal
         visible={dateModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setDateModalVisible(false)}
+        onClose={() => setDateModalVisible(false)}
+        contentStyle={styles.dateModalCard}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setDateModalVisible(false)}
-        >
-          <View style={styles.dateModalCard}>
-            <View style={styles.modalTopHeader}>
-              <Text style={styles.modalTitleText}>
-                {t('selectDateRange') || 'Chọn khoảng thời gian'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setDateModalVisible(false)}
-                style={styles.modalCloseIconBtn}
-              >
-                <Ionicons
-                  name="close"
-                  size={20}
-                  color={isDark ? '#9CA3AF' : '#6B7280'}
-                />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.modalTopHeader}>
+          <Text style={styles.modalTitleText}>
+            {t('selectDateRange') || 'Chọn khoảng thời gian'}
+          </Text>
+          <ScalePressable
+            onPress={() => setDateModalVisible(false)}
+            style={styles.modalCloseIconBtn}
+            activeScale={0.9}
+          >
+            <Ionicons
+              name="close"
+              size={20}
+              color={isDark ? '#9CA3AF' : '#6B7280'}
+            />
+          </ScalePressable>
+        </View>
 
-            <View style={styles.presetOptionsList}>
-              {[
-                {
-                  id: 'last30Days',
-                  label: t('dateRangePresetLast30Days') || '30 ngày qua',
-                },
-                {
-                  id: 'thisMonth',
-                  label: t('dateRangePresetThisMonth') || 'Tháng này',
-                },
-                {
-                  id: 'last3Months',
-                  label: t('dateRangePresetLast3Months') || '3 tháng qua',
-                },
-                {
-                  id: 'all',
-                  label: t('dateRangePresetAll') || 'Tất cả thời gian',
-                },
-              ].map((opt) => {
-                const isSelected = datePreset === opt.id;
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[
-                      styles.presetItem,
-                      isSelected && styles.presetItemActive,
-                    ]}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setDatePreset(opt.id as DatePreset);
-                      setDateModalVisible(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.presetItemLabel,
-                        isSelected && styles.presetItemLabelActive,
-                      ]}
-                    >
-                      {opt.label}
-                    </Text>
-                    {isSelected && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={20}
-                        color={isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B'}
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        <View style={styles.presetOptionsList}>
+          {[
+            {
+              id: 'last30Days',
+              label: t('dateRangePresetLast30Days') || '30 ngày qua',
+            },
+            {
+              id: 'thisMonth',
+              label: t('dateRangePresetThisMonth') || 'Tháng này',
+            },
+            {
+              id: 'last3Months',
+              label: t('dateRangePresetLast3Months') || '3 tháng qua',
+            },
+            {
+              id: 'all',
+              label: t('dateRangePresetAll') || 'Tất cả thời gian',
+            },
+          ].map((opt) => {
+            const isSelected = datePreset === opt.id;
+            return (
+              <ScalePressable
+                key={opt.id}
+                style={[
+                  styles.presetItem,
+                  isSelected && styles.presetItemActive,
+                ]}
+                activeScale={0.96}
+                onPress={() => {
+                  setDatePreset(opt.id as DatePreset);
+                  setDateModalVisible(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.presetItemLabel,
+                    isSelected && styles.presetItemLabelActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+                {isSelected && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B'}
+                  />
+                )}
+              </ScalePressable>
+            );
+          })}
+        </View>
+      </AnimatedCenterModal>
 
       {/* ========================================================================= */}
       {/* MODAL 2: QUY TẮC TÍCH VÀ ĐỔI ĐIỂM (INFO RULES MODAL)                       */}
       {/* ========================================================================= */}
-      <Modal
+      <AnimatedBottomSheetModal
         visible={rulesModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setRulesModalVisible(false)}
+        onClose={() => setRulesModalVisible(false)}
+        contentStyle={styles.rulesSheetModal}
       >
-        <View style={styles.modalOverlayBottom}>
-          <View style={styles.rulesSheetModal}>
-            <View style={styles.modalTopHeader}>
-              <View style={styles.rulesTitleRow}>
-                <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
-                <Text style={styles.modalTitleText}>
-                  {t('potteryPointsModalTitle') || 'Điểm Thưởng Gốm'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setRulesModalVisible(false)}
-                style={styles.modalCloseIconBtn}
-              >
-                <Ionicons
-                  name="close"
-                  size={20}
-                  color={isDark ? '#9CA3AF' : '#6B7280'}
-                />
-              </TouchableOpacity>
+        <View style={styles.modalTopHeader}>
+          <View style={styles.rulesTitleRow}>
+            <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
+            <Text style={styles.modalTitleText}>
+              {t('potteryPointsModalTitle') || 'Điểm Thưởng Gốm'}
+            </Text>
+          </View>
+          <ScalePressable
+            onPress={() => setRulesModalVisible(false)}
+            style={styles.modalCloseIconBtn}
+            activeScale={0.9}
+          >
+            <Ionicons
+              name="close"
+              size={20}
+              color={isDark ? '#9CA3AF' : '#6B7280'}
+            />
+          </ScalePressable>
+        </View>
+
+        <View style={styles.rulesSheetBody}>
+          <View style={styles.pointsHighlightBox}>
+            <Text style={styles.pointsBigNumber}>{availablePoints}</Text>
+            <Text style={styles.pointsUnitLabel}>
+              {t('availablePointsLabel') || 'Điểm hiện có'}
+            </Text>
+            <Text style={styles.pointsEquivText}>
+              {t('pointsDiscountEquivText')} {formatCurrency(availablePoints * 1000)} {t('pointsDiscountEquivSuffix')}
+            </Text>
+          </View>
+
+          <View style={styles.pointsRulesList}>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>
+                {t('pointRuleText1') ||
+                  'Mỗi 10.000đ thanh toán hoàn tất tích ngay 1 Điểm Gốm.'}
+              </Text>
             </View>
-
-            <View style={styles.rulesSheetBody}>
-              <View style={styles.pointsHighlightBox}>
-                <Text style={styles.pointsBigNumber}>{availablePoints}</Text>
-                <Text style={styles.pointsUnitLabel}>
-                  {t('availablePointsLabel') || 'Điểm hiện có'}
-                </Text>
-                <Text style={styles.pointsEquivText}>
-                  {t('pointsDiscountEquivText') || 'Tương đương'}{' '}
-                  {formatVND(availablePoints * 1000)}{' '}
-                  {t('pointsDiscountEquivSuffix') || 'giảm giá khi mua hàng'}
-                </Text>
-              </View>
-
-              <View style={styles.pointsRulesList}>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>
-                    {t('pointRuleText1') ||
-                      'Mỗi 10.000đ thanh toán hoàn tất tích ngay 1 Điểm Gốm.'}
-                  </Text>
-                </View>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>
-                    {t('pointRuleText2') ||
-                      'Điểm có thể dùng để khấu trừ trực tiếp khi thanh toán đơn hàng tiếp theo.'}
-                  </Text>
-                </View>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>
-                    {t('pointRuleText3') ||
-                      'Điểm không hết hạn theo năm và được bảo lưu trọn đời tài khoản.'}
-                  </Text>
-                </View>
-              </View>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>
+                {t('pointRuleText2') ||
+                  'Điểm có thể dùng để khấu trừ trực tiếp khi thanh toán đơn hàng tiếp theo.'}
+              </Text>
+            </View>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>
+                {t('pointRuleText3') ||
+                  'Điểm không hết hạn theo năm và được bảo lưu trọn đời tài khoản.'}
+              </Text>
             </View>
           </View>
         </View>
-      </Modal>
+      </AnimatedBottomSheetModal>
     </View>
   );
 }

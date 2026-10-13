@@ -6,6 +6,7 @@ import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, 
 LogBox.ignoreLogs([
   'expo-notifications: Android Push notifications',
   '`expo-notifications` functionality is not fully supported in Expo Go',
+  'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture',
 ]);
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';

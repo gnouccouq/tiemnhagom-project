@@ -10,6 +10,7 @@ import { Product } from '../types';
 import { formatCurrency } from '../utils/format';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useSettings } from '../context/SettingsContext';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
 
@@ -28,7 +29,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   const router = useRouter();
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
-  const { addToCart } = useCart();
+  const { t } = useSettings();
+  const { addToCart, flyToCart } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
 
   const targetProductId = product.parentProductId || product.id;
@@ -36,6 +38,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
   const heartScale = useRef(new Animated.Value(1)).current;
   const addScale = useRef(new Animated.Value(1)).current;
+  const quickAddRef = useRef<View>(null);
 
   const effectivePrice = product.salePrice
     ? product.salePrice
@@ -81,6 +84,17 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
       Animated.timing(addScale, { toValue: 0.82, duration: 80, useNativeDriver: true }),
       Animated.spring(addScale, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
     ]).start();
+
+    if (quickAddRef.current?.measureInWindow) {
+      quickAddRef.current.measureInWindow((x, y, w, h) => {
+        const validX = typeof x === 'number' && !isNaN(x) && x > 0 ? x + w / 2 : undefined;
+        const validY = typeof y === 'number' && !isNaN(y) && y > 0 ? y + h / 2 : undefined;
+        flyToCart(imageUri, validX, validY);
+      });
+    } else {
+      flyToCart(imageUri);
+    }
+
     addToCart(product, 1, product.selectedVariant);
   };
 
@@ -103,7 +117,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           recyclingKey={imageUri}
         />
 
-        {/* Nút Yêu Thích Glassmorphism với animation nảy */}
+        {/* Nút Yêu Thích hình tròn rõ ràng với animation nảy */}
         <Animated.View style={{ transform: [{ scale: heartScale }], position: 'absolute', top: 8, right: 8, zIndex: 12 }}>
           <ScalePressable
             style={styles.favoriteButton}
@@ -113,8 +127,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           >
             <Ionicons
               name={favorite ? 'heart' : 'heart-outline'}
-              size={16}
-              color={favorite ? Colors.badgeSale : Colors.textPrimary}
+              size={17}
+              color={favorite ? '#E53935' : '#6E665D'}
             />
           </ScalePressable>
         </Animated.View>
@@ -139,8 +153,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         {/* Overlay Hết hàng */}
         {isSoldOut && (
           <View style={styles.outOfStockOverlay}>
-            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} blurMethod="dimezisBlurView">
-              <Text style={styles.outOfStockText}>Hết hàng</Text>
+            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} blurMethod="none">
+              <Text style={styles.outOfStockText}>{t('outOfStock')}</Text>
             </BlurView>
           </View>
         )}
@@ -154,7 +168,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
             {product.parentProductId || product.id}
           </Text>
           {product.sold && product.sold > 0 ? (
-            <Text style={styles.soldText}>Đã bán {product.sold}</Text>
+            <Text style={styles.soldText}>{t('soldCount')} {product.sold}</Text>
           ) : null}
         </View>
 
@@ -196,16 +210,22 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
             ) : null}
           </View>
 
-          <Animated.View style={{ transform: [{ scale: addScale }] }}>
-            <ScalePressable
-              style={[styles.quickAddButton, isSoldOut && styles.quickAddButtonDisabled]}
-              onPress={handleQuickAdd}
-              disabled={isSoldOut}
-              accessibilityLabel="Thêm vào giỏ"
-            >
-              <Ionicons name="bag-add" size={15} color={Colors.textInverse} />
-            </ScalePressable>
-          </Animated.View>
+          <View ref={quickAddRef} collapsable={false}>
+            <Animated.View style={{ transform: [{ scale: addScale }] }}>
+              <ScalePressable
+                style={[styles.quickAddButton, isSoldOut && styles.quickAddButtonDisabled]}
+                onPress={handleQuickAdd}
+                disabled={isSoldOut}
+                accessibilityLabel={t('addToCartAction')}
+              >
+                <Ionicons
+                  name="bag-add"
+                  size={18}
+                  color={isSoldOut ? '#A8A096' : '#FFFFFF'}
+                />
+              </ScalePressable>
+            </Animated.View>
+          </View>
         </View>
       </View>
     </ScalePressable>
@@ -239,9 +259,19 @@ const getStyles = (Colors: any) => StyleSheet.create({
     height: '100%',
   },
   favoriteButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
   },
   badgeContainer: {
     position: 'absolute',
@@ -417,12 +447,22 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginTop: 1,
   },
   quickAddButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#9C7156',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 6,
+    shadowColor: '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   quickAddButtonDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#E5E0DA',
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

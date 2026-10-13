@@ -1,7 +1,9 @@
-// src/context/CartContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CartItem, Product, ProductVariant } from '../types';
+import { useAuth } from './AuthContext';
+import { FlyingCartOverlay, FlyingItemData } from '../components/FlyingCartOverlay';
 
 interface CartContextType {
   cart: CartItem[];
@@ -20,45 +22,101 @@ interface CartContextType {
   shippingMethod: 'standard' | 'express_2h' | 'pickup';
   setShippingMethod: (method: 'standard' | 'express_2h' | 'pickup') => void;
   cartBounceKey: number;
+  triggerCartBounce: () => void;
+  flyToCart: (imageUri: string, startX?: number, startY?: number, targetX?: number, targetY?: number) => void;
 }
 
-
-const CART_STORAGE_KEY = '@tiemnhagom_cart_v1';
+const getCartStorageKey = (uid: string) => `@tiemnhagom_cart_${uid}`;
 const CartContext = createContext<CartContextType>({} as CartContextType);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const currentUid = user?.uid || 'guest';
+  const loadedUserRef = useRef<string | null>(null);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express_2h' | 'pickup'>('standard');
   const [cartBounceKey, setCartBounceKey] = useState<number>(0);
+  const [flyingItems, setFlyingItems] = useState<FlyingItemData[]>([]);
 
-  // Load cart from storage on mount
+  const triggerCartBounce = () => {
+    setCartBounceKey((k) => k + 1);
+  };
+
+  const flyToCart = (
+    imageUri: string,
+    startX?: number,
+    startY?: number,
+    targetX?: number,
+    targetY?: number
+  ) => {
+    if (!imageUri) {
+      triggerCartBounce();
+      return;
+    }
+    const { width: winWidth, height: winHeight } = Dimensions.get('window');
+    const newItem: FlyingItemData = {
+      id: `fly_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      imageUri,
+      startX: typeof startX === 'number' && !isNaN(startX) ? startX : winWidth / 2,
+      startY: typeof startY === 'number' && !isNaN(startY) ? startY : winHeight * 0.45,
+      targetX,
+      targetY,
+    };
+    setFlyingItems((prev) => [...prev, newItem]);
+  };
+
+  const handleFlyingItemFinish = (id: string) => {
+    setFlyingItems((prev) => prev.filter((item) => item.id !== id));
+    triggerCartBounce();
+  };
+
+  // Load cart from storage whenever user changes
   useEffect(() => {
+    let isCancelled = false;
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(CART_STORAGE_KEY);
-        if (stored) {
-          setCart(JSON.parse(stored));
+        const key = getCartStorageKey(currentUid);
+        const stored = await AsyncStorage.getItem(key);
+        if (!isCancelled) {
+          if (stored) {
+            setCart(JSON.parse(stored));
+          } else {
+            setCart([]);
+          }
+          setAppliedCoupon(null);
+          loadedUserRef.current = currentUid;
         }
       } catch (e) {
         console.warn('Lỗi đọc giỏ hàng từ AsyncStorage:', e);
+        if (!isCancelled) {
+          setCart([]);
+          setAppliedCoupon(null);
+          loadedUserRef.current = currentUid;
+        }
       }
     })();
-  }, []);
 
-  // Save cart to storage whenever it changes
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentUid]);
+
+  // Save cart to storage whenever it changes, but ONLY for currently loaded user
   useEffect(() => {
+    if (loadedUserRef.current !== currentUid) return;
     (async () => {
       try {
-        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+        const key = getCartStorageKey(currentUid);
+        await AsyncStorage.setItem(key, JSON.stringify(cart));
       } catch (e) {
         console.warn('Lỗi lưu giỏ hàng vào AsyncStorage:', e);
       }
     })();
-  }, [cart]);
+  }, [cart, currentUid]);
 
   const addToCart = (product: Product, quantity = 1, variant?: ProductVariant) => {
-    setCartBounceKey((k) => k + 1);
     setCart((prev) => {
       const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
       const itemId = `${product.id}${variantKey}`;
@@ -187,9 +245,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         shippingMethod,
         setShippingMethod,
         cartBounceKey,
+        triggerCartBounce,
+        flyToCart,
       }}
     >
       {children}
+      <FlyingCartOverlay items={flyingItems} onFinish={handleFlyingItemFinish} />
     </CartContext.Provider>
   );
 };

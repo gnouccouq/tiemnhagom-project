@@ -107,6 +107,69 @@ export const OrderCardSkeleton: React.FC = () => {
   );
 };
 
+/**
+ * ProductDetailSkeleton: Khung xương cho trang chi tiết sản phẩm
+ */
+export const ProductDetailSkeleton: React.FC = () => {
+  return (
+    <View style={styles.detailSkeletonContainer}>
+      {/* Top Slider Carousel Skeleton */}
+      <ShimmerSkeleton width="100%" height={380} borderRadius={0} />
+
+      {/* Thumbnails Row Skeleton */}
+      <View style={styles.detailThumbnailsRow}>
+        {[1, 2, 3, 4, 5].map((key) => (
+          <ShimmerSkeleton key={key} width={66} height={66} borderRadius={14} style={{ marginRight: 8 }} />
+        ))}
+      </View>
+
+      {/* Main Content Card Skeleton */}
+      <View style={styles.detailContentCard}>
+        {/* Category & Code Row */}
+        <View style={[styles.rowBetween, { marginBottom: 10 }]}>
+          <ShimmerSkeleton width="32%" height={24} borderRadius={12} />
+          <ShimmerSkeleton width="25%" height={14} borderRadius={6} />
+        </View>
+
+        {/* Title Lines */}
+        <ShimmerSkeleton width="90%" height={22} borderRadius={6} style={{ marginBottom: 6 }} />
+        <ShimmerSkeleton width="65%" height={22} borderRadius={6} style={{ marginBottom: 12 }} />
+
+        {/* Sold & Stock Row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <ShimmerSkeleton width={70} height={14} borderRadius={6} />
+          <ShimmerSkeleton width={80} height={14} borderRadius={6} />
+        </View>
+
+        {/* Price Row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <ShimmerSkeleton width={140} height={28} borderRadius={8} />
+          <ShimmerSkeleton width={90} height={18} borderRadius={6} />
+        </View>
+
+        {/* Variant Compact Bar Skeleton */}
+        <ShimmerSkeleton width="100%" height={48} borderRadius={24} style={{ marginBottom: 16 }} />
+
+        {/* Vouchers Section Skeleton */}
+        <ShimmerSkeleton width="50%" height={16} borderRadius={6} style={{ marginBottom: 10 }} />
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+          <ShimmerSkeleton width={130} height={50} borderRadius={12} />
+          <ShimmerSkeleton width={130} height={50} borderRadius={12} />
+        </View>
+
+        {/* Safety Box Skeleton */}
+        <ShimmerSkeleton width="100%" height={90} borderRadius={18} style={{ marginBottom: 20 }} />
+
+        {/* Description Skeleton */}
+        <ShimmerSkeleton width="40%" height={16} borderRadius={6} style={{ marginBottom: 10 }} />
+        <ShimmerSkeleton width="100%" height={14} borderRadius={6} style={{ marginBottom: 6 }} />
+        <ShimmerSkeleton width="95%" height={14} borderRadius={6} style={{ marginBottom: 6 }} />
+        <ShimmerSkeleton width="80%" height={14} borderRadius={6} style={{ marginBottom: 20 }} />
+      </View>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#EBE5DE',
@@ -139,5 +202,24 @@ const styles = StyleSheet.create({
   thumbnailsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  detailSkeletonContainer: {
+    flex: 1,
+    backgroundColor: '#FAF8F5',
+  },
+  detailThumbnailsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  detailContentCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    padding: 18,
+    marginTop: 4,
+    flex: 1,
   },
 });

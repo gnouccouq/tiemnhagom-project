@@ -22,6 +22,8 @@ import { Image } from 'expo-image';
 import { collection, getDocs, limit, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
+import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { OrderCardSkeleton } from '../src/components/ShimmerSkeleton';
 import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
@@ -316,88 +318,57 @@ export default function OrdersScreen() {
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
   const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 35 });
 
-  // ── LẤY ĐƠN HÀNG TRỰC TIẾP TỪ FIRESTORE ──
+  // ── LẤY ĐƠN HÀNG TRỰC TIẾP TỪ FIRESTORE CỦA USER ĐĂNG NHẬP ──
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
-    const loadOrdersFromFirestore = async () => {
-      setLoadingOrders(true);
-      try {
-        const ordersRef = collection(db, 'orders');
+    if (!user?.uid) {
+      setFirestoreOrders([]);
+      setLoadingOrders(false);
+      return;
+    }
 
-        // Nếu user đã đăng nhập, ưu tiên tải đơn của user
-        if (user?.uid) {
-          const qUser = query(ordersRef, where('userId', '==', user.uid), limit(50));
-          const snapUser = await getDocs(qUser);
+    setLoadingOrders(true);
+    try {
+      const ordersRef = collection(db, 'orders');
+      const qUser = query(ordersRef, where('userId', '==', user.uid), limit(50));
+
+      unsubscribe = onSnapshot(
+        qUser,
+        (snapshot) => {
           const userOrdersList: any[] = [];
-          snapUser.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
+          snapshot.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
 
-          // Tìm thêm với trường `user` (trong các đơn bán từ POS)
-          if (userOrdersList.length === 0) {
-            const qUserPos = query(ordersRef, where('user', '==', user.uid), limit(50));
-            const snapPos = await getDocs(qUserPos);
-            snapPos.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
-          }
+          userOrdersList.sort((a, b) => {
+            const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+            const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+            return timeB - timeA;
+          });
 
-          if (userOrdersList.length > 0) {
-            userOrdersList.sort((a, b) => {
-              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
-              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
-              return timeB - timeA;
-            });
-            setFirestoreOrders(userOrdersList);
-            setLoadingOrders(false);
-            return;
-          }
+          setFirestoreOrders(userOrdersList);
+          setLoadingOrders(false);
+        },
+        (err) => {
+          console.warn('Lỗi lắng nghe đơn hàng Firestore:', err);
+          setFirestoreOrders([]);
+          setLoadingOrders(false);
         }
-
-        // Lấy danh sách đơn hàng thực tế mới nhất từ Firestore (ngay cả khi chưa đăng nhập / test)
-        const qRecent = query(ordersRef, limit(35));
-        unsubscribe = onSnapshot(
-          qRecent,
-          (snapshot) => {
-            const list: any[] = [];
-            snapshot.forEach((d) => {
-              list.push({ id: d.id, ...d.data() });
-            });
-
-            // Sắp xếp đơn mới nhất lên đầu theo timestamp thực tế trong Firestore
-            list.sort((a, b) => {
-              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
-              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
-              return timeB - timeA;
-            });
-
-            setFirestoreOrders(list);
-            setLoadingOrders(false);
-          },
-          (err) => {
-            console.warn('Lỗi lắng nghe đơn hàng Firestore:', err);
-            setLoadingOrders(false);
-          }
-        );
-      } catch (e) {
-        console.warn('Lỗi đọc đơn hàng từ Firestore:', e);
-        setLoadingOrders(false);
-      }
-    };
-
-    loadOrdersFromFirestore();
+      );
+    } catch (e) {
+      console.warn('Lỗi đọc đơn hàng từ Firestore:', e);
+      setFirestoreOrders([]);
+      setLoadingOrders(false);
+    }
 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [user]);
+  }, [user?.uid]);
 
   // ── CHUẨN HÓA ĐƠN HÀNG LẤY ĐÚNG MÃ TRONG FIRESTORE & ĐÚNG ẢNH SẢN PHẨM / BIẾN THỂ ──
   const allOrders = useMemo(() => {
-    // Ưu tiên danh sách đơn tải trực tiếp từ Firestore, sau đó là realtimeOrders
-    const rawList =
-      firestoreOrders.length > 0
-        ? firestoreOrders
-        : Array.isArray(realtimeOrders) && realtimeOrders.length > 0
-        ? realtimeOrders
-        : [];
+    // Chỉ lấy đơn hàng thuộc về chính tài khoản user đang đăng nhập
+    const rawList = firestoreOrders;
 
     return rawList.map((item: any) => {
       // 1. MÃ ĐƠN HÀNG PHẢI LẤY ĐÚNG TRONG FIRESTORE (orderCode hoặc orderId hoặc doc.id)
@@ -651,7 +622,7 @@ export default function OrdersScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint="light"
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(250, 248, 245, 0.7)' }]} />
@@ -935,89 +906,92 @@ export default function OrdersScreen() {
       </ScrollView>
 
       {/* ── MODAL LỌC THỜI GIAN (BOTTOM SHEET) ── */}
-      <Modal visible={timeModalVisible} transparent animationType="fade" onRequestClose={() => setTimeModalVisible(false)}>
-        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setTimeModalVisible(false)}>
-          <View style={styles.sheetContent}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Chọn khoảng thời gian</Text>
+      <AnimatedBottomSheetModal
+        visible={timeModalVisible}
+        onClose={() => setTimeModalVisible(false)}
+        contentStyle={styles.sheetContent}
+      >
+        <Text style={styles.sheetTitle}>Chọn khoảng thời gian</Text>
 
-            {[
-              { key: 'all', label: 'Tất cả thời gian' },
-              { key: '30days', label: '30 ngày gần đây' },
-              { key: '3months', label: '3 tháng gần đây' },
-              { key: '6months', label: '6 tháng gần đây' },
-              { key: '2026', label: 'Năm 2026' },
-            ].map((opt) => (
-              <TouchableOpacity
-                key={opt.key}
-                style={[styles.sheetOptionRow, timeFilter === opt.key && styles.sheetOptionRowActive]}
-                onPress={() => {
-                  setTimeFilter(opt.key as any);
-                  setTimeModalVisible(false);
-                }}
-              >
-                <Text style={[styles.sheetOptionText, timeFilter === opt.key && styles.sheetOptionTextActive]}>
-                  {opt.label}
-                </Text>
-                {timeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        {[
+          { key: 'all', label: 'Tất cả thời gian' },
+          { key: '30days', label: '30 ngày gần đây' },
+          { key: '3months', label: '3 tháng gần đây' },
+          { key: '6months', label: '6 tháng gần đây' },
+          { key: '2026', label: 'Năm 2026' },
+        ].map((opt) => (
+          <ScalePressable
+            key={opt.key}
+            style={[styles.sheetOptionRow, timeFilter === opt.key && styles.sheetOptionRowActive]}
+            activeScale={0.96}
+            onPress={() => {
+              setTimeFilter(opt.key as any);
+              setTimeModalVisible(false);
+            }}
+          >
+            <Text style={[styles.sheetOptionText, timeFilter === opt.key && styles.sheetOptionTextActive]}>
+              {opt.label}
+            </Text>
+            {timeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
+          </ScalePressable>
+        ))}
+      </AnimatedBottomSheetModal>
 
       {/* ── MODAL LỌC CỬA HÀNG (BOTTOM SHEET) ── */}
-      <Modal visible={storeModalVisible} transparent animationType="fade" onRequestClose={() => setStoreModalVisible(false)}>
-        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setStoreModalVisible(false)}>
-          <View style={styles.sheetContent}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Chọn cửa hàng & hình thức</Text>
+      <AnimatedBottomSheetModal
+        visible={storeModalVisible}
+        onClose={() => setStoreModalVisible(false)}
+        contentStyle={styles.sheetContent}
+      >
+        <Text style={styles.sheetTitle}>Chọn cửa hàng & hình thức</Text>
 
-            {[
-              { key: 'all', label: 'Tất cả cửa hàng & hình thức' },
-              { key: 'gia-dinh', label: 'Mua tại cửa hàng (Mã POS)' },
-              { key: 'online', label: 'Mua online (Mã TNG)' },
-              { key: 'pickup', label: 'Tự đến lấy tại Showroom' },
-            ].map((opt) => (
-              <TouchableOpacity
-                key={opt.key}
-                style={[styles.sheetOptionRow, storeFilter === opt.key && styles.sheetOptionRowActive]}
-                onPress={() => {
-                  setStoreFilter(opt.key as any);
-                  setStoreModalVisible(false);
-                }}
-              >
-                <Text style={[styles.sheetOptionText, storeFilter === opt.key && styles.sheetOptionTextActive]}>
-                  {opt.label}
-                </Text>
-                {storeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        {[
+          { key: 'all', label: 'Tất cả cửa hàng & hình thức' },
+          { key: 'gia-dinh', label: 'Mua tại cửa hàng (Mã POS)' },
+          { key: 'online', label: 'Mua online (Mã TNG)' },
+          { key: 'pickup', label: 'Tự đến lấy tại Showroom' },
+        ].map((opt) => (
+          <ScalePressable
+            key={opt.key}
+            style={[styles.sheetOptionRow, storeFilter === opt.key && styles.sheetOptionRowActive]}
+            activeScale={0.96}
+            onPress={() => {
+              setStoreFilter(opt.key as any);
+              setStoreModalVisible(false);
+            }}
+          >
+            <Text style={[styles.sheetOptionText, storeFilter === opt.key && styles.sheetOptionTextActive]}>
+              {opt.label}
+            </Text>
+            {storeFilter === opt.key && <Ionicons name="checkmark-circle" size={20} color={BRAND.primary} />}
+          </ScalePressable>
+        ))}
+      </AnimatedBottomSheetModal>
 
       {/* ── MODAL TRA CỨU ĐƠN HÀNG NHANH (MÃ ĐƠN HOẶC SĐT TỪ FIRESTORE) ── */}
-      <Modal visible={lookupModalVisible} transparent animationType="slide" onRequestClose={() => setLookupModalVisible(false)}>
-        <View style={styles.lookupModalOverlay}>
-          <View style={styles.lookupModalCard}>
-            <View style={styles.modalHeaderRow}>
-              <View style={styles.modalHeaderLeft}>
-                <Ionicons name="search" size={20} color={BRAND.primary} style={{ marginRight: 6 }} />
-                <Text style={styles.modalHeaderTitle}>Tra cứu đơn hàng</Text>
-              </View>
-              <TouchableOpacity onPress={() => setLookupModalVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={22} color={BRAND.textPrimary} />
-              </TouchableOpacity>
-            </View>
+      <AnimatedCenterModal
+        visible={lookupModalVisible}
+        onClose={() => setLookupModalVisible(false)}
+        contentStyle={styles.lookupModalCard}
+        avoidKeyboard
+      >
+        <View style={styles.modalHeaderRow}>
+          <View style={styles.modalHeaderLeft}>
+            <Ionicons name="search" size={20} color={BRAND.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.modalHeaderTitle}>Tra cứu đơn hàng</Text>
+          </View>
+          <ScalePressable onPress={() => setLookupModalVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeScale={0.88}>
+            <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+          </ScalePressable>
+        </View>
 
-            <Text style={styles.lookupIntroText}>
-              Nhập mã đơn hàng hoặc số điện thoại người nhận để tìm kiếm thông tin đơn hàng nhanh chóng trong hệ thống:
-            </Text>
+        <Text style={styles.lookupIntroText}>
+          Nhập mã đơn hàng hoặc số điện thoại người nhận để tìm kiếm thông tin đơn hàng nhanh chóng trong hệ thống:
+        </Text>
 
-            <View style={styles.lookupInputWrap}>
-              <Ionicons name="receipt-outline" size={18} color="#9E968D" style={{ marginRight: 8 }} />
-              <TextInput
+        <View style={styles.lookupInputWrap}>
+          <Ionicons name="receipt-outline" size={18} color="#9E968D" style={{ marginRight: 8 }} />
+          <TextInput
                 style={styles.lookupInput}
                 placeholder="VD: POS-1784293830832 hoặc SĐT"
                 placeholderTextColor="#9E968D"
@@ -1051,211 +1025,206 @@ export default function OrdersScreen() {
                 )}
               </View>
             )}
-          </View>
-        </View>
-      </Modal>
+      </AnimatedCenterModal>
 
       {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (RATING & REVIEW) ── */}
-      <Modal visible={ratingModalVisible} transparent animationType="slide" onRequestClose={() => setRatingModalVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.ratingSheetCard}>
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalHeaderTitle}>Đánh giá trải nghiệm</Text>
-              <TouchableOpacity onPress={() => setRatingModalVisible(false)}>
-                <Ionicons name="close" size={22} color={BRAND.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.ratingSubtitle}>
-              Bạn cảm thấy thế nào về đơn hàng #{ratingOrder?.orderCode}?
-            </Text>
-
-            {/* 5 sao đánh giá */}
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setStarCount(star)} activeOpacity={0.7} style={{ padding: 6 }}>
-                  <Ionicons
-                    name={star <= starCount ? 'star' : 'star-outline'}
-                    size={36}
-                    color={star <= starCount ? '#E5B869' : '#D1C7BD'}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Các tags cảm nhận */}
-            <View style={styles.tagsWrap}>
-              {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Tư vấn nhiệt tình', 'Hài lòng 100%'].map((tag) => {
-                const isSelected = reviewTags.includes(tag);
-                return (
-                  <TouchableOpacity
-                    key={tag}
-                    style={[styles.tagPill, isSelected && styles.tagPillActive]}
-                    onPress={() => {
-                      if (isSelected) {
-                        setReviewTags(reviewTags.filter((t) => t !== tag));
-                      } else {
-                        setReviewTags([...reviewTags, tag]);
-                      }
-                    }}
-                  >
-                    <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Ô ghi chú cảm nghĩ */}
-            <TextInput
-              style={styles.reviewTextInput}
-              placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
-              placeholderTextColor="#9E968D"
-              multiline
-              numberOfLines={3}
-              value={reviewNote}
-              onChangeText={setReviewNote}
-            />
-
-            {/* Nút gửi đánh giá */}
-            <TouchableOpacity style={styles.submitReviewBtn} activeOpacity={0.85} onPress={handleSubmitRating}>
-              <Text style={styles.submitReviewBtnText}>Gửi đánh giá</Text>
-            </TouchableOpacity>
-          </View>
+      <AnimatedBottomSheetModal
+        visible={ratingModalVisible}
+        onClose={() => setRatingModalVisible(false)}
+        contentStyle={styles.ratingSheetCard}
+        avoidKeyboard
+      >
+        <View style={styles.modalHeaderRow}>
+          <Text style={styles.modalHeaderTitle}>Đánh giá trải nghiệm</Text>
+          <ScalePressable onPress={() => setRatingModalVisible(false)} activeScale={0.88}>
+            <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+          </ScalePressable>
         </View>
-      </Modal>
+
+        <Text style={styles.ratingSubtitle}>
+          Bạn cảm thấy thế nào về đơn hàng #{ratingOrder?.orderCode}?
+        </Text>
+
+        {/* 5 sao đánh giá */}
+        <View style={styles.starsRow}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <ScalePressable key={star} onPress={() => setStarCount(star)} activeScale={0.85} style={{ padding: 6 }}>
+              <Ionicons
+                name={star <= starCount ? 'star' : 'star-outline'}
+                size={36}
+                color={star <= starCount ? '#E5B869' : '#D1C7BD'}
+              />
+            </ScalePressable>
+          ))}
+        </View>
+
+        {/* Các tags cảm nhận */}
+        <View style={styles.tagsWrap}>
+          {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Tư vấn nhiệt tình', 'Hài lòng 100%'].map((tag) => {
+            const isSelected = reviewTags.includes(tag);
+            return (
+              <ScalePressable
+                key={tag}
+                style={[styles.tagPill, isSelected && styles.tagPillActive]}
+                activeScale={0.92}
+                onPress={() => {
+                  if (isSelected) {
+                    setReviewTags(reviewTags.filter((t) => t !== tag));
+                  } else {
+                    setReviewTags([...reviewTags, tag]);
+                  }
+                }}
+              >
+                <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
+              </ScalePressable>
+            );
+          })}
+        </View>
+
+        {/* Ô ghi chú cảm nghĩ */}
+        <TextInput
+          style={styles.reviewTextInput}
+          placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
+          placeholderTextColor="#9E968D"
+          multiline
+          numberOfLines={3}
+          value={reviewNote}
+          onChangeText={setReviewNote}
+        />
+
+        {/* Nút gửi đánh giá */}
+        <ScalePressable style={styles.submitReviewBtn} activeScale={0.96} onPress={handleSubmitRating}>
+          <Text style={styles.submitReviewBtnText}>Gửi đánh giá</Text>
+        </ScalePressable>
+      </AnimatedBottomSheetModal>
 
       {/* ── MODAL CHI TIẾT ĐƠN HÀNG ĐẦY ĐỦ ── */}
-      <Modal
+      <AnimatedBottomSheetModal
         visible={Boolean(selectedOrderDetail)}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedOrderDetail(null)}
+        onClose={() => setSelectedOrderDetail(null)}
+        contentStyle={styles.detailSheetCard}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.detailSheetCard}>
-            <View style={styles.modalHeaderRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.modalHeaderTitle}>Chi tiết đơn hàng</Text>
-                {/* Hiển thị chuẩn xác mã đơn Firestore */}
-                <Text style={styles.detailCodeSub}>#{selectedOrderDetail?.orderCode}</Text>
-              </View>
-              <TouchableOpacity onPress={() => setSelectedOrderDetail(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={24} color={BRAND.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520, marginTop: 12 }}>
-              {/* Trạng thái & ngày giờ */}
-              <View style={styles.detailMetaBox}>
-                <View style={styles.detailMetaRow}>
-                  <Text style={styles.detailMetaLabel}>Trạng thái:</Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: getBadgeStyle(selectedOrderDetail?.statusRaw).bg,
-                        borderColor: getBadgeStyle(selectedOrderDetail?.statusRaw).borderColor,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusBadgeText,
-                        { color: getBadgeStyle(selectedOrderDetail?.statusRaw).textColor },
-                      ]}
-                    >
-                      {getBadgeStyle(selectedOrderDetail?.statusRaw).label}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.detailMetaRow}>
-                  <Text style={styles.detailMetaLabel}>Ngày đặt hàng:</Text>
-                  <Text style={styles.detailMetaVal}>{formatDate(selectedOrderDetail?.orderDate)}</Text>
-                </View>
-                <View style={styles.detailMetaRow}>
-                  <Text style={styles.detailMetaLabel}>Hình thức:</Text>
-                  <Text style={styles.detailMetaVal}>{selectedOrderDetail?.orderMethod || 'Giao tận nơi'}</Text>
-                </View>
-              </View>
-
-              {/* Danh sách từng món với ảnh sản phẩm/biến thể đúng từ Firestore */}
-              <Text style={styles.detailSectionTitle}>SẢN PHẨM ({selectedOrderDetail?.items?.length || 0})</Text>
-              {selectedOrderDetail?.items?.map((item: any, idx: number) => (
-                <View key={idx} style={styles.detailItemRow}>
-                  <Image
-                    source={{ uri: item.resolvedImage }}
-                    style={styles.detailItemThumb}
-                    contentFit="cover"
-                  />
-                  <View style={styles.detailItemInfo}>
-                    <Text style={styles.detailItemName} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                    {Boolean(item.variantDisplay) && (
-                      <Text style={styles.detailItemVariantBadge}>{item.variantDisplay}</Text>
-                    )}
-                    <Text style={styles.detailItemQty}>Số lượng: x{item.quantity || 1}</Text>
-                  </View>
-                  <Text style={styles.detailItemPrice}>
-                    {formatDisplayPrice((item.price || 0) * (item.quantity || 1))}
-                  </Text>
-                </View>
-              ))}
-
-              {/* Thông tin nhận hàng */}
-              <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>THÔNG TIN NHẬN HÀNG</Text>
-              <View style={styles.detailAddressBox}>
-                <Text style={styles.detailCustomerName}>
-                  {selectedOrderDetail?.shippingAddress?.fullName ||
-                    selectedOrderDetail?.customerName ||
-                    'Khách hàng Tiệm Nhà Gốm'}
-                </Text>
-                <Text style={styles.detailCustomerPhone}>
-                  {selectedOrderDetail?.shippingAddress?.phone || '0777709662'}
-                </Text>
-                <Text style={styles.detailCustomerAddress}>
-                  {selectedOrderDetail?.shippingAddress?.address || 'Tại showroom Tiệm Nhà Gốm (37 Nguyễn Duy)'}
-                </Text>
-              </View>
-
-              {/* Tóm tắt thanh toán */}
-              <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>CHI TIẾT THANH TOÁN</Text>
-              <View style={styles.detailSummaryBox}>
-                <View style={styles.summaryLine}>
-                  <Text style={styles.summaryLineLabel}>Tạm tính:</Text>
-                  <Text style={styles.summaryLineVal}>
-                    {formatDisplayPrice(selectedOrderDetail?.subtotal || selectedOrderDetail?.totalAmount)}
-                  </Text>
-                </View>
-                <View style={styles.summaryLine}>
-                  <Text style={styles.summaryLineLabel}>Phí giao hàng:</Text>
-                  <Text style={styles.summaryLineVal}>
-                    {selectedOrderDetail?.shippingFee ? formatDisplayPrice(selectedOrderDetail.shippingFee) : 'Miễn phí'}
-                  </Text>
-                </View>
-                <View style={[styles.summaryLine, styles.totalLineBorder]}>
-                  <Text style={styles.totalLineLabel}>Tổng cộng:</Text>
-                  <Text style={styles.totalLineVal}>
-                    {formatDisplayPrice(selectedOrderDetail?.totalAmount)}
-                  </Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            {/* Nút đặt lại món quen */}
-            <TouchableOpacity
-              style={styles.detailReorderBtn}
-              activeOpacity={0.85}
-              onPress={() => {
-                setSelectedOrderDetail(null);
-                handleReorder(selectedOrderDetail);
-              }}
-            >
-              <Text style={styles.detailReorderBtnText}>Đặt lại đơn hàng này</Text>
-            </TouchableOpacity>
+        <View style={styles.modalHeaderRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.modalHeaderTitle}>Chi tiết đơn hàng</Text>
+            {/* Hiển thị chuẩn xác mã đơn Firestore */}
+            <Text style={styles.detailCodeSub}>#{selectedOrderDetail?.orderCode}</Text>
           </View>
+          <ScalePressable onPress={() => setSelectedOrderDetail(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeScale={0.88}>
+            <Ionicons name="close" size={24} color={BRAND.textPrimary} />
+          </ScalePressable>
         </View>
-      </Modal>
+
+        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520, marginTop: 12 }}>
+          {/* Trạng thái & ngày giờ */}
+          <View style={styles.detailMetaBox}>
+            <View style={styles.detailMetaRow}>
+              <Text style={styles.detailMetaLabel}>Trạng thái:</Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: getBadgeStyle(selectedOrderDetail?.statusRaw).bg,
+                    borderColor: getBadgeStyle(selectedOrderDetail?.statusRaw).borderColor,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusBadgeText,
+                    { color: getBadgeStyle(selectedOrderDetail?.statusRaw).textColor },
+                  ]}
+                >
+                  {getBadgeStyle(selectedOrderDetail?.statusRaw).label}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.detailMetaRow}>
+              <Text style={styles.detailMetaLabel}>Ngày đặt hàng:</Text>
+              <Text style={styles.detailMetaVal}>{formatDate(selectedOrderDetail?.orderDate)}</Text>
+            </View>
+            <View style={styles.detailMetaRow}>
+              <Text style={styles.detailMetaLabel}>Hình thức:</Text>
+              <Text style={styles.detailMetaVal}>{selectedOrderDetail?.orderMethod || 'Giao tận nơi'}</Text>
+            </View>
+          </View>
+
+          {/* Danh sách từng món với ảnh sản phẩm/biến thể đúng từ Firestore */}
+          <Text style={styles.detailSectionTitle}>SẢN PHẨM ({selectedOrderDetail?.items?.length || 0})</Text>
+          {selectedOrderDetail?.items?.map((item: any, idx: number) => (
+            <View key={idx} style={styles.detailItemRow}>
+              <Image
+                source={{ uri: item.resolvedImage }}
+                style={styles.detailItemThumb}
+                contentFit="cover"
+              />
+              <View style={styles.detailItemInfo}>
+                <Text style={styles.detailItemName} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                {Boolean(item.variantDisplay) && (
+                  <Text style={styles.detailItemVariantBadge}>{item.variantDisplay}</Text>
+                )}
+                <Text style={styles.detailItemQty}>Số lượng: x{item.quantity || 1}</Text>
+              </View>
+              <Text style={styles.detailItemPrice}>
+                {formatDisplayPrice((item.price || 0) * (item.quantity || 1))}
+              </Text>
+            </View>
+          ))}
+
+          {/* Thông tin nhận hàng */}
+          <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>THÔNG TIN NHẬN HÀNG</Text>
+          <View style={styles.detailAddressBox}>
+            <Text style={styles.detailCustomerName}>
+              {selectedOrderDetail?.shippingAddress?.fullName ||
+                selectedOrderDetail?.customerName ||
+                'Khách hàng Tiệm Nhà Gốm'}
+            </Text>
+            <Text style={styles.detailCustomerPhone}>
+              {selectedOrderDetail?.shippingAddress?.phone || '0777709662'}
+            </Text>
+            <Text style={styles.detailCustomerAddress}>
+              {selectedOrderDetail?.shippingAddress?.address || 'Tại showroom Tiệm Nhà Gốm (37 Nguyễn Duy)'}
+            </Text>
+          </View>
+
+          {/* Tóm tắt thanh toán */}
+          <Text style={[styles.detailSectionTitle, { marginTop: 18 }]}>CHI TIẾT THANH TOÁN</Text>
+          <View style={styles.detailSummaryBox}>
+            <View style={styles.summaryLine}>
+              <Text style={styles.summaryLineLabel}>Tạm tính:</Text>
+              <Text style={styles.summaryLineVal}>
+                {formatDisplayPrice(selectedOrderDetail?.subtotal || selectedOrderDetail?.totalAmount)}
+              </Text>
+            </View>
+            <View style={styles.summaryLine}>
+              <Text style={styles.summaryLineLabel}>Phí giao hàng:</Text>
+              <Text style={styles.summaryLineVal}>
+                {selectedOrderDetail?.shippingFee ? formatDisplayPrice(selectedOrderDetail.shippingFee) : 'Miễn phí'}
+              </Text>
+            </View>
+            <View style={[styles.summaryLine, styles.totalLineBorder]}>
+              <Text style={styles.totalLineLabel}>Tổng cộng:</Text>
+              <Text style={styles.totalLineVal}>
+                {formatDisplayPrice(selectedOrderDetail?.totalAmount)}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Nút đặt lại món quen */}
+        <ScalePressable
+          style={styles.detailReorderBtn}
+          activeScale={0.96}
+          onPress={() => {
+            setSelectedOrderDetail(null);
+            handleReorder(selectedOrderDetail);
+          }}
+        >
+          <Text style={styles.detailReorderBtnText}>Đặt lại đơn hàng này</Text>
+        </ScalePressable>
+      </AnimatedBottomSheetModal>
     </Animated.View>
   );
 }

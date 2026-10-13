@@ -29,6 +29,9 @@ import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { BlurButton } from '../../src/components/BlurButton';
 import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
+import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
+import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
+import { ScalePressable } from '../../src/components/ScalePressable';
 
 // Cấu hình hạng thành viên đồng bộ chuẩn xác từ Website Tiệm Nhà Gốm
 const MEMBERSHIP_TIERS = [
@@ -242,7 +245,7 @@ export default function ProfileScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View
@@ -737,172 +740,160 @@ export default function ProfileScreen() {
       {/* ========================================================================= */}
       {/* MODAL 1: QR CODE & MÃ THÀNH VIÊN                                          */}
       {/* ========================================================================= */}
-      <Modal
+      <AnimatedCenterModal
         visible={qrModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setQrModalVisible(false)}
+        onClose={() => setQrModalVisible(false)}
+        contentStyle={styles.qrCardModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.qrCardModal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('memberCardModalTitle')}</Text>
-              <TouchableOpacity
-                onPress={() => setQrModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color="#5D6160" />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>{t('memberCardModalTitle')}</Text>
+          <ScalePressable
+            onPress={() => setQrModalVisible(false)}
+            style={styles.modalCloseBtn}
+            activeScale={0.9}
+          >
+            <Ionicons name="close" size={20} color="#5D6160" />
+          </ScalePressable>
+        </View>
 
-            <View style={styles.qrModalBody}>
-              <View style={styles.qrBox}>
-                <Ionicons name="qr-code" size={140} color="#2D3B34" />
-              </View>
+        <View style={styles.qrModalBody}>
+          <View style={styles.qrBox}>
+            <Ionicons name="qr-code" size={140} color="#2D3B34" />
+          </View>
 
-              <Text style={styles.qrCodeLabel}>{memberCode}</Text>
-              <Text style={styles.qrTierName}>
-                {displayName} • {t('tierPrefix')} {getTierName(currentTier)} • {points} {t('pointUnit') || 'Điểm'}
-              </Text>
+          <Text style={styles.qrCodeLabel}>{memberCode}</Text>
+          <Text style={styles.qrTierName}>
+            {displayName} • {t('tierPrefix')} {getTierName(currentTier)} • {points} {t('pointUnit') || 'Điểm'}
+          </Text>
 
-              <View style={styles.barcodePlaceholder}>
-                <View style={styles.barcodeLinesRow}>
-                  {Array.from({ length: 32 }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.barcodeBar,
-                        { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
-                      ]}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <Text style={styles.qrHelpText}>
-                {t('scanAtCounterInstruction')}
-              </Text>
+          <View style={styles.barcodePlaceholder}>
+            <View style={styles.barcodeLinesRow}>
+              {Array.from({ length: 32 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.barcodeBar,
+                    { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
+                  ]}
+                />
+              ))}
             </View>
           </View>
+
+          <Text style={styles.qrHelpText}>
+            {t('scanAtCounterInstruction')}
+          </Text>
         </View>
-      </Modal>
+      </AnimatedCenterModal>
 
       {/* ========================================================================= */}
       {/* MODAL 2: ĐẶC QUYỀN CÁC HẠNG THÀNH VIÊN                                   */}
       {/* ========================================================================= */}
-      <Modal
+      <AnimatedBottomSheetModal
         visible={tierModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setTierModalVisible(false)}
+        onClose={() => setTierModalVisible(false)}
+        contentStyle={styles.tierSheetModal}
       >
-        <View style={styles.modalOverlayBottom}>
-          <View style={styles.tierSheetModal}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderTitleRow}>
-                <Ionicons name="ribbon-outline" size={20} color="#8A5A2B" />
-                <Text style={styles.modalTitle}>{t('memberPrivilegesModalTitle')}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setTierModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color="#5D6160" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={styles.tierListContainer}>
-              <Text style={styles.tierIntroText}>
-                {t('memberPrivilegesIntro')}
-              </Text>
-
-              {MEMBERSHIP_TIERS.map((tier) => {
-                const isCurrent = tier.id === currentTier.id;
-                return (
-                  <View
-                    key={tier.id}
-                    style={[styles.tierDetailCard, isCurrent && styles.tierDetailCardActive]}
-                  >
-                    <View style={styles.tierHeader}>
-                      <View style={styles.tierLeftBadge}>
-                        <View style={[styles.tierColorDot, { backgroundColor: tier.color }]} />
-                        <Text style={styles.tierCardTitle}>
-                          {t('tierPrefix')} {getTierName(tier)}
-                        </Text>
-                        {isCurrent && (
-                          <View style={styles.currentBadge}>
-                            <Text style={styles.currentBadgeText}>{t('currentTierBadge')}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={styles.tierDiscountTag}>
-                        {t('orderDiscount') || 'Giảm'} {tier.discount}%
-                      </Text>
-                    </View>
-
-                    <Text style={styles.tierMinSpend}>
-                      {t('spendConditionText')} {formatCurrency(tier.min)}
-                    </Text>
-                    <Text style={styles.tierPerkText}>{getTierPerk(tier)}</Text>
-                  </View>
-                );
-              })}
-            </ScrollView>
+        <View style={styles.modalHeader}>
+          <View style={styles.modalHeaderTitleRow}>
+            <Ionicons name="ribbon-outline" size={20} color="#8A5A2B" />
+            <Text style={styles.modalTitle}>{t('memberPrivilegesModalTitle')}</Text>
           </View>
+          <ScalePressable
+            onPress={() => setTierModalVisible(false)}
+            style={styles.modalCloseBtn}
+            activeScale={0.9}
+          >
+            <Ionicons name="close" size={20} color="#5D6160" />
+          </ScalePressable>
         </View>
-      </Modal>
+
+        <ScrollView contentContainerStyle={styles.tierListContainer}>
+          <Text style={styles.tierIntroText}>
+            {t('memberPrivilegesIntro')}
+          </Text>
+
+          {MEMBERSHIP_TIERS.map((tier) => {
+            const isCurrent = tier.id === currentTier.id;
+            return (
+              <View
+                key={tier.id}
+                style={[styles.tierDetailCard, isCurrent && styles.tierDetailCardActive]}
+              >
+                <View style={styles.tierHeader}>
+                  <View style={styles.tierLeftBadge}>
+                    <View style={[styles.tierColorDot, { backgroundColor: tier.color }]} />
+                    <Text style={styles.tierCardTitle}>
+                      {t('tierPrefix')} {getTierName(tier)}
+                    </Text>
+                    {isCurrent && (
+                      <View style={styles.currentBadge}>
+                        <Text style={styles.currentBadgeText}>{t('currentTierBadge')}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.tierDiscountTag}>
+                    {t('orderDiscount') || 'Giảm'} {tier.discount}%
+                  </Text>
+                </View>
+
+                <Text style={styles.tierMinSpend}>
+                  {t('spendConditionText')} {formatCurrency(tier.min)}
+                </Text>
+                <Text style={styles.tierPerkText}>{getTierPerk(tier)}</Text>
+              </View>
+            );
+          })}
+        </ScrollView>
+      </AnimatedBottomSheetModal>
 
       {/* ========================================================================= */}
       {/* MODAL 3: LỊCH SỬ & QUY TẮC ĐIỂM THƯỞNG                                   */}
       {/* ========================================================================= */}
-      <Modal
+      <AnimatedBottomSheetModal
         visible={pointsModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setPointsModalVisible(false)}
+        onClose={() => setPointsModalVisible(false)}
+        contentStyle={styles.tierSheetModal}
       >
-        <View style={styles.modalOverlayBottom}>
-          <View style={styles.tierSheetModal}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderTitleRow}>
-                <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
-                <Text style={styles.modalTitle}>{t('potteryPointsModalTitle')}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setPointsModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color="#5D6160" />
-              </TouchableOpacity>
+        <View style={styles.modalHeader}>
+          <View style={styles.modalHeaderTitleRow}>
+            <Ionicons name="flame" size={20} color="#E5B869" style={{ marginRight: 6 }} />
+            <Text style={styles.modalTitle}>{t('potteryPointsModalTitle')}</Text>
+          </View>
+          <ScalePressable
+            onPress={() => setPointsModalVisible(false)}
+            style={styles.modalCloseBtn}
+            activeScale={0.9}
+          >
+            <Ionicons name="close" size={20} color="#5D6160" />
+          </ScalePressable>
+        </View>
+
+        <View style={styles.pointsSheetBody}>
+          <View style={styles.pointsHighlightBox}>
+            <Text style={styles.pointsBigNumber}>{points}</Text>
+            <Text style={styles.pointsUnitLabel}>{t('availablePointsLabel')}</Text>
+            <Text style={styles.pointsEquivText}>
+              {t('pointsDiscountEquivText')} {formatCurrency(points * 1000)} {t('pointsDiscountEquivSuffix')}
+            </Text>
+          </View>
+
+          <View style={styles.pointsRulesList}>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>{t('pointRuleText1')}</Text>
             </View>
-
-            <View style={styles.pointsSheetBody}>
-              <View style={styles.pointsHighlightBox}>
-                <Text style={styles.pointsBigNumber}>{points}</Text>
-                <Text style={styles.pointsUnitLabel}>{t('availablePointsLabel')}</Text>
-                <Text style={styles.pointsEquivText}>
-                  {t('pointsDiscountEquivText')} {formatCurrency(points * 1000)} {t('pointsDiscountEquivSuffix')}
-                </Text>
-              </View>
-
-              <View style={styles.pointsRulesList}>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>{t('pointRuleText1')}</Text>
-                </View>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>{t('pointRuleText2')}</Text>
-                </View>
-                <View style={styles.ruleItem}>
-                  <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
-                  <Text style={styles.ruleText}>{t('pointRuleText3')}</Text>
-                </View>
-              </View>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>{t('pointRuleText2')}</Text>
+            </View>
+            <View style={styles.ruleItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#9C7156" />
+              <Text style={styles.ruleText}>{t('pointRuleText3')}</Text>
             </View>
           </View>
         </View>
-      </Modal>
+      </AnimatedBottomSheetModal>
     </View>
   );
 }

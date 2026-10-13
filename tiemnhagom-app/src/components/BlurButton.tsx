@@ -25,7 +25,7 @@ export const BlurButton: React.FC<BlurButtonProps> = ({
         <BlurView
           intensity={Platform.OS === 'ios' ? 85 : 70}
           tint={isDark ? "dark" : "light"}
-          blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
+          blurMethod="none"
           style={StyleSheet.absoluteFill}
         />
         <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+
+import { AnimatedCenterModal } from './AnimatedCenterModal';
+import { ScalePressable } from './ScalePressable';
 
 function compareVersions(v1: string, v2: string) {
   const parts1 = v1.split('.').map(Number);
@@ -52,37 +55,31 @@ export default function ForceUpdateChecker() {
   if (!isUpdateRequired) return null;
 
   return (
-    <Modal visible={isUpdateRequired} animationType="fade" transparent={true}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="cloud-download-outline" size={48} color={Colors.textPrimary} />
-          </View>
-          <Text style={styles.title}>Cập nhật bản mới</Text>
-          <Text style={styles.message}>
-            Tiệm Nhà Gốm vừa ra mắt phiên bản mới với nhiều tính năng và trải nghiệm tốt hơn. Vui lòng cập nhật để tiếp tục sử dụng nhé!
-          </Text>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={() => Linking.openURL(storeUrl)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Cập nhật ngay</Text>
-          </TouchableOpacity>
-        </View>
+    <AnimatedCenterModal
+      visible={isUpdateRequired}
+      onClose={() => {}}
+      dismissOnBackdropPress={false}
+      contentStyle={styles.modalContainer}
+    >
+      <View style={styles.iconContainer}>
+        <Ionicons name="cloud-download-outline" size={48} color={Colors.textPrimary} />
       </View>
-    </Modal>
+      <Text style={styles.title}>Cập nhật bản mới</Text>
+      <Text style={styles.message}>
+        Tiệm Nhà Gốm vừa ra mắt phiên bản mới với nhiều tính năng và trải nghiệm tốt hơn. Vui lòng cập nhật để tiếp tục sử dụng nhé!
+      </Text>
+      <ScalePressable 
+        style={styles.button}
+        onPress={() => Linking.openURL(storeUrl)}
+        activeScale={0.96}
+      >
+        <Text style={styles.buttonText}>Cập nhật ngay</Text>
+      </ScalePressable>
+    </AnimatedCenterModal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xxl,
-  },
   modalContainer: {
     backgroundColor: Colors.cardBackground,
     borderRadius: BorderRadius.xl,

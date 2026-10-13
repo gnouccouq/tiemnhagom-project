@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
           <BlurView
             intensity={Platform.OS === 'ios' ? 85 : 75}
             tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
-            blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+            blurMethod="none"
             style={StyleSheet.absoluteFill}
           />
           <View style={[StyleSheet.absoluteFill, styles.headerBackdrop]} />
@@ -173,7 +173,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 2. Thanh tìm kiếm con nhộng (Pill Capsule) */}
           {showSearch && (
             onSearchChange ? (
-              <View style={styles.searchPill}><BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'} style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} />
+              <View style={styles.searchPill}><BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod="none" style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} />
                 <TextInput
                   style={styles.searchInputInline}
                   placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
@@ -199,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={onSearchPress || (() => router.push('/search'))}
                 accessibilityLabel="Tìm kiếm sản phẩm"
               >
-                <BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'} style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} /><Text style={styles.searchPlaceholder} numberOfLines={1}>
+                <BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod="none" style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} /><Text style={styles.searchPlaceholder} numberOfLines={1}>
                   {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
                 </Text>
                 <Ionicons name="search-outline" size={25} color={Colors.textMuted} />

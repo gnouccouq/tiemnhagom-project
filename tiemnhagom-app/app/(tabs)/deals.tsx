@@ -16,6 +16,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
 import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
+import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
+import { ScalePressable } from '../../src/components/ScalePressable';
 import { useAuth } from '../../src/context/AuthContext';
 import { getUserOrders } from '../../src/services/orderService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
@@ -206,9 +208,9 @@ export default function DealsScreen() {
         {/* ================= KHỐI TỔNG QUAN ĐẦU TRANG (HIỆU ỨNG DÒNG CHẢY MEN GỐM / MÀU NƯỚC LOANG) ================= */}
         <View style={styles.topSummaryRow}>
           {/* Card 1: Hạng thành viên & Điểm tích lũy */}
-          <TouchableOpacity
+          <ScalePressable
             style={styles.tierPointsTouch}
-            activeOpacity={0.88}
+            activeScale={0.98}
             onPress={() => router.push('/membership-privileges')}
           >
             <GlazeFluidCard
@@ -252,12 +254,12 @@ export default function DealsScreen() {
                 <Ionicons name="qr-code-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </GlazeFluidCard>
-          </TouchableOpacity>
+          </ScalePressable>
 
           {/* Card 2: Kho quà (Hiệu ứng dòng chảy men gốm đồng bộ, chuyển sang /vouchers) */}
-          <TouchableOpacity
+          <ScalePressable
             style={styles.giftVaultTouch}
-            activeOpacity={0.88}
+            activeScale={0.98}
             onPress={() => router.push('/vouchers')}
           >
             <GlazeFluidCard
@@ -275,13 +277,13 @@ export default function DealsScreen() {
                 <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
               </View>
             </GlazeFluidCard>
-          </TouchableOpacity>
+          </ScalePressable>
         </View>
 
         {/* ================= THANH BANNER ĐẶC QUYỀN HỘI VIÊN (CHUYỂN SANG /membership-privileges) ================= */}
-        <TouchableOpacity
+        <ScalePressable
           style={styles.membershipBanner}
-          activeOpacity={0.85}
+          activeScale={0.98}
           onPress={() => router.push('/membership-privileges')}
         >
           <View style={styles.membershipBannerLeft}>
@@ -299,8 +301,7 @@ export default function DealsScreen() {
               </Text>
             </View>
           </View>
-          <Ionicons name="gift-outline" size={16} color={currentTier.gradientColors[0]} />
-        </TouchableOpacity>
+        </ScalePressable>
 
         {/* ================= PHÂN MỤC: ƯU ĐÃI MỚI (CHỮ SẮP RA MẮT CHÍNH GIỮA) ================= */}
         <View style={styles.sectionHeaderRow}>
@@ -328,92 +329,87 @@ export default function DealsScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.explorePrivilegesBtn}
-            activeOpacity={0.85}
+          <ScalePressable
+            style={[
+              styles.explorePrivilegesBtn,
+              { backgroundColor: currentTier.gradientColors[0] || '#9C7156' },
+            ]}
+            activeScale={0.97}
             onPress={() => router.push('/membership-privileges')}
+          >
+            <View style={styles.explorePrivilegesContent}>
+              <Text style={styles.explorePrivilegesText}>
+                Khám phá đặc quyền hạng {currentTier.name}
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </View>
+          </ScalePressable>
+        </View>
+      </ScrollView>
+
+      {/* ================= MODAL: MÃ THÀNH VIÊN SỐ (QR & BARCODE) ================= */}
+      <AnimatedCenterModal
+        visible={qrModalVisible}
+        onClose={() => setQrModalVisible(false)}
+        contentStyle={styles.qrCardModal}
+      >
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Thẻ Thành Viên Số</Text>
+          <ScalePressable
+            onPress={() => setQrModalVisible(false)}
+            style={styles.modalCloseBtn}
+            activeScale={0.9}
+          >
+            <Ionicons name="close" size={20} color="#2B2928" />
+          </ScalePressable>
+        </View>
+
+        <View style={styles.qrModalBody}>
+          <View style={styles.qrBox}>
+            <Ionicons name="qr-code" size={140} color="#2B2928" />
+          </View>
+
+          <Text style={styles.qrCodeLabel}>{memberCode}</Text>
+          <Text style={styles.qrTierName}>
+            {userProfile?.displayName || user?.displayName || 'Khách hàng thân thiết'} • Hạng {currentTier.name} • {points} Điểm
+          </Text>
+
+          {/* Barcode giả lập */}
+          <View style={styles.barcodePlaceholder}>
+            <View style={styles.barcodeLinesRow}>
+              {Array.from({ length: 32 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.barcodeBar,
+                    { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          <Text style={styles.qrModalHint}>
+            Đưa mã này cho nhân viên thu ngân tại quầy Tiệm Nhà Gốm để tích điểm và hưởng ưu đãi
+            hạng thành viên.
+          </Text>
+
+          <ScalePressable
+            style={styles.qrCloseActionBtn}
+            onPress={() => setQrModalVisible(false)}
+            activeScale={0.96}
           >
             <GlazeFluidCard
               gradientColors={currentTier.gradientColors}
               blobs={currentTier.watercolorBlobs}
               borderRadius={26}
-              style={styles.explorePrivilegesGradient}
+              style={styles.qrCloseActionGradient}
             >
-              <Text style={styles.explorePrivilegesText}>
-                Khám phá đặc quyền hạng {currentTier.name}
-              </Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              <Text style={styles.qrCloseActionText}>Đóng</Text>
             </GlazeFluidCard>
-          </TouchableOpacity>
+          </ScalePressable>
         </View>
-      </ScrollView>
-
-      {/* ================= MODAL: MÃ THÀNH VIÊN SỐ (QR & BARCODE) ================= */}
-      <Modal
-        visible={qrModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setQrModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.qrCardModal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Thẻ Thành Viên Số</Text>
-              <TouchableOpacity
-                onPress={() => setQrModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color="#2B2928" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.qrModalBody}>
-              <View style={styles.qrBox}>
-                <Ionicons name="qr-code" size={140} color="#2B2928" />
-              </View>
-
-              <Text style={styles.qrCodeLabel}>{memberCode}</Text>
-              <Text style={styles.qrTierName}>
-                {userProfile?.displayName || user?.displayName || 'Khách hàng thân thiết'} • Hạng {currentTier.name} • {points} Điểm
-              </Text>
-
-              {/* Barcode giả lập */}
-              <View style={styles.barcodePlaceholder}>
-                <View style={styles.barcodeLinesRow}>
-                  {Array.from({ length: 32 }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.barcodeBar,
-                        { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
-                      ]}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <Text style={styles.qrModalHint}>
-                Đưa mã này cho nhân viên thu ngân tại quầy Tiệm Nhà Gốm để tích điểm và hưởng ưu đãi
-                hạng thành viên.
-              </Text>
-
-              <TouchableOpacity
-                style={styles.qrCloseActionBtn}
-                onPress={() => setQrModalVisible(false)}
-              >
-                <GlazeFluidCard
-                  gradientColors={currentTier.gradientColors}
-                  blobs={currentTier.watercolorBlobs}
-                  borderRadius={26}
-                  style={styles.qrCloseActionGradient}
-                >
-                  <Text style={styles.qrCloseActionText}>Đóng</Text>
-                </GlazeFluidCard>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      </AnimatedCenterModal>
     </View>
   );
 }
@@ -433,7 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     gap: 12,
-    height: 104,
+    width: '100%',
   },
   // Card 1: Hạng & Điểm
   tierPointsTouch: {
@@ -454,6 +450,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     height: 104,
+    width: '100%',
   },
   tierPointsLeft: {
     flex: 1,
@@ -516,6 +513,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderRadius: 20,
     height: 104,
+    width: '100%',
   },
   giftVaultTitle: {
     fontFamily: 'ElleGaborStd',
@@ -542,11 +540,11 @@ const styles = StyleSheet.create({
   // BANNER HỘI VIÊN
   membershipBanner: {
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 16,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -669,22 +667,22 @@ const styles = StyleSheet.create({
   },
   explorePrivilegesBtn: {
     width: '100%',
+    height: 52,
     borderRadius: 26,
-    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 8,
     elevation: 4,
   },
-  explorePrivilegesGradient: {
-    height: 52,
+  explorePrivilegesContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 24,
-    width: '100%',
   },
   explorePrivilegesText: {
     fontFamily: 'ElleGaborStd',

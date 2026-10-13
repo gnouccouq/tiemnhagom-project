@@ -18,6 +18,8 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
+import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
+import { ScalePressable } from '../src/components/ScalePressable';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { useAuth } from '../src/context/AuthContext';
 import { useDialog } from '../src/context/DialogContext';
@@ -332,114 +334,109 @@ export default function VouchersScreen() {
       )}
 
       {/* MODAL CHI TIẾT VOUCHER */}
-      <Modal
+      <AnimatedCenterModal
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        contentStyle={[styles.modalCard, { backgroundColor: Colors.cardBackground }]}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: Colors.cardBackground }]}>
-            {/* Nút đóng */}
-            <TouchableOpacity
-              style={styles.modalCloseBtn}
-              onPress={() => setModalVisible(false)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
+        {/* Nút đóng */}
+        <ScalePressable
+          style={styles.modalCloseBtn}
+          onPress={() => setModalVisible(false)}
+          activeScale={0.9}
+        >
+          <Ionicons name="close" size={20} color={Colors.textSecondary} />
+        </ScalePressable>
 
-            {/* Logo Tiệm Nhà Gốm lớn */}
-            <View style={styles.modalLogoWrap}>
-              <Image
-                source={require('../assets/images/logo.webp')}
-                style={styles.modalLogo}
-                contentFit="contain"
-              />
-            </View>
-
-            {/* Tên voucher */}
-            <Text style={[styles.modalTitle, { color: Colors.textPrimary }]}>
-              {selectedVoucher?.name}
-            </Text>
-
-            {/* Hạn sử dụng */}
-            <Text style={[styles.modalExpiry, { color: Colors.textMuted }]}>
-              {formatExpiryDisplay(selectedVoucher?.expiryDate)}
-            </Text>
-
-            {/* Khung mã giảm giá */}
-            <View style={styles.modalCodeBox}>
-              <View>
-                <Text style={styles.modalCodeLabel}>MÃ VOUCHER</Text>
-                <Text style={styles.modalCodeVal}>{selectedVoucher?.code}</Text>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.modalCopyBtn,
-                  copiedCode === selectedVoucher?.code && styles.modalCopyBtnDone,
-                ]}
-                onPress={() => selectedVoucher && handleCopyCode(selectedVoucher.code)}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={copiedCode === selectedVoucher?.code ? 'checkmark' : 'copy-outline'}
-                  size={16}
-                  color="#FFFFFF"
-                />
-                <Text style={styles.modalCopyBtnText}>
-                  {copiedCode === selectedVoucher?.code ? 'Đã chép' : 'Sao chép'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Chi tiết điều kiện */}
-            <View style={styles.modalDetailsList}>
-              <View style={styles.modalDetailRow}>
-                <Ionicons name="information-circle-outline" size={16} color="#9C7156" />
-                <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
-                  {selectedVoucher?.conditions ||
-                    selectedVoucher?.description ||
-                    'Áp dụng khi thanh toán đơn hàng tại Tiệm Nhà Gốm.'}
-                </Text>
-              </View>
-
-              {Boolean(selectedVoucher?.minOrder && selectedVoucher.minOrder > 0) && (
-                <View style={styles.modalDetailRow}>
-                  <Ionicons name="cart-outline" size={16} color="#9C7156" />
-                  <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
-                    Đơn tối thiểu:{' '}
-                    {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.minOrder || 0)}đ
-                  </Text>
-                </View>
-              )}
-
-              {Boolean(selectedVoucher?.maxDiscount && selectedVoucher.maxDiscount > 0) && (
-                <View style={styles.modalDetailRow}>
-                  <Ionicons name="pricetag-outline" size={16} color="#9C7156" />
-                  <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
-                    Giảm tối đa:{' '}
-                    {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.maxDiscount || 0)}đ
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Nút hành động */}
-            {activeTab === 'unused' && (
-              <TouchableOpacity
-                style={styles.modalPrimaryBtn}
-                onPress={() => selectedVoucher && handleUseNow(selectedVoucher)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.modalPrimaryBtnText}>Sử dụng ngay khi mua hàng</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Logo Tiệm Nhà Gốm lớn */}
+        <View style={styles.modalLogoWrap}>
+          <Image
+            source={require('../assets/images/logo.webp')}
+            style={styles.modalLogo}
+            contentFit="contain"
+          />
         </View>
-      </Modal>
+
+        {/* Tên voucher */}
+        <Text style={[styles.modalTitle, { color: Colors.textPrimary }]}>
+          {selectedVoucher?.name}
+        </Text>
+
+        {/* Hạn sử dụng */}
+        <Text style={[styles.modalExpiry, { color: Colors.textMuted }]}>
+          {formatExpiryDisplay(selectedVoucher?.expiryDate)}
+        </Text>
+
+        {/* Khung mã giảm giá */}
+        <View style={styles.modalCodeBox}>
+          <View>
+            <Text style={styles.modalCodeLabel}>MÃ VOUCHER</Text>
+            <Text style={styles.modalCodeVal}>{selectedVoucher?.code}</Text>
+          </View>
+
+          <ScalePressable
+            style={[
+              styles.modalCopyBtn,
+              copiedCode === selectedVoucher?.code && styles.modalCopyBtnDone,
+            ]}
+            onPress={() => selectedVoucher && handleCopyCode(selectedVoucher.code)}
+            activeScale={0.92}
+          >
+            <Ionicons
+              name={copiedCode === selectedVoucher?.code ? 'checkmark' : 'copy-outline'}
+              size={16}
+              color="#FFFFFF"
+            />
+            <Text style={styles.modalCopyBtnText}>
+              {copiedCode === selectedVoucher?.code ? 'Đã chép' : 'Sao chép'}
+            </Text>
+          </ScalePressable>
+        </View>
+
+        {/* Chi tiết điều kiện */}
+        <View style={styles.modalDetailsList}>
+          <View style={styles.modalDetailRow}>
+            <Ionicons name="information-circle-outline" size={16} color="#9C7156" />
+            <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
+              {selectedVoucher?.conditions ||
+                selectedVoucher?.description ||
+                'Áp dụng khi thanh toán đơn hàng tại Tiệm Nhà Gốm.'}
+            </Text>
+          </View>
+
+          {Boolean(selectedVoucher?.minOrder && selectedVoucher.minOrder > 0) && (
+            <View style={styles.modalDetailRow}>
+              <Ionicons name="cart-outline" size={16} color="#9C7156" />
+              <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
+                Đơn tối thiểu:{' '}
+                {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.minOrder || 0)}đ
+              </Text>
+            </View>
+          )}
+
+          {Boolean(selectedVoucher?.maxDiscount && selectedVoucher.maxDiscount > 0) && (
+            <View style={styles.modalDetailRow}>
+              <Ionicons name="pricetag-outline" size={16} color="#9C7156" />
+              <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
+                Giảm tối đa:{' '}
+                {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.maxDiscount || 0)}đ
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Nút hành động */}
+        {activeTab === 'unused' && (
+          <ScalePressable
+            style={styles.modalPrimaryBtn}
+            onPress={() => selectedVoucher && handleUseNow(selectedVoucher)}
+            activeScale={0.96}
+          >
+            <Text style={styles.modalPrimaryBtnText}>Sử dụng ngay khi mua hàng</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+          </ScalePressable>
+        )}
+      </AnimatedCenterModal>
     </SafeAreaView>
   );
 }

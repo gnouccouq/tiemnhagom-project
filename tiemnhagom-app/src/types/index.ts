@@ -44,7 +44,7 @@ export interface Product {
   dimensions?: { length?: number; width?: number; height?: number };
   details?: { material?: string; origin?: string };
   specs?: { weight?: number; capacity?: number };
-  usage?: { isDishwasherSafe?: boolean; isMicrowaveSafe?: boolean; isFoodSafe?: boolean };
+  usage?: { isDishwasherSafe?: boolean; isMicrowaveSafe?: boolean; isOvenSafe?: boolean; isFoodSafe?: boolean };
 }
 
 export interface CartItem {

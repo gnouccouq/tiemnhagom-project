@@ -32,6 +32,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
+import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -553,60 +554,56 @@ export default function LoginScreen() {
       </KeyboardAvoidingView>
 
       {/* MODAL QUÊN MẬT KHẨU */}
-      <Modal
+      <AnimatedCenterModal
         visible={forgotModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setForgotModalVisible(false)}
+        onClose={() => setForgotModalVisible(false)}
+        contentStyle={styles.modalCard}
+        avoidKeyboard
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{t('forgotPassword')}</Text>
-            <Text style={styles.modalSubtitle}>
-              {t('forgotPasswordDesc')}
-            </Text>
+        <Text style={styles.modalTitle}>{t('forgotPassword')}</Text>
+        <Text style={styles.modalSubtitle}>
+          {t('forgotPasswordDesc')}
+        </Text>
 
-            <View style={[styles.authInputGroup, { marginBottom: 18 }]}>
-              <TextInput
-                style={styles.authInput}
-                placeholder={t('emailPlaceholder')}
-                placeholderTextColor="#a8b8b0"
-                value={forgotEmail}
-                onChangeText={setForgotEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setForgotModalVisible(false)}
-                disabled={forgotLoading}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalSubmitBtn, forgotLoading && styles.btnDisabled]}
-                onPress={handleSendResetPassword}
-                disabled={forgotLoading}
-                activeOpacity={0.85}
-              >
-                {forgotLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <>
-                    <Text style={styles.modalSubmitBtnText}>{t('sendLink')}</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+        <View style={[styles.authInputGroup, { marginBottom: 18 }]}>
+          <TextInput
+            style={styles.authInput}
+            placeholder={t('emailPlaceholder')}
+            placeholderTextColor="#a8b8b0"
+            value={forgotEmail}
+            onChangeText={setForgotEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
         </View>
-      </Modal>
+
+        <View style={styles.modalActions}>
+          <ScalePressable
+            style={styles.modalCancelBtn}
+            onPress={() => setForgotModalVisible(false)}
+            disabled={forgotLoading}
+            activeScale={0.96}
+          >
+            <Text style={styles.modalCancelText}>{t('cancel')}</Text>
+          </ScalePressable>
+
+          <ScalePressable
+            style={[styles.modalSubmitBtn, forgotLoading && styles.btnDisabled]}
+            onPress={handleSendResetPassword}
+            disabled={forgotLoading}
+            activeScale={0.96}
+          >
+            {forgotLoading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <Text style={styles.modalSubmitBtnText}>{t('sendLink')}</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
+              </>
+            )}
+          </ScalePressable>
+        </View>
+      </AnimatedCenterModal>
     </View>
   );
 }
@@ -795,13 +792,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   // Modal Quên mật khẩu
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
   modalCard: {
     width: '100%',
     maxWidth: 380,
@@ -842,27 +832,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: '#dce4da',
+    borderColor: '#E8E1D8',
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCancelText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 14,
-    color: '#687971',
+    color: '#6E665D',
     fontWeight: '600',
   },
   modalSubmitBtn: {
     flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#111111',
+    backgroundColor: '#9C7156',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
   },
   modalSubmitBtnText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     color: '#FFFFFF',
     fontWeight: '700',

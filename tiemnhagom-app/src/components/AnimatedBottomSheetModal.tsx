@@ -1,0 +1,174 @@
+// src/components/AnimatedBottomSheetModal.tsx
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Modal,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  StyleProp,
+  ViewStyle,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export interface AnimatedBottomSheetModalProps {
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  contentStyle?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  backdropStyle?: StyleProp<ViewStyle>;
+  showHandle?: boolean;
+  dismissOnBackdropPress?: boolean;
+  avoidKeyboard?: boolean;
+}
+
+export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> = ({
+  visible,
+  onClose,
+  children,
+  contentStyle,
+  backdropStyle,
+  showHandle = true,
+  dismissOnBackdropPress = true,
+  avoidKeyboard = false,
+}) => {
+  const insets = useSafeAreaInsets();
+  const [isRendered, setIsRendered] = useState(visible);
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(360)).current;
+  const sheetScale = useRef(new Animated.Value(0.96)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setIsRendered(true);
+      backdropAnim.setValue(0);
+      sheetTranslateY.setValue(360);
+      sheetScale.setValue(0.96);
+
+      Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          damping: 22,
+          stiffness: 260,
+          mass: 0.85,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sheetScale, {
+          toValue: 1,
+          damping: 22,
+          stiffness: 260,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (isRendered) {
+      Animated.parallel([
+        Animated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 360,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetScale, {
+          toValue: 0.96,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsRendered(false);
+      });
+    }
+  }, [visible]);
+
+  if (!isRendered) return null;
+
+  const content = (
+    <Animated.View
+      style={[
+        styles.backdrop,
+        backdropStyle,
+        { opacity: backdropAnim },
+      ]}
+    >
+      <TouchableOpacity
+        style={StyleSheet.absoluteFill}
+        activeOpacity={1}
+        onPress={dismissOnBackdropPress ? onClose : undefined}
+      />
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            paddingBottom: Math.max(insets.bottom, 16) + 8,
+            transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
+          },
+          contentStyle,
+        ]}
+      >
+        {showHandle && <View style={styles.handle} />}
+        {children}
+      </Animated.View>
+    </Animated.View>
+  );
+
+  return (
+    <Modal
+      visible={isRendered}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      {avoidKeyboard ? (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboardWrap}
+        >
+          {content}
+        </KeyboardAvoidingView>
+      ) : (
+        content
+      )}
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  keyboardWrap: {
+    flex: 1,
+  },
+  sheet: {
+    backgroundColor: '#FAF8F5',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D8CFBF',
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+});

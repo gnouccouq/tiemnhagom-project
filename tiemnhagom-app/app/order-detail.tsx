@@ -24,6 +24,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
@@ -520,7 +521,7 @@ export default function OrderDetailScreen() {
             <BlurView
               intensity={Platform.OS === 'ios' ? 80 : 70}
               tint="dark"
-              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(35, 27, 21, 0.45)' }]} />
@@ -874,72 +875,74 @@ export default function OrderDetailScreen() {
       </ScrollView>
 
       {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (5 SAO & NHẬN XÉT) ── */}
-      <Modal visible={ratingModalVisible} transparent animationType="slide" onRequestClose={() => setRatingModalVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.ratingSheetCard}>
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalHeaderTitle}>{t('reviewAction') || 'Đánh giá đơn hàng'}</Text>
-              <TouchableOpacity onPress={() => setRatingModalVisible(false)}>
-                <Ionicons name="close" size={22} color={BRAND.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.ratingSubtitle}>
-              Bạn cảm thấy thế nào về đơn hàng #{order.orderCode || order.id}?
-            </Text>
-
-            {/* 5 sao đánh giá */}
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setStarCount(star)} activeOpacity={0.7} style={{ padding: 6 }}>
-                  <Ionicons
-                    name={star <= starCount ? 'star' : 'star-outline'}
-                    size={36}
-                    color={star <= starCount ? '#E5B869' : '#D1C7BD'}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Tags cảm nhận */}
-            <View style={styles.tagsWrap}>
-              {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Hài lòng 100%'].map((tag) => {
-                const isSelected = reviewTags.includes(tag);
-                return (
-                  <TouchableOpacity
-                    key={tag}
-                    style={[styles.tagPill, isSelected && styles.tagPillActive]}
-                    onPress={() => {
-                      if (isSelected) {
-                        setReviewTags(reviewTags.filter((t) => t !== tag));
-                      } else {
-                        setReviewTags([...reviewTags, tag]);
-                      }
-                    }}
-                  >
-                    <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Ô ghi chú cảm nhận */}
-            <TextInput
-              style={styles.reviewTextInput}
-              placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
-              placeholderTextColor="#9E968D"
-              multiline
-              numberOfLines={3}
-              value={reviewNote}
-              onChangeText={setReviewNote}
-            />
-
-            <TouchableOpacity style={styles.submitReviewBtn} activeOpacity={0.85} onPress={handleSubmitRating}>
-              <Text style={styles.submitReviewBtnText}>{t('reviewAction') || 'Gửi đánh giá'}</Text>
-            </TouchableOpacity>
-          </View>
+      <AnimatedBottomSheetModal
+        visible={ratingModalVisible}
+        onClose={() => setRatingModalVisible(false)}
+        contentStyle={styles.ratingSheetCard}
+        avoidKeyboard
+      >
+        <View style={styles.modalHeaderRow}>
+          <Text style={styles.modalHeaderTitle}>{t('reviewAction') || 'Đánh giá đơn hàng'}</Text>
+          <ScalePressable onPress={() => setRatingModalVisible(false)} activeScale={0.88}>
+            <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+          </ScalePressable>
         </View>
-      </Modal>
+
+        <Text style={styles.ratingSubtitle}>
+          Bạn cảm thấy thế nào về đơn hàng #{order.orderCode || order.id}?
+        </Text>
+
+        {/* 5 sao đánh giá */}
+        <View style={styles.starsRow}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <ScalePressable key={star} onPress={() => setStarCount(star)} activeScale={0.85} style={{ padding: 6 }}>
+              <Ionicons
+                name={star <= starCount ? 'star' : 'star-outline'}
+                size={36}
+                color={star <= starCount ? '#E5B869' : '#D1C7BD'}
+              />
+            </ScalePressable>
+          ))}
+        </View>
+
+        {/* Tags cảm nhận */}
+        <View style={styles.tagsWrap}>
+          {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Hài lòng 100%'].map((tag) => {
+            const isSelected = reviewTags.includes(tag);
+            return (
+              <ScalePressable
+                key={tag}
+                style={[styles.tagPill, isSelected && styles.tagPillActive]}
+                activeScale={0.92}
+                onPress={() => {
+                  if (isSelected) {
+                    setReviewTags(reviewTags.filter((t) => t !== tag));
+                  } else {
+                    setReviewTags([...reviewTags, tag]);
+                  }
+                }}
+              >
+                <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
+              </ScalePressable>
+            );
+          })}
+        </View>
+
+        {/* Ô ghi chú cảm nhận */}
+        <TextInput
+          style={styles.reviewTextInput}
+          placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
+          placeholderTextColor="#9E968D"
+          multiline
+          numberOfLines={3}
+          value={reviewNote}
+          onChangeText={setReviewNote}
+        />
+
+        <ScalePressable style={styles.submitReviewBtn} activeScale={0.96} onPress={handleSubmitRating}>
+          <Text style={styles.submitReviewBtnText}>{t('reviewAction') || 'Gửi đánh giá'}</Text>
+        </ScalePressable>
+      </AnimatedBottomSheetModal>
     </Animated.View>
   );
 }
