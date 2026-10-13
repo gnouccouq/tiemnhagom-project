@@ -238,6 +238,32 @@ const resolveItemImage = (item: any, productsCatalog: any[] = []): string => {
   return FALLBACK_CERAMIC_IMAGE;
 };
 
+// Lấy nhãn biến thể hiển thị đồng bộ (Họa tiết, Màu sắc, Combo)
+const getVariantDisplayLabel = (item: any): string => {
+  if (item.variantDisplay) return item.variantDisplay;
+  if (item.selectedPattern || item.pattern) {
+    return `Họa tiết: ${item.selectedPattern || item.pattern}`;
+  }
+  if (item.selectedColor || item.color) {
+    return `Màu sắc: ${item.selectedColor || item.color}`;
+  }
+  if (item.variant?.name) {
+    const typeLabel =
+      item.variant.type === 'color'
+        ? 'Màu sắc'
+        : item.variant.type === 'pattern'
+        ? 'Họa tiết'
+        : item.variant.type === 'combo'
+        ? 'Combo'
+        : 'Phân loại';
+    return `${typeLabel}: ${item.variant.name}`;
+  }
+  if (item.variantName) {
+    return `Phân loại: ${item.variantName}`;
+  }
+  return '';
+};
+
 // Định dạng giá tiền dạng "75.000đ"
 const formatDisplayPrice = (amount?: number | null) => {
   if (amount === undefined || amount === null || isNaN(amount)) return '0đ';
@@ -748,9 +774,9 @@ export default function OrderDetailScreen() {
                       {item.name}
                     </Text>
 
-                    {Boolean(item.variantDisplay || item.variant?.name) && (
+                    {Boolean(getVariantDisplayLabel(item)) && (
                       <Text style={styles.itemCardVariant}>
-                        {item.variantDisplay || item.variant?.name}
+                        {getVariantDisplayLabel(item)}
                       </Text>
                     )}
 

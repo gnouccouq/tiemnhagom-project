@@ -272,6 +272,9 @@ const getVariantDisplayLabel = (item: any): string => {
         : 'Phân loại';
     return `${typeLabel}: ${item.variant.name}`;
   }
+  if (item.variantName) {
+    return `Phân loại: ${item.variantName}`;
+  }
   return '';
 };
 
@@ -417,13 +420,24 @@ export default function OrdersScreen() {
           })
         : [];
 
-      // Tóm tắt danh sách tên sản phẩm
+      // Tóm tắt danh sách tên sản phẩm kèm biến thể (ví dụ: "Cốc gốm (Họa tiết: Gấu Nâu), Đĩa men rạn")
       let summaryName = item.summaryName;
       if (!summaryName) {
         if (Array.isArray(item.productNames) && item.productNames.length > 0) {
           summaryName = item.productNames.join(', ');
         } else if (items.length > 0) {
-          summaryName = items.map((i: any) => i.name).filter(Boolean).join(', ');
+          summaryName = items
+            .map((i: any) => {
+              if (i.variantDisplay) {
+                return `${i.name} (${i.variantDisplay})`;
+              }
+              if (i.variant?.name) {
+                return `${i.name} (${i.variant.name})`;
+              }
+              return i.name;
+            })
+            .filter(Boolean)
+            .join(', ');
         }
       }
 
