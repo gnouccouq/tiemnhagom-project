@@ -9,20 +9,27 @@ import {
   StatusBar,
   Linking,
   ActivityIndicator,
-  Platform,
   Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import { Header } from '../src/components/Header';
-import { useThemeColor, Typography, Spacing, BorderRadius } from '../src/constants/theme';
+import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
 import { getAppVersion, getAppBuildNumber, getOtaVersion, getFullAppVersionString } from '../src/utils/appVersion';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
+import { CHANGELOG_HISTORY, ReleaseVersion } from '../src/constants/changelog';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function VersionScreen() {
   const router = useRouter();
@@ -35,6 +42,20 @@ export default function VersionScreen() {
   const { pageStyle } = usePageAnimation();
 
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  // Mặc định mở rộng bản mới nhất (20261015.01)
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
+    '20261015.01': true,
+  });
+
+  const toggleExpand = (otaKey: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedVersions((prev) => ({
+      ...prev,
+      [otaKey]: !prev[otaKey],
+    }));
+  };
 
   const appVersion = getAppVersion();
   const buildNumber = getAppBuildNumber();
@@ -82,7 +103,10 @@ export default function VersionScreen() {
       }
     } catch (e: any) {
       console.warn('Lỗi kiểm tra update:', e);
-      dialog.alert('Thông tin cập nhật', `Chi tiết: ${e?.message || e || 'Không có phản hồi từ máy chủ'}\n\nUpdates.isEnabled: ${Updates.isEnabled}\nRuntime: ${Updates.runtimeVersion || '1.0.0'}\nChannel: ${Updates.channel || 'mặc định'}`);
+      dialog.alert(
+        'Thông tin cập nhật',
+        `Chi tiết: ${e?.message || e || 'Không có phản hồi từ máy chủ'}\n\nUpdates.isEnabled: ${Updates.isEnabled}\nRuntime: ${Updates.runtimeVersion || '1.0.0'}\nChannel: ${Updates.channel || 'mặc định'}`
+      );
     } finally {
       setCheckingUpdate(false);
     }
@@ -92,13 +116,11 @@ export default function VersionScreen() {
     Linking.openURL('https://tiemnhagom.vn');
   };
 
-  const [scrollY, setScrollY] = useState(0);
-
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header chuẩn không vạch kẻ đáy, căn chỉnh tai thỏ tự động qua Header transparent */}
+      {/* Header chuẩn không vạch kẻ đáy */}
       <Header
         title={t('appVersionTitle') || 'Thông tin phiên bản'}
         showBack={true}
@@ -134,7 +156,7 @@ export default function VersionScreen() {
           </View>
         </View>
 
-        {/* Khối Thông Tin Chi Tiết Bản Build */}
+        {/* Khối Thông Tin Chi Tiết Kỹ Thuật */}
         <View style={styles.card}>
           <Text style={styles.cardHeaderTitle}>Chi tiết kỹ thuật</Text>
 
@@ -152,7 +174,9 @@ export default function VersionScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Bản phát hành OTA</Text>
-            <Text style={styles.infoValue}>{otaVersion}</Text>
+            <View style={styles.otaBadgeWrap}>
+              <Text style={styles.otaBadgeText}>{otaVersion}</Text>
+            </View>
           </View>
           <View style={styles.divider} />
 
@@ -181,42 +205,73 @@ export default function VersionScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Khối Nhật Ký Cập Nhật (Release Notes) */}
-        <View style={styles.card}>
-          <View style={styles.releaseHeaderRow}>
-            <Text style={styles.cardHeaderTitle}>
-              Nhật ký bản cập nhật v{appVersion} (OTA: {otaVersion})
-            </Text>
+        {/* Tiêu đề phân khu: Lịch Sử Cập Nhật */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderIconWrap}>
+            <Ionicons name="time-outline" size={18} color="#9C7156" />
           </View>
-
-          <View style={styles.changelogItem}>
-            <View style={styles.bulletDot} />
-            <Text style={styles.changelogText}>
-              <Text style={styles.changelogBold}>Thanh toán VietQR chuẩn xác:</Text> Tự động tạo mã QR chứa số tiền và nội dung đơn cho Hộ Kinh Doanh Tiệm Nhà Gốm.
-            </Text>
-          </View>
-
-          <View style={styles.changelogItem}>
-            <View style={styles.bulletDot} />
-            <Text style={styles.changelogText}>
-              <Text style={styles.changelogBold}>Lưu ảnh QR & Mở App Ngân hàng:</Text> Dễ dàng lưu ảnh mã QR vào máy hoặc mở app ngân hàng quét thanh toán trong 3 giây.
-            </Text>
-          </View>
-
-          <View style={styles.changelogItem}>
-            <View style={styles.bulletDot} />
-            <Text style={styles.changelogText}>
-              <Text style={styles.changelogBold}>Chia sẻ sản phẩm:</Text> Gửi link sản phẩm gốm mộc kèm thông tin qua Zalo, Facebook, Tin nhắn.
-            </Text>
-          </View>
-
-          <View style={styles.changelogItem}>
-            <View style={styles.bulletDot} />
-            <Text style={styles.changelogText}>
-              <Text style={styles.changelogBold}>Hiệu ứng Splash Screen mượt mà:</Text> Tối ưu hóa trải nghiệm khởi động ứng dụng với hiệu ứng zoom chuẩn nhịp.
-            </Text>
-          </View>
+          <Text style={styles.sectionHeaderText}>Lịch sử bản cập nhật</Text>
         </View>
+
+        {/* Danh sách các bản cập nhật (Changelog History) */}
+        {CHANGELOG_HISTORY.map((item: ReleaseVersion, index: number) => {
+          const isExpanded = !!expandedVersions[item.otaVersion];
+          const isCurrent = item.otaVersion === otaVersion || index === 0;
+
+          return (
+            <View key={item.otaVersion} style={styles.card}>
+              <TouchableOpacity
+                style={styles.changelogCardHeader}
+                activeOpacity={0.7}
+                onPress={() => toggleExpand(item.otaVersion)}
+              >
+                <View style={styles.changelogHeaderLeft}>
+                  <View style={styles.versionTitleRow}>
+                    <Text style={styles.versionNumberText}>v{item.version}</Text>
+                    <View style={[styles.otaChip, isCurrent && styles.otaChipActive]}>
+                      <Text style={[styles.otaChipText, isCurrent && styles.otaChipTextActive]}>
+                        OTA {item.otaVersion}
+                      </Text>
+                    </View>
+                    {isCurrent && (
+                      <View style={styles.currentBadge}>
+                        <Text style={styles.currentBadgeText}>Hiện tại</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.releaseDateText}>Ngày phát hành: {item.releaseDate}</Text>
+                  <Text style={styles.releaseSummaryTitle}>{item.title}</Text>
+                </View>
+
+                <View style={styles.changelogHeaderRight}>
+                  <View style={styles.expandIconCircle}>
+                    <Ionicons
+                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={18}
+                      color={Colors.textSecondary}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* Chi tiết nội dung khi mở rộng */}
+              {isExpanded && (
+                <View style={styles.changelogBody}>
+                  <View style={styles.divider} />
+                  {item.changes.map((change, cIdx) => (
+                    <View key={cIdx} style={styles.changelogItem}>
+                      <View style={styles.bulletDot} />
+                      <Text style={styles.changelogText}>
+                        <Text style={styles.changelogBold}>{change.title}: </Text>
+                        {change.description}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
 
         {/* Khối Chứng Nhận Bộ Công Thương & Bản Quyền */}
         <View style={styles.card}>
@@ -359,6 +414,18 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '700',
       color: Colors.textPrimary,
     },
+    otaBadgeWrap: {
+      backgroundColor: isDark ? '#1E1E1E' : '#E8CCB2',
+      paddingVertical: 3,
+      paddingHorizontal: 10,
+      borderRadius: 12,
+    },
+    otaBadgeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#2B2928',
+    },
     divider: {
       height: 1,
       backgroundColor: isDark ? '#222222' : '#F0ECE6',
@@ -386,17 +453,117 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '700',
       color: '#FFFFFF',
     },
-    releaseHeaderRow: {
+    sectionHeader: {
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      marginBottom: 10,
+      gap: 8,
+      marginTop: 6,
+      marginBottom: 12,
+      paddingHorizontal: 4,
+    },
+    sectionHeaderIconWrap: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sectionHeaderText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    changelogCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    changelogHeaderLeft: {
+      flex: 1,
+      paddingRight: 8,
+    },
+    versionTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flexWrap: 'wrap',
+      marginBottom: 4,
+    },
+    versionNumberText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    otaChip: {
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      paddingVertical: 2,
+      paddingHorizontal: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
+    },
+    otaChipActive: {
+      backgroundColor: isDark ? '#2B2928' : '#E8CCB2',
+      borderColor: isDark ? '#9C7156' : '#9C7156',
+    },
+    otaChipText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      color: Colors.textSecondary,
+      fontWeight: '600',
+    },
+    otaChipTextActive: {
+      color: isDark ? '#E8CCB2' : '#2B2928',
+      fontWeight: '700',
+    },
+    currentBadge: {
+      backgroundColor: '#9C7156',
+      paddingVertical: 2,
+      paddingHorizontal: 8,
+      borderRadius: 10,
+    },
+    currentBadgeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 10.5,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    releaseDateText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11.5,
+      color: Colors.textSecondary,
+      marginBottom: 4,
+    },
+    releaseSummaryTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#9C7156',
+      marginTop: 2,
+    },
+    changelogHeaderRight: {
+      paddingTop: 2,
+    },
+    expandIconCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    changelogBody: {
+      marginTop: 8,
     },
     changelogItem: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: 8,
-      marginBottom: 8,
+      marginTop: 8,
     },
     bulletDot: {
       width: 6,
@@ -414,7 +581,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     changelogBold: {
       fontWeight: '700',
-      color: '#9C7156',
+      color: Colors.textPrimary,
     },
     bctRow: {
       flexDirection: 'row',

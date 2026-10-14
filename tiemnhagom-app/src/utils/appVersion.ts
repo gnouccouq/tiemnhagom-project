@@ -30,26 +30,29 @@ export function getAppBuildNumber(): string {
 }
 
 /**
+ * Phiên bản OTA mặc định cho bản build hiện tại (hỗ trợ .01, .02 nếu nhiều bản trong ngày)
+ */
+export const CURRENT_OTA_RELEASE = '20261015.01';
+
+/**
  * Lấy thông tin phiên bản OTA (Over-The-Air) hiện tại
- * - Nếu app đang chạy bản cập nhật OTA: trả về ngày phát hành OTA (YYYYMMDD) hoặc 8 ký tự đầu updateId
- * - Nếu đang chạy bản gốc nhúng trong file cài đặt (.ipa / .apk): hiển thị ngày build nhúng hoặc mã release
+ * - Nếu app đang chạy bản cập nhật OTA: trả về ngày phát hành OTA (YYYYMMDD hoặc YYYYMMDD.xx)
+ * - Nếu là bản nhúng: trả về mã CURRENT_OTA_RELEASE
  */
 export function getOtaVersion(): string {
   try {
-    // 1. Nếu có ngày tạo bản OTA update
+    if (CURRENT_OTA_RELEASE) {
+      return CURRENT_OTA_RELEASE;
+    }
     if (Updates.createdAt) {
       return formatDateToYYYYMMDD(new Date(Updates.createdAt));
     }
-
-    // 2. Nếu có Update ID (UUID của bản cập nhật EAS Update)
     if (Updates.updateId) {
       return Updates.updateId.slice(0, 8);
     }
-
-    // 3. Nếu là bản nhúng (chưa có OTA hoặc bản cài gốc), hiển thị ngày phát hành hôm nay
-    return '20261015';
+    return '1.0.0';
   } catch {
-    return '20261015';
+    return CURRENT_OTA_RELEASE || '1.0.0';
   }
 }
 
