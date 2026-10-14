@@ -184,8 +184,9 @@ export default function VersionScreen() {
         {/* Khối Nhật Ký Cập Nhật (Release Notes) */}
         <View style={styles.card}>
           <View style={styles.releaseHeaderRow}>
-            <Ionicons name="sparkles" size={18} color="#9C7156" />
-            <Text style={styles.cardHeaderTitle}>Nhật ký bản cập nhật v{appVersion}</Text>
+            <Text style={styles.cardHeaderTitle}>
+              Nhật ký bản cập nhật v{appVersion} (OTA: {otaVersion})
+            </Text>
           </View>
 
           <View style={styles.changelogItem}>

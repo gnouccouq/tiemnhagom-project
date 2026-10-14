@@ -18,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { Header } from '../src/components/Header';
 import { useAuth } from '../src/context/AuthContext';
 import { useThemeColor } from '../src/constants/theme';
@@ -27,12 +29,63 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { getFullAppVersionString } from '../src/utils/appVersion';
 
+WebBrowser.maybeCompleteAuthSession();
+
+// Tải an toàn Native GoogleSignin SDK
+let NativeGoogleSignin: any = null;
+let nativeStatusCodes: any = null;
+try {
+  const gSigninModule = require('@react-native-google-signin/google-signin');
+  NativeGoogleSignin = gSigninModule.GoogleSignin;
+  nativeStatusCodes = gSigninModule.statusCodes;
+  if (NativeGoogleSignin?.configure) {
+    NativeGoogleSignin.configure({
+      webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
+      iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
+      offlineAccess: false,
+    });
+  }
+} catch (err) {
+  // Expo Go fallback
+}
+
+const GOOGLE_CLIENT_ID = '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com';
+
 export default function SettingsScreen() {
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, signOut, linkGoogleAccount } = useAuth();
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
+
+  // Google OAuth Hook
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+    webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
+    iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
+    androidClientId: '571834989973-2hceq95tg0suavnlkit7fhs2ce6iaaua.apps.googleusercontent.com',
+    selectAccount: true,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const idToken = googleResponse.params?.id_token;
+      if (idToken) {
+        setLinkingGoogle(true);
+        linkGoogleAccount(idToken)
+          .then(() => {
+            dialog.alert('Thành công', 'Đã liên kết tài khoản Google thành công!');
+          })
+          .catch((err: any) => {
+            dialog.alert('Lỗi', err.message || 'Không thể liên kết tài khoản Google.');
+          })
+          .finally(() => {
+            setLinkingGoogle(false);
+          });
+      }
+    }
+  }, [googleResponse]);
   
   const {
     themeMode,
@@ -517,13 +570,51 @@ export default function SettingsScreen() {
                       </View>
                     ) : (
                       <TouchableOpacity
-                        style={styles.btnLinkAction}
+                        style={[styles.btnLinkAction, linkingGoogle && { opacity: 0.6 }]}
                         activeOpacity={0.8}
-                        onPress={() => {
-                          dialog.alert('Liên kết Google', 'Vui lòng đăng xuất và đăng nhập bằng Google trên màn hình đăng nhập để tự động liên kết với tài khoản này.');
+                        disabled={linkingGoogle}
+                        onPress={async () => {
+                          setLinkingGoogle(true);
+                          try {
+                            // 1. Thử qua Native Google SDK nếu khả dụng
+                            if (NativeGoogleSignin) {
+                              try {
+                                await NativeGoogleSignin.hasPlayServices();
+                                const response = await NativeGoogleSignin.signIn();
+                                const idToken = response.data?.idToken;
+                                if (idToken) {
+                                  await linkGoogleAccount(idToken);
+                                  dialog.alert('Thành công', 'Đã liên kết tài khoản Google thành công!');
+                                  return;
+                                }
+                              } catch (nativeErr: any) {
+                                if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
+                                  return;
+                                }
+                                console.log('Native GoogleSignin link attempt error, fallback to browser:', nativeErr);
+                              }
+                            }
+
+                            // 2. Dự phòng bằng Expo AuthSession
+                            if (googleRequest) {
+                              await promptGoogleAsync();
+                            } else {
+                              const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent('https://auth.expo.io/@gnouccouq/tiemnhagom')}&nonce=${Math.random().toString(36).substring(7)}`;
+                              await WebBrowser.openAuthSessionAsync(authUrl);
+                            }
+                          } catch (err: any) {
+                            console.log('Error linking Google account:', err);
+                            dialog.alert('Lỗi liên kết', err.message || 'Không thể liên kết tài khoản Google.');
+                          } finally {
+                            setLinkingGoogle(false);
+                          }
                         }}
                       >
-                        <Text style={styles.btnLinkActionText}>Liên kết</Text>
+                        {linkingGoogle ? (
+                          <ActivityIndicator size="small" color="#9C7156" />
+                        ) : (
+                          <Text style={styles.btnLinkActionText}>Liên kết</Text>
+                        )}
                       </TouchableOpacity>
                     )}
                   </View>
