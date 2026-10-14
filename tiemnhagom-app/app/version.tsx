@@ -82,7 +82,7 @@ export default function VersionScreen() {
       }
     } catch (e: any) {
       console.warn('Lỗi kiểm tra update:', e);
-      dialog.alert('Thông báo', 'Đã là phiên bản mới nhất hoặc không có kết nối máy chủ cập nhật.');
+      dialog.alert('Thông tin cập nhật', `Chi tiết: ${e?.message || e || 'Không có phản hồi từ máy chủ'}\n\nUpdates.isEnabled: ${Updates.isEnabled}\nRuntime: ${Updates.runtimeVersion || '1.0.0'}\nChannel: ${Updates.channel || 'mặc định'}`);
     } finally {
       setCheckingUpdate(false);
     }
