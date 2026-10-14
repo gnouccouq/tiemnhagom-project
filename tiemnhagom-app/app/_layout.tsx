@@ -54,13 +54,15 @@ import Animated, {
 
 // Component màn hình chờ với hiệu ứng logo mượt mà và thanh tải OTA khi có bản update mới
 function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
-  const scale = useSharedValue(0.92);
+  // Logo đứng yên tĩnh lặng ở tỉ lệ chuẩn 1.0 lúc đang chờ
+  const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const [downloadingOta, setDownloadingOta] = useState(false);
 
+  // Chỉ zoom ra khi bắt đầu chuyển sang trang khác
   const startExitTransition = () => {
-    scale.value = withTiming(1.18, { duration: 350, easing: Easing.in(Easing.cubic) });
-    opacity.value = withTiming(0, { duration: 320, easing: Easing.in(Easing.ease) }, (finished) => {
+    scale.value = withTiming(1.28, { duration: 400, easing: Easing.inOut(Easing.ease) });
+    opacity.value = withTiming(0, { duration: 360, easing: Easing.in(Easing.ease) }, (finished) => {
       if (finished) {
         runOnJS(onFinish)();
       }
@@ -68,15 +70,9 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
   };
 
   useEffect(() => {
-    // 1. Logo nảy nhẹ chào đón (pulse effect)
-    scale.value = withSequence(
-      withTiming(1.05, { duration: 450, easing: Easing.out(Easing.ease) }),
-      withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) })
-    );
-
     let isMounted = true;
 
-    // 2. Kiểm tra OTA Update thông minh
+    // Kiểm tra OTA Update thông minh
     const checkAndDownloadUpdate = async () => {
       try {
         if (!__DEV__ && Updates.isEnabled) {
@@ -93,10 +89,10 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
         console.log('OTA Check Error:', e);
       }
 
-      // Không có OTA update hoặc đang ở dev -> chuyển vào app sau nhịp hiển thị logo mượt mà
+      // Khi sẵn sàng chuyển trang: kích hoạt hiệu ứng zoom ra để chuyển tiếp mượt mà
       setTimeout(() => {
         if (isMounted) startExitTransition();
-      }, 650);
+      }, 700);
     };
 
     checkAndDownloadUpdate();

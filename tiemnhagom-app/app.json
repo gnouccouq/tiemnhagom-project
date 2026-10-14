@@ -28,6 +28,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ]
     },
@@ -71,6 +73,9 @@
         "projectId": "19342074-41d2-4d48-a369-96a94f445a4a"
       }
     },
-    "owner": "tiemnhagom"
+    "owner": "tiemnhagom",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

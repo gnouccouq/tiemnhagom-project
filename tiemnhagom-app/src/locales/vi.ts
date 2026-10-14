@@ -670,5 +670,9 @@ export const vi = {
   useThisAddress: 'Sử dụng địa chỉ này',
   setAsDefaultLabel: 'Đặt làm địa chỉ mặc định',
   saveAddressAction: 'Lưu địa chỉ',
+
+  // Thông tin phiên bản & Cập nhật
+  appVersionTitle: 'Phiên bản ứng dụng',
+  appVersionDesc: 'Thông tin bản cập nhật, chứng nhận và bản quyền',
 };
 

@@ -423,7 +423,7 @@ export default function CheckoutScreen() {
           style={themeStyles.manageAddressBtn}
           onPress={() => {
             setAddressSheetVisible(false);
-            router.push('/address-book');
+            router.push('/address-book' as any);
           }}
           activeOpacity={0.8}
         >

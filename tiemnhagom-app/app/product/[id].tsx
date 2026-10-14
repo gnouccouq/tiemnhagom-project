@@ -9,6 +9,7 @@ import {
   Dimensions,
   ActivityIndicator,
   StatusBar,
+  Share,
   Animated as RNAnimated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -379,6 +380,20 @@ export default function ProductDetailScreen() {
   if (product.dimensions?.height) dimParts.push(`Cao ${product.dimensions.height}cm`);
   const dimString = dimParts.join(' × ');
 
+  const handleShareProduct = async () => {
+    try {
+      const shareUrl = `https://tiemnhagom.vn/product/?id=${product.id}`;
+      const message = `${product.name} - ${formatCurrency(currentPrice)}\nKhám phá tác phẩm gốm mộc tinh tuyển tại Tiệm Nhà Gốm: ${shareUrl}`;
+      await Share.share({
+        title: product.name,
+        message: message,
+        url: shareUrl,
+      });
+    } catch (err) {
+      console.warn('Lỗi chia sẻ sản phẩm:', err);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
@@ -390,6 +405,10 @@ export default function ProductDetailScreen() {
         </BlurButton>
 
         <View style={styles.headerRightGroup}>
+          <BlurButton style={styles.headerBtn} onPress={handleShareProduct} accessibilityLabel="Chia sẻ sản phẩm">
+            <Ionicons name="share-social-outline" size={20} color={Colors.textPrimary} />
+          </BlurButton>
+
           <BlurButton style={styles.headerBtn} onPress={() => toggleFavorite(product.id)} accessibilityLabel="Yêu thích">
             <Ionicons
               name={favorite ? 'heart' : 'heart-outline'}

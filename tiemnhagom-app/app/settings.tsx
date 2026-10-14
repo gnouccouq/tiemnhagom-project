@@ -619,11 +619,15 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        <View style={styles.versionContainer}>
+        <TouchableOpacity
+          style={styles.versionContainer}
+          activeOpacity={0.7}
+          onPress={() => router.push('/version' as any)}
+        >
           <Text style={styles.versionText}>
             Tiệm Nhà Gốm v{getFullAppVersionString()}
           </Text>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
     </Animated.View>
   );

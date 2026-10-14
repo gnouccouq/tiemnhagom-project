@@ -1,14 +1,21 @@
 // app/order-success.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar
+  StatusBar,
+  Linking,
+  Platform,
+  Alert,
+  Clipboard,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,13 +33,98 @@ export default function OrderSuccessScreen() {
     paymentMethod: string;
   }>();
 
+  const [savingQr, setSavingQr] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const orderCode = params.orderCode || 'TNG-000000';
   const totalAmount = Number(params.totalAmount) || 0;
   const isBanking = params.paymentMethod === 'banking';
 
-  // Link VietQR động của Tiệm Nhà Gốm
-  // Ngân hàng MB Bank (970422) hoặc Techcombank
-  const vietQrUrl = `https://img.vietqr.io/image/970422-0909123456-compact2.png?amount=${totalAmount}&addInfo=${orderCode}&accountName=TIEM%20NHA%20GOM`;
+  // Thông tin chuyển khoản chuẩn của Tiệm Nhà Gốm (HỘ KINH DOANH TIỆM NHÀ GỐM)
+  const BANK_ID = '970436'; // Vietcombank
+  const ACCOUNT_NO = '1059447798';
+  const ACCOUNT_NAME = 'HO KINH DOANH TIEM NHA GOM';
+  const BANK_NAME = 'Vietcombank (VCB)';
+  const BRANCH = 'VCB Tân Bình - PGD ETown';
+
+  // Link VietQR tự động khớp với hệ thống Web
+  const vietQrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      Clipboard.setString(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2500);
+    } catch {
+      Alert.alert('Thông báo', `Đã sao chép: ${text}`);
+    }
+  };
+
+  // Tính năng 1: Lưu ảnh mã QR vào thư viện ảnh điện thoại
+  const handleSaveQR = async () => {
+    if (savingQr) return;
+    try {
+      setSavingQr(true);
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Yêu cầu quyền truy cập',
+          'Vui lòng cấp quyền truy cập Thư viện ảnh trong Cài đặt máy để lưu mã QR thanh toán.'
+        );
+        return;
+      }
+
+      const fileUri = `${FileSystem.cacheDirectory}vietqr-${orderCode}.png`;
+      const downloadRes = await FileSystem.downloadAsync(vietQrUrl, fileUri);
+
+      if (downloadRes.status === 200) {
+        await MediaLibrary.saveToLibraryAsync(downloadRes.uri);
+        Alert.alert(
+          'Đã lưu thành công! 🎉',
+          'Mã QR thanh toán đã được lưu vào Bộ sưu tập ảnh. Bạn có thể mở ứng dụng Ngân hàng và chọn Quét QR từ ảnh.'
+        );
+      } else {
+        throw new Error('Tải ảnh QR thất bại');
+      }
+    } catch (err: any) {
+      console.warn('Lỗi lưu mã QR:', err);
+      Alert.alert('Không thể lưu ảnh', 'Đã có lỗi xảy ra khi lưu mã QR vào máy. Vui lòng thử chụp lại màn hình.');
+    } finally {
+      setSavingQr(false);
+    }
+  };
+
+  // Tính năng 2: Mở ứng dụng ngân hàng hoặc danh sách app thanh toán
+  const handleOpenBankingApp = async () => {
+    try {
+      // Deeplink mở trực tiếp app Vietcombank Digibank hoặc danh sách app ngân hàng
+      const vcbScheme = 'vietcombank://';
+      const canOpenVCB = await Linking.canOpenURL(vcbScheme);
+
+      if (canOpenVCB) {
+        await Linking.openURL(vcbScheme);
+        return;
+      }
+
+      // Nếu không có scheme riêng, mở app ngân hàng mặc định hoặc hướng dẫn
+      Alert.alert(
+        'Thanh toán Ngân hàng',
+        'Đã sao chép số tài khoản & nội dung đơn hàng. Vui lòng mở ứng dụng ngân hàng trên máy bạn để tiến hành quét QR hoặc dán thông tin chuyển khoản.',
+        [
+          {
+            text: 'Sao chép STK',
+            onPress: () => copyToClipboard(ACCOUNT_NO, 'stk'),
+          },
+          {
+            text: 'Đã hiểu',
+            style: 'cancel',
+          },
+        ]
+      );
+    } catch (err) {
+      console.warn('Lỗi mở app ngân hàng:', err);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -79,11 +171,78 @@ export default function OrderSuccessScreen() {
               <Image source={{ uri: vietQrUrl }} style={styles.qrImage} contentFit="contain" />
             </View>
 
+            {/* Hàng nút thao tác tiện lợi: Lưu QR & Mở App Ngân Hàng */}
+            <View style={styles.qrActionRow}>
+              <TouchableOpacity
+                style={styles.qrActionBtn}
+                onPress={handleSaveQR}
+                activeOpacity={0.82}
+                disabled={savingQr}
+              >
+                {savingQr ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Ionicons name="download-outline" size={16} color={Colors.primary} />
+                )}
+                <Text style={styles.qrActionBtnText}>
+                  {savingQr ? 'Đang lưu...' : 'Lưu ảnh QR'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.qrActionBtn, styles.qrActionBtnPrimary]}
+                onPress={handleOpenBankingApp}
+                activeOpacity={0.82}
+              >
+                <Ionicons name="phone-portrait-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.qrActionBtnTextPrimary}>Mở App Ngân hàng</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.bankInfoBox}>
-              <Text style={styles.bankInfoText}>• {t('bankNameLabel')} <Text style={styles.bold}>MB Bank (Quân Đội)</Text></Text>
-              <Text style={styles.bankInfoText}>• {t('bankAccountLabel')} <Text style={styles.bold}>0909 123 456</Text></Text>
-              <Text style={styles.bankInfoText}>• {t('bankOwnerLabel')} <Text style={styles.bold}>TIEM NHA GOM</Text></Text>
-              <Text style={styles.bankInfoText}>• {t('transferContentLabel')} <Text style={styles.boldHighlight}>{orderCode}</Text></Text>
+              <View style={styles.bankInfoRow}>
+                <Text style={styles.bankInfoText}>• {t('bankNameLabel')} <Text style={styles.bold}>{BANK_NAME}</Text></Text>
+              </View>
+
+              <View style={styles.bankInfoRow}>
+                <Text style={styles.bankInfoText}>• {t('bankAccountLabel')} <Text style={[styles.bold, { color: Colors.primaryDark, fontSize: 13 }]}>{ACCOUNT_NO}</Text></Text>
+                <TouchableOpacity
+                  style={styles.inlineCopyBtn}
+                  onPress={() => copyToClipboard(ACCOUNT_NO, 'stk')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={copiedField === 'stk' ? 'checkmark' : 'copy-outline'}
+                    size={14}
+                    color={copiedField === 'stk' ? Colors.success : Colors.primary}
+                  />
+                  <Text style={[styles.inlineCopyText, copiedField === 'stk' && { color: Colors.success }]}>
+                    {copiedField === 'stk' ? 'Đã chép' : 'Sao chép'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.bankInfoRow}>
+                <Text style={styles.bankInfoText}>• {t('bankOwnerLabel')} <Text style={styles.bold}>HỘ KINH DOANH TIỆM NHÀ GỐM</Text></Text>
+              </View>
+
+              <View style={styles.bankInfoRow}>
+                <Text style={styles.bankInfoText}>• {t('transferContentLabel')} <Text style={styles.boldHighlight}>{orderCode}</Text></Text>
+                <TouchableOpacity
+                  style={styles.inlineCopyBtn}
+                  onPress={() => copyToClipboard(orderCode, 'code')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={copiedField === 'code' ? 'checkmark' : 'copy-outline'}
+                    size={14}
+                    color={copiedField === 'code' ? Colors.success : Colors.primary}
+                  />
+                  <Text style={[styles.inlineCopyText, copiedField === 'code' && { color: Colors.success }]}>
+                    {copiedField === 'code' ? 'Đã chép' : 'Sao chép'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}
@@ -237,17 +396,76 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  qrActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: Spacing.md,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  qrActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1.2,
+    borderColor: '#E8CCB2',
+    backgroundColor: '#FFFFFF',
+    gap: 6,
+    paddingHorizontal: 12,
+  },
+  qrActionBtnPrimary: {
+    backgroundColor: '#9C7156',
+    borderColor: '#9C7156',
+  },
+  qrActionBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    fontWeight: '700',
+    color: '#9C7156',
+  },
+  qrActionBtnTextPrimary: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: Typography.fontSize.xs,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   bankInfoBox: {
     width: '100%',
     backgroundColor: Colors.surface,
     padding: Spacing.md,
     borderRadius: 14,
+    gap: 8,
+  },
+  bankInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inlineCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+  },
+  inlineCopyText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9C7156',
   },
   bankInfoText: {
     fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.xs,
     color: Colors.textPrimary,
+    flexShrink: 1,
   },
   bold: {
     fontWeight: '700',

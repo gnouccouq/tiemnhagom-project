@@ -603,7 +603,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => (user ? router.push('/address-book') : router.push('/auth/login'))}
+              onPress={() => (user ? router.push('/address-book' as any) : router.push('/auth/login'))}
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="location-outline" size={24} color="#8A5A2B" />
@@ -728,6 +728,25 @@ export default function ProfileScreen() {
               <Text style={styles.hotlineNumber}>0777 709 662</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+          </TouchableOpacity>
+
+          <View style={styles.itemDivider} />
+
+          <TouchableOpacity
+            style={styles.supportListItem}
+            activeOpacity={0.7}
+            onPress={() => router.push('/version' as any)}
+          >
+            <View style={styles.supportItemLeft}>
+              <Ionicons name="information-circle-outline" size={20} color="#8A5A2B" />
+              <Text style={styles.supportItemTitle}>{t('appVersionTitle') || 'Phiên bản'}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 13, color: '#9E968D' }}>
+                v{getFullAppVersionString()}
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            </View>
           </TouchableOpacity>
         </View>
 
