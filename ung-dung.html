@@ -8,302 +8,235 @@
     <link rel="icon" type="image/png" href="Asset/icons/favicon.png">
     
     <style>
-        .app-landing {
-            padding-top: 80px;
-            min-height: 100vh;
-        }
-        .app-hero {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 5rem 2rem;
-            flex-wrap: wrap;
-        }
-        .app-hero-content {
-            flex: 1;
-            min-width: 300px;
-            padding-right: 3rem;
-        }
-        .app-hero-content h1 {
-            font-size: 3.5rem;
-            color: #111111;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-            font-family: 'ElleGaborStd', serif;
-        }
-        .app-hero-content p {
-            font-size: 1.1rem;
-            color: #555;
-            line-height: 1.7;
-            margin-bottom: 2.5rem;
-        }
-        .app-download-btns {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-        .qr-section {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #E5E5E5;
-        }
-        .qr-code {
-            width: 100px;
-            height: 100px;
-            padding: 8px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .qr-text {
-            font-size: 0.95rem;
-            color: #666;
-            line-height: 1.5;
-        }
-        .app-hero-image {
-            flex: 1;
-            min-width: 300px;
-            text-align: center;
-            position: relative;
-        }
-        .app-hero-image::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120%;
-            height: 120%;
-            background: radial-gradient(circle, rgba(200,100,50,0.08) 0%, rgba(250,248,245,0) 70%);
-            z-index: -1;
-        }
-        .app-hero-image img {
-            max-width: 90%;
-            border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-            border: 8px solid #FFF;
-        }
-        
-        .promo-banner {
-            background-color: #111111;
-            color: #FFF;
-            text-align: center;
-            padding: 2.5rem 1rem;
-            margin: 0 auto;
-        }
-        .promo-banner h2 {
-            font-family: 'ElleGaborStd', serif;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            color: #F3E5DC;
-        }
-        .promo-banner p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .features-section {
-            background-color: #fbf7f4;
-            padding: 6rem 2rem;
-        }
-        .feature-card {
-            text-align: center;
-            padding: 3rem 2rem;
-            background: #FFFFFF;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-        }
-        .feature-icon {
-            width: 64px;
-            height: 64px;
-            background: #FAF8F5;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: #C86432;
-        }
-        .feature-card h3 {
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-            color: #111111;
-        }
-        .feature-card p {
-            color: #666;
-            line-height: 1.6;
-        }
-        
-        .steps-section {
-            padding: 6rem 2rem;
-            background: #FFFFFF;
-        }
-        .step-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4rem;
-            max-width: 1000px;
-            margin: 0 auto;
-            flex-wrap: wrap;
-        }
-        .step-item {
-            text-align: center;
-            flex: 1;
-            min-width: 250px;
-            position: relative;
-        }
-        .step-num {
-            width: 50px;
-            height: 50px;
-            background: #111111;
-            color: #FFF;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            font-family: 'ElleGaborStd', serif;
-            margin-bottom: 1.5rem;
-        }
-        .step-item h4 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .app-hero {
-                flex-direction: column;
-                text-align: center;
-                padding: 3rem 1.5rem;
-            }
-            .app-hero-content {
-                padding-right: 0;
-                margin-bottom: 3rem;
-            }
-            .app-hero-content h1 {
-                font-size: 2.5rem;
-            }
-            .app-download-btns {
-                justify-content: center;
-            }
-            .qr-section {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
+      :root {
+        --ceramic-ink: #28241f;
+        --ceramic-muted: #71685f;
+        --ceramic-clay: #a65f43;
+        --ceramic-paper: #f7f3ed;
+        --ceramic-line: #e8dfd5;
+      }
+      body.app-page { background: #fffdf9; color: var(--ceramic-ink); }
+      .app-landing { padding-top: 70px; overflow: hidden; }
+      .app-landing * { box-sizing: border-box; }
+      .app-landing .eyebrow {
+        display: inline-flex; align-items: center; gap: .65rem;
+        color: var(--ceramic-clay); font-size: .75rem; font-weight: 700;
+        letter-spacing: .18em; text-transform: uppercase;
+      }
+      .app-landing .eyebrow::before { content: ""; width: 25px; height: 1px; background: currentColor; }
+      .app-hero {
+        max-width: 1240px; margin: 0 auto; padding: 5.5rem 2.5rem 6rem;
+        display: grid; grid-template-columns: 1fr .92fr; align-items: center; gap: 4rem;
+      }
+      .app-hero-content { min-width: 0; padding: 0; }
+      .app-hero-content h1 {
+        margin: 1.25rem 0 1.35rem; max-width: 620px;
+        color: var(--ceramic-ink); font-family: 'ElleGaborStd', Georgia, serif;
+        font-size: clamp(3.2rem, 5.3vw, 5.3rem); font-weight: 400;
+        letter-spacing: -.055em; line-height: 1.03;
+      }
+      .app-hero-content h1 em { color: var(--ceramic-clay); font-weight: 400; }
+      .app-hero-content > p { max-width: 510px; margin: 0 0 2rem; color: var(--ceramic-muted); font-size: 1.04rem; line-height: 1.9; }
+      .app-download-btns { display: flex; flex-wrap: wrap; gap: .8rem; margin: 0 0 1.7rem; }
+      .app-download-btns a {
+        min-height: 54px; padding: .9rem 1.2rem; border-radius: 4px;
+        display: inline-flex; align-items: center; justify-content: center;
+        text-decoration: none; font-size: .9rem; font-weight: 600;
+        transition: transform .2s ease, background .2s ease, color .2s ease;
+      }
+      .app-download-btns a:hover { transform: translateY(-2px); }
+      .app-download-btns .btn-dark { background: var(--ceramic-ink); color: #fff; border: 1px solid var(--ceramic-ink); }
+      .app-download-btns .btn-outline { background: transparent; color: var(--ceramic-ink); border: 1px solid #cfc4b8; }
+      .app-download-btns a svg { flex: 0 0 auto; }
+      .app-availability { margin-top: .8rem; display: flex; align-items: center; gap: .55rem; color: #82786e; font-size: .8rem; }
+      .app-availability span { width: 6px; height: 6px; background: #9a9b78; border-radius: 50%; }
+      .qr-section { display: flex; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--ceramic-line); max-width: 450px; }
+      .qr-code { width: 84px; height: 84px; padding: 5px; background: white; border: 1px solid var(--ceramic-line); border-radius: 3px; box-shadow: none; }
+      .qr-text { color: var(--ceramic-muted); font-size: .83rem; line-height: 1.65; }
+      .qr-text strong { display: block; margin-bottom: .15rem; color: var(--ceramic-ink); font-size: .9rem; }
+      .app-hero-image { position: relative; min-width: 0; text-align: center; isolation: isolate; }
+      .app-hero-image::before {
+        content: ""; position: absolute; z-index: -1; width: 90%; aspect-ratio: 1;
+        left: 5%; top: 4%; border-radius: 50%; background: #eee3d6;
+      }
+      .app-hero-image::after {
+        content: "GỐM MỘC · SỐNG CHẬM"; position: absolute; right: -1.5rem; bottom: 8%;
+        writing-mode: vertical-rl; color: #8b7868; font-size: .65rem; letter-spacing: .2em;
+      }
+      .app-hero-image img {
+        width: 100%; max-width: 490px; max-height: 590px; object-fit: cover;
+        aspect-ratio: 4 / 5; border: 10px solid #fffdf9; border-radius: 48% 48% 3px 3px;
+        box-shadow: 0 25px 65px rgba(60, 43, 30, .12);
+      }
+      .promo-banner {
+        padding: 2.25rem 1.5rem; text-align: center; color: var(--ceramic-ink);
+        background: var(--ceramic-paper); border-top: 1px solid #eee6dc; border-bottom: 1px solid #eee6dc;
+      }
+      .promo-banner h2 { margin: 0 0 .55rem; color: var(--ceramic-clay); font-family: 'ElleGaborStd', Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 400; }
+      .promo-banner p { margin: 0; color: var(--ceramic-muted); font-size: .95rem; line-height: 1.7; }
+      .features-section, .steps-section { padding: 6rem 2rem; }
+      .features-section { background: #fbf8f3; }
+      .app-landing .section-header { max-width: 680px; margin: 0 auto 3rem; text-align: center; }
+      .app-landing .section-header h2 { margin: .8rem 0 .7rem; font-family: 'ElleGaborStd', Georgia, serif; font-weight: 400; font-size: clamp(2.2rem, 4vw, 3.2rem); letter-spacing: -.035em; color: var(--ceramic-ink); }
+      .app-landing .section-subtitle { margin: 0; color: var(--ceramic-muted); font-size: .98rem; line-height: 1.75; }
+      .app-landing .grid { max-width: 1120px; margin: 0 auto; }
+      .feature-card { padding: 2.5rem 2rem; text-align: left; background: transparent; border: 1px solid var(--ceramic-line); border-radius: 3px; box-shadow: none; transition: background .25s ease, transform .25s ease; }
+      .feature-card:hover { transform: translateY(-4px); background: #fffdf9; box-shadow: none; }
+      .feature-icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin: 0 0 2rem; color: var(--ceramic-clay); background: #f0e5d9; border-radius: 50%; }
+      .feature-card h3 { margin: 0 0 .8rem; color: var(--ceramic-ink); font-size: 1.12rem; font-weight: 600; }
+      .feature-card p { margin: 0; color: var(--ceramic-muted); font-size: .92rem; line-height: 1.8; }
+      .steps-section { background: #fffdf9; }
+      .step-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1060px; margin: 0 auto; }
+      .step-item { min-width: 0; padding: 1.5rem; text-align: center; }
+      .step-num { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; margin-bottom: 1.25rem; color: #fff; background: var(--ceramic-clay); border-radius: 50%; font-family: Georgia, serif; font-size: 1.2rem; }
+      .step-item h4 { margin: 0 0 .65rem; color: var(--ceramic-ink); font-family: 'Montserrat', sans-serif; font-size: 1rem; font-weight: 600; }
+      .step-item p { max-width: 270px; margin: 0 auto; color: var(--ceramic-muted); font-size: .9rem; line-height: 1.75; }
+      .app-final-cta { padding: 4rem 1.5rem; text-align: center; background: #312b25; color: #fffaf4; }
+      .app-final-cta h2 { margin: 0 0 .8rem; font-family: 'ElleGaborStd', Georgia, serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; }
+      .app-final-cta p { margin: 0 auto 1.5rem; max-width: 550px; color: #d5c9bd; line-height: 1.7; }
+      .app-final-cta a { display: inline-flex; align-items: center; justify-content: center; padding: .95rem 1.4rem; background: #f5ede4; color: #312b25; text-decoration: none; font-size: .9rem; font-weight: 600; border-radius: 3px; }
+      @media (max-width: 850px) {
+        .app-landing { padding-top: 55px; }
+        .app-hero { grid-template-columns: 1fr; gap: 3rem; padding: 4rem 1.5rem 4.5rem; }
+        .app-hero-content { text-align: center; }
+        .app-hero-content h1, .app-hero-content > p { margin-left: auto; margin-right: auto; }
+        .app-download-btns { justify-content: center; }
+        .app-availability { justify-content: center; }
+        .qr-section { margin-left: auto; margin-right: auto; text-align: left; justify-content: center; }
+        .app-hero-image { width: min(100%, 490px); margin: 0 auto; }
+        .app-hero-image::after { right: 0; }
+        .features-section, .steps-section { padding: 4.5rem 1.25rem; }
+      }
+      @media (max-width: 600px) {
+        .app-hero { padding-top: 3rem; }
+        .app-hero-content h1 { font-size: clamp(2.7rem, 12vw, 3.7rem); }
+        .app-hero-content > p { font-size: .97rem; }
+        .app-download-btns { display: grid; grid-template-columns: 1fr; }
+        .app-download-btns a { width: 100%; }
+        .qr-section { gap: .8rem; }
+        .qr-code { width: 74px; height: 74px; }
+        .app-hero-image img { max-width: 88%; }
+        .app-landing .grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+        .feature-card { padding: 1.75rem; }
+        .feature-icon { margin-bottom: 1.2rem; }
+        .step-row { grid-template-columns: 1fr; gap: .5rem; }
+        .step-item { padding: 1rem; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .app-landing *, .app-landing *::before, .app-landing *::after { transition: none !important; scroll-behavior: auto !important; }
+      }
     </style>
 </head>
 <body class="app-page">
     <div id="header-placeholder"></div>
 
     <main class="app-landing">
-        <!-- Hero Section -->
-        <section class="app-hero reveal-on-scroll">
+        <section class="app-hero">
             <div class="app-hero-content">
-                <h1>Trải nghiệm<br>Gốm mộc trọn vẹn</h1>
-                <p>Ứng dụng Tiệm Nhà Gốm mang đến không gian nghệ thuật thu nhỏ ngay trên điện thoại của bạn. Mua sắm, tích điểm và nhận những đặc quyền duy nhất chỉ dành cho hội viên tải App.</p>
+                <span class="eyebrow">Tiệm Nhà Gốm · Ứng dụng chính thức</span>
+                <h1>Một chút gốm mộc,<br><em>thêm nhiều cảm hứng.</em></h1>
+                <p>Khám phá những món đồ gốm bạn yêu, tìm cảm hứng cho không gian sống và tận hưởng những ưu đãi dành riêng cho cộng đồng Tiệm Nhà Gốm — tất cả trong một ứng dụng.</p>
                 <div class="app-download-btns">
-                    <a href="#" class="btn-dark" onclick="alert('Phiên bản App Store đang được cập nhật!')" style="display: flex; align-items: center;">
-                        <svg viewBox="0 0 384 512" width="20" fill="currentColor" style="margin-right:10px"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+                    <a href="public/downloads/tiemnhagom-app.apk" download="tiemnhagom-app.apk" class="btn-dark" style="background: #9C7156; border-color: #9C7156; color: #FFFFFF; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25);" aria-label="Tải trực tiếp file APK cho điện thoại Android">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Tải file APK (Android)
+                    </a>
+                    <a href="#" class="btn-outline" data-store="ios" aria-label="Tải ứng dụng trên App Store">
+                        <svg viewBox="0 0 384 512" width="20" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
                         App Store
                     </a>
-                    <a href="#" class="btn-outline" onclick="alert('Phiên bản Google Play đang được cập nhật!')" style="display: flex; align-items: center;">
-                        <svg viewBox="0 0 512 512" width="20" fill="currentColor" style="margin-right:10px"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>
+                    <a href="#" class="btn-outline" data-store="android" aria-label="Tải ứng dụng trên Google Play">
+                        <svg viewBox="0 0 512 512" width="20" fill="currentColor" aria-hidden="true"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>
                         Google Play
                     </a>
                 </div>
+                <div class="app-availability"><span></span> Đã có sẵn bản cài APK trực tiếp cho Android · Bản iOS đang được chuẩn bị</div>
                 <div class="qr-section">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tiemnhagom.vn/ung-dung.html" alt="QR Code" class="qr-code">
-                    <div class="qr-text">
-                        <strong>Quét mã QR</strong><br>
-                        Sử dụng camera điện thoại để quét mã và tải ứng dụng nhanh chóng.
-                    </div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tiemnhagom.vn/ung-dung.html" alt="Mã QR truy cập trang ứng dụng Tiệm Nhà Gốm" class="qr-code">
+                    <div class="qr-text"><strong>Mang Tiệm Nhà Gốm theo bạn</strong>Quét mã QR để mở trang tải ứng dụng trên điện thoại.</div>
                 </div>
             </div>
             <div class="app-hero-image">
-                <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=800" alt="App Tiệm Nhà Gốm" />
+                <img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=85&w=1100&auto=format&fit=crop" alt="Những món gốm thủ công với sắc màu tự nhiên">
             </div>
         </section>
 
-        <!-- Promo Banner -->
-        <section class="promo-banner reveal-on-scroll">
-            <h2>Tặng ngay Voucher 10%</h2>
-            <p>Dành riêng cho đơn hàng đầu tiên khi bạn đặt qua Ứng dụng Tiệm Nhà Gốm.</p>
+        <section class="promo-banner">
+            <h2>Ưu đãi chào bạn mới</h2>
+            <p>Tận hưởng voucher 10% cho đơn hàng đầu tiên trên ứng dụng. <small>Áp dụng theo điều kiện chương trình.</small></p>
         </section>
 
-        <!-- Features Section -->
-        <section class="features-section reveal-on-scroll">
+        <section class="features-section">
             <div class="section-header">
-                <h2>Tính năng nổi bật</h2>
-                <p class="section-subtitle">Mang đến trải nghiệm mua sắm và chăm sóc khách hàng tốt nhất</p>
+                <span class="eyebrow">Trải nghiệm riêng của bạn</span>
+                <h2>Yêu gốm, theo cách dễ dàng hơn</h2>
+                <p class="section-subtitle">Từ món đồ nhỏ xinh đến những cảm hứng cho tổ ấm, mọi thứ đều gần bạn hơn.</p>
             </div>
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem;">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-9.2-2.8a1 1 0 0 0 1 1h10.5a1 1 0 0 0 1-1l1.5-9H6.2l-1.1-4H2v2h2.2l3 11z"/></svg>
-                    </div>
-                    <h3 style="font-family: 'Montserrat', sans-serif;">Mua sắm mượt mà</h3>
-                    <p>Khám phá hàng ngàn sản phẩm gốm sứ với giao diện trực quan, dễ dàng tìm kiếm và thanh toán chỉ trong 2 chạm.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h2"/></svg>
-                    </div>
-                    <h3 style="font-family: 'Montserrat', sans-serif;">Thẻ thành viên số</h3>
-                    <p>Tích điểm tự động, thăng hạng và lưu trữ voucher giảm giá ngay trên điện thoại mà không cần giữ thẻ cứng.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <h3 style="font-family: 'Montserrat', sans-serif;">Đặc quyền Hội viên</h3>
-                    <p>Nhận thông báo sớm nhất về các đợt Flash Sale, Workshop Gốm và ưu đãi độc quyền hàng tháng.</p>
-                </div>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+                <article class="feature-card">
+                    <div class="feature-icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3h2l2.2 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.5L21 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></div>
+                    <h3>Mua sắm đầy cảm hứng</h3>
+                    <p>Khám phá các bộ sưu tập gốm sứ, đồ bàn ăn và món decor được tuyển chọn cho không gian sống của bạn.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg></div>
+                    <h3>Tích điểm & nhận ưu đãi</h3>
+                    <p>Theo dõi điểm thưởng, voucher và quyền lợi thành viên ngay trên điện thoại — gọn gàng trong một nơi.</p>
+                </article>
+                <article class="feature-card">
+                    <div class="feature-icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+                    <h3>Đặc quyền dành riêng</h3>
+                    <p>Cập nhật chương trình ưu đãi, sự kiện và workshop để không bỏ lỡ những trải nghiệm thú vị từ Tiệm.</p>
+                </article>
             </div>
         </section>
-        
-        <!-- Steps Section -->
-        <section class="steps-section reveal-on-scroll">
+
+        <section class="steps-section">
             <div class="section-header">
-                <h2>Bắt đầu cực dễ dàng</h2>
-                <p class="section-subtitle">Chỉ với 3 bước đơn giản để bước vào thế giới gốm sứ</p>
+                <span class="eyebrow">Bắt đầu thật đơn giản</span>
+                <h2>Chỉ vài bước là sẵn sàng</h2>
+                <p class="section-subtitle">Đưa thế giới gốm mộc đến gần bạn hơn mỗi ngày.</p>
             </div>
             <div class="step-row">
-                <div class="step-item">
-                    <div class="step-num">1</div>
-                    <h4>Tải ứng dụng</h4>
-                    <p style="color: #666; font-size: 0.95rem;">Tìm "Tiệm Nhà Gốm" trên App Store hoặc Google Play.</p>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">2</div>
-                    <h4>Đăng nhập</h4>
-                    <p style="color: #666; font-size: 0.95rem;">Sử dụng số điện thoại để đăng nhập an toàn và bảo mật.</p>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">3</div>
-                    <h4>Khám phá</h4>
-                    <p style="color: #666; font-size: 0.95rem;">Lựa chọn sản phẩm yêu thích và trải nghiệm ngay!</p>
-                </div>
+                <div class="step-item"><div class="step-num">01</div><h4>Tải ứng dụng</h4><p>Chọn nền tảng phù hợp với điện thoại của bạn.</p></div>
+                <div class="step-item"><div class="step-num">02</div><h4>Tạo tài khoản</h4><p>Đăng nhập để lưu thông tin và theo dõi quyền lợi thành viên.</p></div>
+                <div class="step-item"><div class="step-num">03</div><h4>Khám phá & tận hưởng</h4><p>Tìm món đồ yêu thích, tích điểm và cập nhật ưu đãi mới.</p></div>
             </div>
+        </section>
+
+        <section class="app-final-cta">
+            <h2>Ghé Tiệm, dù bạn đang ở đâu.</h2>
+            <p>Một trải nghiệm mua sắm gần gũi hơn, dành cho những người trân trọng vẻ đẹp mộc mạc trong từng chi tiết.</p>
+            <a href="#download" id="final-download-link">Khám phá ứng dụng</a>
         </section>
     </main>
 
     <div id="footer-placeholder"></div>
 
+    <script>
+      /*
+       * Điền link phát hành thật tại đây sau khi app đã được duyệt:
+       * const APP_STORE_URL = "https://apps.apple.com/...";
+       * const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=...";
+       */
+      const APP_STORE_URL = "";
+      const GOOGLE_PLAY_URL = "";
+      document.querySelectorAll("[data-store]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          const target = link.dataset.store === "ios" ? APP_STORE_URL : GOOGLE_PLAY_URL;
+          if (target) {
+            window.open(target, "_blank", "noopener,noreferrer");
+          } else {
+            alert("Link tải ứng dụng đang được cập nhật. Vui lòng quay lại sau nhé!");
+          }
+        });
+      });
+      document.getElementById("final-download-link")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        document.querySelector(".app-download-btns")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    </script>
     <script type="module" src="js/main.js?v=6"></script>
 </body>
 </html>

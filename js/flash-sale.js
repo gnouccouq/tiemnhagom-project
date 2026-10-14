@@ -202,7 +202,8 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         fetchCategorySaleCounts(allFetchedProducts);
 
         // PHÂN LOẠI SẢN PHẨM
-        const flashSaleCampaignProducts = []; // Sản phẩm thuộc chiến dịch 9.9
+        const bogoProducts = []; // Sản phẩm Mua 1 Tặng 1 (20/10)
+        const flashSaleCampaignProducts = []; // Sản phẩm giảm giá sốc
         const groupedProducts = {}; // { 39000: [...], 49000: [...] }
         const otherSales = [];
         const priceGroups = flashSaleSettings?.priceGroups || [];
@@ -231,7 +232,11 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             });
             
             if (fsInfo) {
-                flashSaleCampaignProducts.push(p);
+                if (fsInfo.dealType === 'bogo_same' || fsInfo.dealType === 'bogo_custom') {
+                    bogoProducts.push(p);
+                } else {
+                    flashSaleCampaignProducts.push(p);
+                }
             } else if (isFsRunning && p.flashSaleGroup && priceGroups.includes(p.flashSaleGroup)) {
                 const group = p.flashSaleGroup;
                 if (!groupedProducts[group]) groupedProducts[group] = [];
@@ -271,14 +276,13 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         
         // 1. TRƯỜNG HỢP 1: FLASH SALE SẮP BẮT ĐẦU (ĐẾM NGƯỢC TỚI GIỜ MỞ BÁN)
         if (isUpcoming) {
-            // Lấy các sản phẩm tham gia 9.9
             const upcomingProducts = filteredProducts.filter(p => fsProductsMap[p.id]);
             if (upcomingProducts.length > 0) {
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div style="background: #eff6ff; border: 1.5px dashed #93c5fd; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 2.5rem;">
-                            <h2 style="color: #1e40af; margin-bottom: 6px; font-size: 1.3rem;">🔥 Danh Sách Sản Phẩm Mở Bán Đợt 9.9</h2>
-                            <p style="color: #3b82f6; font-size: 0.9rem; margin: 0;">Các deal số lượng có hạn dưới đây sẽ chính thức áp dụng giá sale khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
+                        <div style="background: #fffaf5; border: 1.5px dashed #E8CCB2; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 2.5rem;">
+                            <h2 style="color: #9C7156; margin-bottom: 8px; font-size: 1.35rem; font-family: 'Playfair Display', serif;">🎁 Danh Sách Sản Phẩm Flash Sale 20/10</h2>
+                            <p style="color: #6E665D; font-size: 0.92rem; margin: 0;">Các deal Mua 1 Tặng 1 & Giảm giá sốc có hạn dưới đây sẽ chính thức mở bán khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
                         </div>
                         <div class="grid" style="padding: 0;">
                             ${upcomingProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
@@ -288,24 +292,44 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             } else {
                 htmlContent += `
                     <div style="text-align: center; padding: 4rem 1rem;">
-                        <p style="font-size: 1.15rem; color: #64748b;">Chương trình <strong>${flashSaleSettings?.title || "Siêu Sale 9.9"}</strong> đang được chuẩn bị và sẽ sớm mở bán!</p>
+                        <p style="font-size: 1.15rem; color: #6E665D;">Chương trình <strong>${flashSaleSettings?.title || "Flash Sale 20/10"}</strong> đang được chuẩn bị và sẽ sớm mở bán!</p>
                         <p style="margin-top: 1rem;"><a href="../products/" class="btn-dark">Khám phá các sản phẩm khác</a></p>
                     </div>
                 `;
             }
         } else {
             // TRƯỜNG HỢP 2: ĐANG DIỄN RA HOẶC BÌNH THƯỜNG
-            // 1. Render nhóm Sản phẩm Siêu Sale 9.9 (Độc quyền & Số lượng có hạn)
+            // 1. Render nhóm Mua 1 Tặng 1 (20/10 ĐẶC QUYỀN)
+            if (isFsRunning && bogoProducts.length > 0 && selectedPriceGroup === null) {
+                sortProducts(bogoProducts);
+                htmlContent += `
+                    <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
+                            <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
+                                🎁 ĐẶC QUYỀN 20/10 — MUA 1 TẶNG 1
+                            </h2>
+                            <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
+                                ✨ Số lượng quà tặng có hạn
+                            </span>
+                        </div>
+                        <div class="grid" style="padding: 0;">
+                            ${bogoProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. Render nhóm Giảm Giá Sốc (Deal Độc Quyền)
             if (isFsRunning && flashSaleCampaignProducts.length > 0 && selectedPriceGroup === null) {
                 sortProducts(flashSaleCampaignProducts);
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
-                            <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px;">
-                                🔥 ${flashSaleSettings?.title || "Siêu Sale 9.9 - Deal Độc Quyền"}
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
+                            <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
+                                ⚡ ${flashSaleSettings?.title || "Flash Sale 20/10 — Giá Sốc"}
                             </h2>
-                            <span style="font-size: 0.85rem; color: #e65100; font-weight: 600; background: #fff7ed; padding: 4px 12px; border-radius: 20px; border: 1px solid #ffedd5;">
-                                ⚡ Số lượng có hạn - Săn ngay kẻo lỡ
+                            <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
+                                🔥 Giá ưu đãi có hạn
                             </span>
                         </div>
                         <div class="grid" style="padding: 0;">
@@ -315,7 +339,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 `;
             }
 
-            // 2. Render các nhóm đồng giá (nếu có)
+            // 3. Render các nhóm đồng giá (nếu có)
             if (isFsRunning) {
                 priceGroups.sort((a,b) => a-b).forEach(price => {
                     if (selectedPriceGroup !== null && price !== selectedPriceGroup) return;
@@ -324,7 +348,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     sortProducts(products);
                     htmlContent += `
                         <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                            <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left;">⚡ Đồng giá ${price/1000}k</h2>
+                            <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left; color: #2B2928;">⚡ Đồng giá ${price/1000}k</h2>
                             <div class="grid" style="padding: 0;">
                                 ${products.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                             </div>
@@ -333,13 +357,13 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 });
             }
 
-            // 3. Render nhóm Sale khác (nếu đang chạy chiến dịch và chưa lọc)
+            // 4. Render nhóm Sale khác (nếu đang chạy chiến dịch và chưa lọc)
             if (otherSales.length > 0 && selectedPriceGroup === null) {
                 sortProducts(otherSales);
-                const sectionTitle = isFsRunning ? "🎁 Ưu đãi hấp dẫn khác" : "Sản phẩm ưu đãi";
+                const sectionTitle = isFsRunning ? "🏺 Ưu đãi gốm sứ khác" : "Sản phẩm ưu đãi";
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">${sectionTitle}</h2>
+                        <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #E8CCB2; padding-bottom: 10px; color: #2B2928;">${sectionTitle}</h2>
                         <div class="grid" style="padding: 0;">
                             ${otherSales.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                         </div>

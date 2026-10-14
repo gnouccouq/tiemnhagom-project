@@ -13015,17 +13015,23 @@ async function initFlashSaleSettings() {
         const rows = document.querySelectorAll('#fs-items-table-body tr[data-pid]');
         rows.forEach(row => {
             const pid = row.getAttribute('data-pid');
+            const dealTypeSelect = row.querySelector('.fs-item-dealtype');
             const salePriceInput = row.querySelector('.fs-item-saleprice');
+            const giftProductSelect = row.querySelector('.fs-item-gift');
             const limitInput = row.querySelector('.fs-item-limit');
             const soldInput = row.querySelector('.fs-item-sold');
 
+            const dealType = dealTypeSelect?.value || 'sale'; // 'sale' | 'bogo_same' | 'bogo_custom'
             const salePrice = parseInt(salePriceInput?.value.replace(/\D/g, '') || 0);
+            const giftProductId = giftProductSelect?.value || '';
             const limit = parseInt(limitInput?.value || 10);
             const sold = parseInt(soldInput?.value || 0);
 
             if (pid) {
                 updatedItems[pid] = {
+                    dealType: dealType,
                     salePrice: salePrice,
+                    giftProductId: dealType === 'bogo_custom' ? giftProductId : (dealType === 'bogo_same' ? pid : ''),
                     limit: limit,
                     sold: sold
                 };
@@ -13050,7 +13056,7 @@ async function initFlashSaleSettings() {
             });
 
             fsSelectedItemsMap = updatedItems;
-            showToast("Đã lưu cấu hình & danh sách Flash Sale 9.9 thành công!");
+            showToast("Đã lưu chiến dịch Flash Sale & Mua 1 Tặng 1 thành công!");
         } catch (err) {
             showToast("Lỗi lưu Flash Sale: " + err.message, "error");
         } finally {
@@ -13072,7 +13078,7 @@ function renderFsSelectedItemsTable() {
     if (totalBadge) totalBadge.innerText = `${pids.length} sản phẩm`;
 
     if (pids.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: #94a3b8;">Chưa có sản phẩm nào trong chiến dịch Flash Sale.<br><button type="button" class="kiot-btn-outline" style="margin-top: 10px;" onclick="document.getElementById('btn-open-fs-product-picker').click()">+ Bấm vào đây để chọn sản phẩm</button></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #94a3b8;">Chưa có sản phẩm nào trong chiến dịch Flash Sale.<br><button type="button" class="kiot-btn-outline" style="margin-top: 10px;" onclick="document.getElementById('btn-open-fs-product-picker').click()">+ Bấm vào đây để chọn sản phẩm</button></td></tr>`;
         return;
     }
 
@@ -13088,10 +13094,17 @@ function renderFsSelectedItemsTable() {
         };
 
         const originalPrice = p.price || 0;
+        const dealType = itemConfig.dealType || 'sale'; // 'sale' | 'bogo_same' | 'bogo_custom'
         const salePrice = itemConfig.salePrice !== undefined ? itemConfig.salePrice : Math.round(originalPrice * 0.8);
+        const giftProductId = itemConfig.giftProductId || '';
         const limit = itemConfig.limit !== undefined ? itemConfig.limit : 20;
         const sold = itemConfig.sold !== undefined ? itemConfig.sold : 0;
         const percentSold = limit > 0 ? Math.min(100, Math.round((sold / limit) * 100)) : 0;
+
+        // Tạo danh sách sản phẩm quà tặng cho dropdown
+        const giftOptions = posProductsLocal.map(prod => `
+            <option value="${prod.id}" ${prod.id === giftProductId ? 'selected' : ''}>${prod.name} (${new Intl.NumberFormat('vi-VN').format(prod.price || 0)}đ)</option>
+        `).join('');
 
         html += `
             <tr data-pid="${pid}">
@@ -13101,9 +13114,29 @@ function renderFsSelectedItemsTable() {
                     <small style="color: #64748b;">Mã: ${pid} | Kho: <strong>${p.stock || 0}</strong></small>
                 </td>
                 <td data-label="Giá gốc" style="color: #64748b; font-size: 0.9rem;">${new Intl.NumberFormat('vi-VN').format(originalPrice)}đ</td>
-                <td data-label="Giá Flash Sale">
-                    <input type="text" class="kiot-filter-input fs-item-saleprice" value="${new Intl.NumberFormat('vi-VN').format(salePrice)}" 
-                        oninput="window.formatCurrencyInput(this)" style="font-weight: 700; color: #e65100; max-width: 130px;">
+                <td data-label="Hình thức khuyến mãi">
+                    <select class="kiot-filter-input fs-item-dealtype" onchange="window.handleFsDealTypeChange('${pid}', this.value)" style="font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+                        <option value="bogo_same" ${dealType === 'bogo_same' ? 'selected' : ''}>🎁 Mua 1 Tặng 1 (Cùng loại)</option>
+                        <option value="bogo_custom" ${dealType === 'bogo_custom' ? 'selected' : ''}>🎁 Mua 1 Tặng 1 (Chọn quà)</option>
+                        <option value="sale" ${dealType === 'sale' ? 'selected' : ''}>⚡ Giảm giá sốc (Giá Sale)</option>
+                    </select>
+                </td>
+                <td data-label="Giá Sale / Quà tặng">
+                    <div id="fs-item-action-wrap-${pid}">
+                        ${dealType === 'sale' ? `
+                            <input type="text" class="kiot-filter-input fs-item-saleprice" value="${new Intl.NumberFormat('vi-VN').format(salePrice)}" 
+                                oninput="window.formatCurrencyInput(this)" style="font-weight: 700; color: #9C7156; max-width: 140px;">
+                        ` : (dealType === 'bogo_same' ? `
+                            <div style="font-size: 0.82rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 6px 10px; border-radius: 6px; border: 1px dashed #E8CCB2;">
+                                🎁 Tặng 1 sản phẩm chính nó (0đ)
+                            </div>
+                        ` : `
+                            <select class="kiot-filter-input fs-item-gift" style="max-width: 160px; font-size: 0.8rem;">
+                                <option value="">-- Chọn quà tặng --</option>
+                                ${giftOptions}
+                            </select>
+                        `)}
+                    </div>
                 </td>
                 <td data-label="Số suất">
                     <input type="number" min="1" class="kiot-filter-input fs-item-limit" value="${limit}" 
@@ -13115,8 +13148,8 @@ function renderFsSelectedItemsTable() {
                 </td>
                 <td data-label="Tiến độ">
                     <div id="fs-progress-preview-${pid}" style="width: 100%; min-width: 120px;">
-                        <div style="background: #fed7aa; height: 16px; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percentSold}%; background: linear-gradient(90deg, #f97316, #ef4444); transition: width 0.3s;"></div>
+                        <div style="background: #E8CCB2; height: 16px; border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percentSold}%; background: linear-gradient(90deg, #9C7156, #2B2928); transition: width 0.3s;"></div>
                             <span style="position: relative; z-index: 2; font-size: 0.68rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">${sold}/${limit} (${percentSold}%)</span>
                         </div>
                     </div>
@@ -13132,6 +13165,38 @@ function renderFsSelectedItemsTable() {
 
     tbody.innerHTML = html;
 }
+
+window.handleFsDealTypeChange = (pid, dealType) => {
+    const wrap = document.getElementById(`fs-item-action-wrap-${pid}`);
+    if (!wrap) return;
+
+    const p = posProductsLocal.find(prod => prod.id === pid);
+    const originalPrice = p ? (p.price || 0) : 100000;
+    const salePrice = Math.round(originalPrice * 0.8);
+
+    if (dealType === 'sale') {
+        wrap.innerHTML = `
+            <input type="text" class="kiot-filter-input fs-item-saleprice" value="${new Intl.NumberFormat('vi-VN').format(salePrice)}" 
+                oninput="window.formatCurrencyInput(this)" style="font-weight: 700; color: #9C7156; max-width: 140px;">
+        `;
+    } else if (dealType === 'bogo_same') {
+        wrap.innerHTML = `
+            <div style="font-size: 0.82rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 6px 10px; border-radius: 6px; border: 1px dashed #E8CCB2;">
+                🎁 Tặng 1 sản phẩm chính nó (0đ)
+            </div>
+        `;
+    } else if (dealType === 'bogo_custom') {
+        const giftOptions = posProductsLocal.map(prod => `
+            <option value="${prod.id}">${prod.name} (${new Intl.NumberFormat('vi-VN').format(prod.price || 0)}đ)</option>
+        `).join('');
+        wrap.innerHTML = `
+            <select class="kiot-filter-input fs-item-gift" style="max-width: 160px; font-size: 0.8rem;">
+                <option value="">-- Chọn quà tặng --</option>
+                ${giftOptions}
+            </select>
+        `;
+    }
+};
 
 window.updateFsRowProgress = (pid) => {
     const row = document.querySelector(`#fs-items-table-body tr[data-pid="${pid}"]`);

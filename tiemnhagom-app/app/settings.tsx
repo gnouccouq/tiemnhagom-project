@@ -25,6 +25,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
+import { getFullAppVersionString } from '../src/utils/appVersion';
 
 export default function SettingsScreen() {
   const Colors = useThemeColor();
@@ -620,7 +621,7 @@ export default function SettingsScreen() {
 
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>
-            Tiệm Nhà Gốm v{Constants.expoConfig?.version || '1.0.0'} ({Platform.OS === 'ios' ? Constants.expoConfig?.ios?.buildNumber || '1' : Constants.expoConfig?.android?.versionCode || '1'})
+            Tiệm Nhà Gốm v{getFullAppVersionString()}
           </Text>
         </View>
       </ScrollView>

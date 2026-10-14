@@ -24,7 +24,6 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
@@ -38,12 +37,23 @@ import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Cấu hình Native GoogleSignin SDK
-GoogleSignin.configure({
-  webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
-  iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
-  offlineAccess: false,
-});
+// Tải an toàn Native GoogleSignin SDK (Tránh crash khi mở bằng Expo Go)
+let NativeGoogleSignin: any = null;
+let nativeStatusCodes: any = null;
+try {
+  const gSigninModule = require('@react-native-google-signin/google-signin');
+  NativeGoogleSignin = gSigninModule.GoogleSignin;
+  nativeStatusCodes = gSigninModule.statusCodes;
+  if (NativeGoogleSignin?.configure) {
+    NativeGoogleSignin.configure({
+      webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
+      iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
+      offlineAccess: false,
+    });
+  }
+} catch (err) {
+  // Đang chạy trên Expo Go (chưa có native binary RNGoogleSignin)
+}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GOOGLE_CLIENT_ID = '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com';
@@ -293,22 +303,24 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      // 1. Thử đăng nhập bằng Native Google SDK (dành cho bản build Release .ipa / standalone)
-      try {
-        await GoogleSignin.hasPlayServices();
-        const response = await GoogleSignin.signIn();
-        const idToken = response.data?.idToken;
-        if (idToken) {
-          await signInWithGoogleCredential(idToken);
-          dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
-          router.back();
-          return;
+      // 1. Thử đăng nhập bằng Native Google SDK (nếu chạy trên bản build .ipa có native binary)
+      if (NativeGoogleSignin) {
+        try {
+          await NativeGoogleSignin.hasPlayServices();
+          const response = await NativeGoogleSignin.signIn();
+          const idToken = response.data?.idToken;
+          if (idToken) {
+            await signInWithGoogleCredential(idToken);
+            dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
+            router.back();
+            return;
+          }
+        } catch (nativeErr: any) {
+          if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
+            return;
+          }
+          console.log('Native GoogleSignin attempt error, fallback to browser OAuth:', nativeErr);
         }
-      } catch (nativeErr: any) {
-        if (nativeErr.code === statusCodes.SIGN_IN_CANCELLED) {
-          return;
-        }
-        console.log('Native GoogleSignin attempt error, fallback to browser OAuth:', nativeErr);
       }
 
       // 2. Dự phòng bằng Expo AuthSession (dành cho Expo Go)

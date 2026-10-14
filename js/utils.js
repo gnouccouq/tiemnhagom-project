@@ -332,11 +332,17 @@ export function getProductFlashSaleInfo(product, id, fsSettings = globalFlashSal
     const sold = itemConfig.sold !== undefined ? Number(itemConfig.sold) : 0;
     const isSoldOut = limit > 0 && sold >= limit;
     const salePrice = Number(itemConfig.salePrice) || 0;
+    const dealType = itemConfig.dealType || 'sale'; // 'sale' | 'bogo_same' | 'bogo_custom'
+    const isBogo = dealType === 'bogo_same' || dealType === 'bogo_custom';
+    const giftProductId = itemConfig.giftProductId || (dealType === 'bogo_same' ? productId : '');
 
     return {
         isRunning,
         isUpcoming,
-        salePrice,
+        dealType,
+        isBogo,
+        giftProductId,
+        salePrice: isBogo ? (product.price || 0) : salePrice,
         limit,
         sold,
         isSoldOut,
@@ -1656,7 +1662,12 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     } catch (e) { }
 
     const isFsItem = fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut;
-    const saleBadge = hasSale ? `<div class="sale-badge" style="${isFsItem ? 'background: linear-gradient(135deg, #e65100, #c62828);' : ''}">-${displaySale}%</div>` : '';
+    let saleBadge = '';
+    if (isFsItem && fsInfo.isBogo) {
+        saleBadge = `<div class="sale-badge" style="background: linear-gradient(135deg, #9C7156, #2B2928); font-size: 0.68rem; font-weight: 800; padding: 3px 7px; letter-spacing: 0.5px;">TẶNG 1</div>`;
+    } else if (hasSale) {
+        saleBadge = `<div class="sale-badge" style="${isFsItem ? 'background: linear-gradient(135deg, #9C7156, #2B2928);' : ''}">-${displaySale}%</div>`;
+    }
     const stockBadge = isOutOfStock ? `<div class="out-of-stock-badge">Hết hàng</div>` : '';
     const isFav = favsList.includes(id);
     const sparkleClass = ''; // hasSale ? 'sale-sparkle' : '';
@@ -1768,10 +1779,65 @@ export async function addToCart(productData) {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
 
+    // Kiểm tra cấu hình Flash Sale để áp dụng ưu đãi Mua 1 Tặng 1 (20/10)
+    let bogoGiftItem = null;
+    try {
+        const fsSettings = await fetchFlashSaleSettings();
+        const fsInfo = getProductFlashSaleInfo({ id: productData.id, price: productData.price }, productData.id, fsSettings);
+        if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.isBogo) {
+            productData.isBogoMain = true;
+            productData.dealNote = "🎁 Mua 1 Tặng 1 (20/10)";
+
+            // Xác định sản phẩm quà tặng (cùng loại hoặc sản phẩm khác)
+            let giftPid = fsInfo.giftProductId || productData.id;
+            let giftName = `${productData.name} (Quà tặng 20/10)`;
+            let giftImage = productData.image;
+
+            if (giftPid && giftPid !== productData.id) {
+                try {
+                    const giftSnap = await getDoc(doc(db, "products", giftPid));
+                    if (giftSnap.exists()) {
+                        const giftData = giftSnap.data();
+                        giftName = `${giftData.name} (Quà tặng 20/10)`;
+                        giftImage = giftData.thumbUrl || giftData.imageUrl || productData.image;
+                    }
+                } catch (e) {
+                    console.error("Lỗi lấy thông tin quà tặng BOGO:", e);
+                }
+            }
+
+            bogoGiftItem = {
+                id: `gift_${giftPid}_for_${productData.id}`,
+                realProductId: giftPid,
+                name: `🎁 ${giftName}`,
+                price: 0,
+                originalPrice: productData.price,
+                image: giftImage,
+                quantity: productData.quantity,
+                variant: 'Quà tặng kèm (0đ)',
+                isGift: true,
+                parentProductId: productData.id,
+                category: productData.category || 'Gifts'
+            };
+        }
+    } catch (err) {
+        console.error("Lỗi kiểm tra BOGO khi thêm giỏ hàng:", err);
+    }
+
     const variantStr = productData.variant || '';
-    const existingItem = cart.find(item => item.id === productData.id && (item.variant || '') === variantStr);
+    const existingItem = cart.find(item => item.id === productData.id && (item.variant || '') === variantStr && !item.isGift);
     if (existingItem) existingItem.quantity += productData.quantity;
     else cart.push(productData);
+
+    // Nếu có quà tặng BOGO, cập nhật quà tặng vào giỏ
+    if (bogoGiftItem) {
+        const existingGift = cart.find(item => item.id === bogoGiftItem.id);
+        if (existingGift) {
+            existingGift.quantity += bogoGiftItem.quantity;
+        } else {
+            cart.push(bogoGiftItem);
+        }
+    }
 
     if (user) await setDoc(doc(db, "carts", user.uid), { items: cart });
     else localStorage.setItem('cart', JSON.stringify(cart));
@@ -1782,7 +1848,8 @@ export async function addToCart(productData) {
     } else if (window.openDrawerCart) {
         window.openDrawerCart();
     } else {
-        showToast(`Đã thêm ${productData.quantity} ${productData.name} vào giỏ hàng!`);
+        const giftNotice = bogoGiftItem ? ' (Kèm 1 quà tặng 0đ)' : '';
+        showToast(`Đã thêm ${productData.quantity} ${productData.name}${giftNotice} vào giỏ hàng!`);
     }
 }
 

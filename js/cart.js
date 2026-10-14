@@ -135,20 +135,28 @@ async function renderCart() {
     cartItemsContainer.innerHTML = cart.map((item, index) => {
         const subtotal = item.price * item.quantity;
         total += subtotal;
+        const isGift = Boolean(item.isGift);
         return `
-            <div class="summary-item">
-                <img src="${item.image}" alt="${item.name}" class="summary-item-img">
+            <div class="summary-item ${isGift ? 'is-bogo-gift-item' : ''}" style="${isGift ? 'background: #fffaf5; border: 1px dashed #E8CCB2; border-radius: 8px; padding: 10px; margin-bottom: 8px;' : ''}">
+                <img src="${item.image}" alt="${item.name}" class="summary-item-img" style="border-radius: 6px;">
                 <div class="summary-item-details">
-                    <h4>${item.name}</h4>
+                    <h4 style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        ${item.name}
+                        ${isGift ? '<span style="font-size: 0.68rem; background: #9C7156; color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 700;">QUÀ TẶNG 20/10</span>' : ''}
+                    </h4>
                     <p class="summary-item-variant">${item.variant || 'Mặc định'}</p>
                     <div class="quantity-controls">
-                        <button class="q-btn" onclick="window.changeQty(${index}, -1)">-</button>
-                        <span class="qty-value">${item.quantity}</span>
-                        <button class="q-btn" onclick="window.changeQty(${index}, 1)">+</button>
+                        ${isGift ? `
+                            <span class="qty-value" style="font-size: 0.82rem; color: #9C7156; font-weight: 700;">SL: ${item.quantity} (Tặng kèm)</span>
+                        ` : `
+                            <button class="q-btn" onclick="window.changeQty(${index}, -1)">-</button>
+                            <span class="qty-value">${item.quantity}</span>
+                            <button class="q-btn" onclick="window.changeQty(${index}, 1)">+</button>
+                        `}
                     </div>
                 </div>
                 <div class="summary-item-price">
-                    <p>${new Intl.NumberFormat('vi-VN').format(subtotal)}đ</p>
+                    <p style="${isGift ? 'color: #9C7156; font-weight: 800;' : ''}">${isGift ? '0đ (Miễn phí)' : `${new Intl.NumberFormat('vi-VN').format(subtotal)}đ`}</p>
                     <button class="btn-remove-small" onclick="window.removeItem(${index})">Xóa</button>
                 </div>
             </div>
@@ -805,8 +813,17 @@ window.changeQty = async (index, delta) => {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
     }
 
-    cart[index].quantity += delta;
-    if (cart[index].quantity < 1) cart[index].quantity = 1;
+    const item = cart[index];
+    if (!item) return;
+
+    item.quantity += delta;
+    if (item.quantity < 1) item.quantity = 1;
+
+    // Nếu sản phẩm này có quà tặng BOGO kèm theo, đồng bộ số lượng quà tặng
+    const associatedGift = cart.find(g => g.isGift && g.parentProductId === item.id);
+    if (associatedGift) {
+        associatedGift.quantity = item.quantity;
+    }
 
     if (auth.currentUser) {
         await setDoc(doc(db, "carts", auth.currentUser.uid), { items: cart });
@@ -832,7 +849,16 @@ window.removeItem = async (index) => {
             cart = JSON.parse(localStorage.getItem('cart')) || [];
         }
 
-        cart.splice(index, 1);
+        const removedItem = cart[index];
+        if (removedItem) {
+            // Xóa cả quà tặng đi kèm nếu là sản phẩm chính
+            cart = cart.filter((item, idx) => {
+                if (idx === index) return false;
+                if (item.isGift && item.parentProductId === removedItem.id) return false;
+                return true;
+            });
+        }
+
         if (auth.currentUser) await setDoc(doc(db, "carts", auth.currentUser.uid), { items: cart });
         else localStorage.setItem('cart', JSON.stringify(cart));
 

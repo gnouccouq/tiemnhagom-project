@@ -17,6 +17,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
@@ -41,16 +42,110 @@ export const unstable_settings = {
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withSequence,
+  runOnJS,
+  Easing,
+} from 'react-native-reanimated';
+
+// Component màn hình chờ với hiệu ứng logo mượt mà và thanh tải OTA khi có bản update mới
+function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
+  const scale = useSharedValue(0.92);
+  const opacity = useSharedValue(1);
+  const [downloadingOta, setDownloadingOta] = useState(false);
+
+  const startExitTransition = () => {
+    scale.value = withTiming(1.18, { duration: 350, easing: Easing.in(Easing.cubic) });
+    opacity.value = withTiming(0, { duration: 320, easing: Easing.in(Easing.ease) }, (finished) => {
+      if (finished) {
+        runOnJS(onFinish)();
+      }
+    });
+  };
+
+  useEffect(() => {
+    // 1. Logo nảy nhẹ chào đón (pulse effect)
+    scale.value = withSequence(
+      withTiming(1.05, { duration: 450, easing: Easing.out(Easing.ease) }),
+      withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) })
+    );
+
+    let isMounted = true;
+
+    // 2. Kiểm tra OTA Update thông minh
+    const checkAndDownloadUpdate = async () => {
+      try {
+        if (!__DEV__ && Updates.isEnabled) {
+          const update = await Updates.checkForUpdateAsync();
+          if (update.isAvailable) {
+            if (isMounted) setDownloadingOta(true);
+            await Updates.fetchUpdateAsync();
+            await Updates.reloadAsync();
+            return;
+          }
+        }
+      } catch (e) {
+        // Nếu lỗi mạng hoặc timeout, bỏ qua và vào app bình thường
+        console.log('OTA Check Error:', e);
+      }
+
+      // Không có OTA update hoặc đang ở dev -> chuyển vào app sau nhịp hiển thị logo mượt mà
+      setTimeout(() => {
+        if (isMounted) startExitTransition();
+      }, 650);
+    };
+
+    checkAndDownloadUpdate();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={[styles.loadingContainer, containerAnimatedStyle]}>
+      <Animated.Image 
+        source={require('../assets/images/LOGO_2_PNG.png')} 
+        style={[{ width: 260, height: 260 }, animatedStyle]} 
+        resizeMode="contain" 
+      />
+
+      {downloadingOta && (
+        <View style={styles.otaProgressWrap}>
+          <View style={styles.otaProgressBarContainer}>
+            <View style={styles.otaProgressBarFill} />
+          </View>
+          <Text style={styles.otaProgressText}>Đang cập nhật phiên bản mới...</Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+}
+
 // Cổng bảo vệ xác thực (Auth Gate)
 function NavigationRoot() {
   const { user, userProfile, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [splashFinished, setSplashFinished] = useState(false);
 
   const isAuth = Boolean(user || userProfile);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !splashFinished) return;
 
     AsyncStorage.getItem('has_seen_onboarding').then((value) => {
       // Nếu đã đăng nhập thì ngầm định là đã qua onboarding
@@ -69,24 +164,10 @@ function NavigationRoot() {
         router.replace('/(tabs)');
       }
     });
-  }, [isAuth, loading, pathname]);
+  }, [isAuth, loading, pathname, splashFinished]);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Image 
-          source={require('../assets/images/LOGO_3_BLACK_PNG.png')} 
-          style={{ width: 360, height: 360 }} 
-          resizeMode="contain" 
-        />
-        <ActivityIndicator 
-          size="large" 
-          color={Colors.textPrimary} 
-          style={{ position: 'absolute', bottom: 100 }} 
-        />
-        <Text style={styles.versionText}>v{Constants.expoConfig?.version || '1.0.0'}</Text>
-      </View>
-    );
+  if (loading || !splashFinished) {
+    return <AnimatedAppSplash onFinish={() => setSplashFinished(true)} />;
   }
 
   return (
@@ -316,16 +397,36 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#F7F6F2',
+    backgroundColor: '#9C7156',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  versionText: {
+  otaProgressWrap: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 50,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 260,
+  },
+  otaProgressBarContainer: {
+    width: '100%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  otaProgressBarFill: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+  },
+  otaProgressText: {
+    fontFamily: 'ElleGaborStd',
     fontSize: 12,
-    color: '#9E968D',
-    fontFamily: 'SpaceMono',
+    color: 'rgba(255, 255, 255, 0.9)',
+    letterSpacing: 0.3,
   },
   lockContainer: {
     flex: 1,

@@ -29,6 +29,7 @@ import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
+import { getFullAppVersionString } from '../../src/utils/appVersion';
 import { BlurButton } from '../../src/components/BlurButton';
 import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
 import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
@@ -760,6 +761,13 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color="#9E968D" />
           </TouchableOpacity>
+        </View>
+
+        {/* Footer App Version */}
+        <View style={styles.footerWrap}>
+          <Text style={styles.footerVersion}>
+            Tiệm Nhà Gốm v{getFullAppVersionString()}
+          </Text>
         </View>
 
       </ScrollView>

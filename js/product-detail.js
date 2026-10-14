@@ -584,21 +584,22 @@ async function fetchProductDetail() {
                         <div class="flashsale-progress-wrapper" style="margin-top: 12px; margin-bottom: 8px;">
                             <div class="flashsale-progress-bar sold-out" style="height: 22px;">
                                 <div class="flashsale-progress-fill" style="width: 100%;"></div>
-                                <span class="flashsale-progress-text" style="font-size: 0.78rem;">ĐÃ HẾT SUẤT SALE (${fsInfo.sold}/${fsInfo.limit})</span>
+                                <span class="flashsale-progress-text" style="font-size: 0.78rem;">ĐÃ HẾT SUẤT ƯU ĐÃI (${fsInfo.sold}/${fsInfo.limit})</span>
                             </div>
                         </div>
                     `;
                 } else {
                     const percentSold = fsInfo.limit > 0 ? Math.min(100, Math.round((fsInfo.sold / fsInfo.limit) * 100)) : 0;
                     const statusText = percentSold >= 80 ? `⚡ SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `🔥 ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
+                    const badgeText = fsInfo.isBogo ? '🎁 MUA 1 TẶNG 1 — 20/10' : (fsSettings?.title ? `⚡ ${fsSettings.title.toUpperCase()}` : '⚡ FLASH SALE 20/10');
                     detailFlashSaleBarHtml = `
                         <div class="flashsale-progress-wrapper" style="margin-top: 12px; margin-bottom: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span class="flashsale-badge-pill">🔥 SIÊU SALE 9.9</span>
-                                <span style="font-size: 0.75rem; color: #e65100; font-weight: 600;">Ưu đãi có hạn</span>
+                                <span class="flashsale-badge-pill" style="background: linear-gradient(135deg, #9C7156, #2B2928); color: #fff;">${badgeText}</span>
+                                <span style="font-size: 0.75rem; color: #9C7156; font-weight: 700;">${fsInfo.isBogo ? 'Tặng 1 sản phẩm kèm theo' : 'Ưu đãi có hạn'}</span>
                             </div>
-                            <div class="flashsale-progress-bar" style="height: 22px;">
-                                <div class="flashsale-progress-fill" style="width: ${percentSold}%;"></div>
+                            <div class="flashsale-progress-bar" style="height: 22px; background: #E8CCB2;">
+                                <div class="flashsale-progress-fill" style="width: ${percentSold}%; background: linear-gradient(90deg, #9C7156, #2B2928);"></div>
                                 <span class="flashsale-progress-text" style="font-size: 0.78rem;">${statusText}</span>
                             </div>
                         </div>
@@ -607,8 +608,8 @@ async function fetchProductDetail() {
             } else if (fsInfo && fsInfo.isUpcoming) {
                 detailFlashSaleBarHtml = `
                     <div class="flashsale-progress-wrapper" style="margin-top: 12px; margin-bottom: 8px;">
-                        <div class="flashsale-progress-bar" style="height: 22px; background: #e0f2fe; border-color: #bae6fd;">
-                            <span class="flashsale-progress-text" style="color: #0369a1; text-shadow: none; font-size: 0.78rem;">⏰ Sắp mở bán 9.9 (${fsInfo.limit} suất sale)</span>
+                        <div class="flashsale-progress-bar" style="height: 22px; background: #fffaf5; border-color: #E8CCB2;">
+                            <span class="flashsale-progress-text" style="color: #9C7156; text-shadow: none; font-size: 0.78rem;">⏰ Sắp mở bán 20/10 (${fsInfo.limit} suất ưu đãi)</span>
                         </div>
                     </div>
                 `;
