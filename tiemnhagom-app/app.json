@@ -16,6 +16,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Ứng dụng cần quyền truy cập camera để bạn có thể chụp ảnh trực tiếp làm ảnh đại diện cho tài khoản cá nhân.",
         "NSPhotoLibraryUsageDescription": "Ứng dụng cần quyền truy cập thư viện ảnh để bạn có thể tải lên ảnh đại diện cá nhân hoặc gửi ảnh minh chứng lỗi sản phẩm cho bộ phận hỗ trợ.",
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần quyền truy cập vị trí để tự động điền địa chỉ giao hàng và gợi ý cửa hàng gần bạn nhất.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -30,8 +31,9 @@
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -52,6 +54,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/LOGO_2_PNG.png",
+          "imageWidth": 260,
           "resizeMode": "contain",
           "backgroundColor": "#9C7156"
         }
@@ -65,7 +68,10 @@
         }
       ],
       "expo-asset",
-      "react-native-liquid-glassmorphism"
+      "react-native-liquid-glassmorphism",
+      "expo-notifications",
+      "expo-media-library",
+      "expo-location"
     ],
     "experiments": {
       "typedRoutes": true

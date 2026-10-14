@@ -18,6 +18,16 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../context/CartContext';
 
+let LiquidGlassView: any = null;
+let isLiquidGlassSupported: any = null;
+try {
+  const liquidModule = require('react-native-liquid-glassmorphism');
+  LiquidGlassView = liquidModule.LiquidGlassView;
+  isLiquidGlassSupported = liquidModule.isLiquidGlassSupported;
+} catch {
+  // Graceful fallback nếu đang chạy môi trường chưa nạp native module
+}
+
 const BAR_HEIGHT = 64;
 const BAR_PADDING = 6;
 const DRAG_THRESHOLD = 6;
@@ -199,13 +209,24 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
         onLayout={onLayout}
       >
         <View style={styles.bar} {...panResponder.panHandlers}>
-          {/* Frosted glass background */}
-          <BlurView
-            intensity={Platform.OS === 'ios' ? 95 : 85}
-            tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"}
-            blurMethod="none"
-            style={StyleSheet.absoluteFill}
-          />
+          {/* Native Apple Liquid Glass / Frosted glass background */}
+          {typeof isLiquidGlassSupported === 'function' && isLiquidGlassSupported() && LiquidGlassView ? (
+            <LiquidGlassView
+              preset="floatingTabBar"
+              variant={Colors.cardBackground === '#FFFFFF' ? 'regular' : 'clear'}
+              tintColor={Colors.cardBackground === '#FFFFFF' ? 'rgba(255,255,255,0.45)' : 'rgba(20,20,20,0.65)'}
+              blurRadius={Platform.OS === 'ios' ? 24 : 18}
+              borderRadius={BAR_HEIGHT / 2}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : (
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 95 : 85}
+              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
+              blurMethod="none"
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />
 
           {/* Sliding active pill */}

@@ -12,8 +12,6 @@
       "functions/**",
       "firestore.rules",
       "storage.rules",
-      "public/downloads/**",
-      "*.apk",
       "*.log",
       "*.md"
     ],
