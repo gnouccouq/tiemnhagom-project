@@ -46,10 +46,10 @@ export function getOtaVersion(): string {
       return Updates.updateId.slice(0, 8);
     }
 
-    // 3. Nếu là bản nhúng (chưa có OTA hoặc bản cài gốc), lấy ngày hiện tại/ngày publish
-    return '20261014';
+    // 3. Nếu là bản nhúng (chưa có OTA hoặc bản cài gốc), hiển thị ngày phát hành hôm nay
+    return '20261015';
   } catch {
-    return '20261014';
+    return '20261015';
   }
 }
 
