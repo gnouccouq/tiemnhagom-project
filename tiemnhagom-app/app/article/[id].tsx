@@ -111,7 +111,7 @@ export default function ArticleDetailScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={22} color="#18181B" />
+          <Ionicons name="chevron-back" size={22} color="#18181B" style={{ marginLeft: -1 }} />
         </ScalePressable>
 
         <Text style={styles.navTitle} numberOfLines={1}>

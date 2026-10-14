@@ -663,7 +663,7 @@ export default function OrdersScreen() {
           onPress={() => router.back()}
           accessibilityLabel="Quay lại"
         >
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
         </BlurButton>
 
         {/* Tiêu đề chính giữa */}

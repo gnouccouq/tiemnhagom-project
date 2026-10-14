@@ -570,7 +570,7 @@ export default function MembershipPrivilegesScreen() {
               onPress={() => router.back()}
               accessibilityLabel={t('back') || 'Quay lại'}
             >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={20} color="#FFFFFF" style={{ marginLeft: -1 }} />
             </BlurButton>
 
             <Text style={styles.headerTitle}>

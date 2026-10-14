@@ -63,7 +63,9 @@
         {
           "faceIDPermission": "Ứng dụng cần quyền sử dụng Face ID để xác thực khi mở khóa ứng dụng."
         }
-      ]
+      ],
+      "expo-asset",
+      "react-native-liquid-glassmorphism"
     ],
     "experiments": {
       "typedRoutes": true

@@ -51,7 +51,7 @@ export default function WebViewScreen() {
           style={styles.backBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
         </ScalePressable>
 
         <Text style={styles.headerTitle} numberOfLines={1}>

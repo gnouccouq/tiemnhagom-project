@@ -340,6 +340,7 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ElleGaborStd: require('../assets/fonts/ElleGaborStd-Light.ttf'),
     'ElleGaborStd-Light': require('../assets/fonts/ElleGaborStd-Light.ttf'),
+    ...Ionicons.font,
   });
 
   useEffect(() => {

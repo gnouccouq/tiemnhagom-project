@@ -294,9 +294,10 @@ export default function PointsHistoryScreen() {
             accessibilityLabel={t('back') || 'Quay lại'}
           >
             <Ionicons
-              name="arrow-back"
-              size={20}
+              name="chevron-back"
+              size={22}
               color={Colors.textPrimary || (isDark ? '#F5F5F5' : '#111827')}
+              style={{ marginLeft: -1 }}
             />
           </BlurButton>
 

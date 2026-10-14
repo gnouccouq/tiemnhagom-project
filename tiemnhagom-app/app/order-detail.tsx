@@ -566,7 +566,7 @@ export default function OrderDetailScreen() {
           accessibilityLabel={t('back') || 'Quay lại'}
           style={{ width: 40, height: 40, borderRadius: 20 }}
         >
-          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+          <Ionicons name="chevron-back" size={22} color="#FFFFFF" style={{ marginLeft: -1 }} />
         </BlurButton>
 
         <View style={styles.headerTitleWrap}>

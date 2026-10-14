@@ -214,7 +214,7 @@ export default function ProductDetailScreen() {
         {/* Floating Header cho Skeleton */}
         <View style={styles.floatingHeader}>
           <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
-            <Ionicons name="arrow-back" size={20} color="#2B2928" />
+            <Ionicons name="chevron-back" size={22} color="#2B2928" style={{ marginLeft: -1 }} />
           </BlurButton>
           <View style={styles.headerRightGroup}>
             <BlurButton style={styles.headerBtn} disabled>
@@ -401,7 +401,7 @@ export default function ProductDetailScreen() {
       {/* Floating Header không vạch kẻ đáy, nút tròn 40px chuẩn GEMINI.md */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
         <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
         </BlurButton>
 
         <View style={styles.headerRightGroup}>
@@ -1077,16 +1077,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.06,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
   },
   headerRightGroup: {
     flexDirection: 'row',

@@ -292,7 +292,7 @@ export default function NotificationDetailScreen() {
             onPress={handleGoBack}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={16} color={Colors.textSecondary} />
+            <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} style={{ marginLeft: -1 }} />
             <Text style={[styles.secondaryBtnText, { color: Colors.textSecondary }]}>
               Quay lại
             </Text>

@@ -10,6 +10,7 @@ import {
   Linking,
   ActivityIndicator,
   Platform,
+  Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -31,7 +32,7 @@ export default function VersionScreen() {
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const dialog = useDialog();
-  const pageStyle = usePageAnimation();
+  const { pageStyle } = usePageAnimation();
 
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
@@ -91,20 +92,27 @@ export default function VersionScreen() {
     Linking.openURL('https://tiemnhagom.vn');
   };
 
+  const [scrollY, setScrollY] = useState(0);
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
+    <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header không có vạch kẻ đáy, nút tròn 40px chuẩn GEMINI.md */}
+      {/* Header chuẩn không vạch kẻ đáy, căn chỉnh tai thỏ tự động qua Header transparent */}
       <Header
         title={t('appVersionTitle') || 'Thông tin phiên bản'}
         showBack={true}
         showCart={false}
+        showSearch={false}
+        transparent
+        scrollY={scrollY}
       />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 12 }]}
+        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}
       >
         {/* Khối Hero Logo Tiệm Nhà Gốm */}
         <View style={styles.heroBox}>
@@ -245,7 +253,7 @@ export default function VersionScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Animated.View>
   );
 }
 
