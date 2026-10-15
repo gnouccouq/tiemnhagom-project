@@ -19,6 +19,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { getArticleById, NewsArticle } from '../../src/services/productService';
 import { ScalePressable } from '../../src/components/ScalePressable';
+import { BlurButton } from '../../src/components/BlurButton';
+import { useThemeColor, checkIsDark } from '../../src/constants/theme';
+import { useSettings } from '../../src/context/SettingsContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,6 +29,9 @@ export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = checkIsDark(Colors);
+  const { t } = useSettings();
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [scrollY, setScrollY] = useState(0);
@@ -52,7 +58,7 @@ export default function ArticleDetailScreen() {
     return (
       <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color="#9C7156" />
-        <Text style={styles.loadingText}>Đang tải bài viết...</Text>
+        <Text style={styles.loadingText}>{t('loadingArticle')}</Text>
       </View>
     );
   }
@@ -61,9 +67,9 @@ export default function ArticleDetailScreen() {
     return (
       <View style={[styles.notFoundContainer, { paddingTop: insets.top }]}>
         <Ionicons name="document-text-outline" size={54} color="#7A827E" />
-        <Text style={styles.notFoundTitle}>Bài viết không tồn tại</Text>
+        <Text style={styles.notFoundTitle}>{t('articleNotFound')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Quay lại</Text>
+          <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -83,7 +89,7 @@ export default function ArticleDetailScreen() {
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
       {/* Header bar */}
       <View style={[styles.navBar, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
@@ -91,7 +97,7 @@ export default function ArticleDetailScreen() {
           <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint="light"
+              tint={isDark ? 'dark' : 'light'}
               blurMethod="none"
               style={StyleSheet.absoluteFill}
             />
@@ -99,32 +105,33 @@ export default function ArticleDetailScreen() {
               style={[
                 StyleSheet.absoluteFill,
                 {
-                  backgroundColor:
-                    Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
+                  backgroundColor: isDark
+                    ? (Platform.OS === 'ios' ? 'rgba(18,18,18,0.12)' : 'rgba(18,18,18,0.45)')
+                    : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)'),
                 },
               ]}
             />
           </View>
         )}
-        <ScalePressable
+        <BlurButton
           style={styles.navBtn}
           onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={t('back')}
         >
-          <Ionicons name="chevron-back" size={22} color="#18181B" style={{ marginLeft: -1 }} />
-        </ScalePressable>
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+        </BlurButton>
 
-        <Text style={styles.navTitle} numberOfLines={1}>
-          Tin Tức & Bài Viết
+        <Text style={[styles.navTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
+          {t('newsAndArticles')}
         </Text>
 
-        <ScalePressable
+        <BlurButton
           style={styles.navBtn}
           onPress={handleShare}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Chia sẻ"
         >
-          <Ionicons name="share-outline" size={20} color="#18181B" />
-        </ScalePressable>
+          <Ionicons name="share-outline" size={20} color={Colors.textPrimary} />
+        </BlurButton>
       </View>
 
       <ScrollView
@@ -148,7 +155,7 @@ export default function ArticleDetailScreen() {
         <View style={styles.contentBox}>
           <View style={styles.tagRow}>
             <View style={styles.tagPill}>
-              <Text style={styles.tagText}>BLOG TIỆM GỐM</Text>
+              <Text style={styles.tagText}>{t('blogTag')}</Text>
             </View>
             {article.dateStr ? (
               <Text style={styles.dateText}>{article.dateStr}</Text>
@@ -160,7 +167,7 @@ export default function ArticleDetailScreen() {
           <View style={styles.divider} />
 
           <Text style={styles.bodyText}>
-            {cleanContent || article.excerpt || 'Đang cập nhật nội dung bài viết...'}
+            {cleanContent || article.excerpt || t('updatingArticleContent')}
           </Text>
 
           <View style={styles.brandBox}>
@@ -198,16 +205,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
   navTitle: {
     fontFamily: 'ElleGaborStd',

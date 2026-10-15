@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Colors, Typography, Spacing, useThemeColor } from '../src/constants/theme';
 import { useWishlist } from '../src/context/WishlistContext';
+import { useSettings } from '../src/context/SettingsContext';
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
 import { Header } from '../src/components/Header';
@@ -19,6 +20,7 @@ export default function FavoritesScreen() {
   const ThemeColors = useThemeColor();
   const isDark = ThemeColors.cardBackground !== '#FFFFFF';
   const { favorites } = useWishlist();
+  const { t } = useSettings();
   const [loading, setLoading] = useState(true);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
 
@@ -54,7 +56,7 @@ export default function FavoritesScreen() {
       
       {/* Header chuẩn app Tiệm Nhà Gốm */}
       <Header
-        title="Sản phẩm yêu thích"
+        title={t('favoriteProducts')}
         showBack={true}
         showSearch={false}
         showCart={false}
@@ -66,7 +68,7 @@ export default function FavoritesScreen() {
         {loading ? (
           <View style={[styles.loadingWrap, { paddingTop: insets.top + 80 }]}>
             <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.loadingText}>Đang tải sản phẩm...</Text>
+            <Text style={styles.loadingText}>{t('loadingProducts')}</Text>
           </View>
         ) : (
           <FlatList
@@ -86,9 +88,9 @@ export default function FavoritesScreen() {
             ListEmptyComponent={
               <EmptyState
                 icon="heart-outline"
-                title="Chưa có sản phẩm yêu thích"
-                message="Bạn chưa lưu món đồ gốm nào. Hãy thêm vào để dễ dàng xem lại nhé!"
-                buttonText="Khám phá ngay"
+                title={t('emptyFavoritesTitle')}
+                message={t('emptyFavoritesMessage')}
+                buttonText={t('exploreNow')}
                 onButtonPress={() => router.push('/(tabs)/products')}
               />
             }

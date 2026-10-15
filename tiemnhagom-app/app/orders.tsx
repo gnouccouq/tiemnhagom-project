@@ -552,11 +552,11 @@ export default function OrdersScreen() {
     });
 
     Alert.alert(
-      'Đã thêm vào giỏ hàng',
-      `Đã đưa ${count} sản phẩm từ đơn hàng #${order.orderCode} vào giỏ hàng của bạn. Bạn có muốn đến giỏ hàng ngay không?`,
+      t('reorderConfirmTitle'),
+      t('reorderConfirmDesc'),
       [
-        { text: 'Tiếp tục xem', style: 'cancel' },
-        { text: 'Đến Giỏ Hàng', onPress: () => router.push('/(tabs)/cart') },
+        { text: t('continueBrowsingAction'), style: 'cancel' },
+        { text: t('goToCartAction'), onPress: () => router.push('/(tabs)/cart') },
       ]
     );
   };
@@ -602,7 +602,7 @@ export default function OrdersScreen() {
         bg: isDark ? 'rgba(220, 38, 38, 0.15)' : BRAND.dangerBg,
         borderColor: isDark ? 'transparent' : BRAND.dangerBorder,
         textColor: '#EF5350',
-        label: 'Đã hủy',
+        label: t('statusCancelledTitle'),
       };
     }
     if (s.includes('giao') || s.includes('ship')) {
@@ -610,7 +610,7 @@ export default function OrdersScreen() {
         bg: isDark ? (Colors.surface || '#2C2C2C') : '#FAF4ED',
         borderColor: isDark ? 'transparent' : BRAND.warmBeige,
         textColor: isDark ? '#E8CCB2' : '#8A5A2B',
-        label: 'Đang giao',
+        label: t('statusShippingTitle'),
       };
     }
     if (s.includes('xác nhận') || s.includes('xử lý') || s.includes('chuẩn bị')) {
@@ -618,7 +618,7 @@ export default function OrdersScreen() {
         bg: isDark ? (Colors.surface || '#2C2C2C') : '#F5F3EF',
         borderColor: isDark ? 'transparent' : BRAND.borderSoft,
         textColor: Colors.textMuted || BRAND.mutedText,
-        label: 'Đang chuẩn bị',
+        label: t('statusProcessingTitle'),
       };
     }
     // Hoàn tất: Tông kem gốm sang trọng, viền men gốm ấm, chữ nâu đất nung
@@ -626,7 +626,7 @@ export default function OrdersScreen() {
       bg: isDark ? 'rgba(156, 113, 86, 0.2)' : '#F6F4EC',
       borderColor: isDark ? 'transparent' : BRAND.warmBeige,
       textColor: isDark ? '#E8CCB2' : BRAND.primary,
-      label: 'Hoàn tất',
+      label: t('statusCompletedTitle'),
     };
   };
 
@@ -831,7 +831,7 @@ export default function OrdersScreen() {
                       </Text>
                       {/* Hiển thị chính xác 100% mã đơn hàng từ Firestore */}
                       <Text style={styles.orderCodeText} numberOfLines={1}>
-                        Mã đơn hàng: {order.orderCode}
+                        {t('orderCode')}: {order.orderCode}
                       </Text>
                     </View>
 

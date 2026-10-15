@@ -139,9 +139,9 @@ export default function AddressBookScreen() {
       phone: formattedPhone,
       address: formStreet.trim(),
       provinceName: formProvinceName,
-      provinceCode: formProvinceCode,
+      provinceCode: formProvinceCode || '',
       wardName: formWardName,
-      wardCode: formWardCode,
+      wardCode: formWardCode || '',
       locationName,
       isDefault: formIsDefault,
     };
@@ -154,9 +154,13 @@ export default function AddressBookScreen() {
         await addAddress(newAddressItem);
       }
       setModalVisible(false);
-      dialog.alert(t('success') || 'Thành công', t('addressSavedSuccess') || 'Đã lưu địa chỉ thành công');
+      setTimeout(() => {
+        dialog.alert(t('success') || 'Thành công', t('addressSavedSuccess') || 'Đã lưu địa chỉ thành công');
+      }, 350);
     } catch (err: any) {
-      dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể lưu địa chỉ.');
+      setTimeout(() => {
+        dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể lưu địa chỉ.');
+      }, 350);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,9 +173,13 @@ export default function AddressBookScreen() {
       async () => {
         try {
           await deleteAddress(index);
-          dialog.alert(t('success') || 'Thành công', t('addressDeletedSuccess') || 'Đã xóa địa chỉ');
+          setTimeout(() => {
+            dialog.alert(t('success') || 'Thành công', t('addressDeletedSuccess') || 'Đã xóa địa chỉ');
+          }, 300);
         } catch (err: any) {
-          dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể xóa địa chỉ');
+          setTimeout(() => {
+            dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể xóa địa chỉ');
+          }, 300);
         }
       }
     );

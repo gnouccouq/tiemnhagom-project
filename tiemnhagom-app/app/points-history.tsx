@@ -80,9 +80,12 @@ export default function PointsHistoryScreen() {
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [transactions, setTransactions] = useState<PointTransaction[]>([]);
+  const [completedSpent, setCompletedSpent] = useState<number | null>(null);
+  const [pendingPoints, setPendingPoints] = useState<number>(0);
+  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(false);
 
-  // Tính số điểm hiện tại của người dùng (10.000đ = 1 điểm, trừ điểm đã đổi, bỏ thưởng 50 điểm chào mừng cũ)
-  const totalSpent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
+  // Tính số điểm hiện tại của người dùng (10.000đ = 1 điểm, chỉ tích lũy khi đơn đã hoàn thành)
+  const totalSpent = completedSpent !== null ? completedSpent : Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
   const earnedPoints = Math.floor(totalSpent / 10000);
   const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
   const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
@@ -92,6 +95,9 @@ export default function PointsHistoryScreen() {
     const fetchHistory = async () => {
       if (!user) {
         setTransactions([]);
+        setPendingPoints(0);
+        setCompletedSpent(0);
+        setOrdersLoaded(true);
         return;
       }
 
@@ -99,13 +105,20 @@ export default function PointsHistoryScreen() {
       try {
         const orders = await getUserOrders(user.uid);
         const list: PointTransaction[] = [];
+        let accCompletedSpent = 0;
+        let accPendingPoints = 0;
 
         orders.forEach((o: Order, idx: number) => {
           const status = (o.status || '').toLowerCase();
+          const isCancelled = status.includes('hủy') || status.includes('cancel');
           const isDone =
-            status.includes('hoàn thành') ||
-            status.includes('thành công') ||
-            status.includes('completed');
+            !isCancelled && (
+              status.includes('hoàn thành') ||
+              status.includes('thành công') ||
+              status.includes('completed') ||
+              status.includes('đã giao') ||
+              status.includes('nhận')
+            );
 
           let dateObj = new Date();
           if (o.orderDate) {
@@ -123,8 +136,9 @@ export default function PointsHistoryScreen() {
           const orderCodeStr = o.orderCode || o.id || `2107012647664951${idx}`;
           const storeName = 'Tiệm Nhà Gốm - 37 Nguyễn Duy, Bình Thạnh';
 
-          // Giao dịch tích điểm (cứ 10.000đ = 1 điểm, chỉ tích khi đơn >= 10.000đ)
-          if ((isDone || orderAmount >= 10000) && pointsEarned > 0) {
+          // Giao dịch tích điểm: CHỈ TÍCH KHI ĐƠN HÀNG ĐÃ HOÀN TẤT THÀNH CÔNG
+          if (isDone && pointsEarned > 0) {
+            accCompletedSpent += orderAmount;
             list.push({
               id: `earn_${o.id || idx}`,
               type: 'earn',
@@ -135,6 +149,9 @@ export default function PointsHistoryScreen() {
               store: storeName,
               orderValue: formatVND(orderAmount),
             });
+          } else if (!isCancelled && !isDone && pointsEarned > 0) {
+            // Đơn đang xử lý hoặc đang vận chuyển: tích lũy vào điểm chờ
+            accPendingPoints += pointsEarned;
           }
 
           // Giao dịch đổi điểm (nếu đơn có dùng điểm / mã giảm)
@@ -145,7 +162,7 @@ export default function PointsHistoryScreen() {
             // Đổi điểm giảm giá: 1 điểm = 1.000đ
             pointsRedeemed = Math.floor(Number(o.discountAmount) / 1000);
           }
-          if (pointsRedeemed > 0) {
+          if (pointsRedeemed > 0 && !isCancelled) {
             list.push({
               id: `redeem_${o.id || idx}`,
               type: 'redeem',
@@ -159,6 +176,10 @@ export default function PointsHistoryScreen() {
           }
         });
 
+        setCompletedSpent(accCompletedSpent);
+        setPendingPoints(accPendingPoints);
+        setOrdersLoaded(true);
+
         if (list.length > 0) {
           // Sắp xếp giảm dần theo thời gian
           list.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
@@ -169,6 +190,7 @@ export default function PointsHistoryScreen() {
         }
       } catch (err) {
         setTransactions([]);
+        setOrdersLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -190,9 +212,12 @@ export default function PointsHistoryScreen() {
     if (!user) {
       return 0;
     }
-    const base = Math.max(earnedPoints, cleanProfilePoints, totalEarnedInHistory);
+    // Khi đã load danh sách đơn hàng, chỉ lấy điểm từ các đơn đã hoàn thành thành công
+    const base = ordersLoaded
+      ? totalEarnedInHistory
+      : Math.max(earnedPoints, cleanProfilePoints, totalEarnedInHistory);
     return Math.max(0, base - totalRedeemedInHistory);
-  }, [user, earnedPoints, cleanProfilePoints, totalEarnedInHistory, totalRedeemedInHistory]);
+  }, [user, ordersLoaded, earnedPoints, cleanProfilePoints, totalEarnedInHistory, totalRedeemedInHistory]);
 
   // Tính toán khoảng ngày hiển thị trên nút Pill theo DatePreset
   const dateRangeDisplay = useMemo(() => {
@@ -383,6 +408,27 @@ export default function PointsHistoryScreen() {
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
+        {/* THẺ ĐIỂM ĐANG CHỜ TÍCH LŨY (KHI CÓ ĐƠN HÀNG ĐANG XỬ LÝ / ĐANG VẬN CHUYỂN) */}
+        {!loading && pendingPoints > 0 && filterType !== 'redeem' && (
+          <View style={styles.pendingPointsCard}>
+            <View style={styles.pendingPointsHeader}>
+              <View style={styles.pendingIconBox}>
+                <Ionicons name="time-outline" size={16} color="#9C7156" />
+              </View>
+              <Text style={styles.pendingPointsTitle}>
+                {t('pendingPointsTitle') || 'Điểm đang chờ tích lũy'}
+              </Text>
+              <Text style={styles.pendingPointsBadge}>
+                +{pendingPoints} {t('points') || 'điểm'}
+              </Text>
+            </View>
+            <Text style={styles.pendingPointsDesc}>
+              {t('pendingPointsNotice', { points: pendingPoints }) ||
+                `Bạn có ${pendingPoints} Điểm gốm sẽ được cộng ngay sau khi đơn hàng được giao và hoàn tất thành công.`}
+            </Text>
+          </View>
+        )}
+
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator
@@ -721,6 +767,50 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 16,
       paddingTop: 16,
       paddingBottom: Platform.OS === 'ios' ? 44 : 28,
+    },
+
+    // Pending Points Card
+    pendingPointsCard: {
+      backgroundColor: isDark ? (Colors.surface || '#1E1E1E') : '#FAF8F5',
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      marginBottom: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8CCB2',
+    },
+    pendingPointsHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    pendingIconBox: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#2A2521' : 'rgba(156, 113, 86, 0.12)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 8,
+    },
+    pendingPointsTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
+      flex: 1,
+    },
+    pendingPointsBadge: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    pendingPointsDesc: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      lineHeight: 19,
+      color: isDark ? Colors.textMuted : '#6E665D',
     },
 
     // Transaction Card

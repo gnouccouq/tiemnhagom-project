@@ -44,9 +44,9 @@ export default function VersionScreen() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  // Mặc định mở rộng bản mới nhất (20261015.01)
+  // Mặc định mở rộng bản mới nhất (20261015.02)
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
-    '20261015.01': true,
+    '20261015.02': true,
   });
 
   const toggleExpand = (otaKey: string) => {
@@ -150,30 +150,32 @@ export default function VersionScreen() {
             />
           </View>
           <Text style={styles.appName}>TIỆM NHÀ GỐM</Text>
-          <Text style={styles.appTagline}>Nghệ Thuật Gốm Sứ Thủ Công Việt</Text>
+          <Text style={styles.appTagline}>{t('tagline')}</Text>
           <View style={styles.versionBadge}>
-            <Text style={styles.versionBadgeText}>Phiên bản {appVersion} (Build {buildNumber})</Text>
+            <Text style={styles.versionBadgeText}>
+              {t('versionBadgeText', { version: appVersion, build: buildNumber })}
+            </Text>
           </View>
         </View>
 
         {/* Khối Thông Tin Chi Tiết Kỹ Thuật */}
         <View style={styles.card}>
-          <Text style={styles.cardHeaderTitle}>Chi tiết kỹ thuật</Text>
+          <Text style={styles.cardHeaderTitle}>{t('techDetails')}</Text>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Phiên bản ứng dụng</Text>
+            <Text style={styles.infoLabel}>{t('appVersion')}</Text>
             <Text style={styles.infoValue}>v{appVersion}</Text>
           </View>
           <View style={styles.divider} />
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mã bản dựng (Build)</Text>
+            <Text style={styles.infoLabel}>{t('buildNumber')}</Text>
             <Text style={styles.infoValue}>{buildNumber}</Text>
           </View>
           <View style={styles.divider} />
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Bản phát hành OTA</Text>
+            <Text style={styles.infoLabel}>{t('otaRelease')}</Text>
             <View style={styles.otaBadgeWrap}>
               <Text style={styles.otaBadgeText}>{otaVersion}</Text>
             </View>
@@ -181,7 +183,7 @@ export default function VersionScreen() {
           <View style={styles.divider} />
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Kênh phát hành</Text>
+            <Text style={styles.infoLabel}>{t('releaseChannel')}</Text>
             <Text style={[styles.infoValue, { color: Colors.primary }]}>
               {Updates.channel || 'Production'}
             </Text>
@@ -201,7 +203,7 @@ export default function VersionScreen() {
             <Ionicons name="cloud-download-outline" size={18} color="#FFFFFF" />
           )}
           <Text style={styles.checkUpdateBtnText}>
-            {checkingUpdate ? 'Đang kiểm tra...' : 'Kiểm tra bản cập nhật mới'}
+            {checkingUpdate ? t('checkingUpdate') : t('checkUpdateBtn')}
           </Text>
         </TouchableOpacity>
 
@@ -210,7 +212,7 @@ export default function VersionScreen() {
           <View style={styles.sectionHeaderIconWrap}>
             <Ionicons name="time-outline" size={18} color="#9C7156" />
           </View>
-          <Text style={styles.sectionHeaderText}>Lịch sử bản cập nhật</Text>
+          <Text style={styles.sectionHeaderText}>{t('changelogHistoryTitle')}</Text>
         </View>
 
         {/* Danh sách các bản cập nhật (Changelog History) */}
@@ -235,11 +237,13 @@ export default function VersionScreen() {
                     </View>
                     {isCurrent && (
                       <View style={styles.currentBadge}>
-                        <Text style={styles.currentBadgeText}>Hiện tại</Text>
+                        <Text style={styles.currentBadgeText}>{t('currentBadge')}</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={styles.releaseDateText}>Ngày phát hành: {item.releaseDate}</Text>
+                  <Text style={styles.releaseDateText}>
+                    {t('releaseDateLabel', { date: item.releaseDate })}
+                  </Text>
                   <Text style={styles.releaseSummaryTitle}>{item.title}</Text>
                 </View>
 
@@ -275,7 +279,7 @@ export default function VersionScreen() {
 
         {/* Khối Chứng Nhận Bộ Công Thương & Bản Quyền */}
         <View style={styles.card}>
-          <Text style={styles.cardHeaderTitle}>Chứng nhận & Bản quyền</Text>
+          <Text style={styles.cardHeaderTitle}>{t('certAndCopyright')}</Text>
           
           <TouchableOpacity
             style={styles.bctRow}
@@ -288,8 +292,8 @@ export default function VersionScreen() {
               contentFit="contain"
             />
             <View style={styles.bctTextWrap}>
-              <Text style={styles.bctTitle}>Đã Đăng Ký Bộ Công Thương</Text>
-              <Text style={styles.bctDesc}>Website & Ứng dụng TMĐT chính thức của Hộ Kinh Doanh Tiệm Nhà Gốm</Text>
+              <Text style={styles.bctTitle}>{t('bctTitle')}</Text>
+              <Text style={styles.bctDesc}>{t('bctDesc')}</Text>
             </View>
             <Ionicons name="open-outline" size={16} color={Colors.textMuted} />
           </TouchableOpacity>

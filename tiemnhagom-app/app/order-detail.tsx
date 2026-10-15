@@ -489,7 +489,7 @@ export default function OrderDetailScreen() {
   const isInStore = order.orderMethod === 'Mua tại cửa hàng' || String(order.orderCode || '').toUpperCase().startsWith('POS');
 
   // Tính điểm nhận được (10.000đ = 1 điểm)
-  const earnedPoints = Math.max(1, Math.floor((order.totalAmount || 0) / 10000));
+  const earnedPoints = Math.floor((order.totalAmount || 0) / 10000);
 
   // Xác định đúng hạng thành viên của user
   const userTierConfig = useMemo(() => {
@@ -881,16 +881,34 @@ export default function OrderDetailScreen() {
             </View>
 
             {/* Dòng tích điểm gốm */}
-            <View style={styles.rewardPointsLine}>
-              <Ionicons name="flame" size={17} color={BRAND.primary} style={{ marginRight: 6 }} />
-              <Text style={styles.rewardPointsText}>
-                {t('rewardPointsNotice') || 'Bạn sẽ nhận được'}{' '}
-                <Text style={styles.rewardPointsBold}>
-                  {earnedPoints} {t('rewardPointsUnit') || 'điểm'}
-                </Text>{' '}
-                {t('rewardPointsSuffix') || 'khi hoàn tất đơn hàng.'}
-              </Text>
-            </View>
+            {!isCancelled && earnedPoints > 0 && (
+              <View style={styles.rewardPointsLine}>
+                <Ionicons
+                  name={isCompleted ? "checkmark-circle" : "time-outline"}
+                  size={17}
+                  color={BRAND.primary}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.rewardPointsText}>
+                  {isCompleted ? (
+                    <>
+                      {t('orderCompletedPointsAwarded') || 'Đơn hàng đã hoàn tất, bạn đã được tích lũy'}{' '}
+                      <Text style={styles.rewardPointsBold}>
+                        +{earnedPoints} {t('rewardPointsUnit') || 'Điểm gốm'}
+                      </Text>!
+                    </>
+                  ) : (
+                    <>
+                      {t('rewardPointsNotice') || 'Bạn sẽ nhận được'}{' '}
+                      <Text style={styles.rewardPointsBold}>
+                        +{earnedPoints} {t('rewardPointsUnit') || 'Điểm gốm'}
+                      </Text>{' '}
+                      {t('rewardPointsSuffix') || 'sau khi đơn hàng được giao và hoàn tất thành công.'}
+                    </>
+                  )}
+                </Text>
+              </View>
+            )}
 
             {/* Link hỗ trợ */}
             <TouchableOpacity

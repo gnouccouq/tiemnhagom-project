@@ -19,12 +19,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { Colors, useThemeColor, checkIsDark, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
 import { formatCurrency } from '../src/utils/format';
 import { useSettings } from '../src/context/SettingsContext';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
+  const themeColors = useThemeColor();
+  const isDark = checkIsDark(themeColors);
   const { t } = useSettings();
   const params = useLocalSearchParams<{
     orderCode: string;
@@ -127,8 +129,8 @@ export default function OrderSuccessScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Success Icon */}

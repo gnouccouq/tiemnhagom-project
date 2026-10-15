@@ -8,14 +8,11 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  Alert,
-  Modal,
-  KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ScrollView
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -24,16 +21,17 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import Animated, { FadeInUp, FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
-import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
-import { app as firebaseApp, auth, db } from '../../src/config/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
-import { formatPhoneNumber, getPhoneVariants } from '../../src/utils/format';
+import { formatPhoneNumber } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
+import {
+  FirebasePhoneAuthWebView,
+  FirebasePhoneAuthWebViewHandle,
+} from '../../src/components/FirebasePhoneAuthWebView';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -55,7 +53,6 @@ try {
   // Đang chạy trên Expo Go (chưa có native binary RNGoogleSignin)
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GOOGLE_CLIENT_ID = '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com';
 
 export default function LoginScreen() {
@@ -66,23 +63,26 @@ export default function LoginScreen() {
     resetPassword,
     signInWithGoogleCredential,
     signInWithAppleCredential,
-    signInWithPhoneSession,
+    signInWithPhoneResult,
   } = useAuth();
-  
+
   const { t } = useSettings();
   const dialog = useDialog();
 
   // Chế độ: false = Đăng nhập (Sign In), true = Đăng ký (Sign Up)
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
-  const recaptchaVerifier = useRef(null);
-  const [verificationId, setVerificationId] = useState('');
-  const [otp, setOtp] = useState('');
-  const [isOtpMode, setIsOtpMode] = useState(false);
 
-  // Form Fields
-  const [fullName, setFullName] = useState('');
+  // Phone OTP ref & states
+  const phoneAuthRef = useRef<FirebasePhoneAuthWebViewHandle>(null);
+  const otpInputRef = useRef<TextInput>(null);
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [isOtpFocused, setIsOtpFocused] = useState(false);
+  const [isOtpMode, setIsOtpMode] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+
+  // Email form fields (Đăng ký chỉ cần email và mật khẩu giống web)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -96,6 +96,30 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+
+  // Countdown timer cho OTP
+  useEffect(() => {
+    let timer: any = null;
+    if (otpCountdown > 0) {
+      timer = setTimeout(() => {
+        setOtpCountdown((c) => c - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [otpCountdown]);
+
+  // Focus ô OTP ngay khi bật isOtpMode
+  useEffect(() => {
+    if (isOtpMode) {
+      setOtp('');
+      const tId = setTimeout(() => {
+        otpInputRef.current?.focus();
+      }, 250);
+      return () => clearTimeout(tId);
+    }
+  }, [isOtpMode]);
 
   // Google OAuth Hook
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
@@ -127,110 +151,90 @@ export default function LoginScreen() {
     }
   }, [response]);
 
-  // Submit form (Sign in / Sign up)
-  const handleVerifyOtp = async () => {
-    if (!otp.trim()) {
-      dialog.alert(t('notification') || 'Thông báo', 'Vui lòng nhập mã OTP');
+  // Xử lý gửi mã xác thực OTP qua số điện thoại (giống bản web)
+  const handleSendOtp = async () => {
+    const rawPhone = phone.trim();
+    if (!rawPhone) {
+      dialog.alert(t('notification') || 'Thông báo', t('phoneRequiredError') || 'Vui lòng nhập số điện thoại');
       return;
     }
+
+    if (otpCountdown > 0) {
+      dialog.alert(
+        t('notification') || 'Thông báo',
+        (t('resendOtpIn') || 'Gửi lại sau {seconds}s').replace('{seconds}', String(otpCountdown))
+      );
+      return;
+    }
+
     setLoading(true);
     try {
-      const cred = PhoneAuthProvider.credential(verificationId, otp);
-      const userCred = await signInWithCredential(auth, cred);
-      const p0 = formatPhoneNumber(phone.trim());
-      const variants = getPhoneVariants(phone.trim());
-
-      const userDocRef = doc(db, 'users', userCred.user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (!userDocSnap.exists()) {
-        // Tìm xem SĐT này đã được gắn vào tài khoản nào trước đó chưa
-        const candidateDocs: any[] = [];
-        for (const p of variants) {
-          const qP = query(collection(db, 'users'), where('phone', '==', p));
-          const sP = await getDocs(qP);
-          candidateDocs.push(...sP.docs.filter(d => d.id !== userCred.user.uid));
-        }
-        if (candidateDocs.length === 0) {
-          for (const p of variants) {
-            const qId = query(collection(db, 'users'), where('identifiers', 'array-contains', p));
-            const sId = await getDocs(qId);
-            candidateDocs.push(...sId.docs.filter(d => d.id !== userCred.user.uid));
-          }
-        }
-
-        // Lọc unique và ưu tiên tài khoản có email (tài khoản chính ban đầu)
-        const uniqueMatches = Array.from(new Map(candidateDocs.map(d => [d.id, d])).values());
-        let primaryAccountSnap = uniqueMatches.find(d => !d.data().isMerged && !!d.data().email);
-        if (!primaryAccountSnap) {
-          primaryAccountSnap = uniqueMatches.find(d => !d.data().isMerged);
-        }
-        if (!primaryAccountSnap && uniqueMatches.length > 0) {
-          primaryAccountSnap = uniqueMatches[0];
-        }
-
-        if (primaryAccountSnap) {
-          // Lấy ID tài khoản gốc (nếu doc này từng trỏ mergedTo thì lấy mergedTo)
-          const pData = primaryAccountSnap.data();
-          const targetPrimaryUid = pData.mergedTo || primaryAccountSnap.id;
-
-          // Đánh dấu UID phone này là tài khoản phụ trỏ về tài khoản chính
-          await setDoc(userDocRef, {
-            uid: userCred.user.uid,
-            phone: p0,
-            identifiers: Array.from(new Set([...(pData.identifiers || []), ...variants])).filter(Boolean),
-            isMerged: true,
-            mergedTo: targetPrimaryUid,
-            createdAt: serverTimestamp(),
-            updatedAt: new Date().toISOString(),
-          }, { merge: true });
-
-          // Cập nhật SĐT chuẩn và danh sách mergedAccounts vào tài khoản chính
-          await setDoc(doc(db, 'users', targetPrimaryUid), {
-            phone: p0,
-            identifiers: Array.from(new Set([...(pData.identifiers || []), ...variants])).filter(Boolean),
-            mergedAccounts: Array.from(new Set([...(pData.mergedAccounts || []), userCred.user.uid])),
-            updatedAt: new Date().toISOString(),
-          }, { merge: true });
-        } else {
-          const newProfile = {
-            uid: userCred.user.uid,
-            email: null,
-            phone: p0,
-            identifiers: variants,
-            displayName: `Khách hàng ${p0.slice(-4)}`,
-            points: 0,
-            tier: 'standard',
-          };
-          await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() }, { merge: true });
-        }
+      const res = await phoneAuthRef.current?.sendOtp(rawPhone);
+      if (res?.success) {
+        setIsOtpMode(true);
+        setOtpCountdown(60);
+        setOtp('');
+        // Mở bàn phím ngay lập tức
+        setTimeout(() => {
+          otpInputRef.current?.focus();
+        }, 250);
+      } else {
+        dialog.alert(
+          t('error') || 'Lỗi',
+          res?.error || t('genericError') || 'Không thể gửi mã xác thực. Vui lòng kiểm tra lại số điện thoại.'
+        );
       }
-      
-      router.back();
     } catch (err: any) {
-      dialog.alert(t('error') || 'Lỗi', 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+      dialog.alert(t('error') || 'Lỗi', err.message || t('genericError'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (loginMethod === 'phone' && !isSignUpMode) {
-      if (!phone.trim()) {
-        dialog.alert(t('notification') || 'Thông báo', 'Vui lòng nhập số điện thoại');
-        return;
-      }
-      setLoading(true);
-      try {
-        await signInWithPhoneSession(phone.trim());
-        router.back();
-      } catch (err: any) {
-        dialog.alert(t('error') || 'Lỗi', err.message || t('genericError'));
-      } finally {
-        setLoading(false);
-      }
+  // Xử lý xác thực OTP và đồng bộ ID User / tài khoản giống bản web
+  const handleVerifyOtp = async () => {
+    const cleanOtp = otp.trim();
+    if (cleanOtp.length < 6) {
+      dialog.alert(t('notification') || 'Thông báo', t('invalidOtpError') || 'Vui lòng nhập đủ 6 chữ số OTP');
       return;
     }
 
+    setLoading(true);
+    try {
+      const res = await phoneAuthRef.current?.verifyOtp(cleanOtp);
+      if (res?.success && res.uid) {
+        // Đồng bộ ID User, liên kết tài khoản gốc và đơn hàng cũ giống bản web (utils.js)
+        await signInWithPhoneResult(res.uid, phone.trim());
+        dialog.showDialog({
+          title: t('success') || 'Thành công',
+          message: t('loginSuccess') || 'Đăng nhập thành công!',
+          type: 'success',
+          buttons: [
+            {
+              text: t('start') || 'Bắt đầu',
+              style: 'primary',
+              onPress: () => router.back(),
+            },
+          ],
+        });
+      } else {
+        dialog.alert(
+          t('error') || 'Lỗi',
+          res?.error || t('invalidOtpError') || 'Mã OTP không chính xác hoặc đã hết hạn.'
+        );
+      }
+    } catch (err: any) {
+      dialog.alert(
+        t('error') || 'Lỗi',
+        err.message || t('invalidOtpError') || 'Mã OTP không chính xác hoặc đã hết hạn.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Submit form (Đăng nhập Email hoặc Đăng ký tài khoản mới)
+  const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
       dialog.alert(t('notification') || 'Thông báo', t('emailPasswordRequired'));
       return;
@@ -239,13 +243,14 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       if (isSignUpMode) {
+        // Đăng ký giống bản web: chỉ cần email và mật khẩu, điều kiện mật khẩu tối thiểu 6 ký tự
         if (password.length < 6) {
           dialog.alert(t('notification') || 'Thông báo', t('passwordLengthError'));
           setLoading(false);
           return;
         }
-        const name = fullName.trim() || email.split('@')[0];
-        await signUp(email.trim(), password, name, phone.trim());
+        const name = email.split('@')[0];
+        await signUp(email.trim(), password, name);
         dialog.showDialog({
           title: t('success') || 'Thành công',
           message: t('registerSuccess') || 'Đăng ký tài khoản thành công!',
@@ -270,6 +275,8 @@ export default function LoginScreen() {
         message = t('emailAlreadyInUse');
       } else if (err.code === 'auth/invalid-email') {
         message = t('invalidEmail');
+      } else if (err.code === 'auth/weak-password') {
+        message = t('passwordLengthError');
       }
       dialog.alert(t('error') || 'Lỗi', message);
     } finally {
@@ -280,7 +287,7 @@ export default function LoginScreen() {
   // Quên mật khẩu
   const handleSendResetPassword = async () => {
     if (!forgotEmail.trim()) {
-      dialog.alert('Thông báo', 'Vui lòng nhập email để nhận liên kết');
+      dialog.alert(t('notification') || 'Thông báo', t('emailRequiredError') || 'Vui lòng nhập email');
       return;
     }
 
@@ -289,11 +296,11 @@ export default function LoginScreen() {
       await resetPassword(forgotEmail.trim());
       setForgotModalVisible(false);
       dialog.alert(
-        'Đã gửi liên kết',
-        'Link đặt lại mật khẩu đã được gửi vào Email của bạn. Vui lòng kiểm tra hộp thư đến (và mục Spam).'
+        t('success') || 'Thành công',
+        t('resetPasswordSentNotice') || 'Link đặt lại mật khẩu đã được gửi vào Email của bạn. Vui lòng kiểm tra hộp thư đến (và mục Spam).'
       );
     } catch (e: any) {
-      dialog.alert('Lỗi', e.message || 'Không tìm thấy tài khoản');
+      dialog.alert(t('error') || 'Lỗi', e.message || 'Không tìm thấy tài khoản');
     } finally {
       setForgotLoading(false);
     }
@@ -303,12 +310,12 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      // 1. Thử đăng nhập bằng Native Google SDK (nếu chạy trên bản build .ipa có native binary)
+      // 1. Thử đăng nhập bằng Native Google SDK (nếu chạy trên bản build .ipa/.apk có native binary)
       if (NativeGoogleSignin) {
         try {
           await NativeGoogleSignin.hasPlayServices();
-          const response = await NativeGoogleSignin.signIn();
-          const idToken = response.data?.idToken;
+          const gResponse = await NativeGoogleSignin.signIn();
+          const idToken = gResponse.data?.idToken;
           if (idToken) {
             await signInWithGoogleCredential(idToken);
             dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
@@ -332,7 +339,7 @@ export default function LoginScreen() {
       }
     } catch (e: any) {
       console.log('Google login error:', e);
-      dialog.alert('Thông báo', 'Vui lòng kiểm tra kết nối Google hoặc đăng nhập bằng Email.');
+      dialog.alert(t('notification') || 'Thông báo', 'Vui lòng kiểm tra kết nối Google hoặc đăng nhập bằng Email.');
     } finally {
       setGoogleLoading(false);
     }
@@ -360,7 +367,7 @@ export default function LoginScreen() {
       const csrf = Math.random().toString(36).substring(2, 15);
       const nonce = Math.random().toString(36).substring(2, 10);
       const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, nonce);
-      
+
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -403,13 +410,25 @@ export default function LoginScreen() {
       {/* GRADIENT OVERLAY */}
       <View style={styles.bgOverlay} />
       <LinearGradient
-        colors={['transparent', 'rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 1)']}
-        locations={[0, 0.4, 1]}
+        colors={['transparent', 'rgba(0, 0, 0, 0.72)', 'rgba(0, 0, 0, 1)']}
+        locations={[0, 0.42, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 
-      {/* AUTH CARD (BOTTOM SHEET .auth-sheet-standalone & .auth-modal-card) */}
+      {/* TOP CLOSE BUTTON */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => router.back()}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="close" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* AUTH CARD (BOTTOM SHEET) */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.sheetContainer}
@@ -418,15 +437,20 @@ export default function LoginScreen() {
           bounces={false}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.sheetScroll}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.authModalCard}>
             {/* AUTH MODAL HEADER */}
-            <Animated.View entering={FadeInUp.duration(600).delay(100)} style={styles.authModalHeader}>
+            <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.authModalHeader}>
               <View style={styles.authModalTitle}>
                 {!isSignUpMode ? (
                   <>
                     <Text style={styles.mainTitleText}>{t('welcomeBack')}</Text>
-                    <Text style={styles.subTitleText}>{t('gladToSeeYou')}</Text>
+                    <Text style={styles.subTitleText}>
+                      {loginMethod === 'phone'
+                        ? (t('phoneLoginDesc') || 'Đăng nhập bảo mật qua mã xác thực OTP')
+                        : t('gladToSeeYou')}
+                    </Text>
                   </>
                 ) : (
                   <>
@@ -439,7 +463,10 @@ export default function LoginScreen() {
               <View style={styles.authHeaderRight}>
                 <TouchableOpacity
                   style={styles.authToggleBadge}
-                  onPress={() => setIsSignUpMode(!isSignUpMode)}
+                  onPress={() => {
+                    setIsSignUpMode(!isSignUpMode);
+                    setIsOtpMode(false);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.authToggleLink}>
@@ -449,199 +476,362 @@ export default function LoginScreen() {
               </View>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.duration(600).delay(300)}>
-            {/* FORM INPUTS (.auth-input-group & .auth-input) */}
-            
-            {isSignUpMode && (
-              <>
-                <View style={styles.authInputGroup}>
-                  <TextInput
-                    style={styles.authInput}
-                    placeholder={t('fullName')}
-                    placeholderTextColor="#A0A0A0"
-                    value={fullName}
-                    onChangeText={setFullName}
-                    autoCapitalize="words"
-                  />
-                </View>
-
-                <View style={styles.authInputGroup}>
-                  <TextInput
-                    style={styles.authInput}
-                    placeholder={t('phonePlaceholder')}
-                    placeholderTextColor="#A0A0A0"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-              </>
-            )}
-
-            {isOtpMode ? (
-              <View style={styles.authInputGroup}>
-                <TextInput
-                  style={styles.authInput}
-                  placeholder="Nhập mã OTP (6 số)"
-                  placeholderTextColor="#A0A0A0"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                />
-              </View>
-            ) : (!isSignUpMode && loginMethod === 'phone') ? (
-              <View style={styles.authInputGroup}>
-                <TextInput
-                  style={styles.authInput}
-                  placeholder={t('phonePlaceholder') || 'Số điện thoại'}
-                  placeholderTextColor="#A0A0A0"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            ) : (
-              <>
-                <View style={styles.authInputGroup}>
-                  <TextInput
-                    style={styles.authInput}
-                    placeholder={t('emailPlaceholder')}
-                    placeholderTextColor="#A0A0A0"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                <View style={styles.authInputGroup}>
-                  <TextInput
-                    style={[styles.authInput, { paddingRight: 48 }]}
-                    placeholder={t('passwordPlaceholder')}
-                    placeholderTextColor="#A0A0A0"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                  />
-                  <TouchableOpacity
-                    style={styles.authPasswordToggle}
-                    onPress={() => setShowPassword(!showPassword)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={19}
-                      color="#FFF"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            {/* SUBMIT BUTTON */}
-            <TouchableOpacity
-              style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
-              onPress={isOtpMode ? handleVerifyOtp : handleSubmit}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading ? (
-                <ActivityIndicator color="#111" size="small" />
-              ) : (
+            <Animated.View entering={FadeInDown.duration(500).delay(250)}>
+              {/* CHẾ ĐỘ 1: ĐĂNG KÝ (GIỐNG BẢN WEB - CHỈ CẦN EMAIL VÀ MẬT KHẨU TỐI THIỂU 6 KÝ TỰ) */}
+              {isSignUpMode ? (
                 <>
-                  <Text style={styles.btnAuthSubmitText}>
-                    {isSignUpMode ? t('createAccount') : t('login')}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
+                  <View style={styles.authInputGroup}>
+                    <TextInput
+                      style={styles.authInput}
+                      placeholder={t('newEmailPlaceholder') || 'example@gmail.com'}
+                      placeholderTextColor="#A0A0A0"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <View style={styles.authInputGroup}>
+                    <TextInput
+                      style={[styles.authInput, { paddingRight: 48 }]}
+                      placeholder={t('passwordMinLengthNotice') || 'Tối thiểu 6 ký tự'}
+                      placeholderTextColor="#A0A0A0"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      style={styles.authPasswordToggle}
+                      onPress={() => setShowPassword(!showPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={19}
+                        color="#FFF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* NÚT TẠO TÀI KHOẢN */}
+                  <TouchableOpacity
+                    style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                    activeOpacity={0.85}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#111" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.btnAuthSubmitText}>{t('createAccount')}</Text>
+                        <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* CHUYỂN VỀ ĐĂNG NHẬP */}
+                  <View style={styles.switchModeRow}>
+                    <TouchableOpacity
+                      onPress={() => setIsSignUpMode(false)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.switchModeText}>{t('alreadyHaveAccount')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : loginMethod === 'phone' ? (
+                /* CHẾ ĐỘ 2: ĐĂNG NHẬP SỐ ĐIỆN THOẠI GỬI MÃ OTP (GIỐNG BẢN WEB) */
+                <>
+                  {!isOtpMode ? (
+                    <>
+                      <View style={styles.authInputGroup}>
+                        <TextInput
+                          style={styles.authInput}
+                          placeholder={t('phonePlaceholder') || '+84 123 456 789'}
+                          placeholderTextColor="#A0A0A0"
+                          value={phone}
+                          onChangeText={setPhone}
+                          keyboardType="phone-pad"
+                        />
+                      </View>
+
+                      {/* NÚT GỬI MÃ XÁC THỰC */}
+                      <TouchableOpacity
+                        style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                        onPress={handleSendOtp}
+                        disabled={loading}
+                        activeOpacity={0.85}
+                      >
+                        {loading ? (
+                          <ActivityIndicator color="#111" size="small" />
+                        ) : (
+                          <>
+                            <Text style={styles.btnAuthSubmitText}>{t('sendOtp')}</Text>
+                            <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      {/* THÔNG BÁO ĐÃ GỬI OTP */}
+                      <View style={styles.otpInfoBox}>
+                        <Text style={styles.otpInfoText}>
+                          {t('otpSentNotice')} ({formatPhoneNumber(phone)})
+                        </Text>
+                      </View>
+
+                      {/* 6 Ô NHẬP MÃ OTP CHUẨN NATIVE VỚI BÀN PHÍM TỰ ĐỘNG BẬT */}
+                      <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={() => otpInputRef.current?.focus()}
+                        style={styles.otpRowContainer}
+                      >
+                        {[0, 1, 2, 3, 4, 5].map((index) => {
+                          const digit = otp[index] || '';
+                          const isCurrent = isOtpFocused && (index === otp.length || (index === 5 && otp.length === 6));
+                          const isFilled = !!digit;
+                          return (
+                            <View
+                              key={index}
+                              pointerEvents="none"
+                              style={[
+                                styles.otpBox,
+                                isCurrent && styles.otpBoxActive,
+                                !isCurrent && isFilled && styles.otpBoxFilled,
+                              ]}
+                            >
+                              <Text style={styles.otpDigitText}>{digit}</Text>
+                              {isCurrent && !digit && <View style={styles.otpCaret} />}
+                            </View>
+                          );
+                        })}
+
+                        {/* INPUT NẰM PHỦ BÊN TRÊN ĐỂ BẮT MỌI CHẠM & TỰ ĐỘNG BẬT BÀN PHÍM */}
+                        <TextInput
+                          ref={otpInputRef}
+                          style={styles.hiddenOtpInput}
+                          value={otp}
+                          onChangeText={(val) => {
+                            const clean = val.replace(/\D/g, '').slice(0, 6);
+                            setOtp(clean);
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={6}
+                          textContentType="oneTimeCode"
+                          autoComplete="sms-otp"
+                          onFocus={() => setIsOtpFocused(true)}
+                          onBlur={() => setIsOtpFocused(false)}
+                          autoFocus={true}
+                          caretHidden={true}
+                        />
+                      </TouchableOpacity>
+
+                      {/* NÚT XÁC NHẬN ĐĂNG NHẬP */}
+                      <TouchableOpacity
+                        style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                        onPress={handleVerifyOtp}
+                        disabled={loading}
+                        activeOpacity={0.85}
+                      >
+                        {loading ? (
+                          <ActivityIndicator color="#111" size="small" />
+                        ) : (
+                          <>
+                            <Text style={styles.btnAuthSubmitText}>{t('verifyOtp')}</Text>
+                            <Ionicons name="checkmark-circle-outline" size={19} color="#111" style={{ marginLeft: 6 }} />
+                          </>
+                        )}
+                      </TouchableOpacity>
+
+                      {/* HÀNG HÀNH ĐỘNG OTP: GỬI LẠI MÃ & ĐỔI SỐ ĐIỆN THOẠI */}
+                      <View style={styles.otpActionsRow}>
+                        {otpCountdown > 0 ? (
+                          <Text style={styles.otpCountdownText}>
+                            {(t('resendOtpIn') || 'Gửi lại sau {seconds}s').replace('{seconds}', String(otpCountdown))}
+                          </Text>
+                        ) : (
+                          <TouchableOpacity onPress={handleSendOtp} disabled={loading} activeOpacity={0.7}>
+                            <Text style={styles.otpActionLink}>{t('resendOtp')}</Text>
+                          </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            setIsOtpMode(false);
+                            setOtp('');
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.otpActionLink}>{t('changePhoneNumber')}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
+
+                  {/* CHUYỂN SANG ĐĂNG KÝ */}
+                  <View style={styles.switchModeRow}>
+                    <TouchableOpacity
+                      onPress={() => setIsSignUpMode(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.switchModeText}>{t('dontHaveAccount')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                /* CHẾ ĐỘ 3: ĐĂNG NHẬP EMAIL (GIỐNG BẢN WEB) */
+                <>
+                  <View style={styles.authInputGroup}>
+                    <TextInput
+                      style={styles.authInput}
+                      placeholder={t('emailPlaceholder') || 'example@gmail.com'}
+                      placeholderTextColor="#A0A0A0"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <View style={styles.authInputGroup}>
+                    <TextInput
+                      style={[styles.authInput, { paddingRight: 48 }]}
+                      placeholder={t('passwordPlaceholder') || '******'}
+                      placeholderTextColor="#A0A0A0"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      style={styles.authPasswordToggle}
+                      onPress={() => setShowPassword(!showPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={19}
+                        color="#FFF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* NÚT ĐĂNG NHẬP EMAIL */}
+                  <TouchableOpacity
+                    style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                    activeOpacity={0.85}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#111" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.btnAuthSubmitText}>{t('login')}</Text>
+                        <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* QUÊN MẬT KHẨU & CHƯA CÓ TÀI KHOẢN */}
+                  <View style={styles.authFooterLinks}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setForgotEmail(email.trim());
+                        setForgotModalVisible(true);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.btnForgotPassword}>{t('forgotPassword')}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.switchModeRow}>
+                    <TouchableOpacity
+                      onPress={() => setIsSignUpMode(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.switchModeText}>{t('dontHaveAccount')}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </>
               )}
-            </TouchableOpacity>
 
-            {/* SOCIAL LOGIN DIVIDER & BUTTONS */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{t('or') || 'Or'}</Text>
-              <View style={styles.dividerLine} />
-            </View>
+              {/* SOCIAL LOGIN DIVIDER & BUTTONS */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t('or') || 'HOẶC'}</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-            <View style={styles.socialButtonsRow}>
-              {/* PHONE/EMAIL TOGGLE */}
-              {!isSignUpMode && (
+              <View style={styles.socialButtonsRow}>
+                {/* NÚT CHUYỂN ĐỔI EMAIL / SỐ ĐIỆN THOẠI NHƯ CŨ NGAY CẠNH FB, GOOGLE, APPLE */}
+                {!isSignUpMode && (
+                  <ScalePressable
+                    style={styles.socialCircleBtn}
+                    onPress={() => {
+                      setLoginMethod(loginMethod === 'email' ? 'phone' : 'email');
+                      setIsOtpMode(false);
+                      setOtp('');
+                    }}
+                    accessibilityLabel="Toggle login method"
+                  >
+                    <Ionicons
+                      name={loginMethod === 'email' ? 'call' : 'mail'}
+                      size={24}
+                      color="#000"
+                    />
+                  </ScalePressable>
+                )}
+
+                {/* FACEBOOK */}
                 <ScalePressable
                   style={styles.socialCircleBtn}
-                  onPress={() => setLoginMethod(loginMethod === 'email' ? 'phone' : 'email')}
-                  accessibilityLabel="Toggle login method"
+                  onPress={handleFacebookLogin}
+                  accessibilityLabel="Login with Facebook"
                 >
-                  <Ionicons 
-                    name={loginMethod === 'email' ? 'call' : 'mail'} 
-                    size={24} 
-                    color="#000" 
-                  />
-                </ScalePressable>
-              )}
-
-              {/* FACEBOOK */}
-              <ScalePressable
-                style={styles.socialCircleBtn}
-                onPress={handleFacebookLogin}
-                accessibilityLabel="Login with Facebook"
-              >
-                <Image
-                  source={require('../../assets/images/logo-facebook.png')}
-                  style={styles.socialIconFb}
-                  contentFit="contain"
-                />
-              </ScalePressable>
-
-              {/* GOOGLE */}
-              <ScalePressable
-                style={styles.socialCircleBtn}
-                onPress={handleGoogleLogin}
-                disabled={googleLoading}
-                accessibilityLabel="Login with Google"
-              >
-                {googleLoading ? (
-                  <ActivityIndicator color="#4285F4" size="small" />
-                ) : (
                   <Image
-                    source={require('../../assets/images/logo-google.png')}
-                    style={styles.socialIconGoogle}
+                    source={require('../../assets/images/logo-facebook.png')}
+                    style={styles.socialIconFb}
                     contentFit="contain"
                   />
-                )}
-              </ScalePressable>
+                </ScalePressable>
 
-              {/* APPLE */}
-              <ScalePressable
-                style={styles.socialCircleBtn}
-                onPress={handleAppleLogin}
-                disabled={appleLoading}
-                accessibilityLabel="Login with Apple"
-              >
-                {appleLoading ? (
-                  <ActivityIndicator color="#000" size="small" />
-                ) : (
-                  <Ionicons name="logo-apple" size={26} color="#000" style={styles.socialIconApple} />
-                )}
-              </ScalePressable>
-            </View>
-
-            {/* FORGOT PASSWORD LINK (.btn-forgot-password) */}
-            {!isSignUpMode && (
-              <View style={styles.authFooterLinks}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setForgotEmail(email.trim());
-                    setForgotModalVisible(true);
-                  }}
-                  activeOpacity={0.7}
+                {/* GOOGLE */}
+                <ScalePressable
+                  style={styles.socialCircleBtn}
+                  onPress={handleGoogleLogin}
+                  disabled={googleLoading}
+                  accessibilityLabel="Login with Google"
                 >
-                  <Text style={styles.btnForgotPassword}>{t('forgotPassword')}</Text>
-                </TouchableOpacity>
+                  {googleLoading ? (
+                    <ActivityIndicator color="#4285F4" size="small" />
+                  ) : (
+                    <Image
+                      source={require('../../assets/images/logo-google.png')}
+                      style={styles.socialIconGoogle}
+                      contentFit="contain"
+                    />
+                  )}
+                </ScalePressable>
+
+                {/* APPLE */}
+                <ScalePressable
+                  style={styles.socialCircleBtn}
+                  onPress={handleAppleLogin}
+                  disabled={appleLoading}
+                  accessibilityLabel="Login with Apple"
+                >
+                  {appleLoading ? (
+                    <ActivityIndicator color="#000" size="small" />
+                  ) : (
+                    <Ionicons name="logo-apple" size={26} color="#000" style={styles.socialIconApple} />
+                  )}
+                </ScalePressable>
               </View>
-            )}
-          </Animated.View>
+            </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -654,15 +844,13 @@ export default function LoginScreen() {
         avoidKeyboard
       >
         <Text style={styles.modalTitle}>{t('forgotPassword')}</Text>
-        <Text style={styles.modalSubtitle}>
-          {t('forgotPasswordDesc')}
-        </Text>
+        <Text style={styles.modalSubtitle}>{t('forgotPasswordDesc')}</Text>
 
         <View style={[styles.authInputGroup, { marginBottom: 18 }]}>
           <TextInput
-            style={styles.authInput}
-            placeholder={t('emailPlaceholder')}
-            placeholderTextColor="#a8b8b0"
+            style={styles.modalInput}
+            placeholder={t('emailPlaceholder') || 'example@gmail.com'}
+            placeholderTextColor="#8C8278"
             value={forgotEmail}
             onChangeText={setForgotEmail}
             keyboardType="email-address"
@@ -697,6 +885,9 @@ export default function LoginScreen() {
           </ScalePressable>
         </View>
       </AnimatedCenterModal>
+
+      {/* FIREBASE PHONE AUTH WEBVIEW (DÙNG CHO RECAPTCHA & SIGNINWITHPHONENUMBER CHUẨN FIREBASE) */}
+      <FirebasePhoneAuthWebView ref={phoneAuthRef} />
     </View>
   );
 }
@@ -712,15 +903,17 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 12 : 24,
-    left: 16,
+    top: Platform.OS === 'ios' ? 52 : 36,
+    left: 18,
     zIndex: 99,
   },
   closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -735,28 +928,28 @@ const styles = StyleSheet.create({
   authModalCard: {
     backgroundColor: 'transparent',
     paddingHorizontal: 24,
-    paddingTop: 26,
-    paddingBottom: Platform.OS === 'ios' ? 48 : 24,
+    paddingTop: 24,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 24,
   },
   authModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   authModalTitle: {
     flex: 1,
   },
   mainTitleText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '700',
     color: '#FFFFFF',
-    lineHeight: 40,
+    lineHeight: 38,
   },
   subTitleText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 16,
+    fontSize: 15,
     color: '#DDDDDD',
     marginTop: 6,
   },
@@ -780,7 +973,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   authInputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
     position: 'relative',
     justifyContent: 'center',
   },
@@ -790,18 +983,75 @@ const styles = StyleSheet.create({
     height: 52,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     borderRadius: 26,
     paddingHorizontal: 20,
     fontSize: 15,
     color: '#FFFFFF',
+  },
+  // 6 ô nhập mã OTP chuẩn
+  otpRowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 14,
+    gap: 8,
+    position: 'relative',
+    height: 52,
+    width: '100%',
+  },
+  otpBox: {
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpBoxActive: {
+    borderColor: '#E8CCB2',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  otpBoxFilled: {
+    borderColor: '#9C7156',
+    backgroundColor: 'rgba(156, 113, 86, 0.22)',
+  },
+  otpDigitText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  otpCaret: {
+    width: 2,
+    height: 22,
+    backgroundColor: '#E8CCB2',
+    borderRadius: 1,
+  },
+  hiddenOtpInput: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.01,
+    fontSize: 1,
+    color: 'transparent',
   },
   authPasswordToggle: {
     position: 'absolute',
     right: 16,
     padding: 6,
   },
-  // .btn-auth-submit in app/app.css
   btnAuthSubmit: {
     width: '100%',
     height: 52,
@@ -810,7 +1060,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 6,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
@@ -826,11 +1076,57 @@ const styles = StyleSheet.create({
   btnDisabled: {
     opacity: 0.65,
   },
+  otpInfoBox: {
+    backgroundColor: 'rgba(156, 113, 86, 0.25)',
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(156, 113, 86, 0.45)',
+  },
+  otpInfoText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: '#F6F4EC',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  otpActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 6,
+  },
+  otpCountdownText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  otpActionLink: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: '#E8CCB2',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  switchModeRow: {
+    marginTop: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchModeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    color: '#E8CCB2',
+    fontWeight: '600',
+  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 18,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   dividerLine: {
     flex: 1,
@@ -838,7 +1134,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   dividerText: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: 'rgba(255, 255, 255, 0.65)',
     marginHorizontal: 16,
     fontWeight: '500',
@@ -847,7 +1143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
     marginBottom: 10,
   },
   socialCircleBtn: {
@@ -875,13 +1171,13 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   authFooterLinks: {
-    marginTop: 14,
+    marginTop: 12,
     alignItems: 'center',
   },
   btnForgotPassword: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 12.5,
-    color: '#888888',
+    fontSize: 13,
+    color: '#B0B0B0',
     textDecorationLine: 'underline',
   },
   // Modal Quên mật khẩu
@@ -914,6 +1210,18 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  modalInput: {
+    fontFamily: 'ElleGaborStd',
+    width: '100%',
+    height: 52,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+    borderRadius: 26,
+    paddingHorizontal: 20,
+    fontSize: 15,
+    color: '#2B2928',
   },
   modalActions: {
     flexDirection: 'row',

@@ -13,18 +13,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { ScalePressable } from '../src/components/ScalePressable';
+import { BlurButton } from '../src/components/BlurButton';
 import { useThemeColor } from '../src/constants/theme';
+import { useSettings } from '../src/context/SettingsContext';
 
 export default function WebViewScreen() {
   const router = useRouter();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
+  const { t } = useSettings();
 
   const { url, title } = useLocalSearchParams<{ url: string; title?: string }>();
   const [loading, setLoading] = useState(true);
   const [canGoBack, setCanGoBack] = useState(false);
-  const [pageTitle, setPageTitle] = useState(title || 'Đang tải...');
+  const [pageTitle, setPageTitle] = useState(title || t('loading') || 'Đang tải...');
   const webViewRef = useRef<WebView>(null);
 
   if (!url) {
@@ -40,7 +43,7 @@ export default function WebViewScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <ScalePressable
+        <BlurButton
           onPress={() => {
             if (canGoBack) {
               webViewRef.current?.goBack();
@@ -49,29 +52,29 @@ export default function WebViewScreen() {
             }
           }}
           style={styles.backBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={t('back')}
         >
           <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </ScalePressable>
+        </BlurButton>
 
         <Text style={styles.headerTitle} numberOfLines={1}>
           {pageTitle}
         </Text>
 
-        <ScalePressable
+        <BlurButton
           onPress={() => router.back()}
           style={styles.closeBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel={t('close')}
         >
           <Ionicons name="close" size={20} color={Colors.textPrimary} />
-        </ScalePressable>
+        </BlurButton>
       </View>
 
       {/* Loading bar */}
       {loading && (
         <View style={styles.loadingBar}>
           <ActivityIndicator size="small" color="#9C7156" />
-          <Text style={styles.loadingText}>Đang tải trang...</Text>
+          <Text style={styles.loadingText}>{t('loadingPage')}</Text>
         </View>
       )}
 
@@ -113,16 +116,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.08,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   headerTitle: {
     flex: 1,
@@ -137,13 +132,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
-    shadowOpacity: isDark ? 0 : 0.08,
-    elevation: isDark ? 0 : 2,
   },
   loadingBar: {
     flexDirection: 'row',

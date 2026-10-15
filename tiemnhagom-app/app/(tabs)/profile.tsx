@@ -128,6 +128,7 @@ export default function ProfileScreen() {
   });
   const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
   const [, setLoadingOrders] = useState<boolean>(false);
+  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(false);
 
   // Modals state
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -145,29 +146,41 @@ export default function ProfileScreen() {
           let redeemed = 0;
           orders.forEach((o) => {
             const status = (o.status || '').toLowerCase();
+            const isCancelled = status.includes('hủy') || status.includes('cancel');
+            const isDone =
+              !isCancelled && (
+                status.includes('hoàn thành') ||
+                status.includes('thành công') ||
+                status.includes('completed') ||
+                status.includes('đã giao') ||
+                status.includes('nhận')
+              );
             // Chỉ tích lũy các đơn hàng đã hoàn thành thành công giống hệ thống Web
-            if (
-              status.includes('hoàn thành') ||
-              status.includes('thành công') ||
-              status.includes('completed')
-            ) {
+            if (isDone) {
               orderSpent += Number(o.totalAmount || 0);
             }
-            if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
+            if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0 && !isCancelled) {
               redeemed += Number((o as any).pointsUsed);
             }
           });
           setRedeemedPoints(redeemed);
-          // Không cộng dồn trùng lặp: lấy mức chi tiêu cao nhất giữa tổng đơn thực tế và trường profile
-          setTotalSpent(Math.max(orderSpent, profileSpent));
+          // Điểm và chi tiêu chỉ tích lũy khi đơn hàng đã hoàn thành
+          if (orders.length > 0) {
+            setTotalSpent(orderSpent);
+          } else {
+            setTotalSpent(profileSpent);
+          }
+          setOrdersLoaded(true);
         })
         .catch(() => {
           setTotalSpent(profileSpent);
+          setOrdersLoaded(true);
         })
         .finally(() => setLoadingOrders(false));
     } else {
       setTotalSpent(profileSpent);
       setRedeemedPoints(0);
+      setOrdersLoaded(true);
     }
   }, [user, userProfile]);
 
@@ -212,12 +225,12 @@ export default function ProfileScreen() {
     ? Math.min(100, Math.max(0, Math.round((totalSpent / nextTier.min) * 100)))
     : 100;
 
-  // Hệ thống tính điểm: Cứ 10.000đ = 1 điểm. Cộng từ chi tiêu thực tế, trừ điểm đã sử dụng, bỏ thưởng chào mừng 50đ cũ
+  // Hệ thống tính điểm: Cứ 10.000đ = 1 điểm. Chỉ tích lũy khi đơn hàng đã hoàn thành thành công
   const earnedPoints = Math.floor(totalSpent / 10000);
   const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
   // Bỏ thưởng chào mừng 50 điểm cũ nếu chưa chi tiêu đủ 500k
   const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
-  const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
+  const points = Math.max(0, (ordersLoaded ? earnedPoints : Math.max(earnedPoints, cleanProfilePoints)) - redeemedPoints);
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || '1612').substring(0, 8).toUpperCase()}`;
   const displayName = userProfile?.displayName || userProfile?.name || user?.displayName || 'Nguyễn Cường';
 

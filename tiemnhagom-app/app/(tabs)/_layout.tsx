@@ -22,6 +22,7 @@ export default function TabLayout() {
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: Colors.background },
       }}
     >
       {/* 1. Trang chủ */}

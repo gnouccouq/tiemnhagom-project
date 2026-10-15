@@ -30,7 +30,8 @@ export function usePageAnimation(options: PageAnimationOptions = {}) {
     staggerDelay = 55,
   } = options;
 
-  const pageOpacity = useRef(new Animated.Value(0)).current;
+  // pageOpacity khởi tạo là 1 để nền trang không bị trong suốt làm lộ nền sáng phía dưới
+  const pageOpacity = useRef(new Animated.Value(1)).current;
   const pageTranslateY = useRef(new Animated.Value(slideOffset)).current;
 
   // Tạo animated values cho từng item stagger
@@ -42,31 +43,23 @@ export function usePageAnimation(options: PageAnimationOptions = {}) {
   ).current;
 
   const runEntrance = useCallback(() => {
-    // Reset
-    pageOpacity.setValue(0);
+    // Giữ pageOpacity luôn là 1 để nền trang không bị trong suốt gây loé sáng
+    pageOpacity.setValue(1);
     pageTranslateY.setValue(slideOffset);
     itemAnims.forEach(a => {
       a.opacity.setValue(0);
       a.translateY.setValue(16);
     });
 
-    // Animate page container
-    Animated.parallel([
-      Animated.timing(pageOpacity, {
-        toValue: 1,
-        duration,
-        delay,
-        useNativeDriver: true,
-      }),
-      Animated.spring(pageTranslateY, {
-        toValue: 0,
-        damping: 22,
-        stiffness: 200,
-        mass: 0.8,
-        delay,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Animate page container với chuyển động trượt nhẹ
+    Animated.spring(pageTranslateY, {
+      toValue: 0,
+      damping: 22,
+      stiffness: 200,
+      mass: 0.8,
+      delay,
+      useNativeDriver: true,
+    }).start();
 
     // Stagger từng item
     const staggeredAnims = itemAnims.map((anim, i) =>

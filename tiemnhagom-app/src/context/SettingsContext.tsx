@@ -18,7 +18,7 @@ interface SettingsContextType {
   setFontSize: (size: FontSize) => Promise<void>;
   setAppLockEnabled: (enabled: boolean) => Promise<void>;
   setPushNotificationEnabled: (enabled: boolean) => Promise<void>;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 import { setGlobalFontScale } from '../utils/textScaler';
@@ -51,7 +51,7 @@ const SettingsContext = createContext<SettingsContextType>({
   setFontSize: async () => {},
   setAppLockEnabled: async () => {},
   setPushNotificationEnabled: async () => {},
-  t: (key: string) => key,
+  t: (key: string, params?: Record<string, string | number>) => key,
 });
 
 const getScaleFromSize = (size: FontSize): number => {
@@ -150,8 +150,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const fontScale = getScaleFromSize(fontSize);
 
-  const t = (key: string): string => {
-    return TRANSLATIONS[language]?.[key] || TRANSLATIONS['vi'][key] || key;
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    let str = TRANSLATIONS[language]?.[key] || TRANSLATIONS['vi'][key] || key;
+    if (params) {
+      Object.keys(params).forEach((paramKey) => {
+        str = str.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(params[paramKey]));
+      });
+    }
+    return str;
   };
 
   return (

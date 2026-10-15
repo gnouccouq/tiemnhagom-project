@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
 import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
+import { useSettings } from '../src/context/SettingsContext';
 import { db } from '../src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -27,6 +28,7 @@ export default function NotificationDetailScreen() {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
+  const { t } = useSettings();
   const params = useLocalSearchParams();
 
   const [loading, setLoading] = useState(false);
@@ -124,32 +126,32 @@ export default function NotificationDetailScreen() {
     switch (detailData.type) {
       case 'order':
         return {
-          label: 'Đơn hàng',
+          label: t('notifTabOrder'),
           icon: 'cube-outline' as const,
           bgColor: isDark ? '#2C2C2C' : '#F6F4EC',
           textColor: isDark ? '#E8CCB2' : '#9C7156',
           borderColor: isDark ? 'transparent' : '#E8CCB2',
-          actionText: 'Xem đơn hàng',
+          actionText: t('viewOrder'),
           actionIcon: 'receipt-outline' as const,
         };
       case 'system':
         return {
-          label: 'Hệ thống',
+          label: t('notifTabSystem'),
           icon: 'shield-checkmark-outline' as const,
           bgColor: isDark ? '#2C2C2C' : '#F1F5F9',
           textColor: isDark ? '#B0B0B0' : '#475569',
           borderColor: isDark ? 'transparent' : '#E2E8F0',
-          actionText: 'Xem tài khoản',
+          actionText: t('viewAccount'),
           actionIcon: 'person-outline' as const,
         };
       default:
         return {
-          label: 'Ưu đãi & Khuyến mãi',
+          label: t('notifPromoAndDiscount'),
           icon: 'sparkles-outline' as const,
           bgColor: isDark ? '#2C2C2C' : '#FDF4ED',
           textColor: isDark ? '#E8CCB2' : '#C86432',
           borderColor: isDark ? 'transparent' : '#F8D8C3',
-          actionText: 'Khám phá ưu đãi ngay',
+          actionText: t('exploreDealsAction'),
           actionIcon: 'bag-handle-outline' as const,
         };
     }
@@ -165,7 +167,7 @@ export default function NotificationDetailScreen() {
 
       {/* Header chuẩn trang trong app với nút quay lại */}
       <Header
-        title="Chi tiết thông báo"
+        title={t('notificationDetailTitle')}
         showBack={true}
         showSearch={false}
         showCart={false}
@@ -176,7 +178,7 @@ export default function NotificationDetailScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#9C7156" />
           <Text style={[styles.loadingText, { color: Colors.textSecondary }]}>
-            Đang tải thông báo...
+            {t('loadingNotification')}
           </Text>
         </View>
       ) : (
@@ -258,11 +260,11 @@ export default function NotificationDetailScreen() {
             <View style={styles.supportHeader}>
               <Ionicons name="chatbubbles-outline" size={18} color="#9C7156" />
               <Text style={[styles.supportTitle, { color: Colors.textPrimary }]}>
-                Cần hỗ trợ về thông báo này?
+                {t('needSupportAboutNotif')}
               </Text>
             </View>
             <Text style={[styles.supportDesc, { color: Colors.textSecondary }]}>
-              Nếu bạn có câu hỏi về ưu đãi hoặc đơn hàng, vui lòng liên hệ hotline hoặc nhắn tin trực tiếp để được tư vấn nhanh nhất.
+              {t('needSupportAboutNotifDesc')}
             </Text>
           </View>
         </ScrollView>
@@ -294,7 +296,7 @@ export default function NotificationDetailScreen() {
           >
             <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} style={{ marginLeft: -1 }} />
             <Text style={[styles.secondaryBtnText, { color: Colors.textSecondary }]}>
-              Quay lại
+              {t('back')}
             </Text>
           </TouchableOpacity>
         </View>

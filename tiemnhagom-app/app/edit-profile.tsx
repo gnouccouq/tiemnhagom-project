@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 
 import { useAuth } from '../src/context/AuthContext';
 import { useDialog } from '../src/context/DialogContext';
+import { useSettings } from '../src/context/SettingsContext';
 import { AddressPicker } from '../src/components/AddressPicker';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
@@ -33,6 +34,7 @@ export default function EditProfileScreen() {
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const { user, userProfile, updateUserProfileData } = useAuth();
+  const { t } = useSettings();
 
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -72,13 +74,13 @@ export default function EditProfileScreen() {
         if (!isNaN(parsedDate.getTime())) {
           setJoinDate(parsedDate.toLocaleDateString('vi-VN'));
         } else {
-          setJoinDate('Thành viên');
+          setJoinDate(t('memberRole') || 'Thành viên');
         }
       } catch {
-        setJoinDate('Thành viên');
+        setJoinDate(t('memberRole') || 'Thành viên');
       }
     } else {
-      setJoinDate('Thành viên');
+      setJoinDate(t('memberRole') || 'Thành viên');
     }
 
     setEditGender(userProfile?.gender || 'Nam');
@@ -118,7 +120,7 @@ export default function EditProfileScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        dialog.alert('Quyền truy cập', 'Vui lòng cấp quyền truy cập thư viện ảnh để đổi ảnh đại diện.');
+        dialog.alert(t('error') || 'Quyền truy cập', t('photoPermissionRequired'));
         return;
       }
 
@@ -140,13 +142,13 @@ export default function EditProfileScreen() {
       }
     } catch (e) {
       console.warn('Lỗi chọn ảnh:', e);
-      dialog.alert('Lỗi', 'Không thể mở thư viện ảnh.');
+      dialog.alert(t('error') || 'Lỗi', t('photoPermissionRequired'));
     }
   };
 
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
-      dialog.alert('Lỗi', 'Vui lòng nhập họ và tên của bạn.');
+      dialog.alert(t('error') || 'Lỗi', t('nameRequiredError'));
       return;
     }
 
@@ -170,14 +172,14 @@ export default function EditProfileScreen() {
       });
 
       dialog.showDialog({
-        title: 'Thành công',
-        message: 'Thông tin tài khoản đã được cập nhật và đồng bộ với hệ thống!',
+        title: t('success') || 'Thành công',
+        message: t('profileUpdateSuccess'),
         type: 'success',
-        buttons: [{ text: 'Đã hiểu', style: 'primary', onPress: () => router.back() }],
+        buttons: [{ text: t('understoodBtn'), style: 'primary', onPress: () => router.back() }],
       });
     } catch (e: any) {
       console.warn('Lỗi lưu thông tin:', e);
-      dialog.alert('Lỗi', e.message || 'Không thể cập nhật thông tin lúc này. Vui lòng thử lại.');
+      dialog.alert(t('error') || 'Lỗi', e.message || t('profileUpdateError'));
     } finally {
       setSavingProfile(false);
     }
@@ -191,7 +193,7 @@ export default function EditProfileScreen() {
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       
       <Header
-        title="Chỉnh Sửa Thông Tin"
+        title={t('editProfile')}
         showBack={true}
         showSearch={false}
         showCart={false}
@@ -230,18 +232,18 @@ export default function EditProfileScreen() {
                 </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.7}>
-                <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
+                <Text style={styles.changeAvatarText}>{t('changeAvatar')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Form Input: Họ và tên */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Họ và tên *</Text>
+              <Text style={styles.inputLabel}>{t('fullNameLabel')}</Text>
               <View style={styles.pillInputWrapper}>
                 <Ionicons name="person-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <TextInput
                   style={styles.pillInput}
-                  placeholder="Nhập họ và tên..."
+                  placeholder={t('enterFullNamePlaceholder')}
                   placeholderTextColor="#A0A8A4"
                   value={editName}
                   onChangeText={setEditName}
@@ -251,12 +253,12 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Số điện thoại */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Số điện thoại</Text>
+              <Text style={styles.inputLabel}>{t('phoneLabel')}</Text>
               <View style={styles.pillInputWrapper}>
                 <Ionicons name="call-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <TextInput
                   style={styles.pillInput}
-                  placeholder="Ví dụ: 0909123456"
+                  placeholder={t('phoneInputPlaceholder')}
                   placeholderTextColor="#A0A8A4"
                   keyboardType="phone-pad"
                   value={editPhone}
@@ -267,12 +269,12 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Email (Tương tự web, hiển thị thông tin tài khoản) */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t('emailLabel')}</Text>
               <View style={[styles.pillInputWrapper, styles.disabledPillWrapper]}>
                 <Ionicons name="mail-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <TextInput
                   style={[styles.pillInput, styles.disabledInput]}
-                  value={userEmail || 'Chưa liên kết email'}
+                  value={userEmail || t('unlinkedEmail')}
                   editable={false}
                 />
               </View>
@@ -280,17 +282,21 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Giới tính */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Giới tính</Text>
+              <Text style={styles.inputLabel}>{t('genderLabel')}</Text>
               <View style={styles.genderRow}>
-                {['Nam', 'Nữ', 'Khác'].map((g) => (
+                {[
+                  { id: 'Nam', label: t('genderMale') },
+                  { id: 'Nữ', label: t('genderFemale') },
+                  { id: 'Khác', label: t('genderOther') },
+                ].map((g) => (
                   <TouchableOpacity
-                    key={g}
-                    style={[styles.genderPill, editGender === g && styles.genderPillActive]}
-                    onPress={() => setEditGender(g)}
+                    key={g.id}
+                    style={[styles.genderPill, editGender === g.id && styles.genderPillActive]}
+                    onPress={() => setEditGender(g.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.genderText, editGender === g && styles.genderTextActive]}>
-                      {g}
+                    <Text style={[styles.genderText, editGender === g.id && styles.genderTextActive]}>
+                      {g.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -299,7 +305,7 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Ngày sinh với Modal chọn lịch */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Ngày sinh</Text>
+              <Text style={styles.inputLabel}>{t('dobLabel')}</Text>
               <TouchableOpacity
                 style={styles.pillInputWrapper}
                 activeOpacity={0.75}
@@ -313,7 +319,7 @@ export default function EditProfileScreen() {
                       if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
                     }
                     return editDob;
-                  })() : 'Chọn ngày sinh nhật...'}
+                  })() : t('selectDobPlaceholder')}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#7A827E" style={{ marginRight: 16 }} />
               </TouchableOpacity>
@@ -321,7 +327,7 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Ngày tham gia (Tương tự web) */}
             <View style={[styles.inputGroup, { marginBottom: 6 }]}>
-              <Text style={styles.inputLabel}>Ngày tham gia</Text>
+              <Text style={styles.inputLabel}>{t('joinDateLabel')}</Text>
               <View style={[styles.pillInputWrapper, styles.disabledPillWrapper]}>
                 <Ionicons name="time-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <TextInput
@@ -337,12 +343,12 @@ export default function EditProfileScreen() {
           <View style={styles.sectionCard}>
             <View style={styles.sectionCardHeader}>
               <Ionicons name="location-outline" size={18} color={isDark ? '#E8CCB2' : '#9C7156'} />
-              <Text style={styles.sectionCardTitle}>Địa chỉ giao hàng</Text>
+              <Text style={styles.sectionCardTitle}>{t('deliveryAddressTitle')}</Text>
             </View>
 
             {/* Form Input: Chọn Tỉnh / Thành phố / Phường / Xã */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Tỉnh / Thành phố, Phường / Xã</Text>
+              <Text style={styles.inputLabel}>{t('areaLabel')}</Text>
               <TouchableOpacity
                 style={styles.locationPill}
                 onPress={() => setAddressPickerVisible(true)}
@@ -350,7 +356,7 @@ export default function EditProfileScreen() {
               >
                 <Ionicons name="map-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
                 <Text style={[styles.locationText, !locationName && styles.locationPlaceholder]} numberOfLines={1}>
-                  {locationName || 'Chọn khu vực giao hàng...'}
+                  {locationName || t('selectAreaPlaceholder')}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#7A827E" />
               </TouchableOpacity>
@@ -358,10 +364,10 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Số nhà, Tên đường */}
             <View style={[styles.inputGroup, { marginBottom: 4 }]}>
-              <Text style={styles.inputLabel}>Số nhà, Tên đường</Text>
+              <Text style={styles.inputLabel}>{t('streetAddressLabel')}</Text>
               <TextInput
                 style={styles.textAreaInput}
-                placeholder="Nhập số nhà, tên đường, hẻm, tòa nhà..."
+                placeholder={t('streetAddressPlaceholder')}
                 placeholderTextColor="#A0A8A4"
                 value={editStreet}
                 onChangeText={setEditStreet}
@@ -391,7 +397,7 @@ export default function EditProfileScreen() {
           showHandle={true}
         >
           <View style={styles.calendarHeader}>
-            <Text style={styles.calendarTitle}>Chọn Ngày Sinh Nhật</Text>
+            <Text style={styles.calendarTitle}>{t('selectDobModalTitle')}</Text>
             <TouchableOpacity onPress={() => setDatePickerVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
@@ -407,7 +413,7 @@ export default function EditProfileScreen() {
               >
                 <Ionicons name="chevron-back" size={16} color="#9C7156" />
               </TouchableOpacity>
-              <Text style={styles.calNavLabel}>Năm {calYear}</Text>
+              <Text style={styles.calNavLabel}>{t('yearFormat', { year: calYear })}</Text>
               <TouchableOpacity
                 onPress={() => setCalYear(prev => Math.min(new Date().getFullYear(), prev + 1))}
                 style={styles.calNavBtn}
@@ -431,7 +437,7 @@ export default function EditProfileScreen() {
               >
                 <Ionicons name="chevron-back" size={16} color="#9C7156" />
               </TouchableOpacity>
-              <Text style={styles.calNavLabel}>Tháng {calMonth + 1}</Text>
+              <Text style={styles.calNavLabel}>{t('monthFormat', { month: calMonth + 1 })}</Text>
               <TouchableOpacity
                 onPress={() => {
                   if (calMonth === 11) {
@@ -497,7 +503,7 @@ export default function EditProfileScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.btnConfirmDateText}>
-                Xác nhận ngày {calDay}/{calMonth + 1}/{calYear}
+                {t('confirmDate', { day: calDay, month: calMonth + 1, year: calYear })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -512,7 +518,7 @@ export default function EditProfileScreen() {
             activeOpacity={0.88}
           >
             <Text style={styles.saveBtnText}>
-              {savingProfile ? 'Đang lưu...' : 'Lưu thông tin'}
+              {savingProfile ? t('saving') : t('saveProfile')}
             </Text>
             {!savingProfile && (
               <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" style={{ marginLeft: 6 }} />

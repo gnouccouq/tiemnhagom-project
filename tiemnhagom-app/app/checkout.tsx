@@ -1,5 +1,5 @@
 // app/checkout.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,861 +8,1280 @@ import {
   TextInput,
   TouchableOpacity,
   StatusBar,
+  Platform,
+  Animated,
   ActivityIndicator,
-  Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Header } from '../src/components/Header';
-import { AddressPicker } from '../src/components/AddressPicker';
-import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
-import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { Image } from 'expo-image';
+import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
-import { createOrder } from '../src/services/orderService';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { formatCurrency } from '../src/utils/format';
-import { UserAddress } from '../src/types';
+import { getBestSellingProducts } from '../src/services/productService';
+import { createOrder } from '../src/services/orderService';
+import { Product } from '../src/types';
 
 export default function CheckoutScreen() {
   const Colors = useThemeColor();
-  const themeStyles = getStyles(Colors);
-  const router = useRouter();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const insets = useSafeAreaInsets();
-  const { cart, subtotal, shippingFee, discountAmount, totalAmount, appliedCoupon, clearCart, shippingMethod } = useCart();
+  const router = useRouter();
+
+  const {
+    cart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    cartCount,
+    subtotal,
+    shippingFee,
+    discountAmount,
+    memberDiscount,
+    memberTier,
+    totalAmount,
+    appliedCoupon,
+    appliedCouponItem,
+    shippingMethod,
+    setShippingMethod,
+    selectedAddress,
+    isHCM,
+    paymentMethod,
+    orderNote,
+    setOrderNote,
+    flyToCart,
+    addToCart,
+  } = useCart();
+
   const { user, userProfile } = useAuth();
-
-  const savedAddresses: UserAddress[] = Array.isArray(userProfile?.addresses) ? userProfile.addresses : [];
-  const defaultSavedAddress = savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
-
-  const [fullName, setFullName] = useState(defaultSavedAddress?.fullName || userProfile?.displayName || '');
-  const [phone, setPhone] = useState(defaultSavedAddress?.phone || userProfile?.phone || '');
-  const [streetAddress, setStreetAddress] = useState(defaultSavedAddress?.address || userProfile?.streetAddress || userProfile?.address || '');
-  const [locationName, setLocationName] = useState(
-    defaultSavedAddress?.locationName ||
-    (defaultSavedAddress?.wardName && defaultSavedAddress?.provinceName ? `${defaultSavedAddress.wardName}, ${defaultSavedAddress.provinceName}` : '') ||
-    userProfile?.locationName ||
-    ''
-  );
-  const [provinceCode, setProvinceCode] = useState<string | undefined>(defaultSavedAddress?.provinceCode || userProfile?.provinceCode);
-  const [wardCode, setWardCode] = useState<string | undefined>(defaultSavedAddress?.wardCode || userProfile?.wardCode);
-  const [addressPickerVisible, setAddressPickerVisible] = useState(false);
-  const [addressSheetVisible, setAddressSheetVisible] = useState(false);
-  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(defaultSavedAddress ? 0 : null);
-  const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'banking'>('cod');
-  const [loading, setLoading] = useState(false);
   const { t } = useSettings();
   const dialog = useDialog();
 
-  const handleSelectSavedAddress = (item: UserAddress, index: number) => {
-    setSelectedAddressIndex(index);
-    if (item.fullName) setFullName(item.fullName);
-    if (item.phone) setPhone(item.phone);
-    if (item.address) setStreetAddress(item.address);
-    const loc = item.locationName || (item.wardName && item.provinceName ? `${item.wardName}, ${item.provinceName}` : '');
-    if (loc) setLocationName(loc);
-    if (item.provinceCode) setProvinceCode(item.provinceCode);
-    if (item.wardCode) setWardCode(item.wardCode);
-    setAddressSheetVisible(false);
-  };
+  const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 40 });
 
-  const handleSubmitOrder = async () => {
-    if (!fullName.trim()) {
-      dialog.alert(t('error') || 'Thiếu thông tin', t('errMissingName') || 'Vui lòng nhập họ và tên nhận hàng.');
-      return;
-    }
-    if (!phone.trim() || phone.trim().length < 9) {
-      dialog.alert(t('error') || 'Thiếu thông tin', t('errInvalidPhone') || 'Số điện thoại không hợp lệ.');
-      return;
-    }
-    if (!streetAddress.trim() || !locationName) {
-      dialog.alert(t('error') || 'Thiếu thông tin', t('errMissingAddress') || 'Vui lòng chọn địa chỉ giao hàng.');
-      return;
-    }
+  const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    getBestSellingProducts(6)
+      .then((items) => {
+        if (!isCancelled) {
+          setSuggestedProducts(items);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const handlePlaceOrder = async () => {
     if (cart.length === 0) {
-      dialog.alert(t('error') || 'Giỏ hàng rỗng', t('errEmptyCart') || 'Giỏ hàng của bạn đang trống.');
+      dialog.alert(t('error_2') || 'Giỏ hàng rỗng', t('errEmptyCart') || 'Giỏ hàng của bạn đang trống.');
       return;
     }
 
-    setLoading(true);
+    if (!selectedAddress) {
+      dialog.alert(
+        t('error_2') || 'Thiếu thông tin',
+        t('errMissingAddress') || 'Vui lòng chọn địa chỉ giao hàng.',
+        [{ text: t('confirmBtn') || 'Đồng ý', onPress: () => router.push('/select-address') }]
+      );
+      return;
+    }
+
+    const recipientName = (selectedAddress.fullName || userProfile?.displayName || userProfile?.name || '').trim();
+    const recipientPhone = (selectedAddress.phone || userProfile?.phone || '').trim();
+
+    if (!recipientName) {
+      dialog.alert(
+        t('error_2') || 'Thiếu thông tin',
+        t('errMissingName') || 'Vui lòng nhập họ và tên người nhận.',
+        [{ text: t('confirmBtn') || 'Đồng ý', onPress: () => router.push('/select-address') }]
+      );
+      return;
+    }
+
+    if (!recipientPhone || recipientPhone.length < 9) {
+      dialog.alert(
+        t('error_2') || 'Thiếu thông tin',
+        t('errInvalidPhone') || 'Số điện thoại không hợp lệ.',
+        [{ text: t('confirmBtn') || 'Đồng ý', onPress: () => router.push('/select-address') }]
+      );
+      return;
+    }
+
+    setIsSubmittingOrder(true);
     try {
-      const orderPayload = {
+      const fullLoc =
+        selectedAddress.locationName ||
+        (selectedAddress.wardName && selectedAddress.provinceName
+          ? `${selectedAddress.wardName}, ${selectedAddress.provinceName}`
+          : selectedAddress.provinceName || '');
+
+      const fullStreet = selectedAddress.address || '';
+      const completeAddress = fullStreet + (fullLoc ? `, ${fullLoc}` : '');
+
+      const orderPayload: any = {
         userId: user ? user.uid : 'guest',
-        customerName: fullName.trim(),
+        customerName: recipientName,
         shippingAddress: {
-          fullName: fullName.trim(),
-          phone: phone.trim(),
-          address: `${streetAddress.trim()}, ${locationName}`,
+          fullName: recipientName,
+          phone: recipientPhone,
+          address: completeAddress,
         },
         items: cart,
         subtotal,
         shippingFee,
         discountAmount,
-        couponCode: appliedCoupon || undefined,
+        membershipDiscount: memberDiscount,
         totalAmount,
-        paymentMethod,
-        note: note.trim() || undefined,
+        couponCode: appliedCoupon || undefined,
+        shippingMethod,
+        paymentMethod: paymentMethod === 'banking' ? 'banking' : 'cod',
+        actualPaymentMethod: paymentMethod,
+        note: orderNote.trim() || undefined,
       };
 
-      const result = await createOrder(orderPayload);
-      if (result.success && result.orderCode) {
+      const res = await createOrder(orderPayload);
+      if (res.success && res.orderCode) {
         clearCart();
         router.replace({
           pathname: '/order-success',
           params: {
-            orderCode: result.orderCode,
-            totalAmount: totalAmount.toString(),
-            customerName: fullName.trim(),
-            paymentMethod,
+            orderCode: res.orderCode,
+            totalAmount: String(totalAmount),
+            customerName: recipientName,
+            paymentMethod: paymentMethod,
           },
         });
       } else {
-        dialog.alert(t('error') || 'Lỗi đặt hàng', result.error || t('errCreateOrderFailed'));
+        dialog.alert(t('error_2') || 'Lỗi', res.error || t('errCreateOrderFailed') || 'Không thể tạo đơn hàng.');
       }
-    } catch (e: any) {
-      dialog.alert(t('error') || 'Lỗi đặt hàng', e.message || t('errOrderProcess'));
+    } catch (err: any) {
+      console.error('Lỗi đặt hàng:', err);
+      dialog.alert(t('error_2') || 'Lỗi', err.message || t('errOrderProcess') || 'Đã xảy ra sự cố khi đặt hàng.');
     } finally {
-      setLoading(false);
+      setIsSubmittingOrder(false);
     }
   };
 
-  const [scrollY, setScrollY] = useState(0);
+  const getPaymentMethodDisplay = () => {
+    if (paymentMethod === 'banking') {
+      return {
+        title: t('vietQR') || 'Chuyển khoản mã QR (VietQR)',
+        icon: 'qr-code-outline' as keyof typeof Ionicons.glyphMap,
+      };
+    }
+    return {
+      title: t('cod') || 'Tiền mặt khi nhận hàng (COD)',
+      icon: 'cash-outline' as keyof typeof Ionicons.glyphMap,
+    };
+  };
+
+  const paymentDisplay = getPaymentMethodDisplay();
+
+  const getEstimatedDeliveryText = () => {
+    if (shippingMethod === 'express_2h') {
+      return t('estimatedTime26m') || '26 phút';
+    }
+    if (shippingMethod === 'pickup') {
+      return t('estimatedTimePickup') || 'Nhận ngay trong ngày';
+    }
+    return isHCM
+      ? t('estimatedTime1_2d') || '1 - 2 ngày làm việc'
+      : t('estimatedTime3_5d') || '3 - 5 ngày làm việc';
+  };
+
+  const recipientDisplayName = selectedAddress?.fullName || userProfile?.displayName || userProfile?.name || 'Nguyễn Cường';
+  const recipientPhone = selectedAddress?.phone || userProfile?.phone || '0867291612';
+  const recipientAddress = selectedAddress
+    ? `${selectedAddress.address}${
+        selectedAddress.locationName
+          ? `, ${selectedAddress.locationName}`
+          : selectedAddress.wardName && selectedAddress.provinceName
+          ? `, ${selectedAddress.wardName}, ${selectedAddress.provinceName}`
+          : ''
+      }`
+    : '474/2 Đ. Cô Giang, Cầu Kiệu, Hồ Chí Minh, Việt Nam';
 
   return (
-    <View style={themeStyles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      <Header 
-        title={t('checkoutTitle')} 
-        showBack 
-        showCart={false} 
-        showSearch={false} 
-        transparent
-        scrollY={scrollY}
-      />
+    <Animated.View style={[styles.safeArea, pageStyle]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={[themeStyles.scrollContent, { paddingTop: insets.top + 54 + 10 }]}
-        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
+      {/* Header chuẩn GEMINI.md (Không có vạch kẻ đáy) */}
+      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        <TouchableOpacity
+          style={styles.headerBackBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>{t('orderHeader') || 'Đơn hàng'}</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 54 + 8,
+            paddingBottom: Math.max(insets.bottom, 16) + 100,
+          },
+        ]}
       >
-        {/* Recipient Information */}
-        <View style={themeStyles.card}>
-          <View style={themeStyles.cardHeaderRow}>
-            <View style={themeStyles.cardHeaderLeft}>
-              <Ionicons name="location-outline" size={20} color={Colors.primary} />
-              <Text style={themeStyles.cardTitle}>{t('recipientInfo')}</Text>
+        {/* 1. KHỐI Giao đến */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="bicycle-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('deliverTo') || 'Giao đến'}</Text>
             </View>
-            {savedAddresses.length > 0 && (
-              <TouchableOpacity
-                style={themeStyles.addressBookQuickBtn}
-                onPress={() => setAddressSheetVisible(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="bookmarks-outline" size={15} color="#9C7156" style={{ marginRight: 4 }} />
-                <Text style={themeStyles.addressBookQuickText}>
-                  {t('selectFromAddressBook') || 'Sổ địa chỉ'} ({savedAddresses.length})
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Quick chips if has addresses */}
-          {savedAddresses.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={themeStyles.quickAddressScroll}
-              style={{ marginBottom: 12 }}
-            >
-              {savedAddresses.map((addr, idx) => {
-                const isSelected =
-                  fullName === addr.fullName &&
-                  phone === addr.phone &&
-                  streetAddress === addr.address;
-                return (
-                  <TouchableOpacity
-                    key={addr.id || `quick-addr-${idx}`}
-                    style={[themeStyles.quickAddressChip, isSelected && themeStyles.quickAddressChipActive]}
-                    onPress={() => handleSelectSavedAddress(addr, idx)}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons
-                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                      size={14}
-                      color={isSelected ? '#9C7156' : '#9E968D'}
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={[themeStyles.quickAddressName, isSelected && themeStyles.quickAddressNameActive]}>
-                      {addr.fullName}
-                    </Text>
-                    {addr.isDefault && (
-                      <View style={themeStyles.quickDefaultBadge}>
-                        <Text style={themeStyles.quickDefaultBadgeText}>
-                          {t('defaultAddressBadge') || 'Mặc định'}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          )}
-
-          <View style={themeStyles.formGroup}>
-            <Text style={themeStyles.label}>{t('fullNameReq')}</Text>
-            <TextInput
-              style={themeStyles.input}
-              placeholder="Nguyễn Văn A"
-              placeholderTextColor={Colors.textMuted}
-              value={fullName}
-              onChangeText={setFullName}
-            />
-          </View>
-
-          <View style={themeStyles.formGroup}>
-            <Text style={themeStyles.label}>{t('phoneReq')}</Text>
-            <TextInput
-              style={themeStyles.input}
-              placeholder="0901234567"
-              placeholderTextColor={Colors.textMuted}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={themeStyles.formGroup}>
-            <Text style={themeStyles.label}>{t('provinceWardReq')}</Text>
             <TouchableOpacity
-              style={themeStyles.locationSelector}
-              onPress={() => setAddressPickerVisible(true)}
+              onPress={() => router.push('/select-address')}
               activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={[themeStyles.locationText, !locationName && themeStyles.locationPlaceholder]}>
-                {locationName || t('selectDeliveryArea')}
-              </Text>
-              <Ionicons name="chevron-down" size={20} color={Colors.textMuted} />
+              <Text style={styles.editActionText}>{t('edit') || 'Chỉnh sửa'}</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={themeStyles.formGroup}>
-            <Text style={themeStyles.label}>{t('streetNameReq')}</Text>
-            <TextInput
-              style={[themeStyles.input, themeStyles.textArea]}
-              placeholder={t('streetNamePlaceholder')}
-              placeholderTextColor={Colors.textMuted}
-              value={streetAddress}
-              onChangeText={setStreetAddress}
-              multiline
-              numberOfLines={2}
-            />
-          </View>
+          <Text style={styles.recipientNameText}>{recipientDisplayName}</Text>
 
-          <View style={themeStyles.formGroup}>
-            <Text style={themeStyles.label}>{t('orderNote')}</Text>
-            <TextInput
-              style={themeStyles.input}
-              placeholder={t('orderNotePlaceholder')}
-              placeholderTextColor={Colors.textMuted}
-              value={note}
-              onChangeText={setNote}
-            />
-          </View>
-        </View>
-
-        {/* Payment Method */}
-        <View style={themeStyles.card}>
-          <View style={themeStyles.cardHeader}>
-            <Ionicons name="card-outline" size={20} color={Colors.primary} />
-            <Text style={themeStyles.cardTitle}>{t('paymentMethodTitle')}</Text>
-          </View>
-
-          <TouchableOpacity
-            style={[themeStyles.paymentOption, paymentMethod === 'cod' && themeStyles.paymentOptionActive]}
-            onPress={() => setPaymentMethod('cod')}
-          >
-            <Ionicons
-              name={paymentMethod === 'cod' ? 'radio-button-on' : 'radio-button-off'}
-              size={18}
-              color={paymentMethod === 'cod' ? Colors.primary : Colors.textMuted}
-            />
-            <View style={themeStyles.paymentTextWrap}>
-              <Text style={themeStyles.paymentName}>{t('cod')}</Text>
-              <Text style={themeStyles.paymentDesc}>{t('codDesc')}</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[themeStyles.paymentOption, paymentMethod === 'banking' && themeStyles.paymentOptionActive]}
-            onPress={() => setPaymentMethod('banking')}
-          >
-            <Ionicons
-              name={paymentMethod === 'banking' ? 'radio-button-on' : 'radio-button-off'}
-              size={18}
-              color={paymentMethod === 'banking' ? Colors.primary : Colors.textMuted}
-            />
-            <View style={themeStyles.paymentTextWrap}>
-              <Text style={themeStyles.paymentName}>{t('vietQR')}</Text>
-              <Text style={themeStyles.paymentDesc}>{t('vietQRDesc')}</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Order Items Preview */}
-        <View style={themeStyles.card}>
-          <Text style={themeStyles.cardTitle}>{t('orderTitle')} ({cart.length} {t('itemsCount')})</Text>
-          <View style={themeStyles.itemsWrap}>
-            {cart.map((item) => (
-              <View key={item.id} style={themeStyles.itemRow}>
-                <Text style={themeStyles.itemName} numberOfLines={1}>
-                  {item.name} {item.variant?.name ? `(${item.variant.name})` : ''}
-                </Text>
-                <Text style={themeStyles.itemDetail}>
-                  x{item.quantity} • {formatCurrency(item.price * item.quantity)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Summary Card */}
-        <View style={themeStyles.card}>
-          <View style={themeStyles.summaryRow}>
-            <Text style={themeStyles.summaryLabel}>{t('subtotal')}:</Text>
-            <Text style={themeStyles.summaryValue}>{formatCurrency(subtotal)}</Text>
-          </View>
-          <View style={themeStyles.summaryRow}>
-            <Text style={themeStyles.summaryLabel}>{t('shippingFee')}:</Text>
-            <Text style={themeStyles.summaryValue}>
-              {shippingFee === 0 ? t('free') : formatCurrency(shippingFee)}
+          <View style={styles.addressRow}>
+            <Ionicons name="location-sharp" size={17} color="#9C7156" style={{ marginTop: 2 }} />
+            <Text style={styles.addressBodyText} numberOfLines={2}>
+              {recipientAddress}
             </Text>
           </View>
+
+          <View style={styles.phoneRow}>
+            <Ionicons name="call-outline" size={15} color={Colors.textSecondary} />
+            <Text style={styles.phoneBodyText}>{recipientPhone}</Text>
+          </View>
+
+          {/* Ô nhập ghi chú dạng viên thuốc (Pill shape) */}
+          <View style={styles.noteInputWrapper}>
+            <Ionicons name="document-text-outline" size={16} color={Colors.textMuted} style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.noteInput}
+              placeholder={t('deliveryNotePlaceholder') || 'Ghi chú (0/120)'}
+              placeholderTextColor={Colors.textMuted}
+              value={orderNote}
+              onChangeText={setOrderNote}
+              maxLength={120}
+            />
+          </View>
+
+          {/* Dự kiến giao hàng */}
+          <View style={styles.estimateSection}>
+            <Text style={styles.estimateTitle}>{t('estimatedDelivery') || 'Dự kiến giao hàng'}</Text>
+            <View style={styles.estimateBadge}>
+              <Ionicons name="time-outline" size={16} color="#9C7156" />
+              <Text style={styles.estimateTimeText}>{getEstimatedDeliveryText()}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 2. KHỐI Cửa hàng */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="storefront-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('storeSection') || 'Cửa hàng'}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/stores')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.editActionText}>{t('edit') || 'Chỉnh sửa'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.recipientNameText}>{t('storeNameDefault') || 'Tiệm Nhà Gốm — Gia Định'}</Text>
+
+          <View style={styles.storeAddressRow}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+              <Ionicons name="business-outline" size={17} color="#9C7156" style={{ marginTop: 2 }} />
+              <Text style={styles.addressBodyText}>
+                {t('storeAddressDefault') || '37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh'}
+              </Text>
+            </View>
+            <View style={styles.distanceBadge}>
+              <Ionicons name="navigate-outline" size={12} color="#9C7156" style={{ marginRight: 3 }} />
+              <Text style={styles.distanceBadgeText}>{t('storeDistanceDefault') || '49m'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. KHỐI CHỌN HÌNH THỨC GIAO HÀNG (2-Hour Express, Standard, Pickup) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="cube-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('shippingMethod') || 'Phương thức giao hàng'}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.shippingPillOption,
+              shippingMethod === 'standard' && styles.shippingPillOptionActive,
+            ]}
+            onPress={() => setShippingMethod('standard')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.shippingPillLeft}>
+              <View style={[styles.radioCircle, shippingMethod === 'standard' && styles.radioCircleActive]}>
+                {shippingMethod === 'standard' && <View style={styles.radioDot} />}
+              </View>
+              <View style={[styles.shippingIconBox, shippingMethod === 'standard' && styles.shippingIconBoxActive]}>
+                <Ionicons
+                  name="cube-outline"
+                  size={18}
+                  color={shippingMethod === 'standard' ? '#9C7156' : Colors.textSecondary}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.shippingPillTitle}>
+                  {isHCM
+                    ? (t('shippingStandardHcm') || 'Giao thông thường nội thành')
+                    : (t('shippingStandardNationwide') || 'Giao tiêu chuẩn toàn quốc')}
+                </Text>
+                <Text style={styles.shippingPillSub}>
+                  {isHCM
+                    ? (t('shippingStandardHcmSub') || 'Nhận hàng trong 1-2 ngày làm việc')
+                    : (t('shippingStandardNationwideSub') || 'Giao tận nơi 3-5 ngày làm việc')}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.shippingPillPrice}>
+              {subtotal >= 500000 || memberTier.freeShipping
+                ? t('free') || 'Miễn phí'
+                : formatCurrency(isHCM ? 20000 : 40000)}
+            </Text>
+          </TouchableOpacity>
+
+          {isHCM && (
+            <TouchableOpacity
+              style={[
+                styles.shippingPillOption,
+                shippingMethod === 'express_2h' && styles.shippingPillOptionActive,
+              ]}
+              onPress={() => setShippingMethod('express_2h')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.shippingPillLeft}>
+                <View style={[styles.radioCircle, shippingMethod === 'express_2h' && styles.radioCircleActive]}>
+                  {shippingMethod === 'express_2h' && <View style={styles.radioDot} />}
+                </View>
+                <View style={[styles.shippingIconBox, shippingMethod === 'express_2h' && styles.shippingIconBoxActive]}>
+                  <Ionicons
+                    name="flash-outline"
+                    size={18}
+                    color="#9C7156"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.shippingPillTitle, { color: '#9C7156' }]}>
+                    {t('shippingExpress2hTitle') || 'Giao nhanh 2 Giờ (Hỏa tốc)'}
+                  </Text>
+                  <Text style={styles.shippingPillSub}>
+                    {t('shippingExpress2hSub') || 'Áp dụng nội thành TP.HCM (Khung 10h - 19h)'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.shippingPillPrice, { color: '#9C7156' }]}>
+                {memberTier.freeShipping ? t('free') || 'Miễn phí' : formatCurrency(30000)}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.shippingPillOption,
+              shippingMethod === 'pickup' && styles.shippingPillOptionActive,
+            ]}
+            onPress={() => setShippingMethod('pickup')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.shippingPillLeft}>
+              <View style={[styles.radioCircle, shippingMethod === 'pickup' && styles.radioCircleActive]}>
+                {shippingMethod === 'pickup' && <View style={styles.radioDot} />}
+              </View>
+              <View style={[styles.shippingIconBox, shippingMethod === 'pickup' && styles.shippingIconBoxActive]}>
+                <Ionicons
+                  name="storefront-outline"
+                  size={18}
+                  color={shippingMethod === 'pickup' ? '#9C7156' : Colors.textSecondary}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.shippingPillTitle}>{t('shippingPickupTitle') || 'Nhận tại showroom'}</Text>
+                <Text style={styles.shippingPillSub}>{t('shippingPickupSub') || '37 Nguyễn Duy, P. Gia Định, TP.HCM'}</Text>
+              </View>
+            </View>
+            <Text style={[styles.shippingPillPrice, { color: '#9C7156' }]}>0đ</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 4. KHỐI DANH SÁCH MÓN */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="bag-handle-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('dishes') || 'Món'}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/products')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.editActionText}>+ {t('addMoreItems') || 'Thêm món nữa'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.itemList}>
+            {cart.map((item) => {
+              const itemTotal = item.price * item.quantity;
+              const variantName = item.variant?.name || (typeof item.variant === 'string' ? item.variant : '');
+
+              return (
+                <View key={item.id} style={styles.cartItemRow}>
+                  <Image
+                    source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/tiemnhagom.png')}
+                    style={styles.itemImg}
+                    contentFit="cover"
+                  />
+
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                    {variantName ? (
+                      <Text style={styles.itemVariantText}>{variantName}</Text>
+                    ) : null}
+
+                    <View style={styles.stepperContainer}>
+                      <TouchableOpacity
+                        style={styles.stepBtn}
+                        onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="remove" size={16} color={Colors.textPrimary} />
+                      </TouchableOpacity>
+
+                      <Text style={styles.stepQtyText}>{item.quantity}</Text>
+
+                      <TouchableOpacity
+                        style={styles.stepBtn}
+                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="add" size={16} color={Colors.textPrimary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.itemRightCol}>
+                    <Text style={styles.itemPriceText}>{formatCurrency(itemTotal)}</Text>
+                    <TouchableOpacity
+                      style={styles.itemEditBtn}
+                      onPress={() => removeFromCart(item.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.itemEditBtnText}>{t('clear') || 'Xóa'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 5. GỢI Ý ĐỒ GỐM ("Món xịn phải thử") */}
+        {suggestedProducts.length > 0 && (
+          <View style={styles.crossSellSection}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="sparkles" size={16} color="#9C7156" />
+              </View>
+              <Text style={styles.crossSellSectionTitle}>
+                {t('mustTrySection') || 'Món xịn phải thử'}
+              </Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.crossSellScrollContent}
+            >
+              {suggestedProducts.map((p) => {
+                const effPrice = p.salePrice || (p.sale ? Math.round(p.price * (1 - p.sale / 100)) : p.price);
+
+                return (
+                  <View key={p.id} style={styles.crossSellCard}>
+                    <Image
+                      source={p.imageUrl ? { uri: p.imageUrl } : require('../assets/images/tiemnhagom.png')}
+                      style={styles.crossSellImg}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.crossSellName} numberOfLines={2}>
+                      {p.name}
+                    </Text>
+                    <View style={styles.crossSellBottomRow}>
+                      <Text style={styles.crossSellPrice}>{formatCurrency(effPrice)}</Text>
+                      <TouchableOpacity
+                        style={styles.crossSellAddBtn}
+                        onPress={() => {
+                          addToCart(p, 1);
+                          flyToCart(p.imageUrl || '');
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 6. KHỐI "Ưu đãi" (Mở trang riêng select-voucher) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="gift-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('offersSection') || 'Ưu đãi'}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.actionRowCard}
+            onPress={() => router.push('/select-voucher')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.actionRowLeft}>
+              <View style={styles.iconCircleBadge}>
+                <Ionicons name="pricetag-outline" size={18} color="#9C7156" />
+              </View>
+              <View>
+                <Text style={styles.actionRowTitle}>
+                  {appliedCouponItem?.name || appliedCoupon || t('selectOfferBtn') || 'Chọn Ưu Đãi'}
+                </Text>
+                {discountAmount > 0 && (
+                  <Text style={styles.actionRowSub}>-{formatCurrency(discountAmount)}</Text>
+                )}
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 7. KHỐI "Phương thức thanh toán" (Mở trang riêng select-payment) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="card-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>
+                {t('paymentMethodSection') || 'Phương thức thanh toán'}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.actionRowCard}
+            onPress={() => router.push('/select-payment')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.actionRowLeft}>
+              <View style={styles.iconCircleBadge}>
+                <Ionicons name={paymentDisplay.icon} size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.actionRowTitle}>{paymentDisplay.title}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 8. KHỐI "Chi tiết thanh toán" */}
+        <View style={styles.summaryCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="receipt-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.summaryTitle}>{t('paymentDetailsSection') || 'Chi tiết thanh toán'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{t('subtotal') || 'Tạm tính'}</Text>
+            <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{t('shippingFee') || 'Phí giao hàng'}</Text>
+            <Text style={styles.summaryValue}>
+              {shippingFee === 0 ? (
+                <Text style={{ color: '#9C7156', fontWeight: '700' }}>0đ ({t('free') || 'Miễn phí'})</Text>
+              ) : (
+                formatCurrency(shippingFee)
+              )}
+            </Text>
+          </View>
+
+          {memberDiscount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+                {t('memberTierDiscountLabel') || 'Ưu đãi hạng'} {memberTier.name} (-{memberTier.discount}%)
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
+                -{formatCurrency(memberDiscount)}
+              </Text>
+            </View>
+          )}
+
           {discountAmount > 0 && (
-            <View style={themeStyles.summaryRow}>
-              <Text style={[themeStyles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}:</Text>
-              <Text style={[themeStyles.summaryValue, { color: Colors.badgeSale }]}>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+                {t('voucherDiscountAmount') || 'Giảm giá ưu đãi'}
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
                 -{formatCurrency(discountAmount)}
               </Text>
             </View>
           )}
-          <View style={themeStyles.divider} />
-          <View style={themeStyles.summaryRowTotal}>
-            <Text style={themeStyles.totalLabel}>{t('totalToPay')}</Text>
-            <Text style={themeStyles.totalValue}>{formatCurrency(totalAmount)}</Text>
+
+          <View style={styles.divider} />
+
+          <View style={styles.summaryTotalRow}>
+            <Text style={styles.totalLabel}>{t('totalPayment') || 'Tổng tiền thanh toán'}</Text>
+            <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
+          </View>
+
+          <Text style={styles.vatSubtext}>{t('vatIncludedNotice') || '(Giá đã bao gồm VAT)'}</Text>
+
+          <View style={styles.pointsNoticeRow}>
+            <Image
+              source={require('../assets/images/icon_ceramic_point.png')}
+              style={styles.pointsNoticeIcon}
+              contentFit="contain"
+            />
+            <Text style={styles.pointsNoticeText}>
+              {(t('earnPointsMessage') || 'Tích thêm {points} Điểm gốm sau khi đơn hàng giao hoàn tất thành công!').replace(
+                '{points}',
+                String(Math.floor(totalAmount / 10000))
+              )}
+            </Text>
           </View>
         </View>
       </ScrollView>
 
-      <AddressPicker
-        visible={addressPickerVisible}
-        onClose={() => setAddressPickerVisible(false)}
-        initialProvinceCode={provinceCode}
-        initialWardCode={wardCode}
-        onSelect={(prov, ward) => {
-          setProvinceCode(prov.province_code);
-          setWardCode(ward.ward_code);
-          setLocationName(`${ward.name}, ${prov.name}`);
-        }}
-      />
-
-      {/* Sổ địa chỉ Selection Modal */}
-      <AnimatedBottomSheetModal
-        visible={addressSheetVisible}
-        onClose={() => setAddressSheetVisible(false)}
-      >
-        <View style={themeStyles.addressSheetHeader}>
-          <Text style={themeStyles.addressSheetTitle}>{t('selectFromAddressBook') || 'Chọn địa chỉ nhận hàng'}</Text>
-          <TouchableOpacity
-            onPress={() => setAddressSheetVisible(false)}
-            style={themeStyles.sheetCloseBtn}
-          >
-            <Ionicons name="close" size={20} color="#2B2928" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380, marginVertical: 10 }}>
-          {savedAddresses.map((addr, idx) => {
-            const isSelected =
-              fullName === addr.fullName &&
-              phone === addr.phone &&
-              streetAddress === addr.address;
-            const fullArea = addr.locationName || [addr.wardName, addr.provinceName].filter(Boolean).join(', ');
-
-            return (
-              <TouchableOpacity
-                key={addr.id || `sheet-addr-${idx}`}
-                style={[themeStyles.sheetAddressCard, isSelected && themeStyles.sheetAddressCardActive]}
-                onPress={() => handleSelectSavedAddress(addr, idx)}
-                activeOpacity={0.8}
-              >
-                <View style={themeStyles.sheetAddressTopRow}>
-                  <View style={themeStyles.sheetUserInfo}>
-                    <Text style={themeStyles.sheetUserName}>{addr.fullName}</Text>
-                    <View style={themeStyles.sheetDot} />
-                    <Text style={themeStyles.sheetUserPhone}>{addr.phone}</Text>
-                  </View>
-                  {addr.isDefault && (
-                    <View style={themeStyles.sheetDefaultBadge}>
-                      <Text style={themeStyles.sheetDefaultBadgeText}>{t('defaultAddressBadge') || 'Mặc định'}</Text>
-                    </View>
-                  )}
-                </View>
-
-                <Text style={themeStyles.sheetStreetText}>{addr.address}</Text>
-                {!!fullArea && <Text style={themeStyles.sheetAreaText}>{fullArea}</Text>}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
+      {/* 9. NÚT ĐẶT HÀNG DÍNH CHÂN TRANG */}
+      <View style={[styles.bottomStickyBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <TouchableOpacity
-          style={themeStyles.manageAddressBtn}
-          onPress={() => {
-            setAddressSheetVisible(false);
-            router.push('/address-book' as any);
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add-circle-outline" size={18} color="#9C7156" style={{ marginRight: 6 }} />
-          <Text style={themeStyles.manageAddressBtnText}>{t('addNewAddress') || 'Thêm / Quản lý sổ địa chỉ'}</Text>
-        </TouchableOpacity>
-      </AnimatedBottomSheetModal>
-
-      {/* Submit Button */}
-      <View style={themeStyles.bottomBar}>
-        <View style={themeStyles.bottomTotal}>
-          <Text style={themeStyles.bottomTotalLabel}>{t('totalPayment')}</Text>
-          <Text style={themeStyles.bottomTotalValue}>{formatCurrency(totalAmount)}</Text>
-        </View>
-
-        <TouchableOpacity
-          style={[themeStyles.submitBtn, loading && themeStyles.submitBtnDisabled]}
-          onPress={handleSubmitOrder}
-          disabled={loading}
+          style={[styles.checkoutPillBtn, isSubmittingOrder && { opacity: 0.75 }]}
+          onPress={handlePlaceOrder}
+          disabled={isSubmittingOrder}
           activeOpacity={0.88}
         >
-          {loading ? (
-            <ActivityIndicator color={Colors.textInverse} />
+          {isSubmittingOrder ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <>
-              <Text style={themeStyles.submitBtnText}>{t('confirmOrder')}</Text>
-              <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} style={{ marginLeft: 4 }} />
-            </>
+            <Text style={styles.checkoutBtnText}>
+              {`${t('orderNowBtn') || 'Đặt hàng ngay'} • ${cartCount} ${t('dishes') || 'Sản phẩm'} • ${formatCurrency(totalAmount)}`}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
-const getStyles = (Colors: any) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: 110,
-  },
-  card: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 20,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-    paddingBottom: Spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-    paddingBottom: Spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  addressBookQuickBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F6F4EC',
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  addressBookQuickText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#9C7156',
-  },
-  quickAddressScroll: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  quickAddressChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 18,
-  },
-  quickAddressChipActive: {
-    backgroundColor: '#F6F4EC',
-    borderColor: '#9C7156',
-  },
-  quickAddressName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: '#2B2928',
-    fontWeight: '600',
-  },
-  quickAddressNameActive: {
-    color: '#9C7156',
-  },
-  quickDefaultBadge: {
-    backgroundColor: '#E8CCB2',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginLeft: 6,
-  },
-  quickDefaultBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    color: '#2B2928',
-    fontWeight: '700',
-  },
-  addressSheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0ECE6',
-  },
-  addressSheetTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2B2928',
-  },
-  sheetCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F6F4EC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetAddressCard: {
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1,
-    borderColor: '#E8E1D8',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-  },
-  sheetAddressCardActive: {
-    borderColor: '#9C7156',
-    backgroundColor: '#F6F4EC',
-  },
-  sheetAddressTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  sheetUserInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sheetUserName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2B2928',
-  },
-  sheetDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#9E968D',
-    marginHorizontal: 6,
-  },
-  sheetUserPhone: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: '#6E665D',
-  },
-  sheetDefaultBadge: {
-    backgroundColor: '#E8CCB2',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  sheetDefaultBadgeText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 10,
-    color: '#2B2928',
-    fontWeight: '700',
-  },
-  sheetStreetText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#2B2928',
-    lineHeight: 18,
-  },
-  sheetAreaText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12.5,
-    color: '#6E665D',
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  manageAddressBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.2,
-    borderColor: '#9C7156',
-    backgroundColor: '#FFFFFF',
-    marginTop: 6,
-  },
-  manageAddressBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#9C7156',
-  },
-  cardTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.base,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  formGroup: {
-    marginBottom: Spacing.md,
-  },
-  label: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginBottom: 6,
-    marginLeft: 4,
-  },
-  input: {
-    fontFamily: 'ElleGaborStd',
-    backgroundColor: Colors.background || '#FAF8F5',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 26,
-    paddingHorizontal: 18,
-    height: 52,
-    fontSize: 14.5,
-    color: Colors.textPrimary,
-  },
-  textArea: {
-    minHeight: 84,
-    borderRadius: 20,
-    paddingTop: 12,
-    paddingHorizontal: 18,
-    textAlignVertical: 'top',
-  },
-  locationSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.background || '#FAF8F5',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 26,
-    paddingHorizontal: 18,
-    height: 52,
-  },
-  locationText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14.5,
-    color: Colors.textPrimary,
-    flex: 1,
-  },
-  locationPlaceholder: {
-    color: Colors.textMuted,
-  },
-  paymentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderLight,
-    gap: Spacing.sm,
-  },
-  paymentOptionActive: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.border,
-    borderWidth: 1,
-  },
-  paymentTextWrap: {
-    flex: 1,
-  },
-  paymentName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  paymentDesc: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-  itemsWrap: {
-    marginTop: Spacing.sm,
-    gap: 6,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  itemName: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textPrimary,
-    flex: 1,
-    marginRight: 6,
-  },
-  itemDetail: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  summaryLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-  },
-  summaryValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.divider,
-    marginVertical: Spacing.sm,
-  },
-  summaryRowTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.base,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  totalValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.cardBackground,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    ...Shadows.md,
-  },
-  bottomTotal: {
-    flex: 1,
-  },
-  bottomTotalLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textMuted,
-  },
-  bottomTotalValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  submitBtn: {
-    backgroundColor: Colors.primary,
-    flexDirection: 'row',
-    paddingHorizontal: 22,
-    height: 52,
-    borderRadius: 26,
-    minWidth: 165,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitBtnDisabled: {
-    opacity: 0.65,
-  },
-  submitBtnText: {
-    color: Colors.textInverse,
-    fontWeight: '700',
-    fontSize: Typography.fontSize.base,
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    customHeader: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 50,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      backgroundColor: Colors.background,
+      borderBottomWidth: 0,
+    },
+    headerBackBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.06,
+      shadowRadius: 4,
+      elevation: isDark ? 0 : 2,
+    },
+    headerTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      gap: 14,
+    },
+    sectionCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    cardHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    cardHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerIconCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2B28' : '#E8CCB2',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    cardHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    editActionText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    recipientNameText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 4,
+    },
+    addressRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 6,
+      marginBottom: 4,
+    },
+    addressBodyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textSecondary,
+      lineHeight: 18,
+      flex: 1,
+    },
+    phoneRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 12,
+    },
+    phoneBodyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textSecondary,
+    },
+    noteInputWrapper: {
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
+      paddingHorizontal: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 14,
+    },
+    noteInput: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      color: Colors.textPrimary,
+      flex: 1,
+    },
+    estimateSection: {
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#242424' : '#F0ECE6',
+    },
+    estimateTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 6,
+    },
+    estimateBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    estimateTimeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textSecondary,
+      fontWeight: '600',
+    },
+    storeAddressRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    distanceBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: '#E8CCB2',
+    },
+    distanceBadgeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    sectionSubtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 12,
+    },
+    shippingPillOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? '#121212' : '#FFFFFF',
+      borderRadius: 16,
+      padding: 12,
+      marginBottom: 8,
+      borderWidth: 1.2,
+      borderColor: isDark ? '#242424' : '#E8E1D8',
+    },
+    shippingPillOptionActive: {
+      borderColor: '#9C7156',
+      backgroundColor: isDark ? '#1A1817' : '#FFFCFA',
+    },
+    shippingPillLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      flex: 1,
+      marginRight: 8,
+    },
+    shippingIconBox: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2B28' : '#E8CCB2',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 8,
+    },
+    shippingIconBoxActive: {
+      backgroundColor: isDark ? '#2A201A' : '#FAF2EA',
+      borderColor: '#9C7156',
+    },
+    shippingPillTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 2,
+    },
+    shippingPillSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      color: Colors.textMuted,
+    },
+    shippingPillPrice: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    radioCircle: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 1.8,
+      borderColor: isDark ? '#4A4A4A' : '#C7BFB5',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioCircleActive: {
+      borderColor: '#9C7156',
+    },
+    radioDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: '#9C7156',
+    },
+    itemList: {
+      gap: 12,
+    },
+    cartItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#1E1E1E' : '#F6F4EC',
+    },
+    itemImg: {
+      width: 68,
+      height: 68,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#F4EFEB',
+      marginRight: 12,
+    },
+    itemInfo: {
+      flex: 1,
+      marginRight: 10,
+    },
+    itemName: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      lineHeight: 18,
+      marginBottom: 3,
+    },
+    itemVariantText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textMuted,
+      marginBottom: 6,
+    },
+    stepperContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    stepBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepQtyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      minWidth: 20,
+      textAlign: 'center',
+    },
+    itemRightCol: {
+      alignItems: 'flex-end',
+      gap: 8,
+    },
+    itemPriceText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    itemEditBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+    },
+    itemEditBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+    },
+    crossSellSection: {
+      marginVertical: 4,
+    },
+    crossSellSectionTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 10,
+    },
+    crossSellScrollContent: {
+      gap: 12,
+    },
+    crossSellCard: {
+      width: 156,
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 10,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    crossSellImg: {
+      width: '100%',
+      height: 105,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#F4EFEB',
+      marginBottom: 8,
+    },
+    crossSellName: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      lineHeight: 16,
+      height: 32,
+      marginBottom: 6,
+    },
+    crossSellBottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    crossSellPrice: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    crossSellAddBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    actionRowCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+    },
+    actionRowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    iconCircleBadge: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2B28' : '#E8CCB2',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 4,
+    },
+    actionRowTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    actionRowSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: '#9C7156',
+      fontWeight: '700',
+      marginTop: 2,
+    },
+    summaryCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+      gap: 10,
+    },
+    summaryTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    summaryLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      color: Colors.textSecondary,
+    },
+    summaryValue: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: isDark ? '#242424' : '#F0ECE6',
+      marginVertical: 4,
+    },
+    summaryTotalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: 2,
+    },
+    totalLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    totalValue: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 20,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+    },
+    vatSubtext: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textMuted,
+      textAlign: 'right',
+      marginTop: -4,
+    },
+    pointsNoticeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      padding: 10,
+      borderRadius: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8CCB2',
+      marginTop: 4,
+    },
+    pointsNoticeIcon: {
+      width: 18,
+      height: 18,
+      marginRight: 4,
+    },
+    pointsNoticeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: '#9C7156',
+      fontWeight: '600',
+      flex: 1,
+    },
+    bottomStickyBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: Colors.background,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      borderTopWidth: 0,
+    },
+    checkoutPillBtn: {
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    checkoutBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+  });

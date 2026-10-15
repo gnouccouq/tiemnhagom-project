@@ -23,6 +23,7 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { useAuth } from '../src/context/AuthContext';
 import { useDialog } from '../src/context/DialogContext';
+import { useSettings } from '../src/context/SettingsContext';
 import { getAllUserCoupons, CategorizedCoupons, CouponItem } from '../src/services/couponService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -36,6 +37,7 @@ export default function VouchersScreen() {
   const styles = getStyles(Colors, isDark);
   const { user } = useAuth();
   const dialog = useDialog();
+  const { t } = useSettings();
 
   const [activeTab, setActiveTab] = useState<TabType>('unused');
   const [loading, setLoading] = useState(true);
@@ -84,24 +86,54 @@ export default function VouchersScreen() {
     Clipboard.setString(voucher.code);
     setModalVisible(false);
     dialog.alert(
-      'Đã lưu mã giảm giá!',
-      `Mã "${voucher.code}" đã được sao chép. Bạn có thể dán mã này tại bước thanh toán.`
+      t('voucherCopiedTitle'),
+      t('voucherCopiedMsg', { code: voucher.code })
     );
     router.push('/(tabs)/products' as any);
   };
 
-  const formatExpiryDisplay = (expiryDate?: string) => {
-    if (!expiryDate) return 'Vô thời hạn';
+  const getExpiryInfo = (expiryDate?: string) => {
+    if (!expiryDate) return { text: t('unlimitedTime'), isUrgent: false, dateStr: '' };
     try {
       const d = new Date(expiryDate);
-      if (isNaN(d.getTime())) return `Hạn dùng: ${expiryDate}`;
+      if (isNaN(d.getTime())) return { text: `${t('expiryDateLabel')}: ${expiryDate}`, isUrgent: false, dateStr: expiryDate };
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffMs = target.getTime() - today.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
       const day = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
-      return `Hết hạn vào 23:59 ${day}/${month}/${year}`;
+      const dateStr = `23:59 ${day}/${month}/${year}`;
+
+      if (diffDays > 0 && diffDays <= 3) {
+        return {
+          text: t('expiresInDays', { days: diffDays }),
+          isUrgent: true,
+          dateStr,
+        };
+      } else if (diffDays === 0) {
+        return {
+          text: t('expiresToday'),
+          isUrgent: true,
+          dateStr,
+        };
+      }
+      return {
+        text: t('expiresAt', { date: dateStr }),
+        isUrgent: false,
+        dateStr,
+      };
     } catch {
-      return `Hết hạn vào ${expiryDate}`;
+      return { text: t('expiresAt', { date: expiryDate }), isUrgent: false, dateStr: expiryDate };
     }
+  };
+
+  const formatExpiryDisplay = (expiryDate?: string) => {
+    return getExpiryInfo(expiryDate).text;
   };
 
   const currentList = couponsData[activeTab];
@@ -112,7 +144,7 @@ export default function VouchersScreen() {
 
       {/* Header chuẩn app Tiệm Nhà Gốm */}
       <Header
-        title="Kho quà"
+        title={t('giftVault')}
         showBack={true}
         showSearch={false}
         showCart={false}
@@ -135,7 +167,7 @@ export default function VouchersScreen() {
                 activeTab === 'unused' ? styles.tabTextActive : styles.tabTextInactive,
               ]}
             >
-              Chưa dùng {couponsData.unused.length > 0 ? `(${couponsData.unused.length})` : ''}
+              {t('vouchersTabUnused')} {couponsData.unused.length > 0 ? `(${couponsData.unused.length})` : ''}
             </Text>
           </TouchableOpacity>
 
@@ -153,7 +185,7 @@ export default function VouchersScreen() {
                 activeTab === 'used' ? styles.tabTextActive : styles.tabTextInactive,
               ]}
             >
-              Đã dùng
+              {t('vouchersTabUsed')}
             </Text>
           </TouchableOpacity>
 
@@ -171,7 +203,7 @@ export default function VouchersScreen() {
                 activeTab === 'expired' ? styles.tabTextActive : styles.tabTextInactive,
               ]}
             >
-              Hết hạn
+              {t('vouchersTabExpired')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -182,7 +214,7 @@ export default function VouchersScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#9C7156" />
           <Text style={[styles.loadingText, { color: Colors.textSecondary }]}>
-            Đang tải kho quà...
+            {t('loadingVouchersVault')}
           </Text>
         </View>
       ) : (
@@ -206,15 +238,15 @@ export default function VouchersScreen() {
               </View>
               <Text style={[styles.emptyTitle, { color: Colors.textPrimary }]}>
                 {activeTab === 'unused'
-                  ? 'Kho quà đang trống'
+                  ? t('vouchersEmptyUnusedTitle')
                   : activeTab === 'used'
-                  ? 'Chưa có voucher nào đã dùng'
-                  : 'Không có voucher hết hạn'}
+                  ? t('vouchersEmptyUsedTitle')
+                  : t('vouchersEmptyExpiredTitle')}
               </Text>
               <Text style={[styles.emptyDesc, { color: Colors.textSecondary }]}>
                 {activeTab === 'unused'
-                  ? 'Các mã ưu đãi mới từ Tiệm Nhà Gốm sẽ xuất hiện tại đây khi có chương trình.'
-                  : 'Lịch sử sử dụng voucher của bạn sẽ được hiển thị đầy đủ tại đây.'}
+                  ? t('vouchersEmptyUnusedDesc')
+                  : t('vouchersEmptyUsedDesc')}
               </Text>
 
               {activeTab === 'unused' && (
@@ -223,7 +255,7 @@ export default function VouchersScreen() {
                   onPress={() => router.push('/(tabs)/deals')}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.emptyActionBtnText}>Khám phá ưu đãi ngay</Text>
+                  <Text style={styles.emptyActionBtnText}>{t('exploreDealsAction')}</Text>
                   <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               )}
@@ -232,7 +264,7 @@ export default function VouchersScreen() {
             currentList.map((item) => {
               const isExpired = activeTab === 'expired';
               const isUsed = activeTab === 'used';
-              const isUnused = activeTab === 'unused';
+              const expiryInfo = getExpiryInfo(item.expiryDate);
 
               return (
                 <TouchableOpacity
@@ -241,18 +273,19 @@ export default function VouchersScreen() {
                     styles.voucherCard,
                     {
                       backgroundColor: Colors.cardBackground,
-                      opacity: isExpired || isUsed ? 0.72 : 1,
+                      opacity: isExpired || isUsed ? 0.65 : 1,
                     },
                   ]}
-                  activeOpacity={0.9}
+                  activeOpacity={0.88}
                   onPress={() => {
-                    setSelectedVoucher(item);
-                    setModalVisible(true);
+                    router.push({
+                      pathname: '/voucher-detail',
+                      params: { voucher: JSON.stringify(item) },
+                    });
                   }}
                 >
-                  {/* Phần trên: Logo tròn + Tiêu đề & Hạn sử dụng (Đúng bố cục ảnh Highland mẫu) */}
-                  <View style={styles.cardTopRow}>
-                    {/* Logo tròn Tiệm Nhà Gốm */}
+                  <View style={styles.cardContentRow}>
+                    {/* Logo tròn thương hiệu Tiệm Nhà Gốm */}
                     <View style={styles.logoCircle}>
                       <Image
                         source={require('../assets/images/logo.webp')}
@@ -273,60 +306,26 @@ export default function VouchersScreen() {
                         {item.name.toUpperCase()}
                       </Text>
 
-                      <Text style={[styles.voucherExpiry, { color: Colors.textMuted }]}>
-                        {formatExpiryDisplay(item.expiryDate)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Đường kẻ chấm gạch tạo cảm giác cuống vé */}
-                  <View style={styles.ticketDividerWrap}>
-                    <View style={[styles.punchHoleLeft, { backgroundColor: Colors.background }]} />
-                    <View style={styles.dashedLine} />
-                    <View style={[styles.punchHoleRight, { backgroundColor: Colors.background }]} />
-                  </View>
-
-                  {/* Phần dưới: Mã voucher + Nút hành động */}
-                  <View style={styles.cardBottomRow}>
-                    <TouchableOpacity
-                      style={styles.codeBadge}
-                      activeOpacity={0.7}
-                      onPress={() => handleCopyCode(item.code)}
-                    >
-                      <Ionicons
-                        name={copiedCode === item.code ? 'checkmark-circle' : 'copy-outline'}
-                        size={14}
-                        color={copiedCode === item.code ? (isDark ? '#E8CCB2' : '#2B2928') : '#9C7156'}
-                      />
                       <Text
                         style={[
-                          styles.codeBadgeText,
-                          copiedCode === item.code && { color: isDark ? '#E8CCB2' : '#2B2928' },
+                          styles.voucherExpiry,
+                          {
+                            color: isExpired || isUsed
+                              ? (Colors.textMuted || '#888888')
+                              : expiryInfo.isUrgent
+                              ? '#E53935'
+                              : (Colors.textMuted || '#71717A'),
+                            fontWeight: (!isExpired && !isUsed && expiryInfo.isUrgent) ? '600' : '400',
+                          },
                         ]}
                       >
-                        {copiedCode === item.code ? 'Đã sao chép!' : item.code}
+                        {isUsed
+                          ? t('usedStatus')
+                          : isExpired
+                          ? t('expiresAt', { date: expiryInfo.dateStr || '' })
+                          : expiryInfo.text}
                       </Text>
-                    </TouchableOpacity>
-
-                    {isUnused ? (
-                      <TouchableOpacity
-                        style={styles.actionBtnUse}
-                        onPress={() => handleUseNow(item)}
-                        activeOpacity={0.85}
-                      >
-                        <Text style={styles.actionBtnUseText}>Dùng ngay</Text>
-                      </TouchableOpacity>
-                    ) : isUsed ? (
-                      <View style={styles.statusBadgeUsed}>
-                        <Ionicons name="checkmark-done" size={13} color="#6E665D" />
-                        <Text style={styles.statusBadgeTextUsed}>Đã dùng</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.statusBadgeExpired}>
-                        <Ionicons name="alert-circle-outline" size={13} color="#A34646" />
-                        <Text style={styles.statusBadgeTextExpired}>Đã hết hạn</Text>
-                      </View>
-                    )}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -372,7 +371,7 @@ export default function VouchersScreen() {
         {/* Khung mã giảm giá */}
         <View style={styles.modalCodeBox}>
           <View>
-            <Text style={styles.modalCodeLabel}>MÃ VOUCHER</Text>
+            <Text style={styles.modalCodeLabel}>{t('exclusiveVoucherCode')}</Text>
             <Text style={styles.modalCodeVal}>{selectedVoucher?.code}</Text>
           </View>
 
@@ -390,7 +389,7 @@ export default function VouchersScreen() {
               color="#FFFFFF"
             />
             <Text style={styles.modalCopyBtnText}>
-              {copiedCode === selectedVoucher?.code ? 'Đã chép' : 'Sao chép'}
+              {copiedCode === selectedVoucher?.code ? t('copiedCode') : t('copyCode')}
             </Text>
           </ScalePressable>
         </View>
@@ -402,7 +401,7 @@ export default function VouchersScreen() {
             <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
               {selectedVoucher?.conditions ||
                 selectedVoucher?.description ||
-                'Áp dụng khi thanh toán đơn hàng tại Tiệm Nhà Gốm.'}
+                t('applyAtTiemNhaGom')}
             </Text>
           </View>
 
@@ -410,7 +409,7 @@ export default function VouchersScreen() {
             <View style={styles.modalDetailRow}>
               <Ionicons name="cart-outline" size={16} color="#9C7156" />
               <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
-                Đơn tối thiểu:{' '}
+                {t('minSpendFrom')}:{' '}
                 {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.minOrder || 0)}đ
               </Text>
             </View>
@@ -420,7 +419,7 @@ export default function VouchersScreen() {
             <View style={styles.modalDetailRow}>
               <Ionicons name="pricetag-outline" size={16} color="#9C7156" />
               <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
-                Giảm tối đa:{' '}
+                {t('maxDiscountLabel')}:{' '}
                 {new Intl.NumberFormat('vi-VN').format(selectedVoucher?.maxDiscount || 0)}đ
               </Text>
             </View>
@@ -434,7 +433,7 @@ export default function VouchersScreen() {
             onPress={() => selectedVoucher && handleUseNow(selectedVoucher)}
             activeScale={0.96}
           >
-            <Text style={styles.modalPrimaryBtnText}>Sử dụng ngay khi mua hàng</Text>
+            <Text style={styles.modalPrimaryBtnText}>{t('useNowWhenShopping')}</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </ScalePressable>
         )}
@@ -465,30 +464,24 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   tabPillActive: {
-    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FFFFFF',
-    borderWidth: 1.2,
-    borderColor: '#9C7156',
-    shadowColor: '#9C7156',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.1,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
+    backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FDFBF7',
+    borderWidth: 1.5,
+    borderColor: '#C4A482',
   },
   tabPillInactive: {
-    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#F6F4EC',
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8CCB2',
+    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#F4F4F5',
+    borderWidth: 0,
   },
   tabText: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 13.5,
+    fontSize: 14,
   },
   tabTextActive: {
     color: isDark ? '#E8CCB2' : '#2B2928',
     fontWeight: '700',
   },
   tabTextInactive: {
-    color: Colors.textMuted || '#6E665D',
+    color: isDark ? '#888888' : '#71717A',
     fontWeight: '500',
   },
   loadingContainer: {
@@ -508,21 +501,22 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 32,
-    gap: 14,
+    gap: 12,
   },
-  // Voucher Card
+  // Voucher Card theo chuẩn thiết kế ảnh mẫu
   voucherCard: {
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: isDark ? 0 : 1,
     borderColor: isDark ? 'transparent' : '#E8E1D8',
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 8,
-    elevation: isDark ? 0 : 2,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 1.5,
   },
-  cardTopRow: {
+  cardContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -531,12 +525,17 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#F6F4EC',
-    borderWidth: 1.2,
-    borderColor: '#E8CCB2',
+    backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+    borderWidth: 1,
+    borderColor: isDark ? '#2E2E2E' : '#EFEAE2',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 3,
+    elevation: isDark ? 0 : 1,
   },
   logoImage: {
     width: '100%',
@@ -544,114 +543,20 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   cardMetaWrap: {
     flex: 1,
-    gap: 4,
+    gap: 5,
+    justifyContent: 'center',
   },
   voucherTitle: {
     fontFamily: Typography.fontFamily.bold,
-    fontSize: 14,
-    lineHeight: 19,
+    fontSize: 14.5,
+    lineHeight: 20,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   voucherExpiry: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
-  },
-  ticketDividerWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 12,
-    position: 'relative',
-  },
-  dashedLine: {
-    flex: 1,
-    height: 1,
-    borderWidth: 0.8,
-    borderColor: '#E8CCB2',
-    borderStyle: 'dashed',
-  },
-  punchHoleLeft: {
-    position: 'absolute',
-    left: -22,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  punchHoleRight: {
-    position: 'absolute',
-    right: -22,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  cardBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  codeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F6F4EC',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
-  },
-  codeBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#9C7156',
-    letterSpacing: 0.3,
-  },
-  actionBtnUse: {
-    height: 34,
-    paddingHorizontal: 16,
-    borderRadius: 17,
-    backgroundColor: '#9C7156',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#9C7156',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  actionBtnUseText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
-    fontWeight: '700',
-  },
-  statusBadgeUsed: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: '#F3EFEA',
-  },
-  statusBadgeTextUsed: {
-    fontSize: 11.5,
-    color: '#6E665D',
-    fontWeight: '600',
-  },
-  statusBadgeExpired: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: '#FBEBEB',
-  },
-  statusBadgeTextExpired: {
-    fontSize: 11.5,
-    color: '#A34646',
-    fontWeight: '600',
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13,
+    lineHeight: 18,
   },
   // Empty State
   emptyContainer: {

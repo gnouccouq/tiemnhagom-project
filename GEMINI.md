@@ -107,3 +107,20 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 * **Thẻ / Chip đang được chọn (Active State):**
   * Nền chuyển sang `#1E1E1E` (hoặc `#121212`), viền bằng màu Nâu Đất Nung `#9C7156` (`borderWidth: 1.2, borderColor: '#9C7156'`). Tuyệt đối không dùng viền trắng hay viền đen chìm.
 
+---
+
+## 7. Quy chuẩn Đa ngôn ngữ (i18n & Localization Bắt buộc)
+* **Bắt buộc 100% giao diện phải hỗ trợ đa ngôn ngữ:**
+  * Mọi màn hình (Screens), khối thành phần (Components), hộp thoại (Dialog / Alert / Modal), trạng thái rỗng (Empty State), nhãn nút (Buttons) và chuỗi hiển thị cho người dùng **phải luôn được lấy từ `const { t } = useSettings()` với `t('key')`**.
+  * **Nghiêm cấm để chuỗi tiếng Việt cứng (hardcoded text)** trong JSX hoặc trong logic phản hồi người dùng.
+  * Mọi từ khóa (key) mới khi tạo ra **bắt buộc phải được định nghĩa đồng bộ đầy đủ ở cả 3 tệp từ điển**:
+    * `src/locales/vi.ts` (Tiếng Việt chuẩn gốm thủ công)
+    * `src/locales/en.ts` (Tiếng Anh tự nhiên, chuẩn mực)
+    * `src/locales/zh.ts` (Tiếng Trung giản thể chuẩn xác)
+  * Bảo toàn tính nhất quán về thuật ngữ thương hiệu:
+    * Tiệm Nhà Gốm: Tiem Nha Gom / 陶舍
+    * Điểm tích lũy / Điểm gốm: Pottery Points / 陶瓷积分
+    * Gốm Mộc / Gốm Nung / Gốm Men / Gốm Độc Bản: Đồng bộ tên hạng hội viên ở mọi ngôn ngữ
+    * Voucher / Kho quà: Vouchers & Rewards / 优惠券与礼品
+
+

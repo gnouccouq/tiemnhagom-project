@@ -12,7 +12,7 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, usePathname } from 'expo-router';
+import { Stack, useRouter, usePathname, ThemeProvider, DarkTheme, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -24,7 +24,7 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { WishlistProvider } from '../src/context/WishlistContext';
 import { SettingsProvider, useSettings } from '../src/context/SettingsContext';
-import { Colors } from '../src/constants/theme';
+import { Colors, useThemeColor, checkIsDark } from '../src/constants/theme';
 import { NotificationBadgeProvider } from '../src/context/NotificationBadgeContext';
 import ForceUpdateChecker from '../src/components/ForceUpdateChecker';
 import NetworkOverlay from '../src/components/NetworkOverlay';
@@ -131,12 +131,28 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
   );
 }
 
+// Cờ ghi nhớ đã hoàn thành splash trong phiên làm việc, tránh phát lại khi đổi cài đặt
+let hasFinishedSplashOnce = false;
+
 // Cổng bảo vệ xác thực (Auth Gate)
 function NavigationRoot() {
   const { user, userProfile, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [splashFinished, setSplashFinished] = useState(false);
+  const [splashFinished, setSplashFinished] = useState(() => hasFinishedSplashOnce);
+  const themeColors = useThemeColor();
+  const isDark = checkIsDark(themeColors);
+
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: themeColors.background,
+      card: themeColors.cardBackground,
+      text: themeColors.textPrimary,
+      border: themeColors.border,
+    },
+  };
 
   const isAuth = Boolean(user || userProfile);
 
@@ -163,85 +179,95 @@ function NavigationRoot() {
   }, [isAuth, loading, pathname, splashFinished]);
 
   if (loading || !splashFinished) {
-    return <AnimatedAppSplash onFinish={() => setSplashFinished(true)} />;
+    return (
+      <AnimatedAppSplash
+        onFinish={() => {
+          hasFinishedSplashOnce = true;
+          setSplashFinished(true);
+        }}
+      />
+    );
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
-        animation: 'slide_from_right',
-      }}
-    >
-      <Stack.Screen
-        name="onboarding"
-        options={{
+    <ThemeProvider value={navigationTheme}>
+      <Stack
+        screenOptions={{
           headerShown: false,
-          gestureEnabled: false,
-          animation: 'fade',
-        }}
-      />
-      <Stack.Screen
-        name="setup-preferences"
-        options={{
-          headerShown: false,
-          gestureEnabled: false,
+          contentStyle: { backgroundColor: themeColors.background },
           animation: 'slide_from_right',
         }}
-      />
-      <Stack.Screen
-        name="setup-permissions"
-        options={{
-          headerShown: false,
-          gestureEnabled: false,
-          animation: 'slide_from_right',
-        }}
-      />
-      {/* Trang Login riêng biệt, bắt buộc trước khi vào app */}
-      <Stack.Screen
-        name="auth/login"
-        options={{
-          headerShown: false,
-          gestureEnabled: false,
-          animation: 'fade',
-        }}
-      />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="checkout" options={{ headerShown: false }} />
-      <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
-      <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="membership-privileges" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="points-history" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="vouchers" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      <Stack.Screen name="order-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      >
+        <Stack.Screen
+          name="onboarding"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
+        <Stack.Screen
+          name="setup-preferences"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="setup-permissions"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        {/* Trang Login riêng biệt, bắt buộc trước khi vào app */}
+        <Stack.Screen
+          name="auth/login"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="membership-privileges" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="points-history" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="vouchers" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="voucher-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="order-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
 
-      {/* WebView: mở từ dưới lên */}
-      <Stack.Screen
-        name="webview"
-        options={{
-          headerShown: false,
-          gestureEnabled: true,
-          animation: 'slide_from_bottom',
-        }}
-      />
-      
-      {/* Trang chi tiết thông báo riêng biệt */}
-      <Stack.Screen
-        name="notification-detail"
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      />
-    </Stack>
+        {/* WebView: mở từ dưới lên */}
+        <Stack.Screen
+          name="webview"
+          options={{
+            headerShown: false,
+            gestureEnabled: true,
+            animation: 'slide_from_bottom',
+          }}
+        />
+        
+        {/* Trang chi tiết thông báo riêng biệt */}
+        <Stack.Screen
+          name="notification-detail"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+      </Stack>
+    </ThemeProvider>
   );
 }
 
 function AppLockGuard({ children }: { children: React.ReactNode }) {
-  const { isAppLockEnabled, language } = useSettings();
+  const { isAppLockEnabled, language, t } = useSettings();
   const [isLocked, setIsLocked] = useState(false);
   const appState = useRef(AppState.currentState);
   const isAuthenticating = useRef(false);
@@ -255,7 +281,7 @@ function AppLockGuard({ children }: { children: React.ReactNode }) {
 
     if (hasHardware && isEnrolled) {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: language === 'vi' ? 'Xác thực để mở khóa ứng dụng' : 'Authenticate to unlock app',
+        promptMessage: t('authToContinue'),
         disableDeviceFallback: false,
       });
       if (result.success) {
@@ -310,10 +336,10 @@ function AppLockGuard({ children }: { children: React.ReactNode }) {
     return (
       <View style={styles.lockContainer}>
         <Ionicons name="lock-closed" size={60} color="#2D3B34" style={{ marginBottom: 20 }} />
-        <Text style={styles.lockTitle}>{language === 'vi' ? 'Ứng dụng đã khóa' : 'App Locked'}</Text>
-        <Text style={styles.lockSub}>{language === 'vi' ? 'Vui lòng xác thực để tiếp tục' : 'Please authenticate to continue'}</Text>
+        <Text style={styles.lockTitle}>{t('appLocked')}</Text>
+        <Text style={styles.lockSub}>{t('authToContinue')}</Text>
         <TouchableOpacity style={styles.unlockBtn} onPress={authenticate}>
-          <Text style={styles.unlockBtnText}>{language === 'vi' ? 'Mở khóa' : 'Unlock'}</Text>
+          <Text style={styles.unlockBtnText}>{t('unlock')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -323,10 +349,12 @@ function AppLockGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AppWrapper() {
-  const { fontSize, language } = useSettings();
+  const themeColors = useThemeColor();
+  const isDark = checkIsDark(themeColors);
 
   return (
-    <View key={`${fontSize}-${language}`} style={styles.rootContainer}>
+    <View style={[styles.rootContainer, { backgroundColor: themeColors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <AppLockGuard>
         <NavigationRoot />
       </AppLockGuard>
@@ -373,7 +401,6 @@ export default function RootLayout() {
               <NotificationBadgeProvider>
                 <RealtimeDataProvider>
                   <DialogProvider>
-                    <StatusBar style="dark" />
                     <AppWrapper />
                     <ForceUpdateChecker />
                   </DialogProvider>

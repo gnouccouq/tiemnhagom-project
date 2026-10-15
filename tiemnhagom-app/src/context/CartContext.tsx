@@ -1,9 +1,21 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react';
 import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CartItem, Product, ProductVariant } from '../types';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { CartItem, Product, ProductVariant, UserAddress } from '../types';
+import { CouponItem } from '../services/couponService';
 import { useAuth } from './AuthContext';
 import { FlyingCartOverlay, FlyingItemData } from '../components/FlyingCartOverlay';
+import {
+  isHCMProvince,
+  getMemberTier,
+  calculateMembershipDiscount,
+  calculateAppShippingFee,
+  MemberTierInfo,
+} from '../utils/shipping';
+
+export type PaymentMethodType = 'cod' | 'banking';
 
 interface CartContextType {
   cart: CartItem[];
@@ -15,30 +27,148 @@ interface CartContextType {
   subtotal: number;
   shippingFee: number;
   discountAmount: number;
+  memberDiscount: number;
+  memberTier: MemberTierInfo;
   totalAmount: number;
   appliedCoupon: string | null;
+  appliedCouponItem: CouponItem | null;
   applyCoupon: (code: string) => boolean;
+  applyCouponItem: (coupon: CouponItem | null) => void;
   removeCoupon: () => void;
   shippingMethod: 'standard' | 'express_2h' | 'pickup';
   setShippingMethod: (method: 'standard' | 'express_2h' | 'pickup') => void;
+  selectedAddress: UserAddress | null;
+  setSelectedAddress: (addr: UserAddress | null) => void;
+  isHCM: boolean;
+  paymentMethod: PaymentMethodType;
+  setPaymentMethod: (method: PaymentMethodType) => void;
+  orderNote: string;
+  setOrderNote: (note: string) => void;
   cartBounceKey: number;
   triggerCartBounce: () => void;
   flyToCart: (imageUri: string, startX?: number, startY?: number, targetX?: number, targetY?: number) => void;
 }
 
+const STORAGE_KEY_GUEST = '@tiemnhagom_cart_guest';
 const getCartStorageKey = (uid: string) => `@tiemnhagom_cart_${uid}`;
 const CartContext = createContext<CartContextType>({} as CartContextType);
 
+// Hàm chuẩn hóa dữ liệu giỏ hàng để lưu Firestore tương thích 100% với Web (không chứa trường undefined)
+const sanitizeCartForFirestore = (items: CartItem[]) => {
+  return items.map((item) => ({
+    id: item.id,
+    productId: item.productId || item.id,
+    name: item.name || 'Sản phẩm gốm',
+    price: Number(item.price) || 0,
+    originalPrice: Number(item.originalPrice ?? item.price) || 0,
+    quantity: Math.max(1, Number(item.quantity) || 1),
+    imageUrl: item.imageUrl || '',
+    image: item.imageUrl || '', // Web sử dụng field image
+    variant: item.variant?.name || (typeof item.variant === 'string' ? item.variant : ''), // Web hiển thị variant dạng chuỗi
+    variantObj: item.variant
+      ? {
+          type: item.variant.type || '',
+          name: item.variant.name || '',
+          imageUrl: item.variant.imageUrl || '',
+        }
+      : null,
+    maxStock: Number(item.maxStock) || 99,
+    isGift: false,
+  }));
+};
+
+// Hàm phân tích dữ liệu giỏ hàng từ Firestore (từ Web hoặc App khác) về chuẩn CartItem của App
+const parseCartFromFirestore = (rawItems: any[]): CartItem[] => {
+  if (!Array.isArray(rawItems)) return [];
+  return rawItems.map((item) => {
+    let variantObj: any = undefined;
+    if (item.variantObj && typeof item.variantObj === 'object') {
+      variantObj = {
+        type: item.variantObj.type || 'pattern',
+        name: item.variantObj.name || '',
+        imageUrl: item.variantObj.imageUrl || '',
+      };
+    } else if (item.variant && typeof item.variant === 'string') {
+      variantObj = {
+        type: 'pattern',
+        name: item.variant,
+        imageUrl: item.imageUrl || item.image || '',
+      };
+    } else if (item.variant && typeof item.variant === 'object') {
+      variantObj = item.variant;
+    }
+
+    return {
+      id: String(item.id || item.productId || `item_${Date.now()}`),
+      productId: String(item.productId || item.id || ''),
+      name: String(item.name || 'Sản phẩm gốm'),
+      price: Number(item.price) || 0,
+      originalPrice: Number(item.originalPrice || item.price) || 0,
+      quantity: Math.max(1, Number(item.quantity) || 1),
+      imageUrl: item.imageUrl || item.image || '',
+      variant: variantObj,
+      maxStock: Number(item.maxStock) || 99,
+    };
+  });
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const currentUid = user?.uid || 'guest';
-  const loadedUserRef = useRef<string | null>(null);
+  const { user, userProfile } = useAuth();
+  const currentUid = user?.uid || null;
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [appliedCouponItem, setAppliedCouponItem] = useState<CouponItem | null>(null);
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express_2h' | 'pickup'>('standard');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('cod');
+  const [orderNote, setOrderNote] = useState<string>('');
+  const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null);
+
   const [cartBounceKey, setCartBounceKey] = useState<number>(0);
   const [flyingItems, setFlyingItems] = useState<FlyingItemData[]>([]);
+  const isSyncingRef = useRef(false);
+
+  // Tự động khởi tạo địa chỉ mặc định từ hồ sơ người dùng nếu chưa chọn
+  useEffect(() => {
+    if (selectedAddress) return;
+
+    if (userProfile?.addresses && userProfile.addresses.length > 0) {
+      const defaultAddr = userProfile.addresses.find((a) => a.isDefault) || userProfile.addresses[0];
+      setSelectedAddress(defaultAddr);
+    } else if (userProfile?.address || userProfile?.streetAddress) {
+      setSelectedAddress({
+        fullName: userProfile.fullName || userProfile.displayName || '',
+        phone: userProfile.phone || '',
+        address: userProfile.address || userProfile.streetAddress || '',
+        locationName: userProfile.locationName,
+        provinceName: userProfile.locationName,
+        isDefault: true,
+      });
+    }
+  }, [userProfile, selectedAddress]);
+
+  // Kiểm tra địa chỉ đã chọn có thuộc TP. Hồ Chí Minh hay không
+  const isHCM = useMemo(() => {
+    if (!selectedAddress) return true; // Mặc định trong TP.HCM nếu chưa chọn
+    return (
+      isHCMProvince(selectedAddress.provinceName) ||
+      isHCMProvince(selectedAddress.locationName) ||
+      isHCMProvince(selectedAddress.address)
+    );
+  }, [selectedAddress]);
+
+  // Nếu chuyển sang địa chỉ ngoại tỉnh nhưng đang chọn Hỏa tốc 2 giờ, tự động quay về Giao tiêu chuẩn
+  useEffect(() => {
+    if (!isHCM && shippingMethod === 'express_2h') {
+      setShippingMethod('standard');
+    }
+  }, [isHCM, shippingMethod]);
+
+  // Lấy thông tin hạng thành viên từ chi tiêu thực tế (Đồng bộ với Web)
+  const memberTier = useMemo(() => {
+    const totalSpent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
+    return getMemberTier(totalSpent, userProfile?.tier || userProfile?.membershipTier);
+  }, [userProfile]);
 
   const triggerCartBounce = () => {
     setCartBounceKey((k) => k + 1);
@@ -72,101 +202,168 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     triggerCartBounce();
   };
 
-  // Load cart from storage whenever user changes
+  // 1. Phục hồi và đồng bộ giỏ hàng khi người dùng thay đổi (Đăng nhập / Đăng xuất / Khởi động)
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | undefined;
     let isCancelled = false;
-    (async () => {
-      try {
-        const key = getCartStorageKey(currentUid);
-        const stored = await AsyncStorage.getItem(key);
-        if (!isCancelled) {
-          if (stored) {
-            setCart(JSON.parse(stored));
-          } else {
-            setCart([]);
+
+    const initCart = async () => {
+      if (currentUid) {
+        // --- NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP ---
+        const cacheKey = getCartStorageKey(currentUid);
+        try {
+          // A. Đọc nhanh từ cache AsyncStorage để render ngay tức thì
+          const cached = await AsyncStorage.getItem(cacheKey);
+          if (cached && !isCancelled) {
+            setCart(JSON.parse(cached));
           }
-          setAppliedCoupon(null);
-          loadedUserRef.current = currentUid;
+
+          // B. Kiểm tra xem có giỏ hàng khách lưu tạm trước khi login không
+          let guestCart: CartItem[] = [];
+          const guestCached = await AsyncStorage.getItem(STORAGE_KEY_GUEST);
+          if (guestCached) {
+            try {
+              guestCart = JSON.parse(guestCached) || [];
+            } catch {}
+          }
+
+          // C. Lắng nghe Realtime từ Firestore collection `carts/{uid}` (Đồng bộ trực tiếp 2 chiều với Web)
+          const cartRef = doc(db, 'carts', currentUid);
+          unsubscribeFirestore = onSnapshot(cartRef, async (snap) => {
+            if (isCancelled) return;
+            let firestoreItems: CartItem[] = [];
+            if (snap.exists()) {
+              firestoreItems = parseCartFromFirestore(snap.data()?.items || []);
+            }
+
+            // Nếu có giỏ hàng khách trước khi login, gộp vào giỏ hàng tài khoản
+            if (guestCart.length > 0) {
+              const merged = [...firestoreItems];
+              guestCart.forEach((gItem) => {
+                const exIdx = merged.findIndex((m) => m.id === gItem.id);
+                if (exIdx > -1) {
+                  merged[exIdx].quantity += gItem.quantity;
+                } else {
+                  merged.push(gItem);
+                }
+              });
+              guestCart = [];
+              await AsyncStorage.removeItem(STORAGE_KEY_GUEST).catch(() => {});
+              isSyncingRef.current = true;
+              await setDoc(cartRef, { items: sanitizeCartForFirestore(merged), updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+              isSyncingRef.current = false;
+              firestoreItems = merged;
+            }
+
+            setCart(firestoreItems);
+            await AsyncStorage.setItem(cacheKey, JSON.stringify(firestoreItems)).catch(() => {});
+          });
+        } catch (e) {
+          console.warn('Lỗi đọc giỏ hàng Firestore:', e);
         }
-      } catch (e) {
-        console.warn('Lỗi đọc giỏ hàng từ AsyncStorage:', e);
-        if (!isCancelled) {
-          setCart([]);
-          setAppliedCoupon(null);
-          loadedUserRef.current = currentUid;
+      } else {
+        // --- KHÁCH CHƯA ĐĂNG NHẬP ---
+        try {
+          const guestCached = await AsyncStorage.getItem(STORAGE_KEY_GUEST);
+          if (!isCancelled) {
+            setCart(guestCached ? JSON.parse(guestCached) : []);
+          }
+        } catch (e) {
+          console.warn('Lỗi đọc giỏ hàng khách:', e);
+          if (!isCancelled) setCart([]);
         }
       }
-    })();
+      setAppliedCoupon(null);
+      setAppliedCouponItem(null);
+    };
+
+    initCart();
 
     return () => {
       isCancelled = true;
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
     };
   }, [currentUid]);
 
-  // Save cart to storage whenever it changes, but ONLY for currently loaded user
-  useEffect(() => {
-    if (loadedUserRef.current !== currentUid) return;
-    (async () => {
-      try {
-        const key = getCartStorageKey(currentUid);
-        await AsyncStorage.setItem(key, JSON.stringify(cart));
-      } catch (e) {
-        console.warn('Lỗi lưu giỏ hàng vào AsyncStorage:', e);
+  // Hàm trung gian cập nhật State, lưu AsyncStorage và đẩy Realtime lên Firestore
+  const saveCartState = async (nextCart: CartItem[]) => {
+    setCart(nextCart);
+    try {
+      if (currentUid) {
+        const cacheKey = getCartStorageKey(currentUid);
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(nextCart));
+
+        const cartRef = doc(db, 'carts', currentUid);
+        await setDoc(
+          cartRef,
+          {
+            items: sanitizeCartForFirestore(nextCart),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      } else {
+        await AsyncStorage.setItem(STORAGE_KEY_GUEST, JSON.stringify(nextCart));
       }
-    })();
-  }, [cart, currentUid]);
+    } catch (err) {
+      console.warn('Lỗi đồng bộ giỏ hàng lên Firestore:', err);
+    }
+  };
 
   const addToCart = (product: Product, quantity = 1, variant?: ProductVariant) => {
-    setCart((prev) => {
-      const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
-      const itemId = `${product.id}${variantKey}`;
+    const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
+    const itemId = `${product.id}${variantKey}`;
 
-      const effectivePrice = variant?.price
-        ? variant.price
-        : product.salePrice
-        ? product.salePrice
-        : product.sale
-        ? Math.round(product.price * (1 - product.sale / 100))
-        : product.price;
+    const effectivePrice = variant?.price
+      ? variant.price
+      : product.salePrice
+      ? product.salePrice
+      : product.sale
+      ? Math.round(product.price * (1 - product.sale / 100))
+      : product.price;
 
-      const existingIndex = prev.findIndex((item) => item.id === itemId);
+    const existingIndex = cart.findIndex((item) => item.id === itemId);
+    let nextCart: CartItem[];
 
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        const newQty = Math.min(
-          updated[existingIndex].quantity + quantity,
-          updated[existingIndex].maxStock || 99
-        );
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: newQty,
-        };
-        return updated;
-      } else {
-        const newItem: CartItem = {
-          id: itemId,
-          productId: product.id,
-          name: product.name,
-          price: effectivePrice,
-          originalPrice: product.price,
-          quantity: Math.min(quantity, variant?.stock ?? product.stock ?? 99),
-          imageUrl: variant?.imageUrl || product.imageUrl || (product.images && product.images[0]) || '',
-          variant: variant
-            ? {
-                type: variant.type,
-                name: variant.name,
-                imageUrl: variant.imageUrl,
-              }
-            : undefined,
-          maxStock: variant?.stock ?? product.stock ?? 99,
-        };
-        return [...prev, newItem];
-      }
-    });
+    if (existingIndex > -1) {
+      nextCart = [...cart];
+      const newQty = Math.min(
+        nextCart[existingIndex].quantity + quantity,
+        nextCart[existingIndex].maxStock || 99
+      );
+      nextCart[existingIndex] = {
+        ...nextCart[existingIndex],
+        quantity: newQty,
+      };
+    } else {
+      const newItem: CartItem = {
+        id: itemId,
+        productId: product.id,
+        name: product.name,
+        price: effectivePrice,
+        originalPrice: product.price,
+        quantity: Math.min(quantity, variant?.stock ?? product.stock ?? 99),
+        imageUrl: variant?.imageUrl || product.imageUrl || (product.images && product.images[0]) || '',
+        variant: variant
+          ? {
+              type: variant.type,
+              name: variant.name,
+              imageUrl: variant.imageUrl,
+            }
+          : undefined,
+        maxStock: variant?.stock ?? product.stock ?? 99,
+      };
+      nextCart = [...cart, newItem];
+    }
+
+    saveCartState(nextCart);
   };
 
   const removeFromCart = (itemId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== itemId));
+    const nextCart = cart.filter((item) => item.id !== itemId);
+    saveCartState(nextCart);
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -174,57 +371,80 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeFromCart(itemId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          return {
-            ...item,
-            quantity: Math.min(quantity, item.maxStock || 99),
-          };
-        }
-        return item;
-      })
-    );
+    const nextCart = cart.map((item) => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          quantity: Math.min(quantity, item.maxStock || 99),
+        };
+      }
+      return item;
+    });
+    saveCartState(nextCart);
   };
 
   const clearCart = () => {
-    setCart([]);
+    saveCartState([]);
     setAppliedCoupon(null);
+    setAppliedCouponItem(null);
   };
 
   const applyCoupon = (code: string): boolean => {
     const clean = code.trim().toUpperCase();
     if (clean === 'GOMMOI' || clean === 'TIEMNHAGOM' || clean === 'CHAOBAN') {
       setAppliedCoupon(clean);
+      setAppliedCouponItem(null);
       return true;
     }
     return false;
   };
 
+  const applyCouponItem = (coupon: CouponItem | null) => {
+    if (!coupon) {
+      setAppliedCouponItem(null);
+      setAppliedCoupon(null);
+      return;
+    }
+    setAppliedCouponItem(coupon);
+    setAppliedCoupon(coupon.code || coupon.id);
+  };
+
   const removeCoupon = () => {
     setAppliedCoupon(null);
+    setAppliedCouponItem(null);
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-  // Phí ship: Tự lấy tại cửa hàng = 0, Hỏa tốc 2h = 30k, Tiêu chuẩn = 20k
-  let shippingFee = 20000;
-  if (shippingMethod === 'pickup') shippingFee = 0;
-  if (shippingMethod === 'express_2h') shippingFee = 35000;
-  if (subtotal >= 500000 && shippingMethod === 'standard') shippingFee = 0; // Miễn phí ship đơn từ 500k
+  // Phí ship: Chuẩn hóa theo bản web
+  let shippingFee = calculateAppShippingFee(shippingMethod, isHCM, subtotal, memberTier.freeShipping);
+
+  // Chiết khấu thành viên (Membership Discount): Chuẩn hóa theo bản web
+  const memberDiscount = calculateMembershipDiscount(subtotal, memberTier);
 
   // Giảm giá voucher
   let discountAmount = 0;
-  if (appliedCoupon === 'GOMMOI') {
-    discountAmount = Math.min(30000, subtotal * 0.1);
+  if (appliedCouponItem) {
+    if (appliedCouponItem.type === 'free_ship') {
+      discountAmount = shippingFee;
+      shippingFee = 0;
+    } else if (appliedCouponItem.type === 'percent') {
+      const raw = Math.round((subtotal * appliedCouponItem.value) / 100);
+      discountAmount = appliedCouponItem.maxDiscount ? Math.min(raw, appliedCouponItem.maxDiscount) : raw;
+    } else {
+      // 'fixed'
+      discountAmount = Math.min(appliedCouponItem.value, subtotal);
+    }
+  } else if (appliedCoupon === 'GOMMOI') {
+    discountAmount = Math.min(30000, Math.round(subtotal * 0.1));
   } else if (appliedCoupon === 'TIEMNHAGOM') {
     discountAmount = 20000;
   } else if (appliedCoupon === 'CHAOBAN') {
-    discountAmount = Math.min(50000, subtotal * 0.15);
+    discountAmount = Math.min(50000, Math.round(subtotal * 0.15));
   }
 
-  const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount);
+  const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount - memberDiscount);
 
   return (
     <CartContext.Provider
@@ -238,12 +458,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subtotal,
         shippingFee,
         discountAmount,
+        memberDiscount,
+        memberTier,
         totalAmount,
         appliedCoupon,
+        appliedCouponItem,
         applyCoupon,
+        applyCouponItem,
         removeCoupon,
         shippingMethod,
         setShippingMethod,
+        selectedAddress,
+        setSelectedAddress,
+        isHCM,
+        paymentMethod,
+        setPaymentMethod,
+        orderNote,
+        setOrderNote,
         cartBounceKey,
         triggerCartBounce,
         flyToCart,
@@ -254,6 +485,5 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </CartContext.Provider>
   );
 };
-
 
 export const useCart = () => useContext(CartContext);

@@ -1,31 +1,29 @@
-// app/cart.tsx
-import React, { useState } from 'react';
+// app/(tabs)/cart.tsx
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   StatusBar,
-  Alert,
   Platform,
   Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
-import { Header } from '../../src/components/Header';
-import { BlurButton } from '../../src/components/BlurButton';
-import { CartItemCard } from '../../src/components/CartItemCard';
 import { EmptyState } from '../../src/components/EmptyState';
-import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
+import { useThemeColor } from '../../src/constants/theme';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { formatCurrency } from '../../src/utils/format';
+import { getBestSellingProducts } from '../../src/services/productService';
+import { Product } from '../../src/types';
 
 export default function CartScreen() {
   const Colors = useThemeColor();
@@ -33,44 +31,41 @@ export default function CartScreen() {
   const styles = getStyles(Colors, isDark);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const {
     cart,
     updateQuantity,
     removeFromCart,
     clearCart,
+    cartCount,
     subtotal,
-    shippingFee,
-    discountAmount,
-    totalAmount,
-    appliedCoupon,
-    applyCoupon,
-    removeCoupon,
-    shippingMethod,
-    setShippingMethod,
+    memberTier,
+    flyToCart,
+    addToCart,
   } = useCart();
+
   const { t } = useSettings();
   const dialog = useDialog();
 
-  const [couponInput, setCouponInput] = useState('');
-  const [couponError, setCouponError] = useState('');
   const [scrollY, setScrollY] = useState(0);
-  const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: 10, delay: 40 });
+  const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 40 });
 
-  const handleApplyCoupon = () => {
-    if (!couponInput.trim()) return;
-    const ok = applyCoupon(couponInput);
-    if (ok) {
-      setCouponError('');
-      setCouponInput('');
-    } else {
-      setCouponError(t('invalidCoupon'));
-    }
-  };
+  const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
 
-  const handleCheckoutPress = () => {
-    if (cart.length === 0) return;
-    router.push('/checkout');
-  };
+  useEffect(() => {
+    let isCancelled = false;
+    getBestSellingProducts(6)
+      .then((items) => {
+        if (!isCancelled) {
+          setSuggestedProducts(items);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const confirmClearCart = () => {
     dialog.confirm(
@@ -83,22 +78,26 @@ export default function CartScreen() {
     );
   };
 
+  const handleProceedToCheckout = () => {
+    if (cart.length === 0) return;
+    router.push('/checkout');
+  };
+
   if (cart.length === 0) {
     return (
       <View style={styles.safeArea}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
-        {/* Custom Header */}
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
         <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
           <View style={{ width: 40 }} />
-          <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
+          <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.emptyContainer}>
           <EmptyState
             icon="bag-handle-outline"
-            title={t('emptyCartTitle')}
-            message={t('emptyCartMsg')}
-            buttonText={t('exploreCeramics')}
+            title={t('emptyCartTitle') || 'Giỏ hàng trống'}
+            message={t('emptyCartMsg') || 'Bạn chưa có sản phẩm gốm nào trong giỏ. Hãy dạo quanh cửa hàng và chọn những món ưng ý nhé!'}
+            buttonText={t('exploreCeramics') || 'Khám phá đồ gốm ngay'}
             onButtonPress={() => router.push('/(tabs)/products')}
           />
         </View>
@@ -107,497 +106,563 @@ export default function CartScreen() {
   }
 
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
+  const freeShippingThreshold = 500000;
+  const remainingForFreeShip = Math.max(0, freeShippingThreshold - subtotal);
+
+  const tabFloatingBottom = Math.max(insets.bottom - 10, 6);
+  const bottomBarOffset = 64 + tabFloatingBottom + 12;
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      {/* Custom Header */}
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
+
+      {/* Header không có vạch kẻ đáy theo chuẩn GEMINI.md */}
       <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
         {blurProgress > 0 && (
           <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
             <BlurView
               intensity={Platform.OS === 'ios' ? 85 : 75}
               tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              blurMethod="none"
               style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor:
-                    Colors.cardBackground === '#FFFFFF'
-                      ? Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)'
-                      : Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)',
-                },
-              ]}
             />
           </View>
         )}
         <View style={{ width: 40 }} />
-        <Text style={styles.headerTitle}>{t('cartHeader')}</Text>
-        {cart.length > 0 ? (
-          <BlurButton
-            style={styles.roundClearBtn}
-            onPress={confirmClearCart}
-            accessibilityLabel={t('clear') || 'Xóa tất cả'}
-          >
-            <Ionicons name="trash-outline" size={19} color={Colors.error || '#DC2626'} />
-          </BlurButton>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
+
+        <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
+
+        <TouchableOpacity
+          style={styles.roundClearBtn}
+          onPress={confirmClearCart}
+          activeOpacity={0.8}
+          accessibilityLabel={t('clear') || 'Xóa tất cả'}
+        >
+          <Ionicons name="trash-outline" size={19} color={Colors.error || '#DC2626'} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { 
+          {
             paddingTop: insets.top + 54 + 8,
-            paddingBottom: Math.max(insets.bottom, 16) + 120,
-          }
+            paddingBottom: bottomBarOffset + 85,
+          },
         ]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
-        {/* Cart Header Action */}
-        <View style={styles.cartTopBar}>
-          <Text style={styles.cartTotalCount}>
-            {cart.reduce((a, b) => a + b.quantity, 0)} {t('productsInCart')}
+        {/* Banner tiến độ Freeship */}
+        <View style={styles.freeShipNoticeCard}>
+          <Ionicons
+            name={remainingForFreeShip === 0 ? 'checkmark-circle' : 'gift-outline'}
+            size={20}
+            color="#9C7156"
+          />
+          <Text style={styles.freeShipNoticeText}>
+            {remainingForFreeShip === 0
+              ? 'Đơn hàng của bạn đã đủ điều kiện Miễn phí giao hàng tiêu chuẩn!'
+              : `Mua thêm ${formatCurrency(remainingForFreeShip)} để được Miễn phí giao hàng toàn quốc!`}
           </Text>
         </View>
 
-        {/* Item List */}
-        <View style={styles.itemList}>
-          {cart.map((item) => (
-            <CartItemCard
-              key={item.id}
-              item={item}
-              onUpdateQuantity={(qty) => updateQuantity(item.id, qty)}
-              onRemove={() => removeFromCart(item.id)}
-            />
-          ))}
-        </View>
-
-        {/* Shipping Method Selector */}
+        {/* Danh sách các sản phẩm trong giỏ để khách kiểm tra */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeaderTitle}>{t('shippingMethod')}</Text>
-
-          <TouchableOpacity
-            style={[styles.shippingOption, shippingMethod === 'standard' && styles.shippingOptionActive]}
-            onPress={() => setShippingMethod('standard')}
-          >
-            <Ionicons
-              name={shippingMethod === 'standard' ? 'radio-button-on' : 'radio-button-off'}
-              size={18}
-              color={shippingMethod === 'standard' ? Colors.primary : Colors.textMuted}
-            />
-            <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>{t('standardDelivery')}</Text>
-              <Text style={styles.shippingSub}>{t('standardDeliveryDesc')}</Text>
-            </View>
-            <Text style={styles.shippingPrice}>
-              {subtotal >= 500000 ? t('free') : formatCurrency(20000)}
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardHeaderTitle}>
+              {`${t('dishes') || 'Sản phẩm'} (${cartCount})`}
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/products')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.editActionText}>+ {t('addMoreItems') || 'Thêm món nữa'}</Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            style={[styles.shippingOption, shippingMethod === 'express_2h' && styles.shippingOptionActive]}
-            onPress={() => setShippingMethod('express_2h')}
-          >
-            <Ionicons
-              name={shippingMethod === 'express_2h' ? 'radio-button-on' : 'radio-button-off'}
-              size={18}
-              color={shippingMethod === 'express_2h' ? Colors.primary : Colors.textMuted}
-            />
-            <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>{t('expressDelivery')}</Text>
-              <Text style={styles.shippingSub}>{t('expressDeliveryDesc')}</Text>
-            </View>
-            <Text style={styles.shippingPrice}>{formatCurrency(35000)}</Text>
-          </TouchableOpacity>
+          <View style={styles.itemList}>
+            {cart.map((item) => {
+              const itemTotal = item.price * item.quantity;
+              const variantName = item.variant?.name || (typeof item.variant === 'string' ? item.variant : '');
 
-          <TouchableOpacity
-            style={[styles.shippingOption, shippingMethod === 'pickup' && styles.shippingOptionActive]}
-            onPress={() => setShippingMethod('pickup')}
-          >
-            <Ionicons
-              name={shippingMethod === 'pickup' ? 'radio-button-on' : 'radio-button-off'}
-              size={18}
-              color={shippingMethod === 'pickup' ? Colors.primary : Colors.textMuted}
-            />
-            <View style={styles.shippingTextWrap}>
-              <Text style={styles.shippingTitle}>{t('pickup')}</Text>
-              <Text style={styles.shippingSub}>{t('pickupDesc')}</Text>
-            </View>
-            <Text style={styles.shippingPrice}>{formatCurrency(0)}</Text>
-          </TouchableOpacity>
+              return (
+                <View key={item.id} style={styles.cartItemRow}>
+                  <Image
+                    source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/tiemnhagom.png')}
+                    style={styles.itemImg}
+                    contentFit="cover"
+                  />
+
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                    {variantName ? (
+                      <Text style={styles.itemVariantText}>{variantName}</Text>
+                    ) : null}
+
+                    {/* Stepper (-) qty (+) */}
+                    <View style={styles.stepperContainer}>
+                      <TouchableOpacity
+                        style={styles.stepBtn}
+                        onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="remove" size={16} color={Colors.textPrimary} />
+                      </TouchableOpacity>
+
+                      <Text style={styles.stepQtyText}>{item.quantity}</Text>
+
+                      <TouchableOpacity
+                        style={styles.stepBtn}
+                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="add" size={16} color={Colors.textPrimary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.itemRightCol}>
+                    <Text style={styles.itemPriceText}>{formatCurrency(itemTotal)}</Text>
+                    <TouchableOpacity
+                      style={styles.itemDeleteBtn}
+                      onPress={() => removeFromCart(item.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+                      <Text style={styles.itemDeleteText}>{t('clear') || 'Xóa'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
 
-        {/* Voucher / Mã giảm giá */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeaderTitle}>{t('voucherDiscount')}</Text>
-          {appliedCoupon ? (
-            <View style={styles.appliedCouponRow}>
-              <View style={styles.couponTag}>
-                <Ionicons name="pricetag" size={16} color={Colors.primary} />
-                <Text style={styles.couponCodeText}>{appliedCoupon}</Text>
-              </View>
-              <TouchableOpacity onPress={removeCoupon} style={styles.removeCouponBtn}>
-                <Text style={styles.removeCouponText}>{t('remove')}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <View style={styles.couponInputRow}>
-                <TextInput
-                  style={styles.couponInput}
-                  placeholder={t('enterCoupon')}
-                  placeholderTextColor={Colors.textMuted}
-                  value={couponInput}
-                  onChangeText={setCouponInput}
-                  autoCapitalize="characters"
-                />
-                <TouchableOpacity style={styles.applyCouponBtn} onPress={handleApplyCoupon}>
-                  <Text style={styles.applyCouponText}>{t('apply')}</Text>
-                </TouchableOpacity>
-              </View>
-              {couponError ? <Text style={styles.couponErrorText}>{couponError}</Text> : null}
-            </View>
-          )}
-        </View>
+        {/* Khối gợi ý đồ gốm đi kèm ("Món xịn phải thử") */}
+        {suggestedProducts.length > 0 && (
+          <View style={styles.crossSellSection}>
+            <Text style={styles.crossSellSectionTitle}>
+              {t('mustTrySection') || 'Món xịn phải thử'}
+            </Text>
 
-        {/* Price Breakdown */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.crossSellScrollContent}
+            >
+              {suggestedProducts.map((p) => {
+                const effPrice = p.salePrice || (p.sale ? Math.round(p.price * (1 - p.sale / 100)) : p.price);
+
+                return (
+                  <View key={p.id} style={styles.crossSellCard}>
+                    <Image
+                      source={p.imageUrl ? { uri: p.imageUrl } : require('../../assets/images/tiemnhagom.png')}
+                      style={styles.crossSellImg}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.crossSellName} numberOfLines={2}>
+                      {p.name}
+                    </Text>
+                    <View style={styles.crossSellBottomRow}>
+                      <Text style={styles.crossSellPrice}>{formatCurrency(effPrice)}</Text>
+                      <TouchableOpacity
+                        style={styles.crossSellAddBtn}
+                        onPress={() => {
+                          addToCart(p, 1);
+                          flyToCart(p.imageUrl || '');
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Tóm tắt tạm tính giỏ hàng */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>{t('subtotal')}</Text>
+            <Text style={styles.summaryLabel}>{t('subtotal') || 'Tạm tính'}</Text>
             <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>{t('shippingFee')}</Text>
-            <Text style={styles.summaryValue}>
-              {shippingFee === 0 ? t('free') : formatCurrency(shippingFee)}
-            </Text>
-          </View>
-
-          {discountAmount > 0 && (
+          {memberTier.discount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: Colors.badgeSale }]}>{t('voucherDiscountAmount')}</Text>
-              <Text style={[styles.summaryValue, { color: Colors.badgeSale }]}>
-                -{formatCurrency(discountAmount)}
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+                {t('memberTierDiscountLabel') || 'Ưu đãi hạng'} {memberTier.name} (-{memberTier.discount}%)
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
+                Áp dụng tại bước đặt hàng
               </Text>
             </View>
           )}
 
-          <View style={styles.divider} />
-
-          <View style={styles.summaryRowTotal}>
-            <Text style={styles.totalLabel}>{t('totalPayment')}</Text>
-            <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
-          </View>
+          <Text style={styles.vatNoteText}>{t('vatIncludedNotice') || '(Giá đã bao gồm VAT)'}</Text>
         </View>
-
-        {/* Checkout Button */}
-        <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckoutPress} activeOpacity={0.88}>
-          <Text style={styles.checkoutBtnText}>{t('proceedToCheckout')}</Text>
-          <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
-        </TouchableOpacity>
       </ScrollView>
+
+      {/* Thanh thanh toán dính đáy nổi bên trên Floating Tab Bar */}
+      <View style={[styles.bottomStickyBar, { bottom: bottomBarOffset }]}>
+        <View style={styles.bottomBarContent}>
+          <View style={styles.bottomSubtotalCol}>
+            <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
+            <Text style={styles.bottomSubtotalValue}>{formatCurrency(subtotal)}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.proceedPillBtn}
+            onPress={handleProceedToCheckout}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.proceedBtnText}>{t('proceedToCheckout') || 'Tiến hành đặt hàng'}</Text>
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </Animated.View>
   );
 }
 
-const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-  customHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    backgroundColor: 'transparent',
-  },
-  headerBackBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : Colors.cardBackground,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.08,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : Colors.borderLight,
-  },
-  headerTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  roundClearBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : (Colors.cardBackground || '#FFFFFF'),
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.06,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
-  },
-  headerClearBtn: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#9C7156',
-    paddingHorizontal: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl * 2,
-  },
-  cartTopBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: Spacing.md,
-  },
-  cartTotalCount: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  clearAllBtn: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: '#9C7156',
-    fontWeight: '600',
-  },
-  itemList: {
-    marginBottom: Spacing.md,
-  },
-  sectionCard: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: isDark ? 0 : 1.2,
-    borderColor: isDark ? 'transparent' : Colors.border,
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.03,
-    shadowRadius: 5,
-    elevation: isDark ? 0 : 1,
-  },
-  sectionHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 12,
-  },
-  shippingOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: isDark ? '#2A2A2A' : Colors.borderLight,
-  },
-  shippingOptionActive: {
-    backgroundColor: isDark ? '#2C2C2C' : Colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 8,
-  },
-  shippingTextWrap: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  shippingTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  shippingSub: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  shippingPrice: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  appliedCouponRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: isDark ? '#2C2C2C' : Colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : Colors.border,
-  },
-  couponTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  couponCodeText: {
-    fontFamily: 'ElleGaborStd',
-    fontWeight: '700',
-    color: isDark ? '#E8CCB2' : Colors.textPrimary,
-    fontSize: 13,
-  },
-  removeCouponBtn: {
-    padding: 4,
-  },
-  removeCouponText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#9C7156',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  couponInputRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-  },
-  couponInput: {
-    fontFamily: 'ElleGaborStd',
-    flex: 1,
-    backgroundColor: isDark ? '#2C2C2C' : (Colors.background || '#FAF8F5'),
-    borderRadius: 26,
-    paddingHorizontal: 18,
-    height: 52,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : Colors.border,
-  },
-  applyCouponBtn: {
-    backgroundColor: '#9C7156',
-    borderRadius: 26,
-    paddingHorizontal: 22,
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.1,
-    shadowRadius: 4,
-    elevation: isDark ? 0 : 2,
-  },
-  applyCouponText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  couponErrorText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#9C7156',
-    fontSize: 11,
-    marginTop: 6,
-  },
-  summaryCard: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 6,
-    elevation: isDark ? 0 : 2,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  summaryValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: isDark ? '#2A2A2A' : Colors.divider,
-    marginVertical: 10,
-  },
-  summaryRowTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  totalLabel: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  totalValue: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-  },
-  checkoutBtn: {
-    backgroundColor: '#9C7156',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 52,
-    borderRadius: 26,
-    gap: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  checkoutBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    customHeader: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 50,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 0,
+    },
+    headerTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    roundClearBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.06,
+      shadowRadius: 4,
+      elevation: isDark ? 0 : 2,
+    },
+    scrollContent: {
+      paddingHorizontal: 16,
+      gap: 14,
+    },
+    freeShipNoticeCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
+      padding: 14,
+      borderRadius: 18,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8CCB2',
+    },
+    freeShipNoticeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: '#9C7156',
+      fontWeight: '600',
+      flex: 1,
+      lineHeight: 18,
+    },
+    sectionCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    cardHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    cardHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    editActionText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    itemList: {
+      gap: 12,
+    },
+    cartItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#1E1E1E' : '#F6F4EC',
+    },
+    itemImg: {
+      width: 72,
+      height: 72,
+      borderRadius: 16,
+      backgroundColor: isDark ? '#1E1E1E' : '#F4EFEB',
+      marginRight: 12,
+    },
+    itemInfo: {
+      flex: 1,
+      marginRight: 10,
+    },
+    itemName: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      lineHeight: 18,
+      marginBottom: 4,
+    },
+    itemVariantText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textMuted,
+      marginBottom: 8,
+    },
+    stepperContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    stepBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepQtyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      minWidth: 20,
+      textAlign: 'center',
+    },
+    itemRightCol: {
+      alignItems: 'flex-end',
+      gap: 10,
+    },
+    itemPriceText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    itemDeleteBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    itemDeleteText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textMuted,
+      fontWeight: '600',
+    },
+    crossSellSection: {
+      marginVertical: 4,
+    },
+    crossSellSectionTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 16,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      marginBottom: 10,
+    },
+    crossSellScrollContent: {
+      gap: 12,
+    },
+    crossSellCard: {
+      width: 156,
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 10,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    crossSellImg: {
+      width: '100%',
+      height: 105,
+      borderRadius: 14,
+      backgroundColor: isDark ? '#1E1E1E' : '#F4EFEB',
+      marginBottom: 8,
+    },
+    crossSellName: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      lineHeight: 16,
+      height: 32,
+      marginBottom: 6,
+    },
+    crossSellBottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    crossSellPrice: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    crossSellAddBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    summaryCard: {
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+      gap: 8,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    summaryLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      color: Colors.textSecondary,
+    },
+    summaryValue: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    vatNoteText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textMuted,
+      textAlign: 'right',
+      marginTop: 2,
+    },
+    bottomStickyBar: {
+      position: 'absolute',
+      left: 14,
+      right: 14,
+      backgroundColor: isDark ? 'rgba(22, 22, 22, 0.96)' : 'rgba(255, 255, 255, 0.97)',
+      borderRadius: 28,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderWidth: 1,
+      borderColor: isDark ? '#2A2A2A' : '#E8E1D8',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    bottomBarContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 14,
+    },
+    bottomSubtotalCol: {
+      justifyContent: 'center',
+    },
+    bottomSubtotalLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textSecondary,
+      marginBottom: 2,
+    },
+    bottomSubtotalValue: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+    },
+    proceedPillBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: '#9C7156',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    proceedBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: 40,
+    },
+  });

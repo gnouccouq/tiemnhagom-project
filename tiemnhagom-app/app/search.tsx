@@ -182,15 +182,15 @@ export default function SearchScreen() {
             )}
             ListHeaderComponent={
               <Text style={styles.resultCountText}>
-                Tìm thấy {searchResults.length} sản phẩm cho "{searchText}"
+                {t('foundProductsCount', { count: searchResults.length, keyword: searchText })}
               </Text>
             }
             ListEmptyComponent={
               !loading ? (
                 <EmptyState
                   icon="search-outline"
-                  title="Không tìm thấy sản phẩm"
-                  message={`Rất tiếc, chúng mình không tìm thấy đồ gốm nào phù hợp với từ khóa "${searchText}".`}
+                  title={t('noProductsFound')}
+                  message={t('noProductsFoundDesc', { keyword: searchText })}
                 />
               ) : null
             }

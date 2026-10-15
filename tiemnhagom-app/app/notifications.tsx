@@ -37,6 +37,7 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Header } from '../src/components/Header';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { useNotificationBadge } from '../src/context/NotificationBadgeContext';
+import { useSettings } from '../src/context/SettingsContext';
 
 interface NotificationItem {
   id: string;
@@ -149,6 +150,7 @@ function SwipeableNotifItem({
   styles: any;
   isDark: boolean;
 }) {
+  const { t } = useSettings();
   const translateX = useRef(new Animated.Value(0)).current;
   const deleteOpacity = useRef(new Animated.Value(0)).current;
 
@@ -194,7 +196,7 @@ function SwipeableNotifItem({
       {/* Nền đỏ xóa — phía sau card */}
       <Animated.View style={[swipeStyles.deleteBg, { opacity: deleteOpacity }]}>
         <Ionicons name="trash" size={20} color="#fff" />
-        <Text style={swipeStyles.deleteText}>Xóa</Text>
+        <Text style={swipeStyles.deleteText}>{t('delete') || 'Xóa'}</Text>
       </Animated.View>
 
       {/* Card chính trượt sang trái */}
@@ -222,7 +224,7 @@ function SwipeableNotifItem({
               <Text style={styles.itemTime}>{item.time}</Text>
               {item.link && (
                 <View style={styles.linkRow}>
-                  <Text style={styles.linkText}>Xem chi tiết</Text>
+                  <Text style={styles.linkText}>{t('viewDetails') || 'Xem chi tiết'}</Text>
                   <Ionicons name="chevron-forward" size={12} color={isDark ? '#E8CCB2' : '#111111'} />
                 </View>
               )}
@@ -478,12 +480,13 @@ export default function NotificationsScreen() {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
+  const { t } = useSettings();
 
   return (
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       <Header 
-        title="Thông báo" 
+        title={t('notifications')} 
         showSearch={false} 
         showBack={true} 
         showCart={false} 
@@ -512,7 +515,7 @@ export default function NotificationsScreen() {
           <View style={styles.unreadInfo}>
             {unreadCount > 0 && (
               <View style={styles.unreadBadge}>
-                <Text style={styles.unreadBadgeText}>{unreadCount} mới</Text>
+                <Text style={styles.unreadBadgeText}>{unreadCount} {t('newCount')}</Text>
               </View>
             )}
           </View>
@@ -525,7 +528,7 @@ export default function NotificationsScreen() {
                 activeOpacity={0.7}
               >
                 <Ionicons name="checkmark-done" size={15} color={Colors.textPrimary} />
-                <Text style={styles.markAllText}>Đã đọc</Text>
+                <Text style={styles.markAllText}>{t('markAllAsReadAction')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -535,10 +538,10 @@ export default function NotificationsScreen() {
         <View style={styles.filterWrap}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
             {[
-              { id: 'all', label: 'Tất cả' },
-              { id: 'promo', label: 'Khuyến mãi' },
-              { id: 'order', label: 'Đơn hàng' },
-              { id: 'system', label: 'Hệ thống' },
+              { id: 'all', label: t('notifTabAll') },
+              { id: 'promo', label: t('notifTabPromo') },
+              { id: 'order', label: t('notifTabOrder') },
+              { id: 'system', label: t('notifTabSystem') },
             ].map((f) => {
               const isActive = filter === f.id;
               return (
@@ -562,8 +565,8 @@ export default function NotificationsScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="notifications-off-outline" size={32} color={isDark ? "#9E968D" : "#8E8E93"} />
             </View>
-            <Text style={styles.emptyTitle}>Không có thông báo nào</Text>
-            <Text style={styles.emptyDesc}>Các thông báo về đơn hàng và ưu đãi sẽ xuất hiện tại đây.</Text>
+            <Text style={styles.emptyTitle}>{t('emptyNotificationsTitle')}</Text>
+            <Text style={styles.emptyDesc}>{t('emptyNotificationsDesc')}</Text>
           </View>
         ) : (
           filteredItems.map((item) => (

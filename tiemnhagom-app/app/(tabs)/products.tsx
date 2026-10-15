@@ -22,6 +22,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { ScalePressable } from '../../src/components/ScalePressable';
+import { BlurButton } from '../../src/components/BlurButton';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
@@ -422,13 +423,25 @@ export default function ProductsScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/search' as any)}>
+          <BlurButton
+            style={styles.iconBtn}
+            onPress={() => router.push('/search' as any)}
+            accessibilityLabel="Tìm kiếm"
+          >
             <Ionicons name="search-outline" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/favorites' as any)}>
+          </BlurButton>
+          <BlurButton
+            style={styles.iconBtn}
+            onPress={() => router.push('/favorites' as any)}
+            accessibilityLabel="Yêu thích"
+          >
             <Ionicons name="heart-outline" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications' as any)}>
+          </BlurButton>
+          <BlurButton
+            style={styles.iconBtn}
+            onPress={() => router.push('/notifications' as any)}
+            accessibilityLabel="Thông báo"
+          >
             <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
             {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
@@ -437,7 +450,7 @@ export default function ProductsScreen() {
                 </Text>
               </View>
             )}
-          </TouchableOpacity>
+          </BlurButton>
         </View>
       </View>
 
@@ -742,16 +755,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.1,
-      shadowRadius: 4,
-      elevation: isDark ? 0 : 2,
-      borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : '#F0ECE6',
       position: 'relative',
     },
     notificationBadge: {

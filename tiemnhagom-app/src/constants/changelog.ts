@@ -19,10 +19,31 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.0',
     buildNumber: '1',
+    otaVersion: '20261015.02',
+    releaseDate: '15/10/2026',
+    title: 'Đăng ký & Đăng nhập OTP chuẩn Web',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Đăng ký tối giản chuẩn Web',
+        description: 'Đăng ký nhanh chóng chỉ với Email và Mật khẩu (tối thiểu 6 ký tự), tự động đồng bộ tên hiển thị.',
+      },
+      {
+        title: 'Đăng nhập OTP 6 ô độc lập',
+        description: 'Hỗ trợ đăng nhập số điện thoại với 6 ô số riêng biệt, bàn phím số tự động mở mượt mà và tự điền mã SMS.',
+      },
+      {
+        title: 'Đồng bộ User ID & Đơn hàng',
+        description: 'Tự động tra cứu và liên kết tài khoản cùng lịch sử đơn hàng cũ theo số điện thoại giống 100% bản Web.',
+      },
+    ],
+  },
+  {
+    version: '1.0.0',
+    buildNumber: '1',
     otaVersion: '20261015.01',
     releaseDate: '15/10/2026',
     title: 'Bản sửa lỗi & Nâng cấp hệ thống OTA',
-    badge: 'Mới nhất',
     changes: [
       {
         title: 'Tối ưu form Đăng nhập',

@@ -30,13 +30,14 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, pass: string) => Promise<void>;
-  signUp: (email: string, pass: string, name: string, phone: string) => Promise<void>;
+  signUp: (email: string, pass: string, name?: string, phone?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signInWithGoogleCredential: (idToken: string) => Promise<void>;
   signInWithAppleCredential: (idToken: string, rawNonce: string) => Promise<void>;
   signInWithPhoneSession: (phone: string, displayName?: string) => Promise<void>;
+  signInWithPhoneResult: (authUid: string, phone: string) => Promise<void>;
   updateUserProfileData: (data: Partial<UserProfile>) => Promise<void>;
   saveAddresses: (addresses: UserAddress[]) => Promise<void>;
   addAddress: (address: UserAddress) => Promise<void>;
@@ -226,20 +227,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUserProfile(cred.user.uid);
   };
 
-  const signUp = async (email: string, pass: string, name: string, phone: string) => {
+  const signUp = async (email: string, pass: string, name?: string, phone?: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     if (cred.user) {
-      await updateProfile(cred.user, { displayName: name });
+      const displayName = (name || '').trim() || email.split('@')[0];
+      await updateProfile(cred.user, { displayName });
       const userDocRef = doc(db, 'users', cred.user.uid);
       const newProfile: UserProfile = {
         uid: cred.user.uid,
         email: cred.user.email,
-        displayName: name,
-        phone,
+        displayName,
+        phone: phone || '',
         points: 0,
         tier: 'standard',
       };
-      await setDoc(userDocRef, { ...newProfile, createdAt: serverTimestamp() });
+      await setDoc(userDocRef, {
+        ...newProfile,
+        identifiers: [email.toLowerCase()],
+        createdAt: serverTimestamp(),
+        lastLogin: new Date().toISOString(),
+      });
       setUserProfile(newProfile);
     }
   };
@@ -400,6 +407,220 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Tự động liên kết các đơn hàng cũ về userId giống bản web (autoLinkOrdersByPhone)
+  const autoLinkOrdersByPhone = async (userId: string, phone: string) => {
+    try {
+      const p0 = formatPhoneNumber(phone);
+      const variants = getPhoneVariants(phone);
+
+      const usersRef = collection(db, 'users');
+      const oldCustIds: string[] = [];
+      try {
+        const qUsers = query(usersRef, where('phone', 'in', variants));
+        const usersSnap = await getDocs(qUsers);
+        usersSnap.forEach((uSnap) => {
+          if (uSnap.id !== userId) {
+            oldCustIds.push(uSnap.id);
+            const uData = uSnap.data();
+            if (uData.displayName || uData.address) {
+              setDoc(
+                doc(db, 'users', userId),
+                {
+                  displayName: uData.displayName || '',
+                  address: uData.address || '',
+                },
+                { merge: true }
+              ).catch(() => {});
+            }
+            setDoc(uSnap.ref, { isMerged: true, mergedTo: userId }, { merge: true }).catch(() => {});
+          }
+        });
+      } catch (e) {}
+
+      const ordersRef = collection(db, 'orders');
+      const orderDocsToUpdate = new Map();
+
+      try {
+        const q1 = query(ordersRef, where('shippingAddress.phone', 'in', variants));
+        const s1 = await getDocs(q1);
+        s1.forEach((d) => {
+          if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref);
+        });
+      } catch (e) {}
+
+      try {
+        const q2 = query(ordersRef, where('customerPhone', 'in', variants));
+        const s2 = await getDocs(q2);
+        s2.forEach((d) => {
+          if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref);
+        });
+      } catch (e) {}
+
+      try {
+        const q3 = query(ordersRef, where('phone', 'in', variants));
+        const s3 = await getDocs(q3);
+        s3.forEach((d) => {
+          if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref);
+        });
+      } catch (e) {}
+
+      if (oldCustIds.length > 0) {
+        try {
+          const q4 = query(ordersRef, where('customerId', 'in', oldCustIds));
+          const s4 = await getDocs(q4);
+          s4.forEach((d) => {
+            if (d.data().userId !== userId) orderDocsToUpdate.set(d.id, d.ref);
+          });
+        } catch (e) {}
+      }
+
+      const updatePromises: Promise<any>[] = [];
+      orderDocsToUpdate.forEach((ref) => {
+        updatePromises.push(setDoc(ref, { userId: userId, customerId: userId }, { merge: true }));
+      });
+      if (updatePromises.length > 0) await Promise.all(updatePromises);
+    } catch (e) {
+      console.warn('Lỗi auto-link orders:', e);
+    }
+  };
+
+  // Đăng nhập số điện thoại xác thực OTP với cơ chế lấy ID đồng bộ bản web
+  const signInWithPhoneResult = async (authUid: string, rawPhoneNumber: string) => {
+    const p0 = formatPhoneNumber(rawPhoneNumber);
+    const variants = getPhoneVariants(rawPhoneNumber);
+    if (!p0) {
+      throw new Error('Số điện thoại không hợp lệ');
+    }
+
+    try {
+      let foundDoc: any = null;
+
+      // 1. Tìm tài khoản người dùng theo SĐT hoặc biến thể
+      const candidateDocs: any[] = [];
+      for (const p of variants) {
+        const q = query(collection(db, 'users'), where('phone', '==', p));
+        const snap = await getDocs(q);
+        candidateDocs.push(...snap.docs);
+      }
+
+      // 2. Tìm tiếp theo identifiers array
+      if (candidateDocs.length === 0) {
+        for (const p of variants) {
+          const qId = query(collection(db, 'users'), where('identifiers', 'array-contains', p));
+          const snapId = await getDocs(qId);
+          candidateDocs.push(...snapId.docs);
+        }
+      }
+
+      const uniqueDocs = Array.from(new Map(candidateDocs.map((d) => [d.id, d])).values());
+
+      // Ưu tiên tài khoản chính có email (hoặc chưa bị gộp)
+      if (uniqueDocs.length > 0) {
+        let bestDoc = uniqueDocs.find((d) => !d.data().isMerged && !!d.data().email);
+        if (!bestDoc) {
+          bestDoc = uniqueDocs.find((d) => !d.data().isMerged);
+        }
+        if (!bestDoc) {
+          bestDoc = uniqueDocs[0];
+        }
+
+        let raw = bestDoc.data() as any;
+        let finalDocId = bestDoc.id;
+
+        if (raw.mergedTo && raw.mergedTo !== bestDoc.id) {
+          const pSnap = await getDoc(doc(db, 'users', raw.mergedTo));
+          if (pSnap.exists()) {
+            finalDocId = pSnap.id;
+            raw = pSnap.data() as any;
+          }
+        }
+        foundDoc = { id: finalDocId, data: () => raw };
+      }
+
+      let targetUid = authUid;
+      if (foundDoc) {
+        targetUid = foundDoc.id;
+        const raw = foundDoc.data() as any;
+        let sanitizedPoints = raw.points !== undefined ? Number(raw.points) : 0;
+        if (sanitizedPoints === 50 && (!raw.totalSpent || Number(raw.totalSpent) < 500000)) {
+          sanitizedPoints = Math.floor(Number(raw.totalSpent || 0) / 10000);
+        }
+        const allIdentifiers = Array.from(new Set([...(raw.identifiers || []), ...variants])).filter(Boolean);
+        const mergedAccounts = Array.from(new Set([...(raw.mergedAccounts || []), authUid])).filter(Boolean);
+
+        // Ghi nhận liên kết nếu authUid khác targetUid
+        if (authUid !== targetUid) {
+          await setDoc(
+            doc(db, 'users', authUid),
+            {
+              uid: authUid,
+              phone: p0,
+              identifiers: variants,
+              isMerged: true,
+              mergedTo: targetUid,
+              createdAt: serverTimestamp(),
+              lastLogin: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+        }
+
+        await setDoc(
+          doc(db, 'users', targetUid),
+          {
+            phone: p0,
+            identifiers: allIdentifiers,
+            mergedAccounts: mergedAccounts,
+            lastLogin: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+
+        const userProfileData = {
+          uid: targetUid,
+          ...raw,
+          phone: p0,
+          points: sanitizedPoints,
+          identifiers: allIdentifiers,
+        };
+        setUserProfile(userProfileData);
+        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(userProfileData));
+        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: targetUid, email: raw.email || null }));
+      } else {
+        // Tài khoản hoàn toàn mới: lấy chính authUid làm ID (giống bản web)
+        targetUid = authUid;
+        const newProfile: UserProfile = {
+          uid: targetUid,
+          email: null,
+          phone: p0,
+          displayName: `Khách hàng ${p0.slice(-4)}`,
+          points: 0,
+          tier: 'standard',
+        };
+        await setDoc(
+          doc(db, 'users', targetUid),
+          {
+            ...newProfile,
+            identifiers: variants,
+            createdAt: serverTimestamp(),
+            lastLogin: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+        setUserProfile({ ...newProfile, identifiers: variants } as any);
+        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(newProfile));
+        await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: targetUid, email: null }));
+      }
+
+      // Tự động liên kết các đơn hàng cũ về userId giống bản web
+      await autoLinkOrdersByPhone(targetUid, p0);
+    } catch (e) {
+      console.warn('Lỗi xử lý đăng nhập số điện thoại:', e);
+      throw e;
+    }
+  };
+
   const updateUserProfileData = async (data: Partial<UserProfile>) => {
     try {
       const currentUid = auth.currentUser?.uid || userProfile?.uid;
@@ -438,19 +659,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.wardCode !== undefined) payload.wardCode = data.wardCode;
       if (data.locationName !== undefined) payload.locationName = data.locationName;
 
-      // Đồng bộ sổ địa chỉ (addresses) để Web có thể hiển thị đồng nhất
-      if (data.address || data.streetAddress || data.fullAddress) {
+      if (data.addresses !== undefined) {
+        payload.addresses = (data.addresses || []).map((addr, idx) => ({
+          id: addr.id || `addr_${Date.now()}_${idx}`,
+          fullName: (addr.fullName || '').trim(),
+          phone: (addr.phone || '').trim(),
+          address: (addr.address || '').trim(),
+          provinceName: addr.provinceName || '',
+          provinceCode: addr.provinceCode || '',
+          wardName: addr.wardName || '',
+          wardCode: addr.wardCode || '',
+          locationName: addr.locationName || `${addr.wardName || ''}, ${addr.provinceName || ''}`.replace(/^,\s*|,\s*$/g, ''),
+          isDefault: Boolean(addr.isDefault),
+        }));
+      } else if (data.address || data.streetAddress || data.fullAddress) {
+        // Đồng bộ sổ địa chỉ (addresses) khi cập nhật địa chỉ từ màn hình chỉnh sửa hồ sơ
         const addrDetail = (data.streetAddress || data.address || data.fullAddress || '').trim();
         const locParts = (data.locationName || '').split(',').map((s: string) => s.trim());
         const wardPart = locParts[0] || '';
         const provPart = locParts[1] || '';
 
         const newAddrItem = {
+          id: `addr_${Date.now()}`,
           fullName: cleanName || userProfile?.displayName || userProfile?.name || 'Khách hàng',
           phone: data.phone || userProfile?.phone || '',
           provinceName: provPart,
+          provinceCode: data.provinceCode || '',
           wardName: wardPart,
+          wardCode: data.wardCode || '',
           address: addrDetail,
+          locationName: data.locationName || `${wardPart}, ${provPart}`.replace(/^,\s*|,\s*$/g, ''),
           isDefault: true,
           updatedAt: new Date().toISOString(),
         };
@@ -749,6 +987,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogleCredential,
         signInWithAppleCredential,
         signInWithPhoneSession,
+        signInWithPhoneResult,
         updateUserProfileData,
         saveAddresses,
         addAddress,

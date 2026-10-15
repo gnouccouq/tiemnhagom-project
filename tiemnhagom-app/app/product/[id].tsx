@@ -210,7 +210,7 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF8F5" />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
         {/* Floating Header cho Skeleton */}
         <View style={styles.floatingHeader}>
           <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
@@ -396,7 +396,7 @@ export default function ProductDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Floating Header không vạch kẻ đáy, nút tròn 40px chuẩn GEMINI.md */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
@@ -1111,7 +1111,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: width,
     height: width,
     marginTop: 32,
-    backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+    backgroundColor: 'transparent',
     position: 'relative',
   },
   carouselItem: {
@@ -1120,6 +1120,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   carouselImage: {
     width: '100%',

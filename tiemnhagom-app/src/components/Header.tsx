@@ -18,6 +18,7 @@ import { useCart } from '../context/CartContext';
 import { useNotificationBadge } from '../context/NotificationBadgeContext';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
+import { LiquidGlass } from './LiquidGlass';
 
 export interface HeaderProps {
   title?: string;
@@ -170,40 +171,44 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </View>
 
-          {/* 2. Thanh tìm kiếm con nhộng (Pill Capsule) */}
+          {/* 2. Thanh tìm kiếm con nhộng (Pill Capsule) bọc Liquid Glass chuẩn Apple */}
           {showSearch && (
             onSearchChange ? (
-              <View style={styles.searchPill}><BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod="none" style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} />
-                <TextInput
-                  style={styles.searchInputInline}
-                  placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
-                  placeholderTextColor={Colors.textMuted}
-                  value={searchValue}
-                  onChangeText={onSearchChange}
-                  onSubmitEditing={onSubmitEditing}
-                  autoFocus={autoFocus}
-                  returnKeyType="search"
-                />
-                {searchValue && searchValue.length > 0 ? (
-                  <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="close-circle" size={17} color={Colors.textMuted} />
-                  </TouchableOpacity>
-                ) : (
-                  <Ionicons name="search-outline" size={19} color={Colors.textMuted} />
-                )}
+              <View style={styles.searchPillWrapper}>
+                <LiquidGlass style={styles.searchPill}>
+                  <TextInput
+                    style={styles.searchInputInline}
+                    placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
+                    placeholderTextColor={Colors.textMuted}
+                    value={searchValue}
+                    onChangeText={onSearchChange}
+                    onSubmitEditing={onSubmitEditing}
+                    autoFocus={autoFocus}
+                    returnKeyType="search"
+                  />
+                  {searchValue && searchValue.length > 0 ? (
+                    <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Ionicons name="close-circle" size={17} color={Colors.textMuted} />
+                    </TouchableOpacity>
+                  ) : (
+                    <Ionicons name="search-outline" size={19} color={Colors.textMuted} />
+                  )}
+                </LiquidGlass>
               </View>
             ) : (
-              <TouchableOpacity
-                style={styles.searchPill}
-                activeOpacity={0.88}
+              <ScalePressable
+                style={styles.searchPillWrapper}
+                activeScale={0.97}
                 onPress={onSearchPress || (() => router.push('/search'))}
                 accessibilityLabel="Tìm kiếm sản phẩm"
               >
-                <BlurView intensity={Platform.OS === 'ios' ? 95 : 85} tint={Colors.cardBackground === "#FFFFFF" ? "light" : "dark"} blurMethod="none" style={StyleSheet.absoluteFill} /><View style={[StyleSheet.absoluteFill, styles.searchPillOverlay]} /><Text style={styles.searchPlaceholder} numberOfLines={1}>
-                  {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
-                </Text>
-                <Ionicons name="search-outline" size={25} color={Colors.textMuted} />
-              </TouchableOpacity>
+                <LiquidGlass style={styles.searchPill} interactive={true}>
+                  <Text style={styles.searchPlaceholder} numberOfLines={1}>
+                    {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
+                  </Text>
+                  <Ionicons name="search-outline" size={20} color={Colors.textMuted} />
+                </LiquidGlass>
+              </ScalePressable>
             )
           )}
 
@@ -348,31 +353,23 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     top: 0,
     left: 0,
   },
-  searchPill: {
+  searchPillWrapper: {
     flex: 1,
+    marginHorizontal: 8,
+    shadowColor: Colors.textPrimary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 5,
+    elevation: isDark ? 0 : 1,
+  },
+  searchPill: {
     height: 42,
     borderRadius: 21,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: 16,
-    paddingRight: 12,
-    marginHorizontal: 8,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : 'rgba(0, 0, 0, 0.08)',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 5,
-    elevation: isDark ? 0 : 3,
-    overflow: 'hidden',
-  },
-  searchPillOverlay: {
-    borderRadius: 21,
-    backgroundColor: isDark 
-      ? (Platform.OS === 'ios' ? 'rgba(30,30,30,0.6)' : 'rgba(30,30,30,0.8)')
-      : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.6)'),
-    overflow: 'hidden',
+    paddingRight: 14,
   },
   searchPlaceholder: {
     fontFamily: 'ElleGaborStd',

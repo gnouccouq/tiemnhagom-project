@@ -8484,19 +8484,69 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
             orderTotal = data.totalAmount || 0;
         }
 
-        if (!['Đã hoàn thành', 'Hoàn thành'].includes(oldStatus) && ['Đã hoàn thành', 'Hoàn thành'].includes(newStatus) && userId && userId !== 'guest') {
+        const wasCompleted = ['Đã hoàn thành', 'Hoàn thành'].includes(oldStatus);
+        const isNowCompleted = ['Đã hoàn thành', 'Hoàn thành'].includes(newStatus);
+
+        if (!wasCompleted && isNowCompleted && userId && userId !== 'guest') {
             const qOrders = query(collection(db, "orders"), where("userId", "==", userId));
             const orderSnaps = await getDocs(qOrders);
             let totalSpentBefore = 0;
+            let pointsUsedTotal = 0;
             orderSnaps.forEach(d => {
-                if (d.id !== orderId && ['Đã hoàn thành', 'Hoàn thành'].includes(d.data().status)) {
-                    totalSpentBefore += (d.data().totalAmount || 0);
+                const od = d.data();
+                if (d.id !== orderId && ['Đã hoàn thành', 'Hoàn thành'].includes(od.status)) {
+                    totalSpentBefore += (od.totalAmount || 0);
+                }
+                if (od.pointsUsed && !['Đã hủy', 'Hủy', 'Cancelled'].includes(od.status)) {
+                    pointsUsedTotal += (Number(od.pointsUsed) || 0);
                 }
             });
 
             let totalSpentAfter = totalSpentBefore + orderTotal;
             let tierAfter = getMembershipTier(totalSpentAfter);
+            let newPoints = Math.max(0, Math.floor(totalSpentAfter / 10000) - pointsUsedTotal);
+
+            try {
+                await updateDoc(doc(db, "users", userId), {
+                    totalSpent: totalSpentAfter,
+                    membershipTier: tierAfter.id,
+                    points: newPoints,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (uErr) {
+                console.warn("Cập nhật tích điểm khách hàng trên user doc:", uErr);
+            }
+
             await generateAutomaticVouchers(userId, tierAfter, totalSpentAfter);
+        } else if (wasCompleted && !isNowCompleted && userId && userId !== 'guest') {
+            // Đơn bị đổi từ Đã hoàn thành sang trạng thái khác -> cập nhật lại chi tiêu & điểm từ các đơn hoàn thành còn lại
+            const qOrders = query(collection(db, "orders"), where("userId", "==", userId));
+            const orderSnaps = await getDocs(qOrders);
+            let totalSpentAfter = 0;
+            let pointsUsedTotal = 0;
+            orderSnaps.forEach(d => {
+                const od = d.data();
+                if (d.id !== orderId && ['Đã hoàn thành', 'Hoàn thành'].includes(od.status)) {
+                    totalSpentAfter += (od.totalAmount || 0);
+                }
+                if (od.pointsUsed && !['Đã hủy', 'Hủy', 'Cancelled'].includes(od.status)) {
+                    pointsUsedTotal += (Number(od.pointsUsed) || 0);
+                }
+            });
+
+            let tierAfter = getMembershipTier(totalSpentAfter);
+            let newPoints = Math.max(0, Math.floor(totalSpentAfter / 10000) - pointsUsedTotal);
+
+            try {
+                await updateDoc(doc(db, "users", userId), {
+                    totalSpent: totalSpentAfter,
+                    membershipTier: tierAfter.id,
+                    points: newPoints,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (uErr) {
+                console.warn("Cập nhật lại điểm khách hàng:", uErr);
+            }
         }
 
         let trackingLink = "";

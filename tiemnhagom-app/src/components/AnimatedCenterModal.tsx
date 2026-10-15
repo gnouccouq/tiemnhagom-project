@@ -24,7 +24,7 @@ export interface AnimatedCenterModalProps {
   avoidKeyboard?: boolean;
 }
 
-export const AnimatedCenterModal: React.FC<AnimatedCenterModalProps> = ({
+export function AnimatedCenterModal({
   visible,
   onClose,
   children,
@@ -32,7 +32,7 @@ export const AnimatedCenterModal: React.FC<AnimatedCenterModalProps> = ({
   backdropStyle,
   dismissOnBackdropPress = true,
   avoidKeyboard = false,
-}) => {
+}: AnimatedCenterModalProps): React.JSX.Element | null {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);

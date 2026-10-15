@@ -184,11 +184,21 @@ export default function DealsScreen() {
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
 
+  const getTierName = (tierId: string) => {
+    switch (tierId) {
+      case 'null': return t('tierGomMoc');
+      case 'new': return t('tierGomNung');
+      case 'mem': return t('tierGomMen');
+      case 'vip': return t('tierGomDocBan');
+      default: return t('tierGomMoc');
+    }
+  };
+
   return (
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
       <Header
-        title="Ưu đãi"
+        title={t('deals')}
         showBack={false}
         showSearch={false}
         showCart={true}
@@ -233,7 +243,9 @@ export default function DealsScreen() {
                   tintColor="#FFFFFF"
                 />
 
-                <Text style={styles.tierNameLabel}>Hạng {currentTier.name}</Text>
+                <Text style={styles.tierNameLabel}>
+                  {t('tier') || 'Hạng'} {getTierName(currentTier.id)}
+                </Text>
 
                 <View style={styles.pointsRow}>
                   <Text style={styles.pointsNumber}>{points}</Text>
@@ -273,7 +285,7 @@ export default function DealsScreen() {
               borderRadius={20}
               style={styles.giftVaultCard}
             >
-              <Text style={styles.giftVaultTitle}>Kho quà</Text>
+              <Text style={styles.giftVaultTitle}>{t('giftVault')}</Text>
 
               {/* Hàng số lượng quà: Sử dụng icon quà phẳng vector đồng bộ */}
               <View style={styles.giftVaultCountRow}>
@@ -298,11 +310,14 @@ export default function DealsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.membershipBannerTitle}>
                 {nextTier
-                  ? `Chi thêm ${formatCurrency(Math.max(0, nextTier.min - totalSpent))} để lên ${nextTier.name}`
-                  : 'Đã đạt hạng hội viên cao nhất'}
+                  ? t('spendMoreForNextTier', {
+                      amount: formatCurrency(Math.max(0, nextTier.min - totalSpent)),
+                      tier: getTierName(nextTier.id),
+                    })
+                  : t('maxTierReached')}
               </Text>
               <Text style={styles.membershipBannerSub}>
-                Ưu đãi giảm giá {currentTier.discount}% • Xem chi tiết đặc quyền hội viên &gt;
+                {t('tierDiscountPerk', { discount: currentTier.discount })} • {t('viewTierPrivileges')}
               </Text>
             </View>
           </View>
@@ -310,7 +325,7 @@ export default function DealsScreen() {
 
         {/* ================= PHÂN MỤC: ƯU ĐÃI MỚI (CHỮ SẮP RA MẮT CHÍNH GIỮA) ================= */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Ưu đãi mới</Text>
+          <Text style={styles.sectionTitle}>{t('newDealsTitle')}</Text>
         </View>
 
         {/* Khối chính giữa hiển thị thông báo "Sắp ra mắt" với icon phẳng */}
@@ -319,18 +334,17 @@ export default function DealsScreen() {
             <Ionicons name="gift-outline" size={38} color={currentTier.gradientColors[0]} />
           </View>
 
-          <Text style={styles.comingSoonMainTitle}>SẮP RA MẮT</Text>
+          <Text style={styles.comingSoonMainTitle}>{t('comingSoonTitle')}</Text>
 
           <Text style={styles.comingSoonSubDesc}>
-            Tính năng đổi điểm lấy quà tặng & voucher ưu đãi đang được hoàn thiện. Hãy tiếp tục mua
-            sắm để tích lũy thêm điểm gốm nhé!
+            {t('dealsComingSoonDesc')}
           </Text>
 
           {/* Badge hiển thị điểm gốm khả dụng */}
           <View style={styles.userPointsBadge}>
             <Ionicons name="flame" size={16} color={currentTier.gradientColors[0]} />
             <Text style={styles.userPointsBadgeText}>
-              Bạn hiện có <Text style={styles.userPointsBold}>{points} Điểm gốm</Text> khả dụng
+              {t('youHavePointsAvailable', { points })}
             </Text>
           </View>
 
@@ -344,7 +358,7 @@ export default function DealsScreen() {
           >
             <View style={styles.explorePrivilegesContent}>
               <Text style={styles.explorePrivilegesText}>
-                Khám phá đặc quyền hạng {currentTier.name}
+                {t('exploreTierPrivileges', { tier: getTierName(currentTier.id) })}
               </Text>
               <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </View>
@@ -359,7 +373,7 @@ export default function DealsScreen() {
         contentStyle={styles.qrCardModal}
       >
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Thẻ Thành Viên Số</Text>
+          <Text style={styles.modalTitle}>{t('digitalMemberCardTitle')}</Text>
           <ScalePressable
             onPress={() => setQrModalVisible(false)}
             style={styles.modalCloseBtn}
@@ -376,7 +390,7 @@ export default function DealsScreen() {
 
           <Text style={styles.qrCodeLabel}>{memberCode}</Text>
           <Text style={styles.qrTierName}>
-            {userProfile?.displayName || user?.displayName || 'Khách hàng thân thiết'} • Hạng {currentTier.name} • {points} Điểm
+            {userProfile?.displayName || user?.displayName || t('guest')} • {t('tier') || 'Hạng'} {getTierName(currentTier.id)} • {points} {t('pointsUnit')}
           </Text>
 
           {/* Barcode giả lập */}
@@ -395,8 +409,7 @@ export default function DealsScreen() {
           </View>
 
           <Text style={styles.qrModalHint}>
-            Đưa mã này cho nhân viên thu ngân tại quầy Tiệm Nhà Gốm để tích điểm và hưởng ưu đãi
-            hạng thành viên.
+            {t('qrModalScanHint')}
           </Text>
 
           <ScalePressable
@@ -410,7 +423,7 @@ export default function DealsScreen() {
               borderRadius={26}
               style={styles.qrCloseActionGradient}
             >
-              <Text style={styles.qrCloseActionText}>Đóng</Text>
+              <Text style={styles.qrCloseActionText}>{t('close')}</Text>
             </GlazeFluidCard>
           </ScalePressable>
         </View>

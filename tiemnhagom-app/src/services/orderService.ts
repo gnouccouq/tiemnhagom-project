@@ -261,7 +261,7 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     const q = query(
       ordersRef,
       where('userId', '==', userId),
-      limit(30)
+      limit(100)
     );
     const snap = await getDocs(q);
     const orders: Order[] = [];
