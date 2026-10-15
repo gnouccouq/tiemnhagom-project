@@ -563,6 +563,19 @@ export default function MembershipPrivilegesScreen() {
         })}
 
         <SafeAreaView edges={['top']} style={styles.safeAreaHeader}>
+          <View style={[StyleSheet.absoluteFill, { height: 110 }]} pointerEvents="none">
+            <LinearGradient
+              colors={[
+                'rgba(0,0,0,0.80)',
+                'rgba(0,0,0,0.60)',
+                'rgba(0,0,0,0.30)',
+                'rgba(0,0,0,0.10)',
+                'transparent',
+              ]}
+              locations={[0, 0.35, 0.65, 0.85, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
           {/* HEADER ROW: NÚT BACK BO TRÒN KÍNH MỜ + TIÊU ĐỀ */}
           <View style={styles.headerRow}>
             <BlurButton

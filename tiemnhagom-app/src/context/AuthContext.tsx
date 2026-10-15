@@ -255,7 +255,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await AsyncStorage.removeItem(STORAGE_KEY_SESSION);
       await AsyncStorage.removeItem(STORAGE_KEY_PROFILE);
-      await AsyncStorage.removeItem('has_seen_onboarding');
       await AsyncStorage.removeItem('@tiemnhagom_cart_guest');
       await AsyncStorage.removeItem('@tiemnhagom_wishlist_guest');
     } catch (e) {

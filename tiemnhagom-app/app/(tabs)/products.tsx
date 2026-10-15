@@ -21,6 +21,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
 import { ProductCard } from '../../src/components/ProductCard';
@@ -30,6 +31,7 @@ import { Product } from '../../src/types';
 import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
 import { useCart } from '../../src/context/CartContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
+import { useWishlist } from '../../src/context/WishlistContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
@@ -274,6 +276,8 @@ export default function ProductsScreen() {
 
   const [searchVisible, setSearchVisible] = useState(false);
   const { unreadCount } = useNotificationBadge();
+  const { favorites } = useWishlist();
+  const favoriteCount = favorites ? favorites.length : 0;
 
   const PAGE_SIZE = 30; // số sản phẩm mỗi lần tải thêm
 
@@ -391,26 +395,29 @@ export default function ProductsScreen() {
 
       {/* ── Header ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint={isDark ? "dark" : "light"}
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: isDark
-                    ? (Platform.OS === 'ios' ? 'rgba(18,18,18,0.85)' : 'rgba(18,18,18,0.95)')
-                    : (Platform.OS === 'ios' ? 'rgba(255,255,255,0.85)' : 'rgba(250,248,245,0.95)'),
-                },
-              ]}
-            />
-          </View>
-        )}
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              isDark
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
         <TouchableOpacity style={styles.headerTitle} onPress={openCategoryModal} activeOpacity={0.7}>
           <View style={styles.headerDots}>
             <View style={[styles.dot, { backgroundColor: '#E8A87C' }]} />
@@ -436,6 +443,13 @@ export default function ProductsScreen() {
             accessibilityLabel="Yêu thích"
           >
             <Ionicons name="heart-outline" size={22} color={Colors.textPrimary} />
+            {favoriteCount > 0 && (
+              <View style={styles.notificationBadge} pointerEvents="none">
+                <Text style={styles.notificationBadgeText}>
+                  {favoriteCount > 99 ? '99+' : favoriteCount}
+                </Text>
+              </View>
+            )}
           </BlurButton>
           <BlurButton
             style={styles.iconBtn}
@@ -444,7 +458,7 @@ export default function ProductsScreen() {
           >
             <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
             {unreadCount > 0 && (
-              <View style={styles.notificationBadge}>
+              <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>

@@ -15,7 +15,9 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { EmptyState } from '../../src/components/EmptyState';
+import { BlurButton } from '../../src/components/BlurButton';
 import { useThemeColor } from '../../src/constants/theme';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -118,27 +120,39 @@ export default function CartScreen() {
 
       {/* Header không có vạch kẻ đáy theo chuẩn GEMINI.md */}
       <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        )}
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              Colors.cardBackground !== '#FFFFFF'
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
         <View style={{ width: 40 }} />
 
         <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
 
-        <TouchableOpacity
-          style={styles.roundClearBtn}
+        <BlurButton
           onPress={confirmClearCart}
-          activeOpacity={0.8}
           accessibilityLabel={t('clear') || 'Xóa tất cả'}
         >
           <Ionicons name="trash-outline" size={19} color={Colors.error || '#DC2626'} />
-        </TouchableOpacity>
+        </BlurButton>
       </View>
 
       <ScrollView

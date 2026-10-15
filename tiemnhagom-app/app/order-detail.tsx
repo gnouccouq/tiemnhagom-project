@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { doc, getDoc } from 'firebase/firestore';
@@ -544,21 +545,33 @@ export default function OrderDetailScreen() {
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'light-content'} backgroundColor="transparent" translucent />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
       {/* ── HEADER CỐ ĐỊNH TRÊN CÙNG (KHÔNG VẠCH KẺ ĐÁY, PHỦ TRÊN HERO BANNER) ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 80 : 70}
-              tint="dark"
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(35, 27, 21, 0.45)' }]} />
-          </View>
-        )}
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              isDark
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
         {/* Nút quay lại tròn chuẩn quy cách BlurButton */}
         <BlurButton

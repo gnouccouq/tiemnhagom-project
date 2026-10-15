@@ -17,12 +17,37 @@ export interface ReleaseVersion {
 
 export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
+    version: '1.0.1',
+    buildNumber: '2',
+    otaVersion: '20261016.01',
+    releaseDate: '16/10/2026',
+    title: 'Icon ứng dụng Light/Dark & Hoàn thiện giao diện',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Icon ứng dụng theo chủ đề (iOS)',
+        description: 'Tự động đổi icon Light Mode (nền sáng) và Dark Mode (nền tối) chuẩn phong cách gốm thủ công.',
+      },
+      {
+        title: 'Logo chính thức Tiệm Nhà Gốm',
+        description: 'Hiển thị logo nhận diện thương hiệu chính thức ở chân trang chủ thay thế chữ thuần túy.',
+      },
+      {
+        title: 'Tối ưu modal chọn Tỉnh / Thành phố',
+        description: 'Khắc phục hoàn toàn hiện tượng hở đáy, danh sách lấp đầy tự nhiên và cuộn mượt mà.',
+      },
+      {
+        title: 'Tự động dừng video banner',
+        description: 'Tự động tạm dừng phát video khi chuyển tab hoặc chuyển trang, tiết kiệm pin và tài nguyên thiết bị.',
+      },
+    ],
+  },
+  {
     version: '1.0.0',
     buildNumber: '1',
     otaVersion: '20261015.02',
     releaseDate: '15/10/2026',
     title: 'Đăng ký & Đăng nhập OTP chuẩn Web',
-    badge: 'Mới nhất',
     changes: [
       {
         title: 'Đăng ký tối giản chuẩn Web',

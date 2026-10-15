@@ -15,12 +15,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurButton } from '../src/components/BlurButton';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useDialog } from '../src/context/DialogContext';
 import { getActiveCoupons, CouponItem } from '../src/services/couponService';
+import { getUserOrders } from '../src/services/orderService';
 import { formatCurrency } from '../src/utils/format';
 
 export default function SelectVoucherScreen() {
@@ -39,8 +42,57 @@ export default function SelectVoucherScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [promoInput, setPromoInput] = useState<string>('');
   const [selectedItem, setSelectedItem] = useState<CouponItem | null>(appliedCouponItem);
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
 
-  const userPoints = Number(userProfile?.points || 0);
+  // Tải tổng chi tiêu thực tế từ các đơn hàng để tính chuẩn xác điểm gốm
+  useEffect(() => {
+    let isCancelled = false;
+    if (!user) {
+      setTotalSpent(0);
+      setRedeemedPoints(0);
+      return;
+    }
+    getUserOrders(user.uid)
+      .then((orders) => {
+        if (isCancelled) return;
+        let spent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
+        let redeemed = 0;
+        orders.forEach((o) => {
+          const status = (o.status || '').toLowerCase();
+          if (
+            status.includes('hoàn thành') ||
+            status.includes('thành công') ||
+            status.includes('đang giao') ||
+            status.includes('completed')
+          ) {
+            spent += Number(o.totalAmount || 0);
+          }
+          if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
+            redeemed += Number((o as any).pointsUsed);
+          }
+        });
+        setRedeemedPoints(redeemed);
+        setTotalSpent(spent);
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setTotalSpent(Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0));
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, userProfile]);
+
+  const earnedPoints = Math.floor(totalSpent / 10000);
+  const rawProfilePoints =
+    userProfile?.points !== undefined && userProfile?.points !== null
+      ? Number(userProfile.points)
+      : 0;
+  const cleanProfilePoints = rawProfilePoints === 50 && totalSpent < 500000 ? 0 : rawProfilePoints;
+  const userPoints = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
 
   useEffect(() => {
     let isCancelled = false;
@@ -128,15 +180,43 @@ export default function SelectVoucherScreen() {
 
       {/* Header chuẩn Screenshot 4 */}
       <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <TouchableOpacity
-          style={styles.headerBackBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              isDark
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
-        <Text style={styles.headerTitle}>{t('selectOfferBtn') || 'Chọn Ưu Đãi'}</Text>
+        <View style={styles.headerLeftGroup}>
+          <BlurButton
+            style={styles.headerBackBtn}
+            onPress={() => router.back()}
+            accessibilityLabel="Quay lại"
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+          </BlurButton>
+
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {t('selectOfferBtn') || 'Chọn Ưu Đãi'}
+          </Text>
+        </View>
 
         <View style={styles.pointsBadge}>
           <Text style={styles.pointsText}>{userPoints}</Text>
@@ -301,40 +381,42 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingBottom: 10,
-      backgroundColor: Colors.background,
+      backgroundColor: 'transparent',
       borderBottomWidth: 0,
+    },
+    headerLeftGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      flex: 1,
+      marginRight: 8,
     },
     headerBackBtn: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : '#E8E1D8',
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.06,
-      shadowRadius: 4,
-      elevation: isDark ? 0 : 2,
+      flexShrink: 0,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
+      flexShrink: 1,
     },
     pointsBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
+      gap: 5,
       backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? 'transparent' : '#E8CCB2',
+      flexShrink: 0,
     },
     pointsText: {
       fontFamily: 'ElleGaborStd',

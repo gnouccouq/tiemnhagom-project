@@ -2,16 +2,21 @@
   "expo": {
     "name": "Tiệm Nhà Gốm",
     "slug": "tiemnhagom",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon.png",
+    "icon": "./assets/app-icon/app-icon-light.png",
     "scheme": "tiemnhagom",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#9C7156",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "vn.tiemnhagom.app",
-      "buildNumber": "1",
+      "buildNumber": "2",
+      "icon": {
+        "light": "./assets/app-icon/app-icon-light.png",
+        "dark": "./assets/app-icon/app-icon-dark.png",
+        "tinted": "./assets/app-icon/app-icon-dark.png"
+      },
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSCameraUsageDescription": "Ứng dụng cần quyền truy cập camera để bạn có thể chụp ảnh trực tiếp làm ảnh đại diện cho tài khoản cá nhân.",
@@ -22,10 +27,10 @@
     },
     "android": {
       "package": "vn.tiemnhagom.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#9C7156",
-        "foregroundImage": "./assets/images/app-icon.png"
+        "foregroundImage": "./assets/app-icon/app-icon-light.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -71,7 +76,8 @@
       "react-native-liquid-glassmorphism",
       "expo-notifications",
       "expo-media-library",
-      "expo-location"
+      "expo-location",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

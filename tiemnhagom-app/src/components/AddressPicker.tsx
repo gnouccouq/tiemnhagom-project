@@ -4,18 +4,20 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScalePressable } from './ScalePressable';
 import { AnimatedBottomSheetModal } from './AnimatedBottomSheetModal';
 import provincesData from '../../assets/data/provinces.json';
 import { useThemeColor } from '../constants/theme';
+import { useSettings } from '../context/SettingsContext';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface AddressPickerProps {
   visible: boolean;
@@ -32,8 +34,11 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   initialProvinceCode,
   initialWardCode,
 }) => {
+  const { t } = useSettings();
+  const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
-  const themeStyles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const themeStyles = getStyles(Colors, insets, isDark);
   const [step, setStep] = useState<'PROVINCE' | 'WARD'>('PROVINCE');
   const [selectedProv, setSelectedProv] = useState<any>(null);
 
@@ -58,8 +63,6 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
     onSelect(selectedProv, ward);
     onClose();
   };
-
-  const isDark = Colors.cardBackground !== '#FFFFFF';
 
   const renderItem = ({ item }: { item: any }) => {
     const isProvStep = step === 'PROVINCE';
@@ -100,7 +103,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
       visible={visible}
       onClose={onClose}
       contentStyle={themeStyles.modalContent}
-      avoidKeyboard
+      avoidKeyboard={false}
       showHandle={true}
     >
       <View style={themeStyles.header}>
@@ -111,7 +114,11 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         ) : (
           <View style={themeStyles.iconBtn} />
         )}
-        <Text style={themeStyles.title}>{step === 'PROVINCE' ? 'Chọn Tỉnh / Thành phố' : 'Chọn Phường / Xã'}</Text>
+        <Text style={themeStyles.title}>
+          {step === 'PROVINCE'
+            ? (t('selectProvinceCity') || 'Chọn Tỉnh / Thành phố')
+            : (t('selectWard') || 'Chọn Phường / Xã')}
+        </Text>
         <ScalePressable onPress={onClose} style={themeStyles.iconBtn} activeScale={0.88}>
           <Ionicons name="close" size={22} color={isDark ? '#F5F5F5' : '#18181B'} />
         </ScalePressable>
@@ -119,11 +126,15 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
 
       {/* Thanh tìm kiếm nhanh */}
       <View style={themeStyles.searchBoxWrapper}>
-        <Ionicons name="search-outline" size={18} color={isDark ? '#888888' : '#9E968D'} style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} style={{ marginRight: 8 }} />
         <TextInput
           style={themeStyles.searchInput}
-          placeholder={step === 'PROVINCE' ? 'Gõ tìm Tỉnh / Thành phố...' : 'Gõ tìm Phường / Xã...'}
-          placeholderTextColor={isDark ? '#777777' : '#9E968D'}
+          placeholder={
+            step === 'PROVINCE'
+              ? (t('searchProvinceCity') || 'Gõ tìm Tỉnh / Thành phố...')
+              : (t('searchWard') || 'Gõ tìm Phường / Xã...')
+          }
+          placeholderTextColor={isDark ? 'rgba(245, 245, 245, 0.72)' : 'rgba(43, 41, 40, 0.68)'}
           value={searchQuery}
           onChangeText={setSearchQuery}
           clearButtonMode="while-editing"
@@ -131,7 +142,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close-circle" size={18} color={isDark ? '#888888' : '#9E968D'} />
+            <Ionicons name="close-circle" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} />
           </TouchableOpacity>
         )}
       </View>
@@ -141,13 +152,14 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         keyExtractor={(item) => (step === 'PROVINCE' ? item.province_code : item.ward_code)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
         contentContainerStyle={themeStyles.listContainer}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={{ paddingVertical: 30, alignItems: 'center' }}>
             <Ionicons name="search" size={32} color={isDark ? '#333333' : '#D1C7BD'} style={{ marginBottom: 8 }} />
             <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 14, color: isDark ? '#888888' : '#9E968D' }}>
-              Không tìm thấy kết quả phù hợp
+              {t('noResultsFound') || 'Không tìm thấy kết quả phù hợp'}
             </Text>
           </View>
         }
@@ -156,29 +168,15 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   );
 };
 
-const getStyles = (Colors: any) => {
-  const isDark = Colors.cardBackground !== '#FFFFFF';
-
+const getStyles = (Colors: any, insets: any, isDark: boolean) => {
   return StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    backdrop: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)',
-    },
     modalContent: {
       backgroundColor: isDark ? '#121212' : Colors.cardBackground,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      height: '70%',
+      height: Math.min(SCREEN_HEIGHT * 0.78, 650),
       paddingHorizontal: 0,
-      paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+      paddingBottom: Math.max(insets.bottom, 16),
       borderWidth: 0,
     },
     header: {

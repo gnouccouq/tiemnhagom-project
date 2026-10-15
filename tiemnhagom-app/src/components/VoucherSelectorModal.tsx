@@ -193,7 +193,7 @@ export const VoucherSelectorModal: React.FC<VoucherSelectorModalProps> = ({
           <TextInput
             style={styles.pillInput}
             placeholder={t('enterOfferPlaceholder') || 'Nhập mã ưu đãi'}
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={isDark ? 'rgba(245, 245, 245, 0.72)' : 'rgba(43, 41, 40, 0.68)'}
             value={promoInput}
             onChangeText={setPromoInput}
             autoCapitalize="characters"

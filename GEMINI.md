@@ -9,8 +9,29 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
 * **Tuyệt đối không có vạch kẻ ngang đáy (`borderBottomWidth: 0`):**
   * Không dùng `borderBottomWidth`, `borderBottomColor` (hoặc divider đen/xám) ngăn cách header với phần nội dung.
   * Nền Header phải tiệp màu hoàn toàn với nền màn hình (`#FAF8F5` / `Colors.background`), tạo cảm giác thoáng đãng, liền mạch và mượt mà khi cuộn hoặc chuyển cảnh (giống như Header trang Cài đặt - `settings.tsx` và trang Hồ sơ - `profile.tsx`).
+* **Nền Gradient trong suốt 80% mờ dần (Fading Backdrop Gradient):**
+  * Áp dụng lớp phủ `LinearGradient` mờ dần từ trên xuống dưới (độ cao `height: statusBarHeight + 56 + 24`):
+    * Light Mode: `['rgba(250,248,245,0.88)', 'rgba(250,248,245,0.75)', 'rgba(250,248,245,0.45)', 'rgba(250,248,245,0.15)', 'rgba(250,248,245,0)']`, locations: `[0, 0.40, 0.70, 0.88, 1]`.
+    * Dark Mode: `['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.72)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0)']`.
+  * **Cơ chế hiển thị trên trang có banner trong suốt (như Trang chủ — `transparent=true`):**
+    * Khi ở đầu trang (`scrollY <= 5`), nền Header hoàn toàn trong suốt (`opacity: 0`) để lộ trọn vẹn banner hình ảnh phía sau.
+    * Khi người dùng cuộn xuống (`scrollY > 5`), lớp nền gradient mới hiện dần dần (`opacity: progress` từ 0 đến 1) để bảo đảm độ tương phản đọc chữ hoàn hảo, không che mờ banner lúc ban đầu.
 * **Nút điều hướng trên Header:**
   * Các nút icon (Quay lại, Cài đặt, Thông báo, Tìm kiếm...) phải là nút tròn đều `width: 40px, height: 40px, borderRadius: 20px`, nền trắng `#FFFFFF` (hoặc `Colors.cardBackground`), viền nhẹ `borderColor: '#E8E1D8'`, đổ bóng nhẹ (`elevation: 2, shadowOpacity: 0.06`).
+* **Bố cục Header trang con có Huy hiệu Điểm Gốm / Action phụ:**
+  * Bên trái: Luôn gom nút Back và Tiêu đề vào chung nhóm `headerLeftGroup` (`flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 8`) để tiêu đề hiển thị liền mạch cạnh nút quay lại.
+  * Bên phải: Huy hiệu Điểm Gốm (`pointsBadge`) bo tròn viên thuốc 20px, hiển thị số điểm đậm màu `#9C7156` kèm icon chiếc bình gốm (`icon_ceramic_point.png` cỡ `18x18px`).
+  * Cơ chế đồng bộ điểm: Luôn tính từ tổng chi tiêu đơn hàng từ `orderService.ts` kết hợp `userProfile.points` trừ điểm đã dùng, bảo đảm số điểm gốm luôn nhất quán với trang Ưu đãi (`deals.tsx`).
+* **Khoảng cách thanh tìm kiếm Header Uniqlo (`searchPillWrapper`):**
+  * Luôn đảm bảo `marginRight: 12px` trước nút chuông thông báo bên phải, và tách các thuộc tính layout (`margin`, `flex`) ra thẻ `Pressable` ngoài cùng khi dùng `ScalePressable` để tránh hiện tượng tràn width lấn sang icon bên cạnh.
+* **Độ tương phản & Hiển thị chữ trong thanh tìm kiếm (`searchPlaceholder` & `searchInputInline`):**
+  * Chữ và Placeholder phải đạt độ tương phản cao, sắc nét trên mọi nền ảnh/canvas: cỡ chữ `13.5px`, `fontWeight: '600'`.
+  * Màu chữ & Icon tìm kiếm: Light Mode dùng Nâu Đen Than Chì `#2B2928` (placeholder `rgba(43, 41, 40, 0.70)`); Dark Mode dùng Trắng Sáng `#F5F5F5` (placeholder `rgba(245, 245, 245, 0.78)`).
+* **Quy chuẩn Thanh Trạng Thái Hệ Thống (Status Bar Icons):**
+  * Luôn tự động chuyển đổi theo chủ đề sáng / tối:
+    * **Light Mode:** `barStyle="dark-content"` (chữ/biểu tượng giờ, pin, wifi hiển thị màu **ĐEN** sắc nét trên nền sáng).
+    * **Dark Mode:** `barStyle="light-content"` (chữ/biểu tượng hiển thị màu **TRẮNG** trên nền đen sâu OLED).
+  * Công thức chuẩn: `barStyle={isDark ? 'light-content' : 'dark-content'}` trên mọi màn hình có `StatusBar`.
 
 ---
 
@@ -32,7 +53,12 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * Dạng viên thuốc: `height: 52px, borderRadius: 26px`.
   * Nổi khối cao cấp: `shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 4`.
   * Chữ: `fontFamily: 'ElleGaborStd'`, `fontSize: 15px - 16px`, `fontWeight: '700'`.
-  * Icon đi kèm: Đặt sát chữ (mũi tên `arrow-forward`, checkmark,...) để định hướng hành động.
+  * Icon đi kèm: Đặt sát chữ (mũi tên `arrow-forward`, checkmark, icon download...) để định hướng hành động.
+* **Nút hành động cố định đáy màn hình (Sticky Bottom Action Container):**
+  * Áp dụng cho các nút CTA chính ở màn hình cuộn (như nút "Kiểm tra bản cập nhật" ở `version.tsx`, nút "Đặt hàng", "Áp dụng"...):
+    * Đặt trong khối `bottomFixedContainer` nằm ngoài `ScrollView`: `position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16)`.
+    * Phía sau nút luôn có lớp `LinearGradient` mờ dần từ trong suốt đến nền màn hình (`['rgba(...,0)', 'rgba(...,0.88)', 'rgba(...,0.98)']`) để nội dung bên dưới khi cuộn không bị cắt ngang thô kệch.
+    * Trong `ScrollView`, `contentContainerStyle` bắt buộc phải có `paddingBottom: Math.max(insets.bottom, 16) + 84` để nội dung cuối trang không bị che khuất sau nút cố định.
 * **Secondary / Pill Buttons (Nút phụ, chip phân loại, toggle):**
   * Dạng viên thuốc nhỏ gọn: `height: 38px - 44px`, `borderRadius: 19px - 22px`.
   * Nền trắng hoặc trong suốt viền mảnh `1px - 1.2px` tinh tế.
@@ -51,13 +77,42 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
 * **Danh sách hàng trong Card (List rows):**
   * Icon đặt trong vòng tròn màu pastel nhẹ `width: 38px - 44px`.
   * Phân cách giữa các hàng bằng divider mờ nhẹ `#F0ECE6` hoặc hairlineWidth.
+* **Lưới Danh mục Không Gian Tuyển Chọn (Category Grid 3 Cột Chuẩn Mực):**
+  * Chia đều 3 cột đối xứng (`width: '33.333%'`), `justifyContent: 'flex-start'`, `rowGap: 18px` để luôn giữ các hàng thẳng hàng, cân xứng, không bị dồn lệch hay để lại ô trống thừa thãi.
+  * Icon tròn minh hoạ gốm (`width: 66px, height: 66px, borderRadius: 33px`): Đặt trên nền men kem mộc `#FAF7F2` / `#F6F4EC` viền nhẹ `#E8E1D8` (Light) hoặc `#1A1816` viền men be mảnh `rgba(232, 204, 178, 0.22)` (Dark).
+  * Tên danh mục (`curatedItemName`): `fontFamily: 'ElleGaborStd'`, cỡ chữ `12.5px`, `fontWeight: '600'`, màu `#2B2928` (Light) / `#F5F5F5` (Dark), `lineHeight: 16px`, căn giữa, không bị cắt cụt hay gãy từ.
+  * Hỗ trợ đầy đủ thuộc tính kích thước (`width`, `height`, `minWidth`...) trong `ScalePressable` để tránh hiện tượng thẻ bấm co cụm làm chữ bị tràn vỡ layout.
 
 ---
 
-## 5. Màu sắc & Tinh thần Thương hiệu (Brand Identity — Trích xuất từ Brand Guidelines PDF)
+## 5. Quy chuẩn Hiệu Ứng Kính Lỏng Apple (Apple Liquid Glass Standard)
+Áp dụng cho thanh điều hướng dưới (`FloatingTabBar.tsx`), thanh tìm kiếm Uniqlo, và các khối thành phần nổi cao cấp:
+
+### 5.1. Cấu trúc 4 lớp của khối kính lỏng (Liquid Glass Structure):
+1. **Thấu kính quang học mờ (Optical Blur Lens):**
+   * Sử dụng `BlurView` với độ mờ quang học `intensity: Platform.OS === 'ios' ? 45 : 32`, `tint: isDark ? 'dark' : 'light'`.
+2. **Lớp màu nền đệm bán trong suốt (Liquid Body Tint):**
+   * Giữ độ trong suốt quang học cao (Ultra-thin & Crystalline), tuyệt đối không tăng độ phủ màu nền quá đậm làm kính bị đục:
+     * Light Mode: `rgba(255, 255, 255, 0.08)` (viền `rgba(255, 255, 255, 0.75)`).
+     * Dark Mode: `rgba(255, 255, 255, 0.03)` (viền `rgba(255, 255, 255, 0.16)`).
+3. **Vành tán sắc lăng kính cầu vồng (Prismatic Caustic Rim):**
+   * Bọc quanh viền bằng `LinearGradient` (padding `1.4px`) mô phỏng hiện tượng tán sắc khúc xạ ánh sáng xung quanh giọt nước chất lỏng:
+     * Light Mode: `['rgba(255, 255, 255, 0.95)', 'rgba(255, 185, 130, 0.75)', 'rgba(240, 120, 150, 0.55)', 'rgba(130, 210, 255, 0.65)', 'rgba(255, 255, 255, 0.95)']`.
+     * Dark Mode: `['rgba(255, 255, 255, 0.70)', 'rgba(232, 204, 178, 0.45)', 'rgba(156, 113, 86, 0.35)', 'rgba(160, 210, 255, 0.45)', 'rgba(255, 255, 255, 0.60)']`.
+4. **Vệt sáng bóng mặt cong (Specular Gloss Highlight):**
+   * Dải gradient phản quang chiếm ~50% nửa trên viên thuốc (`pillTopGloss`), bo cong mềm theo góc đỉnh (`borderTopLeftRadius`, `borderTopRightRadius`):
+     * Light: `['rgba(255, 255, 255, 0.88)', 'rgba(255, 255, 255, 0.22)', 'transparent']`.
+     * Dark: `['rgba(255, 255, 255, 0.38)', 'rgba(255, 255, 255, 0.08)', 'transparent']`.
+5. **Ánh viền phản chiếu đáy & Đổ bóng nổi khối:**
+   * Đường kẻ phản quang đáy `height: 1px, width: '50% - 60%', backgroundColor: 'rgba(255,255,255,0.45)'`.
+   * Đổ bóng: Light Mode dùng sắc ấm đất nung `shadowColor: '#9C7156'`, shadowOpacity: 0.20, shadowRadius: 7. Dark Mode dùng `#000000`.
+
+---
+
+## 6. Màu sắc & Tinh thần Thương hiệu (Brand Identity — Trích xuất từ Brand Guidelines PDF)
 Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy định nghiêm ngặt từ tài liệu `TiemNhaGom_Brand Guideline.pdf` (Màu sắc Logo & Nhận diện):
 
-### 5.1. Bảng màu Logo & Nhận diện Thương hiệu Chuẩn (Official Brand Palette):
+### 6.1. Bảng màu Logo & Nhận diện Thương hiệu Chuẩn (Official Brand Palette):
 * **`#9C7156` — Nâu Đất Nung / Gốm Mộc (Primary Terracotta Brand Color):**
   * Màu đại diện cốt lõi của thương hiệu Tiệm Nhà Gốm.
   * Sử dụng cho: Logo chính thức, nét vẽ biểu tượng chiếc bình gốm (Elements & Pattern), các nút nhấn CTA, icon nổi bật, tiêu đề nhấn mạnh.
@@ -73,12 +128,12 @@ Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy đị
 * **`#FFFFFF` — Trắng Men Tinh Khiết (Pure Glaze White):**
   * Sử dụng cho: Nền các khối Card bo tròn 20px, nút bấm nổi, màu chữ/icon khi đặt trên nền nâu đất nung `#9C7156` hoặc nền tối `#2B2928`.
 
-### 5.2. Các quy tắc cấm khi áp dụng nhận diện thương hiệu (Trang 6 Brand Guidelines):
+### 6.2. Các quy tắc cấm khi áp dụng nhận diện thương hiệu (Trang 6 Brand Guidelines):
 * **Tuyệt đối không dùng màu khác ngoài bảng màu Brand:** Giữ trọn vẹn tinh thần gốm thủ công mộc mạc, tránh dùng các màu quá tươi, màu neon hoặc các dải màu lệch khỏi bảng mã màu quy chuẩn.
 * **Bảo toàn tính tương phản:** Không đặt logo hoặc chữ trên nền màu không đủ độ tương phản; không đặt logo trực tiếp lên ảnh chụp có nhiều chi tiết gây rối mắt.
 * **Không làm biến dạng logo:** Không xoay méo, không đổ bóng đậm (drop shadow) lên logo, không cắt xén, không tạo viền outline thô kệch.
 
-### 5.3. Màu bổ trợ & Điểm nhấn giao diện (UI Functional Accents):
+### 6.3. Màu bổ trợ & Điểm nhấn giao diện (UI Functional Accents):
 * **Tuyệt đối KHÔNG sử dụng màu xanh (xanh lá, xanh rêu, xanh lam, olive):** Nghiêm cấm sử dụng các màu xanh trong toàn bộ giao diện app và web.
 * **Màu chữ phụ (Text Secondary / Muted):** `#6E665D` / `#9E968D`.
 * **Viền tiêu chuẩn giao diện:** `#E8E1D8` / `#E8CCB2`.
@@ -86,17 +141,17 @@ Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy đị
 
 ---
 
-## 6. Quy chuẩn Giao diện Dark Mode (Lấy chuẩn từ trang Stores — `app/stores.tsx`)
+## 7. Quy chuẩn Giao diện Dark Mode (Lấy chuẩn từ trang Stores — `app/stores.tsx`)
 Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản tốt, không bị thô ráp hay chói mắt, sử dụng tông màu Đen Sâu OLED thuần khiết:
 
-### 6.1. Bảng màu & Bố cục Dark Mode:
+### 7.1. Bảng màu & Bố cục Dark Mode:
 * **Màu nền toàn trang:** `#000000` (Pure Black OLED — `Colors.background`).
 * **Màu nền Card View:** `#121212` (`Colors.cardBackground`), nổi khối thanh thoát trên nền đen sâu.
 * **Màu nền Surface phụ / Icon Circle / Chip không active:** `#1E1E1E` (`Colors.surface`).
 * **Màu chữ chính:** `#F5F5F5` (`Colors.textPrimary`), chữ phụ `#B0B0B0` / `#9E968D`, điểm nhấn men gốm `#E8CCB2` hoặc `#9C7156`.
 * **Đường kẻ phân cách (Divider):** `#222222` (`Colors.divider`).
 
-### 6.2. Quy tắc Viền (Border) & Nút Back ở Dark Mode:
+### 7.2. Quy tắc Viền (Border) & Nút Back ở Dark Mode:
 * **Tuyệt đối KHÔNG có viền trắng / xám sáng xung quanh các khối Card:**
   * Toàn bộ Card View ở Dark Mode phải bỏ viền cứng hoặc đặt viền trong suốt: `borderWidth: isDark ? 0 : 1`, `borderColor: isDark ? 'transparent' : ...`.
   * Tắt shadow sáng màu (`shadowOpacity: isDark ? 0 : ...`, `elevation: isDark ? 0 : ...`).
@@ -109,7 +164,18 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 
 ---
 
-## 7. Quy chuẩn Đa ngôn ngữ (i18n & Localization Bắt buộc)
+## 8. Quy chuẩn Màn hình Đăng Nhập & Xác Thực (Auth Screens UX)
+* **Không đặt nút đóng 'X' ở đầu trang:** Tránh cảm giác vụng về hoặc xung đột điều hướng; màn hình auth tập trung tối đa vào trải nghiệm người dùng.
+* **Không nhân đôi nút chuyển đổi Đăng nhập / Đăng ký:**
+  * Tuyệt đối không vừa đặt badge chuyển đổi trên header vừa đặt nút chuyển đổi dưới chân form.
+  * Chỉ giữ lại duy nhất 1 liên kết chuyển chế độ trang nhã ở cuối form (`switchModeRow`).
+* **Bảo lưu thiết lập Onboarding khi Đăng xuất (Logout UX):**
+  * Khi người dùng đăng xuất (`signOut`), **tuyệt đối không xóa cờ `has_seen_onboarding` khỏi `AsyncStorage`**.
+  * Các tùy chọn cài đặt trên thiết bị (ngôn ngữ, cỡ chữ, chủ đề sáng/tối, quyền hệ thống đã cấp) phải luôn được bảo lưu; sau khi đăng xuất người dùng chỉ được chuyển hướng về màn hình đăng nhập (`auth/login`), tuyệt đối không bắt người dùng phải làm lại quy trình giới thiệu, chọn ngôn ngữ/cỡ chữ hay cấp quyền lại.
+
+---
+
+## 9. Quy chuẩn Đa ngôn ngữ (i18n & Localization Bắt buộc)
 * **Bắt buộc 100% giao diện phải hỗ trợ đa ngôn ngữ:**
   * Mọi màn hình (Screens), khối thành phần (Components), hộp thoại (Dialog / Alert / Modal), trạng thái rỗng (Empty State), nhãn nút (Buttons) và chuỗi hiển thị cho người dùng **phải luôn được lấy từ `const { t } = useSettings()` với `t('key')`**.
   * **Nghiêm cấm để chuỗi tiếng Việt cứng (hardcoded text)** trong JSX hoặc trong logic phản hồi người dùng.

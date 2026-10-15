@@ -234,7 +234,7 @@ export default function VoucherDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
@@ -264,6 +264,41 @@ export default function VoucherDetailScreen() {
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
+
+      {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top + 54 + 24,
+          zIndex: 9,
+        }}
+        pointerEvents="none"
+      >
+        <LinearGradient
+          colors={
+            isDark
+              ? [
+                  'rgba(0,0,0,0.85)',
+                  'rgba(0,0,0,0.72)',
+                  'rgba(0,0,0,0.45)',
+                  'rgba(0,0,0,0.15)',
+                  'rgba(0,0,0,0)',
+                ]
+              : [
+                  'rgba(250,248,245,0.88)',
+                  'rgba(250,248,245,0.75)',
+                  'rgba(250,248,245,0.45)',
+                  'rgba(250,248,245,0.15)',
+                  'rgba(250,248,245,0)',
+                ]
+          }
+          locations={[0, 0.40, 0.70, 0.88, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
 
       {/* Floating Back Button bọc Liquid Glass */}
       <View style={[styles.floatingHeader, { top: insets.top + (Platform.OS === 'android' ? 10 : 8) }]}>

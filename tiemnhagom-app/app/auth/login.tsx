@@ -416,18 +416,6 @@ export default function LoginScreen() {
         pointerEvents="none"
       />
 
-      {/* TOP CLOSE BUTTON */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.closeBtn}
-          onPress={() => router.back()}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="close" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-
       {/* AUTH CARD (BOTTOM SHEET) */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -458,21 +446,6 @@ export default function LoginScreen() {
                     <Text style={styles.subTitleText}>{t('joinPotteryStudio')}</Text>
                   </>
                 )}
-              </View>
-
-              <View style={styles.authHeaderRight}>
-                <TouchableOpacity
-                  style={styles.authToggleBadge}
-                  onPress={() => {
-                    setIsSignUpMode(!isSignUpMode);
-                    setIsOtpMode(false);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.authToggleLink}>
-                    {isSignUpMode ? t('login') : t('register')}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </Animated.View>
 

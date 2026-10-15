@@ -1,5 +1,5 @@
 // src/components/BannerSlider.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -9,25 +9,55 @@ import {
   Animated,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  AppState,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { useFocusEffect, usePathname } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { BannerSlide, getHeroBanners } from '../services/productService';
+import { useSettings } from '../context/SettingsContext';
+import { LiquidGlass } from './LiquidGlass';
+import { ScalePressable } from './ScalePressable';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Chiều cao banner full màn hình chuẩn theo giao diện mobile web (chiếm trọn khung nhìn)
 export const HERO_BANNER_HEIGHT = Math.min(SCREEN_HEIGHT * 0.82, 680);
 
+const videoSource = require('../../assets/videos/video_banner_xmas.mp4');
+
 interface BannerSliderProps {
   onBannerPress?: (slide: BannerSlide) => void;
+  scrollY?: number;
 }
 
-export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => {
+export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrollY }) => {
+  const { t } = useSettings();
+  const pathname = usePathname();
   const [slides, setSlides] = useState<BannerSlide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const currentIndexRef = useRef(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const autoPlayTimer = useRef<any>(null);
+
+  // Video mặc định theo yêu cầu người dùng
+  const [bannerMode, setBannerMode] = useState<'image' | 'video'>('video');
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const userPausedRef = useRef(false);
+  const isScreenFocusedRef = useRef(true);
+  const scrollYRef = useRef(scrollY);
+  scrollYRef.current = scrollY;
+  const bannerModeRef = useRef(bannerMode);
+  bannerModeRef.current = bannerMode;
+
+  // Khởi tạo Video Player tự động chạy lặp (loop) và tắt tiếng (muted) mặc định
+  const player = useVideoPlayer(videoSource, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
 
   // Animated value theo dõi vị trí cuộn x (cho animation mượt mà theo cử chỉ ngón tay)
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -56,7 +86,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => 
 
   const startAutoPlay = () => {
     stopAutoPlay();
-    if (slides.length > 1) {
+    if (slides.length > 1 && bannerMode === 'image') {
       autoPlayTimer.current = setInterval(() => {
         const next = (currentIndexRef.current + 1) % slides.length;
         currentIndexRef.current = next;
@@ -66,14 +96,153 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => 
     }
   };
 
-  // Tự động chuyển slide sau mỗi 4.5 giây
+  // Tự động chuyển slide khi ở chế độ 'image'
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || bannerMode === 'video') {
+      stopAutoPlay();
+      return;
+    }
     startAutoPlay();
     return () => {
       stopAutoPlay();
     };
-  }, [slides.length]);
+  }, [slides.length, bannerMode]);
+
+  // 1. Tự động dừng video khi người dùng chuyển sang trang khác hoặc tab khác (React Navigation Blur)
+  useFocusEffect(
+    useCallback(() => {
+      isScreenFocusedRef.current = true;
+      if (bannerModeRef.current === 'video') {
+        if ((scrollYRef.current === undefined || scrollYRef.current <= 140) && !userPausedRef.current) {
+          try {
+            player.play();
+            setIsPlaying(true);
+          } catch (e) {}
+        }
+      } else {
+        startAutoPlay();
+      }
+
+      return () => {
+        isScreenFocusedRef.current = false;
+        try {
+          if (player) {
+            player.pause();
+            setIsPlaying(false);
+          }
+        } catch (e) {}
+        stopAutoPlay();
+      };
+    }, [player])
+  );
+
+  // 2. Theo dõi route pathname tức thời: Khi pathname không còn ở trang chủ -> dừng video ngay lập tức
+  useEffect(() => {
+    const isHome = pathname === '/' || pathname === '' || pathname === '/(tabs)' || pathname === '/(tabs)/';
+    if (!isHome) {
+      isScreenFocusedRef.current = false;
+      try {
+        if (player && player.playing) {
+          player.pause();
+          setIsPlaying(false);
+        }
+      } catch (e) {}
+      stopAutoPlay();
+    }
+  }, [pathname, player]);
+
+  // 3. Theo dõi trạng thái ứng dụng (AppState): Khi chuyển sang app khác hoặc tắt màn hình -> dừng video
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState !== 'active') {
+        try {
+          if (player) {
+            player.pause();
+            setIsPlaying(false);
+          }
+        } catch (e) {}
+        stopAutoPlay();
+      } else {
+        if (isScreenFocusedRef.current && bannerModeRef.current === 'video') {
+          if ((scrollYRef.current === undefined || scrollYRef.current <= 140) && !userPausedRef.current) {
+            try {
+              player.play();
+              setIsPlaying(true);
+            } catch (e) {}
+          }
+        } else if (isScreenFocusedRef.current && bannerModeRef.current === 'image') {
+          startAutoPlay();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
+
+  // 4. Tự động dừng video khi người dùng cuộn xuống xem sản phẩm & phát lại khi cuộn về đầu trang
+  useEffect(() => {
+    if (scrollY === undefined || !player) return;
+    if (!isScreenFocusedRef.current) return;
+
+    if (bannerMode === 'video') {
+      if (scrollY > 180) {
+        // Lướt xuống dưới xem sản phẩm -> tự động dừng video
+        if (player.playing) {
+          player.pause();
+          setIsPlaying(false);
+        }
+      } else if (scrollY <= 140) {
+        // Lướt lên lại đầu trang -> tự động phát tiếp video nếu chưa bị bấm dừng thủ công
+        if (!player.playing && !userPausedRef.current) {
+          player.play();
+          setIsPlaying(true);
+        }
+      }
+    }
+  }, [scrollY, bannerMode, player]);
+
+  // Chuyển đổi qua lại giữa Ảnh và Video
+  const handleModeChange = (mode: 'image' | 'video') => {
+    if (mode === bannerMode) return;
+    setBannerMode(mode);
+    if (mode === 'video') {
+      stopAutoPlay();
+      userPausedRef.current = false;
+      player.play();
+      setIsPlaying(true);
+    } else {
+      player.pause();
+      setIsPlaying(false);
+      startAutoPlay();
+    }
+  };
+
+  const handleToggleMode = () => {
+    const nextMode = bannerMode === 'video' ? 'image' : 'video';
+    handleModeChange(nextMode);
+  };
+
+  // Bật / Tắt âm thanh video
+  const toggleMute = () => {
+    const next = !isMuted;
+    player.muted = next;
+    setIsMuted(next);
+  };
+
+  // Tạm dừng / Tiếp tục phát video khi chạm vào màn hình
+  const togglePlayPause = () => {
+    if (player.playing) {
+      player.pause();
+      setIsPlaying(false);
+      userPausedRef.current = true;
+    } else {
+      player.play();
+      setIsPlaying(true);
+      userPausedRef.current = false;
+    }
+  };
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -91,18 +260,45 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => 
     startAutoPlay();
   };
 
-  if (slides.length === 0) {
-    return (
-      <View style={[styles.container, styles.loadingWrap]}>
-        <View style={styles.placeholderCard} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      {/* 1. Lớp ảnh xếp chồng cố định chuyển mờ dần (Crossfade Layer theo thời gian thực) */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {/* ================= 0. LỚP VIDEO BANNER CHẠY LOOP (MẶC ĐỊNH) ================= */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            opacity: bannerMode === 'video' ? 1 : 0,
+            zIndex: bannerMode === 'video' ? 10 : -1,
+          },
+        ]}
+        pointerEvents={bannerMode === 'video' ? 'auto' : 'none'}
+      >
+        <TouchableOpacity
+          activeOpacity={0.96}
+          onPress={togglePlayPause}
+          style={StyleSheet.absoluteFill}
+        >
+          <VideoView
+            style={StyleSheet.absoluteFill}
+            player={player}
+            nativeControls={false}
+            contentFit="cover"
+            allowsPictureInPicture={false}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* ================= 1. LỚP ẢNH XẾP CHỒNG CROSSFADE LAYER ================= */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            opacity: bannerMode === 'image' ? 1 : 0,
+            zIndex: bannerMode === 'image' ? 5 : -2,
+          },
+        ]}
+        pointerEvents="none"
+      >
         {slides.map((item, index) => {
           const bannerSource =
             item.mobileImageUrl && item.mobileImageUrl.trim() !== ''
@@ -148,106 +344,170 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress }) => 
                 },
               ]}
             >
-                <Image
-                  source={{ uri: bannerSource }}
-                  style={styles.bannerImage}
-                  contentFit="cover"
-                  priority={index === 0 ? 'high' : 'normal'}
-                  cachePolicy="disk"
-                  recyclingKey={bannerSource}
-                />
+              <Image
+                source={{ uri: bannerSource }}
+                style={styles.bannerImage}
+                contentFit="cover"
+                priority={index === 0 ? 'high' : 'normal'}
+                cachePolicy="disk"
+                recyclingKey={bannerSource}
+              />
             </Animated.View>
           );
         })}
       </View>
 
-      {/* 2. Lớp điều khiển cử chỉ lướt tay ngang (Touch Gesture Scroll Layer) */}
-      <Animated.ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        nestedScrollEnabled={true}
-        directionalLockEnabled={true}
-        snapToInterval={SCREEN_WIDTH}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        disableIntervalMomentum={true}
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        bounces={false}
-        overScrollMode="never"
-        onScrollBeginDrag={stopAutoPlay}
-        onScrollEndDrag={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-          if (idx >= 0 && idx < slides.length) {
-            setActiveIndex(idx);
-            currentIndexRef.current = idx;
-          }
-          startAutoPlay();
-        }}
-        onMomentumScrollEnd={onMomentumScrollEnd}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-        style={StyleSheet.absoluteFill}
-        contentContainerStyle={{ width: SCREEN_WIDTH * slides.length, height: HERO_BANNER_HEIGHT }}
-      >
-        {slides.map((item, index) => (
-          <TouchableOpacity
-            key={item.id || String(index)}
-            style={styles.touchSlide}
-            activeOpacity={0.96}
-            delayPressIn={50}
-            onPress={() => onBannerPress?.(item)}
-          />
-        ))}
-      </Animated.ScrollView>
-
-      {/* 3. Dấu chấm chuyển slide với animation chuyển động co dãn mượt mà (Morphing Pill Dots) */}
-      <View style={styles.dotsWrap}>
-        {slides.map((_, i) => {
-          // Animation co dãn theo vị trí cuộn x trực tiếp từ ngón tay người dùng
-          const width = scrollX.interpolate({
-            inputRange: [
-              (i - 1) * SCREEN_WIDTH,
-              i * SCREEN_WIDTH,
-              (i + 1) * SCREEN_WIDTH,
-            ],
-            outputRange: [7, 24, 7],
-            extrapolate: 'clamp',
-          });
-
-          const opacity = scrollX.interpolate({
-            inputRange: [
-              (i - 1) * SCREEN_WIDTH,
-              i * SCREEN_WIDTH,
-              (i + 1) * SCREEN_WIDTH,
-            ],
-            outputRange: [0.45, 1, 0.45],
-            extrapolate: 'clamp',
-          });
-
-          return (
+      {/* ================= 2. LỚP ĐIỀU KHIỂN CỬ CHỈ LƯỚT TAY KHI Ở CHẾ ĐỘ ẢNH ================= */}
+      {bannerMode === 'image' && (
+        <Animated.ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          nestedScrollEnabled={true}
+          directionalLockEnabled={true}
+          snapToInterval={SCREEN_WIDTH}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          disableIntervalMomentum={true}
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          bounces={false}
+          overScrollMode="never"
+          onScrollBeginDrag={stopAutoPlay}
+          onScrollEndDrag={(e) => {
+            const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            if (idx >= 0 && idx < slides.length) {
+              setActiveIndex(idx);
+              currentIndexRef.current = idx;
+            }
+            startAutoPlay();
+          }}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          style={[StyleSheet.absoluteFill, { zIndex: 6 }]}
+          contentContainerStyle={{ width: SCREEN_WIDTH * Math.max(slides.length, 1), height: HERO_BANNER_HEIGHT }}
+        >
+          {slides.map((item, index) => (
             <TouchableOpacity
-              key={i}
-              onPress={() => handleDotPress(i)}
-              activeOpacity={0.7}
-              hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
-            >
-              <Animated.View
-                style={[
-                  styles.dotBase,
-                  {
-                    width,
-                    opacity,
-                  },
-                ]}
-              />
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+              key={item.id || String(index)}
+              style={styles.touchSlide}
+              activeOpacity={0.96}
+              delayPressIn={50}
+              onPress={() => onBannerPress?.(item)}
+            />
+          ))}
+        </Animated.ScrollView>
+      )}
+
+      {/* ================= 3. ĐIỀU KHIỂN ÂM THANH TRÒN (GÓC TRÁI - KHI Ở CHẾ ĐỘ VIDEO) ================= */}
+      {bannerMode === 'video' && (
+        <ScalePressable
+          activeScale={0.88}
+          onPress={toggleMute}
+          style={styles.circleBtnWrapLeft}
+          accessibilityLabel={isMuted ? (t('unmuteVideo') || 'Bật âm thanh') : (t('muteVideo') || 'Tắt âm thanh')}
+        >
+          <LiquidGlass style={styles.circleBtnInner}>
+            <Ionicons
+              name={isMuted ? 'volume-mute-outline' : 'volume-high'}
+              size={19}
+              color="#FFFFFF"
+            />
+          </LiquidGlass>
+        </ScalePressable>
+      )}
+
+      {/* ================= 4. DẤU CHẤM CHUYỂN SLIDE (Ở GIỮA - KHI Ở CHẾ ĐỘ ẢNH) ================= */}
+      {bannerMode === 'image' && slides.length > 1 && (
+        <View style={styles.dotsWrap}>
+          {slides.map((_, i) => {
+            const width = scrollX.interpolate({
+              inputRange: [
+                (i - 1) * SCREEN_WIDTH,
+                i * SCREEN_WIDTH,
+                (i + 1) * SCREEN_WIDTH,
+              ],
+              outputRange: [7, 24, 7],
+              extrapolate: 'clamp',
+            });
+
+            const opacity = scrollX.interpolate({
+              inputRange: [
+                (i - 1) * SCREEN_WIDTH,
+                i * SCREEN_WIDTH,
+                (i + 1) * SCREEN_WIDTH,
+              ],
+              outputRange: [0.45, 1, 0.45],
+              extrapolate: 'clamp',
+            });
+
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={() => handleDotPress(i)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
+              >
+                <Animated.View
+                  style={[
+                    styles.dotBase,
+                    {
+                      width,
+                      opacity,
+                    },
+                  ]}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
+      {/* ================= 5. NÚT TRÒN TẠM DỪNG / TIẾP TỤC (Ở TRÊN NÚT ĐỔI ẢNH/VIDEO) ================= */}
+      {bannerMode === 'video' && (
+        <ScalePressable
+          activeScale={0.88}
+          onPress={togglePlayPause}
+          style={styles.circleBtnWrapRightTop}
+          accessibilityLabel={
+            isPlaying
+              ? (t('pauseVideo') || 'Tạm dừng video')
+              : (t('resumeVideo') || 'Tiếp tục phát video')
+          }
+        >
+          <LiquidGlass style={styles.circleBtnInner}>
+            <Ionicons
+              name={isPlaying ? 'pause' : 'play'}
+              size={18}
+              color="#FFFFFF"
+              style={!isPlaying ? { marginLeft: 2 } : undefined}
+            />
+          </LiquidGlass>
+        </ScalePressable>
+      )}
+
+      {/* ================= 6. NÚT CHUYỂN ĐỔI CHẾ ĐỘ TRÒN (GÓC PHẢI DƯỚI) ================= */}
+      <ScalePressable
+        activeScale={0.88}
+        onPress={handleToggleMode}
+        style={styles.circleBtnWrapRight}
+        accessibilityLabel={
+          bannerMode === 'video'
+            ? (t('bannerModeImage') || 'Chuyển sang xem ảnh')
+            : (t('bannerModeVideo') || 'Chuyển sang xem video')
+        }
+      >
+        <LiquidGlass style={styles.circleBtnInner}>
+          <Ionicons
+            name={bannerMode === 'video' ? 'images-outline' : 'videocam'}
+            size={20}
+            color="#FFFFFF"
+          />
+        </LiquidGlass>
+      </ScalePressable>
     </View>
   );
 };
@@ -257,17 +517,8 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: HERO_BANNER_HEIGHT,
     position: 'relative',
-    backgroundColor: '#F7F4EF',
+    backgroundColor: '#000000',
     overflow: 'hidden',
-  },
-  loadingWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderCard: {
-    width: SCREEN_WIDTH,
-    height: HERO_BANNER_HEIGHT,
-    backgroundColor: '#EAE5DC',
   },
   touchSlide: {
     width: SCREEN_WIDTH,
@@ -277,9 +528,21 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // Nút tròn Tạm dừng / Tiếp tục ở trên nút chuyển đổi chế độ
+  circleBtnWrapRightTop: {
+    position: 'absolute',
+    bottom: 84,
+    right: 16,
+    zIndex: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
   dotsWrap: {
     position: 'absolute',
-    bottom: 28,
+    bottom: 34,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -297,5 +560,39 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 3,
     elevation: 4,
+  },
+  // Nút tròn âm thanh bên trái (Liquid Glass 40x40 tròn)
+  circleBtnWrapLeft: {
+    position: 'absolute',
+    bottom: 34,
+    left: 16,
+    zIndex: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  // Nút tròn chuyển đổi bên phải (Liquid Glass 40x40 tròn)
+  circleBtnWrapRight: {
+    position: 'absolute',
+    bottom: 34,
+    right: 16,
+    zIndex: 30,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  circleBtnInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.32)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.40)',
   },
 });

@@ -122,6 +122,7 @@ export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> =
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={0}
+            style={{ width: '100%', justifyContent: 'flex-end' }}
           >
             <Animated.View
               style={[
@@ -167,6 +168,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   sheet: {
+    width: '100%',
     backgroundColor: isDark ? '#121212' : '#FAF8F5',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

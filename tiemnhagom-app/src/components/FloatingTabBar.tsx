@@ -15,18 +15,11 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../context/CartContext';
+import { LiquidGlass } from './LiquidGlass';
 
-let LiquidGlassView: any = null;
-let isLiquidGlassSupported: any = null;
-try {
-  const liquidModule = require('react-native-liquid-glassmorphism');
-  LiquidGlassView = liquidModule.LiquidGlassView;
-  isLiquidGlassSupported = liquidModule.isLiquidGlassSupported;
-} catch {
-  // Graceful fallback nếu đang chạy môi trường chưa nạp native module
-}
 
 const BAR_HEIGHT = 64;
 const BAR_PADDING = 6;
@@ -43,7 +36,8 @@ type Props = {
 export default function FloatingTabBar({ state, descriptors, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
-  const styles = getStyles(Colors);
+  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const styles = getStyles(Colors, isDark);
   const ACTIVE_COLOR = Colors.textPrimary;
   const INACTIVE_COLOR = Colors.textMuted;
   const [barWidth, setBarWidth] = useState(0);
@@ -208,36 +202,76 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
         style={[styles.shadow, { transform: [{ scale: barScale }] }]}
         onLayout={onLayout}
       >
-        <View style={styles.bar} {...panResponder.panHandlers}>
-          {/* Native Apple Liquid Glass / Frosted glass background */}
-          {typeof isLiquidGlassSupported === 'function' && isLiquidGlassSupported() && LiquidGlassView ? (
-            <LiquidGlassView
-              preset="floatingTabBar"
-              variant={Colors.cardBackground === '#FFFFFF' ? 'regular' : 'clear'}
-              tintColor={Colors.cardBackground === '#FFFFFF' ? 'rgba(255,255,255,0.45)' : 'rgba(20,20,20,0.65)'}
-              blurRadius={Platform.OS === 'ios' ? 24 : 18}
-              borderRadius={BAR_HEIGHT / 2}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 95 : 85}
-              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />
-
-          {/* Sliding active pill */}
+        <LiquidGlass style={styles.bar} {...panResponder.panHandlers}>
+          {/* Sliding Apple Liquid Glass active pill */}
           {itemWidth > 0 && (
             <Animated.View
+              pointerEvents="none"
               style={[
                 styles.activePill,
                 dragIndex !== null && styles.activePillDragging,
                 { width: itemWidth, transform: [{ translateX }, { scale: pillScale }] },
               ]}
-            />
+            >
+              {/* Vành tán sắc lăng kính cầu vồng lỏng (Apple Liquid Glass Prismatic Caustic Rim) */}
+              <LinearGradient
+                colors={
+                  isDark
+                    ? [
+                        'rgba(255, 255, 255, 0.70)',
+                        'rgba(232, 204, 178, 0.45)',
+                        'rgba(156, 113, 86, 0.35)',
+                        'rgba(160, 210, 255, 0.45)',
+                        'rgba(255, 255, 255, 0.60)',
+                      ]
+                    : [
+                        'rgba(255, 255, 255, 0.95)',
+                        'rgba(255, 185, 130, 0.75)',
+                        'rgba(240, 120, 150, 0.55)',
+                        'rgba(130, 210, 255, 0.65)',
+                        'rgba(255, 255, 255, 0.95)',
+                      ]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.pillIridescentRim}
+              >
+                <View style={styles.pillLiquidInner}>
+                  {/* Thấu kính mờ quang học (Frosted Glass Refraction) */}
+                  <BlurView
+                    intensity={Platform.OS === 'ios' ? 45 : 32}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={StyleSheet.absoluteFill}
+                  />
+
+                  {/* Lớp nền men gốm bán trong suốt */}
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 255, 255, 0.10)'
+                          : 'rgba(255, 255, 255, 0.48)',
+                      },
+                    ]}
+                  />
+
+                  {/* Vệt sáng bóng bề mặt chất lỏng (Specular Gloss Highlight) */}
+                  <LinearGradient
+                    colors={[
+                      isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.88)',
+                      isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.22)',
+                      'rgba(255, 255, 255, 0)',
+                    ]}
+                    locations={[0, 0.45, 1]}
+                    style={styles.pillTopGloss}
+                  />
+
+                  {/* Ánh phản chiếu viền đáy */}
+                  <View style={styles.pillBottomReflect} />
+                </View>
+              </LinearGradient>
+            </Animated.View>
           )}
 
           {routes.map((route: any, index: number) => {
@@ -280,14 +314,13 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
               </Pressable>
             );
           })}
-
-        </View>
+        </LiquidGlass>
       </Animated.View>
     </View>
   );
 }
 
-const getStyles = (Colors: any) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   wrapper: {
     position: 'absolute',
     left: 14,
@@ -296,11 +329,11 @@ const getStyles = (Colors: any) => StyleSheet.create({
   shadow: {
     borderRadius: BAR_HEIGHT / 2,
     backgroundColor: 'transparent',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: Colors.cardBackground === '#FFFFFF' ? 0.08 : 0.25,
+    shadowRadius: 14,
+    elevation: 8,
   },
   bar: {
     height: BAR_HEIGHT,
@@ -309,8 +342,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: BAR_PADDING,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border,
   },
   glassOverlay: {
     backgroundColor: Colors.cardBackground === '#FFFFFF' 
@@ -323,10 +354,44 @@ const getStyles = (Colors: any) => StyleSheet.create({
     top: BAR_PADDING,
     bottom: BAR_PADDING,
     borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2,
-    backgroundColor: Colors.cardBackground === '#FFFFFF' ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)',
+    shadowColor: isDark ? '#000000' : '#9C7156',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: isDark ? 0.38 : 0.20,
+    shadowRadius: 7,
+    elevation: 4,
   },
   activePillDragging: {
-    backgroundColor: Colors.cardBackground === '#FFFFFF' ? 'rgba(0,0,0,0.11)' : 'rgba(255,255,255,0.15)',
+    shadowOpacity: isDark ? 0.48 : 0.28,
+    shadowRadius: 10,
+  },
+  pillIridescentRim: {
+    flex: 1,
+    borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2,
+    padding: 1.4,
+  },
+  pillLiquidInner: {
+    flex: 1,
+    borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  pillTopGloss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '52%',
+    borderTopLeftRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
+    borderTopRightRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
+  },
+  pillBottomReflect: {
+    position: 'absolute',
+    bottom: 0.5,
+    left: '22%',
+    right: '22%',
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 1,
   },
   item: {
     flex: 1,

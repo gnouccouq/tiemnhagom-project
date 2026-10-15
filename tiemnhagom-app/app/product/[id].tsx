@@ -17,6 +17,7 @@ import Animated, { FadeIn, FadeInDown, SlideInDown, ZoomIn } from 'react-native-
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
 import { getProductById, getProducts } from '../../src/services/productService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
@@ -398,6 +399,41 @@ export default function ProductDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
+      {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top + 54 + 24,
+          zIndex: 9,
+        }}
+        pointerEvents="none"
+      >
+        <LinearGradient
+          colors={
+            isDark
+              ? [
+                  'rgba(0,0,0,0.85)',
+                  'rgba(0,0,0,0.72)',
+                  'rgba(0,0,0,0.45)',
+                  'rgba(0,0,0,0.15)',
+                  'rgba(0,0,0,0)',
+                ]
+              : [
+                  'rgba(250,248,245,0.88)',
+                  'rgba(250,248,245,0.75)',
+                  'rgba(250,248,245,0.45)',
+                  'rgba(250,248,245,0.15)',
+                  'rgba(250,248,245,0)',
+                ]
+          }
+          locations={[0, 0.40, 0.70, 0.88, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
+
       {/* Floating Header không vạch kẻ đáy, nút tròn 40px chuẩn GEMINI.md */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
         <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
@@ -422,7 +458,7 @@ export default function ProductDetailScreen() {
               <BlurButton style={styles.headerBtn} onPress={() => router.push('/cart')} accessibilityLabel="Giỏ hàng">
                 <Ionicons name="bag-handle-outline" size={20} color={Colors.textPrimary} />
                 {cartCount > 0 && (
-                  <View style={styles.cartBadge}>
+                  <View style={styles.cartBadge} pointerEvents="none">
                     <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
                   </View>
                 )}
@@ -1096,12 +1132,13 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 2,
     borderWidth: 1.5,
-    borderColor: isDark ? '#121212' : '#FFFFFF',
+    borderColor: isDark ? '#121212' : '#FAF8F5',
+    zIndex: 10,
   },
   cartBadgeText: {
     color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
     fontFamily: 'ElleGaborStd',
   },
   scrollContent: {

@@ -16,12 +16,13 @@ export interface ProductCategoryItem {
 
 export function getCategoryDisplayName(name: string): string {
   const n = (name || '').trim();
-  if (n === 'Dining Decor') return 'Bàn Ăn & Bếp';
-  if (n === 'Teatime & Drinks') return 'Trà & Cà Phê';
-  if (n === 'Home Decor') return 'Trang Trí Nhà';
-  if (n === 'Kitchenware') return 'Dụng Cụ Bếp';
-  if (n === 'Lifestyle') return 'Phong Cách Sống';
-  if (n === 'Value Packs') return 'Combo & Quà Tặng';
+  const lower = n.toLowerCase();
+  if (lower === 'dining decor' || lower === 'bàn ăn' || lower === 'bàn ăn & bếp') return 'Bàn Ăn';
+  if (lower === 'teatime & drinks' || lower === 'trà & cà phê' || lower === 'trà & cafe') return 'Trà & Cà Phê';
+  if (lower === 'home decor' || lower === 'trang trí' || lower === 'trang trí nhà') return 'Trang Trí';
+  if (lower === 'kitchenware' || lower === 'dụng cụ' || lower === 'dụng cụ bếp') return 'Dụng Cụ Bếp';
+  if (lower === 'lifestyle' || lower === 'phong cách' || lower === 'phong cách sống') return 'Phong Cách';
+  if (lower === 'value packs' || lower === 'combo' || lower === 'combo quà tặng' || lower === 'combo & quà tặng') return 'Combo Quà';
   return n;
 }
 

@@ -20,7 +20,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
-import { BannerSlider } from '../../src/components/BannerSlider';
+import { BannerSlider, HERO_BANNER_HEIGHT } from '../../src/components/BannerSlider';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { CategoryChip } from '../../src/components/CategoryChip';
@@ -58,6 +58,12 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'Kitchenware': '🔥',
   'Lifestyle': '✨',
   'Value Packs': '🎁',
+  'Bàn ăn': '🍜',
+  'Trà & Cà phê': '🍵',
+  'Trang trí': '🌸',
+  'Dụng cụ': '🔥',
+  'Phong cách': '✨',
+  'Combo': '🎁',
 };
 
 // Màu nền gốm men mộc chuẩn Brand Guidelines Tiệm Nhà Gốm
@@ -69,6 +75,12 @@ const CATEGORY_BG: Record<string, string> = {
   'Kitchenware': '#EFE4D8',
   'Lifestyle': '#F5ECE3',
   'Value Packs': '#EEDECF',
+  'Bàn ăn': '#F7EFE6',
+  'Trà & Cà phê': '#F4EAE0',
+  'Trang trí': '#FBF6F0',
+  'Dụng cụ': '#EFE4D8',
+  'Phong cách': '#F5ECE3',
+  'Combo': '#EEDECF',
 };
 
 // Cấu hình 4 hạng thành viên đồng bộ chuẩn xác từ Website & Tab Ưu đãi
@@ -240,13 +252,47 @@ export default function HomeScreen() {
     loadData();
   };
 
-  const [scrollY, setScrollY] = useState(0);
-  const topGradientOpacity = Math.max(0, 1 - scrollY / 65);
+  // Chiều cao banner full màn hình & Hiệu ứng Stretchy Parallax Hero (giống voucher-detail.tsx)
+  const HERO_HEIGHT = HERO_BANNER_HEIGHT;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [scrollYNum, setScrollYNum] = useState(0);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentY = event.nativeEvent.contentOffset.y;
-    setScrollY(currentY);
-  };
+  // Hiệu ứng kéo dãn khi kéo xuống (overscroll elastic zoom ra)
+  const heroScale = scrollY.interpolate({
+    inputRange: [-HERO_HEIGHT, 0],
+    outputRange: [2.0, 1.0],
+    extrapolateLeft: 'extend',
+    extrapolateRight: 'clamp',
+  });
+
+  // Khi kéo xuống (scrollY < 0): counter-translate để mép trên ảnh luôn ghim chặt ở top: 0, KHÔNG BAO GIỜ bị hở khoảng đen phía trên
+  // Khi kéo lên (scrollY > 0): giữ ảnh cố định (sticky parallax) để nội dung trượt lên phủ qua ảnh
+  const heroTranslateY = scrollY.interpolate({
+    inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
+    outputRange: [-HERO_HEIGHT / 2, 0, HERO_HEIGHT],
+    extrapolateLeft: 'extend',
+    extrapolateRight: 'clamp',
+  });
+
+  // Mờ dần nhẹ khi nội dung cuộn lên che qua
+  const heroOpacity = scrollY.interpolate({
+    inputRange: [0, HERO_HEIGHT * 0.85],
+    outputRange: [1, 0.4],
+    extrapolate: 'clamp',
+  });
+
+  const topGradientOpacity = Math.max(0, 1 - scrollYNum / 65);
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const currentY = event.nativeEvent.contentOffset.y;
+        setScrollYNum(currentY);
+      },
+    }
+  );
 
   const handleCategoryPress = (catId: string) => {
     setSelectedCategory(catId);
@@ -270,19 +316,23 @@ export default function HomeScreen() {
   return (
     <View style={styles.safeArea}>
       <StatusBar
-        barStyle={scrollY > 35 ? 'dark-content' : 'light-content'}
+        barStyle={isDark ? 'light-content' : 'dark-content'}
         translucent
         backgroundColor="transparent"
       />
       <View style={[styles.topGradientWrap, { opacity: topGradientOpacity }]} pointerEvents="none">
         <LinearGradient
-          colors={['rgba(0,0,0,0.6)', 'transparent']}
+          colors={
+            isDark
+              ? ['rgba(0,0,0,0.35)', 'transparent']
+              : ['rgba(255,255,255,0.45)', 'transparent']
+          }
           style={StyleSheet.absoluteFill}
         />
       </View>
-      <Header transparent scrollY={scrollY} />
+      <Header transparent scrollY={scrollYNum} />
 
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         onScroll={handleScroll}
@@ -297,25 +347,39 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* 1. Full-Screen Hero Banner Slider */}
-        <BannerSlider
-          onBannerPress={(slide) => {
-            if (slide.link) {
-              const match = slide.link.match(/id=([^&]+)/);
-              if (match && match[1]) {
-                router.push(`/product/${match[1]}` as any);
-                return;
+        {/* 1. Full-Screen Hero Banner Slider bọc hiệu ứng Zoom & Sticky Parallax */}
+        <Animated.View
+          style={[
+            styles.heroBannerWrap,
+            {
+              height: HERO_HEIGHT,
+              opacity: heroOpacity,
+              transform: [{ translateY: heroTranslateY }, { scale: heroScale }],
+            },
+          ]}
+        >
+          <BannerSlider
+            scrollY={scrollYNum}
+            onBannerPress={(slide) => {
+              if (slide.link) {
+                const match = slide.link.match(/id=([^&]+)/);
+                if (match && match[1]) {
+                  router.push(`/product/${match[1]}` as any);
+                  return;
+                }
+                if (slide.link.includes('TNGCB01')) {
+                  router.push('/product/TNGCB01' as any);
+                  return;
+                }
               }
-              if (slide.link.includes('TNGCB01')) {
-                router.push('/product/TNGCB01' as any);
-                return;
-              }
-            }
-            router.push('/(tabs)/products');
-          }}
-        />
+              router.push('/(tabs)/products');
+            }}
+          />
+        </Animated.View>
 
-        {/* 2. BỘ SƯU TẬP TÂM ĐẮC (Lấy từ Firestore settings/collections) */}
+        {/* ================= 2. NỘI DUNG CHÍNH (MAIN SHEET TRƯỢT LÊN TRÊN BANNER) ================= */}
+        <View style={[styles.mainContentSheet, { backgroundColor: Colors.background }]}>
+          {/* 2. BỘ SƯU TẬP TÂM ĐẮC (Lấy từ Firestore settings/collections) */}
         {collections.length > 0 && (
           <View style={styles.sectionWrap}>
             <View style={styles.sectionHeader}>
@@ -703,13 +767,22 @@ export default function HomeScreen() {
 
         {/* 10. FOOTER TIỆM */}
         <View style={styles.footerWrap}>
-          <Text style={styles.footerBrand}>{t('footerBrand')}</Text>
+          <Image
+            source={
+              isDark
+                ? require('../../assets/images/LOGO_WHITE.png')
+                : require('../../assets/images/LOGO_2_PNG.png')
+            }
+            style={styles.footerLogo}
+            contentFit="contain"
+          />
           <Text style={styles.footerInfo}>{t('footerAddress')}</Text>
           <Text style={styles.footerInfo}>{t('footerHotline')}</Text>
           <Text style={styles.footerInfo}>{t('footerWebsite')}</Text>
           <Text style={styles.footerCopyright}>{t('footerCopyright')}</Text>
         </View>
-      </ScrollView>
+        </View>
+      </Animated.ScrollView>
 
 
       {/* SERVICE / ABOUT MODAL (Phong cách Deals Tab) */}
@@ -839,6 +912,26 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
+  heroBannerWrap: {
+    width: SCREEN_WIDTH,
+    height: HERO_BANNER_HEIGHT,
+    backgroundColor: '#FAF8F5',
+    zIndex: 1,
+    overflow: 'visible',
+  },
+  mainContentSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: Colors.background,
+    marginTop: -24,
+    paddingTop: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: isDark ? 0.35 : 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+    zIndex: 2,
+  },
 
   // SECTION TIÊU CHUẨN (Chuẩn khoảng cách 26px - 28px)
   sectionWrap: {
@@ -959,68 +1052,74 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   curatedGridCard: {
     backgroundColor: Colors.cardBackground,
     marginHorizontal: 16,
-    borderRadius: 20,
-    paddingTop: 18,
-    paddingBottom: 14,
+    borderRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
     paddingHorizontal: 8,
     borderWidth: isDark ? 0 : 1,
     borderColor: isDark ? 'transparent' : '#E8E1D8',
     shadowColor: '#2B2928',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0 : 0.05,
+    shadowRadius: 10,
     elevation: isDark ? 0 : 2,
   },
   curatedGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 16,
+    justifyContent: 'flex-start',
+    rowGap: 18,
   },
   curatedGridItem: {
-    width: '33.33%',
+    width: '33.333%',
     alignItems: 'center',
     paddingHorizontal: 4,
   },
   curatedIconCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: 8,
+    shadowColor: isDark ? '#000000' : '#9C7156',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0 : 0.08,
+    shadowRadius: 5,
+    elevation: isDark ? 0 : 2,
   },
   curatedIconCircleInactive: {
-    borderWidth: isDark ? 0 : 1.5,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
+    borderWidth: 1.2,
+    borderColor: isDark ? 'rgba(232, 204, 178, 0.22)' : '#E8E1D8',
   },
   curatedIconCircleActive: {
     borderWidth: 2.5,
     borderColor: '#9C7156',
     shadowColor: '#9C7156',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 3,
   },
   curatedImage: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
   },
   curatedEmoji: {
-    fontSize: 26,
+    fontSize: 28,
   },
   curatedItemName: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 15,
-    minHeight: 30,
+    lineHeight: 16,
+    minHeight: 32,
     width: '100%',
+    paddingHorizontal: 2,
   },
   curatedItemNameSelected: {
     color: '#9C7156',
@@ -1326,6 +1425,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderTopColor: isDark ? '#2A2A2A' : Colors.borderLight,
     alignItems: 'center',
     gap: 5,
+  },
+  footerLogo: {
+    width: 86,
+    height: 72,
+    marginBottom: 6,
   },
   footerBrand: {
     fontFamily: 'ElleGaborStd',

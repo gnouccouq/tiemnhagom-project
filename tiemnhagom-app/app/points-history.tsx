@@ -17,6 +17,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
@@ -292,26 +293,29 @@ export default function PointsHistoryScreen() {
 
       {/* TOP HEADER: NÚT BACK BO TRÒN VÀ TIÊU ĐỀ LỊCH SỬ ĐIỂM */}
       <View style={[styles.headerSafeArea, { paddingTop: insets.top }]}>
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint={isDark ? 'dark' : 'light'}
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: isDark
-                    ? Platform.OS === 'ios' ? 'rgba(30,30,30,0.12)' : 'rgba(30,30,30,0.45)'
-                    : Platform.OS === 'ios' ? 'rgba(255,255,255,0.12)' : 'rgba(250,248,245,0.45)',
-                },
-              ]}
-            />
-          </View>
-        )}
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              isDark
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
         <View style={styles.headerRow}>
           <BlurButton
             style={styles.roundBackBtn}

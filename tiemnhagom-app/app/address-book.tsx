@@ -12,6 +12,7 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -87,7 +88,8 @@ export default function AddressBookScreen() {
 
   const openAreaPicker = () => {
     // Trên iOS, không thể mở 2 Modal xếp chồng lên nhau. 
-    // Chúng ta tạm ẩn modal form và mở AddressPicker.
+    // Chúng ta dismiss bàn phím, tạm ẩn modal form và mở AddressPicker.
+    Keyboard.dismiss();
     setModalVisible(false);
     setTimeout(() => {
       setPickerVisible(true);
@@ -95,6 +97,7 @@ export default function AddressBookScreen() {
   };
 
   const handleSelectArea = (prov: any, ward: any) => {
+    Keyboard.dismiss();
     setFormProvinceName(prov?.name || '');
     setFormProvinceCode(prov?.province_code);
     setFormWardName(ward?.name || '');
@@ -106,6 +109,7 @@ export default function AddressBookScreen() {
   };
 
   const handleCloseAreaPicker = () => {
+    Keyboard.dismiss();
     setPickerVisible(false);
     setTimeout(() => {
       setModalVisible(true);

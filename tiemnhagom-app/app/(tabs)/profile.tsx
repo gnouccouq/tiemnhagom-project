@@ -276,31 +276,29 @@ export default function ProfileScreen() {
           { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) },
         ]}
       >
-        {blurProgress > 0 && (
-          <View style={[StyleSheet.absoluteFill, { opacity: blurProgress }]} pointerEvents="none">
-            <BlurView
-              intensity={Platform.OS === 'ios' ? 85 : 75}
-              tint={Colors.cardBackground === '#FFFFFF' ? 'light' : 'dark'}
-              blurMethod="none"
-              style={StyleSheet.absoluteFill}
-            />
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor:
-                    Colors.cardBackground === '#FFFFFF'
-                      ? Platform.OS === 'ios'
-                        ? 'rgba(255,255,255,0.12)'
-                        : 'rgba(250,248,245,0.45)'
-                      : Platform.OS === 'ios'
-                      ? 'rgba(30,30,30,0.12)'
-                      : 'rgba(30,30,30,0.45)',
-                },
-              ]}
-            />
-          </View>
-        )}
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              Colors.cardBackground !== '#FFFFFF'
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
         <TouchableOpacity
           style={styles.userInfoRow}
           activeOpacity={0.8}
@@ -344,7 +342,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="notifications-outline" size={20} color={Colors.textPrimary} />
             {unreadCount > 0 && (
-              <View style={styles.notificationBadge}>
+              <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>
@@ -1059,7 +1057,7 @@ const getStyles = (Colors: any) => {
       position: 'absolute',
       top: -2,
       right: -2,
-      backgroundColor: '#B91C1C',
+      backgroundColor: '#9C7156',
       minWidth: 16,
       height: 16,
       borderRadius: 8,
@@ -1067,7 +1065,7 @@ const getStyles = (Colors: any) => {
       justifyContent: 'center',
       paddingHorizontal: 3,
       borderWidth: 1.5,
-      borderColor: Colors.background || (isDark ? '#121212' : '#FAF8F5'),
+      borderColor: isDark ? '#121212' : '#FAF8F5',
       zIndex: 10,
     },
     notificationBadgeText: {
@@ -1310,18 +1308,21 @@ const getStyles = (Colors: any) => {
       position: 'absolute',
       top: -2,
       right: -2,
-      backgroundColor: '#C86432',
+      backgroundColor: '#9C7156',
       minWidth: 16,
       height: 16,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 3,
+      borderWidth: 1.5,
+      borderColor: isDark ? '#121212' : '#FAF8F5',
+      zIndex: 10,
     },
     gridBadgeText: {
       color: '#FFFFFF',
-      fontSize: 9,
-      fontWeight: '700',
+      fontSize: 10,
+      fontWeight: '800',
     },
     gridLabel: {
       fontFamily: 'ElleGaborStd',

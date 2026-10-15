@@ -69,11 +69,41 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
 
   const flatStyle = (StyleSheet.flatten(style) as ViewStyle) || {};
   const pressableStyle: ViewStyle = {};
-  if (flatStyle.flex !== undefined) pressableStyle.flex = flatStyle.flex;
-  if (flatStyle.flexGrow !== undefined) pressableStyle.flexGrow = flatStyle.flexGrow;
-  if (flatStyle.flexShrink !== undefined) pressableStyle.flexShrink = flatStyle.flexShrink;
-  if (flatStyle.flexBasis !== undefined) pressableStyle.flexBasis = flatStyle.flexBasis;
-  if (flatStyle.alignSelf !== undefined) pressableStyle.alignSelf = flatStyle.alignSelf;
+  const innerStyle: ViewStyle = { ...flatStyle };
+
+  const layoutKeys: (keyof ViewStyle)[] = [
+    'flex',
+    'flexGrow',
+    'flexShrink',
+    'flexBasis',
+    'alignSelf',
+    'width',
+    'height',
+    'minWidth',
+    'maxWidth',
+    'minHeight',
+    'maxHeight',
+    'margin',
+    'marginHorizontal',
+    'marginVertical',
+    'marginTop',
+    'marginBottom',
+    'marginLeft',
+    'marginRight',
+    'position',
+    'top',
+    'bottom',
+    'left',
+    'right',
+    'zIndex',
+  ];
+
+  layoutKeys.forEach((key) => {
+    if (flatStyle[key] !== undefined) {
+      (pressableStyle as any)[key] = flatStyle[key];
+      delete (innerStyle as any)[key];
+    }
+  });
 
   return (
     <Pressable
@@ -85,8 +115,9 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
     >
       <Animated.View
         style={[
-          style,
-          flatStyle.flex !== undefined && { width: '100%' },
+          innerStyle,
+          (pressableStyle.flex !== undefined || flatStyle.flex !== undefined || pressableStyle.width !== undefined || flatStyle.width !== undefined) && { width: '100%' },
+          (pressableStyle.height !== undefined || flatStyle.height !== undefined) && { height: '100%' },
           {
             transform: [{ scale: scaleAnim }],
             opacity: opacityAnim,

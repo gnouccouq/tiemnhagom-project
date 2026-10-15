@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -351,7 +352,10 @@ export default function EditProfileScreen() {
               <Text style={styles.inputLabel}>{t('areaLabel')}</Text>
               <TouchableOpacity
                 style={styles.locationPill}
-                onPress={() => setAddressPickerVisible(true)}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setAddressPickerVisible(true);
+                }}
                 activeOpacity={0.7}
               >
                 <Ionicons name="map-outline" size={18} color="#8E8E93" style={styles.inputIcon} />

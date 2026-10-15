@@ -56,10 +56,43 @@ service cloud.firestore {
     match /users/{userId} {
       // Cho phép đọc thông tin cá nhân và tìm kiếm tài khoản
       allow read: if true;
-      // Cho phép tạo ghost account khi đặt hàng hoặc tạo tài khoản mới
-      allow create: if true;
-      // Cho phép cập nhật thông tin cá nhân (chính chủ hoặc khách hàng cập nhật hồ sơ)
-      allow update: if true;
+
+      // Khách hàng tạo tài khoản mới hoặc ghost account khi đặt hàng:
+      // Điểm ban đầu không được tự ý gán > 0, hạng phải là standard, không được tự cấp quyền admin
+      allow create: if isAdmin() || (
+        (!('points' in request.resource.data) || request.resource.data.points == 0) &&
+        (!('tier' in request.resource.data) || request.resource.data.tier == 'standard') &&
+        (!('role' in request.resource.data) || request.resource.data.role != 'admin')
+      );
+
+      // Cập nhật thông tin:
+      // - Admin có toàn quyền (cộng điểm, sửa hạng hội viên, đổi thông tin)
+      // - Người dùng thường chỉ được sửa thông tin cá nhân (tên, avatar, địa chỉ, sđt,...)
+      // - TUYỆT ĐỐI CẤM người dùng thường tự ý sửa points, tier, totalSpent, role
+      allow update: if isAdmin() || (
+        (
+          // Người dùng cập nhật tài khoản của chính mình
+          (request.auth != null && request.auth.uid == userId) ||
+          // Hoặc liên kết tài khoản / tài khoản phụ
+          (request.auth != null && resource.data.mergedTo == request.auth.uid) ||
+          (request.auth != null && request.resource.data.mergedTo == request.auth.uid) ||
+          // Hoặc ghost account do hệ thống tạo khi mua hàng
+          (resource.data.isGhost == true)
+        ) && (
+          // BẢO VỆ ĐIỂM THƯỞNG: Cấm client tự ý sửa đổi điểm gốm (points)
+          isUnchanged('points') || !('points' in request.resource.data)
+        ) && (
+          // BẢO VỆ HẠNG HỘI VIÊN: Cấm client tự ý đổi hạng hội viên (tier)
+          isUnchanged('tier') || !('tier' in request.resource.data)
+        ) && (
+          // BẢO VỆ TỔNG CHI TIÊU: Cấm client tự ý sửa tổng chi tiêu (totalSpent)
+          isUnchanged('totalSpent') || !('totalSpent' in request.resource.data)
+        ) && (
+          // BẢO VỆ PHÂN QUYỀN: Cấm client tự gán quyền Admin cho chính mình
+          !('role' in request.resource.data) || request.resource.data.role != 'admin'
+        )
+      );
+
       allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true);
     }
 
@@ -83,8 +116,16 @@ service cloud.firestore {
         )
       );
 
-      // Cho phép tra cứu đơn hàng công khai theo Mã đơn hoặc Số điện thoại
-      allow read: if true;
+      // Cho phép tra cứu chi tiết đơn hàng đơn lẻ khi biết mã
+      allow get: if true;
+
+      // Bảo vệ danh sách toàn bộ đơn hàng:
+      // - Admin được xem toàn bộ
+      // - Người dùng đã đăng nhập chỉ được xem danh sách đơn hàng của chính mình
+      // - Khách vãng lai chỉ được truy vấn danh sách khi có bộ lọc SĐT
+      allow list: if isAdmin() || 
+        (request.auth != null && (resource.data.userId == request.auth.uid || resource.data.customerId == request.auth.uid)) ||
+        (resource.data.shippingAddress.phone != null);
 
       // Cấu trúc update chặt chẽ cho người dùng
       allow update: if isAdmin() || (

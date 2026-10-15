@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Updates from 'expo-updates';
 import { Header } from '../src/components/Header';
 import { useThemeColor } from '../src/constants/theme';
@@ -46,7 +47,7 @@ export default function VersionScreen() {
 
   // Mặc định mở rộng bản mới nhất (20261015.02)
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
-    '20261015.02': true,
+    '20261016.01': true,
   });
 
   const toggleExpand = (otaKey: string) => {
@@ -132,7 +133,13 @@ export default function VersionScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 12 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 54 + 12,
+            paddingBottom: Math.max(insets.bottom, 16) + 84,
+          },
+        ]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
@@ -189,23 +196,6 @@ export default function VersionScreen() {
             </Text>
           </View>
         </View>
-
-        {/* Nút Kiểm Tra Cập Nhật OTA */}
-        <TouchableOpacity
-          style={styles.checkUpdateBtn}
-          onPress={handleCheckUpdate}
-          activeOpacity={0.85}
-          disabled={checkingUpdate}
-        >
-          {checkingUpdate ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Ionicons name="cloud-download-outline" size={18} color="#FFFFFF" />
-          )}
-          <Text style={styles.checkUpdateBtnText}>
-            {checkingUpdate ? t('checkingUpdate') : t('checkUpdateBtn')}
-          </Text>
-        </TouchableOpacity>
 
         {/* Tiêu đề phân khu: Lịch Sử Cập Nhật */}
         <View style={styles.sectionHeader}>
@@ -313,6 +303,42 @@ export default function VersionScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Nút Kiểm Tra Cập Nhật OTA Cố Định Dưới Cùng */}
+      <View
+        style={[
+          styles.bottomFixedContainer,
+          {
+            paddingBottom: Math.max(insets.bottom, 16),
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={
+            isDark
+              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.98)']
+              : ['rgba(250,248,245,0)', 'rgba(250,248,245,0.88)', 'rgba(250,248,245,0.98)']
+          }
+          locations={[0, 0.38, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <TouchableOpacity
+          style={styles.checkUpdateBtn}
+          onPress={handleCheckUpdate}
+          activeOpacity={0.85}
+          disabled={checkingUpdate}
+        >
+          {checkingUpdate ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Ionicons name="cloud-download-outline" size={19} color="#FFFFFF" />
+          )}
+          <Text style={styles.checkUpdateBtnText}>
+            {checkingUpdate ? t('checkingUpdate') : t('checkUpdateBtn')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 }
@@ -435,25 +461,34 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? '#222222' : '#F0ECE6',
       marginVertical: 4,
     },
+    bottomFixedContainer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     checkUpdateBtn: {
       width: '100%',
-      height: 48,
-      borderRadius: 24,
+      height: 52,
+      borderRadius: 26,
       backgroundColor: '#9C7156',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.16,
-      shadowRadius: 6,
-      elevation: 3,
-      marginBottom: 14,
+      shadowRadius: 8,
+      elevation: 4,
     },
     checkUpdateBtnText: {
       fontFamily: 'ElleGaborStd',
-      fontSize: 14,
+      fontSize: 15.5,
       fontWeight: '700',
       color: '#FFFFFF',
     },

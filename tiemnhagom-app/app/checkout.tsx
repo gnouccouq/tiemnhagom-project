@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurButton } from '../src/components/BlurButton';
 import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -219,13 +221,37 @@ export default function CheckoutScreen() {
 
       {/* Header chuẩn GEMINI.md (Không có vạch kẻ đáy) */}
       <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <TouchableOpacity
+        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
+          <LinearGradient
+            colors={
+              isDark
+                ? [
+                    'rgba(0,0,0,0.85)',
+                    'rgba(0,0,0,0.72)',
+                    'rgba(0,0,0,0.45)',
+                    'rgba(0,0,0,0.15)',
+                    'rgba(0,0,0,0)',
+                  ]
+                : [
+                    'rgba(250,248,245,0.88)',
+                    'rgba(250,248,245,0.75)',
+                    'rgba(250,248,245,0.45)',
+                    'rgba(250,248,245,0.15)',
+                    'rgba(250,248,245,0)',
+                  ]
+            }
+            locations={[0, 0.40, 0.70, 0.88, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+
+        <BlurButton
           style={styles.headerBackBtn}
           onPress={() => router.back()}
-          activeOpacity={0.8}
+          accessibilityLabel="Quay lại"
         >
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+        </BlurButton>
 
         <Text style={styles.headerTitle}>{t('orderHeader') || 'Đơn hàng'}</Text>
         <View style={{ width: 40 }} />
@@ -740,23 +766,15 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingBottom: 10,
-      backgroundColor: Colors.background,
+      backgroundColor: 'transparent',
       borderBottomWidth: 0,
     },
     headerBackBtn: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : '#E8E1D8',
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.06,
-      shadowRadius: 4,
-      elevation: isDark ? 0 : 2,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',
