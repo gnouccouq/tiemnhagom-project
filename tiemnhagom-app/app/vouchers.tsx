@@ -13,7 +13,7 @@ import {
   Clipboard,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +32,7 @@ type TabType = 'unused' | 'used' | 'expired';
 
 export default function VouchersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
@@ -139,7 +140,7 @@ export default function VouchersScreen() {
   const currentList = couponsData[activeTab];
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: Colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* Header chuẩn app Tiệm Nhà Gốm */}
@@ -151,7 +152,7 @@ export default function VouchersScreen() {
       />
 
       {/* Bộ lọc 3 Tabs (Chưa dùng, Đã dùng, Hết hạn) đúng theo ảnh mẫu */}
-      <View style={styles.tabsWrapper}>
+      <View style={[styles.tabsWrapper, { paddingTop: insets.top + 54 }]}>
         <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[
@@ -306,6 +307,42 @@ export default function VouchersScreen() {
                         {item.name.toUpperCase()}
                       </Text>
 
+                      <View style={styles.badgeRow}>
+                        <View
+                          style={[
+                            styles.singleBadgePill,
+                            isUsed && styles.usedBadgePill,
+                            isExpired && styles.expiredBadgePill,
+                          ]}
+                        >
+                          <Ionicons
+                            name={isUsed ? 'checkmark-circle-outline' : isExpired ? 'time-outline' : 'sparkles-outline'}
+                            size={11}
+                            color={isUsed ? '#888888' : isExpired ? '#999999' : '#9C7156'}
+                            style={{ marginRight: 3 }}
+                          />
+                          <Text
+                            style={[
+                              styles.singleBadgeText,
+                              isUsed && { color: '#888888' },
+                              isExpired && { color: '#999999' },
+                            ]}
+                          >
+                            {isUsed
+                              ? t('usedStatus') || 'Đã sử dụng'
+                              : isExpired
+                              ? t('vouchersTabExpired') || 'Hết hạn'
+                              : t('singleUseBadge') || '1 lần duy nhất'}
+                          </Text>
+                        </View>
+
+                        {item.minOrder && item.minOrder > 0 ? (
+                          <Text style={styles.voucherMinSpend}>
+                            {t('minSpendFrom') || 'Đơn từ'} {new Intl.NumberFormat('vi-VN').format(item.minOrder)}đ
+                          </Text>
+                        ) : null}
+                      </View>
+
                       <Text
                         style={[
                           styles.voucherExpiry,
@@ -320,7 +357,7 @@ export default function VouchersScreen() {
                         ]}
                       >
                         {isUsed
-                          ? t('usedStatus')
+                          ? 'Đã áp dụng cho một đơn hàng trước đó'
                           : isExpired
                           ? t('expiresAt', { date: expiryInfo.dateStr || '' })
                           : expiryInfo.text}
@@ -438,7 +475,7 @@ export default function VouchersScreen() {
           </ScalePressable>
         )}
       </AnimatedCenterModal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -553,9 +590,46 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.1,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 2,
+  },
+  singleBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#261F1A' : '#F6F0EA',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 12,
+    borderWidth: 0.8,
+    borderColor: isDark ? '#3D2B22' : '#E8CCB2',
+  },
+  usedBadgePill: {
+    backgroundColor: isDark ? '#202020' : '#F0ECE6',
+    borderColor: isDark ? '#333333' : '#E0DCD5',
+  },
+  expiredBadgePill: {
+    backgroundColor: isDark ? '#202020' : '#F0ECE6',
+    borderColor: isDark ? '#333333' : '#E0DCD5',
+  },
+  singleBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9C7156',
+  },
+  voucherMinSpend: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11.5,
+    color: '#9C7156',
+    fontWeight: '600',
+  },
   voucherExpiry: {
     fontFamily: 'ElleGaborStd',
-    fontSize: 13,
+    fontSize: 12.5,
     lineHeight: 18,
   },
   // Empty State

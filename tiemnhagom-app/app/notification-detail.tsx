@@ -162,7 +162,7 @@ export default function NotificationDetailScreen() {
   const [scrollY, setScrollY] = useState(0);
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: Colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* Header chuẩn trang trong app với nút quay lại */}
@@ -186,7 +186,10 @@ export default function NotificationDetailScreen() {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+            {
+              paddingTop: insets.top + 54 + 10,
+              paddingBottom: Math.max(insets.bottom, 24) + 80,
+            },
           ]}
           showsVerticalScrollIndicator={false}
           onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
@@ -301,7 +304,7 @@ export default function NotificationDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

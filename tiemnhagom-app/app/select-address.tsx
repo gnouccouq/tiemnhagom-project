@@ -10,10 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -67,43 +69,21 @@ export default function SelectAddressScreen() {
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header riêng biệt chuẩn GEMINI.md (Không vạch kẻ đáy) */}
-      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        <BlurButton
-          style={styles.headerBackBtn}
-          onPress={() => router.back()}
-          accessibilityLabel="Quay lại"
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        <Text style={styles.headerTitle}>{t('selectAddressModalTitle') || 'Sổ địa chỉ nhận hàng'}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle}>
+              {t('selectAddressModalTitle') || 'Sổ địa chỉ nhận hàng'}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -224,6 +204,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    navHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      letterSpacing: 0.3,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',

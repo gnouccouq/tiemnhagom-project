@@ -213,23 +213,23 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
                 { width: itemWidth, transform: [{ translateX }, { scale: pillScale }] },
               ]}
             >
-              {/* Vành tán sắc lăng kính cầu vồng lỏng (Apple Liquid Glass Prismatic Caustic Rim) */}
+              {/* Viền quang học kính Apple Liquid Glass (Pure Crystal Rim) */}
               <LinearGradient
                 colors={
                   isDark
                     ? [
-                        'rgba(255, 255, 255, 0.70)',
-                        'rgba(232, 204, 178, 0.45)',
-                        'rgba(156, 113, 86, 0.35)',
-                        'rgba(160, 210, 255, 0.45)',
-                        'rgba(255, 255, 255, 0.60)',
+                        'rgba(255, 255, 255, 0.45)',
+                        'rgba(255, 255, 255, 0.15)',
+                        'rgba(232, 204, 178, 0.20)',
+                        'rgba(255, 255, 255, 0.10)',
+                        'rgba(255, 255, 255, 0.35)',
                       ]
                     : [
                         'rgba(255, 255, 255, 0.95)',
-                        'rgba(255, 185, 130, 0.75)',
-                        'rgba(240, 120, 150, 0.55)',
-                        'rgba(130, 210, 255, 0.65)',
-                        'rgba(255, 255, 255, 0.95)',
+                        'rgba(255, 255, 255, 0.60)',
+                        'rgba(232, 204, 178, 0.30)',
+                        'rgba(255, 255, 255, 0.50)',
+                        'rgba(255, 255, 255, 0.90)',
                       ]
                 }
                 start={{ x: 0, y: 0 }}

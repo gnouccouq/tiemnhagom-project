@@ -13,7 +13,7 @@ import {
   Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -21,6 +21,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getArticleById, NewsArticle } from '../../src/services/productService';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { useThemeColor, checkIsDark } from '../../src/constants/theme';
 import { useSettings } from '../../src/context/SettingsContext';
 
@@ -92,51 +94,36 @@ export default function ArticleDetailScreen() {
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header bar */}
-      <View style={[styles.navBar, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-        <BlurButton
-          style={styles.navBtn}
-          onPress={() => router.back()}
-          accessibilityLabel={t('back')}
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        <Text style={[styles.navTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
-          {t('newsAndArticles')}
-        </Text>
-
-        <BlurButton
-          style={styles.navBtn}
-          onPress={handleShare}
-          accessibilityLabel="Chia sẻ"
-        >
-          <Ionicons name="share-outline" size={20} color={Colors.textPrimary} />
-        </BlurButton>
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={[styles.navHeaderTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
+              {t('newsAndArticles')}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={handleShare}
+              accessibilityLabel={t('share') || 'Chia sẻ'}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ padding: 4 }}
+            >
+              <SymbolView
+                name="square.and.arrow.up"
+                size={19}
+                tintColor={Colors.textPrimary}
+                fallback={<Ionicons name="share-outline" size={20} color={Colors.textPrimary} />}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -211,6 +198,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  navHeaderTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   navTitle: {
     fontFamily: 'ElleGaborStd',

@@ -17,10 +17,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { BlurButton } from '../src/components/BlurButton';
+import { SymbolView } from 'expo-symbols';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { CouponItem } from '../src/services/couponService';
 import { useDialog } from '../src/context/DialogContext';
@@ -36,7 +37,7 @@ export default function VoucherDetailScreen() {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const dialog = useDialog();
-  const { applyCoupon } = useCart();
+  const { applyCoupon, applyCouponItem } = useCart();
   const { t } = useSettings();
   const styles = getStyles(Colors, isDark);
 
@@ -186,7 +187,7 @@ export default function VoucherDetailScreen() {
   // Áp dụng voucher
   const handleApply = () => {
     Clipboard.setString(voucher.code);
-    applyCoupon(voucher.code);
+    applyCouponItem(voucher);
     dialog.showDialog({
       title: t('appliedSuccessTitle'),
       message: (t('appliedSuccessMsg') || 'Mã "{code}" đã được kích hoạt trong giỏ hàng của bạn.').replace('{code}', voucher.code),
@@ -265,56 +266,18 @@ export default function VoucherDetailScreen() {
         />
       </Animated.View>
 
-      {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top + 54 + 24,
-          zIndex: 9,
-        }}
-        pointerEvents="none"
-      >
-        <LinearGradient
-          colors={
-            isDark
-              ? [
-                  'rgba(0,0,0,0.85)',
-                  'rgba(0,0,0,0.72)',
-                  'rgba(0,0,0,0.45)',
-                  'rgba(0,0,0,0.15)',
-                  'rgba(0,0,0,0)',
-                ]
-              : [
-                  'rgba(250,248,245,0.88)',
-                  'rgba(250,248,245,0.75)',
-                  'rgba(250,248,245,0.45)',
-                  'rgba(250,248,245,0.15)',
-                  'rgba(250,248,245,0)',
-                ]
-          }
-          locations={[0, 0.40, 0.70, 0.88, 1]}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
 
-      {/* Floating Back Button bọc Liquid Glass */}
-      <View style={[styles.floatingHeader, { top: insets.top + (Platform.OS === 'android' ? 10 : 8) }]}>
-        <BlurButton
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          accessibilityLabel="Quay lại"
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={isDark ? '#F5F5F5' : '#2B2928'}
-            style={{ marginLeft: -1 }}
-          />
-        </BlurButton>
-      </View>
+
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: '',
+          headerTintColor: '#9C7156',
+        }}
+      />
 
       <Animated.ScrollView
         style={styles.scrollView}
@@ -492,11 +455,23 @@ export default function VoucherDetailScreen() {
         ]}
       >
         <ScalePressable
-          style={styles.applyBtn}
-          onPress={handleApply}
-          activeScale={0.96}
+          style={[styles.applyBtn, voucher.isUsed && { opacity: 0.5, backgroundColor: isDark ? '#262626' : '#E0DCD5' }]}
+          onPress={() => {
+            if (voucher.isUsed) {
+              dialog.alert(
+                t('notice') || 'Thông báo',
+                t('voucherAlreadyUsed') || 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.'
+              );
+              return;
+            }
+            handleApply();
+          }}
+          disabled={voucher.isUsed}
+          activeScale={voucher.isUsed ? 1 : 0.96}
         >
-          <Text style={styles.applyBtnText}>{t('applyVoucher')}</Text>
+          <Text style={[styles.applyBtnText, voucher.isUsed && { color: isDark ? '#888888' : '#777777' }]}>
+            {voucher.isUsed ? (t('usedStatus') || 'Đã sử dụng') : t('applyVoucher')}
+          </Text>
         </ScalePressable>
       </View>
 

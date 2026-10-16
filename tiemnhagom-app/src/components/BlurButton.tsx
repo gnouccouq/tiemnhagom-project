@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { ScalePressable, ScalePressableProps } from './ScalePressable';
 import { LiquidGlass } from './LiquidGlass';
 import { useThemeColor } from '../constants/theme';
@@ -13,35 +14,35 @@ export const BlurButton: React.FC<BlurButtonProps> = ({
   style,
   containerStyle,
   children,
+  onPress,
   ...rest
 }) => {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+
+  const handlePress = (e: any) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    if (onPress) onPress(e);
+  };
 
   return (
     <ScalePressable
-      style={[styles.shadowContainer, containerStyle]}
+      style={containerStyle}
       activeScale={0.90}
+      onPress={handlePress}
       {...rest}
     >
-      <LiquidGlass style={[styles.inner, style]} interactive={true}>
+      <LiquidGlass style={[styles.defaultInner, style]} interactive={true}>
         <View style={styles.content}>{children}</View>
       </LiquidGlass>
     </ScalePressable>
   );
 };
 
-const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
-  shadowContainer: {
-    backgroundColor: 'transparent',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 5,
-    elevation: isDark ? 0 : 1,
-  },
-  inner: {
+const styles = StyleSheet.create({
+  defaultInner: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -51,5 +52,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   content: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    height: '100%',
   },
 });

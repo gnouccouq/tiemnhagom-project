@@ -19,6 +19,7 @@ import { BannerSlide, getHeroBanners } from '../services/productService';
 import { useSettings } from '../context/SettingsContext';
 import { LiquidGlass } from './LiquidGlass';
 import { ScalePressable } from './ScalePressable';
+import { BlurButton } from './BlurButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -404,20 +405,18 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
 
       {/* ================= 3. ĐIỀU KHIỂN ÂM THANH TRÒN (GÓC TRÁI - KHI Ở CHẾ ĐỘ VIDEO) ================= */}
       {bannerMode === 'video' && (
-        <ScalePressable
-          activeScale={0.88}
+        <BlurButton
+          style={styles.circleBtnInner}
+          containerStyle={styles.circleBtnWrapLeft}
           onPress={toggleMute}
-          style={styles.circleBtnWrapLeft}
           accessibilityLabel={isMuted ? (t('unmuteVideo') || 'Bật âm thanh') : (t('muteVideo') || 'Tắt âm thanh')}
         >
-          <LiquidGlass style={styles.circleBtnInner}>
-            <Ionicons
-              name={isMuted ? 'volume-mute-outline' : 'volume-high'}
-              size={19}
-              color="#FFFFFF"
-            />
-          </LiquidGlass>
-        </ScalePressable>
+          <Ionicons
+            name={isMuted ? 'volume-mute-outline' : 'volume-high'}
+            size={19}
+            color="#FFFFFF"
+          />
+        </BlurButton>
       )}
 
       {/* ================= 4. DẤU CHẤM CHUYỂN SLIDE (Ở GIỮA - KHI Ở CHẾ ĐỘ ẢNH) ================= */}
@@ -468,46 +467,42 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
 
       {/* ================= 5. NÚT TRÒN TẠM DỪNG / TIẾP TỤC (Ở TRÊN NÚT ĐỔI ẢNH/VIDEO) ================= */}
       {bannerMode === 'video' && (
-        <ScalePressable
-          activeScale={0.88}
+        <BlurButton
+          style={styles.circleBtnInner}
+          containerStyle={styles.circleBtnWrapRightTop}
           onPress={togglePlayPause}
-          style={styles.circleBtnWrapRightTop}
           accessibilityLabel={
             isPlaying
               ? (t('pauseVideo') || 'Tạm dừng video')
               : (t('resumeVideo') || 'Tiếp tục phát video')
           }
         >
-          <LiquidGlass style={styles.circleBtnInner}>
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={18}
-              color="#FFFFFF"
-              style={!isPlaying ? { marginLeft: 2 } : undefined}
-            />
-          </LiquidGlass>
-        </ScalePressable>
+          <Ionicons
+            name={isPlaying ? 'pause' : 'play'}
+            size={18}
+            color="#FFFFFF"
+            style={!isPlaying ? { marginLeft: 2 } : undefined}
+          />
+        </BlurButton>
       )}
 
       {/* ================= 6. NÚT CHUYỂN ĐỔI CHẾ ĐỘ TRÒN (GÓC PHẢI DƯỚI) ================= */}
-      <ScalePressable
-        activeScale={0.88}
+      <BlurButton
+        style={styles.circleBtnInner}
+        containerStyle={styles.circleBtnWrapRight}
         onPress={handleToggleMode}
-        style={styles.circleBtnWrapRight}
         accessibilityLabel={
           bannerMode === 'video'
             ? (t('bannerModeImage') || 'Chuyển sang xem ảnh')
             : (t('bannerModeVideo') || 'Chuyển sang xem video')
         }
       >
-        <LiquidGlass style={styles.circleBtnInner}>
-          <Ionicons
-            name={bannerMode === 'video' ? 'images-outline' : 'videocam'}
-            size={20}
-            color="#FFFFFF"
-          />
-        </LiquidGlass>
-      </ScalePressable>
+        <Ionicons
+          name={bannerMode === 'video' ? 'images-outline' : 'videocam'}
+          size={20}
+          color="#FFFFFF"
+        />
+      </BlurButton>
     </View>
   );
 };
@@ -591,8 +586,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.32)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.40)',
   },
 });

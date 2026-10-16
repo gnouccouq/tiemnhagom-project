@@ -37,7 +37,7 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
       snap = await getDocs(couponsRef);
     }
 
-    // Lấy các mã mà user đã từng sử dụng qua orders
+    // Lấy các mã mà user đã từng sử dụng qua orders (Mỗi voucher chỉ dùng 1 lần duy nhất giống bản web)
     const usedCoupons = new Set<string>();
     if (userId) {
       try {
@@ -45,8 +45,10 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
         const snapOrders = await getDocs(qUsed);
         snapOrders.forEach((d) => {
           const data = d.data();
-          if (data.couponCode) usedCoupons.add(data.couponCode);
-          if (data.appliedCoupon?.code) usedCoupons.add(data.appliedCoupon.code);
+          if (data.couponCode) usedCoupons.add(String(data.couponCode).toUpperCase());
+          if (data.appliedCoupon?.code) usedCoupons.add(String(data.appliedCoupon.code).toUpperCase());
+          if (data.appliedCoupon?.id) usedCoupons.add(String(data.appliedCoupon.id).toUpperCase());
+          if (typeof data.coupon === 'string') usedCoupons.add(String(data.coupon).toUpperCase());
         });
       } catch (err) {
         console.warn('Lỗi đọc lịch sử voucher đã dùng:', err);
@@ -61,6 +63,7 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
     snap.forEach((d) => {
       const data = d.data();
       const id = d.id;
+      const cleanId = id.toUpperCase();
 
       // 1. Kiểm tra hạn sử dụng
       if (data.expiryDate) {
@@ -81,7 +84,10 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
         return;
       }
 
-      const isUsed = usedCoupons.has(id);
+      // 4. KIỂM TRA ĐÃ SỬ DỤNG: Mỗi voucher chỉ dùng 1 lần duy nhất cho mỗi khách hàng (giống bản web)
+      if (usedCoupons.has(cleanId)) {
+        return;
+      }
 
       validCoupons.push({
         id,
@@ -98,7 +104,7 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
         conditions: data.conditions || data.description,
         description: data.description || data.conditions,
         assignedTo: data.assignedTo,
-        isUsed,
+        isUsed: false,
       });
     });
 
@@ -193,8 +199,10 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
         const snapOrders = await getDocs(qUsed);
         snapOrders.forEach((d) => {
           const data = d.data();
-          if (data.couponCode) usedCoupons.add(data.couponCode);
-          if (data.appliedCoupon?.code) usedCoupons.add(data.appliedCoupon.code);
+          if (data.couponCode) usedCoupons.add(String(data.couponCode).toUpperCase());
+          if (data.appliedCoupon?.code) usedCoupons.add(String(data.appliedCoupon.code).toUpperCase());
+          if (data.appliedCoupon?.id) usedCoupons.add(String(data.appliedCoupon.id).toUpperCase());
+          if (typeof data.coupon === 'string') usedCoupons.add(String(data.coupon).toUpperCase());
         });
       } catch (err) {
         console.warn('Lỗi đọc đơn hàng đã dùng voucher:', err);
@@ -212,7 +220,7 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
       if (data.assignedTo && data.assignedTo !== userId) return;
       if (data.assignedBy && data.assignedBy !== userId) return;
 
-      const isUsed = usedCoupons.has(id);
+      const isUsed = usedCoupons.has(id.toUpperCase());
       let isExpired = false;
 
       if (data.expiryDate) {
@@ -344,6 +352,36 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
   } catch (error) {
     console.error('Lỗi phân loại vouchers:', error);
     return result;
+  }
+}
+
+/**
+ * Kiểm tra xem người dùng đã từng sử dụng mã giảm giá này trên đơn hàng nào chưa
+ * (Tuân thủ quy chuẩn mỗi voucher chỉ được sử dụng 1 lần duy nhất giống bản Web)
+ */
+export async function checkUserCouponUsed(userId: string | undefined, couponCode: string): Promise<boolean> {
+  if (!userId || !couponCode) return false;
+  const clean = couponCode.trim().toUpperCase();
+  try {
+    const qUsed = query(
+      collection(db, 'orders'),
+      where('userId', '==', userId)
+    );
+    const snap = await getDocs(qUsed);
+    let used = false;
+    snap.forEach((d) => {
+      const data = d.data();
+      const code1 = String(data.couponCode || '').toUpperCase();
+      const code2 = String(data.appliedCoupon?.code || data.appliedCoupon?.id || '').toUpperCase();
+      const code3 = String(data.coupon || data.promoCode || '').toUpperCase();
+      if (code1 === clean || code2 === clean || code3 === clean) {
+        used = true;
+      }
+    });
+    return used;
+  } catch (err) {
+    console.warn('Lỗi kiểm tra voucher đã dùng:', err);
+    return false;
   }
 }
 

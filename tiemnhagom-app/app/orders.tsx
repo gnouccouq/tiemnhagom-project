@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { collection, getDocs, limit, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
@@ -26,6 +26,8 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { OrderCardSkeleton } from '../src/components/ShimmerSkeleton';
 import { useAuth } from '../src/context/AuthContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
@@ -635,58 +637,34 @@ export default function OrdersScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
-      {/* ── HEADER CHUẨN THIẾT KẾ TIỆM NHÀ GỐM (KHÔNG VẠCH KẺ ĐÁY) ── */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        {/* Nút quay lại tròn đều 40x40 chuẩn quy tắc */}
-        <BlurButton
-          style={styles.backCircleBtn}
-          onPress={() => router.back()}
-          accessibilityLabel="Quay lại"
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        {/* Tiêu đề chính giữa */}
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitleText}>{t('orderHistoryTitle') || 'Lịch sử mua hàng'}</Text>
-        </View>
-
-        {/* Nút tìm kiếm / tra cứu đơn hàng nhanh */}
-        <BlurButton
-          style={styles.searchCircleBtn}
-          onPress={() => setLookupModalVisible(true)}
-          accessibilityLabel="Tra cứu đơn hàng"
-        >
-          <Ionicons name="search-outline" size={20} color={Colors.textPrimary} />
-        </BlurButton>
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass giống trang Tìm kiếm */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle}>
+              {t('orderHistoryTitle') || 'Lịch sử mua hàng'}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => setLookupModalVisible(true)}
+              style={styles.headerRightBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Tra cứu đơn hàng"
+            >
+              <Ionicons name="search-outline" size={21} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       {/* ── KHỐI BỘ LỌC CỐ ĐỊNH TRÊN CÙNG (3 TABS + HÀNG THỜI GIAN/CỬA HÀNG) ── */}
-      <View style={[styles.fixedFilterContainer, { paddingTop: insets.top + 54 }]}>
+      <View style={[styles.fixedFilterContainer, { paddingTop: Platform.OS === 'ios' ? insets.top + 48 : insets.top + 54 }]}>
         {/* 1. Hàng 3 Tab Viên Thuốc: Đang diễn ra | Hoàn thành | Đã hủy */}
         <View style={styles.tabsRow}>
           <TouchableOpacity
@@ -1282,26 +1260,16 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomWidth: 0, // Tuyệt đối không có vạch kẻ đáy
   },
-  backCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  headerTitleWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleText: {
+  navHeaderTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
+    letterSpacing: 0.3,
   },
-  searchCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerRightBtn: {
+    padding: 6,
+    marginRight: Platform.OS === 'ios' ? 0 : 4,
   },
 
   // ── KHỐI FILTER CỐ ĐỊNH ──

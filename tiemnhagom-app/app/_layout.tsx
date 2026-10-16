@@ -19,6 +19,9 @@ import 'react-native-reanimated';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { enableScreens } from 'react-native-screens';
+
+enableScreens(true);
 
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
@@ -194,6 +197,16 @@ function NavigationRoot() {
       <Stack
         screenOptions={{
           headerShown: false,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTintColor: '#9C7156',
+          headerTitleStyle: {
+            fontFamily: 'ElleGaborStd',
+            fontSize: 17,
+            fontWeight: '700',
+            color: themeColors.textPrimary,
+          },
+          headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: themeColors.background },
           animation: 'slide_from_right',
         }}
@@ -232,22 +245,41 @@ function NavigationRoot() {
           }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="product/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="checkout" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
-        <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="membership-privileges" options={{ headerShown: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="points-history" options={{ headerShown: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="vouchers" options={{ headerShown: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="voucher-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
-        <Stack.Screen name="order-detail" options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen
+          name="search"
+          options={{
+            headerShown: true,
+            headerTransparent: true,
+            headerShadowVisible: false,
+            headerTitle: '',
+            headerTintColor: '#9C7156',
+            animation: 'slide_from_right',
+            headerSearchBarOptions: {
+              placement: 'automatic',
+              placeholder: 'Tìm kiếm sản phẩm...',
+              tintColor: '#9C7156',
+              textColor: themeColors.textPrimary,
+              headerIconColor: '#9C7156',
+              hintTextColor: themeColors.textSecondary,
+              autoCapitalize: 'none',
+              hideWhenScrolling: false,
+            },
+          }}
+        />
+        <Stack.Screen name="membership-privileges" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="points-history" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="vouchers" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="voucher-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
 
         {/* WebView: mở từ dưới lên */}
         <Stack.Screen
           name="webview"
           options={{
-            headerShown: false,
             gestureEnabled: true,
             animation: 'slide_from_bottom',
           }}
@@ -257,7 +289,6 @@ function NavigationRoot() {
         <Stack.Screen
           name="notification-detail"
           options={{
-            headerShown: false,
             animation: 'slide_from_right',
           }}
         />

@@ -13,11 +13,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -59,6 +61,7 @@ export default function CheckoutScreen() {
     setOrderNote,
     flyToCart,
     addToCart,
+    removeCoupon,
   } = useCart();
 
   const { user, userProfile } = useAuth();
@@ -219,43 +222,21 @@ export default function CheckoutScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header chuẩn GEMINI.md (Không có vạch kẻ đáy) */}
-      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        <BlurButton
-          style={styles.headerBackBtn}
-          onPress={() => router.back()}
-          accessibilityLabel="Quay lại"
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        <Text style={styles.headerTitle}>{t('orderHeader') || 'Đơn hàng'}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle}>
+              {t('orderHeader') || 'Đơn hàng'}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -602,6 +583,11 @@ export default function CheckoutScreen() {
               </View>
               <Text style={styles.cardHeaderTitle}>{t('offersSection') || 'Ưu đãi'}</Text>
             </View>
+            {(appliedCouponItem || appliedCoupon) && (
+              <TouchableOpacity onPress={removeCoupon} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={styles.editActionText}>{t('removeVoucher') || 'Bỏ chọn'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <TouchableOpacity
@@ -775,6 +761,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    navHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      letterSpacing: 0.3,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',

@@ -25,6 +25,10 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
     badge: 'Mới nhất',
     changes: [
       {
+        title: 'Hệ thống Liquid Glass & Native Bottom Tabs iOS 26',
+        description: 'Tích hợp mặt kính khúc xạ Apple, hiệu ứng lún đàn hồi, hòa quyện viền kính lỏng và thanh điều hướng nổi Native Tabs tự co nhỏ khi cuộn.',
+      },
+      {
         title: 'Icon ứng dụng theo chủ đề (iOS)',
         description: 'Tự động đổi icon Light Mode (nền sáng) và Dark Mode (nền tối) chuẩn phong cách gốm thủ công.',
       },

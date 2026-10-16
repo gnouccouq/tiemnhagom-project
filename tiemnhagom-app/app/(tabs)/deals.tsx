@@ -208,7 +208,7 @@ export default function DealsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 10 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
         refreshControl={

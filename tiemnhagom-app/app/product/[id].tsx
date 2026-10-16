@@ -10,11 +10,12 @@ import {
   ActivityIndicator,
   StatusBar,
   Share,
+  Platform,
   Animated as RNAnimated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, SlideInDown, ZoomIn } from 'react-native-reanimated';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,9 @@ import { useWishlist } from '../../src/context/WishlistContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop';
+import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
+import { SymbolView } from 'expo-symbols';
 import { ProductCard } from '../../src/components/ProductCard';
 import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
 import { ProductDetailSkeleton } from '../../src/components/ShimmerSkeleton';
@@ -212,21 +216,32 @@ export default function ProductDetailScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
-        {/* Floating Header cho Skeleton */}
-        <View style={styles.floatingHeader}>
-          <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
-            <Ionicons name="chevron-back" size={22} color="#2B2928" style={{ marginLeft: -1 }} />
+        {/* Thanh điều hướng gốc iOS UINavigationBar */}
+        <Stack.Screen
+          options={{
+            headerShown: false,
+          }}
+        />
+        <View
+          style={[
+            styles.floatingHeader,
+            { top: insets.top + (Platform.OS === 'android' ? 8 : 4) },
+          ]}
+          pointerEvents="box-none"
+        >
+          <BlurButton
+            onPress={() => router.back()}
+            accessibilityLabel="Quay lại"
+          >
+            <SymbolView
+              name="chevron.left"
+              size={20}
+              tintColor={Colors.textPrimary}
+              fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
+            />
           </BlurButton>
-          <View style={styles.headerRightGroup}>
-            <BlurButton style={styles.headerBtn} disabled>
-              <Ionicons name="heart-outline" size={20} color="#2B2928" />
-            </BlurButton>
-            <BlurButton style={styles.headerBtn} disabled>
-              <Ionicons name="bag-handle-outline" size={20} color="#2B2928" />
-            </BlurButton>
-          </View>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: insets.top + 48 }}>
           <ProductDetailSkeleton />
         </ScrollView>
       </SafeAreaView>
@@ -399,64 +414,77 @@ export default function ProductDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
-      {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top + 54 + 24,
-          zIndex: 9,
+      {/* Thanh điều hướng với nút Back và 3 nút riêng biệt chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: false,
         }}
-        pointerEvents="none"
-      >
-        <LinearGradient
-          colors={
-            isDark
-              ? [
-                  'rgba(0,0,0,0.85)',
-                  'rgba(0,0,0,0.72)',
-                  'rgba(0,0,0,0.45)',
-                  'rgba(0,0,0,0.15)',
-                  'rgba(0,0,0,0)',
-                ]
-              : [
-                  'rgba(250,248,245,0.88)',
-                  'rgba(250,248,245,0.75)',
-                  'rgba(250,248,245,0.45)',
-                  'rgba(250,248,245,0.15)',
-                  'rgba(250,248,245,0)',
-                ]
-          }
-          locations={[0, 0.40, 0.70, 0.88, 1]}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+      />
+      <FadingHeaderBackdrop height={insets.top + 56 + 24} />
 
-      {/* Floating Header không vạch kẻ đáy, nút tròn 40px chuẩn GEMINI.md */}
-      <Animated.View entering={FadeIn.duration(400)} style={styles.floatingHeader}>
-        <BlurButton style={styles.headerBtn} onPress={() => router.back()} accessibilityLabel="Quay lại">
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+      {/* Header nổi: 1 nút Back bên trái & 3 nút riêng biệt [Chia sẻ] [Yêu thích] [Giỏ hàng] bên phải chuẩn Liquid Glass */}
+      <View
+        style={[
+          styles.floatingHeader,
+          { top: insets.top + (Platform.OS === 'android' ? 8 : 4) },
+        ]}
+        pointerEvents="box-none"
+      >
+        <BlurButton
+          onPress={() => router.back()}
+          accessibilityLabel="Quay lại"
+        >
+          <SymbolView
+            name="chevron.left"
+            size={20}
+            tintColor={Colors.textPrimary}
+            fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
+          />
         </BlurButton>
 
-        <View style={styles.headerRightGroup}>
-          <BlurButton style={styles.headerBtn} onPress={handleShareProduct} accessibilityLabel="Chia sẻ sản phẩm">
-            <Ionicons name="share-social-outline" size={20} color={Colors.textPrimary} />
+        <View style={styles.headerRightGroup} pointerEvents="box-none">
+          <BlurButton
+            onPress={handleShareProduct}
+            accessibilityLabel="Chia sẻ sản phẩm"
+          >
+            <SymbolView
+              name="square.and.arrow.up"
+              size={20}
+              tintColor={Colors.textPrimary}
+              fallback={<Ionicons name="share-social-outline" size={21} color={Colors.textPrimary} />}
+            />
           </BlurButton>
 
-          <BlurButton style={styles.headerBtn} onPress={() => toggleFavorite(product.id)} accessibilityLabel="Yêu thích">
-            <Ionicons
-              name={favorite ? 'heart' : 'heart-outline'}
+          <BlurButton
+            onPress={() => toggleFavorite(product.id)}
+            accessibilityLabel="Yêu thích"
+          >
+            <SymbolView
+              name={favorite ? 'heart.fill' : 'heart'}
               size={20}
-              color={favorite ? Colors.badgeSale : Colors.textPrimary}
+              tintColor={favorite ? Colors.badgeSale : Colors.textPrimary}
+              fallback={
+                <Ionicons
+                  name={favorite ? 'heart' : 'heart-outline'}
+                  size={21}
+                  color={favorite ? Colors.badgeSale : Colors.textPrimary}
+                />
+              }
             />
           </BlurButton>
 
           <View ref={headerCartRef} collapsable={false}>
             <RNAnimated.View style={{ transform: [{ scale: headerCartScale }] }}>
-              <BlurButton style={styles.headerBtn} onPress={() => router.push('/cart')} accessibilityLabel="Giỏ hàng">
-                <Ionicons name="bag-handle-outline" size={20} color={Colors.textPrimary} />
+              <BlurButton
+                onPress={() => router.push('/cart')}
+                accessibilityLabel="Giỏ hàng"
+              >
+                <SymbolView
+                  name="bag"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="bag-handle-outline" size={21} color={Colors.textPrimary} />}
+                />
                 {cartCount > 0 && (
                   <View style={styles.cartBadge} pointerEvents="none">
                     <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
@@ -466,7 +494,7 @@ export default function ProductDetailScreen() {
             </RNAnimated.View>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Images Carousel */}
@@ -1101,11 +1129,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   /* Header chuẩn GEMINI.md: Không vạch kẻ đáy (borderBottomWidth: 0), nút tròn 40px */
   floatingHeader: {
     position: 'absolute',
-    top: 44,
     left: 0,
     right: 0,
-    zIndex: 10,
+    zIndex: 100,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
@@ -1118,6 +1146,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   headerRightGroup: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
   cartBadge: {

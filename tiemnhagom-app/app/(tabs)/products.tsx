@@ -435,14 +435,14 @@ export default function ProductsScreen() {
             onPress={() => router.push('/search' as any)}
             accessibilityLabel="Tìm kiếm"
           >
-            <Ionicons name="search-outline" size={22} color={Colors.textPrimary} />
+            <Ionicons name="search-outline" size={20} color={Colors.textPrimary} />
           </BlurButton>
           <BlurButton
             style={styles.iconBtn}
             onPress={() => router.push('/favorites' as any)}
             accessibilityLabel="Yêu thích"
           >
-            <Ionicons name="heart-outline" size={22} color={Colors.textPrimary} />
+            <Ionicons name="heart-outline" size={20} color={Colors.textPrimary} />
             {favoriteCount > 0 && (
               <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
@@ -456,7 +456,7 @@ export default function ProductsScreen() {
             onPress={() => router.push('/notifications' as any)}
             accessibilityLabel="Thông báo"
           >
-            <Ionicons name="notifications-outline" size={22} color={Colors.textPrimary} />
+            <Ionicons name="notifications-outline" size={20} color={Colors.textPrimary} />
             {unreadCount > 0 && (
               <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
@@ -733,7 +733,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 14,
+      paddingHorizontal: 16,
+      paddingBottom: Platform.OS === 'android' ? 8 : 4,
       backgroundColor: 'transparent',
     },
     headerTitle: {
@@ -757,13 +758,14 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     headerTitleText: {
       fontFamily: 'ElleGaborStd',
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     headerActions: {
       flexDirection: 'row',
-      gap: 4,
+      alignItems: 'center',
+      gap: 8,
     },
     iconBtn: {
       width: 40,

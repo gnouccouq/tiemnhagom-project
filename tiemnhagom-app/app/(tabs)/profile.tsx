@@ -273,7 +273,10 @@ export default function ProfileScreen() {
       <View
         style={[
           styles.topHeader,
-          { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) },
+          {
+            paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4),
+            height: insets.top + 56,
+          },
         ]}
       >
         <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
@@ -362,7 +365,7 @@ export default function ProfileScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 60 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 10 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
@@ -992,7 +995,7 @@ const getStyles = (Colors: any) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingBottom: 8,
+      paddingBottom: Platform.OS === 'android' ? 8 : 4,
       backgroundColor: 'transparent',
     },
     userInfoRow: {

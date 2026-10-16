@@ -9,12 +9,14 @@ import {
   Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 
@@ -42,57 +44,35 @@ export default function WebViewScreen() {
         backgroundColor={Colors.background}
       />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={[StyleSheet.absoluteFill, { height: 76 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-        <BlurButton
-          onPress={() => {
-            if (canGoBack) {
-              webViewRef.current?.goBack();
-            } else {
-              router.back();
-            }
-          }}
-          style={styles.backBtn}
-          accessibilityLabel={t('back')}
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {pageTitle}
-        </Text>
-
-        <BlurButton
-          onPress={() => router.back()}
-          style={styles.closeBtn}
-          accessibilityLabel={t('close')}
-        >
-          <Ionicons name="close" size={20} color={Colors.textPrimary} />
-        </BlurButton>
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle} numberOfLines={1}>
+              {pageTitle}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('close')}
+            >
+              <SymbolView
+                name="xmark"
+                size={18}
+                tintColor={Colors.textPrimary}
+                fallback={<Ionicons name="close" size={20} color={Colors.textPrimary} />}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       {/* Loading bar */}
       {loading && (
@@ -142,6 +122,13 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  navHeaderTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: 0.3,
   },
   headerTitle: {
     flex: 1,

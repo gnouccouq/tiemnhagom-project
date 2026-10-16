@@ -44,6 +44,10 @@ export default function CartScreen() {
     memberTier,
     flyToCart,
     addToCart,
+    appliedCoupon,
+    appliedCouponItem,
+    discountAmount,
+    removeCoupon,
   } = useCart();
 
   const { t } = useSettings();
@@ -89,7 +93,7 @@ export default function CartScreen() {
     return (
       <View style={styles.safeArea}>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
-        <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+        <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
           <View style={{ width: 40 }} />
           <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
           <View style={{ width: 40 }} />
@@ -111,15 +115,15 @@ export default function CartScreen() {
   const freeShippingThreshold = 500000;
   const remainingForFreeShip = Math.max(0, freeShippingThreshold - subtotal);
 
-  const tabFloatingBottom = Math.max(insets.bottom - 10, 6);
-  const bottomBarOffset = 64 + tabFloatingBottom + 12;
+  // Vị trí thanh thanh toán dính đáy: dock sát ngay phía trên thanh Liquid Glass Native Tab Bar
+  const bottomBarOffset = Math.max(insets.bottom, 16) + 8;
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Header không có vạch kẻ đáy theo chuẩn GEMINI.md */}
-      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
+      {/* Header không có vạch kẻ đáy theo chuẩn GEMINI.md, đồng bộ chiều cao insets.top + 56 */}
+      <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
         <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
           <LinearGradient
             colors={
@@ -151,7 +155,7 @@ export default function CartScreen() {
           onPress={confirmClearCart}
           accessibilityLabel={t('clear') || 'Xóa tất cả'}
         >
-          <Ionicons name="trash-outline" size={19} color={Colors.error || '#DC2626'} />
+          <Ionicons name="trash-outline" size={20} color={Colors.error || '#DC2626'} />
         </BlurButton>
       </View>
 
@@ -160,7 +164,7 @@ export default function CartScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 54 + 8,
+            paddingTop: insets.top + 56 + 10,
             paddingBottom: bottomBarOffset + 85,
           },
         ]}
@@ -301,12 +305,68 @@ export default function CartScreen() {
           </View>
         )}
 
+        {/* Khối Mã ưu đãi / Voucher (Đồng bộ với Kho quà & Web) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.headerIconCircle}>
+                <Ionicons name="gift-outline" size={18} color="#9C7156" />
+              </View>
+              <Text style={styles.cardHeaderTitle}>{t('cartVoucherHeader') || 'Mã giảm giá / Ưu đãi'}</Text>
+            </View>
+            {(appliedCouponItem || appliedCoupon) && (
+              <TouchableOpacity onPress={removeCoupon} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={styles.removeVoucherText}>{t('removeVoucher') || 'Bỏ chọn'}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={styles.voucherActionRow}
+            onPress={() => router.push('/select-voucher')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.voucherActionLeft}>
+              <View style={styles.voucherIconCircle}>
+                <Ionicons name="pricetag-outline" size={18} color="#9C7156" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.voucherActionTitle} numberOfLines={1}>
+                  {appliedCouponItem?.name || appliedCoupon || t('cartVoucherSelect') || 'Chọn hoặc nhập mã ưu đãi'}
+                </Text>
+                {discountAmount > 0 ? (
+                  <Text style={styles.voucherActionSub}>
+                    -{formatCurrency(discountAmount)} ({appliedCouponItem?.code || appliedCoupon})
+                  </Text>
+                ) : (
+                  <Text style={styles.voucherActionHint}>
+                    {t('singleUseOnlyNotice') || 'Mỗi voucher chỉ áp dụng 1 lần duy nhất'}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
         {/* Tóm tắt tạm tính giỏ hàng */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>{t('subtotal') || 'Tạm tính'}</Text>
             <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
+
+          {discountAmount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+                {t('voucherDiscountAmount') || 'Giảm giá Voucher'}{' '}
+                {appliedCouponItem?.code || appliedCoupon ? `(${appliedCouponItem?.code || appliedCoupon})` : ''}
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
+                -{formatCurrency(discountAmount)}
+              </Text>
+            </View>
+          )}
 
           {memberTier.discount > 0 && (
             <View style={styles.summaryRow}>
@@ -328,7 +388,9 @@ export default function CartScreen() {
         <View style={styles.bottomBarContent}>
           <View style={styles.bottomSubtotalCol}>
             <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
-            <Text style={styles.bottomSubtotalValue}>{formatCurrency(subtotal)}</Text>
+            <Text style={styles.bottomSubtotalValue}>
+              {formatCurrency(Math.max(0, subtotal - discountAmount))}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -361,7 +423,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingBottom: 10,
+      paddingBottom: Platform.OS === 'android' ? 8 : 4,
       backgroundColor: 'transparent',
       borderBottomWidth: 0,
     },
@@ -426,11 +488,74 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
       marginBottom: 12,
     },
+    cardHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    headerIconCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     cardHeaderTitle: {
       fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
+    },
+    removeVoucherText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '600',
+      color: Colors.error || '#DC2626',
+    },
+    voucherActionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? '#1A1817' : '#FAF8F5',
+      padding: 12,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: isDark ? '#262422' : '#E8E1D8',
+    },
+    voucherActionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      flex: 1,
+      marginRight: 8,
+    },
+    voucherIconCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: isDark ? '#261F1A' : '#F6F0EA',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    voucherActionTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    voucherActionSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      fontWeight: '700',
+      color: '#9C7156',
+      marginTop: 2,
+    },
+    voucherActionHint: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11.5,
+      color: Colors.textMuted || '#71717A',
+      marginTop: 2,
     },
     editActionText: {
       fontFamily: 'ElleGaborStd',

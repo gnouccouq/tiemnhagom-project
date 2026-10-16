@@ -12,9 +12,9 @@ import {
   UIManager,
   LayoutAnimation,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../src/context/AuthContext';
@@ -22,8 +22,10 @@ import { useSettings } from '../src/context/SettingsContext';
 import { openWebLink } from '../src/utils/openWebLink';
 import { getUserOrders } from '../src/services/orderService';
 import { BlurButton } from '../src/components/BlurButton';
+import { SymbolView } from 'expo-symbols';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { useThemeColor } from '../src/constants/theme';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -402,6 +404,7 @@ function AccordionBenefitCard({
 
 export default function MembershipPrivilegesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
@@ -562,40 +565,24 @@ export default function MembershipPrivilegesScreen() {
           );
         })}
 
-        <SafeAreaView edges={['top']} style={styles.safeAreaHeader}>
-          <View style={[StyleSheet.absoluteFill, { height: 110 }]} pointerEvents="none">
-            <LinearGradient
-              colors={[
-                'rgba(0,0,0,0.80)',
-                'rgba(0,0,0,0.60)',
-                'rgba(0,0,0,0.30)',
-                'rgba(0,0,0,0.10)',
-                'transparent',
-              ]}
-              locations={[0, 0.35, 0.65, 0.85, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-          {/* HEADER ROW: NÚT BACK BO TRÒN KÍNH MỜ + TIÊU ĐỀ */}
-          <View style={styles.headerRow}>
-            <BlurButton
-              style={styles.roundBackBtn}
-              onPress={() => router.back()}
-              accessibilityLabel={t('back') || 'Quay lại'}
-            >
-              <Ionicons name="chevron-back" size={20} color="#FFFFFF" style={{ marginLeft: -1 }} />
-            </BlurButton>
-
-            <Text style={styles.headerTitle}>
-              {t('memberBenefitsTitle') || 'Quyền lợi thành viên'}
-            </Text>
-
-            <View style={styles.headerRightSpacer} />
-          </View>
-        </SafeAreaView>
+        {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTransparent: true,
+            headerShadowVisible: false,
+            headerTitle: () => (
+              <Text style={styles.navHeaderTitle}>
+                {t('memberBenefitsTitle') || 'Quyền lợi thành viên'}
+              </Text>
+            ),
+            headerTintColor: '#FFFFFF',
+          }}
+        />
+        <FadingHeaderBackdrop height={insets.top + 56 + 24} />
 
         {/* HERO CAROUSEL VỚI ANIMATED SCROLLX CHO DOTS VÀ TRANSITION MÀU */}
-        <View style={styles.carouselWrapper}>
+        <View style={[styles.carouselWrapper, { paddingTop: insets.top + (Platform.OS === 'android' ? 56 : 48) }]}>
           <Animated.ScrollView
             ref={scrollViewRef}
             horizontal
@@ -831,6 +818,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    navHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: '#FFFFFF',
+      letterSpacing: 0.3,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',

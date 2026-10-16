@@ -140,7 +140,7 @@ export function initTextScaler(initialScale: number = 1.0) {
           const scaledStyle = scaleStyle(props.style, currentFontScale);
           return origJsxDev.call(this, type, { ...props, style: scaledStyle }, key, isStatic, source, self);
         }
-        return origJsxDev.call(this, type, props, key, isStatic, source, self);
+        return origJsxDev.apply(this, arguments as any);
       };
       JsxDev.__isScaled = true;
     }
@@ -159,7 +159,7 @@ export function initTextScaler(initialScale: number = 1.0) {
           const scaledStyle = scaleStyle(props.style, currentFontScale);
           return origJsx.call(this, type, { ...props, style: scaledStyle }, key);
         }
-        return origJsx.call(this, type, props, key);
+        return origJsx.apply(this, arguments as any);
       };
 
       if (typeof origJsxs === 'function') {
@@ -168,7 +168,7 @@ export function initTextScaler(initialScale: number = 1.0) {
             const scaledStyle = scaleStyle(props.style, currentFontScale);
             return origJsxs.call(this, type, { ...props, style: scaledStyle }, key);
           }
-          return origJsxs.call(this, type, props, key);
+          return origJsxs.apply(this, arguments as any);
         };
       }
 

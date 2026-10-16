@@ -30,6 +30,36 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
 
     const cleanOrderData = removeUndefined(orderData);
 
+    // Kiểm tra quy chuẩn mỗi voucher chỉ được sử dụng 1 lần duy nhất cho mỗi khách hàng (giống bản web)
+    if (cleanOrderData.userId && cleanOrderData.couponCode) {
+      const cleanCoupon = String(cleanOrderData.couponCode).trim().toUpperCase();
+      try {
+        const qCheckUsed = query(
+          collection(db, 'orders'),
+          where('userId', '==', cleanOrderData.userId)
+        );
+        const checkSnap = await getDocs(qCheckUsed);
+        let alreadyUsed = false;
+        checkSnap.forEach((d) => {
+          const od = d.data();
+          const c1 = String(od.couponCode || '').toUpperCase();
+          const c2 = String(od.appliedCoupon?.code || od.appliedCoupon?.id || '').toUpperCase();
+          const c3 = String(od.coupon || od.promoCode || '').toUpperCase();
+          if (c1 === cleanCoupon || c2 === cleanCoupon || c3 === cleanCoupon) {
+            alreadyUsed = true;
+          }
+        });
+        if (alreadyUsed) {
+          return {
+            success: false,
+            error: 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.',
+          };
+        }
+      } catch (checkErr) {
+        console.warn('Lỗi kiểm tra trùng lặp voucher:', checkErr);
+      }
+    }
+
     const newOrder = {
       ...cleanOrderData,
       orderCode,
@@ -55,6 +85,16 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
            const productData = snap.data();
            productDocsMap[item.id] = { ref: productRef, data: productData };
            productSnapshots.push({ item, productRef, productData, isChild: false });
+        }
+      }
+
+      // Đọc coupon doc nếu có để cập nhật lượt dùng trong write phase
+      let couponDocRef: any = null;
+      if (cleanOrderData.couponCode) {
+        const cRef = doc(db, 'coupons', cleanOrderData.couponCode);
+        const cSnap = await transaction.get(cRef);
+        if (cSnap.exists()) {
+          couponDocRef = cRef;
         }
       }
 
@@ -187,6 +227,10 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
          }
          
          transaction.update(productRef, updatePayload);
+      }
+
+      if (couponDocRef) {
+        transaction.update(couponDocRef, { usedCount: increment(1) });
       }
 
       const newOrderRef = doc(collection(db, 'orders'));

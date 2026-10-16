@@ -1,22 +1,24 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   Keyboard,
   StatusBar,
   Animated,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { Header } from '../src/components/Header';
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { useThemeColor, Typography, Spacing, BorderRadius } from '../src/constants/theme';
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
@@ -73,11 +75,6 @@ export default function SearchScreen() {
     await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);
   };
 
-  const handleSearchSubmit = () => {
-    saveRecentSearch(searchText);
-    Keyboard.dismiss();
-  };
-
   const handleSelectRecent = (term: string) => {
     setSearchText(term);
     saveRecentSearch(term);
@@ -95,31 +92,61 @@ export default function SearchScreen() {
     });
   }, [searchText, allProducts]);
 
-  const [scrollY, setScrollY] = useState(0);
   const { pageStyle } = usePageAnimation();
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
-      <Header
-        title=""
-        showBack
-        showCart={true}
-        showSearch={true}
-        searchValue={searchText}
-        onSearchChange={setSearchText}
-        onSubmitEditing={handleSearchSubmit}
-        onClearSearch={() => setSearchText('')}
-        searchPlaceholder={t('searchPlaceholder')}
-        autoFocus={true}
-        transparent
-        scrollY={scrollY}
-      />
 
-      <View style={[styles.container, { paddingTop: insets.top + 54 }]}>
+      {/* Kích hoạt thanh điều hướng gốc UINavigationBar & UISearchController Liquid Glass của iOS 26 */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: '',
+          headerTintColor: '#9C7156',
+          headerSearchBarOptions: {
+            placement: 'automatic',
+            placeholder: t('searchPlaceholder') || 'Tìm kiếm sản phẩm...',
+            tintColor: '#9C7156',
+            textColor: isDark ? '#F5F5F5' : '#2B2928',
+            headerIconColor: '#9C7156',
+            hintTextColor: isDark ? 'rgba(245, 245, 245, 0.6)' : 'rgba(43, 41, 40, 0.6)',
+            autoCapitalize: 'none',
+            hideWhenScrolling: false,
+            autoFocus: true,
+            cancelButtonText: t('cancel') || 'Hủy',
+            onChangeText: (e) => setSearchText(e.nativeEvent.text),
+            onSearchButtonPress: (e) => {
+              saveRecentSearch(e.nativeEvent.text);
+              Keyboard.dismiss();
+            },
+            onCancelButtonPress: () => setSearchText(''),
+          },
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/cart')}
+              style={styles.cartHeaderBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('cartTab') || 'Giỏ hàng'}
+            >
+              <Ionicons name="bag-outline" size={22} color={isDark ? '#F5F5F5' : '#2B2928'} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FadingHeaderBackdrop />
+
+      <View style={[styles.container, { paddingTop: Platform.OS === 'ios' ? insets.top + 48 : insets.top + 54 }]}>
         {!searchText.trim() ? (
           // Hiển thị Lịch sử tìm kiếm
-          <View style={styles.recentSection}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={styles.recentSection}
+          >
             <View style={styles.recentHeader}>
               <Text style={styles.recentTitle}>{t('recentSearches')}</Text>
               {recentSearches.length > 0 && (
@@ -161,7 +188,7 @@ export default function SearchScreen() {
                 ))}
               </View>
             </View>
-          </View>
+          </ScrollView>
         ) : (
           // Hiển thị kết quả tìm kiếm realtime
           <FlatList
@@ -172,9 +199,8 @@ export default function SearchScreen() {
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="automatic"
             onScrollBeginDrag={() => Keyboard.dismiss()}
-            onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
-            scrollEventThrottle={16}
             renderItem={({ item }) => (
               <View style={styles.productCardWrapper}>
                 <ProductCard product={item} />
@@ -291,5 +317,9 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: Typography.fontSize.sm,
       color: Colors.textSecondary,
       marginBottom: Spacing.md,
+    },
+    cartHeaderBtn: {
+      padding: 4,
+      marginRight: Platform.OS === 'ios' ? 0 : 4,
     },
   });

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +22,8 @@ import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { ScalePressable } from '../src/components/ScalePressable';
@@ -291,61 +293,37 @@ export default function PointsHistoryScreen() {
         translucent
       />
 
-      {/* TOP HEADER: NÚT BACK BO TRÒN VÀ TIÊU ĐỀ LỊCH SỬ ĐIỂM */}
-      <View style={[styles.headerSafeArea, { paddingTop: insets.top }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-        <View style={styles.headerRow}>
-          <BlurButton
-            style={styles.roundBackBtn}
-            onPress={() => router.back()}
-            accessibilityLabel={t('back') || 'Quay lại'}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={22}
-              color={Colors.textPrimary || (isDark ? '#F5F5F5' : '#111827')}
-              style={{ marginLeft: -1 }}
-            />
-          </BlurButton>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle}>
+              {t('pointsHistoryTitle') || 'Lịch sử Điểm'}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => setRulesModalVisible(true)}
+              style={styles.headerRightBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('pointsRulesInfo') || 'Quy tắc tích điểm'}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color={Colors.textPrimary}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FadingHeaderBackdrop />
 
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {t('pointsHistoryTitle') || 'Lịch sử Điểm'}
-          </Text>
-
-          <BlurButton
-            style={styles.roundHeaderBtn}
-            onPress={() => setRulesModalVisible(true)}
-            accessibilityLabel={t('pointsRulesInfo') || 'Quy tắc tích điểm'}
-          >
-            <Ionicons
-              name="information-circle-outline"
-              size={20}
-              color={isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B'}
-            />
-          </BlurButton>
-        </View>
+      <View style={[styles.headerSafeArea, { paddingTop: Platform.OS === 'ios' ? insets.top + 46 : insets.top + 54 }]}>
 
         {/* BỘ LỌC PILLS (TÍCH / ĐỔI / KHOẢNG NGÀY) */}
         <View style={styles.filtersBar}>
@@ -683,20 +661,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 0,
       shadowOpacity: 0,
     },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingTop: Platform.OS === 'android' ? 14 : 10,
-      paddingBottom: 12,
-      gap: 12,
+    navHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      letterSpacing: 0.3,
     },
-    roundBackBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
+    headerRightBtn: {
+      padding: 6,
+      marginRight: Platform.OS === 'ios' ? 0 : 4,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',

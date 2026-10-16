@@ -9,7 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,7 +19,9 @@ import { useCart } from '../context/CartContext';
 import { useNotificationBadge } from '../context/NotificationBadgeContext';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
-import { LiquidGlass } from './LiquidGlass';
+import { LiquidGlass, LiquidGlassContainerView } from './LiquidGlass';
+import { SymbolView } from 'expo-symbols';
+import { FadingHeaderBackdrop } from './FadingHeaderBackdrop';
 
 export interface HeaderProps {
   title?: string;
@@ -27,6 +29,7 @@ export interface HeaderProps {
   showCart?: boolean;
   showSearch?: boolean;
   showSettings?: boolean;
+  rightComponent?: React.ReactNode;
   onSettingsPress?: () => void;
   onSearchPress?: () => void;
   searchValue?: string;
@@ -47,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   showCart = true,
   showSearch = true,
   showSettings = false,
+  rightComponent,
   onSettingsPress,
   onSearchPress,
   searchValue,
@@ -96,6 +100,64 @@ export const Header: React.FC<HeaderProps> = ({
   const showBlurBackground = !disableBlur && !transparent && blurProgress > 0;
 
   // Nếu không có title (hoặc trang chủ / tìm kiếm), hiển thị Header phong cách Uniqlo: Logo + Thanh tìm kiếm con nhộng + Giỏ hàng
+  // ================= THIẾT KẾ GỐC IOS LIQUID GLASS CHO TẤT CẢ CÁC TRANG CÓ NÚT BACK =================
+  if (title && showBack) {
+    const hasRightContent = Boolean(rightComponent || showSettings || showCart);
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerTransparent: true,
+            headerShadowVisible: false,
+            headerTitle: () => (
+              <Text style={styles.navHeaderTitle}>
+                {title}
+              </Text>
+            ),
+            headerTintColor: '#9C7156',
+            headerRight: hasRightContent
+              ? () => (
+                  <View style={styles.navHeaderRight}>
+                    {rightComponent}
+                    {showSettings && (
+                      <TouchableOpacity
+                        onPress={onSettingsPress}
+                        style={styles.navHeaderIconBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityLabel="Cài đặt"
+                      >
+                        <Ionicons name="settings-outline" size={22} color={Colors.textPrimary} />
+                      </TouchableOpacity>
+                    )}
+                    {showCart && (
+                      <TouchableOpacity
+                        onPress={() => router.push('/notifications')}
+                        style={styles.navHeaderIconBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityLabel="Thông báo"
+                      >
+                        <Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />
+                        {unreadCount > 0 && (
+                          <View style={styles.notificationBadge} pointerEvents="none">
+                            <Text style={styles.notificationBadgeText}>
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )
+              : undefined,
+          }}
+        />
+        {/* Nền Gradient mờ dần từ trên xuống dưới chuẩn GEMINI.md */}
+        <FadingHeaderBackdrop height={statusBarHeight + 56 + 24} />
+      </>
+    );
+  }
+
   const isSearchHeader = !title;
 
   return (
@@ -106,11 +168,19 @@ export const Header: React.FC<HeaderProps> = ({
           ? [
               styles.containerTransparent,
               {
-                paddingTop: statusBarHeight + (Platform.OS === 'android' ? 4 : 2),
-                height: 54 + statusBarHeight,
+                paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
+                paddingBottom: Platform.OS === 'android' ? 8 : 4,
+                height: 56 + statusBarHeight,
               },
             ]
-          : styles.containerDefault,
+          : [
+              styles.containerDefault,
+              {
+                paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
+                paddingBottom: Platform.OS === 'android' ? 8 : 4,
+                height: 56 + statusBarHeight,
+              },
+            ],
       ]}
     >
       {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới áp dụng đồng bộ toàn bộ app */}
@@ -119,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
           style={[
             styles.gradientBackdropWrap,
             {
-              height: (transparent ? 54 + statusBarHeight : 56 + (insets.top > 0 ? insets.top : 0)) + 24,
+              height: 56 + statusBarHeight + 24,
               opacity: transparent ? progress : 1,
             },
           ]}
@@ -160,7 +230,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+                <SymbolView
+                  name="chevron.left"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
+                />
               </BlurButton>
             ) : (
               <TouchableOpacity
@@ -215,10 +290,20 @@ export const Header: React.FC<HeaderProps> = ({
                   />
                   {searchValue && searchValue.length > 0 ? (
                     <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                      <Ionicons name="close-circle" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} />
+                      <SymbolView
+                        name="xmark.circle.fill"
+                        size={18}
+                        tintColor={isDark ? '#F5F5F5' : '#2B2928'}
+                        fallback={<Ionicons name="close-circle" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} />}
+                      />
                     </TouchableOpacity>
                   ) : (
-                    <Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />
+                    <SymbolView
+                      name="magnifyingglass"
+                      size={18}
+                      tintColor={isDark ? '#F5F5F5' : '#2B2928'}
+                      fallback={<Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />}
+                    />
                   )}
                 </LiquidGlass>
               </View>
@@ -233,7 +318,12 @@ export const Header: React.FC<HeaderProps> = ({
                   <Text style={styles.searchPlaceholder} numberOfLines={1}>
                     {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
                   </Text>
-                  <Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />
+                  <SymbolView
+                    name="magnifyingglass"
+                    size={18}
+                    tintColor={isDark ? '#F5F5F5' : '#2B2928'}
+                    fallback={<Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />}
+                  />
                 </LiquidGlass>
               </ScalePressable>
             )
@@ -247,7 +337,12 @@ export const Header: React.FC<HeaderProps> = ({
               onPress={() => router.push('/notifications')}
               accessibilityLabel="Thông báo"
             >
-              <Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />
+              <SymbolView
+                name="bell"
+                size={20}
+                tintColor={Colors.textPrimary}
+                fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
+              />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge} pointerEvents="none">
                   <Text style={styles.notificationBadgeText}>
@@ -269,7 +364,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
               >
-                <Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />
+                <SymbolView
+                  name="chevron.left"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
+                />
               </BlurButton>
             ) : (
               <Text style={styles.screenTitle}>{title}</Text>
@@ -284,15 +384,20 @@ export const Header: React.FC<HeaderProps> = ({
             </View>
           )}
 
-          <View style={styles.right}>
+          <LiquidGlassContainerView spacing={20} style={[styles.right, { gap: 10 }]}>
             {showSettings && (
               <BlurButton
-                style={[styles.iconButton, { marginRight: 8 }]}
+                style={styles.iconButton}
                 containerStyle={styles.iconButtonContainer}
                 onPress={onSettingsPress}
                 accessibilityLabel="Cài đặt"
               >
-                <Ionicons name="settings-outline" size={22} color={Colors.textPrimary} />
+                <SymbolView
+                  name="gearshape"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="settings-outline" size={22} color={Colors.textPrimary} />}
+                />
               </BlurButton>
             )}
             {showCart && (
@@ -302,7 +407,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={() => router.push('/notifications')}
                 accessibilityLabel="Thông báo"
               >
-                <Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />
+                <SymbolView
+                  name="bell"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
+                />
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge} pointerEvents="none">
                     <Text style={styles.notificationBadgeText}>
@@ -312,7 +422,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </BlurButton>
             )}
-          </View>
+          </LiquidGlassContainerView>
         </View>
       )}
     </View>
@@ -320,6 +430,22 @@ export const Header: React.FC<HeaderProps> = ({
 };
 
 const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
+  navHeaderTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: 0.3,
+  },
+  navHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginRight: Platform.OS === 'ios' ? 0 : 4,
+  },
+  navHeaderIconBtn: {
+    padding: 6,
+  },
   container: {
     width: '100%',
   },
@@ -327,7 +453,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     height: 56,
     backgroundColor: 'transparent',
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   containerTransparent: {
     position: 'absolute',
@@ -338,7 +464,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomWidth: 0,
     elevation: 0,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     justifyContent: 'center',
   },
   gradientBackdropWrap: {
@@ -398,13 +524,9 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     minWidth: 0,
     marginLeft: 8,
     marginRight: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.05,
-    shadowRadius: 5,
-    elevation: isDark ? 0 : 2,
   },
   searchPill: {
+    width: '100%',
     height: 40,
     borderRadius: 20,
     flexDirection: 'row',
@@ -434,11 +556,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     flexShrink: 0,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0 : 0.05,
-    shadowRadius: 5,
-    elevation: isDark ? 0 : 2,
   },
   cartButton: {
     width: 50,

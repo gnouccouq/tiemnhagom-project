@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
@@ -27,6 +27,8 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { SymbolView } from 'expo-symbols';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useRealtimeData } from '../src/context/RealtimeDataContext';
@@ -547,47 +549,21 @@ export default function OrderDetailScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* ── HEADER CỐ ĐỊNH TRÊN CÙNG (KHÔNG VẠCH KẺ ĐÁY, PHỦ TRÊN HERO BANNER) ── */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
-        <View style={[StyleSheet.absoluteFill, { height: insets.top + 56 + 24 }]} pointerEvents="none">
-          <LinearGradient
-            colors={
-              isDark
-                ? [
-                    'rgba(0,0,0,0.85)',
-                    'rgba(0,0,0,0.72)',
-                    'rgba(0,0,0,0.45)',
-                    'rgba(0,0,0,0.15)',
-                    'rgba(0,0,0,0)',
-                  ]
-                : [
-                    'rgba(250,248,245,0.88)',
-                    'rgba(250,248,245,0.75)',
-                    'rgba(250,248,245,0.45)',
-                    'rgba(250,248,245,0.15)',
-                    'rgba(250,248,245,0)',
-                  ]
-            }
-            locations={[0, 0.40, 0.70, 0.88, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-
-        {/* Nút quay lại tròn chuẩn quy cách BlurButton */}
-        <BlurButton
-          onPress={() => router.back()}
-          accessibilityLabel={t('back') || 'Quay lại'}
-          style={{ width: 40, height: 40, borderRadius: 20 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#FFFFFF" style={{ marginLeft: -1 }} />
-        </BlurButton>
-
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitleText}>{t('orderDetailTitle') || 'Đơn hàng'}</Text>
-        </View>
-
-        <View style={{ width: 40 }} />
-      </View>
+      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTitle: () => (
+            <Text style={styles.navHeaderTitle}>
+              {t('orderDetailTitle') || 'Đơn hàng'}
+            </Text>
+          ),
+          headerTintColor: '#9C7156',
+        }}
+      />
+      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -1036,6 +1012,13 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    navHeaderTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      letterSpacing: 0.3,
     },
     headerTitleText: {
       fontFamily: 'ElleGaborStd',

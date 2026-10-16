@@ -8,6 +8,7 @@
     "scheme": "tiemnhagom",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#9C7156",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "vn.tiemnhagom.app",
@@ -77,7 +78,8 @@
       "expo-notifications",
       "expo-media-library",
       "expo-location",
-      "expo-video"
+      "expo-video",
+      "react-native-bottom-tabs"
     ],
     "experiments": {
       "typedRoutes": true

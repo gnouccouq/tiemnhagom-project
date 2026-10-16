@@ -26,6 +26,7 @@ import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { CategoryChip } from '../../src/components/CategoryChip';
 import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
 import { ScalePressable } from '../../src/components/ScalePressable';
+import { LiquidGlass } from '../../src/components/LiquidGlass';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   DEFAULT_CATEGORIES,
@@ -390,14 +391,16 @@ export default function HomeScreen() {
                 </View>
                 <Text style={styles.sectionTitle}>{t('favoriteCollections')}</Text>
               </View>
-              <TouchableOpacity
+              <ScalePressable
                 onPress={() => router.push('/(tabs)/products')}
-                style={styles.seeAllBtn}
-                activeOpacity={0.8}
+                activeScale={0.92}
+                accessibilityLabel={t('seeAll')}
               >
-                <Text style={styles.seeAllText}>{t('seeAll')}</Text>
-                <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
-              </TouchableOpacity>
+                <LiquidGlass style={styles.seeAllBtn}>
+                  <Text style={styles.seeAllText}>{t('seeAll')}</Text>
+                  <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+                </LiquidGlass>
+              </ScalePressable>
             </View>
 
             <ScrollView
@@ -443,7 +446,7 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.sectionTitle}>{t('curatedSpace')}</Text>
             </View>
-            <TouchableOpacity
+            <ScalePressable
               onPress={() =>
                 router.push({
                   pathname: '/(tabs)/products',
@@ -454,12 +457,14 @@ export default function HomeScreen() {
                   },
                 })
               }
-              style={styles.seeAllBtn}
-              activeOpacity={0.8}
+              activeScale={0.92}
+              accessibilityLabel={t('viewAll')}
             >
-              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-              <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
-            </TouchableOpacity>
+              <LiquidGlass style={styles.seeAllBtn}>
+                <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+                <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+              </LiquidGlass>
+            </ScalePressable>
           </View>
 
           {/* Lưới 3 cột Không Gian Tuyển Chọn (Icon gốm tròn bo cong đồng bộ với tab Danh mục) */}
@@ -525,14 +530,16 @@ export default function HomeScreen() {
                 </View>
                 <Text style={styles.dealMainTitle}>{t('flashSaleAndGifts')}</Text>
               </View>
-              <TouchableOpacity
+              <ScalePressable
                 onPress={() => router.push('/(tabs)/deals')}
-                style={styles.seeAllBtn}
-                activeOpacity={0.8}
+                activeScale={0.92}
+                accessibilityLabel={t('getCoupon')}
               >
-                <Text style={styles.seeAllText}>{t('getCoupon')}</Text>
-                <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
-              </TouchableOpacity>
+                <LiquidGlass style={styles.seeAllBtn}>
+                  <Text style={styles.seeAllText}>{t('getCoupon')}</Text>
+                  <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+                </LiquidGlass>
+              </ScalePressable>
             </View>
 
             <ScrollView
@@ -559,19 +566,21 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.sectionTitle}>{t('bestSellers')}</Text>
             </View>
-            <TouchableOpacity
+            <ScalePressable
               onPress={() =>
                 router.push({
                   pathname: '/(tabs)/products',
                   params: { sortBy: 'popular' },
                 })
               }
-              style={styles.seeAllBtn}
-              activeOpacity={0.8}
+              activeScale={0.92}
+              accessibilityLabel={t('viewAll')}
             >
-              <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-              <Ionicons name="arrow-forward" size={12} color={Colors.textPrimary} />
-            </TouchableOpacity>
+              <LiquidGlass style={styles.seeAllBtn}>
+                <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+                <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+              </LiquidGlass>
+            </ScalePressable>
           </View>
 
           {loading ? (
@@ -973,20 +982,13 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     lineHeight: 27,
   },
   seeAllBtn: {
+    height: 32,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
-    backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
     paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 16,
-    borderWidth: isDark ? 0 : 1,
-    borderColor: isDark ? 'transparent' : '#E8E1D8',
-    shadowColor: '#2B2928',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 3,
-    elevation: isDark ? 0 : 1,
   },
   seeAllText: {
     fontFamily: 'ElleGaborStd',
