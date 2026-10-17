@@ -31,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
-  const { addToCart, flyToCart } = useCart();
+  const { addToCart, flyToCart, memberTier } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
 
   const targetProductId = product.parentProductId || product.id;
@@ -41,19 +41,24 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   const addScale = useRef(new Animated.Value(1)).current;
   const quickAddRef = useRef<View>(null);
 
-  const effectivePrice = product.salePrice
+  const effectivePrice = (product.salePrice && product.salePrice > 0)
     ? product.salePrice
-    : product.sale
+    : (product.sale && product.sale > 0)
     ? Math.round(product.price * (1 - product.sale / 100))
     : product.price;
 
-  const hasDiscount =
-    (product.sale && product.sale > 0) ||
-    (product.salePrice && product.salePrice < product.price);
+  const hasDiscount = effectivePrice < product.price;
 
-  const discountPercent =
-    product.sale ||
-    (product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0);
+  const discountPercent = hasDiscount && product.price > 0
+    ? Math.round(((product.price - effectivePrice) / product.price) * 100)
+    : (product.sale || 0);
+
+  // Tính chiết khấu hạng thành viên (Nếu khách hàng có hạng thành viên: dùng hạng đó; nếu chưa/Gốm Mộc: hiển thị ưu đãi hạng Gốm Nung 1% để kích thích mua sắm)
+  const displayMemberTier = (memberTier && memberTier.discount > 0)
+    ? memberTier
+    : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
+
+  const memberTierPrice = Math.round(effectivePrice * (1 - displayMemberTier.discount / 100));
 
   const imageUri =
     product.imageUrl ||
@@ -201,14 +206,26 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         {/* Hàng Giá & Nút Thêm Giỏ Hàng có animation nảy */}
         <View style={styles.priceRow}>
           <View style={styles.priceWrap}>
-            <Text style={styles.effectivePrice}>
-              {formatCurrency(effectivePrice)}
-            </Text>
-            {hasDiscount ? (
-              <Text style={styles.originalPrice}>
-                {formatCurrency(product.price)}
+            <View style={styles.mainPriceRow}>
+              <Text style={styles.effectivePrice}>
+                {formatCurrency(effectivePrice)}
               </Text>
-            ) : null}
+              {hasDiscount ? (
+                <Text style={styles.originalPrice}>
+                  {formatCurrency(product.price)}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Dòng Giá Hạng Thành Viên bên dưới: Giá Gốm Nung ... */}
+            <View style={styles.memberTierPriceLine}>
+              <Text style={styles.memberTierPriceLabel}>
+                {t('memberPriceLabel', { tier: displayMemberTier.name }) || `Giá ${displayMemberTier.name}`}{' '}
+                <Text style={styles.memberTierPriceValue}>
+                  {formatCurrency(memberTierPrice)}
+                </Text>
+              </Text>
+            </View>
           </View>
 
           <View ref={quickAddRef} collapsable={false}>
@@ -446,6 +463,29 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     color: Colors.textMuted,
     textDecorationLine: 'line-through',
     marginTop: 1,
+  },
+  mainPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  memberTierPriceLine: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  memberTierPriceLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    color: '#9C7156',
+    fontWeight: '600',
+  },
+  memberTierPriceValue: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#9C7156',
   },
   quickAddButton: {
     width: 36,

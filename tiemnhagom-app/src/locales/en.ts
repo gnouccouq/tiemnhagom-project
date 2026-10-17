@@ -935,6 +935,19 @@ export const en = {
   authToContinue: 'Please authenticate to continue',
   unlock: 'Unlock',
   updatingNewVersion: 'Updating new version...',
+
+  // Friend Voucher
+  friendVoucherBadge: 'Gift for Friends',
+  shareVoucherTitle: 'Gift to Friends',
+  shareVoucherDesc: '10% discount voucher (up to 150k) for friends and family making their first purchase at Tiem Nha Gom.',
+  copyCodeBtn: 'Copy Gift Code',
+  shareCodeBtn: 'Share Code Now',
+  cannotUseSelfFriendVoucher: 'This code is a gift for your friends or family (new customers). You cannot apply it to your own orders.',
+  friendVoucherShareMessage: 'Here is a 10% discount gift code "{code}" (up to 150k) for handcrafted ceramics at Tiem Nha Gom! Download the app or visit https://tiemnhagom.vn to use it.',
+
+  // Member Price Perk
+  memberPriceLabel: '{tier} Price',
+  memberDiscountBadge: '{tier} -{discount}%',
 };
 
 

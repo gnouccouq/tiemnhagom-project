@@ -341,13 +341,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
     const itemId = `${product.id}${variantKey}`;
 
-    const effectivePrice = variant?.price
-      ? variant.price
-      : product.salePrice
-      ? product.salePrice
-      : product.sale
-      ? Math.round(product.price * (1 - product.sale / 100))
-      : product.price;
+    const basePrice = (variant?.price && variant.price > 0) ? variant.price : product.price;
+    let effectivePrice = basePrice;
+    if (variant?.salePrice && variant.salePrice > 0) {
+      effectivePrice = variant.salePrice;
+    } else if (variant?.sale !== undefined && variant.sale !== null && variant.sale > 0) {
+      effectivePrice = Math.round(basePrice * (1 - variant.sale / 100));
+    } else if (variant?.price && variant.price > 0) {
+      effectivePrice = variant.price;
+    } else if (product.salePrice && product.salePrice > 0) {
+      effectivePrice = product.salePrice;
+    } else if (product.sale && product.sale > 0) {
+      effectivePrice = Math.round(product.price * (1 - product.sale / 100));
+    } else {
+      effectivePrice = product.price;
+    }
 
     const existingIndex = cart.findIndex((item) => item.id === itemId);
     let nextCart: CartItem[];
@@ -430,6 +438,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAppliedCoupon(null);
       return;
     }
+
+    // Fail-safe: Không cho phép tự áp dụng voucher tặng người thân (khách mới) cho chính tài khoản của mình giống trên web
+    const isFriendCode = Boolean(
+      coupon.assignedBy ||
+      coupon.forNewCustomerOnly ||
+      coupon.id.startsWith('GIFT') ||
+      coupon.code.startsWith('GIFT')
+    );
+    if (
+      isFriendCode &&
+      (coupon.assignedBy === currentUid ||
+        (currentUid &&
+          (coupon.id === `GIFT${currentUid.substring(0, 5).toUpperCase()}` ||
+            coupon.code === `GIFT${currentUid.substring(0, 5).toUpperCase()}`)))
+    ) {
+      setAppliedCouponItem(null);
+      setAppliedCoupon(null);
+      return;
+    }
+
     setAppliedCouponItem(coupon);
     setAppliedCoupon(coupon.code || coupon.id);
   };

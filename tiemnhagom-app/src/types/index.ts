@@ -6,6 +6,7 @@ export interface ProductVariant {
   imageUrl?: string;
   thumbUrl?: string;
   price?: number;
+  salePrice?: number;
   sale?: number;
   stock?: number;
   sold?: number;

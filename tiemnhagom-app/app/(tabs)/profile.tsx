@@ -240,7 +240,7 @@ export default function ProfileScreen() {
   const { pageStyle } = usePageAnimation();
 
   return (
-    <Animated.View style={[styles.safeArea, pageStyle]}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle={Colors.cardBackground !== '#FFFFFF' ? 'light-content' : 'dark-content'} />
 
       {/* ========================================================================= */}
@@ -342,7 +342,7 @@ export default function ProfileScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 8 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 4 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
@@ -944,7 +944,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </AnimatedBottomSheetModal>
-    </Animated.View>
+    </View>
   );
 }
 

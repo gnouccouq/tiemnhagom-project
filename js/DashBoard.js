@@ -2537,7 +2537,7 @@ function parseVariantColor(rawHex, colorName = '') {
     return { isGradient: false, hex1: singleHex, hex2: '#ec4899', css: singleHex };
 }
 
-window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '', sale = '', sold = 0, id = '') => {
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '', sale = '', sold = 0, id = '', salePrice = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
 
@@ -2606,19 +2606,24 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
             <input type="text" class="variant-hex-input" value="${parsedColor.css}" placeholder="#HEX hoặc loang..." style="width: 105px; padding: 6px 6px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; text-align: center; font-family: monospace; flex-shrink: 0;" title="Mã màu HEX hoặc linear-gradient(135deg, #c1, #c2)">
         </div>
 
-        <!-- Giá riêng -->
-        <div style="width: 82px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
-            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá riêng" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
+        <!-- Giá riêng (Giá gốc) -->
+        <div style="width: 78px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
+            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá gốc" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
 
         <!-- Giảm % riêng -->
-        <div style="width: 62px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
-            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        <div style="width: 55px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
+            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 2px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        </div>
+
+        <!-- Giá giảm tự nhập -->
+        <div style="width: 78px; flex-shrink: 0;" title="Giá sau giảm tự nhập (làm tròn). Tự động tính tương hỗ với % giảm">
+            <input type="number" min="0" class="variant-saleprice" value="${salePrice !== null && salePrice !== undefined ? salePrice : ''}" placeholder="Giá giảm" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
 
         <!-- Tồn kho -->
-        <div style="width: 60px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
-            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        <div style="width: 55px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
         </div>
 
         <!-- Checkbox hiển thị độc lập -->
@@ -2642,6 +2647,49 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     const hexInput = row.querySelector('.variant-hex-input');
     const swatch = row.querySelector('.variant-color-swatch');
     const toggleBtn = row.querySelector('.btn-toggle-gradient');
+    const priceInp = row.querySelector('.variant-price');
+    const saleInp = row.querySelector('.variant-sale');
+    const salePriceInp = row.querySelector('.variant-saleprice');
+
+    // Tự động tính toán tương hỗ giữa % giảm và Giá giảm tự nhập
+    const getBasePriceVal = () => {
+        const vP = parseFloat(priceInp?.value || 0);
+        if (vP > 0) return vP;
+        const mainP = typeof window.getCurrencyValue === 'function' ? window.getCurrencyValue('price') : parseFloat(document.getElementById('price')?.value || 0);
+        return mainP > 0 ? mainP : 0;
+    };
+
+    if (saleInp && salePriceInp) {
+        saleInp.addEventListener('input', () => {
+            const bP = getBasePriceVal();
+            const pct = parseFloat(saleInp.value || 0);
+            if (bP > 0 && pct > 0) {
+                salePriceInp.value = Math.round(bP * (1 - pct / 100));
+            } else if (!saleInp.value) {
+                salePriceInp.value = '';
+            }
+        });
+
+        salePriceInp.addEventListener('input', () => {
+            const bP = getBasePriceVal();
+            const sP = parseFloat(salePriceInp.value || 0);
+            if (bP > 0 && sP > 0 && sP < bP) {
+                saleInp.value = Math.round((1 - sP / bP) * 100);
+            } else if (!salePriceInp.value) {
+                saleInp.value = '';
+            }
+        });
+
+        if (priceInp) {
+            priceInp.addEventListener('input', () => {
+                const bP = parseFloat(priceInp.value || 0);
+                const pct = parseFloat(saleInp.value || 0);
+                if (bP > 0 && pct > 0 && !salePriceInp.value) {
+                    salePriceInp.value = Math.round(bP * (1 - pct / 100));
+                }
+            });
+        }
+    }
 
     let currentIsGradient = parsedColor.isGradient;
 
@@ -2752,7 +2800,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     window.syncStockWithVariants();
 };
 
-window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', sale = '', sold = 0, id = '') => {
+window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', sale = '', sold = 0, id = '', salePrice = '') => {
     const container = document.getElementById('pattern-variant-items-container');
     if (!container) return;
 
@@ -2782,19 +2830,24 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
             <input type="text" class="variant-name" value="${name}" placeholder="Tên họa tiết (VD: Nhám, Hoa lam, Men rạn)" style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.83rem;">
         </div>
 
-        <!-- Giá riêng -->
-        <div style="width: 82px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
-            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá riêng" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
+        <!-- Giá riêng (Giá gốc) -->
+        <div style="width: 78px; flex-shrink: 0;" title="Giá gốc riêng của biến thể này (để trống sẽ lấy giá gốc sản phẩm)">
+            <input type="number" min="0" class="variant-price" value="${price !== null && price !== undefined ? price : ''}" placeholder="Giá gốc" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
 
         <!-- Giảm % riêng -->
-        <div style="width: 62px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
-            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        <div style="width: 55px; flex-shrink: 0;" title="Giảm % riêng cho biến thể này (VD: 15). Để trống sẽ tự áp dụng mức giảm chính của sản phẩm">
+            <input type="number" min="0" max="100" class="variant-sale" value="${sale !== null && sale !== undefined ? sale : ''}" placeholder="Giảm %" style="padding: 6px 2px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        </div>
+
+        <!-- Giá giảm tự nhập -->
+        <div style="width: 78px; flex-shrink: 0;" title="Giá sau giảm tự nhập (làm tròn). Tự động tính tương hỗ với % giảm">
+            <input type="number" min="0" class="variant-saleprice" value="${salePrice !== null && salePrice !== undefined ? salePrice : ''}" placeholder="Giá giảm" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem;">
         </div>
 
         <!-- Tồn kho -->
-        <div style="width: 60px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
-            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 6px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
+        <div style="width: 55px; flex-shrink: 0;" title="Số lượng tồn kho của biến thể">
+            <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
         </div>
 
         <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
@@ -2809,6 +2862,50 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
         <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa họa tiết này">&times;</button>
     `;
+
+    const priceInp = row.querySelector('.variant-price');
+    const saleInp = row.querySelector('.variant-sale');
+    const salePriceInp = row.querySelector('.variant-saleprice');
+
+    // Tự động tính toán tương hỗ giữa % giảm và Giá giảm tự nhập
+    const getBasePriceVal = () => {
+        const vP = parseFloat(priceInp?.value || 0);
+        if (vP > 0) return vP;
+        const mainP = typeof window.getCurrencyValue === 'function' ? window.getCurrencyValue('price') : parseFloat(document.getElementById('price')?.value || 0);
+        return mainP > 0 ? mainP : 0;
+    };
+
+    if (saleInp && salePriceInp) {
+        saleInp.addEventListener('input', () => {
+            const bP = getBasePriceVal();
+            const pct = parseFloat(saleInp.value || 0);
+            if (bP > 0 && pct > 0) {
+                salePriceInp.value = Math.round(bP * (1 - pct / 100));
+            } else if (!saleInp.value) {
+                salePriceInp.value = '';
+            }
+        });
+
+        salePriceInp.addEventListener('input', () => {
+            const bP = getBasePriceVal();
+            const sP = parseFloat(salePriceInp.value || 0);
+            if (bP > 0 && sP > 0 && sP < bP) {
+                saleInp.value = Math.round((1 - sP / bP) * 100);
+            } else if (!salePriceInp.value) {
+                saleInp.value = '';
+            }
+        });
+
+        if (priceInp) {
+            priceInp.addEventListener('input', () => {
+                const bP = parseFloat(priceInp.value || 0);
+                const pct = parseFloat(saleInp.value || 0);
+                if (bP > 0 && pct > 0 && !salePriceInp.value) {
+                    salePriceInp.value = Math.round(bP * (1 - pct / 100));
+                }
+            });
+        }
+    }
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
@@ -4460,6 +4557,12 @@ window.renderComboVariantsTabs = function () {
     const priceInput = document.getElementById('combo-variant-price');
     if (priceInput) priceInput.value = (currentVariant.price !== undefined && currentVariant.price !== null) ? currentVariant.price : '';
 
+    const saleInput = document.getElementById('combo-variant-sale');
+    if (saleInput) saleInput.value = (currentVariant.sale !== undefined && currentVariant.sale !== null) ? currentVariant.sale : '';
+
+    const salePriceInput = document.getElementById('combo-variant-saleprice');
+    if (salePriceInput) salePriceInput.value = (currentVariant.salePrice !== undefined && currentVariant.salePrice !== null) ? currentVariant.salePrice : '';
+
     const calcInfo = window.calcComboVariantStock(currentVariant);
     currentVariant.stock = calcInfo.stock;
     currentVariant.isOutOfStock = calcInfo.isOutOfStock;
@@ -4515,7 +4618,7 @@ window.recalculateTotalComboStock = function () {
 };
 
 window.addComboVariant = function () {
-    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], stock: 0, price: null, isOutOfStock: false, showOnProductPage: false });
+    window.comboVariants.push({ name: `Phân loại ${window.comboVariants.length + 1}`, items: [], stock: 0, price: null, sale: null, salePrice: null, isOutOfStock: false, showOnProductPage: false });
     window.currentComboVariantIndex = window.comboVariants.length - 1;
     window.renderComboVariantsTabs();
 };
@@ -4538,7 +4641,61 @@ window.updateCurrentComboVariantName = function (name) {
 
 window.updateCurrentComboVariantPrice = function (val) {
     if (window.comboVariants[window.currentComboVariantIndex]) {
-        window.comboVariants[window.currentComboVariantIndex].price = (val === '' || val === null) ? null : (parseFloat(val) || 0);
+        const cur = window.comboVariants[window.currentComboVariantIndex];
+        cur.price = (val === '' || val === null) ? null : (parseFloat(val) || 0);
+        
+        // Cập nhật lại giá giảm nếu đang có % giảm
+        const saleInp = document.getElementById('combo-variant-sale');
+        const salePriceInp = document.getElementById('combo-variant-saleprice');
+        const bP = cur.price || (typeof window.getCurrencyValue === 'function' ? window.getCurrencyValue('price') : 0);
+        const pct = parseFloat(saleInp?.value || cur.sale || 0);
+        if (bP > 0 && pct > 0 && (!salePriceInp?.value || !cur.salePrice)) {
+            const calculatedSalePrice = Math.round(bP * (1 - pct / 100));
+            cur.salePrice = calculatedSalePrice;
+            if (salePriceInp) salePriceInp.value = calculatedSalePrice;
+        }
+    }
+};
+
+window.updateCurrentComboVariantSale = function (val) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        const cur = window.comboVariants[window.currentComboVariantIndex];
+        const pct = (val === '' || val === null) ? null : Math.max(0, Math.min(100, parseFloat(val) || 0));
+        cur.sale = pct;
+
+        const mainP = typeof window.getCurrencyValue === 'function' ? window.getCurrencyValue('price') : 0;
+        const bP = (cur.price && cur.price > 0) ? cur.price : mainP;
+        const salePriceInp = document.getElementById('combo-variant-saleprice');
+
+        if (bP > 0 && pct !== null && pct > 0) {
+            const calculatedSalePrice = Math.round(bP * (1 - pct / 100));
+            cur.salePrice = calculatedSalePrice;
+            if (salePriceInp) salePriceInp.value = calculatedSalePrice;
+        } else if (pct === null || pct === 0) {
+            cur.salePrice = null;
+            if (salePriceInp) salePriceInp.value = '';
+        }
+    }
+};
+
+window.updateCurrentComboVariantSalePrice = function (val) {
+    if (window.comboVariants[window.currentComboVariantIndex]) {
+        const cur = window.comboVariants[window.currentComboVariantIndex];
+        const sP = (val === '' || val === null) ? null : (parseFloat(val) || 0);
+        cur.salePrice = sP;
+
+        const mainP = typeof window.getCurrencyValue === 'function' ? window.getCurrencyValue('price') : 0;
+        const bP = (cur.price && cur.price > 0) ? cur.price : mainP;
+        const saleInp = document.getElementById('combo-variant-sale');
+
+        if (bP > 0 && sP !== null && sP > 0 && sP < bP) {
+            const calculatedPct = Math.round((1 - sP / bP) * 100);
+            cur.sale = calculatedPct;
+            if (saleInp) saleInp.value = calculatedPct;
+        } else if (sP === null) {
+            cur.sale = null;
+            if (saleInp) saleInp.value = '';
+        }
     }
 };
 
@@ -4962,6 +5119,8 @@ if (productForm) {
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
                 const saleInput = row.querySelector('.variant-sale');
                 const sale = (saleInput && saleInput.value !== '') ? Math.max(0, Math.min(100, Number(saleInput.value))) : null;
+                const salePriceInput = row.querySelector('.variant-saleprice');
+                const salePrice = salePriceInput && salePriceInput.value ? Number(salePriceInput.value) : null;
                 const hexInput = row.querySelector('.variant-hex-input');
                 const hex = hexInput && hexInput.value ? hexInput.value.trim() : null;
                 
@@ -4976,7 +5135,7 @@ if (productForm) {
                     (c.name && c.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingCV && existingCV.sold !== undefined) ? existingCV.sold : rowSold;
-                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, hex, sold };
+                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, salePrice, hex, sold };
             });
             const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
             if (colorVariantsResult.length > 0) hasVariants = true;
@@ -5004,6 +5163,8 @@ if (productForm) {
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
                 const saleInput = row.querySelector('.variant-sale');
                 const sale = (saleInput && saleInput.value !== '') ? Math.max(0, Math.min(100, Number(saleInput.value))) : null;
+                const salePriceInput = row.querySelector('.variant-saleprice');
+                const salePrice = salePriceInput && salePriceInput.value ? Number(salePriceInput.value) : null;
                 
                 const variantId = row.dataset.variantId || ('var_p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
                 const origName = (row.dataset.originalName || '').trim().toLowerCase();
@@ -5016,7 +5177,7 @@ if (productForm) {
                     (p.name && p.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingPV && existingPV.sold !== undefined) ? existingPV.sold : rowSold;
-                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, sold };
+                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, salePrice, sold };
             });
             const patternVariantsResult = (await Promise.all(patternPromises)).filter(v => v.name);
             if (patternVariantsResult.length > 0) hasVariants = true;
@@ -6327,7 +6488,8 @@ async function editProduct(id) {
                         v.hex || '', 
                         (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
                         v.sold || 0, 
-                        v.id || ''
+                        v.id || '',
+                        v.salePrice || ''
                     ));
                 }
             }
@@ -6345,11 +6507,12 @@ async function editProduct(id) {
                         v.price || '', 
                         (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
                         v.sold || 0, 
-                        v.id || ''
+                        v.id || '',
+                        v.salePrice || ''
                     ));
                 } else if (p.patterns && Array.isArray(p.patterns)) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
-                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, '', '', 0, ''));
+                    p.patterns.forEach(name => window.addPatternVariantRow(name, '', 0, false, '', '', 0, '', ''));
                 }
             }
 
@@ -11368,12 +11531,26 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
                     const vImg = (typeof v === 'object' && v && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
                     const stockVal = typeof v === 'object' && v && v.stock !== undefined ? v.stock : (p.stock || 0);
-                    const vPrice = typeof v === 'object' && v && v.price ? v.price : currentPrice;
+                    
+                    // Tính giá hiển thị cho combo card: ưu tiên salePrice > sale % > price > product price
+                    let vFinalPrice = currentPrice;
+                    if (typeof v === 'object' && v) {
+                        const baseP = (v.price && Number(v.price) > 0) ? Number(v.price) : (p.price || currentPrice);
+                        if (v.salePrice && Number(v.salePrice) > 0) {
+                            vFinalPrice = Number(v.salePrice);
+                        } else if (v.sale !== undefined && v.sale !== null && v.sale !== '') {
+                            const effSale = Math.max(0, Math.min(100, Number(v.sale)));
+                            vFinalPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+                        } else if (v.price && Number(v.price) > 0) {
+                            vFinalPrice = baseP;
+                        }
+                    }
+
                     const soldCount = comboCounts[vName] || 0;
                     const isHot = maxComboCount > 0 && soldCount === maxComboCount;
 
                     return `
-                    <div class="pos-variant-card pos-combo-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vPrice}" onclick="window.posOnComboCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                    <div class="pos-variant-card pos-combo-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vFinalPrice}" onclick="window.posOnComboCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
                         <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
                             <img src="${vImg}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
                             <div style="flex: 1; min-width: 0;">
@@ -11382,7 +11559,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                                     ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
                                 </div>
                                 <div style="font-size: 0.72rem; color: #64748b;">
-                                    Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vPrice) : vPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
+                                    Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vFinalPrice) : vFinalPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -11409,8 +11586,21 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     const isHot = maxColorCount > 0 && soldCount === maxColorCount;
                     const vHex = (typeof v === 'object' && v && v.hex) ? v.hex : (typeof getColorHex === 'function' ? getColorHex(vName, null) : (typeof COLOR_MAP !== 'undefined' ? COLOR_MAP[vName] : null));
 
+                    let vColorPrice = currentPrice;
+                    if (typeof v === 'object' && v) {
+                        const baseP = (v.price && Number(v.price) > 0) ? Number(v.price) : (p.price || currentPrice);
+                        if (v.salePrice && Number(v.salePrice) > 0) {
+                            vColorPrice = Number(v.salePrice);
+                        } else if (v.sale !== undefined && v.sale !== null && v.sale !== '') {
+                            const effSale = Math.max(0, Math.min(100, Number(v.sale)));
+                            vColorPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+                        } else if (v.price && Number(v.price) > 0) {
+                            vColorPrice = baseP;
+                        }
+                    }
+
                     return `
-                    <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
+                    <div class="pos-variant-card pos-color-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vColorPrice}" onclick="window.posOnColorCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease; user-select: none;">
                         <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; pointer-events: none;">
                             <img src="${vImg}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
                             <div style="flex: 1; min-width: 0;">
@@ -11419,7 +11609,9 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                                     <span>${vName}</span>
                                     ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
                                 </div>
-                                <div style="font-size: 0.72rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
+                                <div style="font-size: 0.72rem; color: #64748b;">
+                                    Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vColorPrice) : vColorPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
+                                </div>
                             </div>
                         </div>
                         <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
@@ -11444,8 +11636,21 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     const soldCount = patternCounts[vName] || 0;
                     const isHot = maxPatternCount > 0 && soldCount === maxPatternCount;
 
+                    let vPatternPrice = currentPrice;
+                    if (typeof v === 'object' && v) {
+                        const baseP = (v.price && Number(v.price) > 0) ? Number(v.price) : (p.price || currentPrice);
+                        if (v.salePrice && Number(v.salePrice) > 0) {
+                            vPatternPrice = Number(v.salePrice);
+                        } else if (v.sale !== undefined && v.sale !== null && v.sale !== '') {
+                            const effSale = Math.max(0, Math.min(100, Number(v.sale)));
+                            vPatternPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+                        } else if (v.price && Number(v.price) > 0) {
+                            vPatternPrice = baseP;
+                        }
+                    }
+
                     return `
-                    <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
+                    <div class="pos-variant-card pos-pattern-card" data-variant-name="${encodeURIComponent(vName)}" data-variant-img="${encodeURIComponent(vImg)}" data-variant-price="${vPatternPrice}" onclick="window.posOnPatternCardClick(this)" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.15s ease;">
                         <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; pointer-events: none;">
                             <img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
                             <div style="flex: 1; min-width: 0;">
@@ -11453,7 +11658,9 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                                     <span>${vName}</span>
                                     ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
                                 </div>
-                                <div style="font-size: 0.7rem; color: #64748b;">Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}</div>
+                                <div style="font-size: 0.7rem; color: #64748b;">
+                                    Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vPatternPrice) : vPatternPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
+                                </div>
                             </div>
                         </div>
                         <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
@@ -11494,6 +11701,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
             confirmBtn.onclick = () => {
                 let vPrice = null;
                 let vSale = null;
+                let vSalePrice = null;
 
                 let variantImg = (currentCartItem && currentCartItem.image) || p.imageUrl || p.thumbUrl;
 
@@ -11502,6 +11710,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     if (cv && typeof cv === 'object') {
                         if (cv.price && Number(cv.price) > 0) vPrice = Number(cv.price);
                         if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') vSale = Number(cv.sale);
+                        if (cv.salePrice && Number(cv.salePrice) > 0) vSalePrice = Number(cv.salePrice);
                         if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                     }
                 }
@@ -11511,6 +11720,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     if (cv && typeof cv === 'object') {
                         if (cv.price && Number(cv.price) > 0) vPrice = Number(cv.price);
                         if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') vSale = Number(cv.sale);
+                        if (cv.salePrice && Number(cv.salePrice) > 0) vSalePrice = Number(cv.salePrice);
                         if (cv.thumbUrl || cv.imageUrl || cv.image) variantImg = cv.thumbUrl || cv.imageUrl || cv.image;
                     }
                 }
@@ -11520,6 +11730,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     if (pv && typeof pv === 'object') {
                         if (pv.price && Number(pv.price) > 0) vPrice = Number(pv.price);
                         if (pv.sale !== undefined && pv.sale !== null && pv.sale !== '') vSale = Number(pv.sale);
+                        if (pv.salePrice && Number(pv.salePrice) > 0) vSalePrice = Number(pv.salePrice);
                         if (pv.thumbUrl || pv.imageUrl || pv.image) {
                             if (!selectedPOSColor || !colorVariants.some(v => (typeof v === 'object' && (v.thumbUrl || v.imageUrl || v.image)))) {
                                 variantImg = pv.thumbUrl || pv.imageUrl || pv.image;
@@ -11529,13 +11740,22 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                 }
 
                 const baseP = (vPrice !== null && vPrice > 0) ? vPrice : (p.price || currentPrice);
-                let effSale = 0;
-                if (vSale !== null) {
-                    effSale = Math.max(0, Math.min(100, vSale));
-                } else {
-                    effSale = p.sale || 0;
+                let finalPrice = baseP;
+
+                // ƯU TIÊN 1: Giá giảm tự nhập (làm tròn) của biến thể hoặc sản phẩm
+                if (vSalePrice !== null && vSalePrice > 0) {
+                    finalPrice = vSalePrice;
+                } else if (vSale !== null) {
+                    // ƯU TIÊN 2: % Giảm riêng của biến thể
+                    const effSale = Math.max(0, Math.min(100, vSale));
+                    finalPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+                } else if (p.salePrice && Number(p.salePrice) > 0 && vPrice === null) {
+                    // ƯU TIÊN 3: Giá giảm tự nhập của sản phẩm chính (nếu không có biến thể ghi đè)
+                    finalPrice = Number(p.salePrice);
+                } else if (p.sale && p.sale > 0) {
+                    // ƯU TIÊN 4: % Giảm của sản phẩm chính
+                    finalPrice = Math.round(baseP * (1 - p.sale / 100));
                 }
-                const finalPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
 
                 if (currentPOSVariantCartIndex >= 0) {
                     window.updatePOSCartItemVariant(currentPOSVariantCartIndex, selectedPOSColor || null, selectedPOSPattern || null, selectedPOSComboVariant || null, variantImg, finalPrice);
@@ -11604,6 +11824,7 @@ window.posOnColorCardClick = (el) => {
     if (!el) return;
     const name = decodeURIComponent(el.getAttribute('data-variant-name') || '');
     const img = decodeURIComponent(el.getAttribute('data-variant-img') || '');
+    const price = parseFloat(el.getAttribute('data-variant-price') || 0);
     selectedPOSColor = name;
 
     document.querySelectorAll('.pos-color-card').forEach(card => {
@@ -11618,12 +11839,17 @@ window.posOnColorCardClick = (el) => {
         const modalImg = document.getElementById('pos-modal-prod-img');
         if (modalImg) modalImg.src = img;
     }
+    if (price && price > 0) {
+        const priceEl = document.getElementById('pos-modal-prod-price');
+        if (priceEl) priceEl.innerText = formatVND(price);
+    }
 };
 
 window.posOnPatternCardClick = (el) => {
     if (!el) return;
     const name = decodeURIComponent(el.getAttribute('data-variant-name') || '');
     const img = decodeURIComponent(el.getAttribute('data-variant-img') || '');
+    const price = parseFloat(el.getAttribute('data-variant-price') || 0);
     selectedPOSPattern = name;
 
     document.querySelectorAll('.pos-pattern-card').forEach(card => {
@@ -11638,6 +11864,10 @@ window.posOnPatternCardClick = (el) => {
         const modalImg = document.getElementById('pos-modal-prod-img');
         if (modalImg) modalImg.src = img;
     }
+    if (price && price > 0 && !selectedPOSColor) {
+        const priceEl = document.getElementById('pos-modal-prod-price');
+        if (priceEl) priceEl.innerText = formatVND(price);
+    }
 };
 
 window.posSelectAndAddColor = (encName, encImg) => {
@@ -11646,7 +11876,22 @@ window.posSelectAndAddColor = (encName, encImg) => {
     const name = decodeURIComponent(encName);
     const img = decodeURIComponent(encImg) || p.imageUrl;
     const fsSettings = globalFlashSaleSettings;
-    const currentPrice = getProductCurrentPrice(p, fsSettings);
+    let currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    if (Array.isArray(p.colorVariants)) {
+        const cv = p.colorVariants.find(v => (typeof v === 'string' ? v : v.name) === name);
+        if (cv && typeof cv === 'object') {
+            const baseP = (cv.price && Number(cv.price) > 0) ? Number(cv.price) : (p.price || currentPrice);
+            if (cv.salePrice && Number(cv.salePrice) > 0) {
+                currentPrice = Number(cv.salePrice);
+            } else if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') {
+                const effSale = Math.max(0, Math.min(100, Number(cv.sale)));
+                currentPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+            } else if (cv.price && Number(cv.price) > 0) {
+                currentPrice = baseP;
+            }
+        }
+    }
 
     window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', name, selectedPOSPattern || null);
     window.posCloseVariantModal();
@@ -11658,7 +11903,23 @@ window.posSelectAndAddPattern = (encName, encImg) => {
     const name = decodeURIComponent(encName);
     const img = decodeURIComponent(encImg) || p.imageUrl;
     const fsSettings = globalFlashSaleSettings;
-    const currentPrice = getProductCurrentPrice(p, fsSettings);
+    let currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    const patternVars = p.patternVariants || p.patterns || [];
+    if (Array.isArray(patternVars)) {
+        const pv = patternVars.find(v => (typeof v === 'string' ? v : v.name) === name);
+        if (pv && typeof pv === 'object') {
+            const baseP = (pv.price && Number(pv.price) > 0) ? Number(pv.price) : (p.price || currentPrice);
+            if (pv.salePrice && Number(pv.salePrice) > 0) {
+                currentPrice = Number(pv.salePrice);
+            } else if (pv.sale !== undefined && pv.sale !== null && pv.sale !== '') {
+                const effSale = Math.max(0, Math.min(100, Number(pv.sale)));
+                currentPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+            } else if (pv.price && Number(pv.price) > 0) {
+                currentPrice = baseP;
+            }
+        }
+    }
 
     window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', selectedPOSColor || null, name);
     window.posCloseVariantModal();
@@ -11672,7 +11933,39 @@ window.posQuickAddVariant = (productId, encColor, encPattern, encImg) => {
     const pattern = encPattern ? decodeURIComponent(encPattern) : null;
     const img = encImg ? decodeURIComponent(encImg) : p.imageUrl;
     const fsSettings = globalFlashSaleSettings;
-    const currentPrice = getProductCurrentPrice(p, fsSettings);
+    let currentPrice = getProductCurrentPrice(p, fsSettings);
+
+    let vPrice = null;
+    let vSale = null;
+    let vSalePrice = null;
+
+    if (color && Array.isArray(p.colorVariants)) {
+        const cv = p.colorVariants.find(v => (typeof v === 'string' ? v : v.name) === color);
+        if (cv && typeof cv === 'object') {
+            if (cv.price && Number(cv.price) > 0) vPrice = Number(cv.price);
+            if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') vSale = Number(cv.sale);
+            if (cv.salePrice && Number(cv.salePrice) > 0) vSalePrice = Number(cv.salePrice);
+        }
+    }
+    const patternVars = p.patternVariants || p.patterns || [];
+    if (pattern && Array.isArray(patternVars)) {
+        const pv = patternVars.find(v => (typeof v === 'string' ? v : v.name) === pattern);
+        if (pv && typeof pv === 'object') {
+            if (pv.price && Number(pv.price) > 0) vPrice = Number(pv.price);
+            if (pv.sale !== undefined && pv.sale !== null && pv.sale !== '') vSale = Number(pv.sale);
+            if (pv.salePrice && Number(pv.salePrice) > 0) vSalePrice = Number(pv.salePrice);
+        }
+    }
+
+    const baseP = (vPrice !== null && vPrice > 0) ? vPrice : (p.price || currentPrice);
+    if (vSalePrice !== null && vSalePrice > 0) {
+        currentPrice = vSalePrice;
+    } else if (vSale !== null) {
+        const effSale = Math.max(0, Math.min(100, vSale));
+        currentPrice = effSale > 0 ? Math.round(baseP * (1 - effSale / 100)) : baseP;
+    } else if (vPrice !== null && vPrice > 0) {
+        currentPrice = baseP;
+    }
 
     window.addToPOSCart(p.id, p.name, currentPrice, img, p.category || 'khac', color, pattern);
 

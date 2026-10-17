@@ -1252,35 +1252,29 @@ export function updateMembershipPrices(tier) {
             if (tierStr) tier = JSON.parse(tierStr);
         } catch (e) { }
     }
-    const containers = document.querySelectorAll('.dynamic-membership-price');
-    if (!tier || tier.discount <= 0) {
-        containers.forEach(c => {
-            if (c.innerHTML.trim() !== '') c.innerHTML = '';
-        });
-        return;
-    }
+    const effectiveTier = (tier && tier.discount > 0)
+        ? tier
+        : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
+
     containers.forEach(container => {
         const currentPrice = parseInt(container.getAttribute('data-price')) || 0;
         if (!currentPrice) return;
-        const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
+        const memPrice = Math.round(currentPrice * (1 - effectiveTier.discount / 100));
         const isDetail = Boolean(container.closest('.product-detail-info') || container.closest('#product-detail-container') || container.closest('.product-detail') || container.closest('.product-price-row'));
         if (isDetail) {
             container.innerHTML = `
                 <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 10px; margin-bottom: 5px;">
-                    <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                    <span style="color: ${effectiveTier.color || '#9C7156'}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                        Giá ${tier.name}
+                        Giá ${effectiveTier.name}
                     </span> 
-                    <strong style="color: #e74c3c; font-size: 1.1rem;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                    <strong style="color: #9C7156; font-size: 1.1rem; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
                 </div>`;
         } else {
             container.innerHTML = `
-                <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">
-                    <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                        ${tier.name}
-                    </span> 
-                    <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                <div style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    <span>Giá ${effectiveTier.name}</span>
+                    <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
                 </div>`;
         }
     });
@@ -1454,6 +1448,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     imageUrl: v.imageUrl,
                     price: v.price,
                     sale: v.sale,
+                    salePrice: v.salePrice,
                     hex: v.hex,
                     stock: vStock,
                     sold: vSold,
@@ -1483,6 +1478,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     imageUrl: v.imageUrl,
                     price: v.price,
                     sale: v.sale,
+                    salePrice: v.salePrice,
                     stock: vStock,
                     sold: vSold,
                     manualOutOfStock: v.manualOutOfStock,
@@ -1510,6 +1506,8 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     name: v.name,
                     imageUrl: v.imageUrl || v.thumbUrl,
                     price: v.price,
+                    sale: v.sale,
+                    salePrice: v.salePrice,
                     stock: vStock,
                     sold: vSold,
                     manualOutOfStock: v.manualOutOfStock,
@@ -1530,14 +1528,18 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
 
     let variantPriceValue = null;
     let variantSaleValue = null;
+    let variantSalePriceValue = null;
     if (variantOverride) {
         if (variantOverride.price && Number(variantOverride.price) > 0) variantPriceValue = Number(variantOverride.price);
         if (variantOverride.sale !== undefined && variantOverride.sale !== null && variantOverride.sale !== '') variantSaleValue = Number(variantOverride.sale);
+        if (variantOverride.salePrice && Number(variantOverride.salePrice) > 0) variantSalePriceValue = Number(variantOverride.salePrice);
     }
 
     const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : product.price;
     let effSale = 0;
-    if (variantSaleValue !== null) {
+    if (variantSalePriceValue !== null && variantSalePriceValue > 0 && basePrice > 0) {
+        effSale = Math.round((1 - variantSalePriceValue / basePrice) * 100);
+    } else if (variantSaleValue !== null) {
         effSale = Math.max(0, Math.min(100, variantSaleValue));
     } else {
         effSale = product.sale || (product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0);
@@ -1546,7 +1548,9 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     let mockProduct = { ...product };
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
-    if (effSale > 0) {
+    if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+        mockProduct.salePrice = variantSalePriceValue;
+    } else if (effSale > 0) {
         // Nếu sản phẩm có giá sale cố định và không có biến thể ghi đè giá riêng -> Giữ đúng giá salePrice cố định
         if (product.salePrice && Number(product.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
             mockProduct.salePrice = Number(product.salePrice);
@@ -1640,25 +1644,25 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         `;
     }
 
-    let memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
+    let memPriceHtml = '';
     try {
+        let activeTier = null;
         const tierStr = sessionStorage.getItem('tng_current_tier');
         if (tierStr) {
-            const tier = JSON.parse(tierStr);
-            if (tier && tier.discount > 0) {
-                const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
-                memPriceHtml = `
-                <div class="dynamic-membership-price" data-price="${currentPrice}">
-                    <div style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid #eee; background: #fafafa; margin-top: 6px;">
-                        <span style="color: ${tier.color}; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                            ${tier.name}
-                        </span> 
-                        <strong style="color: #e74c3c;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
-                    </div>
-                </div>`;
-            }
+            const parsed = JSON.parse(tierStr);
+            if (parsed && parsed.discount > 0) activeTier = parsed;
         }
+        if (!activeTier) {
+            // Mặc định hiển thị giá ưu đãi hạng Gốm Nung (1%) để kích thích mua sắm
+            activeTier = { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
+        }
+        const memPrice = Math.round(currentPrice * (1 - activeTier.discount / 100));
+        memPriceHtml = `
+            <div class="dynamic-membership-price" data-price="${currentPrice}" style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                <span>Giá ${activeTier.name}</span>
+                <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+            </div>
+        `;
     } catch (e) { }
 
     const isFsItem = fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut;

@@ -99,6 +99,8 @@ export default function SelectVoucherScreen() {
   const loadCoupons = useCallback(async () => {
     try {
       const data = await getAllUserCoupons(user?.uid);
+      // Loại bỏ voucher tặng người thân (assignedBy == user.uid): Người dùng không được tự áp dụng voucher do chính mình tặng
+      data.unused = data.unused.filter((c) => !c.assignedBy || c.assignedBy !== user?.uid);
       setCouponsData(data);
 
       // Nếu đang có coupon được chọn trong CartContext, tìm trong danh sách khả dụng
@@ -259,6 +261,21 @@ export default function SelectVoucherScreen() {
             dialog.alert(
               t('notice') || 'Thông báo',
               'Mã ưu đãi này dành riêng cho tài khoản khác.'
+            );
+            setApplyingCode(false);
+            return;
+          }
+
+          // Kiểm tra voucher người thân (chính chủ không được tự áp dụng cho chính mình giống trên Web)
+          const isFriendCode = Boolean(
+            data.assignedBy ||
+            data.forNewCustomerOnly ||
+            snapDoc.id.startsWith('GIFT')
+          );
+          if (isFriendCode && (data.assignedBy === user?.uid || (user && snapDoc.id === `GIFT${user.uid.substring(0, 5).toUpperCase()}`))) {
+            dialog.alert(
+              t('notice') || 'Thông báo',
+              t('cannotUseSelfFriendVoucher') || 'Mã này là quà tặng dành cho bạn bè hoặc người thân của bạn (khách hàng mới), bạn không thể tự áp dụng cho chính mình.'
             );
             setApplyingCode(false);
             return;

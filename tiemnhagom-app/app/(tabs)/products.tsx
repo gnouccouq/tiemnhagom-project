@@ -390,7 +390,7 @@ export default function ProductsScreen() {
   const { pageStyle } = usePageAnimation();
 
   return (
-    <Animated.View style={[styles.safeArea, pageStyle]}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
       {/* ── Header ── */}
@@ -713,7 +713,7 @@ export default function ProductsScreen() {
           </Animated.View>
         </Animated.View>
       </Modal>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -806,7 +806,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
 
     // Bubbles
     bubblesSection: {
-      paddingTop: 8,
+      paddingTop: 4,
       paddingBottom: 8,
       backgroundColor: Colors.background,
     },

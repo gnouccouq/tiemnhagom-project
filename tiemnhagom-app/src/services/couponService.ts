@@ -18,6 +18,8 @@ export interface CouponItem {
   conditions?: string;
   description?: string;
   assignedTo?: string;
+  assignedBy?: string;
+  forNewCustomerOnly?: boolean;
   isUsed?: boolean;
 }
 
@@ -110,6 +112,8 @@ export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
         conditions: data.conditions || data.description,
         description: data.description || data.conditions,
         assignedTo: data.assignedTo,
+        assignedBy: data.assignedBy,
+        forNewCustomerOnly: Boolean(data.forNewCustomerOnly),
         isUsed: false,
       });
     });
@@ -262,6 +266,8 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
         conditions: data.conditions || data.description,
         description: data.description || data.conditions,
         assignedTo: data.assignedTo,
+        assignedBy: data.assignedBy,
+        forNewCustomerOnly: Boolean(data.forNewCustomerOnly),
         isUsed,
       };
 

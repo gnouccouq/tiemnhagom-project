@@ -371,8 +371,21 @@ export async function getProducts(options?: {
           const vSold = Number(v.sold) || 0;
           const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
           const vPrice = (v.price && Number(v.price) > 0) ? Number(v.price) : (Number(data.price) || 0);
-          const vSale = (v.sale !== undefined && v.sale !== null && v.sale !== '') ? Number(v.sale) : (data.sale !== undefined ? Number(data.sale) : undefined);
-          const vSalePrice = (vSale && vSale > 0) ? Math.round(vPrice * (1 - vSale / 100)) : undefined;
+          const vCustomSalePrice = (v.salePrice && Number(v.salePrice) > 0) ? Number(v.salePrice) : undefined;
+          const vSalePrice = vCustomSalePrice || (
+            (v.sale !== undefined && v.sale !== null && v.sale !== '' && Number(v.sale) > 0)
+              ? Math.round(vPrice * (1 - Number(v.sale) / 100))
+              : (data.salePrice && Number(data.salePrice) > 0 && (!v.price || Number(v.price) === Number(data.price)))
+              ? Number(data.salePrice)
+              : (data.sale && Number(data.sale) > 0)
+              ? Math.round(vPrice * (1 - Number(data.sale) / 100))
+              : undefined
+          );
+          const vSale = (vSalePrice && vPrice > 0 && vSalePrice < vPrice)
+            ? Math.round((1 - vSalePrice / vPrice) * 100)
+            : (v.sale !== undefined && v.sale !== null && v.sale !== '')
+            ? Number(v.sale)
+            : (data.sale !== undefined ? Number(data.sale) : undefined);
 
           items.push({
             id: `${docSnap.id}_${type}_${v.name}`,

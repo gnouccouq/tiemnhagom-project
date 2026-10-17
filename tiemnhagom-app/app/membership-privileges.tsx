@@ -255,6 +255,14 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
         defaultBullets: ['Ưu đãi sinh nhật: Tặng phiếu quà tặng 500.000đ.'],
       },
       {
+        id: 'friend_voucher',
+        icon: 'people-outline',
+        titleKey: 'privilegeFriendVoucherTitle',
+        defaultTitle: 'Voucher tặng bạn bè',
+        bulletKeys: ['privilegeFriendVoucherDesc'],
+        defaultBullets: ['Tặng voucher 10% (tối đa 150k) cho người thân, bạn bè.'],
+      },
+      {
         id: 'priority_preorder',
         icon: 'ribbon-outline',
         titleKey: 'privilegePriorityPreorderTitle',

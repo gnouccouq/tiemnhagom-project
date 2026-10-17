@@ -932,36 +932,44 @@ async function fetchProductDetail() {
                 let variantImage = p.imageUrl;
                 let variantPriceValue = null;
                 let variantSaleValue = null;
+                let variantSalePriceValue = null;
                 if (selectedComboVariant && p.comboVariants) {
                     const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
                     if (cv && cv.imageUrl) variantImage = cv.imageUrl;
                     if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
                     if (cv && cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+                    if (cv && cv.salePrice && Number(cv.salePrice) > 0) variantSalePriceValue = Number(cv.salePrice);
                 }
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
                     if (c && c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
                     if (c && c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
+                    if (c && c.salePrice && Number(c.salePrice) > 0) variantSalePriceValue = Number(c.salePrice);
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
                     if (pattern && pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
                     if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
+                    if (pattern && pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
                 }
                 
                 let mockProduct = { ...p };
                 const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : p.price;
                 let effSale = 0;
-                if (variantSaleValue !== null) {
+                if (variantSalePriceValue !== null && variantSalePriceValue > 0 && basePrice > 0) {
+                    effSale = Math.round((1 - variantSalePriceValue / basePrice) * 100);
+                } else if (variantSaleValue !== null) {
                     effSale = Math.max(0, Math.min(100, variantSaleValue));
                 } else {
                     effSale = p.sale || (p.salePrice ? Math.round((1 - p.salePrice / p.price) * 100) : 0);
                 }
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
-                if (effSale > 0) {
+                if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+                    mockProduct.salePrice = variantSalePriceValue;
+                } else if (effSale > 0) {
                     if (p.salePrice && Number(p.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
                         mockProduct.salePrice = Number(p.salePrice);
                     } else {
@@ -1004,23 +1012,27 @@ async function fetchProductDetail() {
                 let variantImage = p.imageUrl;
                 let variantPriceValue = null;
                 let variantSaleValue = null;
+                let variantSalePriceValue = null;
                 if (selectedComboVariant && p.comboVariants) {
                     const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
                     if (cv && cv.imageUrl) variantImage = cv.imageUrl;
                     if (cv && cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
                     if (cv && cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+                    if (cv && cv.salePrice && Number(cv.salePrice) > 0) variantSalePriceValue = Number(cv.salePrice);
                 }
                 if (selectedColor && p.colorVariants) {
                     const c = p.colorVariants.find(v => v.name === selectedColor);
                     if (c && c.imageUrl) variantImage = c.imageUrl;
                     if (c && c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
                     if (c && c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
+                    if (c && c.salePrice && Number(c.salePrice) > 0) variantSalePriceValue = Number(c.salePrice);
                 }
                 if (selectedPattern && p.patternVariants) {
                     const pattern = p.patternVariants.find(v => v.name === selectedPattern);
                     if (pattern && pattern.imageUrl) variantImage = pattern.imageUrl;
                     if (pattern && pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
                     if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
+                    if (pattern && pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
                 }
                 
                 let mockProduct = { ...p };
@@ -1033,7 +1045,9 @@ async function fetchProductDetail() {
                 }
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
-                if (effSale > 0) {
+                if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+                    mockProduct.salePrice = variantSalePriceValue;
+                } else if (effSale > 0) {
                     if (p.salePrice && Number(p.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
                         mockProduct.salePrice = Number(p.salePrice);
                     } else {
@@ -1469,12 +1483,14 @@ window.updateDisplayPrice = () => {
     if (!currentProductData) return;
     let variantPriceValue = null;
     let variantSaleValue = null;
+    let variantSalePriceValue = null;
 
     if (selectedComboVariant && currentProductData.comboVariants) {
         const cv = currentProductData.comboVariants.find(v => (v.name || v) === selectedComboVariant);
         if (cv) {
             if (cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
             if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+            if (cv.salePrice && Number(cv.salePrice) > 0) variantSalePriceValue = Number(cv.salePrice);
         }
     }
     if (selectedColor && currentProductData.colorVariants) {
@@ -1482,6 +1498,7 @@ window.updateDisplayPrice = () => {
         if (c) {
             if (c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
             if (c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
+            if (c.salePrice && Number(c.salePrice) > 0) variantSalePriceValue = Number(c.salePrice);
         }
     }
     if (selectedPattern && currentProductData.patternVariants) {
@@ -1489,6 +1506,7 @@ window.updateDisplayPrice = () => {
         if (pattern) {
             if (pattern.price && Number(pattern.price) > 0) variantPriceValue = Number(pattern.price);
             if (pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
+            if (pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
         }
     }
     
@@ -1506,7 +1524,9 @@ window.updateDisplayPrice = () => {
 
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
-    if (effSale > 0) {
+    if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+        mockProduct.salePrice = variantSalePriceValue;
+    } else if (effSale > 0) {
         if (currentProductData.salePrice && Number(currentProductData.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
             mockProduct.salePrice = Number(currentProductData.salePrice);
         } else {

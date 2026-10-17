@@ -52,7 +52,7 @@ export default function ProductDetailScreen() {
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const { user } = useAuth();
-  const { addToCart, cartCount, applyCoupon, flyToCart } = useCart();
+  const { addToCart, cartCount, applyCoupon, flyToCart, memberTier } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
   const dialog = useDialog();
 
@@ -100,11 +100,12 @@ export default function ProductDetailScreen() {
             // Lưu vào danh sách đã xem gần đây
             addRecentlyViewed(res);
 
-            // Tìm và chọn biến thể
+            // Tìm và chọn biến thể: Nếu được mở từ card biến thể (có variantParam) thì chọn đúng biến thể đó
             if (variantParam) {
-              const matchColor = res.colorVariants?.find((v) => v.name === variantParam);
-              const matchPattern = res.patternVariants?.find((v) => v.name === variantParam);
-              const matchCombo = res.comboVariants?.find((v) => v.name === variantParam);
+              const decodedParam = decodeURIComponent(variantParam).trim().toLowerCase();
+              const matchColor = res.colorVariants?.find((v) => v.name?.trim().toLowerCase() === decodedParam);
+              const matchPattern = res.patternVariants?.find((v) => v.name?.trim().toLowerCase() === decodedParam);
+              const matchCombo = res.comboVariants?.find((v) => v.name?.trim().toLowerCase() === decodedParam);
               if (matchColor) {
                 setSelectedVariant({ ...matchColor, type: 'color' });
                 setModalVariant({ ...matchColor, type: 'color' });
@@ -114,21 +115,18 @@ export default function ProductDetailScreen() {
               } else if (matchCombo) {
                 setSelectedVariant({ ...matchCombo, type: 'combo' });
                 setModalVariant({ ...matchCombo, type: 'combo' });
-              } else if (res.colorVariants && res.colorVariants.length > 0) {
-                setSelectedVariant({ ...res.colorVariants[0], type: 'color' });
-                setModalVariant({ ...res.colorVariants[0], type: 'color' });
-              } else if (res.patternVariants && res.patternVariants.length > 0) {
-                setSelectedVariant({ ...res.patternVariants[0], type: 'pattern' });
-                setModalVariant({ ...res.patternVariants[0], type: 'pattern' });
               }
             } else {
-              if (res.colorVariants && res.colorVariants.length > 0) {
-                setSelectedVariant({ ...res.colorVariants[0], type: 'color' });
-                setModalVariant({ ...res.colorVariants[0], type: 'color' });
-              } else if (res.patternVariants && res.patternVariants.length > 0) {
-                setSelectedVariant({ ...res.patternVariants[0], type: 'pattern' });
-                setModalVariant({ ...res.patternVariants[0], type: 'pattern' });
-              }
+              // Bấm vào card sản phẩm gốc: Giữ hiển thị sản phẩm gốc bình thường (ảnh đại diện gốc, giá gốc, tên sản phẩm gốc)
+              setSelectedVariant(undefined);
+              const defaultVariant = (res.colorVariants && res.colorVariants[0])
+                ? { ...res.colorVariants[0], type: 'color' as const }
+                : (res.patternVariants && res.patternVariants[0])
+                ? { ...res.patternVariants[0], type: 'pattern' as const }
+                : (res.comboVariants && res.comboVariants[0])
+                ? { ...res.comboVariants[0], type: 'combo' as const }
+                : undefined;
+              setModalVariant(defaultVariant);
             }
 
             // Tải sản phẩm gợi ý cùng danh mục
@@ -155,7 +153,7 @@ export default function ProductDetailScreen() {
     }
   }, [id, variantParam, user?.uid]);
 
-  // Danh sách hình ảnh
+  // Danh sách hình ảnh: Nếu có biến thể đang chọn có ảnh riêng, đưa ảnh đó lên đầu tiên
   const baseImages = (product?.images && product.images.length > 0)
     ? product.images
     : product?.imageUrl
@@ -164,12 +162,18 @@ export default function ProductDetailScreen() {
     ? ['https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800&auto=format&fit=crop']
     : [];
 
-  const allImages = [...baseImages];
+  const variantImg = selectedVariant?.imageUrl || selectedVariant?.thumbUrl;
+  const allImages = variantImg ? [variantImg] : [];
+  baseImages.forEach((img) => {
+    if (!allImages.includes(img)) allImages.push(img);
+  });
+
   const collectImages = (variants?: ProductVariant[]) => {
     if (!variants) return;
     variants.forEach((v) => {
-      if (v.imageUrl && !allImages.includes(v.imageUrl)) {
-        allImages.push(v.imageUrl);
+      const vImg = v.imageUrl || v.thumbUrl;
+      if (vImg && !allImages.includes(vImg)) {
+        allImages.push(vImg);
       }
     });
   };
@@ -271,28 +275,47 @@ export default function ProductDetailScreen() {
   const hasVariants = allVariants.length > 0;
 
   // Tính giá hiệu lực trang chính
-  const currentPrice = selectedVariant?.price
-    ? selectedVariant.price
-    : product.salePrice
-    ? product.salePrice
-    : product.sale
-    ? Math.round(product.price * (1 - product.sale / 100))
-    : product.price;
+  const getVariantEffectivePrice = (v?: ProductVariant, p?: Product) => {
+    if (!p) return 0;
+    const basePrice = (v?.price && v.price > 0) ? v.price : p.price;
+    if (v?.salePrice && v.salePrice > 0) {
+      return v.salePrice;
+    }
+    if (v?.sale !== undefined && v.sale !== null && v.sale > 0) {
+      return Math.round(basePrice * (1 - v.sale / 100));
+    }
+    if (v?.price && v.price > 0) {
+      // Biến thể có giá riêng nhưng không giảm giá
+      return v.price;
+    }
+    if (p.salePrice && p.salePrice > 0) {
+      return p.salePrice;
+    }
+    if (p.sale && p.sale > 0) {
+      return Math.round(p.price * (1 - p.sale / 100));
+    }
+    return p.price;
+  };
 
-  const currentOriginalPrice = selectedVariant?.price ? selectedVariant.price : product.price;
+  const currentPrice = getVariantEffectivePrice(selectedVariant, product);
+  const currentOriginalPrice = (selectedVariant?.price && selectedVariant.price > 0) ? selectedVariant.price : product.price;
   const hasDiscount = currentPrice < currentOriginalPrice;
   const maxStock = selectedVariant?.stock ?? product.stock ?? 10;
   const isOutOfStock = checkOutOfStock(product, selectedVariant);
 
+  // Chiết khấu thành viên
+  const hasMemberDiscount = Boolean(memberTier && memberTier.discount > 0 && currentPrice > 0);
+  const memberDiscountPercent = hasMemberDiscount ? memberTier.discount : 0;
+  const memberPrice = hasMemberDiscount
+    ? Math.round(currentPrice * (1 - memberDiscountPercent / 100))
+    : currentPrice;
+
   // Tính giá & tồn kho của modal biến thể
   const activeModalVariant = modalVariant || selectedVariant;
-  const modalEffectivePrice = activeModalVariant?.price
-    ? activeModalVariant.price
-    : product.salePrice
-    ? product.salePrice
-    : product.sale
-    ? Math.round(product.price * (1 - product.sale / 100))
-    : product.price;
+  const modalEffectivePrice = getVariantEffectivePrice(activeModalVariant, product);
+  const modalMemberPrice = hasMemberDiscount
+    ? Math.round(modalEffectivePrice * (1 - memberDiscountPercent / 100))
+    : modalEffectivePrice;
 
   const modalStock = activeModalVariant?.stock ?? product.stock ?? 10;
   const modalSold = activeModalVariant?.sold ?? product.sold ?? 0;
@@ -572,7 +595,14 @@ export default function ProductDetailScreen() {
               {t('productCodeLabel')} {product.parentProductId || product.id}
             </Text>
           </View>
-          <Text style={styles.productTitle}>{product.name}</Text>
+          <Text style={styles.productTitle}>
+            {product.name}
+            {selectedVariant?.name ? (
+              <Text style={{ color: '#9C7156', fontWeight: '700' }}>
+                {' '}• {selectedVariant.name}
+              </Text>
+            ) : null}
+          </Text>
 
           {/* Rating & Sold count */}
           <View style={styles.statsRow}>
@@ -585,15 +615,29 @@ export default function ProductDetailScreen() {
 
           {/* Price Row */}
           <View style={styles.priceRow}>
-            <Text style={styles.mainPrice}>{formatCurrency(currentPrice)}</Text>
-            {hasDiscount && (
-              <Text style={styles.strikePrice}>{formatCurrency(currentOriginalPrice)}</Text>
+            {hasMemberDiscount ? (
+              <>
+                <Text style={styles.mainPrice}>{formatCurrency(memberPrice)}</Text>
+                <Text style={styles.strikePrice}>{formatCurrency(currentPrice)}</Text>
+                <View style={styles.memberPerkBadge}>
+                  <Text style={styles.memberPerkBadgeText}>
+                    {memberTier.name} -{memberDiscountPercent}%
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.mainPrice}>{formatCurrency(currentPrice)}</Text>
+                {hasDiscount && (
+                  <Text style={styles.strikePrice}>{formatCurrency(currentOriginalPrice)}</Text>
+                )}
+                {product.sale && product.sale > 0 ? (
+                  <View style={styles.saleTag}>
+                    <Text style={styles.saleTagText}>-{product.sale}%</Text>
+                  </View>
+                ) : null}
+              </>
             )}
-            {product.sale && product.sale > 0 ? (
-              <View style={styles.saleTag}>
-                <Text style={styles.saleTagText}>-{product.sale}%</Text>
-              </View>
-            ) : null}
           </View>
 
           {/* RÚT GỌN BIẾN THỂ TRÊN TRANG CHI TIẾT DẠNG COMPACT PILL BAR */}
@@ -915,7 +959,14 @@ export default function ProductDetailScreen() {
                 contentFit="cover"
               />
               <View style={styles.modalMetaWrap}>
-                <Text style={styles.modalPriceText}>{formatCurrency(modalEffectivePrice)}</Text>
+                {hasMemberDiscount ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                    <Text style={styles.modalPriceText}>{formatCurrency(modalMemberPrice)}</Text>
+                    <Text style={[styles.strikePrice, { fontSize: 13 }]}>{formatCurrency(modalEffectivePrice)}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.modalPriceText}>{formatCurrency(modalEffectivePrice)}</Text>
+                )}
                 <Text style={styles.modalSelectedVariantText}>
                   {t('variantLabel')}{' '}
                   <Text style={{ color: '#9C7156', fontWeight: '700' }}>
@@ -1301,6 +1352,21 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
+  },
+  memberPerkBadge: {
+    backgroundColor: isDark ? '#2D1B13' : '#F7ECE1',
+    borderWidth: 0.8,
+    borderColor: isDark ? '#5C2D07' : '#E8CCB2',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  memberPerkBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#9C7156',
+    letterSpacing: 0.2,
   },
 
   /* Rút gọn biến thể dạng Compact Pill Bar */

@@ -1096,6 +1096,8 @@ window.placeOrder = async () => {
                 let currentStock = product.stock || 0;
                 let variantImage = product.imageUrl;
                 let variantPriceValue = null;
+                let variantSaleValue = null;
+                let variantSalePriceValue = null;
 
                 // Kiểm tra biến thể combo nếu có
                 let matchedComboName = null;
@@ -1114,6 +1116,7 @@ window.placeOrder = async () => {
                             if (cv.imageUrl) variantImage = cv.imageUrl;
                             if (cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
                             if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+                            if (cv.salePrice && Number(cv.salePrice) > 0) variantSalePriceValue = Number(cv.salePrice);
                             if (cv.stock !== undefined && cv.stock !== null) currentStock = cv.stock;
                             if (cv.isOutOfStock) currentStock = 0;
                         }
@@ -1128,6 +1131,7 @@ window.placeOrder = async () => {
                     if (variant.imageUrl) variantImage = variant.imageUrl;
                     if (variant.price && Number(variant.price) > 0) variantPriceValue = Number(variant.price);
                     if (variant.sale !== undefined && variant.sale !== null && variant.sale !== '') variantSaleValue = Number(variant.sale);
+                    if (variant.salePrice && Number(variant.salePrice) > 0) variantSalePriceValue = Number(variant.salePrice);
                 }
                 // Kiểm tra tồn kho biến thể họa tiết
                 if (item.pattern && Array.isArray(product.patternVariants)) {
@@ -1137,6 +1141,7 @@ window.placeOrder = async () => {
                     if (variant.imageUrl) variantImage = variant.imageUrl;
                     if (variant.price && Number(variant.price) > 0) variantPriceValue = Number(variant.price);
                     if (variant.sale !== undefined && variant.sale !== null && variant.sale !== '') variantSaleValue = Number(variant.sale);
+                    if (variant.salePrice && Number(variant.salePrice) > 0) variantSalePriceValue = Number(variant.salePrice);
                 }
 
                 if (!product.isCombo && currentStock < item.quantity) {
@@ -1154,7 +1159,9 @@ window.placeOrder = async () => {
                 let mockProduct = { ...product };
                 mockProduct.price = basePrice;
                 mockProduct.sale = effSale;
-                if (effSale > 0) {
+                if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+                    mockProduct.salePrice = variantSalePriceValue;
+                } else if (effSale > 0) {
                     if (product.salePrice && Number(product.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
                         mockProduct.salePrice = Number(product.salePrice);
                     } else {

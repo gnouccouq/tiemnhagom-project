@@ -119,7 +119,7 @@ export default function CartScreen() {
   const bottomBarOffset = Math.max(insets.bottom, 16) + 8;
 
   return (
-    <Animated.View style={[styles.safeArea, pageStyle]}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
       {/* Header không có vạch kẻ đáy theo chuẩn GEMINI.md, đồng bộ chiều cao insets.top + 56 */}
@@ -165,7 +165,7 @@ export default function CartScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 56 + 8,
+            paddingTop: insets.top + 56 + 4,
             paddingBottom: bottomBarOffset + 85,
           },
         ]}
@@ -404,7 +404,7 @@ export default function CartScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 

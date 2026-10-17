@@ -11,13 +11,14 @@ export interface MemberTierInfo {
   badge?: string;
   tierUpVoucher: number;
   birthdayVoucher: number;
+  friendVoucher: boolean;
 }
 
 export const APP_MEMBERSHIP_TIERS: MemberTierInfo[] = [
-  { id: 'null', name: 'Gốm Mộc', min: 0, discount: 0, freeShipping: false, color: '#95a5a6', badge: '🪵', tierUpVoucher: 0, birthdayVoucher: 0 },
-  { id: 'new', name: 'Gốm Nung', min: 1000000, discount: 1, freeShipping: false, color: '#DC2626', badge: '🔥', tierUpVoucher: 50000, birthdayVoucher: 50000 },
-  { id: 'mem', name: 'Gốm Men', min: 5000000, discount: 3, freeShipping: true, color: '#CA8A04', badge: '✨', tierUpVoucher: 100000, birthdayVoucher: 200000 },
-  { id: 'vip', name: 'Gốm Độc Bản', min: 10000000, discount: 5, freeShipping: true, color: '#EF4444', badge: '👑', tierUpVoucher: 300000, birthdayVoucher: 500000 },
+  { id: 'null', name: 'Gốm Mộc', min: 0, discount: 0, freeShipping: false, color: '#95a5a6', badge: '🪵', tierUpVoucher: 0, birthdayVoucher: 0, friendVoucher: false },
+  { id: 'new', name: 'Gốm Nung', min: 1000000, discount: 1, freeShipping: false, color: '#DC2626', badge: '🔥', tierUpVoucher: 50000, birthdayVoucher: 50000, friendVoucher: false },
+  { id: 'mem', name: 'Gốm Men', min: 5000000, discount: 3, freeShipping: true, color: '#CA8A04', badge: '✨', tierUpVoucher: 100000, birthdayVoucher: 200000, friendVoucher: true },
+  { id: 'vip', name: 'Gốm Độc Bản', min: 10000000, discount: 5, freeShipping: true, color: '#EF4444', badge: '👑', tierUpVoucher: 300000, birthdayVoucher: 500000, friendVoucher: true },
 ];
 
 /**

@@ -250,12 +250,14 @@ function getEffectiveVariantPrice() {
     if (!currentProductData) return 0;
     let variantPriceValue = null;
     let variantSaleValue = null;
+    let variantSalePriceValue = null;
 
     if (selectedComboVariant && currentProductData.comboVariants) {
         const cv = currentProductData.comboVariants.find(v => (v.name || v) === selectedComboVariant);
         if (cv) {
             if (cv.price && Number(cv.price) > 0) variantPriceValue = Number(cv.price);
             if (cv.sale !== undefined && cv.sale !== null && cv.sale !== '') variantSaleValue = Number(cv.sale);
+            if (cv.salePrice && Number(cv.salePrice) > 0) variantSalePriceValue = Number(cv.salePrice);
         }
     }
     if (selectedColor && currentProductData.colorVariants) {
@@ -263,6 +265,7 @@ function getEffectiveVariantPrice() {
         if (c) {
             if (c.price && Number(c.price) > 0) variantPriceValue = Number(c.price);
             if (c.sale !== undefined && c.sale !== null && c.sale !== '') variantSaleValue = Number(c.sale);
+            if (c.salePrice && Number(c.salePrice) > 0) variantSalePriceValue = Number(c.salePrice);
         }
     }
     if (selectedPattern && currentProductData.patternVariants) {
@@ -270,13 +273,16 @@ function getEffectiveVariantPrice() {
         if (pat) {
             if (pat.price && Number(pat.price) > 0) variantPriceValue = Number(pat.price);
             if (pat.sale !== undefined && pat.sale !== null && pat.sale !== '') variantSaleValue = Number(pat.sale);
+            if (pat.salePrice && Number(pat.salePrice) > 0) variantSalePriceValue = Number(pat.salePrice);
         }
     }
 
     const mockProduct = { ...currentProductData };
     const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : currentProductData.price;
     let effSale = 0;
-    if (variantSaleValue !== null) {
+    if (variantSalePriceValue !== null && variantSalePriceValue > 0 && basePrice > 0) {
+        effSale = Math.round((1 - variantSalePriceValue / basePrice) * 100);
+    } else if (variantSaleValue !== null) {
         effSale = Math.max(0, Math.min(100, variantSaleValue));
     } else {
         effSale = currentProductData.sale || (currentProductData.salePrice ? Math.round((1 - currentProductData.salePrice / currentProductData.price) * 100) : 0);
@@ -284,7 +290,9 @@ function getEffectiveVariantPrice() {
 
     mockProduct.price = basePrice;
     mockProduct.sale = effSale;
-    if (effSale > 0) {
+    if (variantSalePriceValue !== null && variantSalePriceValue > 0) {
+        mockProduct.salePrice = variantSalePriceValue;
+    } else if (effSale > 0) {
         if (currentProductData.salePrice && Number(currentProductData.salePrice) > 0 && variantPriceValue === null && variantSaleValue === null) {
             mockProduct.salePrice = Number(currentProductData.salePrice);
         } else {
@@ -562,10 +570,23 @@ async function fetchProductDetailV2() {
         trackProductView(p);
         updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => {});
 
-        // Defaults for variants
-        if (p.colorVariants?.length > 0) selectedColor = p.colorVariants[0].name;
-        if (p.patternVariants?.length > 0) selectedPattern = p.patternVariants[0].name;
-        if (p.comboVariants?.length > 0) selectedComboVariant = p.comboVariants[0].name;
+        // Defaults for variants (hỗ trợ đọc từ URL params khi khách click từ card biến thể độc lập)
+        const urlColor = urlParams.get('color');
+        const urlPattern = urlParams.get('pattern');
+        const urlCombo = urlParams.get('combo');
+
+        if (p.colorVariants?.length > 0) {
+            const matchedColor = urlColor ? (p.colorVariants.find(c => c.name === urlColor) || p.colorVariants[0]) : p.colorVariants[0];
+            selectedColor = matchedColor.name;
+        }
+        if (p.patternVariants?.length > 0) {
+            const matchedPattern = urlPattern ? (p.patternVariants.find(pat => pat.name === urlPattern) || p.patternVariants[0]) : p.patternVariants[0];
+            selectedPattern = matchedPattern.name;
+        }
+        if (p.comboVariants?.length > 0) {
+            const matchedCombo = urlCombo ? (p.comboVariants.find(cv => cv.name === urlCombo) || p.comboVariants[0]) : p.comboVariants[0];
+            selectedComboVariant = matchedCombo.name;
+        }
 
         // Nếu là sản phẩm Combo, nạp chi tiết các sản phẩm con để lấy đúng ảnh và tên biến thể mới nhất
         if (p.isCombo && Array.isArray(p.comboVariants) && p.comboVariants.length > 0) {
@@ -786,13 +807,14 @@ async function fetchProductDetailV2() {
                 ${p.colorVariants?.length > 0 ? `
                     <div class="v2-variants-group">
                         <div class="v2-variant-title">
-                            Chọn màu sắc: <span id="v2-selected-color-label">${escapeHTML(p.colorVariants[0].name)}</span>
+                            Chọn màu sắc: <span id="v2-selected-color-label">${escapeHTML(selectedColor || p.colorVariants[0].name)}</span>
                         </div>
                         <div class="v2-color-swatches">
-                            ${p.colorVariants.map((v, i) => {
+                            ${p.colorVariants.map((v) => {
                                 const hex = v.hex || (COLOR_MAP[v.name] || '#ccc');
+                                const isActive = v.name === selectedColor;
                                 return `
-                                    <div class="v2-color-item ${i === 0 ? 'active' : ''}" data-color-name="${escapeHTML(v.name)}" onclick="window.selectV2Color('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
+                                    <div class="v2-color-item ${isActive ? 'active' : ''}" data-color-name="${escapeHTML(v.name)}" onclick="window.selectV2Color('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
                                         <span class="v2-color-dot" style="background-color: ${hex};"></span>
                                         <span>${escapeHTML(v.name)}</span>
                                     </div>
@@ -806,14 +828,17 @@ async function fetchProductDetailV2() {
                 ${p.patternVariants?.length > 0 ? `
                     <div class="v2-variants-group">
                         <div class="v2-variant-title">
-                            Chọn họa tiết: <span id="v2-selected-pattern-label">${escapeHTML(p.patternVariants[0].name)}</span>
+                            Chọn họa tiết: <span id="v2-selected-pattern-label">${escapeHTML(selectedPattern || p.patternVariants[0].name)}</span>
                         </div>
                         <div class="v2-pattern-chips">
-                            ${p.patternVariants.map((v, i) => `
-                                <div class="v2-pattern-chip ${i === 0 ? 'active' : ''}" data-pattern-name="${escapeHTML(v.name)}" onclick="window.selectV2Pattern('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
+                            ${p.patternVariants.map((v) => {
+                                const isActive = v.name === selectedPattern;
+                                return `
+                                <div class="v2-pattern-chip ${isActive ? 'active' : ''}" data-pattern-name="${escapeHTML(v.name)}" onclick="window.selectV2Pattern('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
                                     ${escapeHTML(v.name)}
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                     </div>
                 ` : ''}

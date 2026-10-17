@@ -913,6 +913,19 @@ export const zh = {
   authToContinue: '请验证身份以继续',
   unlock: '解锁',
   updatingNewVersion: '正在更新新版本...',
+
+  // Friend Voucher
+  friendVoucherBadge: '亲友礼券',
+  shareVoucherTitle: '赠送亲友',
+  shareVoucherDesc: '赠送亲友 10% 折扣券（最高 150k），仅适用于首次在陶舍消费的新顾客。',
+  copyCodeBtn: '复制礼券码',
+  shareCodeBtn: '立即分享礼券',
+  cannotUseSelfFriendVoucher: '此代码为赠送亲友（新顾客）专享礼券，您无法在自己的订单中使用。',
+  friendVoucherShareMessage: '送你一张陶舍手工陶瓷 10% 折扣礼券“{code}”（最高减 150k）！下载 App 或访问 https://tiemnhagom.vn 即可使用。',
+
+  // Member Price Perk
+  memberPriceLabel: '{tier}会员价',
+  memberDiscountBadge: '{tier}专享 -{discount}%',
 };
 
 

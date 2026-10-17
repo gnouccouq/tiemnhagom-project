@@ -13,6 +13,7 @@ import {
   Clipboard,
   Animated,
   Easing,
+  Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -26,6 +27,7 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { CouponItem } from '../src/services/couponService';
 import { useDialog } from '../src/context/DialogContext';
 import { useCart } from '../src/context/CartContext';
+import { useAuth } from '../src/context/AuthContext';
 import { formatCurrency } from '../src/utils/format';
 import { useSettings } from '../src/context/SettingsContext';
 
@@ -177,6 +179,17 @@ export default function VoucherDetailScreen() {
     return t('noMinSpend');
   }, [voucher, t]);
 
+  const { user } = useAuth();
+  const isFriendVoucher = Boolean(
+    voucher.assignedBy ||
+    voucher.id.startsWith('GIFT') ||
+    voucher.code.startsWith('GIFT') ||
+    voucher.forNewCustomerOnly
+  );
+  const isOwnerOfFriendVoucher = Boolean(
+    isFriendVoucher && (voucher.assignedBy === user?.uid || !voucher.assignedBy)
+  );
+
   // Sao chép mã
   const handleCopyCode = () => {
     Clipboard.setString(voucher.code);
@@ -184,8 +197,28 @@ export default function VoucherDetailScreen() {
     setTimeout(() => setCopied(false), 2400);
   };
 
+  // Chia sẻ mã quà tặng cho người thân/bạn bè
+  const handleShareCode = async () => {
+    const shareMsg = (t('friendVoucherShareMessage') || 'Tặng bạn mã ưu đãi "{code}" giảm 10% (tối đa 150k) khi mua sắm gốm sứ thủ công tại Tiệm Nhà Gốm! Tải app hoặc truy cập https://tiemnhagom.vn để áp dụng nha.').replace('{code}', voucher.code);
+    try {
+      await Share.share({
+        message: shareMsg,
+        title: t('shareVoucherTitle') || 'Gửi tặng bạn bè',
+      });
+    } catch (err) {
+      handleCopyCode();
+    }
+  };
+
   // Áp dụng voucher
   const handleApply = () => {
+    if (isOwnerOfFriendVoucher) {
+      dialog.alert(
+        t('notice') || 'Thông báo',
+        t('cannotUseSelfFriendVoucher') || 'Mã này là quà tặng dành cho bạn bè hoặc người thân của bạn (khách hàng mới), bạn không thể tự áp dụng cho chính mình.'
+      );
+      return;
+    }
     Clipboard.setString(voucher.code);
     applyCouponItem(voucher);
     dialog.showDialog({
@@ -312,6 +345,24 @@ export default function VoucherDetailScreen() {
               <Text style={styles.minSpendChipText}>{minSpendDisplay}</Text>
             </View>
           </View>
+
+          {/* Banner thông báo dành riêng cho Voucher tặng người thân (không dùng cho bản thân được giống trên Web) */}
+          {isOwnerOfFriendVoucher && (
+            <View style={styles.friendNoticeCard}>
+              <View style={styles.friendNoticeIconWrap}>
+                <Ionicons name="gift-outline" size={18} color="#9C7156" />
+              </View>
+              <View style={styles.friendNoticeContent}>
+                <Text style={styles.friendNoticeTitle}>
+                  {t('friendVoucherBadge') || 'Quà tặng người thân'}
+                </Text>
+                <Text style={styles.friendNoticeDesc}>
+                  {t('cannotUseSelfFriendVoucher') ||
+                    'Mã này là quà tặng dành cho bạn bè hoặc người thân của bạn (khách hàng mới), bạn không thể tự áp dụng cho chính mình.'}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* ================= 3. THẺ VOUCHER TICKET CAO CẤP (THAY MÃ VẠCH) ================= */}
           <View style={styles.ticketCard}>
@@ -454,25 +505,58 @@ export default function VoucherDetailScreen() {
           },
         ]}
       >
-        <ScalePressable
-          style={[styles.applyBtn, voucher.isUsed && { opacity: 0.5, backgroundColor: isDark ? '#262626' : '#E0DCD5' }]}
-          onPress={() => {
-            if (voucher.isUsed) {
-              dialog.alert(
-                t('notice') || 'Thông báo',
-                t('voucherAlreadyUsed') || 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.'
-              );
-              return;
-            }
-            handleApply();
-          }}
-          disabled={voucher.isUsed}
-          activeScale={voucher.isUsed ? 1 : 0.96}
-        >
-          <Text style={[styles.applyBtnText, voucher.isUsed && { color: isDark ? '#888888' : '#777777' }]}>
-            {voucher.isUsed ? (t('usedStatus') || 'Đã sử dụng') : t('applyVoucher')}
-          </Text>
-        </ScalePressable>
+        {isOwnerOfFriendVoucher ? (
+          <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+            <ScalePressable
+              style={[
+                styles.applyBtn,
+                { flex: 1, backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderWidth: 1, borderColor: '#9C7156' },
+              ]}
+              onPress={handleCopyCode}
+              activeScale={0.96}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="copy-outline" size={17} color="#9C7156" />
+                <Text style={[styles.applyBtnText, { color: '#9C7156' }]}>
+                  {copied ? (t('copied') || 'Đã chép') : (t('copyCodeBtn') || 'Sao chép mã')}
+                </Text>
+              </View>
+            </ScalePressable>
+
+            <ScalePressable
+              style={[styles.applyBtn, { flex: 1.2 }]}
+              onPress={handleShareCode}
+              activeScale={0.96}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.applyBtnText}>
+                  {t('shareCodeBtn') || 'Chia sẻ mã ngay'}
+                </Text>
+              </View>
+            </ScalePressable>
+          </View>
+        ) : (
+          <ScalePressable
+            style={[styles.applyBtn, voucher.isUsed && { opacity: 0.5, backgroundColor: isDark ? '#262626' : '#E0DCD5' }]}
+            onPress={() => {
+              if (voucher.isUsed) {
+                dialog.alert(
+                  t('notice') || 'Thông báo',
+                  t('voucherAlreadyUsed') || 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.'
+                );
+                return;
+              }
+              handleApply();
+            }}
+            disabled={voucher.isUsed}
+            activeScale={voucher.isUsed ? 1 : 0.96}
+          >
+            <Text style={[styles.applyBtnText, voucher.isUsed && { color: isDark ? '#888888' : '#777777' }]}>
+              {voucher.isUsed ? (t('usedStatus') || 'Đã sử dụng') : t('applyVoucher')}
+            </Text>
+          </ScalePressable>
+        )}
       </View>
 
       {/* ================= 6. MODAL ĐIỀU KHOẢN VỚI SPRING ANIMATION UX ================= */}
@@ -595,6 +679,18 @@ export default function VoucherDetailScreen() {
                     Voucher không có giá trị quy đổi thành tiền mặt, không hoàn lại tiền thừa. Mỗi đơn hàng chỉ áp dụng tối đa 01 voucher ưu đãi.
                   </Text>
                 </View>
+
+                {isOwnerOfFriendVoucher && (
+                  <View style={styles.termItem}>
+                    <View style={styles.termBulletCircle}>
+                      <Text style={styles.termBulletText}>★</Text>
+                    </View>
+                    <Text style={styles.termText}>
+                      <Text style={styles.termStrong}>Đặc quyền quà tặng: </Text>
+                      Voucher này là quà tặng dành riêng cho người thân, bạn bè mới của bạn. Chủ tài khoản không thể tự áp dụng cho đơn hàng của chính mình.
+                    </Text>
+                  </View>
+                )}
 
                 <View style={styles.termItem}>
                   <View style={styles.termBulletCircle}>
@@ -742,6 +838,43 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 12,
       color: isDark ? '#B0B0B0' : '#6E665D',
       fontWeight: '500',
+    },
+
+    // ================= FRIEND VOUCHER NOTICE CARD =================
+    friendNoticeCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: isDark ? '#1C1612' : '#FBF7F2',
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(156, 113, 86, 0.4)' : '#E8CCB2',
+      padding: 14,
+      marginBottom: 20,
+      gap: 12,
+    },
+    friendNoticeIconWrap: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.22)' : '#F5EBE1',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    friendNoticeContent: {
+      flex: 1,
+    },
+    friendNoticeTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      fontWeight: '700',
+      color: '#9C7156',
+      marginBottom: 3,
+    },
+    friendNoticeDesc: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      lineHeight: 18,
+      color: isDark ? '#D0C8C0' : '#6E665D',
     },
 
     // ================= TICKET CARD (REPLACES BARCODE) =================

@@ -940,6 +940,19 @@ export const vi = {
   authToContinue: 'Vui lòng xác thực để tiếp tục',
   unlock: 'Mở khóa',
   updatingNewVersion: 'Đang cập nhật phiên bản mới...',
+
+  // Friend Voucher
+  friendVoucherBadge: 'Quà tặng người thân',
+  shareVoucherTitle: 'Gửi tặng bạn bè',
+  shareVoucherDesc: 'Mã ưu đãi giảm 10% (tối đa 150k) dành tặng người thân, bạn bè chưa từng mua hàng tại Tiệm Nhà Gốm.',
+  copyCodeBtn: 'Sao chép mã quà',
+  shareCodeBtn: 'Chia sẻ mã ngay',
+  cannotUseSelfFriendVoucher: 'Mã này là quà tặng dành cho bạn bè hoặc người thân của bạn (khách hàng mới), bạn không thể tự áp dụng cho chính mình.',
+  friendVoucherShareMessage: 'Tặng bạn mã ưu đãi "{code}" giảm 10% (tối đa 150k) khi mua sắm gốm sứ thủ công tại Tiệm Nhà Gốm! Tải app hoặc truy cập https://tiemnhagom.vn để áp dụng nha.',
+
+  // Member Price Perk
+  memberPriceLabel: 'Giá {tier}',
+  memberDiscountBadge: 'Hạng {tier} giảm {discount}%',
 };
 
 

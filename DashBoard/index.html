@@ -3556,10 +3556,16 @@
                                         <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
                                             <input type="text" id="combo-variant-name" placeholder="Tên phân loại"
                                                 oninput="window.updateCurrentComboVariantName(this.value)"
-                                                style="flex: 2; min-width: 140px;">
-                                            <input type="number" id="combo-variant-price" placeholder="Giá riêng (đ)" min="0"
+                                                style="flex: 2; min-width: 130px;">
+                                            <input type="number" id="combo-variant-price" placeholder="Giá gốc (đ)" min="0"
                                                 oninput="window.updateCurrentComboVariantPrice(this.value)"
-                                                style="width: 110px;" title="Giá bán riêng cho phân loại combo này">
+                                                style="width: 100px;" title="Giá gốc riêng cho phân loại combo này">
+                                            <input type="number" id="combo-variant-sale" placeholder="Giảm %" min="0" max="100"
+                                                oninput="window.updateCurrentComboVariantSale(this.value)"
+                                                style="width: 65px; text-align: center;" title="Giảm % cho phân loại combo này">
+                                            <input type="number" id="combo-variant-saleprice" placeholder="Giá giảm (đ)" min="0"
+                                                oninput="window.updateCurrentComboVariantSalePrice(this.value)"
+                                                style="width: 105px;" title="Giá giảm tự nhập (làm tròn) cho phân loại combo này">
                                             <div style="display: flex; align-items: center; gap: 6px; background: #e0f2fe; border: 1px solid #bae6fd; padding: 5px 10px; border-radius: 6px;" title="Tồn kho tự động tính từ tồn kho của các sản phẩm thành phần">
                                                 <span style="font-size: 0.8rem; color: #0369a1; font-weight: 600; white-space: nowrap;">📦 Tồn kho:</span>
                                                 <span id="combo-variant-stock-badge" style="font-size: 0.85rem; font-weight: 700; color: #0284c7;">0</span>
@@ -3744,10 +3750,11 @@
                                     <div style="display: flex; gap: 6px; padding: 5px 10px; font-size: 0.72rem; color: #475569; font-weight: 600; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px dashed #cbd5e1;">
                                         <span style="width: 24px; text-align: center;" title="Kéo thả sắp xếp">Vị trí</span>
                                         <span style="flex: 2; min-width: 0;">Tên màu & Màu sắc (Hỗ trợ Đơn sắc / Loang Gradient 🌈)</span>
-                                        <span style="width: 82px; text-align: center;">Giá riêng</span>
-                                        <span style="width: 62px; text-align: center;">Giảm %</span>
-                                        <span style="width: 60px; text-align: center;">Tồn kho</span>
-                                        <span style="width: 52px; text-align: center;">Độc lập</span>
+                                        <span style="width: 78px; text-align: center;">Giá gốc</span>
+                                        <span style="width: 55px; text-align: center;">Giảm %</span>
+                                        <span style="width: 78px; text-align: center;">Giá giảm</span>
+                                        <span style="width: 55px; text-align: center;">Tồn kho</span>
+                                        <span style="width: 50px; text-align: center;">Độc lập</span>
                                         <span style="width: 32px; text-align: center;">Ảnh</span>
                                         <span style="width: 20px;"></span>
                                     </div>
@@ -3765,10 +3772,11 @@
                                     <div style="display: flex; gap: 6px; padding: 5px 10px; font-size: 0.72rem; color: #475569; font-weight: 600; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; border: 1px dashed #cbd5e1;">
                                         <span style="width: 24px; text-align: center;" title="Kéo thả sắp xếp">Vị trí</span>
                                         <span style="flex: 2; min-width: 0;">Tên họa tiết (VD: Nhám, Hoa lam, Men rạn)</span>
-                                        <span style="width: 82px; text-align: center;">Giá riêng</span>
-                                        <span style="width: 62px; text-align: center;">Giảm %</span>
-                                        <span style="width: 60px; text-align: center;">Tồn kho</span>
-                                        <span style="width: 52px; text-align: center;">Độc lập</span>
+                                        <span style="width: 78px; text-align: center;">Giá gốc</span>
+                                        <span style="width: 55px; text-align: center;">Giảm %</span>
+                                        <span style="width: 78px; text-align: center;">Giá giảm</span>
+                                        <span style="width: 55px; text-align: center;">Tồn kho</span>
+                                        <span style="width: 50px; text-align: center;">Độc lập</span>
                                         <span style="width: 32px; text-align: center;">Ảnh</span>
                                         <span style="width: 20px;"></span>
                                     </div>

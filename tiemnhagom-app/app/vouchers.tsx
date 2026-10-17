@@ -12,6 +12,7 @@ import {
   Modal,
   Clipboard,
   Platform,
+  Share,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -83,7 +84,28 @@ export default function VouchersScreen() {
     }, 2500);
   };
 
-  const handleUseNow = (voucher: CouponItem) => {
+  const handleUseNow = async (voucher: CouponItem) => {
+    const isFriendVoucher = Boolean(
+      voucher.assignedBy ||
+      voucher.id.startsWith('GIFT') ||
+      voucher.code.startsWith('GIFT') ||
+      voucher.forNewCustomerOnly
+    );
+
+    if (isFriendVoucher) {
+      setModalVisible(false);
+      const shareMsg = (t('friendVoucherShareMessage') || 'Tặng bạn mã ưu đãi "{code}" giảm 10% (tối đa 150k) khi mua sắm gốm sứ thủ công tại Tiệm Nhà Gốm! Tải app hoặc truy cập https://tiemnhagom.vn để áp dụng nha.').replace('{code}', voucher.code);
+      try {
+        await Share.share({
+          message: shareMsg,
+          title: t('shareVoucherTitle') || 'Gửi tặng bạn bè',
+        });
+      } catch {
+        handleCopyCode(voucher.code);
+      }
+      return;
+    }
+
     Clipboard.setString(voucher.code);
     setModalVisible(false);
     dialog.alert(
@@ -332,6 +354,8 @@ export default function VouchersScreen() {
                               ? t('usedStatus') || 'Đã sử dụng'
                               : isExpired
                               ? t('vouchersTabExpired') || 'Hết hạn'
+                              : (item.assignedBy || item.id.startsWith('GIFT'))
+                              ? t('friendVoucherBadge') || 'Quà tặng người thân'
                               : t('singleUseBadge') || '1 lần duy nhất'}
                           </Text>
                         </View>
@@ -433,6 +457,21 @@ export default function VouchersScreen() {
 
         {/* Chi tiết điều kiện */}
         <View style={styles.modalDetailsList}>
+          {Boolean(
+            selectedVoucher?.assignedBy ||
+            selectedVoucher?.id.startsWith('GIFT') ||
+            selectedVoucher?.code.startsWith('GIFT') ||
+            selectedVoucher?.forNewCustomerOnly
+          ) && (
+            <View style={styles.modalDetailRow}>
+              <Ionicons name="gift-outline" size={16} color="#9C7156" />
+              <Text style={[styles.modalDetailText, { color: '#9C7156', fontWeight: '600' }]}>
+                {t('cannotUseSelfFriendVoucher') ||
+                  'Mã này là quà tặng dành cho bạn bè hoặc người thân của bạn (khách hàng mới), bạn không thể tự áp dụng cho chính mình.'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.modalDetailRow}>
             <Ionicons name="information-circle-outline" size={16} color="#9C7156" />
             <Text style={[styles.modalDetailText, { color: Colors.textSecondary }]}>
@@ -470,8 +509,18 @@ export default function VouchersScreen() {
             onPress={() => selectedVoucher && handleUseNow(selectedVoucher)}
             activeScale={0.96}
           >
-            <Text style={styles.modalPrimaryBtnText}>{t('useNowWhenShopping')}</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            <Text style={styles.modalPrimaryBtnText}>
+              {(selectedVoucher?.assignedBy || selectedVoucher?.id.startsWith('GIFT') || selectedVoucher?.forNewCustomerOnly)
+                ? (t('shareCodeBtn') || 'Chia sẻ mã ngay')
+                : t('useNowWhenShopping')}
+            </Text>
+            <Ionicons
+              name={(selectedVoucher?.assignedBy || selectedVoucher?.id.startsWith('GIFT') || selectedVoucher?.forNewCustomerOnly)
+                ? 'share-social-outline'
+                : 'arrow-forward'}
+              size={16}
+              color="#FFFFFF"
+            />
           </ScalePressable>
         )}
       </AnimatedCenterModal>
