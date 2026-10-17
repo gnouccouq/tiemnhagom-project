@@ -161,10 +161,11 @@ export default function CartScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 56 + 10,
+            paddingTop: insets.top + 56 + 8,
             paddingBottom: bottomBarOffset + 85,
           },
         ]}

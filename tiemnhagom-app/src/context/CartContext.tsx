@@ -14,6 +14,7 @@ import {
   calculateAppShippingFee,
   MemberTierInfo,
 } from '../utils/shipping';
+import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 
 export type PaymentMethodType = 'cod' | 'banking';
 
@@ -164,11 +165,35 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [isHCM, shippingMethod]);
 
+  const [loyaltySpent, setLoyaltySpent] = useState<number>(() => {
+    return Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
+  });
+
+  // Tự động đồng bộ chi tiêu thực tế từ các đơn hàng và thăng hạng thành viên
+  useEffect(() => {
+    let isCancelled = false;
+    if (currentUid) {
+      syncUserLoyaltyAndVouchers(currentUid, userProfile)
+        .then((res) => {
+          if (!isCancelled) {
+            setLoyaltySpent(res.totalSpent);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setLoyaltySpent(0);
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentUid, userProfile]);
+
   // Lấy thông tin hạng thành viên từ chi tiêu thực tế (Đồng bộ với Web)
   const memberTier = useMemo(() => {
-    const totalSpent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
-    return getMemberTier(totalSpent, userProfile?.tier || userProfile?.membershipTier);
-  }, [userProfile]);
+    const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
+    const effectiveSpent = Math.max(loyaltySpent, profileSpent);
+    return getMemberTier(effectiveSpent, userProfile?.tier || userProfile?.membershipTier);
+  }, [loyaltySpent, userProfile]);
 
   const triggerCartBounce = () => {
     setCartBounceKey((k) => k + 1);

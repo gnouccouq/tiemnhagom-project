@@ -41,6 +41,7 @@ import {
   NewsArticle,
 } from '../../src/services/productService';
 import { getUserOrders } from '../../src/services/orderService';
+import { syncUserLoyaltyAndVouchers } from '../../src/services/loyaltyService';
 import { Product } from '../../src/types';
 import { useThemeColor, Colors } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
@@ -120,35 +121,27 @@ export default function HomeScreen() {
   const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
 
   useEffect(() => {
+    let isCancelled = false;
     if (effectiveUid) {
-      getUserOrders(effectiveUid)
-        .then((orders) => {
-          let spent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
-          let redeemed = 0;
-          orders.forEach((o) => {
-            const status = (o.status || '').toLowerCase();
-            if (
-              status.includes('hoàn thành') ||
-              status.includes('thành công') ||
-              status.includes('đang giao') ||
-              status.includes('completed')
-            ) {
-              spent += Number(o.totalAmount || 0);
-            }
-            if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
-              redeemed += Number((o as any).pointsUsed);
-            }
-          });
-          setRedeemedPoints(redeemed);
-          setTotalSpent(spent);
+      syncUserLoyaltyAndVouchers(effectiveUid, userProfile)
+        .then((res) => {
+          if (!isCancelled) {
+            setRedeemedPoints(res.redeemedPoints);
+            setTotalSpent(res.totalSpent);
+          }
         })
         .catch(() => {
-          setTotalSpent(Number(userProfile?.totalSpent || userProfile?.spentTotal || 0));
+          if (!isCancelled) {
+            setTotalSpent(Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0));
+          }
         });
     } else {
       setTotalSpent(0);
       setRedeemedPoints(0);
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [effectiveUid, userProfile]);
 
   // Xác định hạng hội viên theo chi tiêu tích lũy thực tế
@@ -335,6 +328,7 @@ export default function HomeScreen() {
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={styles.scrollContent}
         onScroll={handleScroll}
         scrollEventThrottle={16}
@@ -523,20 +517,24 @@ export default function HomeScreen() {
         {featuredProducts.length > 0 && (
           <View style={styles.dealContainer}>
             <View style={styles.dealHeader}>
-              <View style={styles.dealTitleWrap}>
+              <ScalePressable
+                style={styles.dealTitleWrap}
+                onPress={() => router.push('/flash-sale')}
+                activeScale={0.97}
+              >
                 <View style={styles.dealBadgeFire}>
-                  <Ionicons name="flame" size={14} color="#9C7156" />
+                  <Ionicons name="flash" size={14} color="#9C7156" />
                   <Text style={styles.dealBadgeFireText}>{t('todayDeals')}</Text>
                 </View>
                 <Text style={styles.dealMainTitle}>{t('flashSaleAndGifts')}</Text>
-              </View>
+              </ScalePressable>
               <ScalePressable
-                onPress={() => router.push('/(tabs)/deals')}
+                onPress={() => router.push('/flash-sale')}
                 activeScale={0.92}
-                accessibilityLabel={t('getCoupon')}
+                accessibilityLabel={t('seeAll')}
               >
                 <LiquidGlass style={styles.seeAllBtn}>
-                  <Text style={styles.seeAllText}>{t('getCoupon')}</Text>
+                  <Text style={styles.seeAllText}>{t('seeAll')}</Text>
                   <Ionicons name="arrow-forward" size={12} color="#9C7156" />
                 </LiquidGlass>
               </ScalePressable>

@@ -477,7 +477,8 @@ export default function ProductsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ProductCard product={item} cardWidth={CARD_WIDTH} />}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: 110 }}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingTop: insets.top + 56 + 4, paddingBottom: 110 }}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
         onEndReached={loadMore}

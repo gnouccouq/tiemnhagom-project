@@ -25,6 +25,7 @@ import { useWishlist } from '../../src/context/WishlistContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { getUserOrders } from '../../src/services/orderService';
+import { syncUserLoyaltyAndVouchers } from '../../src/services/loyaltyService';
 import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -137,39 +138,14 @@ export default function ProfileScreen() {
 
   // Tính toán chi tiêu thực tế từ các đơn hàng đã hoàn thành để đồng bộ chuẩn xác với web
   useEffect(() => {
-    const profileSpent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
-    if (user || userProfile) {
+    const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
+    const targetUid = user?.uid || userProfile?.uid || '';
+    if (targetUid) {
       setLoadingOrders(true);
-      getUserOrders(user?.uid || userProfile?.uid || '')
-        .then((orders) => {
-          let orderSpent = 0;
-          let redeemed = 0;
-          orders.forEach((o) => {
-            const status = (o.status || '').toLowerCase();
-            const isCancelled = status.includes('hủy') || status.includes('cancel');
-            const isDone =
-              !isCancelled && (
-                status.includes('hoàn thành') ||
-                status.includes('thành công') ||
-                status.includes('completed') ||
-                status.includes('đã giao') ||
-                status.includes('nhận')
-              );
-            // Chỉ tích lũy các đơn hàng đã hoàn thành thành công giống hệ thống Web
-            if (isDone) {
-              orderSpent += Number(o.totalAmount || 0);
-            }
-            if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0 && !isCancelled) {
-              redeemed += Number((o as any).pointsUsed);
-            }
-          });
-          setRedeemedPoints(redeemed);
-          // Điểm và chi tiêu chỉ tích lũy khi đơn hàng đã hoàn thành
-          if (orders.length > 0) {
-            setTotalSpent(orderSpent);
-          } else {
-            setTotalSpent(profileSpent);
-          }
+      syncUserLoyaltyAndVouchers(targetUid, userProfile)
+        .then((res) => {
+          setTotalSpent(res.totalSpent);
+          setRedeemedPoints(res.redeemedPoints);
           setOrdersLoaded(true);
         })
         .catch(() => {
@@ -365,7 +341,8 @@ export default function ProfileScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 10 }]}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 8 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >

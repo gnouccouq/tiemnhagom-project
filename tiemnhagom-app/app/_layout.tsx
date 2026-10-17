@@ -292,6 +292,14 @@ function NavigationRoot() {
             animation: 'slide_from_right',
           }}
         />
+
+        {/* Trang Flash Sale mới */}
+        <Stack.Screen
+          name="flash-sale"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );

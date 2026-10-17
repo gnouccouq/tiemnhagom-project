@@ -1,6 +1,6 @@
-// src/services/couponService.ts
 import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { syncUserLoyaltyAndVouchers } from './loyaltyService';
 
 export interface CouponItem {
   id: string;
@@ -27,6 +27,12 @@ export interface CouponItem {
  */
 export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
   try {
+    if (userId) {
+      try {
+        await syncUserLoyaltyAndVouchers(userId);
+      } catch {}
+    }
+
     const couponsRef = collection(db, 'coupons');
     let snap;
     try {
@@ -183,6 +189,12 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
   };
 
   try {
+    if (userId) {
+      try {
+        await syncUserLoyaltyAndVouchers(userId);
+      } catch {}
+    }
+
     const couponsRef = collection(db, 'coupons');
     let snap;
     try {

@@ -32,6 +32,7 @@ import {
   CouponItem,
 } from '../src/services/couponService';
 import { getUserOrders } from '../src/services/orderService';
+import { syncUserLoyaltyAndVouchers } from '../src/services/loyaltyService';
 import { formatCurrency } from '../src/utils/format';
 
 type TabType = 'unused' | 'used' | 'expired';
@@ -61,7 +62,7 @@ export default function SelectVoucherScreen() {
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
 
-  // Tải tổng chi tiêu thực tế từ các đơn hàng để tính chuẩn xác điểm gốm
+  // Tải tổng chi tiêu thực tế từ các đơn hàng để tính chuẩn xác điểm gốm & đồng bộ thăng hạng
   useEffect(() => {
     let isCancelled = false;
     if (!user) {
@@ -69,27 +70,11 @@ export default function SelectVoucherScreen() {
       setRedeemedPoints(0);
       return;
     }
-    getUserOrders(user.uid)
-      .then((orders) => {
+    syncUserLoyaltyAndVouchers(user.uid, userProfile)
+      .then((res) => {
         if (isCancelled) return;
-        let spent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
-        let redeemed = 0;
-        orders.forEach((o) => {
-          const status = (o.status || '').toLowerCase();
-          if (
-            status.includes('hoàn thành') ||
-            status.includes('thành công') ||
-            status.includes('đang giao') ||
-            status.includes('completed')
-          ) {
-            spent += Number(o.totalAmount || 0);
-          }
-          if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
-            redeemed += Number((o as any).pointsUsed);
-          }
-        });
-        setRedeemedPoints(redeemed);
-        setTotalSpent(spent);
+        setRedeemedPoints(res.redeemedPoints);
+        setTotalSpent(res.totalSpent);
       })
       .catch(() => {
         if (!isCancelled) {

@@ -20,6 +20,7 @@ import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { useAuth } from '../../src/context/AuthContext';
 import { getUserOrders } from '../../src/services/orderService';
+import { syncUserLoyaltyAndVouchers } from '../../src/services/loyaltyService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
 import { formatCurrency } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -96,7 +97,7 @@ export default function DealsScreen() {
   // Modal QR mã thành viên
   const [qrModalVisible, setQrModalVisible] = useState<boolean>(false);
 
-  // 1. Tải tổng chi tiêu thực tế từ các đơn hàng hoàn thành
+  // 1. Tải tổng chi tiêu thực tế từ các đơn hàng hoàn thành & đồng bộ voucher thăng hạng
   const fetchLoyaltyData = useCallback(async () => {
     if (!user) {
       setTotalSpent(0);
@@ -106,27 +107,11 @@ export default function DealsScreen() {
     }
 
     try {
-      let spent = Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
-      let redeemed = 0;
-      const orders = await getUserOrders(user.uid);
-      orders.forEach((o) => {
-        const status = (o.status || '').toLowerCase();
-        if (
-          status.includes('hoàn thành') ||
-          status.includes('thành công') ||
-          status.includes('đang giao') ||
-          status.includes('completed')
-        ) {
-          spent += Number(o.totalAmount || 0);
-        }
-        if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
-          redeemed += Number((o as any).pointsUsed);
-        }
-      });
-      setRedeemedPoints(redeemed);
-      setTotalSpent(spent);
+      const res = await syncUserLoyaltyAndVouchers(user.uid, userProfile);
+      setRedeemedPoints(res.redeemedPoints);
+      setTotalSpent(res.totalSpent);
     } catch {
-      setTotalSpent(Number(userProfile?.totalSpent || userProfile?.spentTotal || 0));
+      setTotalSpent(Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0));
     } finally {
       setLoadingLoyalty(false);
     }
@@ -208,7 +193,8 @@ export default function DealsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 10 }]}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 8 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
         refreshControl={
@@ -296,6 +282,31 @@ export default function DealsScreen() {
             </GlazeFluidCard>
           </ScalePressable>
         </View>
+
+        {/* ================= THANH BANNER FLASH SALE (CHUYỂN SANG /flash-sale) ================= */}
+        <ScalePressable
+          style={styles.flashSaleBanner}
+          activeScale={0.98}
+          onPress={() => router.push('/flash-sale')}
+        >
+          <View style={styles.flashSaleBannerLeft}>
+            <View style={styles.flashSaleIconCircle}>
+              <Ionicons name="flash" size={18} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.flashSaleTitleRow}>
+                <Text style={styles.flashSaleBannerTitle}>{t('flashSaleTitle')}</Text>
+                <View style={styles.flashSaleHotBadge}>
+                  <Text style={styles.flashSaleHotText}>HOT</Text>
+                </View>
+              </View>
+              <Text style={styles.flashSaleBannerSub} numberOfLines={1}>
+                {t('flashSaleSubtitle')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#9C7156" />
+          </View>
+        </ScalePressable>
 
         {/* ================= THANH BANNER ĐẶC QUYỀN HỘI VIÊN (CHUYỂN SANG /membership-privileges) ================= */}
         <ScalePressable
@@ -446,7 +457,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     topSummaryRow: {
       flexDirection: 'row',
       paddingHorizontal: 16,
-      paddingTop: 12,
+      paddingTop: 0,
       gap: 12,
       width: '100%',
     },
@@ -556,10 +567,69 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginHorizontal: 1,
     },
 
+    // BANNER FLASH SALE
+    flashSaleBanner: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      backgroundColor: isDark ? '#1C1510' : '#FFF9F2',
+      borderRadius: 20,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: '#E8CCB2',
+      shadowColor: '#9C7156',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: isDark ? 0 : 0.08,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+    },
+    flashSaleBannerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    flashSaleIconCircle: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#9C7156',
+    },
+    flashSaleTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    flashSaleBannerTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: isDark ? '#F5F5F5' : '#2B2928',
+    },
+    flashSaleHotBadge: {
+      backgroundColor: '#9C7156',
+      paddingHorizontal: 6,
+      paddingVertical: 1.5,
+      borderRadius: 8,
+    },
+    flashSaleHotText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 9.5,
+      fontWeight: '800',
+      color: '#FFFFFF',
+    },
+    flashSaleBannerSub: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11.5,
+      color: isDark ? '#B0B0B0' : '#6E665D',
+      marginTop: 2,
+    },
+
     // BANNER HỘI VIÊN
     membershipBanner: {
       marginHorizontal: 16,
-      marginTop: 16,
+      marginTop: 12,
       backgroundColor: Colors.cardBackground,
       borderRadius: 20,
       paddingVertical: 14,
