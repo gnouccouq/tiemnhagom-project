@@ -948,6 +948,19 @@ export const en = {
   // Member Price Perk
   memberPriceLabel: '{tier} Price',
   memberDiscountBadge: '{tier} -{discount}%',
+
+  // Collection Detail
+  collectionDetailTitle: 'Collection',
+  collectionStoryTitle: 'Collection Story',
+  collectionDefaultStory: 'Each ceramic piece in this collection embodies the breath of earth and fire, handcrafted with utmost dedication.',
+  collectionFeaturedProducts: 'Featured Products',
+  collectionEmptyProducts: 'No products found in this collection.',
+  collectionGalleryTitle: 'Artistic Gallery',
+  collectionNotFound: 'Collection not found',
+  collectionProductCount: '{count} pieces',
+  allCollectionsTitle: 'All Collections',
+  allCollectionsSubtitle: 'Explore our curated handcrafted ceramic collections by art themes.',
+  allCollectionsCount: '{count} collections',
 };
 
 

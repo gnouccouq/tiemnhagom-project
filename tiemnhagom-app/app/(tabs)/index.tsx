@@ -298,8 +298,8 @@ export default function HomeScreen() {
 
   const handleCollectionPress = (colName: string) => {
     router.push({
-      pathname: '/(tabs)/products',
-      params: { collection: colName },
+      pathname: '/collection-detail' as any,
+      params: { name: colName },
     });
   };
 
@@ -386,7 +386,7 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>{t('favoriteCollections')}</Text>
               </View>
               <ScalePressable
-                onPress={() => router.push('/(tabs)/products')}
+                onPress={() => router.push('/collections' as any)}
                 activeScale={0.92}
                 accessibilityLabel={t('seeAll')}
               >

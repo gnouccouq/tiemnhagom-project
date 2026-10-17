@@ -926,6 +926,19 @@ export const zh = {
   // Member Price Perk
   memberPriceLabel: '{tier}会员价',
   memberDiscountBadge: '{tier}专享 -{discount}%',
+
+  // Collection Detail
+  collectionDetailTitle: '系列展集',
+  collectionStoryTitle: '系列故事',
+  collectionDefaultStory: '此系列中的每件陶艺品都凝聚着泥土与火焰的气息，倾注匠心手工打造。',
+  collectionFeaturedProducts: '精选作品',
+  collectionEmptyProducts: '该系列暂无作品。',
+  collectionGalleryTitle: '艺术图集',
+  collectionNotFound: '未找到该系列',
+  collectionProductCount: '{count}件作品',
+  allCollectionsTitle: '所有系列展集',
+  allCollectionsSubtitle: '探索陶舍以艺术主题精心甄选的手工陶瓷系列展。',
+  allCollectionsCount: '{count}个系列',
 };
 
 

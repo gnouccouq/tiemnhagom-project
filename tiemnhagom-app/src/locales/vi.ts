@@ -953,6 +953,19 @@ export const vi = {
   // Member Price Perk
   memberPriceLabel: 'Giá {tier}',
   memberDiscountBadge: 'Hạng {tier} giảm {discount}%',
+
+  // Collection Detail
+  collectionDetailTitle: 'Bộ sưu tập',
+  collectionStoryTitle: 'Câu chuyện bộ sưu tập',
+  collectionDefaultStory: 'Từng món gốm trong bộ sưu tập này mang trong mình hơi thở của đất và lửa, được tạo tác thủ công với tất cả sự tỉ mỉ.',
+  collectionFeaturedProducts: 'Sản phẩm nổi bật',
+  collectionEmptyProducts: 'Chưa có sản phẩm nào trong bộ sưu tập này.',
+  collectionGalleryTitle: 'Album ảnh nghệ thuật',
+  collectionNotFound: 'Không tìm thấy bộ sưu tập',
+  collectionProductCount: '{count} tác phẩm',
+  allCollectionsTitle: 'Tất cả Bộ sưu tập',
+  allCollectionsSubtitle: 'Khám phá trọn bộ các tác phẩm gốm sứ thủ công tuyển chọn theo chủ đề.',
+  allCollectionsCount: '{count} bộ sưu tập',
 };
 
 

@@ -184,6 +184,8 @@ export interface CollectionItem {
   imageUrl: string;
   description?: string;
   showOnHome?: boolean;
+  order?: number;
+  galleryUrls?: string[];
 }
 
 export interface NewsArticle {
@@ -197,19 +199,59 @@ export interface NewsArticle {
 }
 
 /**
- * Lấy danh sách bộ sưu tập (Collections) từ Firestore (settings/collections)
+ * Lấy danh sách bộ sưu tập hiển thị ở Trang chủ (showOnHome !== false)
  */
-export async function getCollections(): Promise<CollectionItem[]> {
+export async function getCollections(maxItems = 6): Promise<CollectionItem[]> {
   try {
     const snap = await getDoc(doc(db, 'settings', 'collections'));
     if (snap.exists() && snap.data().items) {
       const items: any[] = snap.data().items;
-      return items.filter((c) => c.showOnHome !== false && c.imageUrl && c.name);
+      return items
+        .filter((c) => c.showOnHome !== false && c.imageUrl && c.name)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .slice(0, maxItems);
     }
   } catch (e) {
     console.warn('Lỗi lấy collections:', e);
   }
   return [];
+}
+
+/**
+ * Lấy toàn bộ danh sách bộ sưu tập (dành cho trang Tất cả bộ sưu tập)
+ */
+export async function getAllCollections(): Promise<CollectionItem[]> {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'collections'));
+    if (snap.exists() && snap.data().items) {
+      const items: any[] = snap.data().items;
+      return items
+        .filter((c) => c.imageUrl && c.name)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  } catch (e) {
+    console.warn('Lỗi lấy tất cả collections:', e);
+  }
+  return [];
+}
+
+/**
+ * Lấy chi tiết một bộ sưu tập theo tên
+ */
+export async function getCollectionByName(colName: string): Promise<CollectionItem | null> {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'collections'));
+    if (snap.exists() && snap.data().items) {
+      const items: any[] = snap.data().items;
+      const target = items.find(
+        (c) => (c.name || '').trim().toLowerCase() === colName.trim().toLowerCase()
+      );
+      if (target) return target;
+    }
+  } catch (e) {
+    console.warn('Lỗi lấy chi tiết bộ sưu tập:', e);
+  }
+  return null;
 }
 
 /**

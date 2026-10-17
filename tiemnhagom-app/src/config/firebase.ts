@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import * as FirebaseAuth from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -34,7 +34,16 @@ try {
   auth = FirebaseAuth.getAuth(app);
 }
 
-const db: Firestore = getFirestore(app);
+// Khởi tạo Firestore với cấu hình long-polling tương thích môi trường React Native (khắc phục lỗi WebChannel stream Listen)
+let db: Firestore;
+try {
+  db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  });
+} catch {
+  db = getFirestore(app);
+}
+
 const storage: FirebaseStorage = getStorage(app);
 
 export { app, auth, db, storage, firebaseConfig };
