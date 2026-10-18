@@ -90,8 +90,6 @@
       }
     },
     "owner": "tiemnhagom",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "runtimeVersion": "1.0.0"
   }
 }
