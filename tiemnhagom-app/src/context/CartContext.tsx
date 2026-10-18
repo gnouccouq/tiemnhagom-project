@@ -15,6 +15,7 @@ import {
   MemberTierInfo,
 } from '../utils/shipping';
 import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
+import { checkOutOfStock } from '../utils/format';
 
 export type PaymentMethodType = 'cod' | 'banking';
 
@@ -338,6 +339,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addToCart = (product: Product, quantity = 1, variant?: ProductVariant) => {
+    // Chặn hoàn toàn nếu sản phẩm hoặc biến thể đã hết hàng
+    if (checkOutOfStock(product, variant)) {
+      console.warn('Sản phẩm hoặc phân loại đã hết hàng, không thể thêm vào giỏ');
+      return;
+    }
+
+    const effectiveStock = (variant?.stock !== undefined && variant?.stock !== null)
+      ? Number(variant.stock)
+      : (product.stock !== undefined && product.stock !== null ? Number(product.stock) : 99);
+
+    if (effectiveStock <= 0) {
+      console.warn('Số lượng tồn kho bằng 0, không thể thêm vào giỏ');
+      return;
+    }
+
     const variantKey = variant ? `_${variant.type || 'var'}_${variant.name}` : '';
     const itemId = `${product.id}${variantKey}`;
 
@@ -362,13 +378,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (existingIndex > -1) {
       nextCart = [...cart];
+      const maxAllowed = nextCart[existingIndex].maxStock > 0 ? nextCart[existingIndex].maxStock : effectiveStock;
       const newQty = Math.min(
         nextCart[existingIndex].quantity + quantity,
-        nextCart[existingIndex].maxStock || 99
+        maxAllowed || 99
       );
       nextCart[existingIndex] = {
         ...nextCart[existingIndex],
         quantity: newQty,
+        maxStock: maxAllowed,
       };
     } else {
       const newItem: CartItem = {
@@ -377,7 +395,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: product.name,
         price: effectivePrice,
         originalPrice: product.price,
-        quantity: Math.min(quantity, variant?.stock ?? product.stock ?? 99),
+        quantity: Math.max(1, Math.min(quantity, effectiveStock)),
         imageUrl: variant?.imageUrl || product.imageUrl || (product.images && product.images[0]) || '',
         variant: variant
           ? {
@@ -386,7 +404,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               imageUrl: variant.imageUrl,
             }
           : undefined,
-        maxStock: variant?.stock ?? product.stock ?? 99,
+        maxStock: effectiveStock,
       };
       nextCart = [...cart, newItem];
     }

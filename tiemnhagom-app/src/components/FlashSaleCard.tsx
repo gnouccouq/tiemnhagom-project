@@ -52,7 +52,7 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = React.memo(({
     (product.images && product.images[0]) ||
     'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d';
 
-  const isSoldOut = checkOutOfStock(product) || Boolean(fsInfo?.isSoldOut);
+  const isSoldOut = checkOutOfStock(product, product.selectedVariant) || Boolean(fsInfo?.isSoldOut);
 
   const handleCardPress = () => {
     router.push({
@@ -75,6 +75,7 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = React.memo(({
 
   const handleQuickAdd = (e: any) => {
     e.stopPropagation?.();
+    if (isSoldOut) return;
     Animated.sequence([
       Animated.timing(addScale, { toValue: 0.82, duration: 80, useNativeDriver: true }),
       Animated.spring(addScale, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),

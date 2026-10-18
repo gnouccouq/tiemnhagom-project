@@ -45,9 +45,9 @@ export default function VersionScreen() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  // Mặc định mở rộng bản mới nhất (20261015.02)
+  // Mặc định mở rộng bản mới nhất (20261018.01)
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
-    '20261016.01': true,
+    '20261018.01': true,
   });
 
   const toggleExpand = (otaKey: string) => {
@@ -97,16 +97,18 @@ export default function VersionScreen() {
           'Để sau'
         );
       } else {
+        const otaStatus = Updates.isEmbeddedLaunch ? 'Bản cài đặt gốc' : 'Bản cập nhật OTA';
+        const updateIdStr = Updates.updateId ? `\n• Mã cập nhật: ${Updates.updateId.slice(0, 8)}` : '';
         dialog.alert(
           'Đã là bản mới nhất ✨',
-          `Ứng dụng Tiệm Nhà Gốm của bạn đang ở phiên bản mới nhất v${getFullAppVersionString()}.`
+          `Ứng dụng Tiệm Nhà Gốm của bạn đang ở phiên bản mới nhất v${getFullAppVersionString()}.\n\n• Kênh: ${Updates.channel || 'preview'}\n• Tình trạng: ${otaStatus}${updateIdStr}`
         );
       }
     } catch (e: any) {
       console.warn('Lỗi kiểm tra update:', e);
       dialog.alert(
         'Thông tin cập nhật',
-        `Chi tiết: ${e?.message || e || 'Không có phản hồi từ máy chủ'}\n\nUpdates.isEnabled: ${Updates.isEnabled}\nRuntime: ${Updates.runtimeVersion || '1.0.0'}\nChannel: ${Updates.channel || 'mặc định'}`
+        `Chi tiết: ${e?.message || e || 'Không có phản hồi từ máy chủ'}\n\nUpdates.isEnabled: ${Updates.isEnabled}\nRuntime: ${Updates.runtimeVersion || '1.0.1'}\nChannel: ${Updates.channel || 'preview'}`
       );
     } finally {
       setCheckingUpdate(false);
@@ -192,9 +194,28 @@ export default function VersionScreen() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>{t('releaseChannel')}</Text>
             <Text style={[styles.infoValue, { color: Colors.primary }]}>
-              {Updates.channel || 'Production'}
+              {Updates.channel || 'preview'}
             </Text>
           </View>
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>{t('otaStatusLabel')}</Text>
+            <Text style={[styles.infoValue, { color: Updates.isEmbeddedLaunch ? Colors.textSecondary : '#9C7156', fontWeight: '600' }]}>
+              {Updates.isEmbeddedLaunch ? t('otaStatusEmbedded') : t('otaStatusOta')}
+            </Text>
+          </View>
+          {Boolean(Updates.updateId) && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>{t('otaUpdateIdLabel')}</Text>
+                <Text style={[styles.infoValue, { fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13 }]}>
+                  {Updates.updateId ? Updates.updateId.slice(0, 8) : 'Embedded'}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Tiêu đề phân khu: Lịch Sử Cập Nhật */}

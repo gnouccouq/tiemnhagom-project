@@ -84,8 +84,12 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
     toggleFavorite(targetProductId);
   };
 
+  const isSoldOut = checkOutOfStock(product, product.selectedVariant);
+
   const handleQuickAdd = (e: any) => {
     e.stopPropagation?.();
+    if (isSoldOut) return;
+
     Animated.sequence([
       Animated.timing(addScale, { toValue: 0.82, duration: 80, useNativeDriver: true }),
       Animated.spring(addScale, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
@@ -103,8 +107,6 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
     addToCart(product, 1, product.selectedVariant);
   };
-
-  const isSoldOut = checkOutOfStock(product);
 
   return (
     <ScalePressable

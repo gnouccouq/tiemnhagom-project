@@ -300,7 +300,9 @@ export default function ProductDetailScreen() {
   const currentPrice = getVariantEffectivePrice(selectedVariant, product);
   const currentOriginalPrice = (selectedVariant?.price && selectedVariant.price > 0) ? selectedVariant.price : product.price;
   const hasDiscount = currentPrice < currentOriginalPrice;
-  const maxStock = selectedVariant?.stock ?? product.stock ?? 10;
+  const maxStock = (selectedVariant?.stock !== undefined && selectedVariant?.stock !== null)
+    ? Number(selectedVariant.stock)
+    : (Number(product.stock) || 0);
   const isOutOfStock = checkOutOfStock(product, selectedVariant);
 
   // Chiết khấu thành viên
@@ -317,7 +319,9 @@ export default function ProductDetailScreen() {
     ? Math.round(modalEffectivePrice * (1 - memberDiscountPercent / 100))
     : modalEffectivePrice;
 
-  const modalStock = activeModalVariant?.stock ?? product.stock ?? 10;
+  const modalStock = (activeModalVariant?.stock !== undefined && activeModalVariant?.stock !== null)
+    ? Number(activeModalVariant.stock)
+    : (Number(product.stock) || 0);
   const modalSold = activeModalVariant?.sold ?? product.sold ?? 0;
   const isModalOutOfStock = checkOutOfStock(product, activeModalVariant);
 
@@ -351,10 +355,16 @@ export default function ProductDetailScreen() {
   const handleOpenActionModal = (action: 'cart' | 'buy') => {
     if (hasVariants) {
       setModalActionType(action);
-      setModalVariant(selectedVariant || allVariants[0]);
-      setModalQuantity(quantity);
+      // Ưu tiên chọn biến thể đang chọn, hoặc biến thể đầu tiên còn hàng
+      const initialVariant = selectedVariant || allVariants.find((v) => !checkOutOfStock(product, v)) || allVariants[0];
+      setModalVariant(initialVariant);
+      setModalQuantity(1);
       setVariantModalVisible(true);
     } else {
+      if (isOutOfStock) {
+        dialog.alert(t('notification'), t('outOfStockAlert'));
+        return;
+      }
       if (action === 'cart') {
         performAddToCart(product, quantity, undefined);
       } else {
@@ -658,6 +668,11 @@ export default function ProductDetailScreen() {
                   <Text style={styles.variantCompactValue} numberOfLines={1}>
                     {selectedVariant?.name || t('selectVariantPrompt')}
                   </Text>
+                  {selectedVariant && isOutOfStock ? (
+                    <View style={styles.compactOutOfStockBadge}>
+                      <Text style={styles.compactOutOfStockText}>{t('outOfStock')}</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
               <View style={styles.variantCompactRight}>
@@ -926,8 +941,10 @@ export default function ProductDetailScreen() {
             disabled={isOutOfStock}
             activeOpacity={0.84}
           >
-            <Ionicons name="bag-add-outline" size={20} color="#9C7156" />
-            <Text style={styles.addToCartText}>{t('addToCartAction')}</Text>
+            <Ionicons name="bag-add-outline" size={20} color={isOutOfStock ? (isDark ? '#6E665D' : '#A8A096') : '#9C7156'} />
+            <Text style={[styles.addToCartText, isOutOfStock && { color: isDark ? '#6E665D' : '#A8A096' }]}>
+              {isOutOfStock ? t('outOfStock') : t('addToCartAction')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1093,6 +1110,55 @@ export default function ProductDetailScreen() {
               </View>
             )}
 
+            {/* Danh sách biến thể Combo */}
+            {product.comboVariants && product.comboVariants.length > 0 && (
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>{t('comboLabel') || 'Combo'}</Text>
+                <View style={styles.modalVariantsGrid}>
+                  {product.comboVariants.map((v, i) => {
+                    const isSelected = activeModalVariant?.name === v.name;
+                    const isVOutOfStock = checkOutOfStock(product, v);
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={[
+                          styles.modalVariantCard,
+                          isSelected && styles.modalVariantCardSelected,
+                          isVOutOfStock && styles.modalVariantCardDisabled,
+                        ]}
+                        onPress={() => setModalVariant({ ...v, type: 'combo' })}
+                      >
+                        {Boolean(v.imageUrl || v.thumbUrl) ? (
+                          <Image
+                            source={{ uri: v.imageUrl || v.thumbUrl }}
+                            style={styles.modalVariantImg}
+                            contentFit="cover"
+                          />
+                        ) : (
+                          <Ionicons name="gift-outline" size={24} color="#9C7156" />
+                        )}
+                        <Text
+                          style={[
+                            styles.modalVariantName,
+                            isSelected && styles.modalVariantNameSelected,
+                            isVOutOfStock && { color: '#9E968D' },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {v.name}
+                        </Text>
+                        {isVOutOfStock ? (
+                          <View style={styles.modalOutOfStockTag}>
+                            <Text style={styles.modalOutOfStockTagText}>{t('outOfStock')}</Text>
+                          </View>
+                        ) : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
             {/* Chọn số lượng trong modal */}
             <View style={styles.modalQuantityRow}>
               <Text style={styles.modalSectionTitle}>{t('quantityLabel').replace(':', '')}</Text>
@@ -1100,17 +1166,19 @@ export default function ProductDetailScreen() {
                 <TouchableOpacity
                   style={styles.stepBtn}
                   onPress={() => setModalQuantity((q) => Math.max(1, q - 1))}
-                  disabled={modalQuantity <= 1}
+                  disabled={isModalOutOfStock || modalQuantity <= 1}
                 >
-                  <Ionicons name="remove" size={16} color={modalQuantity <= 1 ? Colors.textMuted : Colors.textPrimary} />
+                  <Ionicons name="remove" size={16} color={(isModalOutOfStock || modalQuantity <= 1) ? Colors.textMuted : Colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.qtyNumber}>{modalQuantity}</Text>
+                <Text style={[styles.qtyNumber, isModalOutOfStock && { color: Colors.textMuted }]}>
+                  {isModalOutOfStock ? 0 : modalQuantity}
+                </Text>
                 <TouchableOpacity
                   style={styles.stepBtn}
                   onPress={() => setModalQuantity((q) => Math.min(modalStock, q + 1))}
-                  disabled={modalQuantity >= modalStock}
+                  disabled={isModalOutOfStock || modalQuantity >= modalStock}
                 >
-                  <Ionicons name="add" size={16} color={modalQuantity >= modalStock ? Colors.textMuted : Colors.textPrimary} />
+                  <Ionicons name="add" size={16} color={(isModalOutOfStock || modalQuantity >= modalStock) ? Colors.textMuted : Colors.textPrimary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -1423,6 +1491,19 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '700',
     color: Colors.textPrimary,
     flex: 1,
+  },
+  compactOutOfStockBadge: {
+    backgroundColor: isDark ? 'rgba(220, 38, 38, 0.2)' : '#FEE2E2',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 6,
+  },
+  compactOutOfStockText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#DC2626',
   },
   variantCompactRight: {
     flexDirection: 'row',

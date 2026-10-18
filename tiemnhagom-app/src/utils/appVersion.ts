@@ -32,12 +32,12 @@ export function getAppBuildNumber(): string {
 /**
  * Phiên bản OTA mặc định cho bản build hiện tại (hỗ trợ .01, .02 nếu nhiều bản trong ngày)
  */
-export const CURRENT_OTA_RELEASE = '20261016.01';
+export const CURRENT_OTA_RELEASE = '20261018.01';
 
 /**
  * Lấy thông tin phiên bản OTA (Over-The-Air) hiện tại
- * - Nếu app đang chạy bản cập nhật OTA: trả về ngày phát hành OTA (YYYYMMDD hoặc YYYYMMDD.xx)
- * - Nếu là bản nhúng: trả về mã CURRENT_OTA_RELEASE
+ * - Nếu app đang chạy bản cập nhật OTA: trả về mã CURRENT_OTA_RELEASE
+ * - Fallback theo ngày phát hành OTA hoặc updateId nếu có
  */
 export function getOtaVersion(): string {
   try {
@@ -56,8 +56,33 @@ export function getOtaVersion(): string {
   }
 }
 
+export interface OtaDetails {
+  otaVersion: string;
+  updateId: string | null;
+  createdAt: string | null;
+  channel: string;
+  runtimeVersion: string;
+  isEmbeddedLaunch: boolean;
+  isEnabled: boolean;
+}
+
 /**
- * Trả về chuỗi version đầy đủ: `1.0.0 (1) - 20261014`
+ * Trả về thông tin chi tiết về phiên bản OTA & Kênh cập nhật EAS
+ */
+export function getOtaDetails(): OtaDetails {
+  return {
+    otaVersion: CURRENT_OTA_RELEASE,
+    updateId: Updates.updateId || null,
+    createdAt: Updates.createdAt ? formatDateToYYYYMMDD(new Date(Updates.createdAt)) : null,
+    channel: Updates.channel || 'preview',
+    runtimeVersion: typeof Updates.runtimeVersion === 'string' ? Updates.runtimeVersion : (Constants.expoConfig?.version || '1.0.1'),
+    isEmbeddedLaunch: Boolean(Updates.isEmbeddedLaunch),
+    isEnabled: Boolean(Updates.isEnabled),
+  };
+}
+
+/**
+ * Trả về chuỗi version đầy đủ: `1.0.1 (2) - 20261018.01`
  * (Version chính - Build number - Version OTA)
  */
 export function getFullAppVersionString(): string {

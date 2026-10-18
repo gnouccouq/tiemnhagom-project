@@ -71,34 +71,61 @@ export function generateOrderCode(): string {
 }
 
 /**
- * Kiểm tra xem sản phẩm có thực sự hết hàng hay không
+ * Kiểm tra xem sản phẩm hoặc biến thể có thực sự hết hàng hay không
  */
 export function checkOutOfStock(product: any, variantOverride?: any): boolean {
   if (!product) return true;
-  
-  let isOutOfStock = Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (Number(product.stock) || 0) <= 0;
-  
+
+  // 1. Nếu có chỉ định phân loại biến thể cụ thể (variantOverride)
+  if (variantOverride) {
+    // A. Quản trị viên đánh dấu hết hàng thủ công
+    if (Boolean(variantOverride.manualOutOfStock) || Boolean(variantOverride.isOutOfStock)) {
+      return true;
+    }
+    // B. Kiểm tra số lượng tồn kho riêng của biến thể
+    if (variantOverride.stock !== undefined && variantOverride.stock !== null) {
+      return Number(variantOverride.stock) <= 0;
+    }
+    // C. Nếu biến thể không có trường tồn kho riêng, kế thừa theo tồn kho của sản phẩm cha
+    return Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (Number(product.stock) || 0) <= 0;
+  }
+
+  // 2. Kiểm tra ở cấp độ sản phẩm cha (không chỉ định biến thể)
+  if (Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock)) {
+    return true;
+  }
+
+  // 3. Nếu là combo sản phẩm: kiểm tra xem có bất kỳ comboVariant nào còn hàng không
   if (product.isCombo && Array.isArray(product.comboVariants) && product.comboVariants.length > 0) {
     const hasAnyAvailable = product.comboVariants.some((v: any) => {
-      const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
       const vOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock);
+      const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
       return !vOut && vStock > 0;
     });
-    isOutOfStock = !hasAnyAvailable;
+    return !hasAnyAvailable;
   }
-  
-  if (variantOverride) {
-    const isManualOut = Boolean(variantOverride.manualOutOfStock);
-    const rawStock = (variantOverride.stock !== undefined && variantOverride.stock !== null)
-      ? Number(variantOverride.stock)
-      : (Number(product.stock) || 0);
-    const vStock = (!isManualOut && rawStock <= 0 && (Number(product.stock) || 0) > 0)
-      ? Number(product.stock)
-      : rawStock;
-    isOutOfStock = isManualOut || (Boolean(variantOverride.isOutOfStock) && vStock <= 0) || vStock <= 0;
+
+  // 4. Nếu sản phẩm có danh sách biến thể (colorVariants, patternVariants, comboVariants):
+  // Nếu TẤT CẢ các biến thể đều đã hết hàng thì coi như sản phẩm hết hàng
+  const allVariants: any[] = [
+    ...(Array.isArray(product.colorVariants) ? product.colorVariants : []),
+    ...(Array.isArray(product.patternVariants) ? product.patternVariants : []),
+    ...(Array.isArray(product.comboVariants) ? product.comboVariants : []),
+  ];
+
+  if (allVariants.length > 0) {
+    const hasAnyAvailableVariant = allVariants.some((v: any) => {
+      const vOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock);
+      const vStock = (v.stock !== undefined && v.stock !== null) ? Number(v.stock) : (Number(product.stock) || 0);
+      return !vOut && vStock > 0;
+    });
+    if (!hasAnyAvailableVariant) {
+      return true;
+    }
   }
-  
-  return isOutOfStock;
+
+  // 5. Kiểm tra tồn kho của sản phẩm gốc
+  return (Number(product.stock) || 0) <= 0;
 }
 
 /**

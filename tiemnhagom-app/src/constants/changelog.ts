@@ -19,10 +19,31 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.1',
     buildNumber: '2',
+    otaVersion: '20261018.01',
+    releaseDate: '18/10/2026',
+    title: 'Kiểm soát tồn kho phân loại & Cải tiến cập nhật OTA',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Kiểm soát tồn kho biến thể chính xác',
+        description: 'Tự động báo hết hàng và vô hiệu hóa nút thêm vào giỏ hàng ngay khi phân loại biến thể có số lượng tồn kho về 0.',
+      },
+      {
+        title: 'Đồng bộ cơ chế kiểm tra cập nhật OTA',
+        description: 'Hiển thị chi tiết phiên bản OTA, kênh cập nhật (channel) và tình trạng nạp bản cập nhật Over-The-Air.',
+      },
+      {
+        title: 'Hỗ trợ hiển thị phân loại Combo',
+        description: 'Bổ sung danh sách chọn phân loại Combo quà tặng trong bảng chọn mua nhanh của sản phẩm.',
+      },
+    ],
+  },
+  {
+    version: '1.0.1',
+    buildNumber: '2',
     otaVersion: '20261016.01',
     releaseDate: '16/10/2026',
     title: 'Icon ứng dụng Light/Dark & Hoàn thiện giao diện',
-    badge: 'Mới nhất',
     changes: [
       {
         title: 'Hệ thống Liquid Glass & Native Bottom Tabs iOS 26',
