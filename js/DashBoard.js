@@ -8,7 +8,7 @@ import {
     limit, startAfter, endBefore, limitToLast, where, addDoc, serverTimestamp, updateDoc, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { ref as dbRef, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
 
@@ -226,37 +226,72 @@ function renderOnlineUsersTable(usersList) {
 
 listenToOnlineUsers();
 
-// Danh sách tất cả các phân hệ có trong hệ thống
-const ALL_SECTIONS = [
-    { id: 'overview-section', label: 'Tổng quan' },
-    { id: 'product-section', label: 'Sản phẩm' },
-    { id: 'banner-section', label: 'Banner' },
-    { id: 'pos-section', label: 'Bán tại shop (POS)' },
-    { id: 'order-section', label: 'Đơn hàng' },
-    { id: 'rental-order-section', label: 'Đơn thuê đồ' },
-    { id: 'coupon-section', label: 'Mã giảm giá' },
-    { id: 'category-section', label: 'Danh mục' },
-    { id: 'user-section', label: 'Người dùng' },
-    { id: 'admin-account-section', label: 'Quản trị viên' },
-    { id: 'stats-section', label: 'Thống kê' },
-    { id: 'customer-analytics-section', label: 'Vị trí & Lượt xem SP' },
-    { id: 'flash-sale-settings-section', label: 'Cài đặt Flash Sale' },
-    { id: 'inventory-log-section', label: 'Nhật ký kho' },
-    { id: 'news-section', label: 'Tin tức' },
-    { id: 'collections-section', label: 'Bộ sưu tập' },
-    { id: 'lookbook-section', label: 'Lookbook Không gian' },
-    { id: 'events-section', label: 'Dự án sự kiện' },
-    { id: 'online-users-section', label: 'Lượng truy cập' },
-    { id: 'maintenance-section', label: 'Bảo trì' },
-    { id: 'push-notification-section', label: 'Gửi Push (App)' }
+// Cấu hình Phân nhóm Quyền hạn và Phân hệ hệ thống
+const PERMISSION_GROUPS = [
+    {
+        title: "🛍️ Nghiệp vụ Bán hàng & Thu ngân",
+        items: [
+            { id: 'pos-section', label: 'Bán tại shop (POS)' },
+            { id: 'shift-report-section', label: 'Báo cáo ca thu ngân' }
+        ]
+    },
+    {
+        title: "📦 Quản lý Đơn hàng",
+        items: [
+            { id: 'order-section', label: 'Đơn mua trực tuyến' },
+            { id: 'rental-order-section', label: 'Đơn thuê đồ decor / sự kiện' }
+        ]
+    },
+    {
+        title: "🏺 Kho hàng & Sản phẩm",
+        items: [
+            { id: 'product-section', label: 'Sản phẩm & Tồn kho' },
+            { id: 'category-section', label: 'Danh mục sản phẩm' },
+            { id: 'flash-sale-settings-section', label: 'Cài đặt Flash Sale' },
+            { id: 'inventory-log-section', label: 'Nhật ký xuất nhập kho' }
+        ]
+    },
+    {
+        title: "👥 Khách hàng & Marketing",
+        items: [
+            { id: 'user-section', label: 'Khách hàng & Hội viên' },
+            { id: 'customer-analytics-section', label: 'Khách tiềm năng & Lượt xem' },
+            { id: 'coupon-section', label: 'Mã giảm giá Voucher' },
+            { id: 'push-notification-section', label: 'Gửi thông báo đẩy App' }
+        ]
+    },
+    {
+        title: "📰 Nội dung Website",
+        items: [
+            { id: 'banner-section', label: 'Banner trang chủ' },
+            { id: 'news-section', label: 'Tin tức & Blog' },
+            { id: 'collections-section', label: 'Bộ sưu tập' },
+            { id: 'lookbook-section', label: 'Lookbook không gian' },
+            { id: 'events-section', label: 'Dự án & Sự kiện' }
+        ]
+    },
+    {
+        title: "⚙️ Báo cáo & Quản trị Hệ thống",
+        items: [
+            { id: 'overview-section', label: 'Tổng quan hệ thống' },
+            { id: 'stats-section', label: 'Báo cáo & Thống kê doanh thu' },
+            { id: 'online-users-section', label: 'Lượng truy cập trực tuyến' },
+            { id: 'admin-account-section', label: 'Quản trị nhân sự & Phân quyền' },
+            { id: 'maintenance-section', label: 'Cài đặt hệ thống & Bảo trì' }
+        ]
+    }
 ];
 
-let currentAdminPermissions = ALL_SECTIONS.map(s => s.id); // Khởi tạo mặc định đầy đủ quyền để hỗ trợ Deep Link / Hash URL
+// Danh sách phẳng tất cả các phân hệ có trong hệ thống
+const ALL_SECTIONS = PERMISSION_GROUPS.flatMap(g => g.items);
 
-// Cấu hình phân quyền mặc định theo Role (Fallback)
+let currentAdminPermissions = ALL_SECTIONS.map(s => s.id); // Khởi tạo mặc định đầy đủ quyền
+
+// Cấu hình phân quyền mẫu theo Role (Fallback & Gợi ý)
 const ROLE_PERMISSIONS = {
-    super_admin: ALL_SECTIONS.map(s => s.id), // Tự động bao gồm tất cả các section cho super_admin
-    staff: ['overview-section', 'pos-section', 'order-section', 'rental-order-section', 'flash-sale-settings-section', 'product-section', 'customer-analytics-section'] // Thêm mục Sale và Sản phẩm cho Staff
+    super_admin: ALL_SECTIONS.map(s => s.id),
+    manager: ALL_SECTIONS.map(s => s.id).filter(id => id !== 'admin-account-section'),
+    staff: ['overview-section', 'pos-section', 'shift-report-section', 'order-section', 'rental-order-section', 'product-section', 'user-section']
 };
 
 const SECTION_HASH_MAP = {
@@ -418,10 +453,12 @@ function setupAdminTabs() {
     if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeMobileDrawer);
     if (drawerOverlay) drawerOverlay.addEventListener('click', closeMobileDrawer);
     if (btnDrawerLogout) {
-        btnDrawerLogout.addEventListener('click', () => {
-            if (typeof logout === 'function') {
-                logout().then(() => window.location.href = "../index.html");
-            }
+        btnDrawerLogout.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (e) { console.error(e); }
+            closeMobileDrawer();
+            showAdminLoginScreen();
         });
     }
 
@@ -455,6 +492,12 @@ function setupAdminTabs() {
         const hash = window.location.hash;
         const targetSecId = getSectionIdFromHash(hash);
         if (targetSecId) {
+            // Kiểm tra phân quyền truy cập
+            if (!currentAdminPermissions.includes(targetSecId)) {
+                showToast("Bạn không có quyền truy cập chức năng này!", "error");
+                ensureValidActiveTab();
+                return;
+            }
             const btn = document.querySelector(`.admin-tab-btn[data-target="${targetSecId}"]`);
             if (btn && !btn.classList.contains('active')) {
                 btn.click();
@@ -492,11 +535,117 @@ function closeAdminSidebar() {
     if (overlay) overlay.classList.remove('active');
 }
 
+// --- QUẢN LÝ HIỂN THỊ MÀN HÌNH ĐĂNG NHẬP NỘI BỘ (KHÔNG DÙNG GOOGLE) ---
+function showAdminLoginScreen() {
+    document.body.style.display = "block";
+    const loginScreen = document.getElementById('admin-login-screen');
+    const adminWrapper = document.getElementById('admin-wrapper');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    if (adminWrapper) adminWrapper.style.display = 'none';
+}
+
+function hideAdminLoginScreen() {
+    document.body.style.display = "block";
+    const loginScreen = document.getElementById('admin-login-screen');
+    const adminWrapper = document.getElementById('admin-wrapper');
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (adminWrapper) adminWrapper.style.display = 'flex';
+}
+
+function showAdminLoginError(msg) {
+    const errBox = document.getElementById('admin-login-error');
+    if (errBox) {
+        errBox.innerText = msg;
+        errBox.style.display = 'flex';
+    }
+}
+
+// Khởi tạo Form Đăng nhập Quản trị Nội bộ
+let isLoginFormSetup = false;
+function setupAdminLoginForm() {
+    if (isLoginFormSetup) return;
+    isLoginFormSetup = true;
+
+    const form = document.getElementById('admin-login-form');
+    const emailInput = document.getElementById('admin-input-email');
+    const pwInput = document.getElementById('admin-input-password');
+    const togglePwBtn = document.getElementById('btn-toggle-admin-pw');
+    const submitBtn = document.getElementById('btn-submit-admin-login');
+
+    if (togglePwBtn && pwInput) {
+        togglePwBtn.addEventListener('click', () => {
+            const isPassword = pwInput.type === 'password';
+            pwInput.type = isPassword ? 'text' : 'password';
+            togglePwBtn.innerText = isPassword ? '🙈' : '👁️';
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput?.value.trim() || '';
+            const password = pwInput?.value || '';
+            const errBox = document.getElementById('admin-login-error');
+            if (errBox) errBox.style.display = 'none';
+
+            if (!email || !password) {
+                showAdminLoginError('Vui lòng nhập đầy đủ email và mật khẩu nội bộ.');
+                return;
+            }
+
+            try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span>⏳ Đang xác thực...</span>';
+                }
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged sẽ tự động kích hoạt checkAdminRights(user)
+            } catch (err) {
+                console.error("Lỗi đăng nhập admin:", err);
+                let msg = "Email hoặc mật khẩu không chính xác.";
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                    msg = "Tài khoản hoặc mật khẩu không chính xác.";
+                } else if (err.code === 'auth/too-many-requests') {
+                    msg = "Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau ít phút.";
+                } else if (err.message) {
+                    msg = err.message;
+                }
+                showAdminLoginError(msg);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Đăng nhập hệ thống</span> <span>➔</span>';
+                }
+            }
+        });
+    }
+}
+
+// Đảm bảo tab đang active là tab hợp lệ mà user có quyền truy cập
+function ensureValidActiveTab() {
+    const activeSection = document.querySelector('.admin-section.active');
+    if (activeSection) {
+        const activeId = activeSection.id;
+        if (!currentAdminPermissions.includes(activeId)) {
+            // Chuyển sang section đầu tiên mà tài khoản có quyền
+            const firstAllowedId = currentAdminPermissions[0] || 'overview-section';
+            const targetBtn = document.querySelector(`.admin-tab-btn[data-target="${firstAllowedId}"]`);
+            if (targetBtn) targetBtn.click();
+        }
+    } else {
+        const firstAllowedId = currentAdminPermissions[0] || 'overview-section';
+        const targetBtn = document.querySelector(`.admin-tab-btn[data-target="${firstAllowedId}"]`);
+        if (targetBtn) targetBtn.click();
+    }
+}
+
 // Thiết lập Auth Listener để cập nhật UI Header và kiểm tra quyền Admin
 async function checkAdminRights(user) {
-    // 1. Chuyển hướng ngay lập tức nếu chưa đăng nhập
+    setupAdminLoginForm();
+
+    // 1. Nếu chưa đăng nhập: Hiển thị Màn hình Đăng nhập Quản trị (KHÔNG redirect về trang web khách hàng)
     if (!user) {
-        window.location.href = "../index.html";
+        showAdminLoginScreen();
         return;
     }
 
@@ -506,38 +655,44 @@ async function checkAdminRights(user) {
         const adminSnap = await getDoc(adminRef);
 
         if (!adminSnap.exists()) {
-            window.location.href = "../index.html";
-        } else {
-            const adminData = adminSnap.data();
-            if (adminData.isLocked) {
-                showToast("Tài khoản của bạn hiện đang bị khóa tạm thời.", "error");
-                logout().then(() => window.location.href = "../index.html");
-                return;
-            }
-            currentAdminRole = adminData.role || 'staff'; // Lấy vai trò hiện tại
-
-            if (currentAdminRole === 'super_admin') {
-                const allSectionIds = ALL_SECTIONS.map(s => s.id);
-                // Đảm bảo super_admin luôn có tất cả các quyền
-                currentAdminPermissions = allSectionIds;
-            } else {
-                // Với các vai trò khác, ưu tiên quyền chi tiết đã lưu, nếu không thì dùng quyền mặc định theo vai trò
-                currentAdminPermissions = adminData.permissions || ROLE_PERMISSIONS[currentAdminRole] || ROLE_PERMISSIONS['staff'];
-            }
-
-            // Nếu đúng là admin thì mới hiển thị nội dung trang
-            const adminBody = document.querySelector('.admin-dashboard-layout');
-            if (adminBody) {
-                adminBody.style.display = "block";
-                // Không áp dụng hiệu ứng có transform lên body vì sẽ làm hỏng position: fixed của sidebar.
-                // Thay vào đó, áp dụng hiệu ứng cho phần nội dung chính.
-                const mainContent = document.querySelector('.admin-main-content');
-                if (mainContent) mainContent.classList.add('fade-in-content');
-            }
-            updateAdminSidebarProfile(user, adminData);
-            applyRoleToSidebar();
+            showAdminLoginScreen();
+            showAdminLoginError("Tài khoản này không có quyền truy cập hệ thống Quản trị / Nhân sự nội bộ!");
+            await signOut(auth);
+            return;
         }
-    } catch (e) { console.error(e); }
+
+        const adminData = adminSnap.data();
+        if (adminData.isLocked) {
+            showAdminLoginScreen();
+            showAdminLoginError("Tài khoản của bạn hiện đang bị khóa tạm thời bởi Quản trị viên.");
+            await signOut(auth);
+            return;
+        }
+
+        currentAdminRole = adminData.role || 'staff'; // Lấy vai trò hiện tại
+
+        if (currentAdminRole === 'super_admin') {
+            const allSectionIds = ALL_SECTIONS.map(s => s.id);
+            currentAdminPermissions = allSectionIds;
+        } else {
+            currentAdminPermissions = adminData.permissions || ROLE_PERMISSIONS[currentAdminRole] || ROLE_PERMISSIONS['staff'];
+        }
+
+        // Đã xác thực thành công -> Mở giao diện Admin
+        hideAdminLoginScreen();
+
+        const mainContent = document.querySelector('.admin-main-content');
+        if (mainContent) mainContent.classList.add('fade-in-content');
+
+        updateAdminSidebarProfile(user, adminData);
+        applyRoleToSidebar();
+        ensureValidActiveTab();
+
+    } catch (e) {
+        console.error("Lỗi xác thực quyền admin:", e);
+        showAdminLoginScreen();
+        showAdminLoginError("Có lỗi xảy ra khi kiểm tra quyền hạn: " + e.message);
+    }
 }
 
 function updateAdminSidebarProfile(user, adminData) {
@@ -10212,89 +10367,221 @@ window.toggleAdminPrivilege = async (uid, shouldBeAdmin, identifier = '') => {
     }
 };
 
-// --- Logic Quản lý Tài khoản Quản trị/Nhân sự (Internal) ---
-function initAdminAccountListener() {
-    const listTable = document.getElementById('admin-staff-list');
-    if (!listTable || !db) return;
+// --- LOGIC QUẢN LÝ TÀI KHOẢN NHÂN VIÊN & PHÂN QUYỀN CHỨC NĂNG (RBAC NỘI BỘ) ---
+let allStaffListCache = [];
+let staffRoleFilterState = 'all';
+let staffStatusFilterState = 'all';
+let staffSearchKeywordState = '';
 
-    // Thêm nút tạo nhân viên ở đầu bảng "Quản trị viên"
-    const headerActions = document.querySelector('#admin-account-section .header-actions');
-    if (headerActions && !document.getElementById('btn-open-create-staff-admin-tab')) {
-        const btn = document.createElement('button');
-        btn.id = 'btn-open-create-staff-admin-tab';
-        btn.className = 'btn-dark';
-        btn.style.marginTop = '0';
-        btn.innerHTML = '+ Tạo tài khoản nhân viên';
-        btn.onclick = window.showCreateStaffModal;
-        headerActions.appendChild(btn);
+// Bộ lọc nhân sự
+window.filterStaffByRole = (role) => {
+    staffRoleFilterState = role || 'all';
+    renderStaffTable();
+};
+
+window.filterStaffByStatus = (status) => {
+    staffStatusFilterState = status || 'all';
+    renderStaffTable();
+};
+
+window.searchStaffAdmin = (keyword) => {
+    staffSearchKeywordState = (keyword || '').trim().toLowerCase();
+    renderStaffTable();
+};
+
+function renderStaffTable() {
+    const listTable = document.getElementById('admin-staff-list');
+    if (!listTable) return;
+
+    const roleBadges = {
+        super_admin: `<span style="background: #9C7156; color: #FFFFFF; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; display: inline-block;">Quản trị tối cao</span>`,
+        manager: `<span style="background: #b45309; color: #FFFFFF; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; display: inline-block;">Quản lý cửa hàng</span>`,
+        staff: `<span style="background: #2B2928; color: #FFFFFF; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; display: inline-block;">Nhân viên</span>`
+    };
+
+    let filtered = allStaffListCache.filter(item => {
+        const matchesRole = staffRoleFilterState === 'all' || item.role === staffRoleFilterState;
+        const matchesStatus = staffStatusFilterState === 'all' || (staffStatusFilterState === 'locked' ? item.isLocked : !item.isLocked);
+        const nameMatch = (item.displayName || '').toLowerCase().includes(staffSearchKeywordState);
+        const emailMatch = (item.email || '').toLowerCase().includes(staffSearchKeywordState);
+        const phoneMatch = (item.phone || '').includes(staffSearchKeywordState);
+        return matchesRole && matchesStatus && (!staffSearchKeywordState || nameMatch || emailMatch || phoneMatch);
+    });
+
+    if (filtered.length === 0) {
+        listTable.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: #888;">Không tìm thấy nhân viên nào phù hợp.</td></tr>`;
+        return;
     }
 
-    onSnapshot(collection(db, "admins"), async (snapshot) => {
-        const roleNames = { super_admin: 'Quản trị tối cao', staff: 'Nhân viên' };
-        let htmlContent = '';
+    listTable.innerHTML = filtered.map(item => {
+        const isLocked = item.isLocked || false;
+        const statusBadge = isLocked
+            ? `<span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 12px;">Đã khóa</span>`
+            : `<span style="background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 12px;">Hoạt động</span>`;
 
-        // Sử dụng Promise.all để lấy thông tin user đồng thời cho nhanh
-        const adminRows = await Promise.all(snapshot.docs.map(async (adminDoc) => {
-            const a = adminDoc.data();
-            const uid = adminDoc.id;
+        const permsCount = item.role === 'super_admin' ? ALL_SECTIONS.length : (item.permissions ? item.permissions.length : 0);
+        const isSelf = auth.currentUser && auth.currentUser.uid === item.uid;
 
-            // Lấy thêm tên hiển thị từ collection users
-            const userSnap = await getDoc(doc(db, "users", uid));
-            const u = userSnap.exists() ? userSnap.data() : {};
-
-            const isLocked = a.isLocked || false;
-            const statusBadge = isLocked
-                ? `<span class="stock-badge stock-out" style="text-transform:none; padding:4px 8px;">Đã khóa</span>`
-                : `<span class="stock-badge" style="background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; text-transform:none; padding:4px 8px;">Hoạt động</span>`;
-
-            const permsCount = a.permissions ? a.permissions.length : 0;
-
-            return `
-                <tr>
-                    <td data-label="Thông tin">
-                        <strong>${u.displayName || a.email || 'Thành viên mới'}</strong><br>
-                        <small style="color: #888;">${a.email || 'Không có email'}</small>
-                    </td>
-                    <td data-label="Vai trò">
-                        <span style="font-weight:600; color:var(--text-black);">${roleNames[a.role] || 'Nhân viên'}</span>
-                    </td>
-                    <td data-label="Quyền hạn">
-                        <small>${permsCount}/${ALL_SECTIONS.length} chức năng</small>
-                    </td>
-                    <td data-label="Trạng thái">${statusBadge}</td>
-                    <td data-label="Thao tác" style="display: flex; gap: 5px; justify-content: flex-end;">
-                        <button class="btn-minimal" style="font-size: 0.7rem; border-color: #3498db; color: #3498db;" onclick="window.editAdminPermissions('${uid}', '${a.email}')">Quyền</button>
-                        <button class="btn-minimal" style="font-size: 0.7rem; border-color: ${isLocked ? '#27ae60' : '#f39c12'}; color: ${isLocked ? '#27ae60' : '#f39c12'};" 
-                            onclick="window.toggleAccountLock('${uid}', ${!isLocked})">
-                            ${isLocked ? 'Mở khóa' : 'Khóa'}
+        return `
+            <tr>
+                <td data-label="Nhân viên">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 36px; height: 36px; border-radius: 18px; background: #FAF7F2; border: 1.2px solid #E8E1D8; color: #9C7156; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">
+                            ${(item.displayName || 'NV').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <strong style="color: #2B2928; font-size: 0.9rem;">${item.displayName || 'Chưa đặt tên'}</strong>
+                            ${isSelf ? '<span style="font-size: 0.68rem; color: #9C7156; margin-left: 4px; font-weight: 700;">(Bạn)</span>' : ''}
+                            ${item.phone ? `<br><small style="color: #888;">📞 ${item.phone}</small>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Tài khoản / Email">
+                    <span style="font-family: monospace; font-size: 0.84rem; color: #4B5563;">${item.email || '---'}</span>
+                </td>
+                <td data-label="Vai trò">
+                    ${roleBadges[item.role] || roleBadges['staff']}
+                </td>
+                <td data-label="Phân quyền chức năng">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-weight: 700; font-size: 0.85rem; color: #9C7156;">${permsCount}/${ALL_SECTIONS.length}</span>
+                        <span style="font-size: 0.75rem; color: #6E665D;">phân hệ</span>
+                    </div>
+                </td>
+                <td data-label="Trạng thái" style="text-align: center;">
+                    ${statusBadge}
+                </td>
+                <td data-label="Thao tác" style="text-align: right;">
+                    <div style="display: inline-flex; gap: 5px; justify-content: flex-end; align-items: center;">
+                        <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: #9C7156; color: #9C7156;" 
+                            onclick="window.editAdminPermissions('${item.uid}', '${item.email}', '${(item.displayName || '').replace(/'/g, "\\'")}')" title="Cấu hình quyền hạn">
+                            ⚙️ Quyền
                         </button>
-                        ${uid !== auth.currentUser.uid ? `<button class="btn-delete" style="font-size:0.7rem;" onclick="window.toggleAdminPrivilege('${uid}', false)">Gỡ</button>` : ''}
-                    </td>
-                </tr>
-            `;
-        }));
+                        ${!isSelf ? `
+                            <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: ${isLocked ? '#16A34A' : '#D97706'}; color: ${isLocked ? '#16A34A' : '#D97706'};" 
+                                onclick="window.toggleAccountLock('${item.uid}', ${!isLocked})" title="${isLocked ? 'Mở khóa' : 'Khóa tài khoản'}">
+                                ${isLocked ? '🔓 Mở' : '🔒 Khóa'}
+                            </button>
+                        ` : ''}
+                        <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: #4B5563; color: #4B5563;" 
+                            onclick="window.sendStaffPasswordReset('${item.email}')" title="Gửi email đặt lại mật khẩu">
+                            🔑 Đổi MK
+                        </button>
+                        ${!isSelf ? `
+                            <button type="button" class="btn-delete" style="font-size: 0.72rem; padding: 4px 8px;" 
+                                onclick="window.deleteStaffAccount('${item.uid}', '${item.email}')" title="Gỡ quyền quản trị">
+                                🗑️
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
-        listTable.innerHTML = adminRows.join('') || '<tr><td colspan="5" style="text-align:center;">Chưa có tài khoản quản trị nào.</td></tr>';
+function initAdminAccountListener() {
+    if (!db) return;
+
+    onSnapshot(collection(db, "admins"), async (snapshot) => {
+        try {
+            allStaffListCache = await Promise.all(snapshot.docs.map(async (adminDoc) => {
+                const a = adminDoc.data();
+                const uid = adminDoc.id;
+
+                let displayName = a.displayName || '';
+                let phone = a.phone || '';
+
+                if (!displayName || !phone) {
+                    try {
+                        const userSnap = await getDoc(doc(db, "users", uid));
+                        if (userSnap.exists()) {
+                            const u = userSnap.data();
+                            displayName = displayName || u.displayName || '';
+                            phone = phone || u.phone || '';
+                        }
+                    } catch (err) {
+                        console.warn("Lỗi đọc user profile nhân viên:", err);
+                    }
+                }
+
+                return {
+                    uid,
+                    email: a.email || '',
+                    displayName: displayName || a.email || 'Nhân viên Tiệm',
+                    role: a.role || 'staff',
+                    permissions: a.permissions || ROLE_PERMISSIONS[a.role || 'staff'] || [],
+                    isLocked: a.isLocked || false,
+                    phone: phone || ''
+                };
+            }));
+
+            renderStaffTable();
+        } catch (e) {
+            console.error("Lỗi nạp danh sách nhân sự:", e);
+        }
     }, (error) => {
         console.error("Admin list listener error:", error);
     });
 }
 
-// Hàm khóa/mở khóa tài khoản nhân viên
+// Khóa/Mở khóa tài khoản nhân viên
 window.toggleAccountLock = async (uid, shouldLock) => {
     const action = shouldLock ? "KHÓA" : "MỞ KHÓA";
-    if (!confirm(`Bạn có chắc chắn muốn ${action} tài khoản này? Nhân viên sẽ không thể vào trang quản trị.`)) return;
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn ${action} tài khoản này? Nhân viên sẽ bị ngắt quyền truy cập ngay lập tức ở cả Web Dashboard và App Retail.`,
+        `${action} tài khoản nhân viên`,
+        { confirmText: action, cancelText: "Hủy bỏ", type: shouldLock ? "danger" : "primary" }
+    );
+    if (!ok) return;
 
     try {
         await updateDoc(doc(db, "admins", uid), { isLocked: shouldLock });
-        showToast(`Đã ${action} tài khoản thành công`);
-        initUserListener(); // Refresh list
+        showToast(`Đã ${action.toLowerCase()} tài khoản thành công!`);
     } catch (e) {
         showToast("Lỗi: " + e.message, "error");
     }
 };
 
-// Hàm hiển thị Modal tạo tài khoản nhân viên mới
+// Gửi link đặt lại mật khẩu cho nhân viên qua email
+window.sendStaffPasswordReset = async (email) => {
+    if (!email) return showToast("Tài khoản này không có email hợp lệ", "error");
+    const ok = await showModalConfirm(
+        `Hệ thống sẽ gửi email chứa đường link đặt lại mật khẩu đến: "${email}". Tiếp tục?`,
+        "Đặt lại mật khẩu nhân viên",
+        { confirmText: "Gửi link", cancelText: "Hủy bỏ" }
+    );
+    if (!ok) return;
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showToast(`Đã gửi hướng dẫn đổi mật khẩu tới ${email}`);
+    } catch (e) {
+        showToast("Lỗi gửi email: " + e.message, "error");
+    }
+};
+
+// Gỡ tài khoản nhân viên
+window.deleteStaffAccount = async (uid, email) => {
+    if (auth.currentUser && uid === auth.currentUser.uid) {
+        return showToast("Bạn không thể tự gỡ quyền quản trị của chính mình!", "error");
+    }
+    const ok = await showModalConfirm(
+        `Bạn có chắc chắn muốn gỡ quyền quản trị của tài khoản "${email}"? Tài khoản này sẽ không thể đăng nhập vào Dashboard hoặc App Retail nữa.`,
+        "Gỡ tài khoản nhân viên",
+        { confirmText: "Gỡ tài khoản", cancelText: "Hủy bỏ", type: "danger" }
+    );
+    if (!ok) return;
+
+    try {
+        await deleteDoc(doc(db, "admins", uid));
+        showToast("Đã gỡ quyền quản trị thành công.");
+    } catch (e) {
+        showToast("Lỗi: " + e.message, "error");
+    }
+};
+
+// Modal Tạo tài khoản nhân viên mới & Phân quyền trực tiếp
 window.showCreateStaffModal = () => {
     let modal = document.getElementById('create-staff-modal');
     if (!modal) {
@@ -10304,87 +10591,181 @@ window.showCreateStaffModal = () => {
         document.body.appendChild(modal);
     }
 
+    // Tạo HTML checklist các phân hệ theo nhóm
+    const permsChecklistHtml = PERMISSION_GROUPS.map(group => `
+        <div class="perm-group-card">
+            <div class="perm-group-header">
+                <span>${group.title}</span>
+                <button type="button" class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px; border: none; color: #9C7156;" 
+                    onclick="window.toggleGroupCheckboxes(this, true)">Chọn nhóm</button>
+            </div>
+            <div class="perm-group-grid">
+                ${group.items.map(item => `
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" name="staff_perm" value="${item.id}" checked>
+                        <span>${item.label}</span>
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content staff-perm-modal-content">
             <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
-            <h3>Tạo tài khoản nhân viên</h3>
-            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1.5rem;">Cấp tài khoản nội bộ cho nhân viên Tiệm.</p>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="font-size: 1.4rem;">👤</span>
+                <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2B2928;">Tạo tài khoản nhân viên nội bộ</h3>
+            </div>
+            <p style="font-size: 0.85rem; color: #6E665D; margin-bottom: 1.2rem;">
+                Cấp tài khoản đăng nhập trực tiếp (Email & Mật khẩu) và phân bổ quyền truy cập các tính năng trên Web Dashboard & App Retail.
+            </p>
+
             <form id="create-staff-form">
-                <div class="form-group">
-                    <label>Họ tên nhân viên</label>
-                    <input type="text" id="staff-new-name" placeholder="VD: Nguyễn Văn A" required>
+                <!-- 1. Thông tin tài khoản -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Họ tên nhân viên *</label>
+                        <input type="text" id="staff-new-name" placeholder="VD: Nguyễn Thị An" required style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Số điện thoại</label>
+                        <input type="tel" id="staff-new-phone" placeholder="VD: 0987654321" style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Email đăng nhập nội bộ *</label>
+                        <input type="email" id="staff-new-email" placeholder="nhanvien@tiemnhagom.vn" required style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Mật khẩu khởi tạo * (>= 6 ký tự)</label>
+                        <input type="password" id="staff-new-password" placeholder="Tối thiểu 6 ký tự" required minlength="6" style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8;">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Email đăng nhập</label>
-                    <input type="email" id="staff-new-email" placeholder="nhanvien@tiemnhagom.com" required>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Vai trò nhân viên</label>
+                    <select id="staff-new-role" style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8; width: 100%; max-width: 320px;" onchange="window.onStaffRolePresetChange(this.value, '#create-staff-form')">
+                        <option value="staff" selected>Nhân viên bán hàng / Thu ngân (Staff)</option>
+                        <option value="manager">Quản lý cửa hàng (Manager)</option>
+                        <option value="super_admin">Quản trị tối cao (Super Admin - Toàn quyền)</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label>Mật khẩu tạm thời</label>
-                    <input type="password" id="staff-new-password" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+
+                <!-- 2. Bảng chọn Phân quyền Chức năng -->
+                <div style="border-top: 1px solid #E8E1D8; padding-top: 14px; margin-top: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <strong style="font-size: 0.95rem; color: #2B2928;">📋 Phân quyền các tính năng được phép truy cập:</strong>
+                        <div class="perm-quick-actions" style="margin: 0; padding: 4px 8px;">
+                            <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#create-staff-form', true)">Chọn tất cả</button>
+                            <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#create-staff-form', false)">Bỏ chọn hết</button>
+                            <button type="button" class="perm-quick-btn" onclick="window.onStaffRolePresetChange('staff', '#create-staff-form')">Gợi ý: Thu ngân</button>
+                            <button type="button" class="perm-quick-btn" onclick="window.onStaffRolePresetChange('manager', '#create-staff-form')">Gợi ý: Quản lý</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 14px;">
+                        ${permsChecklistHtml}
+                    </div>
                 </div>
-                <button type="submit" class="btn-dark" style="width: 100%; margin-top: 1rem;">Khởi tạo tài khoản</button>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #E8E1D8; padding-top: 16px;">
+                    <button type="button" class="kiot-btn-outline" onclick="document.getElementById('create-staff-modal').classList.remove('active')">Hủy bỏ</button>
+                    <button type="submit" class="kiot-btn-primary" id="btn-submit-create-staff">
+                        <span>Khởi tạo tài khoản & Cấp quyền</span>
+                    </button>
+                </div>
             </form>
         </div>
     `;
+
     modal.classList.add('active');
+
+    // Áp dụng quyền mặc định theo vai trò ban đầu
+    window.onStaffRolePresetChange('staff', '#create-staff-form');
 
     document.getElementById('create-staff-form').onsubmit = async (e) => {
         e.preventDefault();
         const name = document.getElementById('staff-new-name').value.trim();
+        const phone = document.getElementById('staff-new-phone')?.value.trim() || '';
         const email = document.getElementById('staff-new-email').value.trim();
         const password = document.getElementById('staff-new-password').value;
-        const btn = e.target.querySelector('button');
+        const role = document.getElementById('staff-new-role').value;
+        const submitBtn = document.getElementById('btn-submit-create-staff');
+
+        const selectedPerms = Array.from(e.target.querySelectorAll('input[name="staff_perm"]:checked')).map(cb => cb.value);
+
+        if (role !== 'super_admin' && selectedPerms.length === 0) {
+            showToast("Vui lòng chọn ít nhất 1 chức năng cho nhân viên!", "error");
+            return;
+        }
 
         try {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-small"></span> Đang tạo...';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>⏳ Đang tạo tài khoản...</span>';
 
-            // Sử dụng Firebase App phụ để tạo user mà không làm Admin hiện tại bị logout
-            const secondaryApp = initializeApp(auth.app.options, "Secondary");
-            const secondaryAuth = auth.app.options ? onAuthStateChanged(auth, () => { }) : null; // Dùng Auth của instance mới
-            // (Lưu ý: createUserWithEmailAndPassword yêu cầu auth instance)
-            const { getAuth } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
+            // Khởi tạo Firebase App phụ độc lập để không làm gián đoạn phiên Admin hiện tại
+            const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
+            const secondaryApp = initializeApp(auth.app.options, "Secondary_" + Date.now());
+            const { getAuth, createUserWithEmailAndPassword, signOut: secondarySignOut } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
             const tempAuth = getAuth(secondaryApp);
 
             const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
             const newUid = userCredential.user.uid;
 
-            // Tạo bản ghi User và Admin đồng thời
+            // 1. Lưu bản ghi người dùng vào users
             await setDoc(doc(db, "users", newUid), {
                 displayName: name,
                 email: email,
+                phone: phone,
                 createdAt: serverTimestamp(),
-                isGhost: false
+                isGhost: false,
+                role: role
             });
 
+            // 2. Lưu quyền truy cập vào admins
+            const finalPermissions = role === 'super_admin' ? ALL_SECTIONS.map(s => s.id) : selectedPerms;
             await setDoc(doc(db, "admins", newUid), {
                 email: email,
-                role: 'staff',
-                permissions: ROLE_PERMISSIONS['staff'],
+                displayName: name,
+                phone: phone,
+                role: role,
+                permissions: finalPermissions,
+                isLocked: false,
                 assignedAt: serverTimestamp(),
-                isLocked: false
+                assignedBy: auth.currentUser?.uid || 'admin'
             });
 
-            showToast("Đã tạo tài khoản nhân viên thành công!");
+            // Giải phóng app phụ
+            try {
+                await secondarySignOut(tempAuth);
+                await deleteApp(secondaryApp);
+            } catch (ignore) {}
+
+            showToast("Đã khởi tạo tài khoản nhân viên thành công!");
             modal.classList.remove('active');
-            // Xóa instance phụ để giải phóng bộ nhớ
-            const { deleteApp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
-            await deleteApp(secondaryApp);
         } catch (err) {
-            showToast("Lỗi: " + err.message, "error");
-            btn.disabled = false;
-            btn.innerText = "Khởi tạo tài khoản";
+            console.error("Lỗi tạo tài khoản nhân viên:", err);
+            let msg = err.message;
+            if (err.code === 'auth/email-already-in-use') {
+                msg = "Email này đã được sử dụng trong hệ thống.";
+            } else if (err.code === 'auth/weak-password') {
+                msg = "Mật khẩu quá ngắn. Vui lòng đặt tối thiểu 6 ký tự.";
+            }
+            showToast("Lỗi: " + msg, "error");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Khởi tạo tài khoản & Cấp quyền</span>';
         }
     };
 };
 
-// Hàm mở Modal cấu hình quyền chi tiết cho từng nhân viên
-window.editAdminPermissions = async (uid, email) => {
+// Modal Cấu hình Phân quyền Chi tiết cho từng nhân viên
+window.editAdminPermissions = async (uid, email, currentName = '') => {
     try {
         const adminSnap = await getDoc(doc(db, "admins", uid));
-        if (!adminSnap.exists()) return;
+        if (!adminSnap.exists()) return showToast("Không tìm thấy dữ liệu nhân viên", "error");
 
         const adminData = adminSnap.data();
+        const currentRole = adminData.role || 'staff';
         const userPerms = adminData.permissions || [];
 
         let modal = document.getElementById('permissions-modal');
@@ -10395,36 +10776,129 @@ window.editAdminPermissions = async (uid, email) => {
             document.body.appendChild(modal);
         }
 
+        const permsChecklistHtml = PERMISSION_GROUPS.map(group => `
+            <div class="perm-group-card">
+                <div class="perm-group-header">
+                    <span>${group.title}</span>
+                    <button type="button" class="btn-minimal" style="font-size: 0.7rem; padding: 2px 8px; border: none; color: #9C7156;" 
+                        onclick="window.toggleGroupCheckboxes(this, true)">Chọn nhóm</button>
+                </div>
+                <div class="perm-group-grid">
+                    ${group.items.map(item => `
+                        <label class="perm-checkbox-item">
+                            <input type="checkbox" name="edit_staff_perm" value="${item.id}" ${userPerms.includes(item.id) || currentRole === 'super_admin' ? 'checked' : ''}>
+                            <span>${item.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
         modal.innerHTML = `
-            <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-content staff-perm-modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
-                <h3>Cấu hình chức năng</h3>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Tài khoản: <strong>${email}</strong></p>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <span style="font-size: 1.4rem;">⚙️</span>
+                    <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2B2928;">Cấu hình phân quyền nhân viên</h3>
+                </div>
+                <p style="font-size: 0.85rem; color: #6E665D; margin-bottom: 1.2rem;">
+                    Nhân viên: <strong style="color: #2B2928;">${currentName || adminData.displayName || email}</strong> (${email})
+                </p>
+
                 <form id="perms-edit-form">
-                    <div style="display: grid; gap: 12px; margin-bottom: 2rem;">
-                        ${ALL_SECTIONS.map(s => `
-                            <label class="checkbox-container" style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 0;">
-                                <input type="checkbox" name="perm" value="${s.id}" ${userPerms.includes(s.id) ? 'checked' : ''}>
-                                <span class="checkmark" style="position: static; flex-shrink: 0;"></span>
-                                <span style="font-size: 0.95rem;">${s.label}</span>
-                            </label>
-                        `).join('')}
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #2B2928;">Vai trò hiện tại</label>
+                        <select id="edit-staff-role" style="height: 44px; border-radius: 22px; padding: 0 16px; border: 1.2px solid #E8E1D8; width: 100%; max-width: 320px;" onchange="window.onStaffRolePresetChange(this.value, '#perms-edit-form', 'edit_staff_perm')">
+                            <option value="staff" ${currentRole === 'staff' ? 'selected' : ''}>Nhân viên bán hàng (Staff)</option>
+                            <option value="manager" ${currentRole === 'manager' ? 'selected' : ''}>Quản lý cửa hàng (Manager)</option>
+                            <option value="super_admin" ${currentRole === 'super_admin' ? 'selected' : ''}>Quản trị tối cao (Super Admin)</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn-dark" style="width: 100%;">Cập nhật quyền hạn</button>
+
+                    <div style="border-top: 1px solid #E8E1D8; padding-top: 14px; margin-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <strong style="font-size: 0.95rem; color: #2B2928;">📋 Chọn các phân hệ được phép truy cập:</strong>
+                            <div class="perm-quick-actions" style="margin: 0; padding: 4px 8px;">
+                                <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#perms-edit-form', true, 'edit_staff_perm')">Chọn tất cả</button>
+                                <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#perms-edit-form', false, 'edit_staff_perm')">Bỏ chọn hết</button>
+                                <button type="button" class="perm-quick-btn" onclick="window.onStaffRolePresetChange('staff', '#perms-edit-form', 'edit_staff_perm')">Gợi ý: Thu ngân</button>
+                                <button type="button" class="perm-quick-btn" onclick="window.onStaffRolePresetChange('manager', '#perms-edit-form', 'edit_staff_perm')">Gợi ý: Quản lý</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px;">
+                            ${permsChecklistHtml}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #E8E1D8; padding-top: 16px;">
+                        <button type="button" class="kiot-btn-outline" onclick="document.getElementById('permissions-modal').classList.remove('active')">Hủy bỏ</button>
+                        <button type="submit" class="kiot-btn-primary" id="btn-submit-edit-perms">
+                            <span>Cập nhật quyền hạn</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         `;
+
         modal.classList.add('active');
 
         document.getElementById('perms-edit-form').onsubmit = async (e) => {
             e.preventDefault();
-            const selected = Array.from(e.target.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
-            await updateDoc(doc(db, "admins", uid), { permissions: selected });
-            showToast("Đã cập nhật quyền hạn nhân viên");
-            modal.classList.remove('active');
+            const selectedRole = document.getElementById('edit-staff-role').value;
+            const selected = Array.from(e.target.querySelectorAll('input[name="edit_staff_perm"]:checked')).map(cb => cb.value);
+
+            if (selectedRole !== 'super_admin' && selected.length === 0) {
+                showToast("Vui lòng chọn ít nhất 1 quyền truy cập!", "error");
+                return;
+            }
+
+            const finalPerms = selectedRole === 'super_admin' ? ALL_SECTIONS.map(s => s.id) : selected;
+
+            try {
+                await updateDoc(doc(db, "admins", uid), {
+                    role: selectedRole,
+                    permissions: finalPerms,
+                    updatedAt: serverTimestamp()
+                });
+                showToast("Đã cập nhật quyền hạn nhân viên thành công!");
+                modal.classList.remove('active');
+            } catch (err) {
+                showToast("Lỗi cập nhật quyền: " + err.message, "error");
+            }
         };
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Lỗi đọc cấu hình quyền:", e);
+        showToast("Lỗi: " + e.message, "error");
+    }
 };
+
+// Hàm tiện ích chọn/bỏ chọn checkbox
+window.setAllStaffPerms = (formSelector, checkAll, inputName = 'staff_perm') => {
+    const form = document.querySelector(formSelector);
+    if (!form) return;
+    form.querySelectorAll(`input[name="${inputName}"]`).forEach(cb => {
+        cb.checked = checkAll;
+    });
+};
+
+window.onStaffRolePresetChange = (role, formSelector, inputName = 'staff_perm') => {
+    const form = document.querySelector(formSelector);
+    if (!form) return;
+    const defaultPerms = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['staff'];
+    form.querySelectorAll(`input[name="${inputName}"]`).forEach(cb => {
+        cb.checked = role === 'super_admin' ? true : defaultPerms.includes(cb.value);
+    });
+};
+
+window.toggleGroupCheckboxes = (btn, checkAll) => {
+    const groupCard = btn.closest('.perm-group-card');
+    if (!groupCard) return;
+    const inputs = groupCard.querySelectorAll('input[type="checkbox"]');
+    const allChecked = Array.from(inputs).every(i => i.checked);
+    inputs.forEach(i => i.checked = !allChecked);
+};
+
 
 let editingCouponCode = null;
 
@@ -14085,27 +14559,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Thay thế initHeader bằng logic Auth riêng cho Admin Dashboard
+    // Logic Auth & Data Initialization riêng cho Admin Dashboard (Không dùng Google)
+    let isDataListenersInitialized = false;
     onAuthStateChanged(auth, async (user) => {
         await checkAdminRights(user);
-        if (document.body.style.display === "block") {
-            // Nạp settings Flash Sale trước khi init các thành phần khác
-            await fetchFlashSaleSettings();
-            initProductListener();
-            initOrderListener();
-            initUserListener();
-            initCouponListener();
-            initOverview();
-            initCategoryManagement(); // Call initCategoryManagement here to ensure initial render
-            setupNewOrderNotification();
-            initUserOrderCountListener();
-            initUnprocessedOrderBadge();
-            populateCategorySelect();
+        const adminWrapper = document.getElementById('admin-wrapper');
+        if (user && adminWrapper && adminWrapper.style.display !== "none") {
+            if (!isDataListenersInitialized) {
+                isDataListenersInitialized = true;
+                // Nạp settings Flash Sale trước khi init các thành phần khác
+                await fetchFlashSaleSettings();
+                initProductListener();
+                initOrderListener();
+                initUserListener();
+                initAdminAccountListener();
+                initCouponListener();
+                initOverview();
+                initCategoryManagement();
+                setupNewOrderNotification();
+                initUserOrderCountListener();
+                initUnprocessedOrderBadge();
+                populateCategorySelect();
+            }
+        } else {
+            isDataListenersInitialized = false;
         }
     });
 
-    document.getElementById('btn-logout-admin')?.addEventListener('click', () => {
-        logout().then(() => window.location.href = "../index.html");
+    document.getElementById('btn-logout-admin')?.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+        } catch (e) {
+            console.error("Lỗi đăng xuất:", e);
+        }
+        isDataListenersInitialized = false;
+        showAdminLoginScreen();
     });
 
     // Cập nhật đồng hồ trên Header Content

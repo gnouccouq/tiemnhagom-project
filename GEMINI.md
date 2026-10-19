@@ -189,4 +189,31 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
     * Gốm Mộc / Gốm Nung / Gốm Men / Gốm Độc Bản: Đồng bộ tên hạng hội viên ở mọi ngôn ngữ
     * Voucher / Kho quà: Vouchers & Rewards / 优惠券与礼品
 
+---
+
+## 10. Quy chuẩn Hiển thị Số, Giá Tiền & Typography Dữ Liệu (Numbers & Data Typography)
+* **Tuyệt đối không dùng font máy đánh chữ / monospace (`SpaceMono`) cho số liệu:**
+  * Không dùng `fontFamily: 'SpaceMono'` cho giá tiền, mã đơn hàng, số lượng tồn kho, chỉ số KPI doanh thu, điểm tích lũy hay bàn phím nhập PIN. Monospace làm con số bị kéo giãn thô ráp, lệch hàng và khó quan sát nhanh trong môi trường bán hàng.
+* **Quy chuẩn Font Hệ Thống Hiện Đại (System Sans-Serif):**
+  * Sử dụng typography chuẩn của hệ điều hành (San Francisco / SF Pro trên iOS, Roboto trên Android):
+    * Trên iOS: Không đặt `fontFamily` (hoặc để `undefined`), React Native sẽ tự động áp dụng San Francisco chuẩn mực của Apple với đường nét tròn trịa, hiện đại và thanh thoát.
+    * Trên Android: Dùng `fontFamily: 'sans-serif'`.
+* **Độ đậm & Khoảng cách ký tự chuẩn:**
+  * **Giá tiền & Tổng thanh toán (`productPrice`, `totalValue`):** Cỡ chữ `14px - 19px`, `fontWeight: '700'`, màu gốm mộc `#9C7156`.
+  * **Chỉ số KPI & Thống kê doanh thu:** Cỡ chữ `20px - 26px`, `fontWeight: '700'`, màu `#2B2928` (hoặc `#F5F5F5` ở Dark Mode).
+  * **Mã đơn hàng & Mã coupon (`orderCode`, `codeTag`):** `fontWeight: '600' - '700'`, bổ sung `letterSpacing: 0.3 - 0.5` để phân tách rõ ràng các ký tự và chữ số.
+  * **Bàn phím nhập PIN quầy POS (`keyNumber`):** Cỡ chữ `26px`, `fontWeight: '500'` mô phỏng chính xác bàn phím số Apple Passcode cao cấp.
+
+---
+
+## 11. Quy chuẩn Hệ Thống Quản Trị & Ứng Dụng Bán Lẻ (Admin & Retail Architecture)
+* **Cơ chế xác thực tài khoản quản trị nội bộ:**
+  * Web Dashboard và App Retail vận hành hệ thống tài khoản nội bộ độc lập (Email/Mật khẩu), không sử dụng Google Login cho quản trị.
+  * Dữ liệu tài khoản quản trị viên và nhân viên được lưu tập trung tại Firestore collection `admins/{uid}` với các trường phân quyền: `role` (`super_admin`, `admin`, `cashier`, `warehouse`, `decor_staff`), `permissions: string[]`, `active: boolean`.
+* **Tuyệt đối không lưu mật khẩu hay tài khoản quản trị tối cao vào mã nguồn:**
+  * Không hardcode email/mật khẩu trong code git. Mọi tài khoản quản trị viên tối cao được khởi tạo an toàn qua Firebase Auth & Firestore Rules.
+* **Thanh điều hướng App Retail (Native Liquid Glass TabBar):**
+  * Áp dụng `NativeTabs` từ `expo-router/unstable-native-tabs` trên iOS để tận dụng thanh `UITabBarController` gốc của Apple với hiệu ứng Liquid Glass và bộ biểu tượng Apple SF Symbols (`chart.pie`, `doc.text`, `cart`, `cube.box`, `square.grid.2x2`), màu nhấn thương hiệu `tintColor="#9C7156"`.
+
+
 

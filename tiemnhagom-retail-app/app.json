@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Tiệm Nhà Gốm Retail",
+    "slug": "tiemnhagom-retail",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/app-icon/app-icon-light.png",
+    "scheme": "tiemnhagom-retail",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#9C7156",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.tiemnhagom.retail",
+      "buildNumber": "1",
+      "icon": {
+        "light": "./assets/app-icon/app-icon-light.png",
+        "dark": "./assets/app-icon/app-icon-dark.png",
+        "tinted": "./assets/app-icon/app-icon-dark.png"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ứng dụng cần quyền camera để quét mã vạch sản phẩm tại quầy và chụp ảnh sản phẩm mới.",
+        "NSPhotoLibraryUsageDescription": "Ứng dụng cần quyền thư viện ảnh để tải lên ảnh sản phẩm.",
+        "NSFaceIDUsageDescription": "Ứng dụng sử dụng Face ID để mở khóa nhanh ca trực thu ngân.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "vn.tiemnhagom.retail",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#9C7156",
+        "foregroundImage": "./assets/app-icon/app-icon-light.png"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/LOGO.jpg"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/LOGO_2_PNG.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#9C7156"
+        }
+      ],
+      "expo-image",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Ứng dụng cần quyền sử dụng Face ID để mở khóa nhanh ca trực thu ngân."
+        }
+      ],
+      "react-native-liquid-glassmorphism",
+      "react-native-bottom-tabs"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

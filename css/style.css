@@ -13577,3 +13577,305 @@ input:checked + .slider:before {
     transform: translateX(-50%) translateY(0);
 }
 
+/* ==========================================================================
+   TIỆM NHÀ GỐM - DEDICATED ADMIN & STAFF AUTHENTICATION SYSTEM (NO GOOGLE)
+   ========================================================================== */
+.admin-login-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F6F4EC;
+    background: radial-gradient(circle at 50% 20%, #FAF8F5 0%, #F4EFE6 60%, #EAE3D6 100%);
+    z-index: 99999;
+    overflow-y: auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+}
+
+.admin-login-card {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 24px;
+    border: 1px solid #E8E1D8;
+    box-shadow: 0 20px 48px rgba(156, 113, 86, 0.12), 0 4px 16px rgba(43, 41, 40, 0.05);
+    padding: 38px 32px 32px 32px;
+    box-sizing: border-box;
+    position: relative;
+    animation: adminCardSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes adminCardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.admin-login-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.admin-login-logo {
+    max-width: 170px;
+    height: auto;
+    margin-bottom: 14px;
+    display: inline-block;
+}
+
+.admin-login-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(156, 113, 86, 0.12);
+    color: #9C7156;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+}
+
+.admin-login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 23px;
+    font-weight: 700;
+    color: #2B2928;
+    margin: 0 0 6px 0;
+}
+
+.admin-login-desc {
+    font-size: 13px;
+    color: #6E665D;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.admin-login-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #DC2626;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.admin-input-group {
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.admin-input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2B2928;
+    margin-bottom: 7px;
+}
+
+.admin-input-pill {
+    height: 52px;
+    border-radius: 26px;
+    border: 1.2px solid #E8E1D8;
+    background: #FAF8F5;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.admin-input-pill:focus-within {
+    border-color: #9C7156;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.14);
+}
+
+.admin-input-icon {
+    font-size: 16px;
+    color: #9E968D;
+    flex-shrink: 0;
+}
+
+.admin-input-pill input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14.5px;
+    color: #2B2928;
+    width: 100%;
+}
+
+.admin-input-pill input::placeholder {
+    color: #A8A29E;
+}
+
+.btn-toggle-pw {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #6E665D;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s ease;
+}
+
+.btn-toggle-pw:hover {
+    opacity: 0.7;
+}
+
+.btn-admin-login-primary {
+    width: 100%;
+    height: 52px;
+    border-radius: 26px;
+    background: #9C7156;
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    box-shadow: 0 4px 12px rgba(156, 113, 86, 0.35);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-admin-login-primary:hover:not(:disabled) {
+    background: #845c43;
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px rgba(156, 113, 86, 0.4);
+}
+
+.btn-admin-login-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-admin-login-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.admin-login-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 11.5px;
+    color: #8C8278;
+    line-height: 1.5;
+    padding-top: 16px;
+    border-top: 1px solid #F0ECE6;
+}
+
+/* Modal Phân Quyền & Tạo Nhân Viên Nâng Cao */
+.staff-perm-modal-content {
+    max-width: 780px !important;
+    width: 95% !important;
+    border-radius: 20px !important;
+    padding: 28px 32px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+.perm-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 20px 0;
+    padding: 12px 14px;
+    background: #FAF7F2;
+    border: 1px solid #E8E1D8;
+    border-radius: 12px;
+}
+
+.perm-quick-btn {
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #D9CFC4;
+    background: #FFFFFF;
+    color: #2B2928;
+    transition: all 0.15s ease;
+}
+
+.perm-quick-btn:hover {
+    background: #9C7156;
+    color: #FFFFFF;
+    border-color: #9C7156;
+}
+
+.perm-group-card {
+    background: #FFFFFF;
+    border: 1px solid #E8E1D8;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.perm-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #2B2928;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #E8E1D8;
+}
+
+.perm-group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px 12px;
+}
+
+.perm-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333333;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.perm-checkbox-item:hover {
+    background: #FAF7F2;
+}
+
+.perm-checkbox-item input[type="checkbox"] {
+    accent-color: #9C7156;
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+}
+

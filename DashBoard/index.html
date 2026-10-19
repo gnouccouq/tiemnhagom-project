@@ -25,10 +25,56 @@
 <body class="admin-dashboard-layout" style="display: none;">
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Màn hình Đăng nhập Quản trị & Nhân viên Nội bộ (Không dùng Google) -->
+    <div id="admin-login-screen" class="admin-login-screen" style="display: none;">
+        <div class="admin-login-card">
+            <div class="admin-login-header">
+                <img src="../Asset/images/logo.webp" alt="Tiệm Nhà Gốm" class="admin-login-logo">
+                <br>
+                <div class="admin-login-badge">
+                    <span>🛡️</span>
+                    <span>HỆ THỐNG QUẢN TRỊ NỘI BỘ</span>
+                </div>
+                <h2 class="admin-login-title">Đăng nhập Quản trị</h2>
+                <p class="admin-login-desc">Dành riêng cho Ban quản trị & Nhân viên Tiệm Nhà Gốm</p>
+            </div>
+
+            <div id="admin-login-error" class="admin-login-alert" style="display: none;"></div>
+
+            <form id="admin-login-form" autocomplete="on">
+                <div class="admin-input-group">
+                    <label for="admin-input-email">Tài khoản Email nội bộ</label>
+                    <div class="admin-input-pill">
+                        <span class="admin-input-icon">✉️</span>
+                        <input type="email" id="admin-input-email" required placeholder="admin@tiemnhagom.vn" autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="admin-input-group">
+                    <label for="admin-input-password">Mật khẩu</label>
+                    <div class="admin-input-pill">
+                        <span class="admin-input-icon">🔒</span>
+                        <input type="password" id="admin-input-password" required placeholder="••••••••" autocomplete="current-password">
+                        <button type="button" id="btn-toggle-admin-pw" class="btn-toggle-pw" title="Hiện/ẩn mật khẩu">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit-admin-login" class="btn-admin-login-primary">
+                    <span>Đăng nhập hệ thống</span>
+                    <span>➔</span>
+                </button>
+            </form>
+
+            <div class="admin-login-footer">
+                <span>🔒 Kết nối mã hóa bảo mật nội bộ. Nghiêm cấm mọi hành vi truy cập trái phép.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Lớp phủ cho Sidebar trên Mobile -->
     <div id="admin-sidebar-overlay" class="admin-sidebar-overlay"></div>
 
-    <div class="admin-wrapper">
+    <div class="admin-wrapper" id="admin-wrapper" style="display: none;">
         <!-- Official KiotViet 2-Tier Header (Matching Image 1) -->
         <header class="kiot-header-wrapper">
             <!-- Tier 1: Top White Bar -->
@@ -2733,32 +2779,52 @@
                     <!-- 1. Bộ Lọc Bên Trái (Left Filter Sidebar) -->
                     <div class="kiot-filter-sidebar">
                         <div class="filter-header">
-                            <h3 class="filter-title">Nhân viên</h3>
+                            <h3 class="filter-title">Nhân sự nội bộ</h3>
                         </div>
 
                         <div class="filter-group">
                             <label class="filter-label">Vai trò quản trị</label>
                             <select id="staff-role-filter" class="kiot-filter-select" onchange="if(typeof window.filterStaffByRole==='function') window.filterStaffByRole(this.value)">
                                 <option value="all">Tất cả vai trò</option>
-                                <option value="admin">Quản trị viên (Admin)</option>
-                                <option value="staff">Nhân viên bán hàng / POS</option>
+                                <option value="super_admin">Quản trị tối cao (Super Admin)</option>
+                                <option value="manager">Quản lý cửa hàng (Manager)</option>
+                                <option value="staff">Nhân viên bán hàng (Staff)</option>
                             </select>
                         </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái tài khoản</label>
+                            <select id="staff-status-filter" class="kiot-filter-select" onchange="if(typeof window.filterStaffByStatus==='function') window.filterStaffByStatus(this.value)">
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="active">Đang hoạt động</option>
+                                <option value="locked">Đã khóa</option>
+                            </select>
+                        </div>
+
+                        <button type="button" class="kiot-btn-primary" style="width: 100%; margin-top: 14px; justify-content: center;" onclick="window.showCreateStaffModal()">
+                            <span>+ Thêm nhân viên</span>
+                        </button>
                     </div>
 
                     <!-- 2. Danh Sách Nhân Viên Bên Phải (Right Main Area) -->
                     <div class="kiot-product-main">
                         <!-- Top Toolbar -->
-                        <div class="kiot-table-toolbar">
-                            <div class="search-box-wrapper">
+                        <div class="kiot-table-toolbar" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <div class="search-box-wrapper" style="flex: 1; max-width: 420px;">
                                 <span class="search-icon">🔍</span>
-                                <input type="text" placeholder="Tìm kiếm tài khoản, tên nhân viên, email..." onkeyup="if(typeof window.searchStaffAdmin==='function') window.searchStaffAdmin(this.value)">
+                                <input type="text" id="staff-search-input" placeholder="Tìm kiếm tài khoản, tên nhân viên, email..." onkeyup="if(typeof window.searchStaffAdmin==='function') window.searchStaffAdmin(this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="kiot-btn-primary" id="btn-open-create-staff-modal" onclick="window.showCreateStaffModal()">
+                                    <span>+ Thêm nhân viên mới</span>
+                                </button>
                             </div>
                         </div>
 
                         <!-- Summary Banner -->
-                        <div style="padding: 8px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 0.85rem; color: #166534; margin-bottom: 10px;">
-                            👥 Danh sách các tài khoản nhân viên và ban quản trị có quyền truy cập hệ thống
+                        <div style="padding: 10px 16px; background: #FAF7F2; border: 1px solid #E8E1D8; border-radius: 8px; font-size: 0.86rem; color: #6E665D; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.1rem;">👥</span>
+                            <span>Hệ thống phân quyền truy cập tính năng nội bộ độc lập. Tài khoản nhân viên do Ban quản trị cấp trực tiếp, không sử dụng đăng nhập Google.</span>
                         </div>
 
                         <!-- Table Scroll Container -->
@@ -2766,11 +2832,12 @@
                             <table class="kiot-product-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 180px;">Thông tin</th>
-                                        <th style="width: 120px;">Vai trò</th>
-                                        <th style="width: 220px;">Quyền hạn</th>
-                                        <th style="width: 100px; text-align: center;">Trạng thái</th>
-                                        <th style="width: 100px; text-align: center;">Thao tác</th>
+                                        <th style="width: 200px;">Nhân viên</th>
+                                        <th style="width: 180px;">Tài khoản / Email</th>
+                                        <th style="width: 140px;">Vai trò</th>
+                                        <th style="width: 200px;">Phân quyền chức năng</th>
+                                        <th style="width: 110px; text-align: center;">Trạng thái</th>
+                                        <th style="width: 160px; text-align: right;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-staff-list">
