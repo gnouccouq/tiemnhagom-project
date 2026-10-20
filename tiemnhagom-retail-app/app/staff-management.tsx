@@ -205,16 +205,16 @@ export default function StaffManagementScreen() {
         {/* KPI Metrics Summary */}
         <View style={styles.metricsRow}>
           <View style={[styles.metricCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
-            <Text style={[styles.metricNumber, { color: Colors.textPrimary }]}>{totalStaff}</Text>
-            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]}>Tổng nhân sự</Text>
+            <Text style={[styles.metricNumber, { color: Colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{totalStaff}</Text>
+            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Tổng nhân sự</Text>
           </View>
           <View style={[styles.metricCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
-            <Text style={[styles.metricNumber, { color: '#9C7156' }]}>{activeStaff}</Text>
-            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]}>Đang hoạt động</Text>
+            <Text style={[styles.metricNumber, { color: '#9C7156' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{activeStaff}</Text>
+            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Đang hoạt động</Text>
           </View>
           <View style={[styles.metricCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
-            <Text style={[styles.metricNumber, { color: '#DC2626' }]}>{lockedStaff}</Text>
-            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]}>Đã khóa</Text>
+            <Text style={[styles.metricNumber, { color: '#DC2626' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{lockedStaff}</Text>
+            <Text style={[styles.metricLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Đã khóa</Text>
           </View>
         </View>
 
@@ -261,6 +261,7 @@ export default function StaffManagementScreen() {
                     styles.filterChipText,
                     { color: isSelected ? '#FFFFFF' : Colors.textPrimary },
                   ]}
+                  numberOfLines={1}
                 >
                   {chip.label}
                 </Text>
@@ -306,16 +307,16 @@ export default function StaffManagementScreen() {
 
                   <View style={styles.staffInfo}>
                     <View style={styles.staffNameRow}>
-                      <Text style={[styles.staffName, { color: Colors.textPrimary }]}>
+                      <Text style={[styles.staffName, { color: Colors.textPrimary }]} numberOfLines={1}>
                         {staff.displayName}
                       </Text>
                       {isSelf ? <Text style={styles.selfTag}>(Bạn)</Text> : null}
                     </View>
-                    <Text style={[styles.staffEmail, { color: Colors.textSecondary }]}>
+                    <Text style={[styles.staffEmail, { color: Colors.textSecondary }]} numberOfLines={1}>
                       {staff.email}
                     </Text>
                     {staff.phone ? (
-                      <Text style={[styles.staffPhone, { color: Colors.textMuted }]}>
+                      <Text style={[styles.staffPhone, { color: Colors.textMuted }]} numberOfLines={1}>
                         📞 {staff.phone}
                       </Text>
                     ) : null}
@@ -336,6 +337,7 @@ export default function StaffManagementScreen() {
                         styles.statusBadgeText,
                         { color: staff.isLocked ? '#DC2626' : '#9C7156' },
                       ]}
+                      numberOfLines={1}
                     >
                       {staff.isLocked ? 'Đã khóa' : 'Hoạt động'}
                     </Text>
@@ -445,9 +447,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 4,
+    overflow: 'hidden',
   },
   metricNumber: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 2,
@@ -510,6 +512,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
+    overflow: 'hidden',
   },
   staffCardHeader: {
     flexDirection: 'row',

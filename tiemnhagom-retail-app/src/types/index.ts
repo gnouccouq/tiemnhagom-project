@@ -47,6 +47,8 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   source?: 'online' | 'pos' | 'app';
+  orderSource?: 'online' | 'pos' | 'app' | string;
+  cashierId?: string;
   staffId?: string;
   staffName?: string;
   notes?: string;
@@ -93,6 +95,13 @@ export interface ProductVariant {
   salePrice?: number;
   stock?: number;
   sku?: string;
+  code?: string;
+  cost?: number;
+  color?: string;
+  pattern?: string;
+  discountPercent?: number;
+  isOutOfStock?: boolean;
+  independent?: boolean;
   imageUrl?: string;
 }
 
@@ -100,23 +109,68 @@ export interface Product {
   id: string;
   name: string;
   code?: string;
+  barcode?: string;
+  cost?: number;
   price: number;
   sale?: number;
   salePrice?: number;
+  rentalPrice?: number;
   stock: number;
+  stockMin?: number;
+  stockMax?: number;
   category: string;
   subCategory?: string;
   collections?: string[];
+  events?: string[];
   images?: string[];
   imageUrl?: string;
+  hoverImageUrl?: string;
   description?: string;
   variants?: ProductVariant[];
+  productType?: 'normal' | 'combo';
+  comboVariants?: any[];
+  dimLength?: number;
+  dimWidth?: number;
+  dimHeight?: number;
+  weight?: number;
+  capacity?: number;
+  material?: string;
+  origin?: string;
+  dishwasherSafe?: boolean;
+  microwaveSafe?: boolean;
+  foodSafe?: boolean;
+  ovenSafe?: boolean;
+  flashSaleGroupId?: string;
   isHidden?: boolean;
   isOnlyEvent?: boolean;
   sold?: number;
   views?: number;
   createdAt?: any;
   updatedAt?: any;
+}
+
+export interface InventoryLog {
+  id: string;
+  productId: string;
+  productName: string;
+  previousStock: number;
+  newStock: number;
+  diff: number;
+  reason: string;
+  staffName: string;
+  createdAt: any;
+}
+
+export interface RestockAlert {
+  id: string;
+  productId: string;
+  productName: string;
+  productImage?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerName?: string;
+  status: 'pending' | 'notified' | 'cancelled';
+  createdAt: any;
 }
 
 export interface Category {
@@ -168,6 +222,14 @@ export interface POSCartItem {
   note?: string;
 }
 
+export interface FlashSaleProductConfig {
+  dealType?: 'sale' | 'bogo_same' | 'bogo_custom';
+  salePrice?: number;
+  giftProductId?: string;
+  limit?: number;
+  sold?: number;
+}
+
 export interface FlashSaleItem {
   id: string;
   name?: string;
@@ -180,10 +242,14 @@ export interface FlashSaleItem {
 
 export interface FlashSaleSettings {
   isActive: boolean;
-  startTime?: string;
-  endTime?: string;
+  title?: string;
+  subtitle?: string;
+  startTime?: any;
+  endTime?: any;
   bannerUrl?: string;
-  products: FlashSaleItem[];
+  priceGroups?: number[];
+  items?: Record<string, FlashSaleProductConfig>;
+  products?: FlashSaleItem[];
 }
 
 export interface ShiftReport {

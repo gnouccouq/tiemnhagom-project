@@ -69,7 +69,7 @@ export default function PushNotificationScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backCircleBtn}>
             <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>Gửi thông báo đẩy App</Text>
+          <Text style={[styles.headerTitle, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>Gửi thông báo đẩy App</Text>
         </View>
       </View>
 
@@ -217,6 +217,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   backCircleBtn: {
     width: 40,
@@ -227,6 +229,7 @@ const styles = StyleSheet.create({
     borderColor: '#E8E1D8',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     fontFamily: 'ElleGaborStd',
@@ -241,6 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',

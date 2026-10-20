@@ -93,7 +93,7 @@ export default function CouponScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backCircleBtn}>
             <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>Mã giảm giá (Coupons)</Text>
+          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]} numberOfLines={1}>Mã giảm giá (Coupons)</Text>
         </View>
 
         <ScalePressable style={styles.btnAddHeader} onPress={() => setShowAddModal(true)}>
@@ -120,7 +120,7 @@ export default function CouponScreen() {
             <View style={styles.couponTopRow}>
               <View style={styles.codeTag}>
                 <Ionicons name="pricetag" size={14} color="#9C7156" />
-                <Text style={styles.codeTagText}>{c.code}</Text>
+                <Text style={styles.codeTagText} numberOfLines={1}>{c.code}</Text>
               </View>
 
               <Switch
@@ -133,18 +133,18 @@ export default function CouponScreen() {
               />
             </View>
 
-            <Text style={[styles.couponValueText, { color: Colors.textPrimary }]}>
+            <Text style={[styles.couponValueText, { color: Colors.textPrimary }]} numberOfLines={1}>
               Giảm {c.type === 'percent' ? `${c.value}%` : formatCurrency(c.value)}
             </Text>
-            <Text style={[styles.couponMinOrder, { color: Colors.textSecondary }]}>
+            <Text style={[styles.couponMinOrder, { color: Colors.textSecondary }]} numberOfLines={1}>
               Đơn tối thiểu: {formatCurrency(c.minOrder)} • HSD: {c.expiryDate}
             </Text>
 
             <View style={[styles.cardDivider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
 
             <View style={styles.couponBottomRow}>
-              <Text style={[styles.usedCount, { color: Colors.textMuted }]}>Đã dùng: {c.usedCount || 0} lượt</Text>
-              <TouchableOpacity onPress={() => handleDelete(c)}>
+              <Text style={[styles.usedCount, { color: Colors.textMuted }]} numberOfLines={1}>Đã dùng: {c.usedCount || 0} lượt</Text>
+              <TouchableOpacity onPress={() => handleDelete(c)} style={{ flexShrink: 0 }}>
                 <Ionicons name="trash-outline" size={18} color="#DC2626" />
               </TouchableOpacity>
             </View>
@@ -229,6 +229,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   backCircleBtn: {
     width: 40,
@@ -239,11 +241,13 @@ const styles = StyleSheet.create({
     borderColor: '#E8E1D8',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
   },
   btnAddHeader: {
     flexDirection: 'row',
@@ -253,6 +257,7 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: 14,
     borderRadius: 19,
+    flexShrink: 0,
   },
   btnAddHeaderText: {
     fontFamily: 'ElleGaborStd',
@@ -272,6 +277,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 5,
+    overflow: 'hidden',
   },
   couponTopRow: {
     flexDirection: 'row',

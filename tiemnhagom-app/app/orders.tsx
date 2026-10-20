@@ -466,9 +466,12 @@ export default function OrdersScreen() {
   // Phân loại đơn theo 3 Tab chính (Đang diễn ra | Hoàn thành | Đã hủy)
   const filteredOrders = useMemo(() => {
     return allOrders.filter((order) => {
+      const code = (order.orderCode || order.orderId || order.id || '').toUpperCase();
+      const isPos = code.includes('POS') || order.source === 'pos';
       const s = (order.statusRaw || '').toLowerCase();
       const isCancelled = s.includes('hủy') || s.includes('cancel');
       const isCompleted =
+        isPos ||
         s.includes('hoàn') ||
         s.includes('complete') ||
         s.includes('giao thành công') ||

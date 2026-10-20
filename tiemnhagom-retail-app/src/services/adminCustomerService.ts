@@ -81,3 +81,44 @@ export async function adjustCustomerPoints(
     return false;
   }
 }
+
+export async function createCustomer(customerData: {
+  displayName: string;
+  phone: string;
+  email?: string;
+  address?: string;
+}): Promise<{ success: boolean; customer?: Customer; error?: string }> {
+  try {
+    const usersRef = collection(db, 'users');
+    const newDoc = await addDoc(usersRef, {
+      displayName: customerData.displayName.trim(),
+      phone: customerData.phone.trim(),
+      email: customerData.email?.trim() || '',
+      address: customerData.address?.trim() || '',
+      points: 0,
+      totalSpent: 0,
+      orderCount: 0,
+      tier: 'Gốm Mộc',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    const newCustomer: Customer = {
+      id: newDoc.id,
+      uid: newDoc.id,
+      displayName: customerData.displayName.trim(),
+      phone: customerData.phone.trim(),
+      email: customerData.email?.trim() || '',
+      address: customerData.address?.trim() || '',
+      points: 0,
+      totalSpent: 0,
+      orderCount: 0,
+      tier: 'Gốm Mộc',
+    };
+
+    return { success: true, customer: newCustomer };
+  } catch (err: any) {
+    console.error('Lỗi tạo khách hàng:', err);
+    return { success: false, error: err.message };
+  }
+}

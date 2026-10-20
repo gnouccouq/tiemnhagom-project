@@ -19,7 +19,7 @@ import { useThemeColor } from '../../src/constants/theme';
 import { usePOS } from '../../src/context/POSContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { subscribeProducts } from '../../src/services/adminProductService';
-import { subscribeCustomers } from '../../src/services/adminCustomerService';
+import { subscribeCustomers, createCustomer } from '../../src/services/adminCustomerService';
 import { Product, ProductVariant, Customer } from '../../src/types';
 import { formatCurrency } from '../../src/utils/format';
 import { ScalePressable } from '../../src/components/ScalePressable';
@@ -42,6 +42,9 @@ export default function POSScreen() {
     memberDiscountAmount,
     couponDiscountAmount,
     pointsDiscountAmount,
+    manualDiscountType,
+    manualDiscountValue,
+    manualDiscountAmount,
     totalAmount,
     paymentMethod,
     cashGiven,
@@ -52,6 +55,7 @@ export default function POSScreen() {
     clearCart,
     selectCustomer,
     setUsePoints,
+    setManualDiscount,
     setPaymentMethod,
     setCashGiven,
     generateVietQRUrl,
@@ -66,13 +70,24 @@ export default function POSScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProductForVariant, setSelectedProductForVariant] = useState<Product | null>(null);
 
-  // Modals
+  // Modals & form states
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const [custSearchQuery, setCustSearchQuery] = useState('');
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [successReceiptModalVisible, setSuccessReceiptModalVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Quick Customer Creation
+  const [showCreateCust, setShowCreateCust] = useState(false);
+  const [newCustName, setNewCustName] = useState('');
+  const [newCustPhone, setNewCustPhone] = useState('');
+  const [newCustAddress, setNewCustAddress] = useState('');
+  const [isCreatingCust, setIsCreatingCust] = useState(false);
+
+  // Checkout order notes & manual discount
+  const [orderNotes, setOrderNotes] = useState('');
+  const [discountValInput, setDiscountValInput] = useState('');
 
   useEffect(() => {
     const unsubProd = subscribeProducts((data) => setProducts(data.filter((p) => !p.isHidden)));
@@ -92,12 +107,16 @@ export default function POSScreen() {
     return ['all', ...Array.from(set)];
   }, [products]);
 
-  // Filter Products
+  // Filter Products (hỗ trợ tên, mã SKU, mã vạch Barcode)
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
       const q = searchQuery.trim().toLowerCase();
-      const matchQuery = !q || p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q));
+      const matchQuery =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        (p.code && p.code.toLowerCase().includes(q)) ||
+        (p.barcode && p.barcode.toLowerCase().includes(q));
       return matchCat && matchQuery;
     });
   }, [products, selectedCategory, searchQuery]);
@@ -110,6 +129,31 @@ export default function POSScreen() {
       (c) => c.displayName.toLowerCase().includes(q) || (c.phone && c.phone.includes(q))
     );
   }, [customers, custSearchQuery]);
+
+  const handleCreateCustomer = async () => {
+    if (!newCustName.trim() || !newCustPhone.trim()) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập Tên và Số điện thoại khách hàng.');
+      return;
+    }
+    setIsCreatingCust(true);
+    const res = await createCustomer({
+      displayName: newCustName,
+      phone: newCustPhone,
+      address: newCustAddress,
+    });
+    setIsCreatingCust(false);
+    if (res.success && res.customer) {
+      selectCustomer(res.customer);
+      setShowCreateCust(false);
+      setNewCustName('');
+      setNewCustPhone('');
+      setNewCustAddress('');
+      setCustomerModalVisible(false);
+      Alert.alert('Thành công', `Đã tạo khách hàng ${res.customer.displayName} và gắn vào đơn.`);
+    } else {
+      Alert.alert('Lỗi', res.error || 'Không thể tạo khách hàng.');
+    }
+  };
 
   const handleProductPress = (product: Product) => {
     if (product.variants && product.variants.length > 0) {
@@ -307,7 +351,14 @@ export default function POSScreen() {
                     {p.name}
                   </Text>
                   <View style={styles.productBottomRow}>
-                    <Text style={styles.productPrice}>{formatCurrency(p.salePrice || p.price)}</Text>
+                    <Text
+                      style={styles.productPrice}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.75}
+                    >
+                      {formatCurrency(p.salePrice || p.price)}
+                    </Text>
                     <View style={styles.btnAddQuick}>
                       <Ionicons name="add" size={17} color="#FFFFFF" />
                     </View>
@@ -330,14 +381,14 @@ export default function POSScreen() {
                   <Text style={styles.cartBadgeNumberText}>{cartTotalQuantity}</Text>
                 </View>
               </View>
-              <View>
-                <Text style={styles.cartTotalLabel}>Tạm tính ({cartTotalQuantity} món)</Text>
-                <Text style={styles.cartTotalValue}>{formatCurrency(totalAmount)}</Text>
+              <View style={{ flex: 1, marginRight: 6 }}>
+                <Text style={styles.cartTotalLabel} numberOfLines={1}>Tạm tính ({cartTotalQuantity} món)</Text>
+                <Text style={styles.cartTotalValue} numberOfLines={1}>{formatCurrency(totalAmount)}</Text>
               </View>
             </View>
 
             <ScalePressable style={styles.btnCheckoutPill} onPress={handleOpenCheckout}>
-              <Text style={styles.btnCheckoutPillText}>Thanh toán</Text>
+              <Text style={styles.btnCheckoutPillText} numberOfLines={1}>Thanh toán</Text>
               <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </ScalePressable>
           </LiquidGlass>
@@ -372,44 +423,120 @@ export default function POSScreen() {
       {/* CUSTOMER SEARCH & SELECT MODAL */}
       <AnimatedCenterModal
         visible={customerModalVisible}
-        onClose={() => setCustomerModalVisible(false)}
+        onClose={() => {
+          setCustomerModalVisible(false);
+          setShowCreateCust(false);
+        }}
         contentStyle={[styles.modalCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF' }]}
       >
-        <Text style={[styles.modalTitle, { color: Colors.textPrimary }]}>Gắn khách hàng vào đơn</Text>
-        <Text style={[styles.modalSubtitle, { color: Colors.textSecondary }]}>Để áp dụng chiết khấu hạng hội viên & tích điểm gốm</Text>
-
-        <View style={[styles.searchPill, { backgroundColor: Colors.surface, borderColor: Colors.border, marginVertical: 12 }]}>
-          <Ionicons name="search" size={17} color={Colors.textSecondary} style={{ marginRight: 6 }} />
-          <TextInput
-            style={[styles.searchInput, { color: Colors.textPrimary }]}
-            placeholder="Tìm theo Số điện thoại hoặc Tên khách..."
-            placeholderTextColor={Colors.textMuted}
-            value={custSearchQuery}
-            onChangeText={setCustSearchQuery}
-          />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Text style={[styles.modalTitle, { color: Colors.textPrimary, marginBottom: 0 }]}>
+            {showCreateCust ? 'Thêm khách hàng mới' : 'Gắn khách hàng vào đơn'}
+          </Text>
+          <TouchableOpacity
+            style={[styles.btnToggleCustForm, { backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5' }]}
+            onPress={() => setShowCreateCust(!showCreateCust)}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#9C7156' }}>
+              {showCreateCust ? 'Tìm khách' : '+ Thêm khách'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
-          {filteredCustomers.map((c) => (
-            <TouchableOpacity
-              key={c.id}
-              style={[styles.customerRow, { borderBottomColor: Colors.border }]}
-              onPress={() => {
-                selectCustomer(c);
-                setCustomerModalVisible(false);
-              }}
+        <Text style={[styles.modalSubtitle, { color: Colors.textSecondary, marginBottom: 10 }]}>
+          {showCreateCust
+            ? 'Nhập nhanh thông tin khách để tích lũy điểm gốm'
+            : 'Để áp dụng chiết khấu hạng hội viên & tích điểm gốm'}
+        </Text>
+
+        {showCreateCust ? (
+          <View style={{ gap: 10, marginTop: 4 }}>
+            <View>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4 }}>
+                Họ và tên khách hàng (*)
+              </Text>
+              <TextInput
+                style={[styles.inputPillSmall, { color: Colors.textPrimary, backgroundColor: Colors.surface, borderColor: Colors.border }]}
+                placeholder="Ví dụ: Nguyễn Thị Mai"
+                placeholderTextColor={Colors.textMuted}
+                value={newCustName}
+                onChangeText={setNewCustName}
+              />
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4 }}>
+                Số điện thoại (*)
+              </Text>
+              <TextInput
+                style={[styles.inputPillSmall, { color: Colors.textPrimary, backgroundColor: Colors.surface, borderColor: Colors.border }]}
+                placeholder="0912 345 678"
+                keyboardType="phone-pad"
+                placeholderTextColor={Colors.textMuted}
+                value={newCustPhone}
+                onChangeText={setNewCustPhone}
+              />
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 4 }}>
+                Địa chỉ giao hàng (tùy chọn)
+              </Text>
+              <TextInput
+                style={[styles.inputPillSmall, { color: Colors.textPrimary, backgroundColor: Colors.surface, borderColor: Colors.border }]}
+                placeholder="Số nhà, đường, quận/huyện..."
+                placeholderTextColor={Colors.textMuted}
+                value={newCustAddress}
+                onChangeText={setNewCustAddress}
+              />
+            </View>
+
+            <ScalePressable
+              style={[styles.btnSubmitNewCust, isCreatingCust && { opacity: 0.6 }]}
+              onPress={handleCreateCustomer}
+              disabled={isCreatingCust}
             >
-              <View>
-                <Text style={[styles.custItemName, { color: Colors.textPrimary }]}>{c.displayName}</Text>
-                <Text style={[styles.custItemPhone, { color: Colors.textSecondary }]}>{c.phone || 'Chưa có SĐT'}</Text>
-              </View>
-              <View style={styles.custBadgeRight}>
-                <Text style={styles.custBadgeTier}>{c.tier}</Text>
-                <Text style={[styles.custItemPoints, { color: Colors.textMuted }]}>{c.points} điểm</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>
+                {isCreatingCust ? 'Đang tạo...' : 'Tạo & Gắn vào đơn ngay'}
+              </Text>
+            </ScalePressable>
+          </View>
+        ) : (
+          <>
+            <View style={[styles.searchPill, { backgroundColor: Colors.surface, borderColor: Colors.border, marginVertical: 8 }]}>
+              <Ionicons name="search" size={17} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+              <TextInput
+                style={[styles.searchInput, { color: Colors.textPrimary }]}
+                placeholder="Tìm theo Số điện thoại hoặc Tên khách..."
+                placeholderTextColor={Colors.textMuted}
+                value={custSearchQuery}
+                onChangeText={setCustSearchQuery}
+              />
+            </View>
+
+            <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
+              {filteredCustomers.map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[styles.customerRow, { borderBottomColor: isDark ? '#222' : '#F0ECE6' }]}
+                  onPress={() => {
+                    selectCustomer(c);
+                    setCustomerModalVisible(false);
+                  }}
+                >
+                  <View>
+                    <Text style={[styles.custItemName, { color: Colors.textPrimary }]}>{c.displayName}</Text>
+                    <Text style={[styles.custItemPhone, { color: Colors.textSecondary }]}>{c.phone || 'Chưa có SĐT'}</Text>
+                  </View>
+                  <View style={styles.custBadgeRight}>
+                    <Text style={styles.custBadgeTier}>{c.tier}</Text>
+                    <Text style={[styles.custItemPoints, { color: Colors.textMuted }]}>{c.points} điểm</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
       </AnimatedCenterModal>
 
       {/* CHECKOUT MODAL */}
@@ -417,7 +544,7 @@ export default function POSScreen() {
         <View style={[styles.checkoutContainer, { backgroundColor: Colors.background, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}>
           {/* Header */}
           <View style={styles.checkoutHeader}>
-            <TouchableOpacity onPress={() => setCheckoutModalVisible(false)} style={styles.backCircleBtn}>
+            <TouchableOpacity onPress={() => setCheckoutModalVisible(false)} style={[styles.backCircleBtn, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
               <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
             </TouchableOpacity>
             <Text style={[styles.checkoutTitle, { color: Colors.textPrimary }]}>Thanh toán đơn quầy</Text>
@@ -462,21 +589,66 @@ export default function POSScreen() {
             {customer && (
               <View style={[styles.checkoutCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
                 <View style={styles.customerHeaderRow}>
-                  <View>
-                    <Text style={[styles.cardTitle, { color: Colors.textPrimary }]}>Hội viên: {customer.displayName}</Text>
-                    <Text style={[styles.customerTierSub, { color: '#9C7156' }]}>Hạng {customer.tier} • Khả dụng {customer.points} điểm</Text>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.cardTitle, { color: Colors.textPrimary }]} numberOfLines={1}>Hội viên: {customer.displayName}</Text>
+                    <Text style={[styles.customerTierSub, { color: '#9C7156' }]} numberOfLines={1}>Hạng {customer.tier} • Khả dụng {customer.points} điểm</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.togglePointsBtn, usePoints && styles.togglePointsBtnActive]}
                     onPress={() => setUsePoints(!usePoints)}
                   >
-                    <Text style={[styles.togglePointsText, usePoints && { color: '#FFFFFF' }]}>
+                    <Text style={[styles.togglePointsText, usePoints && { color: '#FFFFFF' }]} numberOfLines={1}>
                       {usePoints ? 'Đang dùng điểm' : 'Dùng điểm'}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             )}
+
+            {/* Chiết khấu trực tiếp & Ghi chú */}
+            <View style={[styles.checkoutCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
+              <Text style={[styles.cardTitle, { color: Colors.textPrimary }]}>Chiết khấu trực tiếp & Ghi chú</Text>
+
+              {/* Direct discount switcher */}
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                <View style={[styles.discountTypeGroup, { backgroundColor: isDark ? '#1E1E1E' : '#F0ECE6' }]}>
+                  <TouchableOpacity
+                    style={[styles.discountTypeBtn, manualDiscountType === 'fixed' && styles.discountTypeBtnActive]}
+                    onPress={() => setManualDiscount('fixed', Number(discountValInput.replace(/\D/g, '')) || 0)}
+                  >
+                    <Text style={[styles.discountTypeText, manualDiscountType === 'fixed' && styles.discountTypeTextActive]}>VNĐ</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.discountTypeBtn, manualDiscountType === 'percent' && styles.discountTypeBtnActive]}
+                    onPress={() => setManualDiscount('percent', Number(discountValInput.replace(/\D/g, '')) || 0)}
+                  >
+                    <Text style={[styles.discountTypeText, manualDiscountType === 'percent' && styles.discountTypeTextActive]}>%</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={[styles.inputPillSmall, { flex: 1, color: Colors.textPrimary, backgroundColor: Colors.surface, borderColor: Colors.border }]}
+                  placeholder={manualDiscountType === 'percent' ? 'Nhập % giảm (VD: 10)' : 'Nhập tiền giảm (VD: 20000)'}
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="numeric"
+                  value={discountValInput}
+                  onChangeText={(val) => {
+                    setDiscountValInput(val);
+                    const n = Number(val.replace(/\D/g, '')) || 0;
+                    setManualDiscount(manualDiscountType, n);
+                  }}
+                />
+              </View>
+
+              {/* Order Notes */}
+              <TextInput
+                style={[styles.inputPillSmall, { color: Colors.textPrimary, backgroundColor: Colors.surface, borderColor: Colors.border }]}
+                placeholder="Ghi chú đơn hàng (VD: Khách nhận quà, bọc hộp riêng...)"
+                placeholderTextColor={Colors.textMuted}
+                value={orderNotes}
+                onChangeText={setOrderNotes}
+              />
+            </View>
 
             {/* Payment Method Selector */}
             <View style={[styles.checkoutCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
@@ -540,25 +712,31 @@ export default function POSScreen() {
             {/* Bill Summary */}
             <View style={[styles.checkoutCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}>
               <View style={styles.billRow}>
-                <Text style={[styles.billLabel, { color: Colors.textSecondary }]}>Tiền hàng:</Text>
-                <Text style={[styles.billVal, { color: Colors.textPrimary }]}>{formatCurrency(subtotal)}</Text>
+                <Text style={[styles.billLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Tiền hàng:</Text>
+                <Text style={[styles.billVal, { color: Colors.textPrimary }]} numberOfLines={1}>{formatCurrency(subtotal)}</Text>
               </View>
               {memberDiscountAmount > 0 && (
                 <View style={styles.billRow}>
-                  <Text style={[styles.billLabel, { color: '#9C7156' }]}>Ưu đãi hạng hội viên:</Text>
-                  <Text style={[styles.billVal, { color: '#9C7156' }]}>-{formatCurrency(memberDiscountAmount)}</Text>
+                  <Text style={[styles.billLabel, { color: '#9C7156' }]} numberOfLines={1}>Ưu đãi hạng hội viên:</Text>
+                  <Text style={[styles.billVal, { color: '#9C7156' }]} numberOfLines={1}>-{formatCurrency(memberDiscountAmount)}</Text>
                 </View>
               )}
               {pointsDiscountAmount > 0 && (
                 <View style={styles.billRow}>
-                  <Text style={[styles.billLabel, { color: '#9C7156' }]}>Điểm gốm khấu trừ:</Text>
-                  <Text style={[styles.billVal, { color: '#9C7156' }]}>-{formatCurrency(pointsDiscountAmount)}</Text>
+                  <Text style={[styles.billLabel, { color: '#9C7156' }]} numberOfLines={1}>Điểm gốm khấu trừ:</Text>
+                  <Text style={[styles.billVal, { color: '#9C7156' }]} numberOfLines={1}>-{formatCurrency(pointsDiscountAmount)}</Text>
+                </View>
+              )}
+              {manualDiscountAmount > 0 && (
+                <View style={styles.billRow}>
+                  <Text style={[styles.billLabel, { color: '#9C7156' }]} numberOfLines={1}>Chiết khấu quầy trực tiếp:</Text>
+                  <Text style={[styles.billVal, { color: '#9C7156' }]} numberOfLines={1}>-{formatCurrency(manualDiscountAmount)}</Text>
                 </View>
               )}
               <View style={[styles.billDivider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
               <View style={styles.billRow}>
-                <Text style={[styles.billTotalLabel, { color: Colors.textPrimary }]}>TỔNG THANH TOÁN:</Text>
-                <Text style={styles.billTotalVal}>{formatCurrency(totalAmount)}</Text>
+                <Text style={[styles.billTotalLabel, { color: Colors.textPrimary }]} numberOfLines={1}>TỔNG THANH TOÁN:</Text>
+                <Text style={styles.billTotalVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{formatCurrency(totalAmount)}</Text>
               </View>
             </View>
           </ScrollView>
@@ -981,6 +1159,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     marginBottom: 12,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',
@@ -1014,6 +1193,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   qtyBtn: {
     width: 28,
@@ -1043,6 +1223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 14,
     backgroundColor: '#F0ECE6',
+    flexShrink: 0,
   },
   togglePointsBtnActive: {
     backgroundColor: '#9C7156',
@@ -1116,11 +1297,14 @@ const styles = StyleSheet.create({
   changeDueLabel: {
     fontSize: 13,
     fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
   },
   changeDueValue: {
     fontSize: 16,
     fontWeight: '700',
     color: '#9C7156',
+    flexShrink: 0,
   },
   billRow: {
     flexDirection: 'row',
@@ -1130,10 +1314,13 @@ const styles = StyleSheet.create({
   },
   billLabel: {
     fontSize: 13,
+    flex: 1,
+    marginRight: 8,
   },
   billVal: {
     fontSize: 13.5,
     fontWeight: '600',
+    flexShrink: 0,
   },
   billDivider: {
     height: 1,
@@ -1143,11 +1330,14 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
+    flex: 1,
+    marginRight: 8,
   },
   billTotalVal: {
     fontSize: 18,
     fontWeight: '700',
     color: '#9C7156',
+    flexShrink: 0,
   },
   btnFinalCheckout: {
     marginHorizontal: 16,
@@ -1237,6 +1427,49 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  btnToggleCustForm: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#9C7156',
+  },
+  inputPillSmall: {
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 13.5,
+  },
+  btnSubmitNewCust: {
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#9C7156',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  discountTypeGroup: {
+    flexDirection: 'row',
+    borderRadius: 18,
+    padding: 3,
+  },
+  discountTypeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 15,
+  },
+  discountTypeBtnActive: {
+    backgroundColor: '#9C7156',
+  },
+  discountTypeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6E665D',
+  },
+  discountTypeTextActive: {
     color: '#FFFFFF',
   },
 });

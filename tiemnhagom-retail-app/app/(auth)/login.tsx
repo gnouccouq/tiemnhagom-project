@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
+    overflow: 'hidden',
   },
   errorAlert: {
     flexDirection: 'row',
@@ -296,9 +297,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     marginTop: 28,
+    paddingHorizontal: 16,
   },
   footerNoticeText: {
     fontSize: 12,
     textAlign: 'center',
+    flexShrink: 1,
   },
 });

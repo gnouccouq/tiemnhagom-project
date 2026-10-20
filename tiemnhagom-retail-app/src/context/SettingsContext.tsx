@@ -3,9 +3,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { vi } from '../locales/vi';
 import { en } from '../locales/en';
+import { zh } from '../locales/zh';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
-export type Language = 'vi' | 'en';
+export type Language = 'vi' | 'en' | 'zh';
 
 interface SettingsContextType {
   themeMode: ThemeMode;
@@ -24,6 +25,7 @@ const STORAGE_KEY_HAPTICS = '@tiemnhagom_retail_haptics';
 const TRANSLATIONS: Record<Language, Record<string, string>> = {
   vi,
   en,
+  zh,
 };
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -49,8 +51,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           setThemeModeState(savedTheme);
         }
         const savedLang = await AsyncStorage.getItem(STORAGE_KEY_LANGUAGE);
-        if (savedLang === 'vi' || savedLang === 'en') {
-          setLanguageState(savedLang);
+        if (savedLang === 'vi' || savedLang === 'en' || savedLang === 'zh') {
+          setLanguageState(savedLang as Language);
         }
         const savedHaptics = await AsyncStorage.getItem(STORAGE_KEY_HAPTICS);
         if (savedHaptics !== null) {

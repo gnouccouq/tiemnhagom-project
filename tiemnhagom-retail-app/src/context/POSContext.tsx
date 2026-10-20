@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import {
   collection,
   doc,
+  getDoc,
   setDoc,
   updateDoc,
   increment,
@@ -22,6 +23,9 @@ interface POSContextType {
   memberDiscountAmount: number;
   couponDiscountAmount: number;
   pointsDiscountAmount: number;
+  manualDiscountType: 'percent' | 'fixed';
+  manualDiscountValue: number;
+  manualDiscountAmount: number;
   totalAmount: number;
   paymentMethod: 'cash' | 'vietqr' | 'card';
   cashGiven: number;
@@ -34,6 +38,7 @@ interface POSContextType {
   selectCustomer: (cust: Customer | null) => void;
   setUsePoints: (use: boolean) => void;
   applyCoupon: (cp: Coupon | null) => void;
+  setManualDiscount: (type: 'percent' | 'fixed', val: number) => void;
   setPaymentMethod: (method: 'cash' | 'vietqr' | 'card') => void;
   setCashGiven: (cash: number) => void;
   generateVietQRUrl: (orderCode: string, amount: number) => string;
@@ -53,6 +58,8 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [usePoints, setUsePointsState] = useState<boolean>(false);
+  const [manualDiscountType, setManualDiscountType] = useState<'percent' | 'fixed'>('fixed');
+  const [manualDiscountValue, setManualDiscountValue] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'vietqr' | 'card'>('cash');
   const [cashGiven, setCashGiven] = useState<number>(0);
   const [lastCompletedOrder, setLastCompletedOrder] = useState<Order | null>(null);
@@ -99,6 +106,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCustomer(null);
     setCoupon(null);
     setUsePointsState(false);
+    setManualDiscountValue(0);
     setCashGiven(0);
   };
 
@@ -113,6 +121,11 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const applyCoupon = (cp: Coupon | null) => {
     setCoupon(cp);
+  };
+
+  const setManualDiscount = (type: 'percent' | 'fixed', val: number) => {
+    setManualDiscountType(type);
+    setManualDiscountValue(Math.max(0, val));
   };
 
   // Tính toán
@@ -142,8 +155,18 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }
 
+  // Chiết khấu trực tiếp (Manual Discount)
+  let manualDiscountAmount = 0;
+  if (manualDiscountValue > 0) {
+    if (manualDiscountType === 'percent') {
+      manualDiscountAmount = Math.round((subtotal * Math.min(100, manualDiscountValue)) / 100);
+    } else {
+      manualDiscountAmount = Math.min(subtotal, manualDiscountValue);
+    }
+  }
+
   // Giảm giá điểm tích lũy: 1 điểm = 1.000đ, tối đa 50% tiền còn lại
-  const afterDiscounts = Math.max(0, subtotal - memberDiscountAmount - couponDiscountAmount);
+  const afterDiscounts = Math.max(0, subtotal - memberDiscountAmount - couponDiscountAmount - manualDiscountAmount);
   let pointsToRedeem = 0;
   let pointsDiscountAmount = 0;
 
@@ -175,6 +198,8 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Điểm tích lũy cho đơn POS này (1% chi tiêu)
       const pointsEarned = Math.floor(totalAmount / 100000);
 
+      const totalDiscount = memberDiscountAmount + couponDiscountAmount + pointsDiscountAmount + manualDiscountAmount;
+
       const orderData: Order = {
         id: orderId,
         orderCode,
@@ -192,7 +217,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           category: i.product.category,
         })),
         subtotal,
-        discountAmount: memberDiscountAmount + couponDiscountAmount + pointsDiscountAmount,
+        discountAmount: totalDiscount,
         pointsUsed: pointsToRedeem,
         pointsEarned,
         shippingFee: 0,
@@ -204,22 +229,45 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         staffId: adminProfile?.uid || '',
         staffName: adminProfile?.displayName || 'Thu ngân',
         notes: notes || '',
-        internalNotes: `Thanh toán tại quầy qua ${paymentMethod.toUpperCase()}`,
+        internalNotes: `Thanh toán tại quầy qua ${paymentMethod.toUpperCase()}${manualDiscountAmount > 0 ? ` (Chiết khấu quầy: -${manualDiscountAmount.toLocaleString('vi-VN')}đ)` : ''}`,
       };
 
       // Ghi đơn hàng vào Firestore
       await setDoc(doc(db, 'orders', orderId), orderData);
 
-      // Cập nhật tồn kho sản phẩm trong Firestore
+      // Cập nhật tồn kho sản phẩm & biến thể trong Firestore
       for (const item of cart) {
         try {
           const prodRef = doc(db, 'products', item.product.id);
-          await updateDoc(prodRef, {
-            stock: increment(-item.quantity),
-            sold: increment(item.quantity),
-          });
+          const snap = await getDoc(prodRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            let variants = data.variants || [];
+            if (item.selectedVariant && Array.isArray(variants) && variants.length > 0) {
+              variants = variants.map((v: any) => {
+                if (v.id === item.selectedVariant?.id || v.name === item.selectedVariant?.name) {
+                  const currentStock = v.stock !== undefined ? v.stock : data.stock || 0;
+                  return {
+                    ...v,
+                    stock: Math.max(0, currentStock - item.quantity),
+                  };
+                }
+                return v;
+              });
+              await updateDoc(prodRef, {
+                stock: increment(-item.quantity),
+                sold: increment(item.quantity),
+                variants,
+              });
+            } else {
+              await updateDoc(prodRef, {
+                stock: increment(-item.quantity),
+                sold: increment(item.quantity),
+              });
+            }
+          }
         } catch (e) {
-          console.warn('Lỗi trừ tồn kho sản phẩm:', item.product.id, e);
+          console.warn('Lỗi trừ tồn kho sản phẩm/biến thể:', item.product.id, e);
         }
       }
 
@@ -275,6 +323,10 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         memberDiscountAmount,
         couponDiscountAmount,
         pointsDiscountAmount,
+        manualDiscountType,
+        manualDiscountValue,
+        manualDiscountAmount,
+        setManualDiscount,
         totalAmount,
         paymentMethod,
         cashGiven,

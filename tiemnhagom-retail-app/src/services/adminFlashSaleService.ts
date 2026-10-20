@@ -16,14 +16,21 @@ export function subscribeFlashSale(
         const data = docSnap.data();
         onUpdate({
           isActive: !!data.isActive,
+          title: data.title || '',
+          subtitle: data.subtitle || '',
           startTime: data.startTime || '',
           endTime: data.endTime || '',
           bannerUrl: data.bannerUrl || '',
+          priceGroups: data.priceGroups || [],
+          items: data.items || {},
           products: data.products || [],
         });
       } else {
         onUpdate({
           isActive: false,
+          title: '',
+          subtitle: '',
+          items: {},
           products: [],
         });
       }

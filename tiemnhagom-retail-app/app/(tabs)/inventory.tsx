@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../src/constants/theme';
+import { useAuth } from '../../src/context/AuthContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import {
   subscribeProducts,
@@ -33,6 +34,7 @@ export default function InventoryScreen() {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const router = useRouter();
+  const { adminProfile } = useAuth();
   const { t } = useSettings();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -43,6 +45,8 @@ export default function InventoryScreen() {
   // Quick Stock Adjustment Modal
   const [stockModalProduct, setStockModalProduct] = useState<Product | null>(null);
   const [newStockVal, setNewStockVal] = useState('');
+  const [isAdditive, setIsAdditive] = useState(false);
+  const [stockReason, setStockReason] = useState('Kiểm kê tại quầy');
 
   useEffect(() => {
     const unsub = subscribeProducts((data) => setProducts(data));
@@ -58,14 +62,17 @@ export default function InventoryScreen() {
     return ['all', ...Array.from(set)];
   }, [products]);
 
-  // Filtered Products
+  // Filtered Products (hỗ trợ tên, mã SKU, mã vạch)
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchCat = selectedCat === 'all' || p.category === selectedCat;
       const matchLow = !onlyLowStock || p.stock <= 5;
       const q = searchQuery.trim().toLowerCase();
       const matchQuery =
-        !q || p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q));
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        (p.code && p.code.toLowerCase().includes(q)) ||
+        (p.barcode && p.barcode.toLowerCase().includes(q));
       return matchCat && matchLow && matchQuery;
     });
   }, [products, selectedCat, onlyLowStock, searchQuery]);
@@ -73,16 +80,26 @@ export default function InventoryScreen() {
   const handleOpenStockModal = (product: Product) => {
     setStockModalProduct(product);
     setNewStockVal(String(product.stock));
+    setIsAdditive(false);
+    setStockReason('Kiểm kê tại quầy');
   };
 
   const handleSaveStock = async () => {
     if (!stockModalProduct) return;
     const num = parseInt(newStockVal, 10);
-    if (isNaN(num) || num < 0) {
-      Alert.alert('Số lượng không hợp lệ', 'Vui lòng nhập một số không âm.');
+    if (isNaN(num)) {
+      Alert.alert('Số lượng không hợp lệ', 'Vui lòng nhập một số hợp lệ.');
       return;
     }
-    await quickUpdateStock(stockModalProduct.id, num);
+    const finalStock = isAdditive ? (stockModalProduct.stock || 0) + num : Math.max(0, num);
+    await quickUpdateStock(
+      stockModalProduct.id,
+      finalStock,
+      stockModalProduct.name,
+      stockModalProduct.stock,
+      stockReason || (isAdditive ? 'Nhập thêm hàng vào kho' : 'Điều chỉnh tồn kho'),
+      adminProfile?.displayName || 'Thu ngân'
+    );
     setStockModalProduct(null);
   };
 
@@ -114,20 +131,32 @@ export default function InventoryScreen() {
       {/* Header Bar */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>{t('navInventory')}</Text>
-          <Text style={[styles.headerSub, { color: Colors.textSecondary }]}>
+          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
+            {t('navInventory')}
+          </Text>
+          <Text style={[styles.headerSub, { color: Colors.textSecondary }]} numberOfLines={1}>
             {products.length} tác phẩm gốm
           </Text>
         </View>
 
-        {/* Add Product CTA Pill */}
-        <ScalePressable
-          style={styles.btnAddProduct}
-          onPress={() => router.push('/product-edit/new' as any)}
-        >
-          <Ionicons name="add" size={18} color="#FFFFFF" />
-          <Text style={styles.btnAddProductText}>Thêm mới</Text>
-        </ScalePressable>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+          {/* Inventory Log Shortcut Pill */}
+          <ScalePressable
+            style={[styles.btnLogShortcut, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}
+            onPress={() => router.push('/inventory-log' as any)}
+          >
+            <Ionicons name="time-outline" size={17} color="#9C7156" />
+          </ScalePressable>
+
+          {/* Add Product CTA Pill */}
+          <ScalePressable
+            style={styles.btnAddProduct}
+            onPress={() => router.push('/product-edit/new' as any)}
+          >
+            <Ionicons name="add" size={18} color="#FFFFFF" />
+            <Text style={styles.btnAddProductText}>Thêm mới</Text>
+          </ScalePressable>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -149,6 +178,43 @@ export default function InventoryScreen() {
         </View>
       </View>
 
+      {/* Quick Modules Strip */}
+      <View style={styles.quickModulesStrip}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickModulesContent}>
+          <TouchableOpacity
+            style={[styles.quickModulePill, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}
+            onPress={() => router.push('/categories' as any)}
+          >
+            <Ionicons name="grid-outline" size={13} color="#9C7156" />
+            <Text style={[styles.quickModuleText, { color: Colors.textPrimary }]}>Danh mục</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickModulePill, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}
+            onPress={() => router.push('/flash-sale' as any)}
+          >
+            <Ionicons name="flame-outline" size={13} color="#9C7156" />
+            <Text style={[styles.quickModuleText, { color: Colors.textPrimary }]}>Flash Sale</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickModulePill, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}
+            onPress={() => router.push('/restock-alerts' as any)}
+          >
+            <Ionicons name="alert-circle-outline" size={13} color="#9C7156" />
+            <Text style={[styles.quickModuleText, { color: Colors.textPrimary }]}>Báo có hàng</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickModulePill, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderColor: isDark ? 'transparent' : '#E8E1D8' }]}
+            onPress={() => router.push('/inventory-log' as any)}
+          >
+            <Ionicons name="clipboard-outline" size={13} color="#9C7156" />
+            <Text style={[styles.quickModuleText, { color: Colors.textPrimary }]}>Nhật ký kho</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
       {/* Filter Row: Low stock toggle + Category chips */}
       <View style={styles.filterBar}>
         <TouchableOpacity
@@ -160,12 +226,12 @@ export default function InventoryScreen() {
           onPress={() => setOnlyLowStock(!onlyLowStock)}
         >
           <Ionicons name="alert-circle" size={14} color={onlyLowStock ? '#D97706' : Colors.textMuted} />
-          <Text style={[styles.lowStockToggleText, onlyLowStock && { color: '#D97706', fontWeight: '700' }]}>
+          <Text style={[styles.lowStockToggleText, onlyLowStock && { color: '#D97706', fontWeight: '700' }]} numberOfLines={1}>
             Sắp hết (≤ 5)
           </Text>
         </TouchableOpacity>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={styles.catScroll}>
           {categories.map((c) => {
             const active = selectedCat === c;
             return (
@@ -234,7 +300,9 @@ export default function InventoryScreen() {
 
                 <View style={styles.cardInfo}>
                   <View style={styles.codeRow}>
-                    <Text style={[styles.productCode, { color: Colors.textMuted }]}>{p.code || p.id}</Text>
+                    <Text style={[styles.productCode, { color: Colors.textMuted }]} numberOfLines={1}>
+                      {p.code || p.id}
+                    </Text>
                     {p.isHidden && (
                       <View style={styles.hiddenTag}>
                         <Text style={styles.hiddenTagText}>ĐÃ ẨN</Text>
@@ -245,14 +313,16 @@ export default function InventoryScreen() {
                   <Text style={[styles.productName, { color: Colors.textPrimary }]} numberOfLines={1}>
                     {p.name}
                   </Text>
-                  <Text style={[styles.productCategory, { color: Colors.textSecondary }]}>
+                  <Text style={[styles.productCategory, { color: Colors.textSecondary }]} numberOfLines={1}>
                     {p.category} {p.subCategory ? `› ${p.subCategory}` : ''}
                   </Text>
 
                   <View style={styles.priceRow}>
-                    <Text style={styles.productPrice}>{formatCurrency(p.salePrice || p.price)}</Text>
+                    <Text style={styles.productPrice} numberOfLines={1}>
+                      {formatCurrency(p.salePrice || p.price)}
+                    </Text>
                     {p.sale ? (
-                      <Text style={[styles.productOriginalPrice, { color: Colors.textMuted }]}>
+                      <Text style={[styles.productOriginalPrice, { color: Colors.textMuted }]} numberOfLines={1}>
                         {formatCurrency(p.price)}
                       </Text>
                     ) : null}
@@ -270,7 +340,7 @@ export default function InventoryScreen() {
                   onPress={() => handleOpenStockModal(p)}
                 >
                   <Ionicons name="cube-outline" size={14} color={isLow ? '#D97706' : Colors.textSecondary} />
-                  <Text style={[styles.stockPillText, isLow && { color: '#D97706', fontWeight: '700' }]}>
+                  <Text style={[styles.stockPillText, isLow && { color: '#D97706', fontWeight: '700' }]} numberOfLines={1}>
                     Kho: {p.stock}
                   </Text>
                   <Ionicons name="create-outline" size={12} color={isLow ? '#D97706' : Colors.textMuted} />
@@ -321,9 +391,28 @@ export default function InventoryScreen() {
         contentStyle={[styles.modalCard, { backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF' }]}
       >
         <Text style={[styles.modalTitle, { color: Colors.textPrimary }]}>Điều chỉnh số lượng tồn kho</Text>
-        <Text style={[styles.modalSubtitle, { color: Colors.textSecondary, marginBottom: 16 }]} numberOfLines={1}>
-          {stockModalProduct?.name}
+        <Text style={[styles.modalSubtitle, { color: Colors.textSecondary, marginBottom: 12 }]} numberOfLines={1}>
+          {stockModalProduct?.name} (Hiện tại: {stockModalProduct?.stock || 0})
         </Text>
+
+        {/* Mode Selector */}
+        <View style={[styles.stockModeGroup, { backgroundColor: isDark ? '#1E1E1E' : '#F0ECE6' }]}>
+          <TouchableOpacity
+            style={[styles.stockModeBtn, !isAdditive && styles.stockModeBtnActive]}
+            onPress={() => setIsAdditive(false)}
+          >
+            <Text style={[styles.stockModeText, !isAdditive && styles.stockModeTextActive]}>Đặt số lượng mới</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.stockModeBtn, isAdditive && styles.stockModeBtnActive]}
+            onPress={() => {
+              setIsAdditive(true);
+              setNewStockVal('5');
+            }}
+          >
+            <Text style={[styles.stockModeText, isAdditive && styles.stockModeTextActive]}>+ Nhập thêm hàng</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.stockInputRow}>
           <TouchableOpacity
@@ -348,8 +437,34 @@ export default function InventoryScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Quick Reason Chips */}
+        <View style={{ marginTop: 12, marginBottom: 16 }}>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 }}>
+            Lý do biến động kho:
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {['Nhập hàng từ lò', 'Kiểm kê định kỳ', 'Bù trừ kiểm kho', 'Hàng vỡ / nứt'].map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[
+                  styles.reasonChip,
+                  stockReason === r && styles.reasonChipActive,
+                  { borderColor: stockReason === r ? '#9C7156' : isDark ? '#333' : '#E8E1D8' },
+                ]}
+                onPress={() => setStockReason(r)}
+              >
+                <Text style={[styles.reasonChipText, stockReason === r && { color: '#9C7156', fontWeight: '700' }]}>
+                  {r}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <ScalePressable style={styles.btnSaveStock} onPress={handleSaveStock}>
-          <Text style={styles.btnSaveStockText}>Lưu tồn kho</Text>
+          <Text style={styles.btnSaveStockText}>
+            {isAdditive ? `Nhập thêm +${newStockVal || 0}` : 'Lưu tồn kho mới'}
+          </Text>
         </ScalePressable>
       </AnimatedCenterModal>
     </View>
@@ -368,7 +483,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  headerLeft: {},
+  headerLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
   headerTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 20,
@@ -376,6 +494,14 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: 12,
+  },
+  btnLogShortcut: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   btnAddProduct: {
     flexDirection: 'row',
@@ -413,6 +539,27 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
   },
+  quickModulesStrip: {
+    marginBottom: 10,
+  },
+  quickModulesContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  quickModulePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+  },
+  quickModuleText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   filterBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -429,6 +576,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     backgroundColor: '#FFFBEB',
+    flexShrink: 0,
   },
   lowStockToggleActive: {
     backgroundColor: '#FEF3C7',
@@ -464,6 +612,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
+    overflow: 'hidden',
   },
   cardMainTouch: {
     flexDirection: 'row',
@@ -612,5 +761,41 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  stockModeGroup: {
+    flexDirection: 'row',
+    borderRadius: 18,
+    padding: 3,
+    marginBottom: 14,
+  },
+  stockModeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 15,
+  },
+  stockModeBtnActive: {
+    backgroundColor: '#9C7156',
+  },
+  stockModeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6E665D',
+  },
+  stockModeTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  reasonChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  reasonChipActive: {
+    backgroundColor: 'rgba(156, 113, 86, 0.08)',
+  },
+  reasonChipText: {
+    fontSize: 11.5,
+    color: '#6E665D',
   },
 });

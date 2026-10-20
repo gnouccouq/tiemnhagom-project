@@ -177,7 +177,7 @@ export default function ShiftReportScreen() {
         >
           <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
         </ScalePressable>
-        <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>Báo cáo kết ca</Text>
+        <Text style={[styles.headerTitle, { color: Colors.textPrimary }]} numberOfLines={1}>Báo cáo kết ca</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -211,22 +211,22 @@ export default function ShiftReportScreen() {
                 <Ionicons name="person" size={24} color="#FFFFFF" />
               </View>
               <View style={styles.cashierDetails}>
-                <Text style={[styles.cashierName, { color: Colors.textPrimary }]}>
+                <Text style={[styles.cashierName, { color: Colors.textPrimary }]} numberOfLines={1}>
                   {adminProfile?.displayName || 'Thu ngân'}
                 </Text>
-                <Text style={[styles.cashierSub, { color: Colors.textSecondary }]}>
+                <Text style={[styles.cashierSub, { color: Colors.textSecondary }]} numberOfLines={1}>
                   {adminProfile?.email} • {adminProfile?.role?.toUpperCase()}
                 </Text>
               </View>
               <View style={styles.todayBadge}>
                 <Ionicons name="calendar-outline" size={13} color="#9C7156" />
-                <Text style={styles.todayBadgeText}>Hôm nay</Text>
+                <Text style={styles.todayBadgeText} numberOfLines={1}>Hôm nay</Text>
               </View>
             </View>
           </View>
 
           {/* Section: Thu ngân trong ca */}
-          <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Doanh thu ghi nhận hôm nay</Text>
+          <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]} numberOfLines={1}>Doanh thu ghi nhận hôm nay</Text>
           <View
             style={[
               styles.card,
@@ -239,9 +239,9 @@ export default function ShiftReportScreen() {
             <View style={styles.statRow}>
               <View style={styles.statLabelGroup}>
                 <View style={[styles.iconDot, { backgroundColor: '#9C7156' }]} />
-                <Text style={[styles.statLabel, { color: Colors.textSecondary }]}>Tiền mặt thu tại quầy</Text>
+                <Text style={[styles.statLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Tiền mặt thu tại quầy</Text>
               </View>
-              <Text style={[styles.statValue, { color: Colors.textPrimary }]}>
+              <Text style={[styles.statValue, { color: Colors.textPrimary }]} numberOfLines={1}>
                 {formatCurrency(shiftMetrics.totalCashSales)}
               </Text>
             </View>
@@ -251,9 +251,9 @@ export default function ShiftReportScreen() {
             <View style={styles.statRow}>
               <View style={styles.statLabelGroup}>
                 <View style={[styles.iconDot, { backgroundColor: '#E8CCB2' }]} />
-                <Text style={[styles.statLabel, { color: Colors.textSecondary }]}>Chuyển khoản VietQR</Text>
+                <Text style={[styles.statLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Chuyển khoản VietQR</Text>
               </View>
-              <Text style={[styles.statValue, { color: Colors.textPrimary }]}>
+              <Text style={[styles.statValue, { color: Colors.textPrimary }]} numberOfLines={1}>
                 {formatCurrency(shiftMetrics.totalVietQRSales)}
               </Text>
             </View>
@@ -263,9 +263,9 @@ export default function ShiftReportScreen() {
             <View style={styles.statRow}>
               <View style={styles.statLabelGroup}>
                 <View style={[styles.iconDot, { backgroundColor: '#6E665D' }]} />
-                <Text style={[styles.statLabel, { color: Colors.textSecondary }]}>Quẹt thẻ POS</Text>
+                <Text style={[styles.statLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Quẹt thẻ POS</Text>
               </View>
-              <Text style={[styles.statValue, { color: Colors.textPrimary }]}>
+              <Text style={[styles.statValue, { color: Colors.textPrimary }]} numberOfLines={1}>
                 {formatCurrency(shiftMetrics.totalCardSales)}
               </Text>
             </View>
@@ -273,13 +273,13 @@ export default function ShiftReportScreen() {
             <View style={[styles.divider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
 
             <View style={styles.statRowTotal}>
-              <Text style={[styles.totalLabel, { color: Colors.textPrimary }]}>Tổng doanh số ({shiftMetrics.totalOrders} đơn)</Text>
-              <Text style={styles.totalValue}>{formatCurrency(shiftMetrics.totalSales)}</Text>
+              <Text style={[styles.totalLabel, { color: Colors.textPrimary }]} numberOfLines={1}>Tổng doanh số ({shiftMetrics.totalOrders} đơn)</Text>
+              <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatCurrency(shiftMetrics.totalSales)}</Text>
             </View>
           </View>
 
           {/* Section: Kiểm kê Tiền mặt Trong Két */}
-          <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Đối soát két tiền mặt</Text>
+          <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]} numberOfLines={1}>Đối soát két tiền mặt</Text>
           <View
             style={[
               styles.card,
@@ -317,22 +317,22 @@ export default function ShiftReportScreen() {
 
             {/* Expected Cash In Drawer */}
             <View style={[styles.calloutRow, { backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2' }]}>
-              <View>
-                <Text style={[styles.calloutTitle, { color: Colors.textSecondary }]}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={[styles.calloutTitle, { color: Colors.textSecondary }]} numberOfLines={1}>
                   Tiền mặt dự kiến có trong két:
                 </Text>
-                <Text style={[styles.calloutDesc, { color: Colors.textMuted }]}>
+                <Text style={[styles.calloutDesc, { color: Colors.textMuted }]} numberOfLines={1}>
                   = Đầu ca ({formatCurrency(shiftMetrics.initCashNum)}) + Thu tiền mặt ({formatCurrency(shiftMetrics.totalCashSales)})
                 </Text>
               </View>
-              <Text style={styles.calloutAmount}>
+              <Text style={styles.calloutAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {formatCurrency(shiftMetrics.expectedCashInDrawer)}
               </Text>
             </View>
 
             {/* Actual Cash In Drawer Input */}
             <View style={[styles.inputGroup, { marginTop: 14 }]}>
-              <Text style={[styles.inputLabel, { color: Colors.textPrimary, fontWeight: '700' }]}>
+              <Text style={[styles.inputLabel, { color: Colors.textPrimary, fontWeight: '700' }]} numberOfLines={1}>
                 Tiền mặt thực tế đếm được trong két:
               </Text>
               <View
@@ -382,6 +382,7 @@ export default function ShiftReportScreen() {
                   }
                   size={20}
                   color={shiftMetrics.difference === 0 ? '#9C7156' : shiftMetrics.difference! > 0 ? '#9C7156' : '#C85050'}
+                  style={{ flexShrink: 0 }}
                 />
                 <Text
                   style={[
@@ -395,6 +396,9 @@ export default function ShiftReportScreen() {
                           : '#C85050',
                     },
                   ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
                   {shiftMetrics.difference === 0
                     ? 'Khớp chính xác 100% két tiền mặt'
@@ -474,6 +478,8 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
   },
   centerContainer: {
     flex: 1,
@@ -500,6 +506,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
+    overflow: 'hidden',
   },
   cashierRow: {
     flexDirection: 'row',
@@ -516,6 +523,7 @@ const styles = StyleSheet.create({
   },
   cashierDetails: {
     flex: 1,
+    marginRight: 8,
   },
   cashierName: {
     fontFamily: 'ElleGaborStd',
@@ -534,6 +542,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 12,
     gap: 4,
+    flexShrink: 0,
   },
   todayBadgeText: {
     fontSize: 12,
@@ -557,18 +566,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   iconDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    flexShrink: 0,
   },
   statLabel: {
     fontSize: 14,
+    flex: 1,
   },
   statValue: {
     fontSize: 14,
     fontWeight: '600',
+    flexShrink: 0,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -585,12 +599,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     fontFamily: 'ElleGaborStd',
+    flex: 1,
+    marginRight: 8,
   },
   totalValue: {
     fontSize: 17,
     fontWeight: '700',
     color: '#9C7156',
-    fontFamily: 'ElleGaborStd',
+    flexShrink: 0,
   },
   inputGroup: {
     marginBottom: 8,
@@ -610,7 +626,6 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
-    fontFamily: 'ElleGaborStd',
   },
   inputUnit: {
     fontSize: 13,
@@ -635,7 +650,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#9C7156',
-    fontFamily: 'ElleGaborStd',
+    flexShrink: 0,
   },
   diffBadge: {
     flexDirection: 'row',

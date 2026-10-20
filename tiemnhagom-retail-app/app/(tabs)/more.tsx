@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,12 +27,16 @@ export default function MoreScreen() {
   const { adminProfile, lockShift, signOut, checkPermission } = useAuth();
   const { themeMode, setThemeMode, language, setLanguage, hapticsEnabled, setHapticsEnabled, t } = useSettings();
 
+  const canInventory = checkPermission('inventory');
   const canCustomers = checkPermission('customers');
   const canCoupons = checkPermission('coupons');
   const canPush = checkPermission('push_notifications');
   const canShiftReport = checkPermission('shift_report');
+  const canRevenueReport = checkPermission('stats') || checkPermission('overview') || canShiftReport;
   const canStaff = checkPermission('staff');
-  const hasBusinessModules = canCustomers || canCoupons || canPush || canShiftReport || canStaff;
+  const hasBusinessModules = canInventory || canCustomers || canCoupons || canPush || canShiftReport || canRevenueReport || canStaff;
+
+  const [showLangModal, setShowLangModal] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -52,6 +57,12 @@ export default function MoreScreen() {
     if (role === 'super_admin') return t('roleSuperAdmin');
     if (role === 'manager') return t('roleManager');
     return t('roleStaff');
+  };
+
+  const getLangName = (lang: string) => {
+    if (lang === 'vi') return 'Tiếng Việt';
+    if (lang === 'zh') return '中文 (简体)';
+    return 'English';
   };
 
   return (
@@ -98,10 +109,88 @@ export default function MoreScreen() {
           </View>
         </View>
 
-        {/* SECTION 1: QUẢN TRỊ NGHIỆP VỤ (Retail Management Modules) */}
-        {hasBusinessModules ? (
+        {/* SECTION 1: QUẢN TRỊ HÀNG HÓA & KHO (Inventory Modules) */}
+        {canInventory ? (
           <>
-            <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Phân hệ Nghiệp vụ</Text>
+            <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Hàng hóa & Khuyến mãi</Text>
+            <View
+              style={[
+                styles.menuGroupCard,
+                {
+                  backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
+                  borderColor: isDark ? 'transparent' : '#E8E1D8',
+                },
+              ]}
+            >
+              {/* Danh mục sản phẩm */}
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/categories' as any)}
+              >
+                <View style={styles.menuRowLeft}>
+                  <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
+                    <Ionicons name="grid-outline" size={20} color="#9C7156" />
+                  </View>
+                  <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]}>{t('categoryManagementTitle')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
+
+              {/* Thiết lập Flash Sale */}
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/flash-sale' as any)}
+              >
+                <View style={styles.menuRowLeft}>
+                  <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
+                    <Ionicons name="flame-outline" size={20} color="#9C7156" />
+                  </View>
+                  <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]}>{t('flashSaleSettings')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
+
+              {/* Yêu cầu báo có hàng */}
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/restock-alerts' as any)}
+              >
+                <View style={styles.menuRowLeft}>
+                  <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
+                    <Ionicons name="alert-circle-outline" size={20} color="#9C7156" />
+                  </View>
+                  <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]}>{t('restockAlertsTitle')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
+
+              {/* Nhật ký kho & Tồn kho */}
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/inventory-log' as any)}
+              >
+                <View style={styles.menuRowLeft}>
+                  <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
+                    <Ionicons name="clipboard-outline" size={20} color="#9C7156" />
+                  </View>
+                  <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]}>{t('inventoryLogTitle')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : null}
+
+        {/* SECTION 2: QUẢN TRỊ KHÁCH HÀNG & MARKETING */}
+        {canCustomers || canCoupons || canPush ? (
+          <>
+            <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Khách hàng & Marketing</Text>
             <View
               style={[
                 styles.menuGroupCard,
@@ -166,11 +255,52 @@ export default function MoreScreen() {
                   </TouchableOpacity>
                 </>
               ) : null}
+            </View>
+          </>
+        ) : null}
+
+        {/* SECTION 3: VẬN HÀNH & BÁO CÁO TÀI CHÍNH */}
+        {canShiftReport || canRevenueReport || canStaff ? (
+          <>
+            <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Vận hành & Báo cáo tài chính</Text>
+            <View
+              style={[
+                styles.menuGroupCard,
+                {
+                  backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
+                  borderColor: isDark ? 'transparent' : '#E8E1D8',
+                },
+              ]}
+            >
+              {/* Báo cáo doanh thu & Lợi nhuận chuyên sâu */}
+              {canRevenueReport ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.menuRow}
+                    onPress={() => router.push('/revenue-report' as any)}
+                  >
+                    <View style={styles.menuRowLeft}>
+                      <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
+                        <Ionicons name="bar-chart-outline" size={20} color="#9C7156" />
+                      </View>
+                      <View style={{ flex: 1, marginRight: 4 }}>
+                        <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]} numberOfLines={1}>
+                          {t('revenueReportTitle')}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 1 }} numberOfLines={1}>
+                          {t('revenueReportDesc')}
+                        </Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+                  </TouchableOpacity>
+                </>
+              ) : null}
 
               {/* Báo cáo kết ca thu ngân */}
               {canShiftReport ? (
                 <>
-                  {canCustomers || canCoupons || canPush ? <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} /> : null}
+                  {canRevenueReport ? <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} /> : null}
                   <TouchableOpacity
                     style={styles.menuRow}
                     onPress={() => router.push('/shift-report' as any)}
@@ -186,12 +316,10 @@ export default function MoreScreen() {
                 </>
               ) : null}
 
-              {/* Quản lý tài khoản nhân viên (Super Admin / Manager có quyền staff) */}
+              {/* Quản lý tài khoản nhân viên */}
               {canStaff ? (
                 <>
-                  {canCustomers || canCoupons || canPush || canShiftReport ? (
-                    <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
-                  ) : null}
+                  {canShiftReport || canRevenueReport ? <View style={[styles.menuDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} /> : null}
                   <TouchableOpacity
                     style={styles.menuRow}
                     onPress={() => router.push('/staff-management' as any)}
@@ -210,7 +338,7 @@ export default function MoreScreen() {
           </>
         ) : null}
 
-        {/* SECTION 2: CÀI ĐẶT ỨNG DỤNG (System & Preferences) */}
+        {/* SECTION 4: CÀI ĐẶT ỨNG DỤNG (System & Preferences) */}
         <Text style={[styles.sectionHeading, { color: Colors.textPrimary }]}>Cài đặt hệ thống</Text>
         <View
           style={[
@@ -260,7 +388,7 @@ export default function MoreScreen() {
           {/* Ngôn ngữ */}
           <TouchableOpacity
             style={styles.menuRow}
-            onPress={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            onPress={() => setShowLangModal(true)}
           >
             <View style={styles.menuRowLeft}>
               <View style={[styles.menuIconCircle, { backgroundColor: 'rgba(156, 113, 86, 0.1)' }]}>
@@ -268,9 +396,12 @@ export default function MoreScreen() {
               </View>
               <Text style={[styles.menuRowLabel, { color: Colors.textPrimary }]}>{t('appLanguage')}</Text>
             </View>
-            <Text style={[styles.langCurrentText, { color: '#9C7156' }]}>
-              {language === 'vi' ? 'Tiếng Việt' : 'English'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={[styles.langCurrentText, { color: '#9C7156' }]}>
+                {getLangName(language)}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -293,6 +424,83 @@ export default function MoreScreen() {
           Tiệm Nhà Gốm Retail App v1.0.0 (Internal Production)
         </Text>
       </ScrollView>
+
+      {/* Modal Chọn Ngôn ngữ */}
+      <Modal
+        visible={showLangModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowLangModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowLangModal(false)}
+        >
+          <View
+            style={[
+              styles.langModalCard,
+              {
+                backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
+                borderColor: isDark ? 'transparent' : '#E8E1D8',
+              },
+            ]}
+          >
+            <Text style={[styles.langModalTitle, { color: Colors.textPrimary }]}>
+              {t('appLanguage')}
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.langOptionRow,
+                language === 'vi' && { backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2' },
+              ]}
+              onPress={() => {
+                setLanguage('vi');
+                setShowLangModal(false);
+              }}
+            >
+              <Text style={styles.langFlag}>🇻🇳</Text>
+              <Text style={[styles.langOptionLabel, { color: Colors.textPrimary }]}>Tiếng Việt (Chuẩn)</Text>
+              {language === 'vi' ? <Ionicons name="checkmark-circle" size={20} color="#9C7156" /> : null}
+            </TouchableOpacity>
+
+            <View style={[styles.menuDivider, { marginLeft: 16, backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
+
+            <TouchableOpacity
+              style={[
+                styles.langOptionRow,
+                language === 'en' && { backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2' },
+              ]}
+              onPress={() => {
+                setLanguage('en');
+                setShowLangModal(false);
+              }}
+            >
+              <Text style={styles.langFlag}>🇬🇧</Text>
+              <Text style={[styles.langOptionLabel, { color: Colors.textPrimary }]}>English</Text>
+              {language === 'en' ? <Ionicons name="checkmark-circle" size={20} color="#9C7156" /> : null}
+            </TouchableOpacity>
+
+            <View style={[styles.menuDivider, { marginLeft: 16, backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
+
+            <TouchableOpacity
+              style={[
+                styles.langOptionRow,
+                language === 'zh' && { backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2' },
+              ]}
+              onPress={() => {
+                setLanguage('zh');
+                setShowLangModal(false);
+              }}
+            >
+              <Text style={styles.langFlag}>🇨🇳</Text>
+              <Text style={[styles.langOptionLabel, { color: Colors.textPrimary }]}>中文 (简体)</Text>
+              {language === 'zh' ? <Ionicons name="checkmark-circle" size={20} color="#9C7156" /> : null}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -389,6 +597,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   menuIconCircle: {
     width: 36,
@@ -456,5 +666,48 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11.5,
     marginTop: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  langModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 16,
+  },
+  langModalTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  langOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    gap: 12,
+  },
+  langFlag: {
+    fontSize: 22,
+  },
+  langOptionLabel: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
   },
 });

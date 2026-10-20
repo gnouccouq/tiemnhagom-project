@@ -80,7 +80,7 @@ export default function CustomerScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backCircleBtn}>
             <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>Khách hàng & Hội viên</Text>
+          <Text style={[styles.headerTitle, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>Khách hàng & Hội viên</Text>
         </View>
       </View>
 
@@ -117,21 +117,21 @@ export default function CustomerScreen() {
               <View style={styles.custAvatar}>
                 <Ionicons name="person" size={20} color="#FFFFFF" />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.custName, { color: Colors.textPrimary }]}>{c.displayName}</Text>
-                <Text style={[styles.custPhone, { color: Colors.textSecondary }]}>{c.phone || 'Chưa cập nhật SĐT'}</Text>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={[styles.custName, { color: Colors.textPrimary }]} numberOfLines={1}>{c.displayName}</Text>
+                <Text style={[styles.custPhone, { color: Colors.textSecondary }]} numberOfLines={1}>{c.phone || 'Chưa cập nhật SĐT'}</Text>
               </View>
               <View style={styles.tierBadge}>
-                <Text style={styles.tierBadgeText}>{c.tier}</Text>
+                <Text style={styles.tierBadgeText} numberOfLines={1}>{c.tier}</Text>
               </View>
             </View>
 
             <View style={[styles.cardDivider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
 
             <View style={styles.custBottomRow}>
-              <View>
-                <Text style={[styles.spentLabel, { color: Colors.textMuted }]}>Tổng chi tiêu:</Text>
-                <Text style={[styles.spentVal, { color: Colors.textPrimary }]}>{formatCurrency(c.totalSpent)}</Text>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={[styles.spentLabel, { color: Colors.textMuted }]} numberOfLines={1}>Tổng chi tiêu:</Text>
+                <Text style={[styles.spentVal, { color: Colors.textPrimary }]} numberOfLines={1}>{formatCurrency(c.totalSpent)}</Text>
               </View>
 
               <TouchableOpacity
@@ -139,7 +139,7 @@ export default function CustomerScreen() {
                 onPress={() => setSelectedCustForPoints(c)}
               >
                 <Ionicons name="sparkles" size={14} color="#9C7156" />
-                <Text style={styles.pointsPillText}>{c.points} điểm</Text>
+                <Text style={styles.pointsPillText} numberOfLines={1}>{c.points} điểm</Text>
                 <Ionicons name="create-outline" size={13} color="#9C7156" />
               </TouchableOpacity>
             </View>
@@ -213,6 +213,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   backCircleBtn: {
     width: 40,
@@ -223,6 +225,7 @@ const styles = StyleSheet.create({
     borderColor: '#E8E1D8',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     fontFamily: 'ElleGaborStd',
@@ -258,6 +261,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 5,
+    overflow: 'hidden',
   },
   custTopRow: {
     flexDirection: 'row',

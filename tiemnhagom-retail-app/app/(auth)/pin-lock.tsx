@@ -85,16 +85,16 @@ export default function PinLockScreen() {
       {/* Top Staff Info */}
       <View style={styles.topBar}>
         <View style={styles.staffBadge}>
-          <Ionicons name="person-circle" size={24} color="#9C7156" />
-          <View>
-            <Text style={[styles.staffName, { color: Colors.textPrimary }]}>{adminProfile?.displayName || 'Thu ngân'}</Text>
-            <Text style={[styles.staffRole, { color: Colors.textSecondary }]}>Ca trực Tiệm Nhà Gốm</Text>
+          <Ionicons name="person-circle" size={24} color="#9C7156" style={{ flexShrink: 0 }} />
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={[styles.staffName, { color: Colors.textPrimary }]} numberOfLines={1}>{adminProfile?.displayName || 'Thu ngân'}</Text>
+            <Text style={[styles.staffRole, { color: Colors.textSecondary }]} numberOfLines={1}>Ca trực Tiệm Nhà Gốm</Text>
           </View>
         </View>
 
         <TouchableOpacity onPress={signOut} style={styles.btnSwitchCashier}>
           <Ionicons name="log-out-outline" size={18} color={Colors.textSecondary} />
-          <Text style={[styles.switchText, { color: Colors.textSecondary }]}>{t('switchCashier')}</Text>
+          <Text style={[styles.switchText, { color: Colors.textSecondary }]} numberOfLines={1}>{t('switchCashier')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -205,6 +205,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   staffName: {
     fontFamily: 'ElleGaborStd',
@@ -220,6 +222,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
+    flexShrink: 0,
   },
   switchText: {
     fontSize: 12,

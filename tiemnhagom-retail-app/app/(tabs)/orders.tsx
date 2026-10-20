@@ -50,7 +50,12 @@ export default function OrdersScreen() {
   // Filter Orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const matchStatus = selectedStatus === 'all' || o.status === selectedStatus;
+      const isPos =
+        o.source === 'pos' ||
+        o.orderCode?.toUpperCase().includes('POS') ||
+        o.id?.toUpperCase().includes('POS');
+      const effStatus = isPos && o.status !== 'cancelled' ? 'completed' : o.status;
+      const matchStatus = selectedStatus === 'all' || effStatus === selectedStatus;
       const q = searchQuery.trim().toLowerCase();
       const matchQuery =
         !q ||
@@ -75,7 +80,10 @@ export default function OrdersScreen() {
     });
   }, [rentalOrders, selectedStatus, searchQuery]);
 
-  const getStatusBadge = (status: OrderStatus | RentalStatus) => {
+  const getStatusBadge = (status: OrderStatus | RentalStatus, isPos = false) => {
+    if (isPos && status !== 'cancelled') {
+      return { label: 'Đã hoàn tất', bg: 'rgba(156, 113, 86, 0.15)', text: '#9C7156' };
+    }
     switch (status) {
       case 'pending':
       case 'pending_deposit':
@@ -97,6 +105,12 @@ export default function OrdersScreen() {
   };
 
   const handleAdvanceStatus = async (order: Order) => {
+    const isPos =
+      order.source === 'pos' ||
+      order.orderCode?.toUpperCase().includes('POS') ||
+      order.id?.toUpperCase().includes('POS');
+    if (isPos) return; // Đơn POS đã hoàn tất tại quầy
+
     let nextStatus: OrderStatus | null = null;
     if (order.status === 'pending') nextStatus = 'processing';
     else if (order.status === 'processing') nextStatus = 'shipping';
@@ -280,7 +294,11 @@ export default function OrdersScreen() {
             </View>
           ) : (
             filteredOrders.map((ord) => {
-              const badge = getStatusBadge(ord.status);
+              const isPos =
+                ord.source === 'pos' ||
+                ord.orderCode?.toUpperCase().includes('POS') ||
+                ord.id?.toUpperCase().includes('POS');
+              const badge = getStatusBadge(ord.status, isPos);
               return (
                 <TouchableOpacity
                   key={ord.id}
@@ -296,19 +314,20 @@ export default function OrdersScreen() {
                 >
                   <View style={styles.orderTop}>
                     <View style={styles.orderTopLeft}>
-                      <Text style={[styles.orderCode, { color: Colors.textPrimary }]}>{ord.orderCode}</Text>
-                      {ord.source === 'pos' && (
-                        <View style={styles.posBadge}>
-                          <Text style={styles.posBadgeText}>TẠI QUẦY</Text>
+                      <Text style={[styles.orderCode, { color: Colors.textPrimary }]} numberOfLines={1}>{ord.orderCode}</Text>
+                      {isPos && (
+                        <View style={[styles.posBadge, { backgroundColor: isDark ? '#2B241E' : '#F6F0EA', borderColor: '#E8CCB2', borderWidth: 1 }]}>
+                          <Ionicons name="storefront-outline" size={11} color="#9C7156" style={{ marginRight: 3 }} />
+                          <Text style={[styles.posBadgeText, { color: '#9C7156', fontWeight: '700' }]}>BÁN TẠI QUẦY (POS)</Text>
                         </View>
                       )}
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-                      <Text style={[styles.statusBadgeText, { color: badge.text }]}>{badge.label}</Text>
+                      <Text style={[styles.statusBadgeText, { color: badge.text }]} numberOfLines={1}>{badge.label}</Text>
                     </View>
                   </View>
 
-                  <Text style={[styles.custName, { color: Colors.textPrimary }]}>
+                  <Text style={[styles.custName, { color: Colors.textPrimary }]} numberOfLines={1}>
                     {ord.customerName} {ord.customerPhone ? `• ${ord.customerPhone}` : ''}
                   </Text>
 
@@ -322,20 +341,20 @@ export default function OrdersScreen() {
                   <View style={[styles.cardDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
 
                   <View style={styles.orderBottom}>
-                    <View>
-                      <Text style={[styles.paymentLabel, { color: Colors.textMuted }]}>
-                        {ord.paymentMethod.toUpperCase()} • {ord.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={[styles.paymentLabel, { color: isPos || ord.paymentStatus === 'paid' ? '#9C7156' : Colors.textMuted, fontWeight: isPos || ord.paymentStatus === 'paid' ? '700' : '500' }]} numberOfLines={1}>
+                        {ord.paymentMethod.toUpperCase()} • {isPos || ord.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                       </Text>
-                      <Text style={styles.orderTotal}>{formatCurrency(ord.totalAmount)}</Text>
+                      <Text style={styles.orderTotal} numberOfLines={1}>{formatCurrency(ord.totalAmount)}</Text>
                     </View>
 
                     {/* Quick action button */}
-                    {ord.status !== 'completed' && ord.status !== 'cancelled' ? (
+                    {!isPos && ord.status !== 'completed' && ord.status !== 'cancelled' ? (
                       <ScalePressable
                         style={styles.btnAdvance}
                         onPress={() => handleAdvanceStatus(ord)}
                       >
-                        <Text style={styles.btnAdvanceText}>
+                        <Text style={styles.btnAdvanceText} numberOfLines={1}>
                           {ord.status === 'pending'
                             ? 'Duyệt đơn'
                             : ord.status === 'processing'
@@ -347,7 +366,9 @@ export default function OrdersScreen() {
                     ) : (
                       <View style={styles.finishedBadge}>
                         <Ionicons name="checkmark-circle" size={15} color="#9C7156" />
-                        <Text style={styles.finishedText}>Hoàn tất</Text>
+                        <Text style={styles.finishedText} numberOfLines={1}>
+                          {ord.status === 'cancelled' ? 'Đã hủy' : 'Đã hoàn tất'}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -378,34 +399,34 @@ export default function OrdersScreen() {
                   onPress={() => router.push(`/rental-detail/${rent.id}` as any)}
                 >
                   <View style={styles.orderTop}>
-                    <Text style={[styles.orderCode, { color: Colors.textPrimary }]}>{rent.orderCode}</Text>
+                    <Text style={[styles.orderCode, { color: Colors.textPrimary }]} numberOfLines={1}>{rent.orderCode}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-                      <Text style={[styles.statusBadgeText, { color: badge.text }]}>{badge.label}</Text>
+                      <Text style={[styles.statusBadgeText, { color: badge.text }]} numberOfLines={1}>{badge.label}</Text>
                     </View>
                   </View>
 
-                  <Text style={[styles.custName, { color: Colors.textPrimary }]}>
+                  <Text style={[styles.custName, { color: Colors.textPrimary }]} numberOfLines={1}>
                     {rent.customerName} • {rent.customerPhone}
                   </Text>
-                  <Text style={[styles.rentalDates, { color: Colors.textSecondary }]}>
+                  <Text style={[styles.rentalDates, { color: Colors.textSecondary }]} numberOfLines={1}>
                     📅 Thuê: {rent.startDate} ⮂ {rent.endDate} ({rent.rentalDays} ngày)
                   </Text>
 
                   <View style={[styles.cardDivider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
 
                   <View style={styles.orderBottom}>
-                    <View>
-                      <Text style={[styles.paymentLabel, { color: Colors.textMuted }]}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={[styles.paymentLabel, { color: Colors.textMuted }]} numberOfLines={1}>
                         Cọc: {formatCurrency(rent.totalDeposit)}
                       </Text>
-                      <Text style={styles.orderTotal}>Phí thuê: {formatCurrency(rent.totalRentalFee)}</Text>
+                      <Text style={styles.orderTotal} numberOfLines={1}>Phí thuê: {formatCurrency(rent.totalRentalFee)}</Text>
                     </View>
 
                     <TouchableOpacity
                       style={styles.btnDetailOnly}
                       onPress={() => router.push(`/rental-detail/${rent.id}` as any)}
                     >
-                      <Text style={[styles.btnDetailOnlyText, { color: Colors.textPrimary }]}>Chi tiết</Text>
+                      <Text style={[styles.btnDetailOnlyText, { color: Colors.textPrimary }]} numberOfLines={1}>Chi tiết</Text>
                       <Ionicons name="chevron-forward" size={14} color={Colors.textPrimary} />
                     </TouchableOpacity>
                   </View>
@@ -517,6 +538,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
+    overflow: 'hidden',
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.04,
@@ -527,11 +549,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   orderTopLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   orderCode: {
     fontSize: 14.5,

@@ -93,9 +93,9 @@ export default function RentalDetailScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backCircleBtn}>
             <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <View>
-            <Text style={[styles.headerCode, { color: Colors.textPrimary }]}>{rental.orderCode}</Text>
-            <Text style={[styles.headerSub, { color: Colors.textSecondary }]}>Đơn thuê đồ Decor sự kiện</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.headerCode, { color: Colors.textPrimary }]} numberOfLines={1}>{rental.orderCode}</Text>
+            <Text style={[styles.headerSub, { color: Colors.textSecondary }]} numberOfLines={1}>Đơn thuê đồ Decor sự kiện</Text>
           </View>
         </View>
 
@@ -150,19 +150,19 @@ export default function RentalDetailScreen() {
           <View style={styles.infoRow}>
             <Ionicons name="person-outline" size={17} color="#9C7156" />
             <Text style={[styles.infoLabel, { color: Colors.textSecondary }]}>Khách hàng:</Text>
-            <Text style={[styles.infoVal, { color: Colors.textPrimary }]}>{rental.customerName}</Text>
+            <Text style={[styles.infoVal, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>{rental.customerName}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Ionicons name="call-outline" size={17} color="#9C7156" />
             <Text style={[styles.infoLabel, { color: Colors.textSecondary }]}>SĐT:</Text>
-            <Text style={[styles.infoVal, { color: Colors.textPrimary }]}>{rental.customerPhone || 'Chưa có'}</Text>
+            <Text style={[styles.infoVal, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>{rental.customerPhone || 'Chưa có'}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Ionicons name="calendar-outline" size={17} color="#9C7156" />
             <Text style={[styles.infoLabel, { color: Colors.textSecondary }]}>Lịch thuê:</Text>
-            <Text style={[styles.infoVal, { color: Colors.textPrimary }]}>
+            <Text style={[styles.infoVal, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>
               {rental.startDate} ⮂ {rental.endDate} ({rental.rentalDays} ngày)
             </Text>
           </View>
@@ -188,8 +188,8 @@ export default function RentalDetailScreen() {
                 contentFit="cover"
               />
               <View style={{ flex: 1, paddingHorizontal: 10 }}>
-                <Text style={[styles.itemName, { color: Colors.textPrimary }]}>{it.name}</Text>
-                <Text style={[styles.itemSub, { color: Colors.textMuted }]}>
+                <Text style={[styles.itemName, { color: Colors.textPrimary }]} numberOfLines={1}>{it.name}</Text>
+                <Text style={[styles.itemSub, { color: Colors.textMuted }]} numberOfLines={1}>
                   Thuê: {formatCurrency(it.rentalPrice)}/ngày • Cọc: {formatCurrency(it.depositPrice)}
                 </Text>
               </View>
@@ -203,20 +203,20 @@ export default function RentalDetailScreen() {
           <Text style={[styles.cardTitle, { color: Colors.textPrimary }]}>Chi phí thuê & Tiền cọc</Text>
 
           <View style={styles.billRow}>
-            <Text style={[styles.billLabel, { color: Colors.textSecondary }]}>Tổng tiền thuê:</Text>
-            <Text style={[styles.billVal, { color: Colors.textPrimary }]}>{formatCurrency(rental.totalRentalFee)}</Text>
+            <Text style={[styles.billLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Tổng tiền thuê:</Text>
+            <Text style={[styles.billVal, { color: Colors.textPrimary }]} numberOfLines={1}>{formatCurrency(rental.totalRentalFee)}</Text>
           </View>
 
           <View style={styles.billRow}>
-            <Text style={[styles.billLabel, { color: '#9C7156' }]}>Tiền cọc thiết bị:</Text>
-            <Text style={[styles.billVal, { color: '#9C7156' }]}>{formatCurrency(rental.totalDeposit)}</Text>
+            <Text style={[styles.billLabel, { color: '#9C7156' }]} numberOfLines={1}>Tiền cọc thiết bị:</Text>
+            <Text style={[styles.billVal, { color: '#9C7156' }]} numberOfLines={1}>{formatCurrency(rental.totalDeposit)}</Text>
           </View>
 
           <View style={[styles.divider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
 
           <View style={styles.billRow}>
-            <Text style={[styles.totalLabel, { color: Colors.textPrimary }]}>TỔNG THU BAN ĐẦU:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(rental.totalAmount || rental.totalRentalFee + rental.totalDeposit)}</Text>
+            <Text style={[styles.totalLabel, { color: Colors.textPrimary }]} numberOfLines={1}>TỔNG THU BAN ĐẦU:</Text>
+            <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatCurrency(rental.totalAmount || rental.totalRentalFee + rental.totalDeposit)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -244,6 +244,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   backCircleBtn: {
     width: 40,
@@ -254,6 +256,7 @@ const styles = StyleSheet.create({
     borderColor: '#E8E1D8',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   headerCode: {
     fontSize: 16,
@@ -271,6 +274,7 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: 12,
     borderRadius: 19,
+    flexShrink: 0,
   },
   btnCallText: {
     fontFamily: 'ElleGaborStd',
@@ -287,6 +291,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',
@@ -319,6 +324,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 13,
     width: 100,
+    flexShrink: 0,
   },
   infoVal: {
     fontSize: 13,
@@ -348,6 +354,7 @@ const styles = StyleSheet.create({
   itemQty: {
     fontSize: 13.5,
     fontWeight: '700',
+    flexShrink: 0,
   },
   billRow: {
     flexDirection: 'row',
@@ -357,10 +364,13 @@ const styles = StyleSheet.create({
   },
   billLabel: {
     fontSize: 13,
+    flex: 1,
+    marginRight: 8,
   },
   billVal: {
     fontSize: 14,
     fontWeight: '600',
+    flexShrink: 0,
   },
   divider: {
     height: 1,
@@ -370,10 +380,13 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
+    flex: 1,
+    marginRight: 8,
   },
   totalValue: {
     fontSize: 19,
     fontWeight: '700',
     color: '#9C7156',
+    flexShrink: 0,
   },
 });

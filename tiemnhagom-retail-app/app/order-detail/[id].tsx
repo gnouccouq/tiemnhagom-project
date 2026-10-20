@@ -18,7 +18,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../src/config/firebase';
 import { useThemeColor } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
-import { updateOrderStatus, addOrderInternalNote } from '../../src/services/adminOrderService';
+import { updateOrderStatus, addOrderInternalNote, normalizeOrder } from '../../src/services/adminOrderService';
 import { Order, OrderStatus } from '../../src/types';
 import { formatCurrency } from '../../src/utils/format';
 import { ScalePressable } from '../../src/components/ScalePressable';
@@ -41,32 +41,7 @@ export default function OrderDetailScreen() {
     const docRef = doc(db, 'orders', id);
     const unsub = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        const ord: Order = {
-          id: docSnap.id,
-          orderCode: data.orderCode || docSnap.id,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-          customerName: data.customerName || data.shippingAddress?.fullName || 'Khách hàng',
-          customerPhone: data.customerPhone || data.shippingAddress?.phone || '',
-          customerEmail: data.customerEmail || '',
-          shippingAddress: data.shippingAddress,
-          items: data.items || [],
-          subtotal: data.subtotal || data.totalAmount || 0,
-          discountAmount: data.discountAmount || 0,
-          pointsUsed: data.pointsUsed || 0,
-          pointsEarned: data.pointsEarned || 0,
-          shippingFee: data.shippingFee || 0,
-          totalAmount: data.totalAmount || 0,
-          status: (data.status || 'pending') as OrderStatus,
-          paymentMethod: data.paymentMethod || 'cod',
-          paymentStatus: data.paymentStatus || 'unpaid',
-          source: data.source || 'online',
-          staffId: data.staffId,
-          staffName: data.staffName,
-          notes: data.notes || '',
-          internalNotes: data.internalNotes || '',
-        };
+        const ord = normalizeOrder(docSnap.id, docSnap.data());
         setOrder(ord);
         setInternalNoteInput(ord.internalNotes || '');
       }
@@ -82,6 +57,11 @@ export default function OrderDetailScreen() {
       </View>
     );
   }
+
+  const isPos =
+    order.source === 'pos' ||
+    order.orderCode?.toUpperCase().includes('POS') ||
+    order.id?.toUpperCase().includes('POS');
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
     await updateOrderStatus(order.id, newStatus, adminProfile?.displayName);
@@ -110,10 +90,10 @@ export default function OrderDetailScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backCircleBtn}>
             <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <View>
-            <Text style={[styles.headerOrderCode, { color: Colors.textPrimary }]}>{order.orderCode}</Text>
-            <Text style={[styles.headerSub, { color: Colors.textSecondary }]}>
-              {order.source === 'pos' ? 'Đơn bán tại quầy' : 'Đơn đặt trực tuyến'}
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.headerOrderCode, { color: Colors.textPrimary }]} numberOfLines={1}>{order.orderCode}</Text>
+            <Text style={[styles.headerSub, { color: Colors.textSecondary }]} numberOfLines={1}>
+              {isPos ? 'Đơn bán tại quầy (POS) • Đã hoàn tất' : 'Đơn đặt trực tuyến'}
             </Text>
           </View>
         </View>
@@ -135,6 +115,26 @@ export default function OrderDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Banner thông báo nếu là đơn POS */}
+        {isPos && (
+          <View
+            style={[
+              styles.posBannerCard,
+              {
+                backgroundColor: isDark ? '#2B241E' : '#FFF9F5',
+                borderColor: '#E8CCB2',
+              },
+            ]}
+          >
+            <Ionicons name="storefront" size={22} color="#9C7156" />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={[styles.posBannerTitle, { color: '#9C7156' }]}>Đơn bán tại quầy (POS)</Text>
+              <Text style={[styles.posBannerDesc, { color: isDark ? '#D6D3D1' : '#6E665D' }]}>
+                Đơn hàng đã hoàn tất thanh toán và bàn giao tác phẩm trực tiếp cho khách tại tiệm.
+              </Text>
+            </View>
+          </View>
+        )}
         {/* Status Selector Card */}
         <View
           style={[
@@ -197,13 +197,13 @@ export default function OrderDetailScreen() {
           <View style={styles.infoRow}>
             <Ionicons name="person-outline" size={17} color="#9C7156" style={styles.infoIcon} />
             <Text style={[styles.infoLabel, { color: Colors.textSecondary }]}>Khách hàng:</Text>
-            <Text style={[styles.infoVal, { color: Colors.textPrimary }]}>{order.customerName}</Text>
+            <Text style={[styles.infoVal, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>{order.customerName}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Ionicons name="call-outline" size={17} color="#9C7156" style={styles.infoIcon} />
             <Text style={[styles.infoLabel, { color: Colors.textSecondary }]}>Số điện thoại:</Text>
-            <Text style={[styles.infoVal, { color: Colors.textPrimary }]}>{order.customerPhone || 'Chưa có'}</Text>
+            <Text style={[styles.infoVal, { color: Colors.textPrimary, flex: 1 }]} numberOfLines={1}>{order.customerPhone || 'Chưa có'}</Text>
           </View>
 
           {order.shippingAddress && (
@@ -251,15 +251,15 @@ export default function OrderDetailScreen() {
                 contentFit="cover"
               />
               <View style={{ flex: 1, paddingHorizontal: 10 }}>
-                <Text style={[styles.itemName, { color: Colors.textPrimary }]}>{it.name}</Text>
+                <Text style={[styles.itemName, { color: Colors.textPrimary }]} numberOfLines={2}>{it.name}</Text>
                 {it.selectedVariant ? (
-                  <Text style={[styles.itemVariant, { color: Colors.textMuted }]}>Men: {it.selectedVariant}</Text>
+                  <Text style={[styles.itemVariant, { color: Colors.textMuted }]} numberOfLines={1}>Men: {it.selectedVariant}</Text>
                 ) : null}
-                <Text style={styles.itemPriceSingle}>{formatCurrency(it.price)}</Text>
+                <Text style={styles.itemPriceSingle} numberOfLines={1}>{formatCurrency(it.price)}</Text>
               </View>
               <View style={styles.itemQtyWrap}>
                 <Text style={[styles.itemQtyText, { color: Colors.textPrimary }]}>x{it.quantity}</Text>
-                <Text style={styles.itemSubtotal}>{formatCurrency(it.price * it.quantity)}</Text>
+                <Text style={styles.itemSubtotal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatCurrency(it.price * it.quantity)}</Text>
               </View>
             </View>
           ))}
@@ -278,38 +278,56 @@ export default function OrderDetailScreen() {
           <Text style={[styles.cardTitle, { color: Colors.textPrimary }]}>Chi tiết thanh toán</Text>
 
           <View style={styles.billRow}>
-            <Text style={[styles.billLabel, { color: Colors.textSecondary }]}>Tạm tính:</Text>
-            <Text style={[styles.billVal, { color: Colors.textPrimary }]}>{formatCurrency(order.subtotal)}</Text>
+            <Text style={[styles.billLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Tạm tính:</Text>
+            <Text style={[styles.billVal, { color: Colors.textPrimary }]} numberOfLines={1}>{formatCurrency(order.subtotal)}</Text>
           </View>
 
           {(order.discountAmount ?? 0) > 0 && (
             <View style={styles.billRow}>
-              <Text style={[styles.billLabel, { color: '#9C7156' }]}>Giảm giá / Voucher:</Text>
-              <Text style={[styles.billVal, { color: '#9C7156' }]}>-{formatCurrency(order.discountAmount ?? 0)}</Text>
+              <Text style={[styles.billLabel, { color: '#9C7156' }]} numberOfLines={1}>Giảm giá / Voucher:</Text>
+              <Text style={[styles.billVal, { color: '#9C7156' }]} numberOfLines={1}>-{formatCurrency(order.discountAmount ?? 0)}</Text>
             </View>
           )}
 
           {(order.shippingFee ?? 0) > 0 && (
             <View style={styles.billRow}>
-              <Text style={[styles.billLabel, { color: Colors.textSecondary }]}>Phí vận chuyển:</Text>
-              <Text style={[styles.billVal, { color: Colors.textPrimary }]}>{formatCurrency(order.shippingFee ?? 0)}</Text>
+              <Text style={[styles.billLabel, { color: Colors.textSecondary }]} numberOfLines={1}>Phí vận chuyển:</Text>
+              <Text style={[styles.billVal, { color: Colors.textPrimary }]} numberOfLines={1}>{formatCurrency(order.shippingFee ?? 0)}</Text>
             </View>
           )}
 
           <View style={[styles.divider, { backgroundColor: isDark ? '#222222' : '#F0ECE6' }]} />
 
           <View style={styles.billRow}>
-            <Text style={[styles.totalLabel, { color: Colors.textPrimary }]}>TỔNG ĐƠN HÀNG:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(order.totalAmount)}</Text>
+            <Text style={[styles.totalLabel, { color: Colors.textPrimary }]} numberOfLines={1}>TỔNG ĐƠN HÀNG:</Text>
+            <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatCurrency(order.totalAmount)}</Text>
           </View>
 
           <View style={styles.paymentMethodBadgeRow}>
             <View style={styles.methodTag}>
-              <Text style={styles.methodTagText}>{order.paymentMethod.toUpperCase()}</Text>
+              <Text style={styles.methodTagText} numberOfLines={1}>{order.paymentMethod.toUpperCase()}</Text>
             </View>
-            <View style={[styles.methodTag, { backgroundColor: order.paymentStatus === 'paid' ? 'rgba(156, 113, 86, 0.12)' : '#FEF3C7' }]}>
-              <Text style={[styles.methodTagText, { color: order.paymentStatus === 'paid' ? '#9C7156' : '#D97706' }]}>
-                {order.paymentStatus === 'paid' ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN'}
+            <View
+              style={[
+                styles.methodTag,
+                {
+                  backgroundColor:
+                    isPos || order.paymentStatus === 'paid'
+                      ? 'rgba(156, 113, 86, 0.12)'
+                      : '#FEF3C7',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.methodTagText,
+                  {
+                    color: isPos || order.paymentStatus === 'paid' ? '#9C7156' : '#D97706',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {isPos || order.paymentStatus === 'paid' ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN'}
               </Text>
             </View>
           </View>
@@ -389,6 +407,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   backCircleBtn: {
     width: 40,
@@ -404,6 +424,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    flexShrink: 0,
   },
   headerOrderCode: {
     fontSize: 16,
@@ -421,6 +442,7 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: 12,
     borderRadius: 19,
+    flexShrink: 0,
   },
   btnCallText: {
     fontFamily: 'ElleGaborStd',
@@ -441,6 +463,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 6,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontFamily: 'ElleGaborStd',
@@ -530,10 +553,13 @@ const styles = StyleSheet.create({
   },
   billLabel: {
     fontSize: 13,
+    flex: 1,
+    marginRight: 8,
   },
   billVal: {
     fontSize: 14,
     fontWeight: '600',
+    flexShrink: 0,
   },
   divider: {
     height: 1,
@@ -543,11 +569,14 @@ const styles = StyleSheet.create({
     fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
+    flex: 1,
+    marginRight: 8,
   },
   totalValue: {
     fontSize: 19,
     fontWeight: '700',
     color: '#9C7156',
+    flexShrink: 0,
   },
   paymentMethodBadgeRow: {
     flexDirection: 'row',
@@ -611,5 +640,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  posBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  posBannerTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14.5,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  posBannerDesc: {
+    fontSize: 12.5,
+    lineHeight: 17,
   },
 });

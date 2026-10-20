@@ -68,6 +68,12 @@ function RootNavigator() {
         <Stack.Screen name="coupon-edit/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="push-notification" options={{ headerShown: false }} />
         <Stack.Screen name="shift-report" options={{ headerShown: false }} />
+        <Stack.Screen name="staff-management" options={{ headerShown: false }} />
+        <Stack.Screen name="categories" options={{ headerShown: false }} />
+        <Stack.Screen name="flash-sale" options={{ headerShown: false }} />
+        <Stack.Screen name="inventory-log" options={{ headerShown: false }} />
+        <Stack.Screen name="restock-alerts" options={{ headerShown: false }} />
+        <Stack.Screen name="revenue-report" options={{ headerShown: false }} />
       </Stack>
     </>
   );
