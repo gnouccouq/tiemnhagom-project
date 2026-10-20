@@ -1246,38 +1246,45 @@ window.setupLocationPrompt = setupLocationPrompt;
 
 // 8. Logic UI: Render thẻ sản phẩm dùng chung
 export function updateMembershipPrices(tier) {
-    if (!tier) {
-        try {
-            const tierStr = sessionStorage.getItem('tng_current_tier');
-            if (tierStr) tier = JSON.parse(tierStr);
-        } catch (e) { }
-    }
-    const effectiveTier = (tier && tier.discount > 0)
-        ? tier
-        : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
-
-    containers.forEach(container => {
-        const currentPrice = parseInt(container.getAttribute('data-price')) || 0;
-        if (!currentPrice) return;
-        const memPrice = Math.round(currentPrice * (1 - effectiveTier.discount / 100));
-        const isDetail = Boolean(container.closest('.product-detail-info') || container.closest('#product-detail-container') || container.closest('.product-detail') || container.closest('.product-price-row'));
-        if (isDetail) {
-            container.innerHTML = `
-                <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 10px; margin-bottom: 5px;">
-                    <span style="color: ${effectiveTier.color || '#9C7156'}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                        Giá ${effectiveTier.name}
-                    </span> 
-                    <strong style="color: #9C7156; font-size: 1.1rem; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
-                </div>`;
-        } else {
-            container.innerHTML = `
-                <div style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                    <span>Giá ${effectiveTier.name}</span>
-                    <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
-                </div>`;
+    try {
+        if (!tier) {
+            try {
+                const tierStr = sessionStorage.getItem('tng_current_tier');
+                if (tierStr) tier = JSON.parse(tierStr);
+            } catch (e) { }
         }
-    });
+        const effectiveTier = (tier && tier.discount > 0)
+            ? tier
+            : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
+
+        const containers = document.querySelectorAll('.dynamic-membership-price');
+        if (!containers || containers.length === 0) return;
+
+        containers.forEach(container => {
+            const currentPrice = parseInt(container.getAttribute('data-price')) || 0;
+            if (!currentPrice) return;
+            const memPrice = Math.round(currentPrice * (1 - effectiveTier.discount / 100));
+            const isDetail = Boolean(container.closest('.product-detail-info') || container.closest('#product-detail-container') || container.closest('.product-detail') || container.closest('.product-price-row'));
+            if (isDetail) {
+                container.innerHTML = `
+                    <div style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafa; margin-top: 10px; margin-bottom: 5px;">
+                        <span style="color: ${effectiveTier.color || '#9C7156'}; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            Giá ${effectiveTier.name}
+                        </span> 
+                        <strong style="color: #9C7156; font-size: 1.1rem; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                    </div>`;
+            } else {
+                container.innerHTML = `
+                    <div style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <span>Giá ${effectiveTier.name}</span>
+                        <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                    </div>`;
+            }
+        });
+    } catch (err) {
+        console.warn("Lỗi khi cập nhật giá thành viên:", err);
+    }
 }
 window.updateMembershipPrices = updateMembershipPrices;
 

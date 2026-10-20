@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +26,7 @@ import { useNotificationBadge } from '../../src/context/NotificationBadgeContext
 import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { getUserOrders } from '../../src/services/orderService';
 import { syncUserLoyaltyAndVouchers } from '../../src/services/loyaltyService';
+import { getAllUserCoupons } from '../../src/services/couponService';
 import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -135,6 +136,24 @@ export default function ProfileScreen() {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [tierModalVisible, setTierModalVisible] = useState(false);
   const [pointsModalVisible, setPointsModalVisible] = useState(false);
+  const [vouchersCount, setVouchersCount] = useState<number>(0);
+
+  // Tải số lượng voucher/quà tặng khả dụng trong Kho quà
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      getAllUserCoupons(user?.uid)
+        .then((res) => {
+          if (isMounted && res && Array.isArray(res.unused)) {
+            setVouchersCount(res.unused.length);
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isMounted = false;
+      };
+    }, [user?.uid])
+  );
 
   // Tính toán chi tiêu thực tế từ các đơn hàng đã hoàn thành để đồng bộ chuẩn xác với web
   useEffect(() => {
@@ -531,6 +550,13 @@ export default function ProfileScreen() {
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="gift-outline" size={24} color="#8A5A2B" />
+                {vouchersCount > 0 && (
+                  <View style={styles.gridBadge}>
+                    <Text style={styles.gridBadgeText}>
+                      {vouchersCount > 99 ? '99+' : vouchersCount}
+                    </Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.gridLabel}>{t('rewardsWalletUtility')}</Text>
             </TouchableOpacity>

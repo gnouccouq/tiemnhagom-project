@@ -25,6 +25,7 @@ import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop'
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor, checkIsDark } from '../../src/constants/theme';
 import { useSettings } from '../../src/context/SettingsContext';
+import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -35,17 +36,19 @@ export default function ArticleDetailScreen() {
   const Colors = useThemeColor();
   const isDark = checkIsDark(Colors);
   const { t } = useSettings();
+  const { markAsRead } = useNotificationBadge();
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     if (id) {
+      markAsRead(id);
       getArticleById(id)
         .then((res) => setArticle(res))
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, markAsRead]);
 
   const handleShare = async () => {
     if (!article) return;

@@ -1,6 +1,6 @@
 # Tiệm Nhà Gốm — Workspace Design Rules & UI/UX Standards
 
-Tài liệu này là **Bộ quy chuẩn thiết kế UI/UX bắt buộc** cho toàn bộ dự án Tiệm Nhà Gốm (bao gồm `tiemnhagom-app` và hệ thống Web).
+Tài liệu này là **Bộ quy chuẩn thiết kế UI/UX và Kiến trúc vận hành bắt buộc** cho toàn bộ dự án Tiệm Nhà Gốm (bao gồm `tiemnhagom-app`, `tiemnhagom-retail-app` và hệ thống Web Dashboard / POS).
 Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị nào **phải luôn tuân thủ 100% các quy tắc dưới đây**.
 
 ---
@@ -215,5 +215,62 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 * **Thanh điều hướng App Retail (Native Liquid Glass TabBar):**
   * Áp dụng `NativeTabs` từ `expo-router/unstable-native-tabs` trên iOS để tận dụng thanh `UITabBarController` gốc của Apple với hiệu ứng Liquid Glass và bộ biểu tượng Apple SF Symbols (`chart.pie`, `doc.text`, `cart`, `cube.box`, `square.grid.2x2`), màu nhấn thương hiệu `tintColor="#9C7156"`.
 
+---
 
+## 12. Quy chuẩn Chống Tràn Khung & Đảm Bảo Bố Cục An Toàn (Anti-Overflow & Safe Layout Standard)
+* **Nguyên tắc không tràn viền:** Tuyệt đối không để chữ, số liệu giá tiền hay biểu tượng tràn ra ngoài khung viền Card, lấn sang nút bấm hoặc bị cắt cụt mất chữ.
+* **Bắt buộc giới hạn dòng và đuôi ba chấm (Ellipsis truncation):**
+  * Mọi thẻ văn bản trong các hàng danh sách, tiêu đề sản phẩm, tên khách hàng, mã đơn hàng: bắt buộc khai báo `numberOfLines={1}` (hoặc `{2}`) kết hợp `ellipsizeMode="tail"`.
+* **Quy chuẩn hàng ngang (`flexDirection: 'row'`):**
+  * Cột chứa văn bản (tên hàng, mô tả) bắt buộc phải có `flex: 1` hoặc `flexShrink: 1` kèm `marginRight: 8px` để tự động nhường không gian cho cột hiển thị giá tiền/số lượng bên phải.
+  * Phần tử giá tiền và số lượng bên phải phải có `flexShrink: 0` để luôn giữ trọn vẹn số tiền, không bao giờ bị dồn ép thành dấu chấm lửng.
+* **Co giãn số tiền tự động (Dynamic Currency Scaling):**
+  * Với các con số giá trị lớn (`productPrice`, `totalValue`, thẻ thống kê KPI): luôn bổ sung `adjustsFontSizeToFit={true}` và `minimumFontScale={0.75 - 0.8}` để đảm bảo hiển thị hoàn hảo trên cả các thiết bị màn hình nhỏ (như iPhone SE).
+* **Tách thuộc tính bố cục ra khỏi ScalePressable:**
+  * Khi bọc các nút bấm hoặc ô tìm kiếm trong `ScalePressable`, các thuộc tính layout (`flex: 1`, `margin`, `width`, `minWidth`) phải được đặt ở thẻ chứa bao bọc ngoài cùng để tránh làm co cụm hoặc méo mó các thành phần lân cận khi chạm.
 
+---
+
+## 13. Quy chuẩn Nghiệp Vụ Đơn Hàng Tại Quầy POS (POS In-Store Orders Standard)
+* **Định danh đơn hàng tại quầy:**
+  * Mọi đơn hàng có mã bắt đầu bằng `POS-`, `id` chứa `POS`, hoặc có cờ `source: 'pos'` / `orderSource: 'pos'` / `cashierId` là đơn bán trực tiếp tại cửa hàng.
+* **Trạng thái mặc định và bắt buộc:**
+  * Đơn POS **100% đã hoàn tất thanh toán và giao nhận tại quầy**:
+    * `status` luôn là **`'completed'` (Đã hoàn tất)** (trừ trường hợp chủ động ghi nhận hủy).
+    * `paymentStatus` luôn là **`'paid'` (Đã thanh toán)**.
+    * `source` định danh là `'pos'`.
+* **Quy tắc hiển thị giao diện Đơn hàng:**
+  * **Huy hiệu nguồn:** Hiển thị tag rõ ràng `🏪 BÁN TẠI QUẦY (POS)` kèm icon cửa hàng.
+  * **Huy hiệu trạng thái:** Hiển thị `ĐÃ HOÀN TẤT` (`#9C7156` trên nền `rgba(156, 113, 86, 0.15)`).
+  * **Khóa nút hành động:** Tuyệt đối không hiển thị các nút thao tác như "Duyệt đơn" hay "Giao hàng" cho đơn POS; luôn hiển thị huy hiệu cố định `Hoàn tất` với biểu tượng checkmark men gốm.
+  * **Bộ lọc tab trạng thái:** Đơn POS được đưa về đúng tab "Đã hoàn tất" và "Tất cả", **tuyệt đối không xuất hiện trong tab "Chờ duyệt"**.
+  * **Cảnh báo thông minh Dashboard:** Không tính đơn POS vào số lượng "Đơn mới cần xác nhận".
+
+---
+
+## 14. Quy chuẩn Báo Cáo Doanh Thu, Lợi Nhuận & Sổ Thuế (Financial & Tax Ledger Standard)
+* **Phân định rõ 6 chỉ số tài chính cốt lõi (Financial KPIs):**
+  1. **Doanh thu gộp (Gross Revenue):** Tổng giá trị đơn hàng phát sinh chưa trừ hủy.
+  2. **Doanh thu thuần (Net Revenue):** Doanh thu thực tế sau khi đã loại bỏ toàn bộ đơn hủy/trả.
+  3. **Lợi nhuận gộp ước tính (Estimated Gross Profit):** Doanh thu thuần trừ đi giá vốn hàng bán (COGS).
+  4. **Số đơn hoàn tất:** Tổng số giao dịch thành công trong chu kỳ.
+  5. **Tỷ lệ hủy đơn (Cancellation Rate):** Tỷ lệ phần trăm giữa đơn hủy trên tổng lượt tạo đơn.
+  6. **Giá trị trung bình/đơn (AOV):** Doanh thu thuần chia cho số đơn thành công.
+* **Biểu đồ cột phân bổ chu kỳ trực quan (Cyclical Revenue Chart):**
+  * Hỗ trợ xem linh hoạt theo: Hôm nay (phân bổ 4 khung giờ: Sáng 6-12h, Chiều 12-17h, Tối 17-21h, Đêm 21-6h), 7 ngày gần nhất, Tháng này, Quý này, và Năm nay.
+* **Bảng kê nghĩa vụ thuế Hộ Kinh Doanh Cá Thể:**
+  * Áp dụng theo quy định pháp luật ngành thương mại bán lẻ:
+    * **Thuế GTGT (VAT):** 1.0% trên tổng doanh thu tính thuế.
+    * **Thuế TNCN:** 0.5% trên tổng doanh thu tính thuế.
+    * **Tổng nghĩa vụ thuế:** 1.5% doanh thu, hiển thị rõ ràng, minh bạch giúp chủ tiệm quản trị rủi ro tài chính.
+
+---
+
+## 15. Quy chuẩn Kiểm Kê Két Tiền & Kết Ca Thu Ngân (Cash Drawer & Shift Handover Standard)
+* **Phân loại dòng tiền thanh toán:**
+  * Tách biệt rõ ràng 3 nguồn tiền: Tiền mặt tại quầy (Cash in Drawer), Chuyển khoản VietQR, và Quẹt thẻ POS.
+* **Quy trình kết ca & bàn giao:**
+  * Thu ngân nhập số tiền mặt thực tế kiểm đếm được trong két.
+  * Hệ thống tự động tính toán chênh lệch: `Chênh lệch = Tiền mặt thực tế - (Tiền đầu ca + Tiền mặt thu trong ca)`.
+  * Hiển thị cảnh báo lệch két (Thừa / Thiếu tiền) màu gốm trầm, không dùng màu xanh.
+  * Bắt buộc có phần ghi chú bàn giao ca và lưu dữ liệu đối soát vào collection `shift_reports` trên Firestore.

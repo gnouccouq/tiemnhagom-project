@@ -7,6 +7,7 @@
       "**/.*",
       "**/node_modules/**",
       "tiemnhagom-app/**",
+      "tiemnhagom-retail-app/**",
       "android/**",
       "ios/**",
       "functions/**",

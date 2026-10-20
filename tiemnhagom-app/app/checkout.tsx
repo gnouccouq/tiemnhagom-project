@@ -29,6 +29,7 @@ import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { formatCurrency } from '../src/utils/format';
 import { getBestSellingProducts } from '../src/services/productService';
 import { createOrder } from '../src/services/orderService';
+import { createOrderPlacedNotification } from '../src/services/orderNotificationService';
 import { Product } from '../src/types';
 
 export default function CheckoutScreen() {
@@ -158,6 +159,13 @@ export default function CheckoutScreen() {
 
       const res = await createOrder(orderPayload);
       if (res.success && res.orderCode) {
+        // Gửi thông báo đặt hàng thành công vào tài khoản khách hàng
+        if (user && user.uid && res.orderId) {
+          const firstItem = cart && cart.length > 0 ? cart[0] : null;
+          const firstImg = firstItem?.imageUrl || (firstItem as any)?.image || undefined;
+          createOrderPlacedNotification(user.uid, res.orderId, res.orderCode, totalAmount, firstImg).catch(() => {});
+        }
+
         clearCart();
         router.replace({
           pathname: '/order-success',

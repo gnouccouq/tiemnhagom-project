@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestor
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { useAuth } from './AuthContext';
+import { syncOrderNotificationsForUser } from '../services/orderNotificationService';
 
 interface RealtimeDataContextProps {
   products: Product[];
@@ -213,6 +214,11 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
         });
         
         setOrders(items);
+
+        // Tự động đồng bộ thông báo đơn hàng cho tài khoản người dùng
+        if (user && user.uid) {
+          syncOrderNotificationsForUser(user.uid, items).catch(() => {});
+        }
       });
       return () => unsubscribe();
     }

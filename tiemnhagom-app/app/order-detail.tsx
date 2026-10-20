@@ -330,18 +330,18 @@ const formatShortPickupTime = (dateInput: any) => {
 
 export default function OrderDetailScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ orderId?: string; orderData?: string }>();
+  const params = useLocalSearchParams<{ orderId?: string; id?: string; orderData?: string }>();
   const insets = useSafeAreaInsets();
   const { userProfile } = useAuth();
   const { addToCart } = useCart();
   const { products: productsCatalog } = useRealtimeData();
   const { t } = useSettings();
 
-  // Dữ liệu đơn hàng tải từ Firestore (nếu có orderId)
+  // Dữ liệu đơn hàng tải từ Firestore (nếu có orderId hoặc id)
   const [firestoreOrder, setFirestoreOrder] = useState<any | null>(null);
 
   useEffect(() => {
-    const rawId = params.orderId;
+    const rawId = params.orderId || params.id;
     if (!rawId) return;
 
     let isMounted = true;

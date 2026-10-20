@@ -146,7 +146,7 @@ function renderOnlineUsersTable(usersList) {
         const timeAgo = formatOnlineTimeAgo(u?.startTime);
         const deviceIcon = u.deviceType === 'Mobile' ? '📱' : (u.deviceType === 'Tablet' ? '📟' : '💻');
         const userAvatar = u.isGuest ? '👤' : '⭐';
-        const userBadge = u.isGuest 
+        const userBadge = u.isGuest
             ? `<span style="font-size:0.75rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:4px;">Khách</span>`
             : `<span style="font-size:0.75rem; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:4px; font-weight:600;">Thành viên</span>`;
 
@@ -1551,7 +1551,7 @@ function updateDashboardNotificationsAndAlerts() {
             }
             smartTitle.style.color = '#92400e';
             smartTitle.innerText = 'Cảnh báo kho hàng';
-            
+
             let descParts = [];
             if (outOfStockItems.length > 0) descParts.push(`${outOfStockItems.length} mặt hàng hết hàng`);
             if (lowStockItems.length > 0) descParts.push(`${lowStockItems.length} mặt hàng sắp hết (≤ 3 SP)`);
@@ -2439,7 +2439,7 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
     // 4. Click vào ô ảnh: Nếu trong gallery có ảnh, cho phép chọn nhanh hoặc tải tệp
     previewEl.onclick = (e) => {
         e.stopPropagation();
-        
+
         // Nếu không có ảnh nào trong gallery thì trực tiếp mở file picker
         if (!window.productGalleryImages || window.productGalleryImages.length === 0) {
             fileInput.click();
@@ -3390,7 +3390,7 @@ async function initLookbookManagement() {
         csToggle.onchange = async (e) => {
             const isComingSoon = e.target.checked;
             try {
-                await setDoc(doc(db, "settings", "lookbook"), { 
+                await setDoc(doc(db, "settings", "lookbook"), {
                     isComingSoon: isComingSoon,
                     updatedAt: new Date().toISOString()
                 }, { merge: true });
@@ -3603,7 +3603,7 @@ async function initLookbookManagement() {
             const csToggle = document.getElementById('lookbook-coming-soon-toggle');
             const isComingSoon = csToggle ? csToggle.checked : true;
 
-            await setDoc(doc(db, "settings", "lookbook"), { 
+            await setDoc(doc(db, "settings", "lookbook"), {
                 items: updatedList,
                 isComingSoon: isComingSoon,
                 updatedAt: new Date().toISOString()
@@ -3784,7 +3784,7 @@ window.deleteLookbookScene = async (sceneId) => {
         const updatedList = adminLookbookScenes.filter(s => s.id !== sceneId);
         const csToggle = document.getElementById('lookbook-coming-soon-toggle');
         const isComingSoon = csToggle ? csToggle.checked : true;
-        await setDoc(doc(db, "settings", "lookbook"), { 
+        await setDoc(doc(db, "settings", "lookbook"), {
             items: updatedList,
             isComingSoon: isComingSoon,
             updatedAt: new Date().toISOString()
@@ -3838,7 +3838,7 @@ window.seedDefaultLookbookScenes = async () => {
             }
         ];
 
-        await setDoc(doc(db, "settings", "lookbook"), { 
+        await setDoc(doc(db, "settings", "lookbook"), {
             items: defaultScenes,
             isComingSoon: true, // Mặc định vẫn giữ Sắp ra mắt khi nạp mẫu
             updatedAt: new Date().toISOString()
@@ -4503,7 +4503,7 @@ window.getComboItemStockInfo = function (item) {
     const p = (typeof posProductsLocal !== 'undefined' && Array.isArray(posProductsLocal))
         ? posProductsLocal.find(x => x.id === item.id)
         : null;
-    
+
     if (!p) {
         return {
             stock: item.stock !== undefined ? Number(item.stock) : 0,
@@ -4693,8 +4693,8 @@ window.renderComboVariantsTabs = function () {
 
     tabsContainer.innerHTML = window.comboVariants.map((v, idx) => {
         const calc = window.calcComboVariantStock(v);
-        const statusBadge = calc.isOutOfStock 
-            ? '<span style="color: #ef4444; font-size: 0.75rem; margin-left: 4px;">(Hết)</span>' 
+        const statusBadge = calc.isOutOfStock
+            ? '<span style="color: #ef4444; font-size: 0.75rem; margin-left: 4px;">(Hết)</span>'
             : `<span style="color: #10b981; font-size: 0.75rem; margin-left: 4px;">(${calc.stock})</span>`;
         return `
             <button type="button" class="btn-minimal ${idx === window.currentComboVariantIndex ? 'active' : ''}" 
@@ -4798,7 +4798,7 @@ window.updateCurrentComboVariantPrice = function (val) {
     if (window.comboVariants[window.currentComboVariantIndex]) {
         const cur = window.comboVariants[window.currentComboVariantIndex];
         cur.price = (val === '' || val === null) ? null : (parseFloat(val) || 0);
-        
+
         // Cập nhật lại giá giảm nếu đang có % giảm
         const saleInp = document.getElementById('combo-variant-sale');
         const salePriceInp = document.getElementById('combo-variant-saleprice');
@@ -4965,8 +4965,8 @@ window.renderComboItems = function () {
         }
 
         const stockBadgeColor = isItemOut ? '#ef4444' : (itemMaxSets < 5 ? '#f59e0b' : '#10b981');
-        const stockBadgeText = isItemOut 
-            ? '⚠️ Sản phẩm này đã hết hàng' 
+        const stockBadgeText = isItemOut
+            ? '⚠️ Sản phẩm này đã hết hàng'
             : `📦 Tồn kho con: <strong>${stockInfo.stock}</strong> (Lấy <strong>${qtyNeeded}</strong> → Tạo được <strong>${itemMaxSets}</strong> combo)`;
 
         return `
@@ -5278,15 +5278,15 @@ if (productForm) {
                 const salePrice = salePriceInput && salePriceInput.value ? Number(salePriceInput.value) : null;
                 const hexInput = row.querySelector('.variant-hex-input');
                 const hex = hexInput && hexInput.value ? hexInput.value.trim() : null;
-                
+
                 const variantId = row.dataset.variantId || ('var_c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
                 const origName = (row.dataset.originalName || '').trim().toLowerCase();
                 const rowSold = Number(row.dataset.sold || 0);
 
                 // Khớp biến thể cũ theo id -> originalName -> name mới, tránh reset sold về 0 khi đổi tên
-                const existingCV = existingColorVariants.find(c => 
-                    (c.id && c.id === variantId) || 
-                    (origName && c.name && c.name.trim().toLowerCase() === origName) || 
+                const existingCV = existingColorVariants.find(c =>
+                    (c.id && c.id === variantId) ||
+                    (origName && c.name && c.name.trim().toLowerCase() === origName) ||
                     (c.name && c.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingCV && existingCV.sold !== undefined) ? existingCV.sold : rowSold;
@@ -5320,15 +5320,15 @@ if (productForm) {
                 const sale = (saleInput && saleInput.value !== '') ? Math.max(0, Math.min(100, Number(saleInput.value))) : null;
                 const salePriceInput = row.querySelector('.variant-saleprice');
                 const salePrice = salePriceInput && salePriceInput.value ? Number(salePriceInput.value) : null;
-                
+
                 const variantId = row.dataset.variantId || ('var_p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
                 const origName = (row.dataset.originalName || '').trim().toLowerCase();
                 const rowSold = Number(row.dataset.sold || 0);
 
                 // Khớp biến thể cũ theo id -> originalName -> name mới, tránh reset sold về 0 khi đổi tên
-                const existingPV = existingPatternVariants.find(p => 
-                    (p.id && p.id === variantId) || 
-                    (origName && p.name && p.name.trim().toLowerCase() === origName) || 
+                const existingPV = existingPatternVariants.find(p =>
+                    (p.id && p.id === variantId) ||
+                    (origName && p.name && p.name.trim().toLowerCase() === origName) ||
                     (p.name && p.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingPV && existingPV.sold !== undefined) ? existingPV.sold : rowSold;
@@ -6447,9 +6447,9 @@ window.syncAllProductsSoldCount = async () => {
 
                             // 3. Kiểm tra item.variant
                             if (!matchedComboKey && item.variant) {
-                                const found = pData.comboVariants.find(cv => 
-                                    cv.name === item.variant || 
-                                    cv.id === item.variant || 
+                                const found = pData.comboVariants.find(cv =>
+                                    cv.name === item.variant ||
+                                    cv.id === item.variant ||
                                     item.variant.toLowerCase().includes((cv.name || '').toLowerCase()) ||
                                     (cv.name || '').toLowerCase().includes(item.variant.toLowerCase())
                                 );
@@ -6635,14 +6635,14 @@ async function editProduct(id) {
                 variantContainer.innerHTML = '';
                 if (p.colorVariants && Array.isArray(p.colorVariants)) {
                     p.colorVariants.forEach(v => window.addVariantRow(
-                        v.name, 
-                        v.imageUrl, 
-                        v.stock || 0, 
-                        v.showOnProductPage || false, 
-                        v.price || '', 
-                        v.hex || '', 
-                        (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
-                        v.sold || 0, 
+                        v.name,
+                        v.imageUrl,
+                        v.stock || 0,
+                        v.showOnProductPage || false,
+                        v.price || '',
+                        v.hex || '',
+                        (v.sale !== undefined && v.sale !== null) ? v.sale : '',
+                        v.sold || 0,
                         v.id || '',
                         v.salePrice || ''
                     ));
@@ -6655,13 +6655,13 @@ async function editProduct(id) {
                 patternContainer.innerHTML = '';
                 if (p.patternVariants && Array.isArray(p.patternVariants)) {
                     p.patternVariants.forEach(v => window.addPatternVariantRow(
-                        v.name, 
-                        v.imageUrl, 
-                        v.stock || 0, 
-                        v.showOnProductPage || false, 
-                        v.price || '', 
-                        (v.sale !== undefined && v.sale !== null) ? v.sale : '', 
-                        v.sold || 0, 
+                        v.name,
+                        v.imageUrl,
+                        v.stock || 0,
+                        v.showOnProductPage || false,
+                        v.price || '',
+                        (v.sale !== undefined && v.sale !== null) ? v.sale : '',
+                        v.sold || 0,
                         v.id || '',
                         v.salePrice || ''
                     ));
@@ -7035,10 +7035,10 @@ async function deleteProduct(id) {
 
     try {
         await deleteDoc(doc(db, "products", id));
-        
+
         // Cập nhật mảng sản phẩm local
         posProductsLocal = posProductsLocal.filter(item => item.id !== id);
-        
+
         showToast(`✅ Đã xóa sản phẩm "${prodName}" thành công!`, "success");
 
         // Đóng modal sản phẩm nếu đang mở
@@ -7280,7 +7280,7 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
     let filtered = allOrdersCache.filter(order => {
         if (order.orderType === 'rental') return false;
 
-        const matchesId = !idVal || 
+        const matchesId = !idVal ||
             (order.id && order.id.toLowerCase().includes(idVal)) ||
             (order.shippingAddress?.phone && order.shippingAddress.phone.toLowerCase().includes(idVal)) ||
             (order.customerPhone && order.customerPhone.toLowerCase().includes(idVal)) ||
@@ -7519,13 +7519,13 @@ function renderOrderRows(ordersList, tableElement) {
         const orderDate = order.orderDate
             ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
             : 'N/A';
-        
+
         const items = order.items || [];
         const subtotal = items.length > 0 ? items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0) : (order.totalAmount || 0);
         const discount = Number(order.discountAmount || order.discountVal || order.discount || (subtotal > (order.totalAmount || 0) && order.totalAmount > 0 ? (subtotal - order.totalAmount) : 0));
         const finalTotal = order.totalAmount || Math.max(0, subtotal - discount);
         const paidAmount = order.cashGiven ? Math.max(finalTotal, order.cashGiven) : finalTotal;
-        
+
         const custName = order.shippingAddress?.fullName || order.customerName || 'Khách mua tại shop';
         const custPhone = order.shippingAddress?.phone || order.customerPhone || '';
         const custCode = order.userId || order.customerId || 'Khách vãng lai';
@@ -7658,12 +7658,12 @@ window.toggleOrderQuickView = function (orderId, event) {
                             </thead>
                             <tbody>
                                 ${items.map(item => {
-                                    const itemPrice = item.price || 0;
-                                    const itemDiscount = item.discount || 0;
-                                    const itemSellingPrice = itemPrice - itemDiscount;
-                                    const itemLineTotal = itemSellingPrice * (item.quantity || 1);
+        const itemPrice = item.price || 0;
+        const itemDiscount = item.discount || 0;
+        const itemSellingPrice = itemPrice - itemDiscount;
+        const itemLineTotal = itemSellingPrice * (item.quantity || 1);
 
-                                    return `
+        return `
                                     <tr style="border-bottom: 1px solid #f1f5f9;">
                                         <td style="padding: 8px 10px; color: #0066cc; font-weight: 600;">${item.id || 'SP'}</td>
                                         <td style="padding: 8px 10px; font-weight: 500;">
@@ -7680,7 +7680,7 @@ window.toggleOrderQuickView = function (orderId, event) {
                                         <td style="padding: 8px 10px; text-align: right; font-weight: 600;">${formatVND(itemSellingPrice)}</td>
                                         <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a;">${formatVND(itemLineTotal)}</td>
                                     </tr>`;
-                                }).join('')}
+    }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -7853,7 +7853,7 @@ window.renderEditOrderItemsTable = function () {
             <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 8px 10px;">
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
-                        <strong style="color: #0066cc; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index+1)}</strong>
+                        <strong style="color: #0066cc; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index + 1)}</strong>
                         <input type="text" value="${item.name || ''}" placeholder="Tên sản phẩm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600; outline: none;" onchange="window.changeEditItemField(${index}, 'name', this.value)">
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
@@ -8335,7 +8335,7 @@ function renderRentalOrderRows(ordersList, tableElement) {
         const orderDate = order.orderDate
             ? (order.orderDate.toDate ? new Date(order.orderDate.toDate()) : new Date(order.orderDate)).toLocaleString('vi-VN')
             : 'N/A';
-        
+
         const rInfo = order.rentalInfo || {};
         const items = order.items || [];
         const rentalDays = rInfo.rentalDays || 1;
@@ -8464,10 +8464,10 @@ window.toggleRentalQuickView = function (orderId, event) {
                             </thead>
                             <tbody>
                                 ${items.map(item => {
-                                    const uPrice = item.rentalPrice || item.price || 0;
-                                    const lineTotal = uPrice * (item.quantity || 1);
+        const uPrice = item.rentalPrice || item.price || 0;
+        const lineTotal = uPrice * (item.quantity || 1);
 
-                                    return `
+        return `
                                     <tr style="border-bottom: 1px solid #f1f5f9;">
                                         <td style="padding: 8px 10px; color: #166534; font-weight: 600;">${item.id || 'SP'}</td>
                                         <td style="padding: 8px 10px; font-weight: 500;">
@@ -8482,7 +8482,7 @@ window.toggleRentalQuickView = function (orderId, event) {
                                         <td style="padding: 8px 10px; text-align: right;">${formatVND(uPrice)}</td>
                                         <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: #0f172a;">${formatVND(lineTotal)}</td>
                                     </tr>`;
-                                }).join('')}
+    }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -8611,7 +8611,7 @@ window.renderEditRentalOrderItemsTable = function () {
             <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 8px 10px;">
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
-                        <strong style="color: #166534; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index+1)}</strong>
+                        <strong style="color: #166534; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index + 1)}</strong>
                         <input type="text" value="${item.name || ''}" placeholder="Tên món gốm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600;" onchange="window.changeEditRentalItemField(${index}, 'name', this.value)">
                     </div>
                 </td>
@@ -8928,8 +8928,8 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                         if (item.color && Array.isArray(pData.colorVariants)) {
                             pUpdate.colorVariants = pData.colorVariants.map(v => {
                                 if (v.name === item.color) {
-                                    return { 
-                                        ...v, 
+                                    return {
+                                        ...v,
                                         stock: (Number(v.stock) || 0) + itemQty,
                                         sold: Math.max(0, (Number(v.sold) || 0) - itemQty)
                                     };
@@ -8941,8 +8941,8 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                         if (item.pattern && Array.isArray(pData.patternVariants)) {
                             pUpdate.patternVariants = pData.patternVariants.map(v => {
                                 if (v.name === item.pattern) {
-                                    return { 
-                                        ...v, 
+                                    return {
+                                        ...v,
                                         stock: (Number(v.stock) || 0) + itemQty,
                                         sold: Math.max(0, (Number(v.sold) || 0) - itemQty)
                                     };
@@ -9033,7 +9033,7 @@ window.printPackingSlip = async (orderId) => {
         const customerPhone = order.shippingAddress?.phone || order.phone || 'N/A';
         const customerAddress = order.shippingAddress?.address || order.address || 'Giao tại quầy';
         const customerNote = order.customerNote || order.note || order.shippingAddress?.note || order.shippingAddress?.notes || 'Không có';
-        
+
         let orderDateStr = 'Vừa xong';
         if (order.orderDate) {
             const d = order.orderDate.toDate ? order.orderDate.toDate() : new Date(order.orderDate);
@@ -9044,7 +9044,7 @@ window.printPackingSlip = async (orderId) => {
         const shippingFee = Number(order.shippingFee) || 0;
         const discountAmount = (Number(order.discountAmount) || 0) + (Number(order.membershipDiscount) || 0);
         const totalAmount = Number(order.totalAmount) || 0;
-        
+
         // Xác định COD
         const isPaidOnline = ['Chuyển khoản', 'VNPAY', 'MoMo', 'Thẻ ATM / QR', 'Đã thanh toán', 'ZaloPay'].includes(order.paymentMethod) || order.status === 'Đã thanh toán' || order.isPaid === true;
         const codAmount = isPaidOnline ? 0 : totalAmount;
@@ -10739,7 +10739,7 @@ window.showCreateStaffModal = () => {
             try {
                 await secondarySignOut(tempAuth);
                 await deleteApp(secondaryApp);
-            } catch (ignore) {}
+            } catch (ignore) { }
 
             showToast("Đã khởi tạo tài khoản nhân viên thành công!");
             modal.classList.remove('active');
@@ -10986,7 +10986,7 @@ window.editCoupon = async (code) => {
             if (!cancelBtn) {
                 cancelBtn = document.createElement('button');
                 cancelBtn.type = 'button';
-cancelBtn.id = 'btn-cancel-coupon-edit';
+                cancelBtn.id = 'btn-cancel-coupon-edit';
                 cancelBtn.className = 'btn-minimal';
                 cancelBtn.innerText = 'Hủy chỉnh sửa';
                 cancelBtn.style.width = '100%';
@@ -11080,11 +11080,11 @@ window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
     if (typeof userTotalSpentLocal !== 'undefined' && customerId && userTotalSpentLocal[customerId]) {
         totalSpent = userTotalSpentLocal[customerId];
     }
-    
+
     // Check local user cache
     if (typeof posUsersLocal !== 'undefined' && Array.isArray(posUsersLocal)) {
-        const u = posUsersLocal.find(user => 
-            (customerId && String(user.id) === String(customerId)) || 
+        const u = posUsersLocal.find(user =>
+            (customerId && String(user.id) === String(customerId)) ||
             (customerPhone && user.phone && String(user.phone).trim() === String(customerPhone).trim())
         );
         if (u && typeof u.totalSpent === 'number' && u.totalSpent > totalSpent) {
@@ -11102,11 +11102,11 @@ window.getPOSCustomerMembershipInfo = function (customerId, customerPhone) {
         orders.forEach(o => {
             if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status)) {
                 const isMatch = (customerId && String(o.userId) === String(customerId)) ||
-                                (targetPhone && targetPhone.length >= 8 && (
-                                    cleanPhone(o.shippingAddress?.phone).endsWith(targetPhone.slice(-8)) ||
-                                    cleanPhone(o.customerPhone).endsWith(targetPhone.slice(-8)) ||
-                                    cleanPhone(o.phone).endsWith(targetPhone.slice(-8))
-                                ));
+                    (targetPhone && targetPhone.length >= 8 && (
+                        cleanPhone(o.shippingAddress?.phone).endsWith(targetPhone.slice(-8)) ||
+                        cleanPhone(o.customerPhone).endsWith(targetPhone.slice(-8)) ||
+                        cleanPhone(o.phone).endsWith(targetPhone.slice(-8))
+                    ));
                 if (isMatch) {
                     const items = o.items || [];
                     const sub = items.length > 0 ? items.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : (o.totalAmount || 0);
@@ -11788,7 +11788,7 @@ window.getPOSVariantSalesCounts = (productId, pData = null) => {
                 if (item.pattern) {
                     stats.pattern[item.pattern] = (stats.pattern[item.pattern] || 0) + qty;
                 }
-                
+
                 // Lọc biến thể Combo
                 let cName = item.comboVariant || item.variantName || item.combo;
                 if (!cName && item.variant && comboVariantsList.length > 0) {
@@ -11947,8 +11947,8 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
 
         const comboVariants = Array.isArray(p.comboVariants) ? p.comboVariants : [];
         const colorVariants = Array.isArray(p.colorVariants) ? p.colorVariants : [];
-        let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0 
-            ? p.patternVariants 
+        let availablePatterns = Array.isArray(p.patternVariants) && p.patternVariants.length > 0
+            ? p.patternVariants
             : (Array.isArray(p.patterns) ? p.patterns : []);
 
         currentPOSVariantCartIndex = actualCartIndex;
@@ -12005,7 +12005,7 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                     const vName = typeof v === 'string' ? v : (v.name || 'Mặc định');
                     const vImg = (typeof v === 'object' && v && (v.thumbUrl || v.imageUrl || v.image)) ? (v.thumbUrl || v.imageUrl || v.image) : p.imageUrl;
                     const stockVal = typeof v === 'object' && v && v.stock !== undefined ? v.stock : (p.stock || 0);
-                    
+
                     // Tính giá hiển thị cho combo card: ưu tiên salePrice > sale % > price > product price
                     let vFinalPrice = currentPrice;
                     if (typeof v === 'object' && v) {
@@ -12622,7 +12622,7 @@ window.createPOSOrder = async () => {
                     const newTotalSpent = (custSpendInfo?.totalSpent || 0) + total;
                     const tier = getMembershipTier(newTotalSpent);
                     generateAutomaticVouchers(customerId, tier, newTotalSpent);
-                } catch(vErr) {
+                } catch (vErr) {
                     console.error("Lỗi cấp voucher POS:", vErr);
                 }
             }
@@ -12763,7 +12763,7 @@ window.createPOSOrder = async () => {
 window.realignAllPastOrdersInventory = async () => {
     try {
         if (typeof showToast !== 'undefined') showToast("Đang rà soát và đồng bộ tồn kho từ lịch sử đơn hàng...");
-        
+
         const qCompleted = query(collection(db, "orders"), where("status", "in", ["Đã hoàn thành", "Hoàn thành"]));
         const snap = await getDocs(qCompleted);
 
@@ -12979,7 +12979,7 @@ async function initFullReport() {
         const variantStatsMap = {}; // Thống kê phân loại
         const categoryStatsMap = {}; // Thống kê danh mục
         const paymentMethodMap = {}; // Thống kê theo phương thức thanh toán
-        
+
         // 24 Giờ mua sắm
         const hourlyOrdersCount = new Array(24).fill(0);
         const hourlyRevenueSum = new Array(24).fill(0);
@@ -13019,7 +13019,7 @@ async function initFullReport() {
 
             if (orderYear === selectedYear) {
                 totalCreatedOrders++;
-                
+
                 // Đếm trạng thái đơn hàng
                 if (isCompleted) {
                     totalCompletedOrders++;
@@ -13373,22 +13373,22 @@ async function initFullReport() {
             summaryBox.innerHTML = `
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
                     <div style="font-size: 0.8rem; color: #888;">🌅 SÁNG (06:00 - 12:00)</div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${morningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((morningOrders/totalValid)*100).toFixed(0)}%)</span></div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${morningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((morningOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Khách văn phòng xem hàng</div>
                 </div>
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
                     <div style="font-size: 0.8rem; color: #888;">☀️ TRƯA & CHIỀU (12:00 - 18:00)</div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${afternoonOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((afternoonOrders/totalValid)*100).toFixed(0)}%)</span></div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${afternoonOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((afternoonOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Đặt quà tặng & sự kiện</div>
                 </div>
                 <div style="background: #fff8f0; border: 1.5px solid #ffcc80; border-radius: 8px; padding: 10px;">
                     <div style="font-size: 0.8rem; color: #e65100; font-weight: 700;">🌙 TỐI (18:00 - 22:00) ★ VÀNG</div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: #e65100; margin: 3px 0;">${eveningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #e65100;">(${((eveningOrders/totalValid)*100).toFixed(0)}%)</span></div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: #e65100; margin: 3px 0;">${eveningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #e65100;">(${((eveningOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #d84315; font-weight: 600;">Thời điểm chốt đơn cao nhất!</div>
                 </div>
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
                     <div style="font-size: 0.8rem; color: #888;">🌌 ĐÊM (22:00 - 06:00)</div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${nightOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((nightOrders/totalValid)*100).toFixed(0)}%)</span></div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${nightOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((nightOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Mua sắm khuya online</div>
                 </div>
             `;
@@ -13503,7 +13503,7 @@ async function initFullReport() {
     // Gắn sự kiện chuyển đổi linh hoạt không cần fetch lại Firebase
     btnRefresh.onclick = updateReport;
     document.getElementById('btn-export-stats-excel').onclick = exportStatsToExcel;
-    
+
     // Tự động vẽ lại Top Bán chạy khi thay đổi metric/groupBy/type
     const topSoldMetricEl = document.getElementById('topSoldMetric');
     const topSoldGroupByEl = document.getElementById('topSoldGroupBy');
@@ -14685,9 +14685,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (results.length > 0) {
                     posSuggestions.innerHTML = results.map((p, idx) => {
                         const currentPrice = getProductCurrentPrice(p, fsSettings);
-                        const hasVars = (Array.isArray(p.colorVariants) && p.colorVariants.length > 0) || 
-                                         (Array.isArray(p.patternVariants) && p.patternVariants.length > 0) || 
-                                         (Array.isArray(p.patterns) && p.patterns.length > 0);
+                        const hasVars = (Array.isArray(p.colorVariants) && p.colorVariants.length > 0) ||
+                            (Array.isArray(p.patternVariants) && p.patternVariants.length > 0) ||
+                            (Array.isArray(p.patterns) && p.patterns.length > 0);
 
                         const clickRowAction = `window.addToPOSCart('${p.id.replace(/'/g, "\\'")}', '${(p.name || '').replace(/'/g, "\\'")}', ${currentPrice}, '${p.imageUrl}', '${p.category || 'khac'}')`;
 
@@ -14919,15 +14919,15 @@ window.printPOSReceipt = function (orderId, customer, items, total, subtotal = 0
             </thead>
             <tbody>
                 ${items.map(i => {
-                    const variantStr = [i.comboVariant, i.color, i.pattern].filter(Boolean).join(' / ');
-                    return `
+        const variantStr = [i.comboVariant, i.color, i.pattern].filter(Boolean).join(' / ');
+        return `
                     <tr>
                         <td>${i.name} ${variantStr ? `<br><small style="color: #555;">(${variantStr})</small>` : ''}</td>
                         <td>${i.quantity}</td>
                         <td>${new Intl.NumberFormat('vi-VN').format(i.price)}</td>
                         <td>${new Intl.NumberFormat('vi-VN').format(i.price * i.quantity)}</td>
                     </tr>`;
-                }).join('')}
+    }).join('')}
             </tbody>
         </table>
         ${discount > 0 ? `<div class="receipt-discount" style="text-align: right;">Giảm giá: -${new Intl.NumberFormat('vi-VN').format(discount)}đ</div>` : ''}
@@ -15674,7 +15674,7 @@ let filteredAnalyticsProducts = [];
 async function initCustomerAnalyticsReport() {
     if (!analyticsEventsBound) {
         analyticsEventsBound = true;
-        
+
         document.getElementById('btn-refresh-customer-analytics')?.addEventListener('click', () => {
             loadCustomerAnalyticsData(true);
         });
@@ -15726,7 +15726,7 @@ async function loadCustomerAnalyticsData(forceRefresh = false) {
             const catSelect = document.getElementById('analytics-category-filter');
             if (catSelect) {
                 const categories = Array.from(new Set(analyticsCache.products.map(p => p.category).filter(Boolean))).sort();
-                catSelect.innerHTML = '<option value="all">Tất cả danh mục</option>' + 
+                catSelect.innerHTML = '<option value="all">Tất cả danh mục</option>' +
                     categories.map(c => `<option value="${c}">${c}</option>`).join('');
             }
         }
@@ -16039,8 +16039,8 @@ function renderLocationTable(sortedProvinces, totalAllVisitors) {
         const rankBadge = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
         const pct = totalAllVisitors > 0 ? ((data.visitors / totalAllVisitors) * 100).toFixed(1) : '0.0';
         const isHCM = province === 'TP. Hồ Chí Minh';
-        const expressTag = isHCM ? 
-            '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">⚡ Hỗ trợ 2 Giờ</span>' : 
+        const expressTag = isHCM ?
+            '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">⚡ Hỗ trợ 2 Giờ</span>' :
             '<span style="color: #64748b; font-size: 0.75rem;">🚚 Tiêu chuẩn</span>';
         const keyArea = isHCM ? 'Nội thành TP.HCM (Q1, Q3, Bình Thạnh...)' : (province === 'Hà Nội' ? 'Hoàn Kiếm, Cầu Giấy, Đống Đa' : 'Khu vực trung tâm');
 
@@ -16265,7 +16265,147 @@ function exportCustomerAnalyticsExcel() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Bao_Cao_Vi_Tri_Va_San_Pham_TiemNhaGom_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", `Bao_Cao_Vi_Tri_Va_San_Pham_TiemNhaGom_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast("Đã xuất file báo cáo Excel thành công!", "success");
+}
+responsive: true,
+    maintainAspectRatio: false,
+        plugins: {
+    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+    tooltip: {
+        callbacks: {
+            afterLabel: (ctx) => {
+                const prod = top10Prods[ctx.dataIndex];
+                return prod ? `🏷️ Tỷ lệ chuyển đổi: ${prod.conversionRate.toFixed(1)}%` : '';
+            }
+        }
+    }
+},
+scales: {
+    x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+}
+            }
+        });
+    }
+
+// Render Biểu đồ Danh mục
+const catMap = {};
+prods.forEach(p => {
+    catMap[p.category] = (catMap[p.category] || 0) + p.views;
+});
+const catLabels = Object.keys(catMap);
+const catViews = Object.values(catMap);
+
+const catCanvas = document.getElementById('chartCategoryViews');
+if (catCanvas) {
+    if (analyticsCategoriesChart) analyticsCategoriesChart.destroy();
+    analyticsCategoriesChart = new Chart(catCanvas, {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catViews,
+                backgroundColor: ['#ea580c', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#64748b'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+// Render Bảng Sản phẩm
+filterAnalyticsProductTable(document.getElementById('analytics-product-search')?.value || '');
+}
+
+function filterAnalyticsProductTable(query = '') {
+    const tableBody = document.getElementById('top-viewed-products-table-body');
+    if (!tableBody) return;
+
+    let list = filteredAnalyticsProducts;
+    if (query && query.trim()) {
+        const q = query.toLowerCase().trim();
+        list = list.filter(p => (p.name && p.name.toLowerCase().includes(q)) || (p.category && p.category.toLowerCase().includes(q)) || (p.id && p.id.toLowerCase().includes(q)));
+    }
+
+    if (!list.length) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #888;">Không tìm thấy sản phẩm phù hợp</td></tr>';
+        return;
+    }
+
+    let rowsHtml = '';
+    list.slice(0, 30).forEach(p => {
+        const rate = p.conversionRate.toFixed(1);
+        let badgeHtml = '<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;">⭐ Ổn định</span>';
+        if (p.conversionRate >= 14) {
+            badgeHtml = '<span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;">🔥 Siêu Hot</span>';
+        } else if (p.views >= 100 && p.conversionRate < 8) {
+            badgeHtml = '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600;">⚡ Cần đẩy Sale</span>';
+        }
+
+        rowsHtml += `
+            <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;" onmouseover="this.style.background='#fafaf9'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 10px 12px; display: flex; align-items: center; gap: 10px;">
+                    <img src="${p.imageUrl}" alt="${p.name}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div>
+                        <div style="font-weight: 600; color: #1c1917; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${p.name}">${p.name}</div>
+                        <div style="font-size: 0.72rem; color: #94a3b8;">Mã: ${p.id}</div>
+                    </div>
+                </td>
+                <td style="padding: 10px 12px; color: #475569; font-size: 0.8rem;">${p.category}</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #c2410c;">${p.views.toLocaleString()}</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #0284c7;">${p.sold.toLocaleString()}</td>
+                <td style="padding: 10px 12px; text-align: right; color: ${p.stock <= 5 ? '#e11d48' : '#334155'}; font-weight: ${p.stock <= 5 ? '700' : '500'};">${p.stock}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 700;">${rate}%</td>
+                <td style="padding: 10px 12px; text-align: center;">${badgeHtml}</td>
+            </tr>
+        `;
+    });
+
+    tableBody.innerHTML = rowsHtml;
+}
+
+function exportCustomerAnalyticsExcel() {
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += "=== BÁO CÁO VỊ TRÍ KHÁCH HÀNG TIỆM NHÀ GỐM ===\r\n";
+    csvContent += "Tỉnh/Thành phố,Khu vực,Lượt tương tác,Số đơn hàng,Giao nhanh 2H\r\n";
+
+    const tableRows = document.querySelectorAll('#customer-location-table-body tr');
+    tableRows.forEach(row => {
+        const cols = row.querySelectorAll('td');
+        if (cols.length >= 6) {
+            const province = cols[1]?.innerText || '';
+            const area = cols[2]?.innerText || '';
+            const isExpress = cols[3]?.innerText.includes('2 Giờ') ? 'Có' : 'Không';
+            const visitors = cols[4]?.innerText || '0';
+            const orders = cols[5]?.innerText || '0';
+            csvContent += `"${province}","${area}","${visitors}","${orders}","${isExpress}"\r\n`;
+        }
+    });
+
+    csvContent += "\r\n=== BÁO CÁO SẢN PHẨM QUAN TÂM NHIỀU NHẤT ===\r\n";
+    csvContent += "Tên sản phẩm,Danh mục,Giá bán,Lượt xem,Đã bán,Tồn kho,Tỷ lệ chuyển đổi\r\n";
+
+    filteredAnalyticsProducts.forEach(p => {
+        csvContent += `"${p.name.replace(/"/g, '""')}","${p.category}","${p.price}","${p.views}","${p.sold}","${p.stock}","${p.conversionRate.toFixed(1)}%"\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Bao_Cao_Vi_Tri_Va_San_Pham_TiemNhaGom_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -88,6 +88,11 @@ service cloud.firestore {
       );
 
       allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true);
+
+      // Thông báo cá nhân của người dùng (users/{userId}/notifications)
+      match /notifications/{notifId} {
+        allow read, write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      }
     }
 
     // 5. Đơn hàng (orders)
