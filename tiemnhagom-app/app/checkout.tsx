@@ -163,7 +163,7 @@ export default function CheckoutScreen() {
         if (user && user.uid && res.orderId) {
           const firstItem = cart && cart.length > 0 ? cart[0] : null;
           const firstImg = firstItem?.imageUrl || (firstItem as any)?.image || undefined;
-          createOrderPlacedNotification(user.uid, res.orderId, res.orderCode, totalAmount, firstImg).catch(() => {});
+          createOrderPlacedNotification(user.uid, res.orderId, res.orderCode, totalAmount, firstImg, true).catch(() => {});
         }
 
         clearCart();

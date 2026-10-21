@@ -45,6 +45,41 @@
             flex-shrink: 0;
             color: #ffffff;
             gap: 12px;
+            position: relative;
+            z-index: 1000;
+        }
+
+        #pos-product-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 480px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            z-index: 9999;
+            max-height: 420px;
+            overflow-y: auto;
+            color: #1e293b;
+        }
+
+        #pos-customer-suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            z-index: 9999;
+            max-height: 280px;
+            overflow-y: auto;
+            color: #1e293b;
+        }
+
+        .suggestion-item.highlighted,
+        .suggestion-item:hover {
+            background-color: #f1f5f9 !important;
         }
 
         .kiot-pos-top-left {
@@ -606,7 +641,7 @@
 
     <!-- Khung chứa hóa đơn in ấn -->
     <div id="receipt-print-area"></div>
-    <script type="module" src="../js/DashBoard.js?v=25"></script>
+    <script type="module" src="../js/DashBoard.js?v=72"></script>
     <script>
         // Update live clock
         setInterval(() => {
@@ -619,18 +654,18 @@
             }
         }, 1000);
 
-        // Auto initialize Hóa đơn 1 when POS screen opens
+        // Auto initialize Hóa đơn 1 và dữ liệu hàng hóa, khách hàng khi mở màn hình POS
         window.addEventListener('load', () => {
             setTimeout(() => {
                 if (typeof window.initPOSBills === 'function') {
                     window.initPOSBills();
                 }
+                if (typeof window.initPOSPageData === 'function') {
+                    window.initPOSPageData();
+                }
             }, 100);
         });
     </script>
-</body>
-
-</html>
 </body>
 
 </html>

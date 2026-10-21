@@ -110,25 +110,25 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <!-- Speculation Rules API: Tăng tốc độ chuyển trang tức thì -->
-    <script type="speculationrules">
-    {
-      "prerender": [{
-        "source": "document",
-        "where": {
-          "and": [
-            { "href_matches": "/*" },
-            { "not": { "href_matches": [
-              "/admin/*",
-              "/cart/*",
-              "/login/*",
-              "/profile/*"
-            ]}}
-          ]
-        },
-        "eagerness": "moderate"
-      }]
-    }
+    <!-- Speculation Rules API: Tăng tốc độ chuyển trang tức thì (Feature-detected an toàn) -->
+    <script>
+      if (typeof HTMLScriptElement !== 'undefined' && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) {
+        const specScript = document.createElement('script');
+        specScript.type = 'speculationrules';
+        specScript.textContent = JSON.stringify({
+          prerender: [{
+            source: 'document',
+            where: {
+              and: [
+                { href_matches: '/*' },
+                { not: { href_matches: ['/admin/*', '/cart/*', '/login/*', '/profile/*'] } }
+              ]
+            },
+            eagerness: 'moderate'
+          }]
+        });
+        document.head.appendChild(specScript);
+      }
     </script>
 </head>
 

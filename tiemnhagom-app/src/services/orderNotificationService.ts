@@ -17,7 +17,7 @@ if (!(isExpoGo && Platform.OS === 'android')) {
 
 export const DELETED_NOTIFS_KEY = '@tiemnhagom_deleted_notif_ids';
 
-export type OrderNotificationStage = 'created' | 'shipping' | 'completed' | 'pos';
+export type OrderNotificationStage = 'created' | 'shipping' | 'completed' | 'pos' | 'rental' | 'cancelled';
 
 export interface OrderNotificationItem {
   id: string;
@@ -130,17 +130,63 @@ export function generateOrderNotificationsFromOrders(
 
     const { timeStr, ms } = formatFriendlyTime(order.createdAt || order.orderDate);
 
-    // Kiểm tra loại đơn: POS hay Online
+    // Kiểm tra loại đơn: Thuê gốm sự kiện, POS hay Online
+    const isRental = order.orderType === 'rental' || Boolean(order.rentalInfo);
     const isPos =
-      order.source === 'pos' ||
+      !isRental &&
+      (order.source === 'pos' ||
       order.orderSource === 'pos' ||
       order.channel === 'pos' ||
       order.inStore ||
-      upperCode.startsWith('POS');
+      upperCode.startsWith('POS'));
 
     const statusRaw = (order.status || '').toString().toLowerCase();
 
-    if (isPos) {
+    if (isRental) {
+      // Đơn thuê gốm sự kiện
+      const rentalId = `order_${orderId}_rental`;
+      if (!deletedIds.has(rentalId)) {
+        let rentalTitle = `Hợp đồng thuê gốm #${orderCode}`;
+        let rentalMsg = `Tiệm Nhà Gốm đã tiếp nhận yêu cầu thuê đồ gốm sự kiện trị giá ${formatVND(totalAmount)}. Tiệm đang chuẩn bị các tác phẩm theo concept cho bạn.`;
+        let rentalIcon = 'calendar';
+
+        if (statusRaw.includes('xác nhận') || statusRaw.includes('duyệt')) {
+          rentalTitle = `Hợp đồng thuê gốm #${orderCode} đã xác nhận`;
+          rentalMsg = `Yêu cầu thuê đồ gốm sự kiện của bạn đã được xác nhận. Tiệm sẽ chuẩn bị sẵn sàng trước ngày tổ chức.`;
+          rentalIcon = 'checkmark-circle';
+        } else if (statusRaw.includes('giao') || statusRaw.includes('vận chuyển') || statusRaw.includes('bàn giao')) {
+          rentalTitle = `Đồ gốm sự kiện #${orderCode} đang bàn giao`;
+          rentalMsg = `Đội ngũ Tiệm Nhà Gốm đang vận chuyển đồ gốm đến địa điểm tiệc để bàn giao cho bạn.`;
+          rentalIcon = 'cube';
+        } else if (statusRaw.includes('hoàn tất') || statusRaw.includes('trả') || statusRaw.includes('hoàn thành')) {
+          rentalTitle = `Hợp đồng thuê gốm #${orderCode} đã hoàn tất`;
+          rentalMsg = `Tiệm Nhà Gốm đã nhận hoàn trả đồ gốm sự kiện và hoàn tất hợp đồng. Cảm ơn bạn đã tin chọn dịch vụ của Tiệm!`;
+          rentalIcon = 'checkmark-circle';
+        } else if (statusRaw.includes('hủy')) {
+          rentalTitle = `Hợp đồng thuê gốm #${orderCode} đã bị hủy`;
+          rentalMsg = `Yêu cầu thuê đồ gốm sự kiện #${orderCode} đã được cập nhật trạng thái hủy bỏ trên hệ thống.`;
+          rentalIcon = 'close-circle';
+        }
+
+        items.push({
+          id: rentalId,
+          kind: 'notification',
+          type: 'order',
+          stage: 'rental',
+          title: rentalTitle,
+          message: rentalMsg,
+          time: timeStr,
+          createdAtMs: ms,
+          isRead: readIds.has(rentalId),
+          link: `/order-detail?orderId=${orderId}`,
+          imageUrl,
+          icon: rentalIcon,
+          iconBg: '#F6F4EC',
+          iconColor: '#9C7156',
+          totalAmount,
+        });
+      }
+    } else if (isPos) {
       // 4. Mua tại quầy POS
       const posId = `order_${orderId}_pos`;
       if (!deletedIds.has(posId)) {
@@ -264,14 +310,17 @@ export async function createOrderPlacedNotification(
   orderId: string,
   orderCode: string,
   totalAmount?: number,
-  imageUrl?: string
+  imageUrl?: string,
+  sendLocalPush: boolean = false
 ): Promise<void> {
   const title = `Đơn hàng #${orderCode} đã đặt thành công`;
   const message = totalAmount
     ? `Tiệm Nhà Gốm đã nhận đơn hàng trị giá ${formatVND(totalAmount)}. Tiệm đang chuẩn bị các món đồ gốm để gửi đến bạn.`
     : `Tiệm Nhà Gốm đã nhận đơn hàng #${orderCode}. Tiệm đang chuẩn bị các món đồ gốm để gửi đến bạn.`;
 
-  await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  if (sendLocalPush) {
+    await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  }
 
   if (!userId || userId === 'guest' || !orderId) return;
 
@@ -314,12 +363,15 @@ export async function createOrderShippingNotification(
   orderId: string,
   orderCode: string,
   totalAmount?: number,
-  imageUrl?: string
+  imageUrl?: string,
+  sendLocalPush: boolean = false
 ): Promise<void> {
   const title = `Đơn hàng #${orderCode} đang được giao`;
   const message = `Kiện hàng đồ gốm đã được bọc xốp chống sốc cẩn thận và đang trên đường vận chuyển tới địa chỉ của bạn.`;
 
-  await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  if (sendLocalPush) {
+    await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  }
 
   if (!userId || userId === 'guest' || !orderId) return;
 
@@ -362,12 +414,15 @@ export async function createOrderCompletedNotification(
   orderId: string,
   orderCode: string,
   totalAmount?: number,
-  imageUrl?: string
+  imageUrl?: string,
+  sendLocalPush: boolean = false
 ): Promise<void> {
   const title = `Đơn hàng #${orderCode} đã hoàn tất`;
   const message = `Đơn hàng đã được giao thành công. Cảm ơn bạn đã tin chọn các tác phẩm gốm thủ công của Tiệm!`;
 
-  await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  if (sendLocalPush) {
+    await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  }
 
   if (!userId || userId === 'guest' || !orderId) return;
 
@@ -410,14 +465,17 @@ export async function createPosPurchaseNotification(
   orderId: string,
   orderCode: string,
   totalAmount?: number,
-  imageUrl?: string
+  imageUrl?: string,
+  sendLocalPush: boolean = false
 ): Promise<void> {
   const title = `Mua sắm tại quầy #${orderCode}`;
   const message = totalAmount
     ? `Cảm ơn bạn đã ghé thăm showroom Tiệm Nhà Gốm! Đơn hàng ${formatVND(totalAmount)} và điểm tích lũy đã được ghi nhận vào tài khoản.`
     : `Cảm ơn bạn đã ghé thăm showroom Tiệm Nhà Gốm! Đơn hàng #${orderCode} và điểm tích lũy đã được ghi nhận vào tài khoản.`;
 
-  await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  if (sendLocalPush) {
+    await triggerLocalPush(title, message, { orderId, orderCode, link: `/order-detail?orderId=${orderId}` });
+  }
 
   if (!userId || userId === 'guest' || !orderId) return;
 
@@ -474,16 +532,51 @@ export async function syncOrderNotificationsForUser(
     const firstItem = Array.isArray(order.items) && order.items.length > 0 ? order.items[0] : null;
     const imageUrl = firstItem?.resolvedImage || firstItem?.imageUrl || firstItem?.image || undefined;
 
+    const isRental = order.orderType === 'rental' || Boolean(order.rentalInfo);
     const isPos =
-      order.source === 'pos' ||
+      !isRental &&
+      (order.source === 'pos' ||
       order.orderSource === 'pos' ||
       order.channel === 'pos' ||
       order.inStore ||
-      upperCode.startsWith('POS');
+      upperCode.startsWith('POS'));
 
     const statusRaw = (order.status || '').toString().toLowerCase();
 
-    if (isPos) {
+    if (isRental) {
+      const notifId = `order_${orderId}_rental`;
+      if (!syncedNotifIds.has(notifId)) {
+        syncedNotifIds.add(notifId);
+        try {
+          let title = `Hợp đồng thuê gốm #${orderCode}`;
+          let message = `Tiệm Nhà Gốm đã tiếp nhận yêu cầu thuê đồ gốm sự kiện của bạn và đang chuẩn bị dự toán chi tiết.`;
+          let icon = 'calendar';
+          if (statusRaw.includes('xác nhận') || statusRaw.includes('duyệt')) {
+            title = `Hợp đồng thuê gốm #${orderCode} đã xác nhận`;
+            message = `Yêu cầu thuê đồ gốm sự kiện của bạn đã được xác nhận.`;
+            icon = 'checkmark-circle';
+          }
+          await setDoc(doc(db, 'users', userId, 'notifications', notifId), {
+            id: notifId,
+            userId,
+            orderId,
+            orderCode,
+            type: 'order',
+            stage: 'rental',
+            title,
+            message,
+            link: `/order-detail?orderId=${orderId}`,
+            totalAmount,
+            icon,
+            iconBg: '#F6F4EC',
+            iconColor: '#9C7156',
+            isRead: false,
+            createdAt: serverTimestamp(),
+            createdAtMs: Date.now(),
+          }, { merge: true });
+        } catch {}
+      }
+    } else if (isPos) {
       const notifId = `order_${orderId}_pos`;
       if (!syncedNotifIds.has(notifId)) {
         syncedNotifIds.add(notifId);

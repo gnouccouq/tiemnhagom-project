@@ -1939,6 +1939,8 @@
                             </div>
                             <select id="order-filter-channel" class="kiot-filter-select" onchange="window.renderOrdersFiltered()">
                                 <option value="all" selected>Chọn kênh bán</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Instagram">Instagram</option>
                                 <option value="POS">Bán trực tiếp (POS)</option>
                                 <option value="Website">Website</option>
                                 <option value="Shopee">Shopee</option>
@@ -1955,9 +1957,14 @@
                                 <span class="search-icon">🔍</span>
                                 <input type="text" id="order-search-input" placeholder="Theo mã hóa đơn, tên KH, SĐT..." onkeyup="window.renderOrdersFiltered()">
                             </div>
-                            <div class="toolbar-actions">
-                                <a href="pos.html" class="kiot-btn-primary" style="text-decoration: none;">+ Tạo mới hóa đơn</a>
-                                <button type="button" class="kiot-btn-outline" onclick="window.exportOrdersExcel()">📤 Xuất file</button>
+                            <div class="toolbar-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <button type="button" class="kiot-btn-primary" style="background: #9C7156; border-color: #9C7156; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25); border-radius: 20px; padding: 7px 16px; cursor: pointer;" onclick="window.openCreateOnlineOrderModal()">
+                                    <span>📱</span> + Tạo đơn Online (FB / IG)
+                                </button>
+                                <a href="pos.html" class="kiot-btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #475569; border-color: #cbd5e1; border-radius: 20px; padding: 7px 14px;">
+                                    <span>🏪</span> Bán tại quầy (POS)
+                                </a>
+                                <button type="button" class="kiot-btn-outline" style="border-radius: 20px; padding: 7px 14px;" onclick="window.exportOrdersExcel()">📤 Xuất file</button>
                             </div>
                         </div>
 
@@ -3931,14 +3938,181 @@
     <!-- Kết thúc Modal -->
     <!-- Kết thúc Modal -->
 
+    <!-- Style tối ưu căn giữa & chống tràn cho Modal Chỉnh sửa đơn hàng Tiệm Nhà Gốm -->
+    <style>
+        #edit-order-modal.modal,
+        #edit-rental-order-modal.modal,
+        #create-online-order-modal.modal,
+        #online-order-variant-modal.modal,
+        #edit-order-modal[style*="display: block"],
+        #edit-rental-order-modal[style*="display: block"],
+        #create-online-order-modal[style*="display: block"],
+        #edit-order-modal[style*="display: flex"],
+        #edit-rental-order-modal[style*="display: flex"],
+        #create-online-order-modal[style*="display: flex"] {
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(15, 23, 42, 0.65) !important;
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
+            z-index: 99999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            box-sizing: border-box !important;
+        }
+
+        #edit-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
+        #edit-rental-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
+        #create-online-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
+        #online-order-variant-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active) {
+            display: none !important;
+        }
+
+        #edit-order-modal[style*="display: none"],
+        #edit-rental-order-modal[style*="display: none"],
+        #create-online-order-modal[style*="display: none"],
+        #online-order-variant-modal[style*="display: none"] {
+            display: none !important;
+        }
+
+        #edit-order-modal .modal-content,
+        #edit-rental-order-modal .modal-content {
+            margin: auto !important;
+            width: 100% !important;
+            max-width: 780px !important;
+            max-height: calc(100vh - 40px) !important;
+            background: #FAF8F5 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            border: 1px solid #E8CCB2 !important;
+            animation: editModalZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-sizing: border-box !important;
+        }
+
+        #create-online-order-modal .modal-content {
+            margin: auto !important;
+            width: 100% !important;
+            max-width: 980px !important;
+            max-height: calc(100vh - 40px) !important;
+            background: #FAF8F5 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            border: 1px solid #E8CCB2 !important;
+            animation: editModalZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-sizing: border-box !important;
+        }
+
+        #online-order-variant-modal .modal-content {
+            margin: auto !important;
+            width: 100% !important;
+            max-width: 480px !important;
+            background: #FAF8F5 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid #E8CCB2 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            animation: editModalZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        @keyframes editModalZoomIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        #edit-order-modal .edit-modal-header,
+        #edit-rental-order-modal .edit-modal-header,
+        #create-online-order-modal .edit-modal-header {
+            flex-shrink: 0 !important;
+            padding: 14px 20px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            color: #ffffff !important;
+        }
+
+        #edit-order-modal .edit-modal-body,
+        #edit-rental-order-modal .edit-modal-body,
+        #create-online-order-modal .edit-modal-body {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 18px 20px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 14px !important;
+        }
+
+        #create-online-order-modal .edit-modal-body::-webkit-scrollbar {
+            width: 7px;
+        }
+        #create-online-order-modal .edit-modal-body::-webkit-scrollbar-track {
+            background: #FAF8F5;
+        }
+        #create-online-order-modal .edit-modal-body::-webkit-scrollbar-thumb {
+            background: #E8CCB2;
+            border-radius: 4px;
+        }
+        #create-online-order-modal .edit-modal-body::-webkit-scrollbar-thumb:hover {
+            background: #9C7156;
+        }
+
+        #edit-order-modal .edit-modal-footer,
+        #edit-rental-order-modal .edit-modal-footer,
+        #create-online-order-modal .edit-modal-footer {
+            flex-shrink: 0 !important;
+            padding: 12px 20px !important;
+            background: #FAF8F5 !important;
+            border-top: 1px solid #E8CCB2 !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        @media (max-width: 900px) {
+            #create-online-order-modal .online-order-grid-layout {
+                grid-template-columns: 1fr !important;
+            }
+            #create-online-order-modal .modal-content {
+                max-height: calc(100vh - 20px) !important;
+                border-radius: 10px !important;
+            }
+        }
+    </style>
+
     <!-- Modal Chỉnh sửa đơn hàng Admin (KiotViet) -->
-    <div id="edit-order-modal" class="modal">
-        <div class="modal-content" style="max-width: 750px; padding: 0; border-radius: 10px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
-            <div style="background: #0066cc; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 1.05rem;" id="edit-order-modal-title">✏️ Chỉnh sửa đơn hàng</h3>
-                <span class="close" onclick="window.closeEditOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</span>
+    <div id="edit-order-modal" class="modal" onclick="if(event.target === this) window.closeEditOrderModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="edit-modal-header" style="background: linear-gradient(135deg, #9C7156, #7D563D);">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700;" id="edit-order-modal-title">✏️ Chỉnh sửa đơn hàng</h3>
+                <span class="close" onclick="window.closeEditOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1; opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">&times;</span>
             </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 78vh; overflow-y: auto;">
+            <div class="edit-modal-body">
                 <input type="hidden" id="edit-order-id-hidden">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -3989,11 +4163,26 @@
                     </div>
                 </div>
 
+                <!-- Thời gian ngày tháng đơn hàng & Ghi nhận doanh thu -->
+                <div style="background: #FFFFFF; border: 1.2px solid #E8CCB2; border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div>
+                        <label class="filter-label" style="font-weight: 700; color: #9C7156; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <span>📅</span> Thời gian tạo đơn (Ngày & Giờ)
+                        </label>
+                        <input type="datetime-local" id="edit-order-date" class="kiot-filter-input" style="font-weight: 600; color: #2B2928; background: #FAF8F5; border-color: #E8CCB2; font-size: 0.88rem; height: 38px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <span style="font-size: 0.8rem; color: #6E665D; line-height: 1.45;">
+                            ✨ <strong>Ghi nhận doanh thu:</strong> Khi thay đổi ngày giờ đơn hàng, doanh thu sẽ tự động chuyển sang hiển thị và kết chuyển vào ngày đó trên trang Tổng quan, biểu đồ và báo cáo.
+                        </span>
+                    </div>
+                </div>
+
                 <!-- BẢNG CHỈNH SỬA SẢN PHẨM & SỐ LƯỢNG -->
-                <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-top: 4px; background: #ffffff;">
-                    <div style="background: #f0f7ff; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #0066cc; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1;">
+                <div style="border: 1px solid #E8CCB2; border-radius: 8px; overflow: hidden; margin-top: 4px; background: #ffffff;">
+                    <div style="background: #FAF8F5; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #9C7156; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8CCB2;">
                         <span>🛍️ Danh sách sản phẩm & Số lượng</span>
-                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff;" onclick="window.addEditOrderItemPrompt()">+ Thêm món mới</button>
+                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff; border-color: #9C7156; color: #9C7156;" onclick="window.addEditOrderItemPrompt()">+ Thêm món mới</button>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                         <thead>
@@ -4027,9 +4216,9 @@
                 </div>
 
                 <!-- Total Preview Row -->
-                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
-                    <span>Tổng tiền hàng: <strong id="edit-order-calc-subtotal" style="color: #0f172a;">0 đ</strong></span>
-                    <span style="font-size: 1rem; font-weight: 700; color: #0066cc;">Khách cần trả: <strong id="edit-order-calc-total">0 đ</strong></span>
+                <div style="background: #FAF8F5; padding: 12px 14px; border-radius: 8px; border: 1px solid #E8CCB2; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <span>Tổng tiền hàng: <strong id="edit-order-calc-subtotal" style="color: #2B2928;">0 đ</strong></span>
+                    <span style="font-size: 1rem; font-weight: 700; color: #9C7156;">Khách cần trả: <strong id="edit-order-calc-total">0 đ</strong></span>
                 </div>
 
                 <div>
@@ -4038,21 +4227,21 @@
                 </div>
             </div>
 
-            <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="kiot-btn-outline" onclick="window.closeEditOrderModal()">Bỏ qua</button>
-                <button type="button" class="kiot-btn-primary" onclick="window.saveEditedOrder()">💾 Lưu thay đổi</button>
+            <div class="edit-modal-footer">
+                <button type="button" class="kiot-btn-outline" style="border: 1.2px solid #E8CCB2; background: #fff; color: #6E665D; border-radius: 20px; padding: 8px 18px; font-weight: 600; cursor: pointer;" onclick="window.closeEditOrderModal()">Bỏ qua</button>
+                <button type="button" class="kiot-btn-primary" style="background: #9C7156; border-color: #9C7156; border-radius: 20px; padding: 8px 22px; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25); cursor: pointer;" onclick="window.saveEditedOrder()">💾 Lưu thay đổi</button>
             </div>
         </div>
     </div>
 
     <!-- Modal Chỉnh sửa đơn thuê đồ Decor Admin (KiotViet) -->
-    <div id="edit-rental-order-modal" class="modal">
-        <div class="modal-content" style="max-width: 750px; padding: 0; border-radius: 10px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
-            <div style="background: #166534; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 1.05rem;" id="edit-rental-modal-title">✏️ Chỉnh sửa đơn thuê đồ Decor</h3>
-                <span class="close" onclick="window.closeEditRentalOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</span>
+    <div id="edit-rental-order-modal" class="modal" onclick="if(event.target === this) window.closeEditRentalOrderModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="edit-modal-header" style="background: linear-gradient(135deg, #7D563D, #5A3E2C);">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700;" id="edit-rental-modal-title">✏️ Chỉnh sửa đơn thuê đồ Decor</h3>
+                <span class="close" onclick="window.closeEditRentalOrderModal()" style="color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1; opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">&times;</span>
             </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 78vh; overflow-y: auto;">
+            <div class="edit-modal-body">
                 <input type="hidden" id="edit-rental-id-hidden">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -4098,11 +4287,26 @@
                     </div>
                 </div>
 
+                <!-- Thời gian ngày tháng đơn thuê & Ghi nhận doanh thu -->
+                <div style="background: #FFFFFF; border: 1.2px solid #E8CCB2; border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div>
+                        <label class="filter-label" style="font-weight: 700; color: #9C7156; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <span>📅</span> Thời gian tạo đơn (Ngày & Giờ)
+                        </label>
+                        <input type="datetime-local" id="edit-rental-order-date" class="kiot-filter-input" style="font-weight: 600; color: #2B2928; background: #FAF8F5; border-color: #E8CCB2; font-size: 0.88rem; height: 38px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <span style="font-size: 0.8rem; color: #6E665D; line-height: 1.45;">
+                            ✨ <strong>Ghi nhận doanh thu:</strong> Thay đổi ngày tạo đơn thuê sẽ tự động cập nhật doanh thu vào ngày đó trên biểu đồ và báo cáo.
+                        </span>
+                    </div>
+                </div>
+
                 <!-- BẢNG CHỈNH SỬA SẢN PHẨM THUÊ & SỐ LƯỢNG -->
-                <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-top: 4px; background: #ffffff;">
-                    <div style="background: #f0fdf4; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #166534; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #bbf7d0;">
+                <div style="border: 1px solid #E8CCB2; border-radius: 8px; overflow: hidden; margin-top: 4px; background: #ffffff;">
+                    <div style="background: #FAF8F5; padding: 10px 14px; font-weight: 700; font-size: 0.85rem; color: #9C7156; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8CCB2;">
                         <span>🏺 Danh sách sản phẩm thuê & Giá theo ngày</span>
-                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff;" onclick="window.addEditRentalItemPrompt()">+ Thêm món thuê mới</button>
+                        <button type="button" class="kiot-btn-outline" style="font-size: 0.76rem; padding: 4px 10px; background: #fff; border-color: #9C7156; color: #9C7156;" onclick="window.addEditRentalItemPrompt()">+ Thêm món thuê mới</button>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                         <thead>
@@ -4140,9 +4344,9 @@
                 </div>
 
                 <!-- Total Preview Row -->
-                <div style="background: #f0fdf4; padding: 10px 14px; border-radius: 6px; border: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
-                    <span>Tiền thuê hàng/ngày: <strong id="edit-rental-calc-subtotal" style="color: #0f172a;">0 đ</strong></span>
-                    <span style="font-size: 1rem; font-weight: 700; color: #166534;">Tổng cộng đơn thuê: <strong id="edit-rental-calc-total">0 đ</strong></span>
+                <div style="background: #FAF8F5; padding: 12px 14px; border-radius: 8px; border: 1px solid #E8CCB2; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <span>Tiền thuê hàng/ngày: <strong id="edit-rental-calc-subtotal" style="color: #2B2928;">0 đ</strong></span>
+                    <span style="font-size: 1rem; font-weight: 700; color: #9C7156;">Tổng cộng đơn thuê: <strong id="edit-rental-calc-total">0 đ</strong></span>
                 </div>
 
                 <div>
@@ -4151,9 +4355,296 @@
                 </div>
             </div>
 
-            <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="kiot-btn-outline" onclick="window.closeEditRentalOrderModal()">Bỏ qua</button>
-                <button type="button" class="kiot-btn-primary" style="background: #166534;" onclick="window.saveEditedRentalOrder()">💾 Lưu thay đổi</button>
+            <div class="edit-modal-footer">
+                <button type="button" class="kiot-btn-outline" style="border: 1.2px solid #E8CCB2; background: #fff; color: #6E665D; border-radius: 20px; padding: 8px 18px; font-weight: 600; cursor: pointer;" onclick="window.closeEditRentalOrderModal()">Bỏ qua</button>
+                <button type="button" class="kiot-btn-primary" style="background: #9C7156; border-color: #9C7156; border-radius: 20px; padding: 8px 22px; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25); cursor: pointer;" onclick="window.saveEditedRentalOrder()">💾 Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Đơn Hàng Online Mới (Facebook / Instagram / Online) -->
+    <div id="create-online-order-modal" class="modal" onclick="if(event.target === this) window.closeCreateOnlineOrderModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="edit-modal-header" style="background: linear-gradient(135deg, #9C7156, #7D563D);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">📱</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff;">Tạo đơn hàng Online (Facebook / Instagram)</h3>
+                        <div style="font-size: 0.76rem; color: #f5ebe1; margin-top: 2px;">
+                            Mã đơn dự kiến: <strong id="online-order-code-preview" style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px;">TNG-...</strong>
+                        </div>
+                    </div>
+                </div>
+                <span class="close" onclick="window.closeCreateOnlineOrderModal()" style="color: #fff; font-size: 1.6rem; cursor: pointer; line-height: 1; opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">&times;</span>
+            </div>
+
+            <!-- Body: Grid 2 cột KiotViet/POS Style (Hỗ trợ cuộn mượt mà trên mọi màn hình) -->
+            <div class="edit-modal-body" style="background: #FAF8F5; flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 18px 20px;">
+                <div class="online-order-grid-layout" style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 18px; align-items: start;">
+                    
+                    <!-- Cột 1: Thông tin khách hàng & Vận chuyển & Thanh toán -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <!-- Chọn Kênh bán hàng -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px;">
+                            <label class="filter-label" style="font-weight: 700; color: #9C7156; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                <span>🌐 Kênh bán hàng</span>
+                                <span style="font-size: 0.74rem; font-weight: normal; color: #6E665D;">Nguồn: Online</span>
+                            </label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <button type="button" class="online-channel-pill active" id="btn-channel-fb" onclick="window.selectOnlineOrderChannel('Facebook')" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #9C7156; background: #FAF7F2; color: #9C7156; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span>📘</span> Facebook
+                                </button>
+                                <button type="button" class="online-channel-pill" id="btn-channel-ig" onclick="window.selectOnlineOrderChannel('Instagram')" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #E8CCB2; background: #fff; color: #6E665D; font-weight: 600; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span>📸</span> Instagram
+                                </button>
+                                <button type="button" class="online-channel-pill" id="btn-channel-zalo" onclick="window.selectOnlineOrderChannel('Zalo / Khác')" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #E8CCB2; background: #fff; color: #6E665D; font-weight: 600; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span>💬</span> Khác
+                                </button>
+                            </div>
+                            <div>
+                                <label class="filter-label" style="font-size: 0.78rem;">Tên tài khoản / Link chat khách (FB / IG)</label>
+                                <input type="text" id="online-order-social-user" class="kiot-filter-input" placeholder="Ví dụ: fb.com/nguyenvana hoặc @anhthu_gom (để đối chiếu tin nhắn)">
+                            </div>
+                        </div>
+
+                        <!-- Thông tin khách hàng & Gợi ý tài khoản app (Chuẩn POS) -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label class="filter-label" style="font-weight: 700; color: #9C7156; margin: 0; display: flex; align-items: center; gap: 6px;">
+                                    <span>👤 Khách hàng & Địa chỉ nhận</span>
+                                </label>
+                                <span style="font-size: 0.72rem; color: #6E665D;">Đồng bộ data POS & App</span>
+                            </div>
+
+                            <!-- Khối tìm kiếm khách hàng kiểu POS -->
+                            <div class="online-customer-search-section" style="position: relative;">
+                                <!-- Hộp tìm kiếm khách hàng -->
+                                <div id="online-customer-search-box" style="display: flex; align-items: center; position: relative;">
+                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156;">🔍</span>
+                                    <input type="text" id="online-customer-search" class="kiot-filter-input" style="padding-left: 36px; padding-right: 32px; height: 42px; font-size: 0.88rem; font-weight: 500;" placeholder="🔍 Tìm khách hàng (Tên, SĐT, Email, ID)..." oninput="window.handleOnlineCustomerSearchInput(this.value)" autocomplete="off">
+                                    <button type="button" id="online-customer-search-clear-btn" onclick="window.clearOnlineCustomerSearchInput()" style="display: none; position: absolute; right: 10px; background: none; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer; padding: 2px;">✕</button>
+                                </div>
+
+                                <!-- Dropdown gợi ý khách hàng (POS style) -->
+                                <div id="online-customer-suggestions" class="search-suggestions" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff; border: 1.5px solid #E8CCB2; border-radius: 8px; box-shadow: 0 14px 35px rgba(0,0,0,0.16); z-index: 9999; max-height: 280px; overflow-y: auto;"></div>
+
+                                <!-- Thẻ khách hàng đã chọn (Selected Customer Card) -->
+                                <div id="online-selected-customer" style="display: none; margin-top: 2px; padding: 10px 12px; background: #FAF7F2; border: 1.5px solid #9C7156; border-radius: 8px; align-items: center; justify-content: space-between; gap: 10px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #E8CCB2; color: #2B2928; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;" id="online-cust-avatar-letter">👤</div>
+                                        <div style="min-width: 0; flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                                <span id="online-cust-name-display" style="font-weight: 700; font-size: 0.9rem; color: #2B2928; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                                <span id="online-cust-membership-badge" style="display: none; font-size: 0.7rem; font-weight: 700; background: #9C7156; color: #fff; padding: 1px 6px; border-radius: 10px;"></span>
+                                            </div>
+                                            <div style="font-size: 0.76rem; color: #6E665D; margin-top: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <span>SĐT: <strong id="online-cust-phone-display" style="color: #9C7156;"></strong></span>
+                                                <span>•</span>
+                                                <span>Điểm: <strong id="online-cust-points-display" style="color: #2B2928;">0</strong></span>
+                                                <span>•</span>
+                                                <span>Đã mua: <strong id="online-cust-orders-display">0</strong> đơn</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="window.posClearOnlineCustomer()" style="background: #fff; border: 1px solid #E8CCB2; color: #dc2626; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: all 0.15s;" title="Bỏ chọn để tìm khách khác hoặc nhập khách mới">✕ Bỏ chọn</button>
+                                </div>
+                            </div>
+
+                            <!-- 3 ô chi tiết (tự động điền khi chọn, hoặc gõ tay nếu là khách mới) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label class="filter-label">Số điện thoại khách (*)</label>
+                                    <input type="tel" id="online-order-phone" class="kiot-filter-input" placeholder="09xxxxxxxxx" oninput="window.handleOnlineOrderPhoneInput(this.value)">
+                                </div>
+                                <div>
+                                    <label class="filter-label">Họ và tên khách hàng (*)</label>
+                                    <input type="text" id="online-order-name" class="kiot-filter-input" placeholder="Tên khách nhận hàng">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="filter-label">Địa chỉ giao hàng (*)</label>
+                                <textarea id="online-order-address" class="kiot-filter-input" style="height: 52px; resize: vertical;" placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Thanh toán, Trạng thái & Ngày tạo -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+                            <label class="filter-label" style="font-weight: 700; color: #9C7156; margin: 0;">
+                                💳 Thanh toán & Trạng thái xử lý
+                            </label>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label class="filter-label">Phương thức thanh toán</label>
+                                    <select id="online-order-payment-method" class="kiot-filter-select" onchange="window.handleOnlinePaymentMethodChange(this.value)">
+                                        <option value="Chuyển khoản">Chuyển khoản / QR</option>
+                                        <option value="COD" selected>COD (Thanh toán khi nhận)</option>
+                                        <option value="Tiền mặt">Tiền mặt</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="filter-label">Trạng thái thanh toán</label>
+                                    <select id="online-order-payment-status" class="kiot-filter-select">
+                                        <option value="pending" selected>Chờ thanh toán (Chưa thu)</option>
+                                        <option value="Đã thanh toán">Đã thanh toán</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label class="filter-label">Trạng thái đơn hàng</label>
+                                    <select id="online-order-status" class="kiot-filter-select">
+                                        <option value="Đang xử lý" selected>Đang xử lý (Mặc định)</option>
+                                        <option value="Chờ xác nhận">Chờ xác nhận</option>
+                                        <option value="Chờ thanh toán">Chờ thanh toán</option>
+                                        <option value="Đang giao hàng">Đang giao hàng</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="filter-label">Thời gian tạo đơn</label>
+                                    <input type="datetime-local" id="online-order-date" class="kiot-filter-input" style="font-size: 0.82rem;">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="filter-label">Ghi chú đơn hàng & Dặn dò đóng gói</label>
+                                <textarea id="online-order-note" class="kiot-filter-input" style="height: 48px; resize: vertical;" placeholder="Bọc xốp dày, giao giờ hành chính, đóng hộp quà..."></textarea>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Cột 2: Chọn sản phẩm (POS-style) & Bảng Giỏ hàng & Tính tiền -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        
+                        <!-- Ô tìm kiếm sản phẩm kiểu POS -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px;">
+                            <label class="filter-label" style="font-weight: 700; color: #9C7156; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                                <span>🏺 Tìm & Thêm sản phẩm gốm (F3)</span>
+                                <span style="font-size: 0.74rem; font-weight: normal; color: #6E665D;">Kho realtime (Enter / Quét mã)</span>
+                            </label>
+
+                            <div style="position: relative;">
+                                <div style="display: flex; align-items: center; position: relative;">
+                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156;">🔍</span>
+                                    <input type="text" id="online-order-search-prod" class="kiot-filter-input" style="padding-left: 36px; padding-right: 32px; height: 42px; font-size: 0.9rem;" placeholder="🔍 Tìm hàng hóa (Tên, Mã SP, Barcode, SKU...)" oninput="window.handleOnlineOrderProdSearch(this.value)" autocomplete="off">
+                                    <button type="button" id="online-order-search-prod-clear-btn" onclick="window.clearOnlineProdSearchInput()" style="display: none; position: absolute; right: 10px; background: none; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer; padding: 2px;">✕</button>
+                                </div>
+                                
+                                <!-- Dropdown kết quả tìm kiếm sản phẩm kiểu POS -->
+                                <div id="online-order-prod-dropdown" class="search-suggestions" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 290px; overflow-y: auto; background: #ffffff; border: 1.5px solid #E8CCB2; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.18); z-index: 9999;">
+                                    <!-- Dynamic search items -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bảng danh sách sản phẩm trong giỏ -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;">
+                            <div style="background: #FAF8F5; padding: 9px 12px; font-weight: 700; font-size: 0.84rem; color: #9C7156; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8CCB2;">
+                                <span>🛍️ Danh sách món đã chọn (<strong id="online-order-cart-count">0</strong>)</span>
+                                <button type="button" style="border: none; background: none; color: #dc2626; font-size: 0.76rem; cursor: pointer; text-decoration: underline;" onclick="window.clearOnlineOrderCart()">Xóa tất cả</button>
+                            </div>
+                            
+                            <div style="max-height: 240px; overflow-y: auto;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                                    <thead>
+                                        <tr style="background: #f8fafc; color: #475569; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                                            <th style="padding: 8px 10px;">Sản phẩm & Phân loại</th>
+                                            <th style="padding: 8px 10px; text-align: center; width: 105px;">Số lượng</th>
+                                            <th style="padding: 8px 10px; text-align: right; width: 95px;">Đơn giá</th>
+                                            <th style="padding: 8px 10px; text-align: right; width: 100px;">Thành tiền</th>
+                                            <th style="padding: 8px 8px; text-align: center; width: 35px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="online-order-cart-tbody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 25px 12px; color: #94a3b8;">
+                                                Chưa có sản phẩm nào trong giỏ.<br>
+                                                <span style="font-size: 0.76rem;">Tìm kiếm và bấm chọn món gốm ở ô bên trên.</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Khối Chiết khấu & Phí vận chuyển & Tổng tiền -->
+                        <div style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+                            
+                            <!-- Phí vận chuyển -->
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <label class="filter-label" style="margin: 0;">Phí vận chuyển (VNĐ)</label>
+                                    <div style="display: flex; gap: 4px;">
+                                        <button type="button" class="kiot-btn-outline" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;" onclick="window.setOnlineShippingFee(0)">Freeship</button>
+                                        <button type="button" class="kiot-btn-outline" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;" onclick="window.setOnlineShippingFee(25000)">25k</button>
+                                        <button type="button" class="kiot-btn-outline" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;" onclick="window.setOnlineShippingFee(30000)">30k</button>
+                                        <button type="button" class="kiot-btn-outline" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;" onclick="window.setOnlineShippingFee(35000)">35k</button>
+                                    </div>
+                                </div>
+                                <input type="number" id="online-order-shipping-fee" class="kiot-filter-input" value="0" min="0" step="1000" oninput="window.recalculateOnlineOrderTotal()">
+                            </div>
+
+                            <!-- Giảm giá / Chiết khấu & Mã voucher -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label class="filter-label">Giảm giá / Chiết khấu (VNĐ)</label>
+                                    <input type="number" id="online-order-discount" class="kiot-filter-input" value="0" min="0" step="1000" oninput="window.recalculateOnlineOrderTotal()">
+                                </div>
+                                <div>
+                                    <label class="filter-label">Mã voucher (nếu có)</label>
+                                    <input type="text" id="online-order-coupon" class="kiot-filter-input" placeholder="Nhập mã voucher...">
+                                </div>
+                            </div>
+
+                            <!-- Bảng tóm tắt thanh toán -->
+                            <div style="background: #FAF8F5; border: 1.2px solid #E8CCB2; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
+                                    <span>Tiền hàng:</span>
+                                    <strong id="online-order-subtotal" style="color: #2B2928;">0 đ</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
+                                    <span>Phí giao hàng:</span>
+                                    <strong id="online-order-display-shipping" style="color: #2B2928;">0 đ</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
+                                    <span>Giảm giá / Chiết khấu:</span>
+                                    <strong id="online-order-display-discount" style="color: #9C7156;">- 0 đ</strong>
+                                </div>
+                                <div style="border-top: 1px dashed #E8CCB2; margin-top: 4px; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700; font-size: 0.95rem; color: #2B2928;">Khách cần trả:</span>
+                                    <span style="font-size: 1.25rem; font-weight: 800; color: #9C7156;" id="online-order-calc-total">0 đ</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="edit-modal-footer">
+                <button type="button" class="kiot-btn-outline" style="border: 1.2px solid #E8CCB2; background: #fff; color: #6E665D; border-radius: 20px; padding: 8px 20px; font-weight: 600; cursor: pointer;" onclick="window.closeCreateOnlineOrderModal()">Bỏ qua</button>
+                <button type="button" id="btn-submit-online-order" class="kiot-btn-primary" style="background: #9C7156; border-color: #9C7156; border-radius: 20px; padding: 9px 26px; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25); cursor: pointer;" onclick="window.submitCreateOnlineOrder()">💾 Hoàn tất tạo đơn Online (TNG)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nhỏ Chọn Biến Thể Sản Phẩm Cho Đơn Online (Khi SP có màu/mẫu/combo) -->
+    <div id="online-order-variant-modal" class="modal" onclick="if(event.target === this) window.closeOnlineVariantModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="background: linear-gradient(135deg, #9C7156, #7D563D); color: #fff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;" id="online-variant-modal-title">🎨 Chọn phân loại sản phẩm</h4>
+                <span class="close" onclick="window.closeOnlineVariantModal()" style="color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1;">&times;</span>
+            </div>
+            <div style="padding: 16px; max-height: 70vh; overflow-y: auto; background: #FAF8F5;" id="online-variant-modal-body">
+                <!-- Variant list loaded dynamically -->
             </div>
         </div>
     </div>
@@ -4603,7 +5094,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=60"></script>
+    <script type="module" src="../js/DashBoard.js?v=72"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

@@ -43,26 +43,26 @@
     gtag('config', 'G-4FNKRZ13JC');
   </script>
 
-  <!-- Speculation Rules API -->
-  <script type="speculationrules">
-    {
-      "prerender": [{
-        "source": "document",
-        "where": {
-          "and": [
-            { "href_matches": "/*" },
-            { "not": { "href_matches": [
-              "/admin/*",
-              "/cart/*",
-              "/login/*",
-              "/profile/*"
-            ]}}
-          ]
-        },
-        "eagerness": "moderate"
-      }]
+  <!-- Speculation Rules API (Feature-detected an toàn) -->
+  <script>
+    if (typeof HTMLScriptElement !== 'undefined' && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) {
+      const specScript = document.createElement('script');
+      specScript.type = 'speculationrules';
+      specScript.textContent = JSON.stringify({
+        prerender: [{
+          source: 'document',
+          where: {
+            and: [
+              { href_matches: '/*' },
+              { not: { href_matches: ['/admin/*', '/cart/*', '/login/*', '/profile/*'] } }
+            ]
+          },
+          eagerness: 'moderate'
+        }]
+      });
+      document.head.appendChild(specScript);
     }
-    </script>
+  </script>
 </head>
 
 <body>

@@ -114,6 +114,170 @@ export function removeVietnameseTones(str) {
         .trim();
 }
 
+/**
+ * Thuật toán tìm kiếm thông minh & chấm điểm độ liên quan (Smart Product Matching & Scoring)
+ * Cho phép gõ đảo từ, không dấu, từ không liền nhau (ví dụ: "bình gốm", "gốm hoa", "hoa gốm" đều khớp "Bình hoa gốm")
+ */
+export function matchAndScoreProduct(product, queryStr) {
+    if (!product || !queryStr) return null;
+    const rawQuery = String(queryStr).trim().toLowerCase();
+    if (!rawQuery) return null;
+
+    const cleanQuery = removeVietnameseTones(rawQuery);
+    const cleanTokens = cleanQuery.split(/\s+/).filter(Boolean);
+    const rawTokens = rawQuery.split(/\s+/).filter(Boolean);
+    if (cleanTokens.length === 0) return null;
+
+    const nameRaw = String(product.name || '').toLowerCase();
+    const nameClean = removeVietnameseTones(nameRaw);
+
+    const skuRaw = String(product.sku || product.id || '').toLowerCase();
+    const skuClean = removeVietnameseTones(skuRaw);
+
+    const barcode = String(product.barcode || '').toLowerCase();
+    const code = String(product.code || '').toLowerCase();
+
+    const catClean = removeVietnameseTones(product.category || product.categoryName || '');
+    const subCatClean = removeVietnameseTones(product.subCategory || '');
+
+    let variantsText = '';
+    if (Array.isArray(product.colorVariants)) {
+        variantsText += ' ' + product.colorVariants.map(v => v.name || v.color || '').join(' ');
+    }
+    if (Array.isArray(product.patternVariants)) {
+        variantsText += ' ' + product.patternVariants.map(v => v.name || v.pattern || '').join(' ');
+    }
+    if (Array.isArray(product.patterns)) {
+        variantsText += ' ' + product.patterns.join(' ');
+    }
+    if (Array.isArray(product.comboVariants)) {
+        variantsText += ' ' + product.comboVariants.map(v => v.name || v.title || '').join(' ');
+    }
+    if (Array.isArray(product.comboItems)) {
+        variantsText += ' ' + product.comboItems.map(v => v.name || v.title || '').join(' ');
+    }
+    const variantsClean = removeVietnameseTones(variantsText);
+    const descClean = removeVietnameseTones(product.description || '');
+
+    const nameWords = nameClean.split(/\s+/).filter(Boolean);
+    const allSearchable = `${nameClean} ${skuClean} ${barcode} ${code} ${catClean} ${subCatClean} ${variantsClean} ${descClean}`;
+
+    let score = 0;
+
+    // 1. Khớp chính xác Barcode / SKU / Code / ID
+    if (barcode === rawQuery || skuClean === cleanQuery || code === cleanQuery || skuRaw === rawQuery) {
+        return { isMatch: true, score: 3000 };
+    }
+    if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery))) {
+        score += 1500;
+    }
+
+    // 2. Khớp trọn vẹn cụm từ trong tên (Exact Phrase)
+    if (nameClean.includes(cleanQuery)) {
+        score += 800;
+        if (nameRaw.includes(rawQuery)) score += 200;
+        if (nameClean.startsWith(cleanQuery)) score += 250;
+    }
+
+    // 3. Khớp từng token (từ khóa) không phụ thuộc thứ tự
+    let tokensInName = 0;
+    let tokensInProduct = 0;
+    let firstMatchedIndexInName = -1;
+    let lastMatchedIndexInName = -1;
+    let isSameOrderInName = true;
+
+    for (let i = 0; i < cleanTokens.length; i++) {
+        const token = cleanTokens[i];
+        const rawToken = rawTokens[i];
+
+        const posInName = nameClean.indexOf(token);
+        if (posInName !== -1) {
+            tokensInName++;
+            if (firstMatchedIndexInName === -1) {
+                firstMatchedIndexInName = posInName;
+            }
+            if (lastMatchedIndexInName !== -1 && posInName < lastMatchedIndexInName) {
+                isSameOrderInName = false;
+            }
+            lastMatchedIndexInName = posInName;
+
+            const isExactWord = nameWords.includes(token);
+            score += isExactWord ? 120 : 70;
+
+            if (nameRaw.includes(rawToken)) {
+                score += 30;
+            }
+        }
+
+        if (allSearchable.includes(token)) {
+            tokensInProduct++;
+        }
+    }
+
+    const totalTokens = cleanTokens.length;
+    let isQualified = false;
+
+    if (totalTokens === 1) {
+        isQualified = tokensInProduct >= 1;
+    } else if (totalTokens === 2) {
+        isQualified = tokensInProduct === 2;
+    } else {
+        isQualified = tokensInProduct >= Math.ceil(totalTokens * 0.7) || tokensInName >= Math.ceil(totalTokens * 0.6);
+    }
+
+    if (!isQualified && score === 0) return null;
+
+    if (tokensInName === totalTokens) {
+        score += 500;
+        if (isSameOrderInName) score += 100;
+        const density = Math.min(1, totalTokens / Math.max(1, nameWords.length));
+        score += Math.round(density * 150);
+    } else if (tokensInName > 0) {
+        score += (tokensInName / totalTokens) * 300;
+    }
+
+    if (catClean.includes(cleanQuery) || subCatClean.includes(cleanQuery)) {
+        score += 120;
+    }
+    if (variantsClean.includes(cleanQuery)) {
+        score += 100;
+    }
+
+    const popularity = Number(product.sold || 0) + Number(product.views || 0) * 0.1;
+    score += Math.min(50, Math.round(popularity));
+
+    return {
+        isMatch: true,
+        score: score,
+        tokensInName: tokensInName,
+        tokensInProduct: tokensInProduct
+    };
+}
+
+export function searchAndRankProducts(products, queryStr, maxResults = 50) {
+    if (!Array.isArray(products) || products.length === 0) return [];
+    if (!queryStr || !String(queryStr).trim()) return products.slice(0, maxResults);
+
+    const scored = [];
+    for (let i = 0; i < products.length; i++) {
+        const p = products[i];
+        const res = matchAndScoreProduct(p, queryStr);
+        if (res && res.isMatch) {
+            scored.push({ product: p, score: res.score });
+        }
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, maxResults).map(item => item.product);
+}
+
+// Gắn vào window để các script khác có thể dùng
+if (typeof window !== 'undefined') {
+    window.matchAndScoreProduct = matchAndScoreProduct;
+    window.searchAndRankProducts = searchAndRankProducts;
+    window.removeVietnameseTones = removeVietnameseTones;
+}
+
 export function addCustomColorHex(colorName, hexCode) {
     if (colorName && hexCode) {
         COLOR_MAP[colorName.trim()] = hexCode.trim();
@@ -1023,17 +1187,12 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 const snap = await getDocs(q);
                 const valClean = removeVietnameseTones(val);
 
-                // Lọc client-side để tìm kiếm từ khóa có dấu / không dấu / mã SKU
-                const results = snap.docs
+                const candidates = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(p => {
-                        if (p.isHidden || p.isOnlyEvent) return false;
-                        const nameRaw = (p.name || '').toLowerCase();
-                        const nameClean = removeVietnameseTones(p.name || '');
-                        const skuClean = (p.id || '').toLowerCase();
-                        return nameRaw.includes(val) || nameClean.includes(valClean) || skuClean.includes(valClean);
-                    })
-                    .slice(0, 8);
+                    .filter(p => !p.isHidden && !p.isOnlyEvent);
+
+                // Tìm kiếm thông minh đa năng: Hỗ trợ đảo từ, không dấu, từ không liền nhau (ví dụ: "bình gốm", "gốm hoa", "hoa gốm")
+                const results = searchAndRankProducts(candidates, val, 8);
 
                 if (results.length === 0) {
                     box.innerHTML = `<div style="padding: 15px; text-align: center; color: #888; font-size: 0.85rem;">Không tìm thấy sản phẩm phù hợp</div>`;
@@ -2718,6 +2877,8 @@ function getCleanPageTitle() {
     return title || 'Trang chủ';
 }
 
+let pendingLocationPromise = null;
+
 async function fetchUserLocation() {
     let cached = sessionStorage.getItem('tng_user_location');
     if (cached) return cached;
@@ -2726,13 +2887,17 @@ async function fetchUserLocation() {
         return 'Việt Nam';
     }
 
-    try {
-        const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(2500) });
-        if (res.status === 429) throw new Error('429');
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.success) {
-                const loc = `${data.city || data.region || ''}, ${data.country_code || ''}`.replace(/^,\s*/, '').trim();
+    if (pendingLocationPromise) {
+        return pendingLocationPromise;
+    }
+
+    pendingLocationPromise = (async () => {
+        try {
+            // Sử dụng geojs.io hoàn toàn miễn phí, không giới hạn request và không bị lỗi HTTP 429
+            const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(2500) });
+            if (res.ok) {
+                const data = await res.json();
+                const loc = `${data.city || data.region || ''}, ${data.country_code || data.country || ''}`.replace(/^,\s*/, '').trim();
                 if (data.latitude && data.longitude) {
                     sessionStorage.setItem('tng_user_lat', data.latitude.toString());
                     sessionStorage.setItem('tng_user_lon', data.longitude.toString());
@@ -2742,46 +2907,18 @@ async function fetchUserLocation() {
                     return loc;
                 }
             }
+        } catch (e) {
+            // Im lặng xử lý khi mất mạng hoặc timeout
         }
-    } catch (e) {}
 
-    try {
-        const res2 = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(2500) });
-        if (res2.ok) {
-            const data2 = await res2.json();
-            const loc2 = `${data2.city || data2.region || ''}, ${data2.country_code || data2.country || ''}`.replace(/^,\s*/, '').trim();
-            if (data2.latitude && data2.longitude) {
-                sessionStorage.setItem('tng_user_lat', data2.latitude.toString());
-                sessionStorage.setItem('tng_user_lon', data2.longitude.toString());
-            }
-            if (loc2) {
-                sessionStorage.setItem('tng_user_location', loc2);
-                return loc2;
-            }
-        }
-    } catch (e) {}
+        // Mặc định an toàn cho khách hàng tại Việt Nam và lưu cache để không lặp lại request
+        sessionStorage.setItem('tng_user_location', 'Việt Nam');
+        return 'Việt Nam';
+    })().finally(() => {
+        pendingLocationPromise = null;
+    });
 
-    try {
-        const res3 = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(2500) });
-        if (res3.status === 429) throw new Error('429');
-        if (res3.ok) {
-            const data3 = await res3.json();
-            const loc3 = `${data3.city || data3.region || ''}, ${data3.country_code || ''}`.replace(/^,\s*/, '').trim();
-            if (data3.latitude && data3.longitude) {
-                sessionStorage.setItem('tng_user_lat', data3.latitude.toString());
-                sessionStorage.setItem('tng_user_lon', data3.longitude.toString());
-            }
-            if (loc3) {
-                sessionStorage.setItem('tng_user_location', loc3);
-                return loc3;
-            }
-        }
-    } catch (e) {}
-
-    // Lưu 'Việt Nam' vào sessionStorage để không tiếp tục gửi request khi bị 429 Rate Limit
-    sessionStorage.setItem('tng_user_location', 'Việt Nam');
-    sessionStorage.setItem('tng_user_location_failed', '1');
-    return 'Việt Nam';
+    return pendingLocationPromise;
 }
 
 function getLiveCartInfo() {

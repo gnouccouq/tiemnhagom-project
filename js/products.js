@@ -1,5 +1,5 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones, searchAndRankProducts
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
@@ -334,17 +334,10 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             favs = JSON.parse(localStorage.getItem('favorites')) || [];
         }
 
-        // Lọc Substring client-side nếu có search term và lọc sản phẩm bị ẩn
+        // Lọc thông minh client-side: Hỗ trợ đảo từ, không dấu, từ không liền nhau
         const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden && !p.isOnlyEvent);
-        const termClean = removeVietnameseTones(searchTerm);
-        const termRaw = searchTerm.toLowerCase();
         let finalResults = hasSearchTerm 
-            ? allDocs.filter(p => {
-                const nameRaw = (p.name || '').toLowerCase();
-                const nameClean = removeVietnameseTones(p.name || '');
-                const sku = (p.id || '').toLowerCase();
-                return nameRaw.includes(termRaw) || nameClean.includes(termClean) || sku.includes(termClean);
-            })
+            ? searchAndRankProducts(allDocs, searchTerm, 1000)
             : allDocs;
 
         // Sắp xếp lại danh sách trả về theo giá cuối cùng (đã giảm) nếu user chọn sort giá

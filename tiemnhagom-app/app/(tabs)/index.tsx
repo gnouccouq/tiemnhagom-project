@@ -675,7 +675,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.primaryDarkBtn}
               activeOpacity={0.88}
-              onPress={() => setServiceModal({ visible: true, type: 'event' })}
+              onPress={() => router.push('/event-decor' as any)}
             >
               <Text style={styles.primaryDarkBtnText}>{t('viewDecorService')}</Text>
               <Ionicons name="sparkles-outline" size={15} color={Colors.textInverse} />

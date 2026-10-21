@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from '
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { removeVietnameseTones } from '../utils/format';
+import { searchAndRankProducts } from '../utils/searchHelper';
 
 export interface ProductCategoryItem {
   id: string;
@@ -506,14 +507,9 @@ export async function getProducts(options?: {
       );
     }
 
-    // Lọc theo từ khóa tìm kiếm (hỗ trợ cả tiếng Việt có dấu và không dấu)
+    // Lọc theo từ khóa tìm kiếm (hỗ trợ đảo từ, không dấu, từ không liền nhau)
     if (options?.searchTerm && options.searchTerm.trim() !== '') {
-      const cleanTerm = removeVietnameseTones(options.searchTerm);
-      items = items.filter((p) => {
-        const cleanName = removeVietnameseTones(p.name);
-        const sku = p.id.toLowerCase();
-        return cleanName.includes(cleanTerm) || sku.includes(cleanTerm);
-      });
+      items = searchAndRankProducts(items, options.searchTerm.trim(), options.maxItems || 1000);
     }
 
     // Sắp xếp

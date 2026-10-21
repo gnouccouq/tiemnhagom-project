@@ -23,6 +23,7 @@ import { useThemeColor, Typography, Spacing, BorderRadius } from '../src/constan
 import { getProducts } from '../src/services/productService';
 import { Product } from '../src/types';
 import { removeVietnameseTones } from '../src/utils/format';
+import { searchAndRankProducts } from '../src/utils/searchHelper';
 import { useSettings } from '../src/context/SettingsContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 
@@ -81,15 +82,8 @@ export default function SearchScreen() {
   };
 
   const searchResults = useMemo(() => {
-    const term = removeVietnameseTones(searchText.trim().toLowerCase());
-    if (!term) return [];
-
-    return allProducts.filter((product) => {
-      const name = removeVietnameseTones(product.name.toLowerCase());
-      const cat = removeVietnameseTones((product.category || '').toLowerCase());
-      const sku = (product.id || '').toLowerCase();
-      return name.includes(term) || cat.includes(term) || sku.includes(term);
-    });
+    if (!searchText.trim()) return [];
+    return searchAndRankProducts(allProducts, searchText.trim(), 100);
   }, [searchText, allProducts]);
 
   const { pageStyle } = usePageAnimation();

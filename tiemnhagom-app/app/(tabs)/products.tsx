@@ -29,6 +29,7 @@ import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
 import { Product } from '../../src/types';
 import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
+import { searchAndRankProducts } from '../../src/utils/searchHelper';
 import { useCart } from '../../src/context/CartContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useWishlist } from '../../src/context/WishlistContext';
@@ -324,14 +325,9 @@ export default function ProductsScreen() {
       });
     }
 
-    // Lọc theo search
+    // Lọc theo search (hỗ trợ đảo từ, không dấu, từ không liền nhau)
     if (params.search && params.search.trim() !== '') {
-      const cleanTerm = removeVietnameseTones(params.search);
-      items = items.filter((p) => {
-        const cleanName = removeVietnameseTones(p.name);
-        const sku = p.id.toLowerCase();
-        return cleanName.includes(cleanTerm) || sku.includes(cleanTerm);
-      });
+      items = searchAndRankProducts(items, params.search.trim(), 1000);
     }
 
     // Sắp xếp
