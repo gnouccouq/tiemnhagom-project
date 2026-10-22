@@ -1,31 +1,32 @@
-import { useThemeColor } from '../constants/theme';
 // src/components/FloatingTabBar.tsx
-// Floating "pill" bottom tab bar with frosted-glass background and a sliding active indicator.
-// Supports tap-to-switch AND press-and-drag: slide your finger across the bar, the pill follows,
-// release to jump to the tab under your finger.
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+// Thanh điều hướng đáy chuẩn Apple Liquid Glass (Mục 5 GEMINI.md - Cách 2)
+// Kết hợp trọn bộ 5 icon Tabler Icons: icon-smart-home, icon-layout-grid, icon-tag, icon-user, icon-shopping-bag
+// Bố cục 2 khối: Thanh viên thuốc 4 tab bên trái + Nút tròn giỏ hàng độc lập bên phải
+// Bọc trong LiquidGlassContainerView spacing={18} tạo hiệu ứng kéo giãn giọt nước khi chạm/nhấn giữ
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   Animated,
-  Platform,
-  PanResponder,
-  LayoutChangeEvent,
+  Text,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { useThemeColor } from '../constants/theme';
 import { useCart } from '../context/CartContext';
-import { LiquidGlass } from './LiquidGlass';
+import { LiquidGlass, LiquidGlassContainerView } from './LiquidGlass';
+import {
+  TablerHomeIcon,
+  TablerCategoryIcon,
+  TablerDealsIcon,
+  TablerProfileIcon,
+  TablerCartIcon,
+} from './TablerIcons';
 
-
-const BAR_HEIGHT = 64;
-const BAR_PADDING = 6;
-const DRAG_THRESHOLD = 6;
-const BAR_ZOOM = 1.05; // zoom while dragging (bouncy)
-const TAP_ZOOM = 1.015; // zoom on a simple tap (subtle)
+const BAR_HEIGHT = 60;
+const CART_BUTTON_SIZE = 60;
+const PILL_PADDING = 5;
 
 type Props = {
   state: any;
@@ -38,370 +39,402 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
-  const ACTIVE_COLOR = Colors.textPrimary;
-  const INACTIVE_COLOR = Colors.textMuted;
-  const [barWidth, setBarWidth] = useState(0);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const translateX = useRef(new Animated.Value(0)).current;
-  const pillScale = useRef(new Animated.Value(1)).current;
-  const barScale = useRef(new Animated.Value(1)).current;
-  const barRef = useRef<View>(null);
-  const barPageX = useRef(0);
-  const isDragging = useRef(false);
 
-  const { cartBounceKey } = useCart();
+  // Màu sắc thương hiệu Tiệm Nhà Gốm
+  const ACTIVE_COLOR = isDark ? '#E8CCB2' : '#9C7156';
+  const INACTIVE_COLOR = isDark ? '#9E968D' : '#6E665D';
+
+  const { cartCount, cartBounceKey } = useCart();
+  const [leftBarWidth, setLeftBarWidth] = useState(0);
+
+  // Animation values
+  const translateX = useRef(new Animated.Value(0)).current;
   const cartIconScale = useRef(new Animated.Value(1)).current;
+  const cartButtonScale = useRef(new Animated.Value(1)).current;
+
+  // Lọc tách các route: 4 tab bên trái và tab Giỏ hàng bên phải
+  const allRoutes = state.routes.filter((r: any) => {
+    const opts = descriptors[r.key]?.options;
+    return opts?.href !== null && opts?.tabBarItemStyle?.display !== 'none';
+  });
+
+  const leftRoutes = allRoutes.filter((r: any) => r.name !== 'cart');
+  const cartRoute = allRoutes.find((r: any) => r.name === 'cart');
+
+  const activeRouteKey = state.routes[state.index]?.key;
+  const activeRoute = state.routes[state.index];
+  const isCartActive = activeRoute?.name === 'cart';
+
+  const leftActiveIndex = leftRoutes.findIndex((r: any) => r.key === activeRouteKey);
+  const leftItemWidth = leftBarWidth > 0 ? (leftBarWidth - PILL_PADDING * 2) / Math.max(leftRoutes.length, 1) : 0;
+
+  // Trượt bọt kính (Sliding Indicator) mượt mà đến vị trí tab đang chọn
+  useEffect(() => {
+    if (leftItemWidth > 0 && leftActiveIndex !== -1) {
+      Animated.spring(translateX, {
+        toValue: leftActiveIndex * leftItemWidth,
+        useNativeDriver: true,
+        damping: 20,
+        stiffness: 220,
+        mass: 0.8,
+      }).start();
+    }
+  }, [leftActiveIndex, leftItemWidth]);
 
   // Hiệu ứng nảy giỏ hàng (Cart Bounce Pop) khi thêm sản phẩm thành công
   useEffect(() => {
     if (cartBounceKey > 0) {
       Animated.sequence([
         Animated.timing(cartIconScale, {
-          toValue: 1.45,
+          toValue: 1.38,
           duration: 120,
           useNativeDriver: true,
         }),
         Animated.spring(cartIconScale, {
           toValue: 1,
-          friction: 3,
-          tension: 100,
+          friction: 3.5,
+          tension: 140,
           useNativeDriver: true,
         }),
       ]).start();
     }
   }, [cartBounceKey]);
 
-  // Zoom of the whole bar: subtle on tap, bouncy while dragging
-  const zoomBar = (mode: 'tap' | 'drag' | 'release') => {
-    const config =
-      mode === 'drag'
-        ? { toValue: BAR_ZOOM, friction: 4, tension: 180 }
-        : mode === 'tap'
-          ? { toValue: TAP_ZOOM, friction: 12, tension: 300 }
-          : isDragging.current
-            ? { toValue: 1, friction: 3.5, tension: 180 } // bounce back after drag
-            : { toValue: 1, friction: 12, tension: 300 }; // gentle return after tap
-    Animated.spring(barScale, { ...config, useNativeDriver: true }).start();
-  };
+  // Điều hướng tab
+  const handleTabPress = (route: any, isCurrentlyActive: boolean) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
 
-  const routes = state.routes.filter((r: any) => {
-    const opts = descriptors[r.key]?.options;
-    return opts?.href !== null && opts?.tabBarItemStyle?.display !== 'none';
-  });
-  const tabCount = routes.length;
-  const itemWidth = barWidth > 0 ? (barWidth - BAR_PADDING * 2) / tabCount : 0;
-  const activeRouteKey = state.routes[state.index]?.key;
-  const activeIndex = Math.max(0, routes.findIndex((r: any) => r.key === activeRouteKey));
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
 
-  // Keep latest values for the gesture handlers (PanResponder is memoized)
-  const latest = useRef({ itemWidth, tabCount, activeIndex, routes, navigation, barWidth });
-  latest.current = { itemWidth, tabCount, activeIndex, routes, navigation, barWidth };
-
-  const springTo = (index: number) => {
-    Animated.spring(translateX, {
-      toValue: index * latest.current.itemWidth,
-      useNativeDriver: true,
-      damping: 18,
-      stiffness: 180,
-      mass: 0.8,
-    }).start();
-  };
-
-  useEffect(() => {
-    if (!itemWidth || dragIndex !== null) return;
-    springTo(activeIndex);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, itemWidth]);
-
-  const goToIndex = (index: number) => {
-    const { routes: rs, navigation: nav, activeIndex: current } = latest.current;
-    const route = rs[index];
-    if (!route) return;
-    const event = nav.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (index !== current && !event.defaultPrevented) {
-      nav.navigate(route.name, route.params);
+    if (!isCurrentlyActive && !event.defaultPrevented) {
+      navigation.navigate(route.name, route.params);
     }
   };
 
-  const panResponder = useMemo(() => {
-    // Convert absolute finger X to pill offset & tab index
-    const resolve = (pageX: number) => {
-      const { itemWidth: w, tabCount: n, barWidth: bw } = latest.current;
-      // Undo the zoom so the pill stays under the finger while the bar is scaled up
-      const center = barPageX.current + bw / 2;
-      const unscaledX = center + (pageX - center) / BAR_ZOOM;
-      const localX = unscaledX - barPageX.current - BAR_PADDING;
-      const maxOffset = (n - 1) * w;
-      const offset = Math.min(Math.max(localX - w / 2, 0), maxOffset);
-      const index = Math.min(Math.max(Math.floor(localX / w), 0), n - 1);
-      return { offset, index };
-    };
+  // Hiệu ứng kéo giãn giọt nước khi nhấn giữ/chạm vào nút giỏ hàng (iOS 26 Liquid Droplet Stretch)
+  const onCartPressIn = () => {
+    Animated.spring(cartButtonScale, {
+      toValue: 1.12,
+      friction: 5,
+      tension: 200,
+      useNativeDriver: true,
+    }).start();
+  };
 
-    return PanResponder.create({
-      // Let taps go to the Pressables; only take over once the finger moves horizontally
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, g) =>
-        Math.abs(g.dx) > DRAG_THRESHOLD && Math.abs(g.dx) > Math.abs(g.dy),
-      onMoveShouldSetPanResponderCapture: (_, g) =>
-        Math.abs(g.dx) > DRAG_THRESHOLD && Math.abs(g.dx) > Math.abs(g.dy),
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: (_, g) => {
-        translateX.stopAnimation();
-        isDragging.current = true;
-        zoomBar('drag');
-        Animated.spring(pillScale, { toValue: 1.1, useNativeDriver: true, friction: 6 }).start();
-        const { offset, index } = resolve(g.moveX);
-        translateX.setValue(offset);
-        setDragIndex(index);
-      },
-      onPanResponderMove: (_, g) => {
-        const { offset, index } = resolve(g.moveX);
-        translateX.setValue(offset);
-        setDragIndex((prev) => (prev === index ? prev : index));
-      },
-      onPanResponderRelease: (_, g) => {
-        const { index } = resolve(g.moveX);
-        zoomBar('release');
-        isDragging.current = false;
-        Animated.spring(pillScale, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
-        springTo(index);
-        setDragIndex(null);
-        goToIndex(index);
-      },
-      onPanResponderTerminate: () => {
-        zoomBar('release');
-        isDragging.current = false;
-        Animated.spring(pillScale, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
-        springTo(latest.current.activeIndex);
-        setDragIndex(null);
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const onCartPressOut = () => {
+    Animated.spring(cartButtonScale, {
+      toValue: 1,
+      friction: 5,
+      tension: 200,
+      useNativeDriver: true,
+    }).start();
+  };
 
-  // Hide the bar if the focused screen requests it
+  // Ẩn thanh tab nếu màn hình con yêu cầu
   const focusedOptions = descriptors[activeRouteKey]?.options;
   if (focusedOptions?.tabBarStyle?.display === 'none') return null;
 
-  const onLayout = (e: LayoutChangeEvent) => {
-    setBarWidth(e.nativeEvent.layout.width);
-    barRef.current?.measureInWindow((x) => {
-      barPageX.current = x;
-    });
-  };
+  // Render icon Tabler cho từng tab tương ứng
+  const renderTablerIcon = (routeName: string, focused: boolean, color: string) => {
+    const iconSize = 24;
+    const strokeWidth = focused ? 2.1 : 1.8;
 
-  const highlightedIndex = dragIndex ?? activeIndex;
+    switch (routeName) {
+      case 'index':
+        return (
+          <TablerHomeIcon
+            size={iconSize}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+      case 'products':
+        return (
+          <TablerCategoryIcon
+            size={iconSize}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+      case 'deals':
+        return (
+          <TablerDealsIcon
+            size={iconSize}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+      case 'profile':
+        return (
+          <TablerProfileIcon
+            size={iconSize}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+      case 'cart':
+        return (
+          <TablerCartIcon
+            size={iconSize + 1}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+      default:
+        return (
+          <TablerHomeIcon
+            size={iconSize}
+            color={color}
+            stroke={strokeWidth}
+            focused={focused}
+          />
+        );
+    }
+  };
 
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.wrapper, { bottom: Math.max(insets.bottom - 10, 6) }]}
+      style={[styles.wrapper, { bottom: Math.max(insets.bottom - 4, 10) }]}
     >
-      <Animated.View
-        ref={barRef}
-        style={[styles.shadow, { transform: [{ scale: barScale }] }]}
-        onLayout={onLayout}
-      >
-        <LiquidGlass style={styles.bar} {...panResponder.panHandlers}>
-          {/* Sliding Apple Liquid Glass active pill */}
-          {itemWidth > 0 && (
-            <Animated.View
-              pointerEvents="none"
+      {/* Container chuẩn Apple Liquid Glass nối kết giọt nước với spacing={18} */}
+      <LiquidGlassContainerView spacing={18} style={styles.containerRow}>
+        {/* 1. THANH VIÊN THUỐC BÊN TRÁI: Chứa 4 tab mộc mạc (Trang chủ, Danh mục, Ưu đãi, Cá nhân) */}
+        <View
+          style={styles.leftPillWrapper}
+          onLayout={(e) => setLeftBarWidth(e.nativeEvent.layout.width)}
+        >
+          <LiquidGlass
+            interactive={true}
+            effect="regular"
+            style={styles.leftPillBar}
+          >
+            {/* Bọt kính trượt nhẹ nhàng giữa các tab (tuyệt đối không dùng 4 lớp giả kính) */}
+            {leftItemWidth > 0 && leftActiveIndex !== -1 && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.slidingIndicator,
+                  {
+                    width: leftItemWidth,
+                    transform: [{ translateX }],
+                  },
+                ]}
+              >
+                <View style={styles.indicatorPill} />
+              </Animated.View>
+            )}
+
+            {/* Danh sách 4 icon Tabler */}
+            <View style={styles.leftItemsRow}>
+              {leftRoutes.map((route: any, index: number) => {
+                const { options } = descriptors[route.key];
+                const isFocused = index === leftActiveIndex;
+                const iconColor = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+                const label =
+                  typeof options.tabBarLabel === 'string'
+                    ? options.tabBarLabel
+                    : options.title ?? route.name;
+
+                return (
+                  <Pressable
+                    key={route.key}
+                    accessibilityRole="button"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+                    testID={`tab-${route.name}`}
+                    onPress={() => handleTabPress(route, isFocused)}
+                    style={styles.tabItem}
+                  >
+                    <View style={styles.iconContainer}>
+                      {renderTablerIcon(route.name, isFocused, iconColor)}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </LiquidGlass>
+        </View>
+
+        {/* 2. VIÊN BI KÍNH TRÒN GIỎ HÀNG BÊN PHẢI: Nút tròn độc lập tách rời với hiệu ứng đàn hồi giọt nước */}
+        {cartRoute && (
+          <Animated.View
+            style={[
+              styles.cartWrapper,
+              {
+                transform: [
+                  { scale: Animated.multiply(cartButtonScale, cartIconScale) },
+                ],
+              },
+            ]}
+          >
+            <LiquidGlass
+              interactive={true}
+              effect="regular"
               style={[
-                styles.activePill,
-                dragIndex !== null && styles.activePillDragging,
-                { width: itemWidth, transform: [{ translateX }, { scale: pillScale }] },
+                styles.cartCircle,
+                isCartActive && styles.cartCircleActive,
               ]}
             >
-              {/* Viền quang học kính Apple Liquid Glass (Pure Crystal Rim) */}
-              <LinearGradient
-                colors={
-                  isDark
-                    ? [
-                      'rgba(255, 255, 255, 0.45)',
-                      'rgba(255, 255, 255, 0.15)',
-                      'rgba(232, 204, 178, 0.20)',
-                      'rgba(255, 255, 255, 0.10)',
-                      'rgba(255, 255, 255, 0.35)',
-                    ]
-                    : [
-                      'rgba(255, 255, 255, 0.95)',
-                      'rgba(255, 255, 255, 0.60)',
-                      'rgba(232, 204, 178, 0.30)',
-                      'rgba(255, 255, 255, 0.50)',
-                      'rgba(255, 255, 255, 0.90)',
-                    ]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.pillIridescentRim}
-              >
-                <View style={styles.pillLiquidInner}>
-                  {/* Thấu kính mờ quang học (Frosted Glass Refraction) */}
-                  <BlurView
-                    intensity={Platform.OS === 'ios' ? 45 : 32}
-                    tint={isDark ? 'dark' : 'light'}
-                    style={StyleSheet.absoluteFill}
-                  />
-
-                  {/* Lớp nền men gốm bán trong suốt */}
-                  <View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      {
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.10)'
-                          : 'rgba(255, 255, 255, 0.48)',
-                      },
-                    ]}
-                  />
-
-                  {/* Vệt sáng bóng bề mặt chất lỏng (Specular Gloss Highlight) */}
-                  <LinearGradient
-                    colors={[
-                      isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.88)',
-                      isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.22)',
-                      'rgba(255, 255, 255, 0)',
-                    ]}
-                    locations={[0, 0.45, 1]}
-                    style={styles.pillTopGloss}
-                  />
-
-                  {/* Ánh phản chiếu viền đáy */}
-                  <View style={styles.pillBottomReflect} />
-                </View>
-              </LinearGradient>
-            </Animated.View>
-          )}
-
-          {routes.map((route: any, index: number) => {
-            const { options } = descriptors[route.key];
-            const label =
-              typeof options.tabBarLabel === 'string'
-                ? options.tabBarLabel
-                : options.title ?? route.name;
-            const isFocused = index === highlightedIndex;
-            const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
-
-            return (
               <Pressable
-                key={route.key}
                 accessibilityRole="button"
-                accessibilityState={index === activeIndex ? { selected: true } : {}}
-                accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-                testID={`tab-${route.name}`}
-                onPress={() => goToIndex(index)}
-                onPressIn={() => zoomBar('tap')}
-                onPressOut={() => {
-                  if (!isDragging.current) zoomBar('release');
-                }}
-                onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
-                style={styles.item}
+                accessibilityState={isCartActive ? { selected: true } : {}}
+                accessibilityLabel="Giỏ hàng"
+                testID="tab-cart"
+                onPressIn={onCartPressIn}
+                onPressOut={onCartPressOut}
+                onPress={() => handleTabPress(cartRoute, isCartActive)}
+                style={styles.cartPressable}
               >
-                {route.name === 'cart' ? (
-                  <Animated.View style={{ transform: [{ scale: cartIconScale }] }}>
-                    {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
-                  </Animated.View>
-                ) : (
-                  options.tabBarIcon?.({ focused: isFocused, color, size: 24 })
-                )}
-                <Text
-                  numberOfLines={1}
-                  style={[styles.label, { color, fontWeight: isFocused ? '700' : '500' }]}
-                >
-                  {label}
-                </Text>
+                <View style={styles.cartIconWrapper}>
+                  {renderTablerIcon(
+                    'cart',
+                    isCartActive,
+                    isCartActive ? ACTIVE_COLOR : (isDark ? '#F5F5F5' : '#2B2928')
+                  )}
+                  {/* Badge số lượng sản phẩm trên giỏ hàng */}
+                  {cartCount > 0 && (
+                    <View style={styles.cartBadge}>
+                      <Text style={styles.cartBadgeText}>
+                        {cartCount > 99 ? '99+' : cartCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </Pressable>
-            );
-          })}
-        </LiquidGlass>
-      </Animated.View>
+            </LiquidGlass>
+          </Animated.View>
+        )}
+      </LiquidGlassContainerView>
     </View>
   );
 }
 
-const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-  },
-  shadow: {
-    borderRadius: BAR_HEIGHT / 2,
-    backgroundColor: 'transparent',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: Colors.cardBackground === '#FFFFFF' ? 0.08 : 0.25,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  bar: {
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: BAR_PADDING,
-    overflow: 'hidden',
-  },
-  glassOverlay: {
-    backgroundColor: Colors.cardBackground === '#FFFFFF'
-      ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.35)')
-      : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.25)' : 'rgba(30,30,30,0.35)'),
-  },
-  activePill: {
-    position: 'absolute',
-    left: BAR_PADDING,
-    top: BAR_PADDING,
-    bottom: BAR_PADDING,
-    borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2,
-    shadowColor: isDark ? '#000000' : '#9C7156',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: isDark ? 0.38 : 0.20,
-    shadowRadius: 7,
-    elevation: 4,
-  },
-  activePillDragging: {
-    shadowOpacity: isDark ? 0.48 : 0.28,
-    shadowRadius: 10,
-  },
-  pillIridescentRim: {
-    flex: 1,
-    borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2,
-    padding: 1.4,
-  },
-  pillLiquidInner: {
-    flex: 1,
-    borderRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  pillTopGloss: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '52%',
-    borderTopLeftRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
-    borderTopRightRadius: (BAR_HEIGHT - BAR_PADDING * 2) / 2 - 1.4,
-  },
-  pillBottomReflect: {
-    position: 'absolute',
-    bottom: 0.5,
-    left: '22%',
-    right: '22%',
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderRadius: 1,
-  },
-  item: {
-    flex: 1,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  label: {
-    fontSize: 10.5,
-    letterSpacing: 0.1,
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    wrapper: {
+      position: 'absolute',
+      left: 14,
+      right: 14,
+      alignItems: 'center',
+    },
+    containerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      width: '100%',
+    },
+    leftPillWrapper: {
+      flex: 1,
+      height: BAR_HEIGHT,
+      borderRadius: BAR_HEIGHT / 2,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.35 : 0.08,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    leftPillBar: {
+      height: BAR_HEIGHT,
+      borderRadius: BAR_HEIGHT / 2,
+      paddingHorizontal: PILL_PADDING,
+      overflow: 'hidden',
+    },
+    slidingIndicator: {
+      position: 'absolute',
+      top: PILL_PADDING,
+      bottom: PILL_PADDING,
+      left: PILL_PADDING,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    indicatorPill: {
+      width: '88%',
+      height: '84%',
+      borderRadius: (BAR_HEIGHT - PILL_PADDING * 2) / 2,
+      backgroundColor: isDark
+        ? 'rgba(232, 204, 178, 0.16)'
+        : 'rgba(156, 113, 86, 0.12)',
+    },
+    leftItemsRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    tabItem: {
+      flex: 1,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cartWrapper: {
+      width: CART_BUTTON_SIZE,
+      height: CART_BUTTON_SIZE,
+      borderRadius: CART_BUTTON_SIZE / 2,
+      shadowColor: isDark ? '#000000' : '#9C7156',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.40 : 0.20,
+      shadowRadius: 10,
+      elevation: 8,
+    },
+    cartCircle: {
+      width: CART_BUTTON_SIZE,
+      height: CART_BUTTON_SIZE,
+      borderRadius: CART_BUTTON_SIZE / 2,
+      overflow: 'hidden',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cartCircleActive: {
+      borderWidth: 1.5,
+      borderColor: '#9C7156',
+    },
+    cartPressable: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cartIconWrapper: {
+      position: 'relative',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cartBadge: {
+      position: 'absolute',
+      top: -6,
+      right: -10,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: '#9C7156',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 4,
+      borderWidth: 1.5,
+      borderColor: isDark ? '#121212' : '#FFFFFF',
+    },
+    cartBadgeText: {
+      color: '#FFFFFF',
+      fontSize: 10,
+      fontWeight: '700',
+    },
+  });
