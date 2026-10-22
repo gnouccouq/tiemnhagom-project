@@ -246,7 +246,6 @@ function NavigationRoot() {
           }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="cart" options={{ animation: 'slide_from_right', headerShown: false }} />
         <Stack.Screen name="product/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="checkout" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />

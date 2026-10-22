@@ -562,7 +562,7 @@ export default function OrdersScreen() {
       t('reorderConfirmDesc'),
       [
         { text: t('continueBrowsingAction'), style: 'cancel' },
-        { text: t('goToCartAction'), onPress: () => router.push('/cart') },
+        { text: t('goToCartAction'), onPress: () => router.push('/(tabs)/cart') },
       ]
     );
   };

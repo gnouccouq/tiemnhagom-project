@@ -229,7 +229,7 @@ export default function VoucherDetailScreen() {
         {
           text: t('goToCartBtn') || 'Đến giỏ hàng',
           style: 'primary',
-          onPress: () => router.push('/cart'),
+          onPress: () => router.push('/(tabs)/cart'),
         },
         {
           text: t('continueBrowsingBtn') || 'Tiếp tục xem',

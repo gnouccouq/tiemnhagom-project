@@ -120,7 +120,7 @@ export default function SearchScreen() {
           },
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => router.push('/cart')}
+              onPress={() => router.push('/(tabs)/cart')}
               style={styles.cartHeaderBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('cartTab') || 'Giỏ hàng'}

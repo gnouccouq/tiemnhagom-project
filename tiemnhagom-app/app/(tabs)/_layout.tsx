@@ -1,23 +1,9 @@
 // app/(tabs)/_layout.tsx
-// Thanh điều hướng đáy chuẩn Liquid Glass kết hợp bộ 5 Tabler Icons chính thức
-// 1. Trang chủ: icon-smart-home
-// 2. Danh mục: icon-layout-grid
-// 3. Ưu đãi: icon-tag
-// 4. Cá nhân: icon-user
-// 5. Giỏ hàng: icon-shopping-bag (Tách riêng thành viên bi tròn bên phải)
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useThemeColor } from '../../src/constants/theme';
-import FloatingTabBar from '../../src/components/FloatingTabBar';
-import {
-  TablerHomeIcon,
-  TablerCategoryIcon,
-  TablerDealsIcon,
-  TablerCartIcon,
-  TablerProfileIcon,
-} from '../../src/components/TablerIcons';
 
 export default function TabLayout() {
   const Colors = useThemeColor();
@@ -25,65 +11,64 @@ export default function TabLayout() {
   const { t } = useSettings();
 
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          elevation: 0,
-        },
-      }}
+    <NativeTabs
+      tintColor="#9C7156"
+      backgroundColor={Colors.background}
+      minimizeBehavior="automatic"
+      labelVisibilityMode="unlabeled"
     >
-      {/* 1. Trang chủ: icon-smart-home (hoặc icon-home) */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('home'),
-          tabBarLabel: t('home'),
-          tabBarIcon: ({ color, focused }) => (
-            <TablerHomeIcon size={24} color={color} stroke={1.8} focused={focused} />
-          ),
-        }}
-      />
+      {/* 4 Icon nằm trong thanh viên thuốc dài bên trái (ẩn chữ, chỉ hiện icon tròn) */}
+      {/* 1. Trang chủ */}
+      <NativeTabs.Trigger name="index" accessibilityLabel={t('home')}>
+        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'house', selected: 'house.fill' }}
+          md={{ default: 'home', selected: 'home' }}
+        />
+      </NativeTabs.Trigger>
 
-      {/* 2. Danh mục: icon-layout-grid (hoặc icon-category) */}
-      <Tabs.Screen
-        name="products"
-        options={{
-          title: t('categories'),
-          tabBarLabel: t('categories'),
-          tabBarIcon: ({ color, focused }) => (
-            <TablerCategoryIcon size={24} color={color} stroke={1.8} focused={focused} />
-          ),
-        }}
-      />
+      {/* 2. Danh mục */}
+      <NativeTabs.Trigger name="products" accessibilityLabel={t('categories')}>
+        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }}
+          md={{ default: 'grid_view', selected: 'grid_view' }}
+        />
+      </NativeTabs.Trigger>
 
-      {/* 3. Ưu đãi: icon-tag (hoặc icon-discount) */}
-      <Tabs.Screen
-        name="deals"
-        options={{
-          title: t('deals'),
-          tabBarLabel: t('deals'),
-          tabBarIcon: ({ color, focused }) => (
-            <TablerDealsIcon size={24} color={color} stroke={1.8} focused={focused} />
-          ),
-        }}
-      />
+      {/* 3. Ưu đãi */}
+      <NativeTabs.Trigger name="deals" accessibilityLabel={t('deals')}>
+        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'tag', selected: 'tag.fill' }}
+          md={{ default: 'local_offer', selected: 'local_offer' }}
+        />
+      </NativeTabs.Trigger>
 
-      {/* 4. Cá nhân: icon-user (hoặc icon-user-circle) */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t('profile'),
-          tabBarLabel: t('profile'),
-          tabBarIcon: ({ color, focused }) => (
-            <TablerProfileIcon size={24} color={color} stroke={1.8} focused={focused} />
-          ),
-        }}
-      />
-    </Tabs>
+      {/* 4. Tài khoản */}
+      <NativeTabs.Trigger name="profile" accessibilityLabel={t('profile')}>
+        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person', selected: 'person.fill' }}
+          md={{ default: 'person', selected: 'person' }}
+        />
+      </NativeTabs.Trigger>
+
+      {/* 5. Nút Giỏ hàng tách rời thành viên bi kính tròn bên phải nhờ role="search" */}
+      <NativeTabs.Trigger
+        name="cart"
+        role="search"
+        accessibilityLabel={t('cartTab')}
+      >
+        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'bag', selected: 'bag.fill' }}
+          md={{ default: 'shopping_bag', selected: 'shopping_bag' }}
+        />
+        {cartCount > 0 && (
+          <NativeTabs.Trigger.Badge>{cartCount > 99 ? '99+' : String(cartCount)}</NativeTabs.Trigger.Badge>
+        )}
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
