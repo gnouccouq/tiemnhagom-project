@@ -458,7 +458,7 @@ export default function OrderDetailScreen() {
       t('reorderConfirmDesc') || 'Đã đưa các sản phẩm vào giỏ hàng của bạn. Bạn có muốn đến giỏ hàng ngay không?',
       [
         { text: t('continueBrowsingAction') || 'Tiếp tục xem', style: 'cancel' },
-        { text: t('goToCartAction') || 'Đến Giỏ Hàng', onPress: () => router.push('/(tabs)/cart') },
+        { text: t('goToCartAction') || 'Đến Giỏ Hàng', onPress: () => router.push('/cart') },
       ]
     );
   };

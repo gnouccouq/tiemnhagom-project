@@ -84,19 +84,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* 5. Giỏ hàng: icon-shopping-bag (hoặc icon-basket) */}
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: t('cartTab'),
-          tabBarLabel: t('cartTab'),
-          tabBarBadge: cartCount > 0 ? (cartCount > 99 ? '99+' : cartCount) : undefined,
-          tabBarIcon: ({ color, focused }) => (
-            <TablerCartIcon size={24} color={color} stroke={1.8} focused={focused} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }

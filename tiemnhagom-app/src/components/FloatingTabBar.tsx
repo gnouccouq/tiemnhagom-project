@@ -12,6 +12,7 @@ import {
   Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '../constants/theme';
 import { useCart } from '../context/CartContext';
@@ -36,6 +37,7 @@ type Props = {
 
 export default function FloatingTabBar({ state, descriptors, navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
@@ -52,19 +54,14 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
   const cartIconScale = useRef(new Animated.Value(1)).current;
   const cartButtonScale = useRef(new Animated.Value(1)).current;
 
-  // Lọc tách các route: 4 tab bên trái và tab Giỏ hàng bên phải
+  // 4 tab nằm trong thanh viên thuốc bên trái
   const allRoutes = state.routes.filter((r: any) => {
     const opts = descriptors[r.key]?.options;
     return opts?.href !== null && opts?.tabBarItemStyle?.display !== 'none';
   });
 
   const leftRoutes = allRoutes.filter((r: any) => r.name !== 'cart');
-  const cartRoute = allRoutes.find((r: any) => r.name === 'cart');
-
   const activeRouteKey = state.routes[state.index]?.key;
-  const activeRoute = state.routes[state.index];
-  const isCartActive = activeRoute?.name === 'cart';
-
   const leftActiveIndex = leftRoutes.findIndex((r: any) => r.key === activeRouteKey);
   const leftItemWidth = leftBarWidth > 0 ? (leftBarWidth - PILL_PADDING * 2) / Math.max(leftRoutes.length, 1) : 0;
 
@@ -268,54 +265,49 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
         </View>
 
         {/* 2. VIÊN BI KÍNH TRÒN GIỎ HÀNG BÊN PHẢI: Nút tròn độc lập tách rời với hiệu ứng đàn hồi giọt nước */}
-        {cartRoute && (
-          <Animated.View
-            style={[
-              styles.cartWrapper,
-              {
-                transform: [
-                  { scale: Animated.multiply(cartButtonScale, cartIconScale) },
-                ],
-              },
-            ]}
+        <Animated.View
+          style={[
+            styles.cartWrapper,
+            {
+              transform: [
+                { scale: Animated.multiply(cartButtonScale, cartIconScale) },
+              ],
+            },
+          ]}
+        >
+          <LiquidGlass
+            interactive={true}
+            effect="regular"
+            style={styles.cartCircle}
           >
-            <LiquidGlass
-              interactive={true}
-              effect="regular"
-              style={[
-                styles.cartCircle,
-                isCartActive && styles.cartCircleActive,
-              ]}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Giỏ hàng"
+              testID="tab-cart"
+              onPressIn={onCartPressIn}
+              onPressOut={onCartPressOut}
+              onPress={() => {
+                try {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                } catch {}
+                router.push('/cart');
+              }}
+              style={styles.cartPressable}
             >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={isCartActive ? { selected: true } : {}}
-                accessibilityLabel="Giỏ hàng"
-                testID="tab-cart"
-                onPressIn={onCartPressIn}
-                onPressOut={onCartPressOut}
-                onPress={() => handleTabPress(cartRoute, isCartActive)}
-                style={styles.cartPressable}
-              >
-                <View style={styles.cartIconWrapper}>
-                  {renderTablerIcon(
-                    'cart',
-                    isCartActive,
-                    isCartActive ? ACTIVE_COLOR : (isDark ? '#F5F5F5' : '#2B2928')
-                  )}
-                  {/* Badge số lượng sản phẩm trên giỏ hàng */}
-                  {cartCount > 0 && (
-                    <View style={styles.cartBadge}>
-                      <Text style={styles.cartBadgeText}>
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            </LiquidGlass>
-          </Animated.View>
-        )}
+              <View style={styles.cartIconWrapper}>
+                {renderTablerIcon('cart', false, isDark ? '#F5F5F5' : '#2B2928')}
+                {/* Badge số lượng sản phẩm trên giỏ hàng */}
+                {cartCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </LiquidGlass>
+        </Animated.View>
       </LiquidGlassContainerView>
     </View>
   );
