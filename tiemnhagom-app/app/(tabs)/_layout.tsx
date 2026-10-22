@@ -18,43 +18,55 @@ export default function TabLayout() {
       labelVisibilityMode="unlabeled"
     >
       {/* 4 Icon nằm trong thanh viên thuốc dài bên trái (ẩn chữ, chỉ hiện icon tròn) */}
-      {/* 1. Trang chủ */}
+      {/* 1. Trang chủ: icon-smart-home */}
       <NativeTabs.Trigger name="index" accessibilityLabel={t('home')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'house', selected: 'house.fill' }}
-          md={{ default: 'home', selected: 'home' }}
+          src={{
+            default: require('../../assets/icons/tabler/tabler_home.png'),
+            selected: require('../../assets/icons/tabler/tabler_home_selected.png'),
+          }}
+          renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      {/* 2. Danh mục */}
+      {/* 2. Danh mục: icon-layout-grid */}
       <NativeTabs.Trigger name="products" accessibilityLabel={t('categories')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }}
-          md={{ default: 'grid_view', selected: 'grid_view' }}
+          src={{
+            default: require('../../assets/icons/tabler/tabler_grid.png'),
+            selected: require('../../assets/icons/tabler/tabler_grid_selected.png'),
+          }}
+          renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      {/* 3. Ưu đãi */}
+      {/* 3. Ưu đãi: icon-tag */}
       <NativeTabs.Trigger name="deals" accessibilityLabel={t('deals')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'tag', selected: 'tag.fill' }}
-          md={{ default: 'local_offer', selected: 'local_offer' }}
+          src={{
+            default: require('../../assets/icons/tabler/tabler_tag.png'),
+            selected: require('../../assets/icons/tabler/tabler_tag_selected.png'),
+          }}
+          renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      {/* 4. Tài khoản */}
+      {/* 4. Tài khoản: icon-user */}
       <NativeTabs.Trigger name="profile" accessibilityLabel={t('profile')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'person', selected: 'person.fill' }}
-          md={{ default: 'person', selected: 'person' }}
+          src={{
+            default: require('../../assets/icons/tabler/tabler_user.png'),
+            selected: require('../../assets/icons/tabler/tabler_user_selected.png'),
+          }}
+          renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      {/* 5. Nút Giỏ hàng tách rời thành viên bi kính tròn bên phải nhờ role="search" */}
+      {/* 5. Nút Giỏ hàng tách rời thành viên bi kính tròn bên phải nhờ role="search": icon-shopping-bag */}
       <NativeTabs.Trigger
         name="cart"
         role="search"
@@ -62,8 +74,11 @@ export default function TabLayout() {
       >
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'bag', selected: 'bag.fill' }}
-          md={{ default: 'shopping_bag', selected: 'shopping_bag' }}
+          src={{
+            default: require('../../assets/icons/tabler/tabler_cart.png'),
+            selected: require('../../assets/icons/tabler/tabler_cart_selected.png'),
+          }}
+          renderingMode="template"
         />
         {cartCount > 0 && (
           <NativeTabs.Trigger.Badge>{cartCount > 99 ? '99+' : String(cartCount)}</NativeTabs.Trigger.Badge>
