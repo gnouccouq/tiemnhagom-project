@@ -136,11 +136,13 @@ export function initTextScaler(initialScale: number = 1.0) {
     if (JsxDev && typeof JsxDev.jsxDEV === 'function' && !JsxDev.__isScaled) {
       const origJsxDev = JsxDev.jsxDEV;
       JsxDev.jsxDEV = function (type: any, props: any, key: any, isStatic: any, source: any, self: any) {
-        if (isTextComponent(type) && props) {
-          const scaledStyle = scaleStyle(props.style, currentFontScale);
-          return origJsxDev.call(this, type, { ...props, style: scaledStyle }, key, isStatic, source, self);
-        }
-        return origJsxDev.apply(this, arguments as any);
+        try {
+          if (isTextComponent(type) && props) {
+            const scaledStyle = scaleStyle(props.style, currentFontScale);
+            return origJsxDev(type, { ...props, style: scaledStyle }, key, isStatic, source, self);
+          }
+        } catch {}
+        return origJsxDev(type, props, key, isStatic, source, self);
       };
       JsxDev.__isScaled = true;
     }
@@ -155,20 +157,24 @@ export function initTextScaler(initialScale: number = 1.0) {
       const origJsxs = JsxProd.jsxs;
 
       JsxProd.jsx = function (type: any, props: any, key: any) {
-        if (isTextComponent(type) && props) {
-          const scaledStyle = scaleStyle(props.style, currentFontScale);
-          return origJsx.call(this, type, { ...props, style: scaledStyle }, key);
-        }
-        return origJsx.apply(this, arguments as any);
+        try {
+          if (isTextComponent(type) && props) {
+            const scaledStyle = scaleStyle(props.style, currentFontScale);
+            return origJsx(type, { ...props, style: scaledStyle }, key);
+          }
+        } catch {}
+        return origJsx(type, props, key);
       };
 
       if (typeof origJsxs === 'function') {
         JsxProd.jsxs = function (type: any, props: any, key: any) {
-          if (isTextComponent(type) && props) {
-            const scaledStyle = scaleStyle(props.style, currentFontScale);
-            return origJsxs.call(this, type, { ...props, style: scaledStyle }, key);
-          }
-          return origJsxs.apply(this, arguments as any);
+          try {
+            if (isTextComponent(type) && props) {
+              const scaledStyle = scaleStyle(props.style, currentFontScale);
+              return origJsxs(type, { ...props, style: scaledStyle }, key);
+            }
+          } catch {}
+          return origJsxs(type, props, key);
         };
       }
 
@@ -182,8 +188,11 @@ export function initTextScaler(initialScale: number = 1.0) {
     if (TextComponent && typeof TextComponent.render === 'function' && !TextComponent.__isScaled) {
       const originalTextRender = TextComponent.render;
       TextComponent.render = function (props: any, ref: any) {
-        const scaledStyle = scaleStyle(props?.style, currentFontScale);
-        return originalTextRender.call(this, { ...props, style: scaledStyle }, ref);
+        try {
+          const scaledStyle = scaleStyle(props?.style, currentFontScale);
+          return originalTextRender.call(this, { ...props, style: scaledStyle }, ref);
+        } catch {}
+        return originalTextRender.call(this, props, ref);
       };
       TextComponent.__isScaled = true;
     }
@@ -201,8 +210,11 @@ export function initTextScaler(initialScale: number = 1.0) {
     ) {
       const originalInputRender = TextInputComponent.render;
       TextInputComponent.render = function (props: any, ref: any) {
-        const scaledStyle = scaleStyle(props?.style, currentFontScale);
-        return originalInputRender.call(this, { ...props, style: scaledStyle }, ref);
+        try {
+          const scaledStyle = scaleStyle(props?.style, currentFontScale);
+          return originalInputRender.call(this, { ...props, style: scaledStyle }, ref);
+        } catch {}
+        return originalInputRender.call(this, props, ref);
       };
       TextInputComponent.__isScaled = true;
     }
@@ -217,8 +229,11 @@ export function initTextScaler(initialScale: number = 1.0) {
     if (RNW?.Text && typeof RNW.Text.render === 'function' && !RNW.Text.__isScaled) {
       const origWebRender = RNW.Text.render;
       RNW.Text.render = function (props: any, ref: any) {
-        const scaledStyle = scaleStyle(props?.style, currentFontScale);
-        return origWebRender.call(this, { ...props, style: scaledStyle }, ref);
+        try {
+          const scaledStyle = scaleStyle(props?.style, currentFontScale);
+          return origWebRender.call(this, { ...props, style: scaledStyle }, ref);
+        } catch {}
+        return origWebRender.call(this, props, ref);
       };
       RNW.Text.__isScaled = true;
     }
