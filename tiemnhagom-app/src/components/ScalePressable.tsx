@@ -9,6 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { triggerHaptic } from '../utils/haptics';
 
 export interface ScalePressableProps extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
@@ -34,9 +35,7 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
 
   const handlePressIn = (e: any) => {
     if (disabled) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: activeScale,

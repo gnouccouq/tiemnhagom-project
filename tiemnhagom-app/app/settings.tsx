@@ -28,6 +28,7 @@ import { useDialog } from '../src/context/DialogContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { getFullAppVersionString } from '../src/utils/appVersion';
+import { triggerHaptic, Haptics } from '../src/utils/haptics';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -98,6 +99,8 @@ export default function SettingsScreen() {
     setAppLockEnabled,
     isPushNotificationEnabled,
     setPushNotificationEnabled,
+    isHapticEnabled,
+    setHapticEnabled,
     t
   } = useSettings();
   
@@ -140,6 +143,13 @@ export default function SettingsScreen() {
         t('notificationDisabled'),
         t('pushDisabled')
       );
+    }
+  };
+
+  const handleToggleHaptic = async (value: boolean) => {
+    await setHapticEnabled(value);
+    if (value) {
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
@@ -388,7 +398,29 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 3. NGÔN NGỮ */}
+        {/* 3. PHẢN HỒI XÚC GIÁC (RUNG) */}
+        <View style={styles.settingsGroup}>
+          <Text style={styles.settingsGroupTitle}>{t('hapticFeedback')}</Text>
+          <Text style={styles.settingsGroupSubtitle}>
+            {t('hapticFeedbackDesc')}
+          </Text>
+          <View style={styles.cacheActionBtn}>
+            <View style={styles.cacheLeft}>
+              <Ionicons name="finger-print-outline" size={18} color={Colors.textPrimary} />
+              <Text style={styles.cacheBtnText}>
+                {t('hapticFeedbackFeature')}
+              </Text>
+            </View>
+            <Switch
+              value={isHapticEnabled}
+              onValueChange={handleToggleHaptic}
+              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
+              thumbColor={Colors.textInverse}
+            />
+          </View>
+        </View>
+
+        {/* 4. NGÔN NGỮ */}
         <View style={styles.settingsGroup}>
           <Text style={styles.settingsGroupTitle}>{t('appLanguage')}</Text>
           <Text style={styles.settingsGroupSubtitle}>

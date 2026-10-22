@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { triggerHaptic } from '../utils/haptics';
 import { useThemeColor } from '../constants/theme';
 import { useCart } from '../context/CartContext';
 import { LiquidGlass, LiquidGlassContainerView } from './LiquidGlass';
@@ -99,9 +100,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
 
   // Điều hướng tab
   const handleTabPress = (route: any, isCurrentlyActive: boolean) => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
 
     const event = navigation.emit({
       type: 'tabPress',
@@ -287,9 +286,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
               onPressIn={onCartPressIn}
               onPressOut={onCartPressOut}
               onPress={() => {
-                try {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                } catch {}
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/cart');
               }}
               style={styles.cartPressable}

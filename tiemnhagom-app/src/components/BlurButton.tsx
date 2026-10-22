@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { LiquidGlass } from './LiquidGlass';
+import { triggerHaptic } from '../utils/haptics';
 
 export interface BlurButtonProps {
   style?: StyleProp<ViewStyle>;
@@ -42,9 +43,7 @@ export const BlurButton: React.FC<BlurButtonProps> = ({
 
   const handlePressIn = (e: any) => {
     if (disabled) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
 
     // Hiệu ứng giọt nước phồng nở đàn hồi hướng về các phần tử lân cận
     Animated.spring(scale, {

@@ -14,20 +14,24 @@ interface SettingsContextType {
   fontScale: number;
   isAppLockEnabled: boolean;
   isPushNotificationEnabled: boolean;
+  isHapticEnabled: boolean;
   setLanguage: (lang: Language) => Promise<void>;
   setFontSize: (size: FontSize) => Promise<void>;
   setAppLockEnabled: (enabled: boolean) => Promise<void>;
   setPushNotificationEnabled: (enabled: boolean) => Promise<void>;
+  setHapticEnabled: (enabled: boolean) => Promise<void>;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 import { setGlobalFontScale } from '../utils/textScaler';
+import { setGlobalHapticsEnabled } from '../utils/haptics';
 
 const STORAGE_KEY_LANGUAGE = '@tiemnhagom_language';
 const STORAGE_KEY_THEME_MODE = '@tiemnhagom_theme_mode';
 const STORAGE_KEY_FONT_SIZE = '@tiemnhagom_font_size';
 const STORAGE_KEY_APP_LOCK = '@tiemnhagom_app_lock';
 const STORAGE_KEY_PUSH_NOTI = '@tiemnhagom_push_noti';
+const STORAGE_KEY_HAPTIC = '@tiemnhagom_haptic';
 
 import { vi } from '../locales/vi';
 import { en } from '../locales/en';
@@ -47,10 +51,12 @@ const SettingsContext = createContext<SettingsContextType>({
   fontScale: 1.0,
   isAppLockEnabled: false,
   isPushNotificationEnabled: true,
+  isHapticEnabled: true,
   setLanguage: async () => {},
   setFontSize: async () => {},
   setAppLockEnabled: async () => {},
   setPushNotificationEnabled: async () => {},
+  setHapticEnabled: async () => {},
   t: (key: string, params?: Record<string, string | number>) => key,
 });
 
@@ -66,6 +72,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [fontSize, setFontSizeState] = useState<FontSize>('normal');
   const [isAppLockEnabled, setIsAppLockEnabled] = useState<boolean>(false);
   const [isPushNotificationEnabled, setIsPushNotificationEnabled] = useState<boolean>(true);
+  const [isHapticEnabled, setIsHapticEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     // Khởi tạo ngay kích thước dễ đọc
@@ -94,6 +101,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const savedPushNoti = await AsyncStorage.getItem(STORAGE_KEY_PUSH_NOTI);
         if (savedPushNoti === 'false') {
           setIsPushNotificationEnabled(false);
+        }
+        const savedHaptic = await AsyncStorage.getItem(STORAGE_KEY_HAPTIC);
+        if (savedHaptic === 'false') {
+          setIsHapticEnabled(false);
+          setGlobalHapticsEnabled(false);
+        } else {
+          setIsHapticEnabled(true);
+          setGlobalHapticsEnabled(true);
         }
       } catch (err) {
         console.warn('Lỗi đọc settings:', err);
@@ -148,6 +163,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  const setHapticEnabled = async (enabled: boolean) => {
+    setIsHapticEnabled(enabled);
+    setGlobalHapticsEnabled(enabled);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY_HAPTIC, enabled ? 'true' : 'false');
+    } catch (err) {
+      console.warn('Lỗi lưu haptic:', err);
+    }
+  };
+
   const fontScale = getScaleFromSize(fontSize);
 
   const t = (key: string, params?: Record<string, string | number>): string => {
@@ -170,10 +195,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         fontScale,
         isAppLockEnabled,
         isPushNotificationEnabled,
+        isHapticEnabled,
         setLanguage,
         setFontSize,
         setAppLockEnabled,
         setPushNotificationEnabled,
+        setHapticEnabled,
         t,
       }}
     >
