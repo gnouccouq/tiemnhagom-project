@@ -19,10 +19,31 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.1',
     buildNumber: '2',
+    otaVersion: '20261022.01',
+    releaseDate: '22/10/2026',
+    title: 'Phát hành bản dựng APK Android & Hệ thống OTA Update',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Tối ưu bản cài đặt Android APK độc lập',
+        description: 'Tương thích trọn vẹn icon Material Symbols, cấu hình buildType APK trong EAS Build và ẩn nhãn chữ Bottom Bar tối giản.',
+      },
+      {
+        title: 'Đồng bộ hệ thống OTA Update toàn diện',
+        description: 'Tự động kiểm tra bản cập nhật tức thì qua đám mây EAS Update (kênh preview & production) khi mở ứng dụng.',
+      },
+      {
+        title: 'Nâng cấp và đồng bộ trọn bộ module Expo SDK',
+        description: 'Đồng bộ phiên bản Expo SDK 57, giải quyết triệt để cảnh báo tương thích và vượt qua 100% bài kiểm tra Expo Doctor.',
+      },
+    ],
+  },
+  {
+    version: '1.0.1',
+    buildNumber: '2',
     otaVersion: '20261018.01',
     releaseDate: '18/10/2026',
     title: 'Kiểm soát tồn kho phân loại & Cải tiến cập nhật OTA',
-    badge: 'Mới nhất',
     changes: [
       {
         title: 'Kiểm soát tồn kho biến thể chính xác',

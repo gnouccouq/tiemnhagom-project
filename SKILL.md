@@ -2,7 +2,7 @@
 name: tiemnhagom-standards
 description: >-
   Bộ quy chuẩn thiết kế UI/UX và kiến trúc vận hành bắt buộc cho Tiệm Nhà Gốm.
-  Bao gồm bảng màu men gốm, chuẩn Apple Liquid Glass, Dark Mode OLED, đa ngôn ngữ i18n,
+  Bao gồm bảng màu men gốm, chuẩn thanh điều hướng Native iOS, Dark Mode OLED, đa ngôn ngữ i18n,
   chống tràn khung, quy trình POS, kết ca thu ngân và báo cáo doanh thu tài chính.
 ---
 
@@ -93,27 +93,24 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
 
 ---
 
-## 5. Quy chuẩn Hiệu Ứng Kính Lỏng Apple (Apple Liquid Glass Standard)
-Áp dụng cho thanh điều hướng dưới (`FloatingTabBar.tsx`), thanh tìm kiếm Uniqlo, và các khối thành phần nổi cao cấp:
-
-### 5.1. Cấu trúc 4 lớp của khối kính lỏng (Liquid Glass Structure):
-1. **Thấu kính quang học mờ (Optical Blur Lens):**
-   * Sử dụng `BlurView` với độ mờ quang học `intensity: Platform.OS === 'ios' ? 45 : 32`, `tint: isDark ? 'dark' : 'light'`.
-2. **Lớp màu nền đệm bán trong suốt (Liquid Body Tint):**
-   * Giữ độ trong suốt quang học cao (Ultra-thin & Crystalline), tuyệt đối không tăng độ phủ màu nền quá đậm làm kính bị đục:
-     * Light Mode: `rgba(255, 255, 255, 0.08)` (viền `rgba(255, 255, 255, 0.75)`).
-     * Dark Mode: `rgba(255, 255, 255, 0.03)` (viền `rgba(255, 255, 255, 0.16)`).
-3. **Vành tán sắc lăng kính cầu vồng (Prismatic Caustic Rim):**
-   * Bọc quanh viền bằng `LinearGradient` (padding `1.4px`) mô phỏng hiện tượng tán sắc khúc xạ ánh sáng xung quanh giọt nước chất lỏng:
-     * Light Mode: `['rgba(255, 255, 255, 0.95)', 'rgba(255, 185, 130, 0.75)', 'rgba(240, 120, 150, 0.55)', 'rgba(130, 210, 255, 0.65)', 'rgba(255, 255, 255, 0.95)']`.
-     * Dark Mode: `['rgba(255, 255, 255, 0.70)', 'rgba(232, 204, 178, 0.45)', 'rgba(156, 113, 86, 0.35)', 'rgba(160, 210, 255, 0.45)', 'rgba(255, 255, 255, 0.60)']`.
-4. **Vệt sáng bóng mặt cong (Specular Gloss Highlight):**
-   * Dải gradient phản quang chiếm ~50% nửa trên viên thuốc (`pillTopGloss`), bo cong mềm theo góc đỉnh (`borderTopLeftRadius`, `borderTopRightRadius`):
-     * Light: `['rgba(255, 255, 255, 0.88)', 'rgba(255, 255, 255, 0.22)', 'transparent']`.
-     * Dark: `['rgba(255, 255, 255, 0.38)', 'rgba(255, 255, 255, 0.08)', 'transparent']`.
-5. **Ánh viền phản chiếu đáy & Đổ bóng nổi khối:**
-   * Đường kẻ phản quang đáy `height: 1px, width: '50% - 60%', backgroundColor: 'rgba(255,255,255,0.45)'`.
-   * Đổ bóng: Light Mode dùng sắc ấm đất nung `shadowColor: '#9C7156'`, shadowOpacity: 0.20, shadowRadius: 7. Dark Mode dùng `#000000`.
+## 5. Quy chuẩn Thanh Điều Hướng & Hiệu Ứng Giao Diện (Navigation & Visual Standards)
+* **TUYỆT ĐỐI KHÔNG làm hiệu ứng giả lập "Chuẩn 4 lớp Apple Liquid Glass" rườm rà:**
+  * **NGHIÊM CẤM** tự làm 4 lớp hiệu ứng mô phỏng thủ công phức tạp gồm:
+    * ❌ Lớp 1: Vành tán sắc lăng kính cầu vồng 5 dải màu ánh ngọc trai (`LinearGradient`).
+    * ❌ Lớp 2: Thấu kính quang học mờ (`BlurView` độ mờ quang học 50 trên iOS) kèm lớp nền đệm siêu mỏng.
+    * ❌ Lớp 3: Vệt sáng bóng mặt cong phản quang góc 45° (`topGloss`).
+    * ❌ Lớp 4: Ánh viền phản chiếu đáy & Đổ bóng sắc ấm đất nung `#9C7156` (Light) hoặc đen sâu (Dark).
+  * Lý do: Hiệu ứng giả lập nhiều lớp này làm giao diện bị rối mắt, thiếu tự nhiên, đi ngược tinh thần tối giản mộc mạc của gốm thủ công và gây lãng phí tài nguyên render.
+* **Quy chuẩn Cơ chế Tách Nút Độc Lập & Hiệu Ứng Giọt Nước Chuẩn Hệ Thống iOS 26:**
+  * Để tạo thanh Bottom Bar có bọt kính tròn (bubble indicator) bên trong và nút tròn tách biệt hoàn toàn bên phải (như nút Giỏ hàng), đồng thời khi nhấn giữ thì tự động phồng ra, kéo giãn giọt nước nối liền thanh Bar theo đúng cơ chế mặc định của Apple, luôn tuân theo 2 cách chuẩn hệ thống:
+    * **Cách 1: Dùng `NativeTabs` nguyên bản 100% của iOS 26 (Ưu tiên số 1 — Ngắn gọn nhất):**
+      * Khai báo thuộc tính `role="search"` cho tab cần tách (ví dụ tab Giỏ hàng): `<NativeTabs.Trigger name="cart" role="search">` từ `expo-router/unstable-native-tabs`.
+      * Hệ thống iOS 26 sẽ tự động tách tab đó ra thành một viên bi kính tròn nằm riêng bên phải, tự động có bọt kính trượt giữa 4 icon bên trái và tự động có hiệu ứng kéo giãn giọt nước dính vào thanh chính khi nhấn giữ hoặc vuốt qua mà không cần bất kỳ thủ thuật vẽ canvas/gradient nào.
+    * **Cách 2: Dùng `@callstack/liquid-glass` (Khi cần nhét ảnh 3D hoặc tuỳ chỉnh khoảng cách giọt nước):**
+      * Bọc thanh Bar và nút tròn trong `<LiquidGlassContainerView spacing={18}>` với `gap: 12`.
+      * Thanh viên thuốc bên trái: `<LiquidGlassView interactive={true} effect="regular">`.
+      * Nút tròn độc lập bên phải: `<LiquidGlassView interactive={true} effect="regular" style={{ width: 68, height: 68, borderRadius: 34 }}>` bằng đúng chiều cao của thanh Bar bên trái.
+      * Cơ chế vật lý: Khi không chạm thì hai khối đứng tách nhau 12pt; khi chạm vào nút tròn, hiệu ứng đàn hồi của iOS 26 (`interactive={true}`) làm nút phồng to vượt ngưỡng 18pt của `spacing`, hai mép kính sẽ tự động hút lấy nhau tạo thành cổ nối chất lỏng tự nhiên của hệ thống.
 
 ---
 

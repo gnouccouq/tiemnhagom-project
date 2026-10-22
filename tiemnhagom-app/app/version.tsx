@@ -45,9 +45,9 @@ export default function VersionScreen() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  // Mặc định mở rộng bản mới nhất (20261018.01)
+  // Mặc định mở rộng bản mới nhất (20261022.01)
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
-    '20261018.01': true,
+    '20261022.01': true,
   });
 
   const toggleExpand = (otaKey: string) => {

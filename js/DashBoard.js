@@ -5161,6 +5161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!val) {
                 suggs.innerHTML = '';
                 return;
+            }
             const results = window.searchAndRankProducts(posProductsLocal.filter(p => !p.isCombo), val, 10);
             if (results.length > 0) {
                 suggs.innerHTML = results.map(p => {

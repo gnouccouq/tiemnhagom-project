@@ -218,19 +218,19 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
                 colors={
                   isDark
                     ? [
-                        'rgba(255, 255, 255, 0.45)',
-                        'rgba(255, 255, 255, 0.15)',
-                        'rgba(232, 204, 178, 0.20)',
-                        'rgba(255, 255, 255, 0.10)',
-                        'rgba(255, 255, 255, 0.35)',
-                      ]
+                      'rgba(255, 255, 255, 0.45)',
+                      'rgba(255, 255, 255, 0.15)',
+                      'rgba(232, 204, 178, 0.20)',
+                      'rgba(255, 255, 255, 0.10)',
+                      'rgba(255, 255, 255, 0.35)',
+                    ]
                     : [
-                        'rgba(255, 255, 255, 0.95)',
-                        'rgba(255, 255, 255, 0.60)',
-                        'rgba(232, 204, 178, 0.30)',
-                        'rgba(255, 255, 255, 0.50)',
-                        'rgba(255, 255, 255, 0.90)',
-                      ]
+                      'rgba(255, 255, 255, 0.95)',
+                      'rgba(255, 255, 255, 0.60)',
+                      'rgba(232, 204, 178, 0.30)',
+                      'rgba(255, 255, 255, 0.50)',
+                      'rgba(255, 255, 255, 0.90)',
+                    ]
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -344,7 +344,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   glassOverlay: {
-    backgroundColor: Colors.cardBackground === '#FFFFFF' 
+    backgroundColor: Colors.cardBackground === '#FFFFFF'
       ? (Platform.OS === 'ios' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.35)')
       : (Platform.OS === 'ios' ? 'rgba(30,30,30,0.25)' : 'rgba(30,30,30,0.35)'),
   },

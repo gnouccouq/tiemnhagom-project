@@ -32,7 +32,7 @@ export function getAppBuildNumber(): string {
 /**
  * Phiên bản OTA mặc định cho bản build hiện tại (hỗ trợ .01, .02 nếu nhiều bản trong ngày)
  */
-export const CURRENT_OTA_RELEASE = '20261018.01';
+export const CURRENT_OTA_RELEASE = '20261022.01';
 
 /**
  * Lấy thông tin phiên bản OTA (Over-The-Air) hiện tại

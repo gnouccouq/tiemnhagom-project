@@ -152,10 +152,10 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
     typeof rawBorderRadius === 'number'
       ? rawBorderRadius
       : typeof height === 'number'
-      ? height / 2
-      : typeof width === 'number'
-      ? width / 2
-      : 20;
+        ? height / 2
+        : typeof width === 'number'
+          ? width / 2
+          : 20;
 
   const blurIntensity = intensity !== undefined ? intensity : Platform.OS === 'ios' ? 45 : 32;
 
