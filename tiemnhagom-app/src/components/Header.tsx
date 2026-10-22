@@ -100,89 +100,35 @@ export const Header: React.FC<HeaderProps> = ({
   const showBlurBackground = !disableBlur && !transparent && blurProgress > 0;
 
   // Nếu không có title (hoặc trang chủ / tìm kiếm), hiển thị Header phong cách Uniqlo: Logo + Thanh tìm kiếm con nhộng + Giỏ hàng
-  // ================= THIẾT KẾ GỐC IOS LIQUID GLASS CHO TẤT CẢ CÁC TRANG CÓ NÚT BACK =================
-  if (title && showBack) {
-    const hasRightContent = Boolean(rightComponent || showSettings || showCart);
-    return (
-      <>
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            headerTransparent: true,
-            headerShadowVisible: false,
-            headerTitle: () => (
-              <Text style={styles.navHeaderTitle}>
-                {title}
-              </Text>
-            ),
-            headerTintColor: '#9C7156',
-            headerRight: hasRightContent
-              ? () => (
-                  <View style={styles.navHeaderRight}>
-                    {rightComponent}
-                    {showSettings && (
-                      <TouchableOpacity
-                        onPress={onSettingsPress}
-                        style={styles.navHeaderIconBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityLabel="Cài đặt"
-                      >
-                        <Ionicons name="settings-outline" size={22} color={Colors.textPrimary} />
-                      </TouchableOpacity>
-                    )}
-                    {showCart && (
-                      <TouchableOpacity
-                        onPress={() => router.push('/notifications')}
-                        style={styles.navHeaderIconBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityLabel="Thông báo"
-                      >
-                        <Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />
-                        {unreadCount > 0 && (
-                          <View style={styles.notificationBadge} pointerEvents="none">
-                            <Text style={styles.notificationBadgeText}>
-                              {unreadCount > 99 ? '99+' : unreadCount}
-                            </Text>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )
-              : undefined,
-          }}
-        />
-        {/* Nền Gradient mờ dần từ trên xuống dưới chuẩn GEMINI.md */}
-        <FadingHeaderBackdrop height={statusBarHeight + 56 + 24} />
-      </>
-    );
-  }
-
   const isSearchHeader = !title;
 
+  // ================= THIẾT KẾ GỐC IOS LIQUID GLASS CHO TẤT CẢ CÁC TRANG CÓ NÚT BACK =================
+  // Luôn ẩn Stack header mặc định để render toàn bộ bằng Header kính lỏng Liquid Glass
   return (
-    <View
-      style={[
-        styles.container,
-        transparent
-          ? [
-              styles.containerTransparent,
-              {
-                paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
-                paddingBottom: Platform.OS === 'android' ? 8 : 4,
-                height: 56 + statusBarHeight,
-              },
-            ]
-          : [
-              styles.containerDefault,
-              {
-                paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
-                paddingBottom: Platform.OS === 'android' ? 8 : 4,
-                height: 56 + statusBarHeight,
-              },
-            ],
-      ]}
-    >
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View
+        style={[
+          styles.container,
+          transparent
+            ? [
+                styles.containerTransparent,
+                {
+                  paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
+                  paddingBottom: Platform.OS === 'android' ? 8 : 4,
+                  height: 56 + statusBarHeight,
+                },
+              ]
+            : [
+                styles.containerDefault,
+                {
+                  paddingTop: statusBarHeight + (Platform.OS === 'android' ? 8 : 4),
+                  paddingBottom: Platform.OS === 'android' ? 8 : 4,
+                  height: 56 + statusBarHeight,
+                },
+              ],
+        ]}
+      >
       {/* Nền Gradient trong suốt 80% mờ dần từ trên xuống dưới áp dụng đồng bộ toàn bộ app */}
       {!disableBlur && (
         <View
@@ -273,90 +219,95 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </View>
 
-          {/* 2. Thanh tìm kiếm con nhộng (Pill Capsule) bọc Liquid Glass */}
-          {showSearch && (
-            onSearchChange ? (
-              <View style={styles.searchPillWrapper}>
-                <LiquidGlass style={styles.searchPill}>
-                  <TextInput
-                    style={styles.searchInputInline}
-                    placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
-                    placeholderTextColor={isDark ? 'rgba(245, 245, 245, 0.72)' : 'rgba(43, 41, 40, 0.68)'}
-                    value={searchValue}
-                    onChangeText={onSearchChange}
-                    onSubmitEditing={onSubmitEditing}
-                    autoFocus={autoFocus}
-                    returnKeyType="search"
-                  />
-                  {searchValue && searchValue.length > 0 ? (
-                    <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          {/* Cụm Kính lỏng chứa Thanh tìm kiếm con nhộng + Nút chuông thông báo (kéo dãn giọt nước khi chạm) */}
+          <LiquidGlassContainerView
+            spacing={18}
+            style={styles.searchAndActionGroup}
+          >
+            {showSearch && (
+              onSearchChange ? (
+                <View style={styles.searchPillWrapper}>
+                  <LiquidGlass style={styles.searchPill}>
+                    <TextInput
+                      style={styles.searchInputInline}
+                      placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
+                      placeholderTextColor={isDark ? 'rgba(245, 245, 245, 0.72)' : 'rgba(43, 41, 40, 0.68)'}
+                      value={searchValue}
+                      onChangeText={onSearchChange}
+                      onSubmitEditing={onSubmitEditing}
+                      autoFocus={autoFocus}
+                      returnKeyType="search"
+                    />
+                    {searchValue && searchValue.length > 0 ? (
+                      <TouchableOpacity onPress={onClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <SymbolView
+                          name="xmark.circle.fill"
+                          size={18}
+                          tintColor={isDark ? '#F5F5F5' : '#2B2928'}
+                          fallback={<Ionicons name="close-circle" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} />}
+                        />
+                      </TouchableOpacity>
+                    ) : (
                       <SymbolView
-                        name="xmark.circle.fill"
+                        name="magnifyingglass"
                         size={18}
                         tintColor={isDark ? '#F5F5F5' : '#2B2928'}
-                        fallback={<Ionicons name="close-circle" size={18} color={isDark ? '#F5F5F5' : '#2B2928'} />}
+                        fallback={<Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />}
                       />
-                    </TouchableOpacity>
-                  ) : (
+                    )}
+                  </LiquidGlass>
+                </View>
+              ) : (
+                <ScalePressable
+                  style={styles.searchPillWrapper}
+                  activeScale={0.98}
+                  onPress={onSearchPress || (() => router.push('/search'))}
+                  accessibilityLabel="Tìm kiếm sản phẩm"
+                >
+                  <LiquidGlass style={styles.searchPill} interactive={true}>
+                    <Text style={styles.searchPlaceholder} numberOfLines={1}>
+                      {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
+                    </Text>
                     <SymbolView
                       name="magnifyingglass"
                       size={18}
                       tintColor={isDark ? '#F5F5F5' : '#2B2928'}
                       fallback={<Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />}
                     />
-                  )}
-                </LiquidGlass>
-              </View>
-            ) : (
-              <ScalePressable
-                style={styles.searchPillWrapper}
-                activeScale={0.97}
-                onPress={onSearchPress || (() => router.push('/search'))}
-                accessibilityLabel="Tìm kiếm sản phẩm"
-              >
-                <LiquidGlass style={styles.searchPill} interactive={true}>
-                  <Text style={styles.searchPlaceholder} numberOfLines={1}>
-                    {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
-                  </Text>
-                  <SymbolView
-                    name="magnifyingglass"
-                    size={18}
-                    tintColor={isDark ? '#F5F5F5' : '#2B2928'}
-                    fallback={<Ionicons name="search-outline" size={19} color={isDark ? '#F5F5F5' : '#2B2928'} />}
-                  />
-                </LiquidGlass>
-              </ScalePressable>
-            )
-          )}
+                  </LiquidGlass>
+                </ScalePressable>
+              )
+            )}
 
-          {/* 3. Nút Thông báo (Thay cho Giỏ hàng) */}
-          {showCart && (
-            <BlurButton
-              style={styles.iconButton}
-              containerStyle={styles.iconButtonContainer}
-              onPress={() => router.push('/notifications')}
-              accessibilityLabel="Thông báo"
-            >
-              <SymbolView
-                name="bell"
-                size={20}
-                tintColor={Colors.textPrimary}
-                fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
-              />
-              {unreadCount > 0 && (
-                <View style={styles.notificationBadge} pointerEvents="none">
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </BlurButton>
-          )}
+            {/* Nút Thông báo (giọt nước giao nhau cùng thanh tìm kiếm) */}
+            {showCart && (
+              <BlurButton
+                style={styles.iconButton}
+                containerStyle={styles.iconButtonContainer}
+                onPress={() => router.push('/notifications')}
+                accessibilityLabel="Thông báo"
+              >
+                <SymbolView
+                  name="bell"
+                  size={20}
+                  tintColor={Colors.textPrimary}
+                  fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
+                />
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge} pointerEvents="none">
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </BlurButton>
+            )}
+          </LiquidGlassContainerView>
         </View>
       ) : (
-        // ================= HEADER CÓ TIÊU ĐỀ (NOTIFICATIONS, PROFILE, ORDERS...) =================
+        // ================= HEADER CÓ TIÊU ĐỀ (NOTIFICATIONS, PROFILE, ORDERS, SETTINGS, VERSION...) =================
         <View style={styles.titleHeaderRow}>
-          <View style={styles.left}>
+          <View style={styles.headerLeftGroup}>
             {showBack ? (
               <BlurButton
                 style={styles.iconButton}
@@ -371,20 +322,15 @@ export const Header: React.FC<HeaderProps> = ({
                   fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
                 />
               </BlurButton>
-            ) : (
-              <Text style={styles.screenTitle}>{title}</Text>
-            )}
+            ) : null}
+            <Text style={styles.screenTitle} numberOfLines={1}>
+              {title}
+            </Text>
           </View>
 
-          {showBack && (
-            <View style={styles.titleContainer} pointerEvents="none">
-              <Text style={styles.title} numberOfLines={1}>
-                {title}
-              </Text>
-            </View>
-          )}
-
-          <LiquidGlassContainerView spacing={20} style={[styles.right, { gap: 10 }]}>
+          {/* Cụm nút kính lỏng bên phải: Cài đặt + Thông báo + Nút tùy chọn (kéo dãn giọt nước) */}
+          <LiquidGlassContainerView spacing={18} style={[styles.right, { gap: 10 }]}>
+            {rightComponent}
             {showSettings && (
               <BlurButton
                 style={styles.iconButton}
@@ -426,6 +372,7 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       )}
     </View>
+    </>
   );
 };
 
@@ -518,12 +465,17 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     top: 0,
     left: 0,
   },
+  searchAndActionGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginLeft: 10,
+  },
   searchPillWrapper: {
     flex: 1,
     flexShrink: 1,
     minWidth: 0,
-    marginLeft: 8,
-    marginRight: 12,
   },
   searchPill: {
     width: '100%',
@@ -619,6 +571,13 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  headerLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    marginRight: 8,
   },
   left: {
     flexDirection: 'row',

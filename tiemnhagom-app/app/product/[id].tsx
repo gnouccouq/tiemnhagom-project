@@ -475,7 +475,8 @@ export default function ProductDetailScreen() {
           />
         </BlurButton>
 
-        <View style={styles.headerRightGroup} pointerEvents="box-none">
+        {/* Cụm 3 nút kính lỏng giao nhau: Chia sẻ + Yêu thích + Giỏ hàng (kéo dãn giọt nước) */}
+        <LiquidGlassContainerView spacing={18} style={styles.headerRightGroup} pointerEvents="box-none">
           <BlurButton
             onPress={handleShareProduct}
             accessibilityLabel="Chia sẻ sản phẩm"
@@ -526,7 +527,7 @@ export default function ProductDetailScreen() {
               </BlurButton>
             </RNAnimated.View>
           </View>
-        </View>
+        </LiquidGlassContainerView>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -934,7 +935,7 @@ export default function ProductDetailScreen() {
 
       {/* Bottom Sticky CTA dạng viên thuốc Pill chuẩn GEMINI.md */}
       <Animated.View entering={SlideInDown.duration(500).delay(300)} style={styles.bottomBar}>
-        <View ref={ctaBtnRef} collapsable={false} style={{ flex: 1, flexDirection: 'row', gap: 12 }}>
+        <LiquidGlassContainerView spacing={18} style={{ flex: 1, flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity
             style={[styles.addToCartBtn, isOutOfStock && styles.btnDisabled]}
             onPress={() => handleOpenActionModal('cart')}
@@ -956,7 +957,7 @@ export default function ProductDetailScreen() {
             <Text style={styles.buyNowText}>{isOutOfStock ? t('outOfStock') : t('buyNowAction')}</Text>
             {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
           </TouchableOpacity>
-        </View>
+        </LiquidGlassContainerView>
       </Animated.View>
 
       {/* ── MODAL CHỌN BIẾN THỂ TRƯỚC KHI THÊM GIỎ HOẶC MUA NGAY (ANIMATED BOTTOM SHEET MODAL UX) ── */}
