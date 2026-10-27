@@ -1412,13 +1412,18 @@ export function updateMembershipPrices(tier) {
                 if (tierStr) tier = JSON.parse(tierStr);
             } catch (e) { }
         }
-        const effectiveTier = (tier && tier.discount > 0)
-            ? tier
-            : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
-
         const containers = document.querySelectorAll('.dynamic-membership-price');
         if (!containers || containers.length === 0) return;
 
+        // Nếu khách hàng chưa có hạng thành viên hoặc hạng chưa có chiết khấu (<= 0%), ẩn dòng giá thành viên
+        if (!tier || !tier.discount || tier.discount <= 0) {
+            containers.forEach(container => {
+                container.innerHTML = '';
+            });
+            return;
+        }
+
+        const effectiveTier = tier;
         containers.forEach(container => {
             const currentPrice = parseInt(container.getAttribute('data-price')) || 0;
             if (!currentPrice) return;
@@ -1818,17 +1823,18 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             const parsed = JSON.parse(tierStr);
             if (parsed && parsed.discount > 0) activeTier = parsed;
         }
-        if (!activeTier) {
-            // Mặc định hiển thị giá ưu đãi hạng Gốm Nung (1%) để kích thích mua sắm
-            activeTier = { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
+        // Chỉ hiển thị giá thành viên nếu tài khoản thực tế đạt hạng có chiết khấu (> 0%)
+        if (activeTier && activeTier.discount > 0) {
+            const memPrice = Math.round(currentPrice * (1 - activeTier.discount / 100));
+            memPriceHtml = `
+                <div class="dynamic-membership-price" data-price="${currentPrice}" style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    <span>Giá ${activeTier.name}</span>
+                    <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
+                </div>
+            `;
+        } else {
+            memPriceHtml = `<div class="dynamic-membership-price" data-price="${currentPrice}"></div>`;
         }
-        const memPrice = Math.round(currentPrice * (1 - activeTier.discount / 100));
-        memPriceHtml = `
-            <div class="dynamic-membership-price" data-price="${currentPrice}" style="margin-top: 3px; font-size: 0.76rem; color: #9C7156; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                <span>Giá ${activeTier.name}</span>
-                <strong style="color: #9C7156; font-weight: 800;">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</strong>
-            </div>
-        `;
     } catch (e) { }
 
     const isFsItem = fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut;

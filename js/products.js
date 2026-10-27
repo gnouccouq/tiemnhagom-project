@@ -234,12 +234,18 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                 const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
                 if (selectedGroup) {
                     if (selectedGroup.subs && selectedGroup.subs.length > 0) {
-                        productsQuery = query(productsQuery, where("category", "in", selectedGroup.subs));
+                        productsQuery = query(productsQuery, where("category", "in", [selectedGroup.name, ...selectedGroup.subs]));
                     } else {
                         productsQuery = query(productsQuery, where("category", "==", currentCategory));
                     }
                 } else {
-                    productsQuery = query(productsQuery, where("category", "==", currentCategory));
+                    const subMatches = [currentCategory];
+                    if (currentCategory === 'Lọ Hoa Nghệ Thuật') subMatches.push('Bình & Lọ Hoa', 'Bình hoa', 'Lọ hoa');
+                    if (currentCategory === 'Bát & Chén') subMatches.push('Tô, Bát & Chén', 'Chén bát', 'Bát đĩa');
+                    if (currentCategory === 'Dĩa & Khay') subMatches.push('Đĩa Ăn & Decor');
+                    if (currentCategory === 'Ly & Tách') subMatches.push('Cốc, Ly & Phụ Kiện');
+                    if (currentCategory === 'Ấm Trà') subMatches.push('Ấm chén', 'Bộ ấm chén');
+                    productsQuery = query(productsQuery, where("category", "in", subMatches));
                 }
             }
 
@@ -483,20 +489,48 @@ function initMobileFilter() {
 // Hàm xử lý tham số URL và trạng thái ban đầu sau khi đã có danh mục
 function handleInitialFilters() {
     const urlParams = new URLSearchParams(window.location.search);
-    const catParam = urlParams.get('category');
+    let catParam = urlParams.get('category');
     const collParam = urlParams.get('collection');
     
     if (catParam && !collParam) {
-        let isGroup = dynamicCategories.some(g => g.name === catParam);
-        if (!isGroup) {
+        // Map alias nếu có
+        const ALIASES = {
+            'bình hoa': 'Lọ Hoa Nghệ Thuật',
+            'binh hoa': 'Lọ Hoa Nghệ Thuật',
+            'lọ hoa': 'Lọ Hoa Nghệ Thuật',
+            'lo hoa': 'Lọ Hoa Nghệ Thuật',
+            'bình & lọ hoa': 'Lọ Hoa Nghệ Thuật',
+            'chén bát': 'Bát & Chén',
+            'chen bat': 'Bát & Chén',
+            'bát đĩa': 'Bát & Chén',
+            'bat dia': 'Bát & Chén',
+            'tô, bát & chén': 'Bát & Chén',
+            'ấm trà': 'Ấm Trà',
+            'am tra': 'Ấm Trà',
+            'ấm chén': 'Ấm Trà',
+            'am chen': 'Ấm Trà',
+            'ly tách': 'Ly & Tách',
+            'ly tach': 'Ly & Tách',
+            'cốc': 'Ly & Tách',
+            'nồi chảo': 'Nồi & Chảo',
+            'nồi đất': 'Nồi & Chảo'
+        };
+        const lowerCat = catParam.toLowerCase().trim();
+        if (ALIASES[lowerCat]) {
+            catParam = ALIASES[lowerCat];
+        }
+
+        let matchedGroup = dynamicCategories.find(g => g.name.toLowerCase() === lowerCat || g.name === catParam);
+        if (matchedGroup) {
+            activeSubCategory = null;
+        } else {
             for (const group of dynamicCategories) {
-                if (group.subs && group.subs.includes(catParam)) {
-                    activeSubCategory = catParam;
+                if (group.subs && group.subs.some(s => s.toLowerCase() === lowerCat || s === catParam)) {
+                    const matchedSub = group.subs.find(s => s.toLowerCase() === lowerCat || s === catParam);
+                    activeSubCategory = matchedSub || catParam;
                     break;
                 }
             }
-        } else {
-            activeSubCategory = null;
         }
     }
 

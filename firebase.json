@@ -14,7 +14,9 @@
       "firestore.rules",
       "storage.rules",
       "*.log",
-      "*.md"
+      "*.md",
+      "product/index.html",
+      "products/index.html"
     ],
 
 
@@ -74,6 +76,26 @@
       {
         "source": "/share",
         "function": "shareRedirect"
+      },
+      {
+        "source": "/sitemap-products.xml",
+        "function": "sitemapProducts"
+      },
+      {
+        "source": "/product",
+        "function": "productDetail"
+      },
+      {
+        "source": "/product/**",
+        "function": "productDetail"
+      },
+      {
+        "source": "/products",
+        "function": "productsList"
+      },
+      {
+        "source": "/products/**",
+        "function": "productsList"
       }
     ]
   },

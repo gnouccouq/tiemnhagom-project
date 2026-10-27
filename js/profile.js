@@ -149,7 +149,7 @@ window.cancelOrder = async (orderId) => {
         await cancelOrderSecure({ orderId: orderId });
         
         showToast("Đơn hàng đã được hủy thành công!", "success");
-        fetchOrderHistory(user.uid); // Tải lại lịch sử đơn hàng để cập nhật UI
+        fetchOrderHistory(user.uid, user); // Tải lại lịch sử đơn hàng để cập nhật UI
     } catch (error) {
         showToast("Lỗi khi hủy đơn hàng: " + error.message, "error");
     }
@@ -778,7 +778,7 @@ async function handleProfileAuth(user) {
         }
 
         fetchFavorites(effectiveUid);
-        fetchOrderHistory(effectiveUid);
+        fetchOrderHistory(effectiveUid, user);
         fetchAddresses(effectiveUid);
         fetchUserVouchers(effectiveUid);
     } else {
@@ -795,7 +795,7 @@ async function handleProfileAuth(user) {
 }
 
 // Hàm tải lịch sử đơn hàng
-async function fetchOrderHistory(userId) {
+async function fetchOrderHistory(userId, authUser = null) {
     const orderListContainer = document.getElementById('order-history-list');
     const noOrdersMsg = document.getElementById('no-orders-msg');
     orderListContainer.innerHTML = '<p style="text-align: center;">Đang tải lịch sử đơn hàng...</p>';
@@ -1066,7 +1066,18 @@ async function fetchOrderHistory(userId) {
                 `;
             }
 
-            const joinDateWeb = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
+            const currentUser = authUser || auth.currentUser;
+            let creationTime = currentUser?.metadata?.creationTime;
+            if (!creationTime && userId) {
+                try {
+                    const uSnap = await getDoc(doc(db, "users", userId));
+                    if (uSnap.exists()) {
+                        const uData = uSnap.data();
+                        creationTime = uData.createdAt || uData.metadata?.creationTime;
+                    }
+                } catch (_) {}
+            }
+            const joinDateWeb = creationTime ? new Date(creationTime) : null;
             const memberSinceWeb = joinDateWeb && !isNaN(joinDateWeb.getTime()) ? `${joinDateWeb.getMonth() + 1}/${joinDateWeb.getFullYear()}` : '';
 
             cardContainer.innerHTML = `

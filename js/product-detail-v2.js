@@ -161,10 +161,10 @@ window.toggleV2Favorite = async () => {
 
 // Share product
 window.shareV2Product = async () => {
-    const shareUrl = `https://tiemnhagom.vn/share?type=product&id=${currentProductId}`;
+    const shareUrl = window.location.href;
     const shareData = {
         title: document.title,
-        text: 'Mời bạn xem sản phẩm gốm sứ thủ công tinh xảo tại Tiệm Nhà Gốm!',
+        text: `Mời bạn xem ${document.title} tại Tiệm Nhà Gốm!`,
         url: shareUrl
     };
     try {
@@ -172,7 +172,7 @@ window.shareV2Product = async () => {
             await navigator.share(shareData);
         } else {
             await navigator.clipboard.writeText(shareUrl);
-            showToast("Đã sao chép liên kết chia sẻ!");
+            showToast("Đã sao chép liên kết sản phẩm!");
         }
     } catch (err) {
         if (err.name !== 'AbortError') showToast("Lỗi chia sẻ: " + err.message, "error");
@@ -375,6 +375,88 @@ function updatePriceDisplay() {
     }
 }
 
+// Cập nhật URL trên thanh địa chỉ & Meta SEO khi người dùng chọn biến thể
+function syncVariantStateToUrlAndSEO() {
+    if (!currentProductData || !currentProductId) return;
+    const p = currentProductData;
+    
+    // 1. Đồng bộ URL trên thanh địa chỉ trình duyệt
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', currentProductId);
+    
+    if (selectedColor) {
+        url.searchParams.set('color', selectedColor);
+    } else {
+        url.searchParams.delete('color');
+    }
+    
+    if (selectedPattern) {
+        url.searchParams.set('pattern', selectedPattern);
+    } else {
+        url.searchParams.delete('pattern');
+    }
+    
+    if (selectedComboVariant) {
+        url.searchParams.set('combo', selectedComboVariant);
+    } else {
+        url.searchParams.delete('combo');
+    }
+
+    try {
+        window.history.replaceState(null, '', url.toString());
+    } catch (_) {}
+
+    // 2. Tìm ảnh và tiêu đề chính xác của biến thể đang chọn
+    let variantImg = null;
+    const variantTitleParts = [p.name];
+    const variantDescParts = [];
+
+    if (selectedComboVariant && p.comboVariants) {
+        const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
+        if (cv) {
+            if (cv.imageUrl) variantImg = cv.imageUrl;
+            variantTitleParts.push(`Phân loại: ${cv.name}`);
+            variantDescParts.push(`Phân loại: ${cv.name}`);
+        }
+    }
+
+    if (selectedColor && p.colorVariants) {
+        const c = p.colorVariants.find(v => (v.name || v) === selectedColor);
+        if (c) {
+            const cImg = c.imageUrl || c.thumbUrl || c.image;
+            if (cImg && !variantImg) variantImg = cImg;
+            variantTitleParts.push(`Màu: ${c.name}`);
+            variantDescParts.push(`Màu: ${c.name}`);
+        }
+    }
+
+    if (selectedPattern && p.patternVariants) {
+        const pat = p.patternVariants.find(v => (v.name || v) === selectedPattern);
+        if (pat) {
+            const patImg = pat.imageUrl || pat.thumbUrl || pat.image;
+            if (patImg && !variantImg) variantImg = patImg;
+            variantTitleParts.push(`Họa tiết: ${pat.name}`);
+            variantDescParts.push(`Họa tiết: ${pat.name}`);
+        }
+    }
+
+    const finalImg = variantImg || p.imageUrl || (p.additionalImages && p.additionalImages[0]) || 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg';
+    const finalTitle = `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`;
+
+    const currentPrice = getEffectiveVariantPrice();
+    if (currentPrice > 0) {
+        variantDescParts.push(`Giá: ${new Intl.NumberFormat('vi-VN').format(currentPrice)}₫`);
+    }
+
+    const baseDesc = (p.description || 'Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm.').replace(/<[^>]*>?/gm, '').substring(0, 140);
+    if (baseDesc) variantDescParts.push(baseDesc);
+
+    const finalDesc = variantDescParts.join(' • ');
+
+    // 3. Cập nhật title trình duyệt và thẻ OG trong DOM
+    updateSEO(finalTitle, finalDesc, finalImg, url.toString());
+}
+
 // Select Variant functions
 window.selectV2Color = (name, imgUrl) => {
     selectedColor = name;
@@ -391,6 +473,7 @@ window.selectV2Color = (name, imgUrl) => {
     }
     updatePriceDisplay();
     updateStockDisplay();
+    syncVariantStateToUrlAndSEO();
 };
 
 window.selectV2Pattern = (name, imgUrl) => {
@@ -408,6 +491,7 @@ window.selectV2Pattern = (name, imgUrl) => {
     }
     updatePriceDisplay();
     updateStockDisplay();
+    syncVariantStateToUrlAndSEO();
 };
 
 window.selectV2Combo = (idx) => {
@@ -445,6 +529,7 @@ window.selectV2Combo = (idx) => {
 
     updatePriceDisplay();
     updateStockDisplay();
+    syncVariantStateToUrlAndSEO();
 };
 
 function updateStockDisplay() {
@@ -631,9 +716,27 @@ async function fetchProductDetailV2() {
             }
         }
 
-        // SEO and Title
-        document.title = `${p.name} | Tiệm Nhà Gốm`;
-        updateSEO(`${p.name} | Tiệm Nhà Gốm`, p.description?.substring(0, 160) || '', p.imageUrl);
+        // Tự động chọn ảnh của biến thể nếu có URL params biến thể
+        let initialVariantImg = null;
+        if (selectedComboVariant && p.comboVariants) {
+            const cv = p.comboVariants.find(v => (v.name || v) === selectedComboVariant);
+            if (cv?.imageUrl) initialVariantImg = cv.imageUrl;
+        }
+        if (!initialVariantImg && selectedColor && p.colorVariants) {
+            const c = p.colorVariants.find(v => (v.name || v) === selectedColor);
+            if (c?.imageUrl) initialVariantImg = c.imageUrl;
+        }
+        if (!initialVariantImg && selectedPattern && p.patternVariants) {
+            const pat = p.patternVariants.find(v => (v.name || v) === selectedPattern);
+            if (pat?.imageUrl) initialVariantImg = pat.imageUrl;
+        }
+        if (initialVariantImg) {
+            const foundIdx = allImages.indexOf(initialVariantImg);
+            if (foundIdx !== -1) currentIndex = foundIdx;
+        }
+
+        // SEO and Title đồng bộ theo biến thể
+        syncVariantStateToUrlAndSEO();
 
         // Update Breadcrumb
         const breadcrumb = document.getElementById('breadcrumb-container');
@@ -686,10 +789,10 @@ async function fetchProductDetailV2() {
                             ${p.sale ? `<span class="v2-pill-badge sale">-${p.sale}%</span>` : ''}
                         </div>
 
-                        <img id="v2-main-img" class="v2-main-img" src="${p.imageUrl}" alt="${escapeHTML(p.name)}" onclick="window.openV2Lightbox(this.src)" title="Nhấn để phóng to ảnh">
+                        <img id="v2-main-img" class="v2-main-img" src="${allImages[currentIndex] || p.imageUrl}" alt="${escapeHTML(p.name)}" onclick="window.openV2Lightbox(this.src)" title="Nhấn để phóng to ảnh">
                         
                         ${allImages.length > 1 ? `
-                            <div id="v2-img-counter" class="v2-img-counter">1 / ${allImages.length}</div>
+                            <div id="v2-img-counter" class="v2-img-counter">${currentIndex + 1} / ${allImages.length}</div>
                         ` : ''}
                     </div>
 
@@ -698,7 +801,7 @@ async function fetchProductDetailV2() {
                             <button type="button" class="v2-thumb-arrow-btn prev" onclick="window.scrollV2Thumbnails(-1)" aria-label="Cuộn trái">&#10094;</button>
                             <div class="v2-thumb-track" id="v2-thumb-track">
                                 ${allImages.map((img, idx) => `
-                                    <div class="v2-thumb-item ${idx === 0 ? 'active' : ''}" onclick="window.changeV2MainImage('${img}', ${idx})">
+                                    <div class="v2-thumb-item ${idx === currentIndex ? 'active' : ''}" onclick="window.changeV2MainImage('${img}', ${idx})">
                                         <img src="${img}" alt="${escapeHTML(p.name)} - thumb ${idx + 1}" loading="lazy">
                                     </div>
                                 `).join('')}
@@ -1030,7 +1133,7 @@ async function fetchProductDetailV2() {
         const stickyName = document.getElementById('v2-sticky-name');
         const stickyThumb = document.getElementById('v2-sticky-thumb');
         if (stickyName) stickyName.innerText = p.name;
-        if (stickyThumb) stickyThumb.src = p.imageUrl;
+        if (stickyThumb) stickyThumb.src = allImages[currentIndex] || p.imageUrl;
 
         // 5. ATTACH BUY & CART EVENTS
         const handleAddCart = async (redirect = false) => {

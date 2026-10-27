@@ -11,3 +11,4 @@ Disallow: /login/
 Disallow: /profile/
 # Chỉ định đường dẫn tới sơ đồ trang web để bot lập chỉ mục nhanh hơn
 Sitemap: https://tiemnhagom.vn/sitemap.xml
+Sitemap: https://tiemnhagom.vn/sitemap-products.xml

@@ -11,13 +11,158 @@
     <!-- Cửa hàng & Khuyến mãi -->
     <url>
         <loc>https://tiemnhagom.vn/products/</loc>
-        <lastmod>2026-06-19</lastmod>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- 5 Danh mục cha (Parent Categories) -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Dining%20Decor</loc>
+        <lastmod>2026-10-28</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://tiemnhagom.vn/product/</loc>
-        <lastmod>2026-06-19</lastmod>
+        <loc>https://tiemnhagom.vn/products/?category=Teatime%20%26%20Drinks</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Home%20Decor</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Kitchenware</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Lifestyle</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- 18 Danh mục con (Subcategories) -->
+    <!-- Dining Decor subs -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=B%C3%A1t%20%26%20Ch%C3%A9n</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=D%C4%A9a%20%26%20Khay</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Th%C3%ACa%20Mu%E1%BB%A1ng%20%26%20%C4%90%C5%A9a</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Gia%20V%E1%BB%8B%20%26%20N%C6%B0%E1%BB%9Bc%20Ch%E1%BA%A5m</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=G%C3%A1c%20%C4%90%C5%A9a%20%26%20Ph%E1%BB%A5%20Ki%E1%BB%87n</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Teatime & Drinks subs -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=%E1%BA%A4m%20Tr%C3%A0</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Ly%20%26%20T%C3%A1ch</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=L%C3%B3t%20Ly%20%26%20%C4%90%E1%BA%BF%20L%C3%B3t</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Home Decor subs -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=L%E1%BB%8D%20Hoa%20Ngh%E1%BB%87%20Thu%E1%BA%ADt</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=%C4%90%C3%A8n%20%26%20T%C6%B0%E1%BB%A3ng%20Decor</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Khay%20B%C3%A1nh%20M%E1%BB%A9t</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Kitchenware subs -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=N%E1%BB%93i%20%26%20Ch%E1%BA%A3o</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Dao%20%26%20K%C3%A9o</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Th%E1%BB%9Bt</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=D%E1%BB%A5ng%20C%E1%BB%A5%20S%C6%A1%20Ch%E1%BA%BF</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Lifestyle subs -->
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=Ph%E1%BB%A5%20Ki%E1%BB%87n%20Ph%C3%B2ng%20T%E1%BA%AFm</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=T%E1%BA%A1p%20V%E1%BA%ADt%20Tinh%20T%E1%BA%BF</loc>
+        <lastmod>2026-10-28</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://tiemnhagom.vn/products/?category=V%E1%BA%ADt%20Ph%E1%BA%A9m%20C%C3%A1%20Nh%C3%A2n</loc>
+        <lastmod>2026-10-28</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
     </url>

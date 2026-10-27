@@ -54,12 +54,11 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
     ? Math.round(((product.price - effectivePrice) / product.price) * 100)
     : (product.sale || 0);
 
-  // Tính chiết khấu hạng thành viên (Nếu khách hàng có hạng thành viên: dùng hạng đó; nếu chưa/Gốm Mộc: hiển thị ưu đãi hạng Gốm Nung 1% để kích thích mua sắm)
-  const displayMemberTier = (memberTier && memberTier.discount > 0)
-    ? memberTier
-    : { name: 'Gốm Nung', discount: 1, color: '#9C7156' };
-
-  const memberTierPrice = Math.round(effectivePrice * (1 - displayMemberTier.discount / 100));
+  // Tính chiết khấu hạng thành viên (Chỉ hiển thị khi khách hàng thực tế có hạng thành viên được chiết khấu > 0%)
+  const hasMemberDiscount = Boolean(memberTier && memberTier.discount > 0);
+  const memberTierPrice = hasMemberDiscount
+    ? Math.round(effectivePrice * (1 - (memberTier?.discount || 0) / 100))
+    : effectivePrice;
 
   const imageUri =
     product.imageUrl ||
@@ -221,15 +220,17 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
               ) : null}
             </View>
 
-            {/* Dòng Giá Hạng Thành Viên bên dưới: Giá Gốm Nung ... */}
-            <View style={styles.memberTierPriceLine}>
-              <Text style={styles.memberTierPriceLabel}>
-                {t('memberPriceLabel', { tier: displayMemberTier.name }) || `Giá ${displayMemberTier.name}`}{' '}
-                <Text style={styles.memberTierPriceValue}>
-                  {formatCurrency(memberTierPrice)}
+            {/* Dòng Giá Hạng Thành Viên bên dưới: Chỉ hiển thị khi tài khoản có chiết khấu thành viên */}
+            {hasMemberDiscount && memberTier ? (
+              <View style={styles.memberTierPriceLine}>
+                <Text style={styles.memberTierPriceLabel}>
+                  {t('memberPriceLabel', { tier: memberTier.name }) || `Giá ${memberTier.name}`}{' '}
+                  <Text style={styles.memberTierPriceValue}>
+                    {formatCurrency(memberTierPrice)}
+                  </Text>
                 </Text>
-              </Text>
-            </View>
+              </View>
+            ) : null}
           </View>
 
           <View ref={quickAddRef} collapsable={false}>

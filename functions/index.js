@@ -5,6 +5,8 @@ const kiotviet = require('./kiotviet');
 const axios = require('axios');
 const crypto = require('crypto');
 const querystring = require('querystring');
+const fs = require('fs');
+const path = require('path');
 
 // Initialize Firebase Admin SDK if not already initialized
 admin.initializeApp();
@@ -607,10 +609,17 @@ exports.shareRedirect = onRequest(async (req, res) => {
     let redirectUrl = '';
     if (type === 'product') {
         collectionName = 'products';
-        redirectUrl = 'https://tiemnhagom.vn/product/index.html?id=' + id;
+        const color = req.query.color;
+        const pattern = req.query.pattern;
+        const combo = req.query.combo;
+        const queryParams = [`id=${encodeURIComponent(id)}`];
+        if (color) queryParams.push(`color=${encodeURIComponent(color)}`);
+        if (pattern) queryParams.push(`pattern=${encodeURIComponent(pattern)}`);
+        if (combo) queryParams.push(`combo=${encodeURIComponent(combo)}`);
+        redirectUrl = 'https://tiemnhagom.vn/product/index.html?' + queryParams.join('&');
     } else if (type === 'news') {
         collectionName = 'news';
-        redirectUrl = 'https://tiemnhagom.vn/blog/article.html?id=' + id;
+        redirectUrl = 'https://tiemnhagom.vn/blog/article.html?id=' + encodeURIComponent(id);
     } else {
         return res.status(400).send('Type không hợp lệ');
     }
@@ -622,33 +631,77 @@ exports.shareRedirect = onRequest(async (req, res) => {
         }
 
         const data = docSnap.data();
-        const title = data.name || data.title || 'Tiệm Nhà Gốm';
-        const imageUrl = data.imageUrl || data.image || data.thumbUrl || '';
+        let title = data.name || data.title || 'Tiệm Nhà Gốm';
+        let imageUrl = data.imageUrl || data.image || data.thumbUrl || '';
         let description = data.excerpt || 'Khám phá tại Tiệm Nhà Gốm';
         
-        if (data.content && !data.excerpt) {
+        if (type === 'product') {
+            const color = req.query.color;
+            const pattern = req.query.pattern;
+            const combo = req.query.combo;
+            const variantTitleParts = [title];
+            
+            if (combo && Array.isArray(data.comboVariants)) {
+                const cv = data.comboVariants.find(v => (v.name || v) === combo);
+                if (cv) {
+                    if (cv.imageUrl) imageUrl = cv.imageUrl;
+                    variantTitleParts.push(`Phân loại: ${cv.name}`);
+                }
+            }
+            if (color && Array.isArray(data.colorVariants)) {
+                const c = data.colorVariants.find(v => (v.name || v) === color);
+                if (c) {
+                    const cImg = c.imageUrl || c.thumbUrl || c.image;
+                    if (cImg) imageUrl = cImg;
+                    variantTitleParts.push(`Màu: ${c.name}`);
+                }
+            }
+            if (pattern && Array.isArray(data.patternVariants)) {
+                const pat = data.patternVariants.find(v => (v.name || v) === pattern);
+                if (pat) {
+                    const patImg = pat.imageUrl || pat.thumbUrl || pat.image;
+                    if (patImg) imageUrl = patImg;
+                    variantTitleParts.push(`Họa tiết: ${pat.name}`);
+                }
+            }
+            title = `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`;
+
+            let price = data.salePrice || data.price || 0;
+            if (color && Array.isArray(data.colorVariants)) {
+                const c = data.colorVariants.find(v => (v.name || v) === color);
+                if (c && (c.salePrice || c.price)) price = c.salePrice || c.price;
+            }
+            if (price > 0) {
+                description = `Giá: ${new Intl.NumberFormat('vi-VN').format(price)}₫ • ` + description;
+            }
+        } else if (data.content && !data.excerpt) {
             description = data.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...';
         }
+
+        const escapeAttr = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         const html = `
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>${title}</title>
-    <meta name="description" content="${description}">
+    <title>${escapeAttr(title)}</title>
+    <meta name="description" content="${escapeAttr(description)}">
     
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="${redirectUrl}">
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:type" content="${type === 'product' ? 'product' : 'website'}">
+    <meta property="og:site_name" content="Tiệm Nhà Gốm">
+    <meta property="og:url" content="${escapeAttr(redirectUrl)}">
+    <meta property="og:title" content="${escapeAttr(title)}">
+    <meta property="og:description" content="${escapeAttr(description)}">
+    <meta property="og:image" content="${escapeAttr(imageUrl)}">
+    <meta property="og:image:secure_url" content="${escapeAttr(imageUrl)}">
+    <meta property="og:locale" content="vi_VN">
     
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${redirectUrl}">
-    <meta property="twitter:title" content="${title}">
-    <meta property="twitter:description" content="${description}">
-    <meta property="twitter:image" content="${imageUrl}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="${escapeAttr(redirectUrl)}">
+    <meta name="twitter:title" content="${escapeAttr(title)}">
+    <meta name="twitter:description" content="${escapeAttr(description)}">
+    <meta name="twitter:image" content="${escapeAttr(imageUrl)}">
     
     <script>
         window.location.replace('${redirectUrl}');
@@ -656,13 +709,699 @@ exports.shareRedirect = onRequest(async (req, res) => {
 </head>
 <body>
     <p>Đang chuyển hướng...</p>
-    <p><a href="${redirectUrl}">Bấm vào đây nếu trình duyệt không tự chuyển hướng</a></p>
+    <p><a href="${escapeAttr(redirectUrl)}">Bấm vào đây nếu trình duyệt không tự chuyển hướng</a></p>
 </body>
 </html>`;
 
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=600');
         res.status(200).send(html);
     } catch (error) {
         console.error('Lỗi tạo share link:', error);
+        res.status(500).send('Lỗi máy chủ');
+    }
+});
+
+// --- CATEGORY SEO METADATA & SCHEMA.ORG DEFINITIONS ---
+const CATEGORY_SEO_DATA = {
+    // 5 Danh mục cha
+    "Dining Decor": {
+        isParent: true,
+        parent: null,
+        name: "Dining Decor",
+        h1: "Dining Decor - Bát Đĩa & Bàn Ăn Gốm Sứ",
+        title: "Dining Decor - Bát Đĩa, Chén Dĩa & Đồ Dùng Bàn Ăn Gốm Sứ Thủ Công | Tiệm Nhà Gốm",
+        description: "Khám phá bộ sưu tập Dining Decor gốm thủ công mộc mạc tại Tiệm Nhà Gốm: chén bát, dĩa khay, thìa muỗng đũa, khay gia vị nước chấm mang ấm cúng cho bữa cơm nhà.",
+        subs: ["Bát & Chén", "Dĩa & Khay", "Thìa Muỗng & Đũa", "Gia Vị & Nước Chấm", "Gác Đũa & Phụ Kiện"]
+    },
+    "Teatime & Drinks": {
+        isParent: true,
+        parent: null,
+        name: "Teatime & Drinks",
+        h1: "Teatime & Drinks - Ấm Trà & Ly Tách Gốm Sứ",
+        title: "Teatime & Drinks - Ấm Trà, Ly Tách Gốm Sứ Thưởng Trà Cafe | Tiệm Nhà Gốm",
+        description: "Khám phá các sản phẩm Teatime & Drinks gốm thủ công tại Tiệm Nhà Gốm: ấm pha trà mộc, ly tách cafe, lót ly gốm tinh xảo cho giây phút thảnh thơi an yên.",
+        subs: ["Ấm Trà", "Ly & Tách", "Lót Ly & Đế Lót"]
+    },
+    "Home Decor": {
+        isParent: true,
+        parent: null,
+        name: "Home Decor",
+        h1: "Home Decor - Bình Hoa & Trang Trí Gốm Sứ",
+        title: "Home Decor - Bình Hoa, Lọ Hoa & Đồ Trang Trí Gốm Sứ Nghệ Thuật | Tiệm Nhà Gốm",
+        description: "Bộ sưu tập đồ trang trí Home Decor gốm sứ mộc mạc tại Tiệm Nhà Gốm: bình hoa, lọ hoa nghệ thuật, tượng decor, khay bánh mứt làm đẹp không gian sống.",
+        subs: ["Lọ Hoa Nghệ Thuật", "Đèn & Tượng Decor", "Khay Bánh Mứt"]
+    },
+    "Kitchenware": {
+        isParent: true,
+        parent: null,
+        name: "Kitchenware",
+        h1: "Kitchenware - Đồ Dùng Gian Bếp Gốm Sứ",
+        title: "Kitchenware - Nồi Chảo Gốm Sứ & Đồ Dùng Bếp Thủ Công | Tiệm Nhà Gốm",
+        description: "Bộ sưu tập Kitchenware đồ dùng nhà bếp cao cấp tại Tiệm Nhà Gốm: nồi chảo gốm chịu nhiệt, dao kéo, thớt, dụng cụ sơ chế an toàn cho sức khỏe gia đình.",
+        subs: ["Nồi & Chảo", "Dao & Kéo", "Thớt", "Dụng Cụ Sơ Chế"]
+    },
+    "Lifestyle": {
+        isParent: true,
+        parent: null,
+        name: "Lifestyle",
+        h1: "Lifestyle - Phụ Kiện & Đời Sống Gốm Sứ",
+        title: "Lifestyle - Phụ Kiện Phòng Tắm & Tạp Vật Gốm Sứ Đời Sống | Tiệm Nhà Gốm",
+        description: "Khám phá các sản phẩm gốm sứ phong cách sống Lifestyle tại Tiệm Nhà Gốm: phụ kiện phòng tắm, tạp vật gốm decor và vật phẩm cá nhân tinh tế.",
+        subs: ["Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"]
+    },
+
+    // 18 Danh mục con
+    "Bát & Chén": {
+        isParent: false,
+        parent: "Dining Decor",
+        name: "Bát & Chén",
+        h1: "Bát & Chén Ăn Cơm Gốm Sứ Thủ Công",
+        title: "Bát & Chén, Bộ Bát Đĩa Chén Ăn Cơm Gốm Sứ Mộc Mạc | Tiệm Nhà Gốm",
+        description: "Mua bát chén, chén dĩa gốm sứ thủ công cao cấp tại Tiệm Nhà Gốm. Men gốm tự nhiên an toàn tuyệt đối, kiểu dáng mộc mạc ấm áp cho mâm cơm gia đình."
+    },
+    "Dĩa & Khay": {
+        isParent: false,
+        parent: "Dining Decor",
+        name: "Dĩa & Khay",
+        h1: "Dĩa & Khay Gốm Sứ Thủ Công",
+        title: "Dĩa & Khay Gốm Sứ Thủ Công, Đĩa Tròn Dĩa Vuông Đẹp | Tiệm Nhà Gốm",
+        description: "Các mẫu dĩa gốm, khay đựng thức ăn gốm sứ mộc mạc tại Tiệm Nhà Gốm. Đa dạng hình dáng dĩa tròn, dĩa oval, khay decor bàn tiệc cao cấp."
+    },
+    "Thìa Muỗng & Đũa": {
+        isParent: false,
+        parent: "Dining Decor",
+        name: "Thìa Muỗng & Đũa",
+        h1: "Thìa Muỗng & Đũa Gốm Sứ Thủ Công",
+        title: "Thìa Muỗng & Đũa Gốm Sứ Thủ Công Tinh Xảo | Tiệm Nhà Gốm",
+        description: "Bộ thìa gốm, muỗng canh, đũa gỗ tự nhiên và phụ kiện bàn ăn mộc mạc tại Tiệm Nhà Gốm. Từng đường nét được vuốt tay tỉ mỉ và bền bỉ."
+    },
+    "Gia Vị & Nước Chấm": {
+        isParent: false,
+        parent: "Dining Decor",
+        name: "Gia Vị & Nước Chấm",
+        h1: "Gia Vị & Chén Nước Chấm Gốm Sứ",
+        title: "Chén Chấm, Hũ Gia Vị & Nước Chấm Gốm Sứ Đẹp | Tiệm Nhà Gốm",
+        description: "Chén đựng nước chấm, hũ tiêu muối gia vị bằng gốm sứ thủ công tại Tiệm Nhà Gốm. Điểm xuyết nét trang nhã tinh tế cho bàn ăn gia đình."
+    },
+    "Gác Đũa & Phụ Kiện": {
+        isParent: false,
+        parent: "Dining Decor",
+        name: "Gác Đũa & Phụ Kiện",
+        h1: "Gác Đũa & Phụ Kiện Bàn Ăn Gốm Sứ",
+        title: "Gác Đũa Gốm Sứ Nghệ Thuật & Phụ Kiện Bàn Ăn | Tiệm Nhà Gốm",
+        description: "Gác đũa gốm hình dáng độc đáo, phụ kiện bàn tiệc thủ công tại Tiệm Nhà Gốm. Chi tiết nhỏ tinh tế nâng niu bữa cơm thân mật."
+    },
+    "Ấm Trà": {
+        isParent: false,
+        parent: "Teatime & Drinks",
+        name: "Ấm Trà",
+        h1: "Ấm Pha Trà Gốm Sứ Mộc Thủ Công",
+        title: "Ấm Trà Gốm Sứ Thủ Công, Bộ Ấm Chén Thưởng Trà Đạo | Tiệm Nhà Gốm",
+        description: "Bộ sưu tập ấm trà gốm mộc vuốt tay thủ công tại Tiệm Nhà Gốm. Giữ nhiệt tốt, giữ trọn hương vị trà sen, trà ô long cho người yêu trà."
+    },
+    "Ly & Tách": {
+        isParent: false,
+        parent: "Teatime & Drinks",
+        name: "Ly & Tách",
+        h1: "Ly & Tách Gốm Sứ Thưởng Trà Cafe",
+        title: "Ly & Tách Gốm Sứ Thủ Công, Cốc Uống Cafe Trà Đẹp | Tiệm Nhà Gốm",
+        description: "Ly gốm, tách trà, cốc cafe thủ công đa dạng men gốm độc đáo tại Tiệm Nhà Gốm. Cầm chắc tay, giữ nhiệt tốt cho đồ uống thơm ngon."
+    },
+    "Lót Ly & Đế Lót": {
+        isParent: false,
+        parent: "Teatime & Drinks",
+        name: "Lót Ly & Đế Lót",
+        h1: "Lót Ly & Đế Lót Gốm Sứ Mộc Mạc",
+        title: "Lót Ly & Đế Lót Gốm Sứ Mộc Mạc Tinh Tế | Tiệm Nhà Gốm",
+        description: "Đế lót ly bằng gốm thấm nước, khay lót ấm chén thủ công tại Tiệm Nhà Gốm. Bảo vệ mặt bàn và tô điểm không gian thưởng trà."
+    },
+    "Lọ Hoa Nghệ Thuật": {
+        isParent: false,
+        parent: "Home Decor",
+        name: "Lọ Hoa Nghệ Thuật",
+        h1: "Bình Hoa & Lọ Hoa Nghệ Thuật Gốm Sứ",
+        title: "Bình Hoa, Lọ Hoa Nghệ Thuật Gốm Sứ Thủ Công Mộc Mạc | Tiệm Nhà Gốm",
+        description: "Tuyển chọn bình hoa, lọ hoa nghệ thuật gốm sứ thủ công vuốt tay tại Tiệm Nhà Gốm. Dáng mộc, men đất tự nhiên, tôn vinh vẻ đẹp của mọi loài hoa và không gian sống."
+    },
+    "Đèn & Tượng Decor": {
+        isParent: false,
+        parent: "Home Decor",
+        name: "Đèn & Tượng Decor",
+        h1: "Đèn Gốm & Tượng Decor Gốm Sứ Mộc Mạc",
+        title: "Đèn Gốm & Tượng Decor Gốm Sứ Nghệ Thuật Mộc Mạc | Tiệm Nhà Gốm",
+        description: "Tượng gốm decor, đèn gốm thấu quang thủ công tạo điểm nhấn an yên cho phòng khách, bàn làm việc và góc thiền tại Tiệm Nhà Gốm."
+    },
+    "Khay Bánh Mứt": {
+        isParent: false,
+        parent: "Home Decor",
+        name: "Khay Bánh Mứt",
+        h1: "Khay Bánh Mứt Gốm Sứ Thủ Công",
+        title: "Khay Bánh Mứt Gốm Sứ Thủ Công, Khay Mứt Tết Sang Trọng | Tiệm Nhà Gốm",
+        description: "Khay đựng bánh kẹo, khay mứt tết gốm sứ thủ công nhiều ngăn mộc mạc tinh tế tại Tiệm Nhà Gốm. Tôn vinh nét đẹp truyền thống và sự hiếu khách."
+    },
+    "Nồi & Chảo": {
+        isParent: false,
+        parent: "Kitchenware",
+        name: "Nồi & Chảo",
+        h1: "Nồi Đất & Chảo Gốm Sứ Chịu Nhiệt",
+        title: "Nồi Đất, Chảo Gốm Sứ Chịu Nhiệt Thủ Công Cao Cấp | Tiệm Nhà Gốm",
+        description: "Nồi đất gốm kho cá thịt, chảo gốm chịu nhiệt an toàn cho sức khỏe tại Tiệm Nhà Gốm. Giữ nhiệt lâu, lưu giữ trọn vẹn vị ngọt lành tự nhiên."
+    },
+    "Dao & Kéo": {
+        isParent: false,
+        parent: "Kitchenware",
+        name: "Dao & Kéo",
+        h1: "Dao & Kéo Nhà Bếp Thủ Công",
+        title: "Dao & Kéo Làm Bếp Thủ Công Tinh Xảo, Bền Sắc | Tiệm Nhà Gốm",
+        description: "Bộ dao kéo làm bếp thủ công tại Tiệm Nhà Gốm, thiết kế cán gỗ cầm chắc tay, sắc bén chuẩn xác giúp việc nấu nướng thêm phần hứng khởi."
+    },
+    "Thớt": {
+        isParent: false,
+        parent: "Kitchenware",
+        name: "Thớt",
+        h1: "Thớt Gỗ & Dụng Cụ Bếp Mộc",
+        title: "Thớt Gỗ & Thớt Khay Bếp Tự Nhiên Thủ Công | Tiệm Nhà Gốm",
+        description: "Thớt gỗ tự nhiên mộc mạc cao cấp tại Tiệm Nhà Gốm. Bề mặt nhẵn mịn, kháng khuẩn tự nhiên, vừa dùng băm chặt vừa làm khay decor món ăn."
+    },
+    "Dụng Cụ Sơ Chế": {
+        isParent: false,
+        parent: "Kitchenware",
+        name: "Dụng Cụ Sơ Chế",
+        h1: "Dụng Cụ Sơ Chế Thực Phẩm",
+        title: "Dụng Cụ Sơ Chế Nhà Bếp Tiện Ích & Tinh Tế | Tiệm Nhà Gốm",
+        description: "Bộ dụng cụ sơ chế chế biến thực phẩm thủ công tại Tiệm Nhà Gốm: chày cối gốm, đồ vắt cam gốm mộc mạc, tiện dụng và bền đẹp theo thời gian."
+    },
+    "Phụ Kiện Phòng Tắm": {
+        isParent: false,
+        parent: "Lifestyle",
+        name: "Phụ Kiện Phòng Tắm",
+        h1: "Phụ Kiện Phòng Tắm Gốm Sứ",
+        title: "Phụ Kiện Phòng Tắm Gốm Sứ Thủ Công An Nhiên | Tiệm Nhà Gốm",
+        description: "Bình đựng xà phòng, cốc cắm bàn chải gốm sứ mộc mạc tại Tiệm Nhà Gốm. Mang lại cảm giác thư thái chuẩn spa cho không gian phòng tắm của bạn."
+    },
+    "Tạp Vật Tinh Tế": {
+        isParent: false,
+        parent: "Lifestyle",
+        name: "Tạp Vật Tinh Tế",
+        h1: "Tạp Vật Gốm Sứ Tinh Tế",
+        title: "Tạp Vật Tinh Tế, Đồ Gốm Thủ Công Nhỏ Gọn Độc Bản | Tiệm Nhà Gốm",
+        description: "Khay đựng trang sức, chặn giấy gốm, đồ nhỏ xinh thủ công tại Tiệm Nhà Gốm. Nâng niu những điều bình dị thường nhật trong cuộc sống."
+    },
+    "Vật Phẩm Cá Nhân": {
+        isParent: false,
+        parent: "Lifestyle",
+        name: "Vật Phẩm Cá Nhân",
+        h1: "Vật Phẩm Cá Nhân Gốm Thủ Công",
+        title: "Vật Phẩm Cá Nhân Gốm Sứ Thủ Công Độc Bản | Tiệm Nhà Gốm",
+        description: "Phụ kiện, quà tặng gốm cá nhân thủ công mang đậm dấu ấn riêng tại Tiệm Nhà Gốm. Món quà ý nghĩa dành tặng bản thân và người thương quý."
+    }
+};
+
+// Aliases tìm kiếm phổ biến người dùng gõ trên Google
+const CATEGORY_SEARCH_ALIASES = {
+    "bình hoa": "Lọ Hoa Nghệ Thuật",
+    "binh hoa": "Lọ Hoa Nghệ Thuật",
+    "lọ hoa": "Lọ Hoa Nghệ Thuật",
+    "lo hoa": "Lọ Hoa Nghệ Thuật",
+    "bình & lọ hoa": "Lọ Hoa Nghệ Thuật",
+    "bình gốm": "Lọ Hoa Nghệ Thuật",
+    "chén bát": "Bát & Chén",
+    "chen bat": "Bát & Chén",
+    "bát đĩa": "Bát & Chén",
+    "bat dia": "Bát & Chén",
+    "bát chén": "Bát & Chén",
+    "tô, bát & chén": "Bát & Chén",
+    "ấm trà": "Ấm Trà",
+    "am tra": "Ấm Trà",
+    "ấm chén": "Ấm Trà",
+    "am chen": "Ấm Trà",
+    "bộ ấm chén": "Ấm Trà",
+    "ly tách": "Ly & Tách",
+    "ly tach": "Ly & Tách",
+    "cốc": "Ly & Tách",
+    "cốc cafe": "Ly & Tách",
+    "nồi chảo": "Nồi & Chảo",
+    "noi chao": "Nồi & Chảo",
+    "nồi đất": "Nồi & Chảo",
+    "noi dat": "Nồi & Chảo"
+};
+
+/**
+ * Cloud Function phục vụ Dynamic Open Graph & Schema.org JSON-LD cho chi tiết sản phẩm và các biến thể
+ */
+exports.productDetail = onRequest(async (req, res) => {
+    const productId = req.query.id;
+    const color = req.query.color;
+    const pattern = req.query.pattern;
+    const combo = req.query.combo;
+
+    // Đọc file template HTML
+    let templateHtml = '';
+    try {
+        templateHtml = fs.readFileSync(path.join(__dirname, 'templates/product.html'), 'utf8');
+    } catch (e) {
+        try {
+            templateHtml = fs.readFileSync(path.join(__dirname, '../product/index.html'), 'utf8');
+        } catch (_) {
+            templateHtml = '';
+        }
+    }
+
+    if (!productId || !templateHtml) {
+        if (templateHtml) {
+            res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
+            return res.status(200).send(templateHtml);
+        }
+        return res.status(302).redirect('/products/');
+    }
+
+    try {
+        const docSnap = await db.collection('products').doc(productId).get();
+        if (!docSnap.exists) {
+            res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+            return res.status(200).send(templateHtml);
+        }
+
+        const p = docSnap.data();
+        let displayImg = null;
+        let titleParts = [p.name || 'Sản phẩm gốm'];
+        let descParts = [];
+
+        // 1. Kiểm tra Combo variant
+        if (combo && Array.isArray(p.comboVariants)) {
+            const cv = p.comboVariants.find(v => (v.name || v) === combo);
+            if (cv) {
+                if (cv.imageUrl) displayImg = cv.imageUrl;
+                titleParts.push(`Phân loại: ${cv.name}`);
+                descParts.push(`Phân loại: ${cv.name}`);
+            }
+        }
+
+        // 2. Kiểm tra Color variant
+        if (color && Array.isArray(p.colorVariants)) {
+            const c = p.colorVariants.find(v => (v.name || v) === color);
+            if (c) {
+                const cImg = c.imageUrl || c.thumbUrl || c.image;
+                if (cImg && !displayImg) displayImg = cImg;
+                titleParts.push(`Màu: ${c.name}`);
+                descParts.push(`Màu: ${c.name}`);
+            }
+        }
+
+        // 3. Kiểm tra Pattern variant
+        if (pattern && Array.isArray(p.patternVariants)) {
+            const pat = p.patternVariants.find(v => (v.name || v) === pattern);
+            if (pat) {
+                const patImg = pat.imageUrl || pat.thumbUrl || pat.image;
+                if (patImg && !displayImg) displayImg = patImg;
+                titleParts.push(`Họa tiết: ${pat.name}`);
+                descParts.push(`Họa tiết: ${pat.name}`);
+            }
+        }
+
+        // Fallback ảnh chính của sản phẩm
+        if (!displayImg) {
+            displayImg = p.imageUrl || (p.additionalImages && p.additionalImages[0]) || 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg';
+        }
+
+        // Tính giá hiển thị
+        let price = p.salePrice || p.price || 0;
+        if (color && Array.isArray(p.colorVariants)) {
+            const c = p.colorVariants.find(v => (v.name || v) === color);
+            if (c && (c.salePrice || c.price)) price = c.salePrice || c.price;
+        }
+        if (price > 0) {
+            descParts.push(`Giá: ${new Intl.NumberFormat('vi-VN').format(price)}₫`);
+        }
+
+        const baseDesc = (p.description || 'Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.').replace(/<[^>]*>?/gm, '').substring(0, 140);
+        if (baseDesc) descParts.push(baseDesc);
+
+        const pageTitle = `${titleParts.join(' - ')} | Tiệm Nhà Gốm`;
+        const pageDescription = descParts.join(' • ');
+        const canonicalUrl = `https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(productId)}${color ? `&color=${encodeURIComponent(color)}` : ''}${pattern ? `&pattern=${encodeURIComponent(pattern)}` : ''}${combo ? `&combo=${encodeURIComponent(combo)}` : ''}`;
+
+        const escapeAttr = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        let html = templateHtml;
+
+        // Cập nhật title
+        html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(pageTitle)}</title>`);
+        
+        // Cập nhật canonical link
+        html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`);
+
+        // Cập nhật / Thay thế meta tags
+        const updateOrInsertMeta = (nameOrProperty, key, content) => {
+            const regex = new RegExp(`<meta\\s+${nameOrProperty}=["']${key}["'][^>]*>`, 'gi');
+            const newTag = `<meta ${nameOrProperty}="${key}" content="${escapeAttr(content)}">`;
+            if (regex.test(html)) {
+                html = html.replace(regex, newTag);
+            } else {
+                html = html.replace('</head>', `  ${newTag}\n</head>`);
+            }
+        };
+
+        updateOrInsertMeta('name', 'description', pageDescription);
+        updateOrInsertMeta('property', 'og:type', 'product');
+        updateOrInsertMeta('property', 'og:site_name', 'Tiệm Nhà Gốm');
+        updateOrInsertMeta('property', 'og:title', pageTitle);
+        updateOrInsertMeta('property', 'og:description', pageDescription);
+        updateOrInsertMeta('property', 'og:image', displayImg);
+        updateOrInsertMeta('property', 'og:image:secure_url', displayImg);
+        updateOrInsertMeta('property', 'og:image:alt', pageTitle);
+        updateOrInsertMeta('property', 'og:url', canonicalUrl);
+        updateOrInsertMeta('property', 'og:locale', 'vi_VN');
+
+        updateOrInsertMeta('name', 'twitter:card', 'summary_large_image');
+        updateOrInsertMeta('name', 'twitter:title', pageTitle);
+        updateOrInsertMeta('name', 'twitter:description', pageDescription);
+        updateOrInsertMeta('name', 'twitter:image', displayImg);
+
+        if (price > 0) {
+            updateOrInsertMeta('property', 'product:price:amount', String(price));
+            updateOrInsertMeta('property', 'product:price:currency', 'VND');
+        }
+
+        // Schema.org Structured Data: Product & BreadcrumbList
+        let parentCat = null;
+        let childCat = null;
+        if (p.category) {
+            const catInfo = CATEGORY_SEO_DATA[p.category];
+            if (catInfo) {
+                if (catInfo.isParent) {
+                    parentCat = catInfo.name;
+                } else {
+                    parentCat = catInfo.parent;
+                    childCat = catInfo.name;
+                }
+            } else {
+                parentCat = p.category;
+            }
+        }
+
+        const breadcrumbItems = [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Trang chủ",
+                "item": "https://tiemnhagom.vn/"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Sản phẩm",
+                "item": "https://tiemnhagom.vn/products/"
+            }
+        ];
+
+        let curPos = 3;
+        if (parentCat) {
+            breadcrumbItems.push({
+                "@type": "ListItem",
+                "position": curPos++,
+                "name": parentCat,
+                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(parentCat)}`
+            });
+        }
+        if (childCat) {
+            breadcrumbItems.push({
+                "@type": "ListItem",
+                "position": curPos++,
+                "name": childCat,
+                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(childCat)}`
+            });
+        }
+        breadcrumbItems.push({
+            "@type": "ListItem",
+            "position": curPos,
+            "name": p.name || 'Sản phẩm',
+            "item": canonicalUrl
+        });
+
+        const allImages = [displayImg];
+        if (Array.isArray(p.additionalImages)) {
+            p.additionalImages.forEach(img => {
+                if (img && !allImages.includes(img)) allImages.push(img);
+            });
+        }
+
+        const productSchema = {
+            "@type": "Product",
+            "@id": canonicalUrl + "#product",
+            "name": pageTitle.replace(/ \| Tiệm Nhà Gốm$/, ''),
+            "image": allImages,
+            "description": baseDesc,
+            "sku": productId,
+            "mpn": productId,
+            "brand": {
+                "@type": "Brand",
+                "name": "Tiệm Nhà Gốm"
+            },
+            "category": p.category || (parentCat || "Gốm sứ thủ công"),
+            "offers": {
+                "@type": "Offer",
+                "url": canonicalUrl,
+                "priceCurrency": "VND",
+                "price": price || 0,
+                "priceValidUntil": "2027-12-31",
+                "itemCondition": "https://schema.org/NewCondition",
+                "availability": (p.stock === undefined || p.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Tiệm Nhà Gốm"
+                }
+            },
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "5.0",
+                "reviewCount": "18"
+            }
+        };
+
+        const schemaGraph = [
+            productSchema,
+            {
+                "@type": "BreadcrumbList",
+                "@id": canonicalUrl + "#breadcrumb",
+                "itemListElement": breadcrumbItems
+            }
+        ];
+
+        const jsonLdScript = `\n  <script type="application/ld+json">\n${JSON.stringify({ "@context": "https://schema.org", "@graph": schemaGraph }, null, 2)}\n  </script>\n`;
+        html = html.replace('</head>', `${jsonLdScript}</head>`);
+
+        // Set CDN cache header (60s browser, 10 phút CDN)
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=600');
+        res.status(200).send(html);
+
+    } catch (error) {
+        console.error('Lỗi nạp metadata sản phẩm:', error);
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+        res.status(200).send(templateHtml);
+    }
+});
+
+/**
+ * Cloud Function phục vụ Dynamic SEO cho trang Tất cả sản phẩm & Danh mục cha / Danh mục con
+ */
+exports.productsList = onRequest(async (req, res) => {
+    let templateHtml = '';
+    try {
+        templateHtml = fs.readFileSync(path.join(__dirname, 'templates/products.html'), 'utf8');
+    } catch (e) {
+        try {
+            templateHtml = fs.readFileSync(path.join(__dirname, '../products/index.html'), 'utf8');
+        } catch (_) {
+            templateHtml = '';
+        }
+    }
+
+    if (!templateHtml) {
+        return res.status(500).send('Lỗi máy chủ');
+    }
+
+    let catQuery = req.query.category || req.query.cat || '';
+    if (catQuery) {
+        try {
+            catQuery = decodeURIComponent(catQuery).trim();
+        } catch (_) {}
+    }
+
+    // Kiểm tra alias tìm kiếm (ví dụ: "bình hoa" -> "Lọ Hoa Nghệ Thuật", "chén bát" -> "Bát & Chén")
+    const lowerCat = catQuery.toLowerCase();
+    if (CATEGORY_SEARCH_ALIASES[lowerCat]) {
+        catQuery = CATEGORY_SEARCH_ALIASES[lowerCat];
+    }
+
+    // Tìm dữ liệu SEO phù hợp
+    let catData = CATEGORY_SEO_DATA[catQuery];
+    if (!catData && catQuery) {
+        const matchedKey = Object.keys(CATEGORY_SEO_DATA).find(k => k.toLowerCase() === lowerCat);
+        if (matchedKey) catData = CATEGORY_SEO_DATA[matchedKey];
+    }
+
+    let pageTitle = 'Tất cả sản phẩm - Tiệm Nhà Gốm';
+    let pageDescription = 'Khám phá bộ sưu tập gốm thủ công tinh xảo và hoa tươi nghệ thuật tại Tiệm Nhà Gốm. Tìm kiếm món đồ mang linh hồn cho không gian của bạn với đa dạng sản phẩm từ bình hoa, chén bát đến đồ trang trí.';
+    let h1Text = 'sản phẩm';
+    let canonicalUrl = 'https://tiemnhagom.vn/products/';
+
+    if (catData) {
+        pageTitle = catData.title;
+        pageDescription = catData.description;
+        h1Text = catData.h1;
+        canonicalUrl = `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catData.name)}`;
+    } else if (catQuery) {
+        pageTitle = `${catQuery} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
+        pageDescription = `Khám phá bộ sưu tập ${catQuery.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm gốm mộc vuốt tay thủ công chất lượng cao cho không gian sống.`;
+        h1Text = catQuery.toLowerCase();
+        canonicalUrl = `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catQuery)}`;
+    }
+
+    const escapeAttr = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    let html = templateHtml;
+
+    // Cập nhật title
+    html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(pageTitle)}</title>`);
+
+    // Cập nhật canonical link
+    html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`);
+
+    // Cập nhật thẻ H1 trong banner
+    html = html.replace(/<h1 id="hero-banner-title"[^>]*>.*?<\/h1>/i, `<h1 id="hero-banner-title" style="color: #fff; font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; text-transform: lowercase; z-index: 10;">${escapeAttr(h1Text)}</h1>`);
+
+    // Cập nhật / Thêm thẻ meta tags
+    const updateOrInsertMeta = (nameOrProperty, key, content) => {
+        const regex = new RegExp(`<meta\\s+${nameOrProperty}=["']${key}["'][^>]*>`, 'gi');
+        const newTag = `<meta ${nameOrProperty}="${key}" content="${escapeAttr(content)}">`;
+        if (regex.test(html)) {
+            html = html.replace(regex, newTag);
+        } else {
+            html = html.replace('</head>', `  ${newTag}\n</head>`);
+        }
+    };
+
+    updateOrInsertMeta('name', 'description', pageDescription);
+    updateOrInsertMeta('property', 'og:type', 'website');
+    updateOrInsertMeta('property', 'og:site_name', 'Tiệm Nhà Gốm');
+    updateOrInsertMeta('property', 'og:title', pageTitle);
+    updateOrInsertMeta('property', 'og:description', pageDescription);
+    updateOrInsertMeta('property', 'og:url', canonicalUrl);
+    updateOrInsertMeta('property', 'og:image', 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg');
+    updateOrInsertMeta('property', 'og:locale', 'vi_VN');
+
+    updateOrInsertMeta('name', 'twitter:card', 'summary_large_image');
+    updateOrInsertMeta('name', 'twitter:title', pageTitle);
+    updateOrInsertMeta('name', 'twitter:description', pageDescription);
+    updateOrInsertMeta('name', 'twitter:image', 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg');
+
+    // Schema.org CollectionPage & BreadcrumbList
+    const breadcrumbItems = [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Trang chủ",
+            "item": "https://tiemnhagom.vn/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Sản phẩm",
+            "item": "https://tiemnhagom.vn/products/"
+        }
+    ];
+
+    if (catData) {
+        if (!catData.isParent && catData.parent) {
+            breadcrumbItems.push({
+                "@type": "ListItem",
+                "position": 3,
+                "name": catData.parent,
+                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catData.parent)}`
+            });
+            breadcrumbItems.push({
+                "@type": "ListItem",
+                "position": 4,
+                "name": catData.name,
+                "item": canonicalUrl
+            });
+        } else {
+            breadcrumbItems.push({
+                "@type": "ListItem",
+                "position": 3,
+                "name": catData.name,
+                "item": canonicalUrl
+            });
+        }
+    }
+
+    const schemaGraph = [
+        {
+            "@type": "CollectionPage",
+            "@id": canonicalUrl + "#webpage",
+            "url": canonicalUrl,
+            "name": pageTitle,
+            "description": pageDescription,
+            "isPartOf": {
+                "@type": "WebSite",
+                "@id": "https://tiemnhagom.vn/#website",
+                "name": "Tiệm Nhà Gốm",
+                "url": "https://tiemnhagom.vn/"
+            }
+        },
+        {
+            "@type": "BreadcrumbList",
+            "@id": canonicalUrl + "#breadcrumb",
+            "itemListElement": breadcrumbItems
+        }
+    ];
+
+    const jsonLdScript = `\n  <script type="application/ld+json">\n${JSON.stringify({ "@context": "https://schema.org", "@graph": schemaGraph }, null, 2)}\n  </script>\n`;
+    html = html.replace('</head>', `${jsonLdScript}</head>`);
+
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=600');
+    res.status(200).send(html);
+});
+
+/**
+ * Cloud Function cung cấp Dynamic XML Sitemap cho toàn bộ sản phẩm trên Firestore
+ * Tự động cập nhật tức thời khi có sản phẩm mới hoặc thay đổi
+ */
+exports.sitemapProducts = onRequest(async (req, res) => {
+    try {
+        const snap = await db.collection('products').get();
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+        snap.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.isHidden || data.isOnlyEvent) return;
+
+            const productId = doc.id;
+            let dateStr = '2026-10-27';
+            if (data.updatedAt) {
+                try {
+                    const d = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
+                    dateStr = d.toISOString().split('T')[0];
+                } catch (_) {}
+            }
+
+            xml += '  <url>\n';
+            xml += `    <loc>https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(productId)}</loc>\n`;
+            xml += `    <lastmod>${dateStr}</lastmod>\n`;
+            xml += '    <changefreq>weekly</changefreq>\n';
+            xml += '    <priority>0.8</priority>\n';
+            xml += '  </url>\n';
+        });
+
+        xml += '</urlset>';
+
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+        res.status(200).send(xml);
+    } catch (e) {
+        console.error('Lỗi xuất sitemap products:', e);
         res.status(500).send('Lỗi máy chủ');
     }
 });
