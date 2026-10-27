@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { db } from '../src/config/firebase';
@@ -147,7 +148,7 @@ export default function NotificationDetailScreen() {
       default:
         return {
           label: t('notifPromoAndDiscount'),
-          icon: 'sparkles-outline' as const,
+          icon: 'pricetag-outline' as const,
           bgColor: isDark ? '#2C2C2C' : '#FDF4ED',
           textColor: isDark ? '#E8CCB2' : '#C86432',
           borderColor: isDark ? 'transparent' : '#F8D8C3',
@@ -273,35 +274,45 @@ export default function NotificationDetailScreen() {
         </ScrollView>
       )}
 
-      {/* Thanh Action Bar cố định dưới đáy */}
+      {/* Thanh Action Bar cố định dưới đáy bọc Liquid Glass chuẩn hệ thống iOS */}
       {!loading && (
         <View
           style={[
-            styles.bottomBar,
+            styles.bottomBarWrapper,
             {
-              paddingBottom: Math.max(insets.bottom, 14),
+              bottom: Math.max(insets.bottom, 14),
             },
           ]}
+          pointerEvents="box-none"
         >
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={handleAction}
-            activeOpacity={0.85}
+          <LiquidGlass
+            style={styles.bottomBar}
+            interactive={true}
+            effect="regular"
+            isDark={isDark}
           >
-            <Ionicons name={badgeConfig.actionIcon} size={18} color="#FFFFFF" />
-            <Text style={styles.primaryBtnText}>{badgeConfig.actionText}</Text>
-          </TouchableOpacity>
+            <View style={styles.bottomBarContent}>
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={handleAction}
+                activeOpacity={0.85}
+              >
+                <Ionicons name={badgeConfig.actionIcon} size={18} color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>{badgeConfig.actionText}</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={handleGoBack}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} style={{ marginLeft: -1 }} />
-            <Text style={[styles.secondaryBtnText, { color: Colors.textSecondary }]}>
-              {t('back')}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryBtn}
+                onPress={handleGoBack}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} style={{ marginLeft: -1 }} />
+                <Text style={[styles.secondaryBtnText, { color: Colors.textSecondary }]}>
+                  {t('back')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </LiquidGlass>
         </View>
       )}
     </View>
@@ -435,24 +446,22 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 13,
       lineHeight: 19,
     },
-    bottomBar: {
+    bottomBarWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: Colors.cardBackground,
-      borderTopWidth: 1,
-      borderTopColor: isDark ? '#2A2A2A' : (Colors.border || '#E8E1D8'),
-      paddingHorizontal: 16,
-      paddingTop: 12,
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomBar: {
+      borderRadius: 36,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      overflow: 'hidden',
+    },
+    bottomBarContent: {
       flexDirection: 'row',
       gap: 12,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -3 },
-      shadowOpacity: isDark ? 0 : 0.05,
-      shadowRadius: 8,
-      elevation: isDark ? 0 : 8,
     },
     primaryBtn: {
       flex: 1,

@@ -1,14 +1,25 @@
 // app/(tabs)/_layout.tsx
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useThemeColor } from '../../src/constants/theme';
 
 export default function TabLayout() {
+  const router = useRouter();
   const Colors = useThemeColor();
   const { cartCount } = useCart();
   const { t } = useSettings();
+
+  const cartTabListeners = React.useMemo(
+    () => ({
+      tabPress: () => {
+        router.push('/cart');
+      },
+    }),
+    [router]
+  );
 
   return (
     <NativeTabs
@@ -66,10 +77,12 @@ export default function TabLayout() {
         />
       </NativeTabs.Trigger>
 
-      {/* 5. Nút Giỏ hàng tách rời thành viên bi kính tròn bên phải nhờ role="search": icon-shopping-bag */}
+      {/* 5. Nút Giỏ hàng tách rời thành viên bi kính tròn bên phải nhờ role="search", khi chạm mở trang /cart độc lập */}
       <NativeTabs.Trigger
-        name="cart"
+        name="cart-tab"
         role="search"
+        disabled
+        listeners={cartTabListeners}
         accessibilityLabel={t('cartTab')}
       >
         <NativeTabs.Trigger.Label hidden />

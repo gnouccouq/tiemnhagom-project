@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -430,7 +431,7 @@ export default function SelectVoucherScreen() {
       >
         {/* Banner thông báo quy chuẩn: Voucher chỉ sử dụng 1 lần duy nhất */}
         <View style={styles.singleUseNoticeBox}>
-          <Ionicons name="sparkles" size={17} color="#9C7156" style={{ marginTop: 1 }} />
+          <Ionicons name="information-circle-outline" size={17} color="#9C7156" style={{ marginTop: 1 }} />
           <Text style={styles.singleUseNoticeText}>
             {t('singleUseOnlyNotice') || 'Mỗi voucher chỉ áp dụng 1 lần duy nhất cho mỗi khách hàng.'}
           </Text>
@@ -601,7 +602,15 @@ export default function SelectVoucherScreen() {
                       ]}
                     >
                       <Ionicons
-                        name={isUsed ? 'checkmark-circle-outline' : isExpired ? 'time-outline' : 'sparkles-outline'}
+                        name={
+                          isUsed
+                            ? 'checkmark-circle-outline'
+                            : isExpired
+                            ? 'time-outline'
+                            : item.assignedBy || item.id.startsWith('GIFT')
+                            ? 'gift-outline'
+                            : 'pricetag-outline'
+                        }
                         size={11}
                         color={isUsed ? '#888888' : isExpired ? '#999999' : '#9C7156'}
                         style={{ marginRight: 3 }}
@@ -670,33 +679,43 @@ export default function SelectVoucherScreen() {
         )}
       </ScrollView>
 
-      {/* Khối Xác nhận dính chân trang */}
-      <View style={[styles.bottomStickyBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <View style={styles.bottomBarRow}>
-          {appliedCouponItem || selectedItem ? (
-            <TouchableOpacity
-              style={styles.removePillBtn}
-              onPress={handleRemoveVoucher}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="trash-outline" size={17} color={Colors.error || '#DC2626'} />
-              <Text style={styles.removeBtnText}>{t('removeVoucher') || 'Bỏ chọn'}</Text>
-            </TouchableOpacity>
-          ) : null}
+      {/* Khối Xác nhận dính chân trang bọc Liquid Glass chuẩn hệ thống iOS */}
+      <View
+        style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomStickyBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          <View style={styles.bottomBarRow}>
+            {appliedCouponItem || selectedItem ? (
+              <TouchableOpacity
+                style={styles.removePillBtn}
+                onPress={handleRemoveVoucher}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="trash-outline" size={17} color={Colors.error || '#DC2626'} />
+                <Text style={styles.removeBtnText}>{t('removeVoucher') || 'Bỏ chọn'}</Text>
+              </TouchableOpacity>
+            ) : null}
 
-          <TouchableOpacity
-            style={[styles.confirmPillBtn, !selectedItem && !appliedCouponItem && styles.confirmPillBtnDisabled]}
-            onPress={handleConfirm}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.confirmBtnText}>
-              {selectedItem
-                ? `${t('apply') || 'Áp dụng'} (${selectedItem.code})`
-                : t('confirmBtn') || 'Xác nhận'}
-            </Text>
-            <Ionicons name="arrow-forward" size={17} color="#FFFFFF" style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.confirmPillBtn, !selectedItem && !appliedCouponItem && styles.confirmPillBtnDisabled]}
+              onPress={handleConfirm}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.confirmBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+                {selectedItem
+                  ? `${t('apply') || 'Áp dụng'} (${selectedItem.code})`
+                  : t('confirmBtn') || 'Xác nhận'}
+              </Text>
+              <Ionicons name="arrow-forward" size={17} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          </View>
+        </LiquidGlass>
       </View>
     </View>
   );
@@ -997,20 +1016,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
       lineHeight: 18,
     },
-    bottomStickyBar: {
+    bottomStickyWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: Colors.background,
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      borderTopWidth: 0,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: -3 },
-      shadowOpacity: isDark ? 0 : 0.05,
-      shadowRadius: 6,
-      elevation: isDark ? 0 : 3,
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomStickyBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     bottomBarRow: {
       flexDirection: 'row',

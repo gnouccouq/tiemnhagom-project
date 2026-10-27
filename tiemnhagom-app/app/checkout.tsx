@@ -11,13 +11,16 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
@@ -60,6 +63,10 @@ export default function CheckoutScreen() {
     paymentMethod,
     orderNote,
     setOrderNote,
+    isGiftWrap,
+    setIsGiftWrap,
+    giftCardMessage,
+    setGiftCardMessage,
     flyToCart,
     addToCart,
     removeCoupon,
@@ -136,6 +143,16 @@ export default function CheckoutScreen() {
       const fullStreet = selectedAddress.address || '';
       const completeAddress = fullStreet + (fullLoc ? `, ${fullLoc}` : '');
 
+      const combinedNoteParts: string[] = [];
+      if (orderNote.trim()) combinedNoteParts.push(orderNote.trim());
+      if (isGiftWrap) {
+        combinedNoteParts.push(
+          giftCardMessage.trim()
+            ? `[Hộp quà mộc & Thiệp viết tay: "${giftCardMessage.trim()}"]`
+            : '[Yêu cầu đóng gói hộp quà mộc]'
+        );
+      }
+
       const orderPayload: any = {
         userId: user ? user.uid : 'guest',
         customerName: recipientName,
@@ -154,7 +171,9 @@ export default function CheckoutScreen() {
         shippingMethod,
         paymentMethod: paymentMethod === 'banking' ? 'banking' : 'cod',
         actualPaymentMethod: paymentMethod,
-        note: orderNote.trim() || undefined,
+        isGiftWrap: Boolean(isGiftWrap),
+        giftCardMessage: isGiftWrap && giftCardMessage.trim() ? giftCardMessage.trim() : undefined,
+        note: combinedNoteParts.length > 0 ? combinedNoteParts.join(' | ') : undefined,
       };
 
       const res = await createOrder(orderPayload);
@@ -248,6 +267,7 @@ export default function CheckoutScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -532,12 +552,65 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
+        {/* 4.5. KHỐI ĐÓNG GÓI HỘP QUÀ MỘC & THIỆP VIẾT TAY */}
+        <View style={styles.sectionCard}>
+          <TouchableOpacity
+            style={styles.giftHeaderTouch}
+            activeOpacity={0.85}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              setIsGiftWrap(!isGiftWrap);
+            }}
+          >
+            <View style={styles.giftLeftCol}>
+              <View style={styles.giftTitleRow}>
+                <View style={styles.headerIconCircle}>
+                  <Ionicons name="gift-outline" size={18} color="#9C7156" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardHeaderTitle}>{t('giftWrapTitle')}</Text>
+                  <Text style={styles.giftSubtitleText}>{t('giftWrapSubtitle')}</Text>
+                </View>
+              </View>
+            </View>
+
+            <Switch
+              value={isGiftWrap}
+              onValueChange={(val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setIsGiftWrap(val);
+              }}
+              trackColor={{ false: isDark ? '#333333' : '#E8E1D8', true: '#9C7156' }}
+              thumbColor="#FFFFFF"
+            />
+          </TouchableOpacity>
+
+          {isGiftWrap && (
+            <View style={styles.giftCardInputWrap}>
+              <View style={styles.giftCardLabelRow}>
+                <Ionicons name="create-outline" size={15} color="#9C7156" />
+                <Text style={styles.giftCardLabelText}>{t('giftCardMessageLabel')}</Text>
+                <Text style={styles.giftCharCount}>{giftCardMessage.length}/150</Text>
+              </View>
+              <TextInput
+                style={styles.giftTextArea}
+                placeholder={t('giftCardMessagePlaceholder')}
+                placeholderTextColor={Colors.textMuted}
+                value={giftCardMessage}
+                onChangeText={setGiftCardMessage}
+                multiline
+                maxLength={150}
+              />
+            </View>
+          )}
+        </View>
+
         {/* 5. GỢI Ý ĐỒ GỐM ("Món xịn phải thử") */}
         {suggestedProducts.length > 0 && (
           <View style={styles.crossSellSection}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.headerIconCircle}>
-                <Ionicons name="sparkles" size={16} color="#9C7156" />
+                <Ionicons name="flame-outline" size={16} color="#9C7156" />
               </View>
               <Text style={styles.crossSellSectionTitle}>
                 {t('mustTrySection') || 'Món xịn phải thử'}
@@ -697,6 +770,17 @@ export default function CheckoutScreen() {
             </View>
           )}
 
+          {isGiftWrap && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+                {t('giftWrapIncludedNote')}
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
+                0đ ({t('giftWrapFreeBadge')})
+              </Text>
+            </View>
+          )}
+
           <View style={styles.divider} />
 
           <View style={styles.summaryTotalRow}>
@@ -722,22 +806,37 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
-      {/* 9. NÚT ĐẶT HÀNG DÍNH CHÂN TRANG */}
-      <View style={[styles.bottomStickyBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-        <TouchableOpacity
-          style={[styles.checkoutPillBtn, isSubmittingOrder && { opacity: 0.75 }]}
-          onPress={handlePlaceOrder}
-          disabled={isSubmittingOrder}
-          activeOpacity={0.88}
+      {/* 9. NÚT ĐẶT HÀNG DÍNH CHÂN TRANG BỌC LIQUID GLASS CHUẨN IOS */}
+      <View
+        style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomStickyBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
         >
-          {isSubmittingOrder ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.checkoutBtnText}>
-              {`${t('orderNowBtn') || 'Đặt hàng ngay'} • ${cartCount} ${t('dishes') || 'Sản phẩm'} • ${formatCurrency(totalAmount)}`}
-            </Text>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.checkoutPillBtn, isSubmittingOrder && { opacity: 0.75 }]}
+            onPress={handlePlaceOrder}
+            disabled={isSubmittingOrder}
+            activeOpacity={0.88}
+          >
+            {isSubmittingOrder ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text
+                style={styles.checkoutBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {`${t('orderNowBtn') || 'Đặt hàng ngay'} • ${cartCount} ${t('dishes') || 'Sản phẩm'} • ${formatCurrency(totalAmount)}`}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </LiquidGlass>
       </View>
     </Animated.View>
   );
@@ -1091,6 +1190,78 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '600',
       color: Colors.textSecondary,
     },
+    giftHeaderTouch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+    },
+    giftLeftCol: {
+      flex: 1,
+      marginRight: 6,
+    },
+    giftTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    giftFreeBadge: {
+      backgroundColor: isDark ? '#2A201A' : '#F6F4EC',
+      borderWidth: 1,
+      borderColor: '#9C7156',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 10,
+    },
+    giftFreeBadgeText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    giftSubtitleText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      color: Colors.textSecondary,
+      lineHeight: 17,
+      marginTop: 4,
+    },
+    giftCardInputWrap: {
+      marginTop: 14,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#242424' : '#F0ECE6',
+    },
+    giftCardLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      marginBottom: 8,
+    },
+    giftCardLabelText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      flex: 1,
+    },
+    giftCharCount: {
+      fontSize: 11.5,
+      color: Colors.textMuted,
+      fontWeight: '600',
+    },
+    giftTextArea: {
+      minHeight: 84,
+      borderRadius: 20,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      color: Colors.textPrimary,
+      textAlignVertical: 'top',
+    },
     crossSellSection: {
       marginVertical: 4,
     },
@@ -1275,19 +1446,22 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '600',
       flex: 1,
     },
-    bottomStickyBar: {
+    bottomStickyWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: Colors.background,
-      paddingHorizontal: 16,
-      paddingTop: 10,
-      borderTopWidth: 0,
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomStickyBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     checkoutPillBtn: {
       height: 52,
       borderRadius: 26,
+      paddingHorizontal: 14,
       backgroundColor: '#9C7156',
       alignItems: 'center',
       justifyContent: 'center',

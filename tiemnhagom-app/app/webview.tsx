@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -22,6 +22,7 @@ import { useSettings } from '../src/context/SettingsContext';
 
 export default function WebViewScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
@@ -38,7 +39,7 @@ export default function WebViewScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={Colors.background}
@@ -98,7 +99,7 @@ export default function WebViewScreen() {
         domStorageEnabled={true}
         startInLoadingState={false}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

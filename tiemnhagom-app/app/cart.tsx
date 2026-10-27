@@ -1,4 +1,5 @@
-// app/(tabs)/cart.tsx
+// app/cart.tsx
+// Màn hình Giỏ hàng riêng biệt (Standalone Screen) - Tách khỏi Tab Bar, có nút quay lại
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,24 +9,24 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
-  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { EmptyState } from '../../src/components/EmptyState';
-import { BlurButton } from '../../src/components/BlurButton';
-import { useThemeColor } from '../../src/constants/theme';
-import { useCart } from '../../src/context/CartContext';
-import { useSettings } from '../../src/context/SettingsContext';
-import { useDialog } from '../../src/context/DialogContext';
-import { usePageAnimation } from '../../src/hooks/usePageAnimation';
-import { formatCurrency } from '../../src/utils/format';
-import { getBestSellingProducts } from '../../src/services/productService';
-import { Product } from '../../src/types';
+import { EmptyState } from '../src/components/EmptyState';
+import { BlurButton } from '../src/components/BlurButton';
+import { LiquidGlass } from '../src/components/LiquidGlass';
+import { useThemeColor } from '../src/constants/theme';
+import { useCart } from '../src/context/CartContext';
+import { useSettings } from '../src/context/SettingsContext';
+import { useDialog } from '../src/context/DialogContext';
+import { usePageAnimation } from '../src/hooks/usePageAnimation';
+import { formatCurrency } from '../src/utils/format';
+import { getRecentlyViewed, RecentlyViewedItem } from '../src/utils/recentViews';
+import { getBestSellingProducts } from '../src/services/productService';
+import { Product } from '../src/types';
 
 export default function CartScreen() {
   const Colors = useThemeColor();
@@ -57,6 +58,7 @@ export default function CartScreen() {
   const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 40 });
 
   const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
+  const [recentProducts, setRecentProducts] = useState<RecentlyViewedItem[]>([]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -68,10 +70,26 @@ export default function CartScreen() {
       })
       .catch(() => {});
 
+    getRecentlyViewed()
+      .then((recents) => {
+        if (!isCancelled) {
+          setRecentProducts(recents);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       isCancelled = true;
     };
   }, []);
+
+  const handleGoBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   const confirmClearCart = () => {
     dialog.confirm(
@@ -93,30 +111,86 @@ export default function CartScreen() {
     return (
       <View style={styles.safeArea}>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
+        {/* Header với nút quay lại khi giỏ hàng trống */}
         <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
-          <View style={{ width: 40 }} />
-          <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
+          <BlurButton
+            onPress={handleGoBack}
+            accessibilityLabel={t('back') || 'Quay lại'}
+          >
+            <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
+          </BlurButton>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {t('cartHeader') || 'Giỏ hàng'}
+          </Text>
           <View style={{ width: 40 }} />
         </View>
-        <View style={styles.emptyContainer}>
-          <EmptyState
-            icon="bag-handle-outline"
-            title={t('emptyCartTitle') || 'Giỏ hàng trống'}
-            message={t('emptyCartMsg') || 'Bạn chưa có sản phẩm gốm nào trong giỏ. Hãy dạo quanh cửa hàng và chọn những món ưng ý nhé!'}
-            buttonText={t('exploreCeramics') || 'Khám phá đồ gốm ngay'}
-            onButtonPress={() => router.push('/(tabs)/products')}
-          />
-        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={{
+            paddingTop: insets.top + 64,
+            paddingBottom: Math.max(insets.bottom, 24) + 32,
+          }}
+        >
+          <View style={styles.emptyContainer}>
+            <EmptyState
+              icon="bag-handle-outline"
+              title={t('emptyCartTitle') || 'Giỏ hàng trống'}
+              message={t('emptyCartMsg') || 'Bạn chưa có sản phẩm gốm nào trong giỏ. Hãy dạo quanh cửa hàng và chọn những món ưng ý nhé!'}
+              buttonText={t('exploreCeramics') || 'Khám phá đồ gốm ngay'}
+              onButtonPress={() => router.push('/(tabs)/products')}
+            />
+          </View>
+
+          {recentProducts.length > 0 && (
+            <View style={[styles.crossSellSection, { paddingHorizontal: 16, marginTop: 12 }]}>
+              <Text style={styles.crossSellSectionTitle}>{t('recentlyViewedCeramics')}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.crossSellScrollContent}
+              >
+                {recentProducts.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.crossSellCard}
+                    onPress={() => router.push(`/product/${item.id}`)}
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.crossSellImg}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.crossSellName} numberOfLines={2} ellipsizeMode="tail">
+                      {item.name}
+                    </Text>
+                    <View style={styles.crossSellBottomRow}>
+                      <Text
+                        style={styles.crossSellPrice}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                      >
+                        {formatCurrency(item.salePrice || item.price)}
+                      </Text>
+                      <Ionicons name="arrow-forward-circle" size={24} color="#9C7156" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </ScrollView>
       </View>
     );
   }
 
-  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
   const freeShippingThreshold = 500000;
   const remainingForFreeShip = Math.max(0, freeShippingThreshold - subtotal);
 
-  // Vị trí thanh thanh toán dính đáy: dock sát ngay phía trên thanh Liquid Glass Native Tab Bar
-  const bottomBarOffset = Math.max(insets.bottom, 16) + 8;
+  // Vị trí thanh thanh toán dính đáy: dock sát mép đáy màn hình (không có bottom bar)
+  const bottomBarOffset = Math.max(insets.bottom, 14);
 
   return (
     <View style={styles.safeArea}>
@@ -147,10 +221,20 @@ export default function CartScreen() {
             style={StyleSheet.absoluteFill}
           />
         </View>
-        <View style={{ width: 40 }} />
 
-        <Text style={styles.headerTitle}>{t('cartHeader') || 'Giỏ hàng'}</Text>
+        {/* Nút quay lại tròn 40px theo chuẩn GEMINI.md Mục 1 */}
+        <BlurButton
+          onPress={handleGoBack}
+          accessibilityLabel={t('back') || 'Quay lại'}
+        >
+          <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
+        </BlurButton>
 
+        <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+          {t('cartHeader') || 'Giỏ hàng'}
+        </Text>
+
+        {/* Nút xoá tất cả */}
         <BlurButton
           onPress={confirmClearCart}
           accessibilityLabel={t('clear') || 'Xóa tất cả'}
@@ -181,15 +265,15 @@ export default function CartScreen() {
           />
           <Text style={styles.freeShipNoticeText}>
             {remainingForFreeShip === 0
-              ? 'Đơn hàng của bạn đã đủ điều kiện Miễn phí giao hàng tiêu chuẩn!'
-              : `Mua thêm ${formatCurrency(remainingForFreeShip)} để được Miễn phí giao hàng toàn quốc!`}
+              ? t('freeShipQualifiedNotice')
+              : t('freeShipRemainingNotice').replace('{amount}', formatCurrency(remainingForFreeShip))}
           </Text>
         </View>
 
         {/* Danh sách các sản phẩm trong giỏ để khách kiểm tra */}
         <View style={styles.sectionCard}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardHeaderTitle}>
+            <Text style={styles.cardHeaderTitle} numberOfLines={1} ellipsizeMode="tail">
               {`${t('dishes') || 'Sản phẩm'} (${cartCount})`}
             </Text>
             <TouchableOpacity
@@ -209,17 +293,19 @@ export default function CartScreen() {
               return (
                 <View key={item.id} style={styles.cartItemRow}>
                   <Image
-                    source={item.imageUrl ? { uri: item.imageUrl } : require('../../assets/images/tiemnhagom.png')}
+                    source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/tiemnhagom.png')}
                     style={styles.itemImg}
                     contentFit="cover"
                   />
 
                   <View style={styles.itemInfo}>
-                    <Text style={styles.itemName} numberOfLines={2}>
+                    <Text style={styles.itemName} numberOfLines={2} ellipsizeMode="tail">
                       {item.name}
                     </Text>
                     {variantName ? (
-                      <Text style={styles.itemVariantText}>{variantName}</Text>
+                      <Text style={styles.itemVariantText} numberOfLines={1} ellipsizeMode="tail">
+                        {variantName}
+                      </Text>
                     ) : null}
 
                     {/* Stepper (-) qty (+) */}
@@ -245,7 +331,14 @@ export default function CartScreen() {
                   </View>
 
                   <View style={styles.itemRightCol}>
-                    <Text style={styles.itemPriceText}>{formatCurrency(itemTotal)}</Text>
+                    <Text
+                      style={styles.itemPriceText}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                    >
+                      {formatCurrency(itemTotal)}
+                    </Text>
                     <TouchableOpacity
                       style={styles.itemDeleteBtn}
                       onPress={() => removeFromCart(item.id)}
@@ -279,15 +372,22 @@ export default function CartScreen() {
                 return (
                   <View key={p.id} style={styles.crossSellCard}>
                     <Image
-                      source={p.imageUrl ? { uri: p.imageUrl } : require('../../assets/images/tiemnhagom.png')}
+                      source={p.imageUrl ? { uri: p.imageUrl } : require('../assets/images/tiemnhagom.png')}
                       style={styles.crossSellImg}
                       contentFit="cover"
                     />
-                    <Text style={styles.crossSellName} numberOfLines={2}>
+                    <Text style={styles.crossSellName} numberOfLines={2} ellipsizeMode="tail">
                       {p.name}
                     </Text>
                     <View style={styles.crossSellBottomRow}>
-                      <Text style={styles.crossSellPrice}>{formatCurrency(effPrice)}</Text>
+                      <Text
+                        style={styles.crossSellPrice}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                      >
+                        {formatCurrency(effPrice)}
+                      </Text>
                       <TouchableOpacity
                         style={styles.crossSellAddBtn}
                         onPress={() => {
@@ -313,7 +413,9 @@ export default function CartScreen() {
               <View style={styles.headerIconCircle}>
                 <Ionicons name="gift-outline" size={18} color="#9C7156" />
               </View>
-              <Text style={styles.cardHeaderTitle}>{t('cartVoucherHeader') || 'Mã giảm giá / Ưu đãi'}</Text>
+              <Text style={styles.cardHeaderTitle} numberOfLines={1} ellipsizeMode="tail">
+                {t('cartVoucherHeader') || 'Mã giảm giá / Ưu đãi'}
+              </Text>
             </View>
             {(appliedCouponItem || appliedCoupon) && (
               <TouchableOpacity onPress={removeCoupon} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -332,15 +434,15 @@ export default function CartScreen() {
                 <Ionicons name="pricetag-outline" size={18} color="#9C7156" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.voucherActionTitle} numberOfLines={1}>
+                <Text style={styles.voucherActionTitle} numberOfLines={1} ellipsizeMode="tail">
                   {appliedCouponItem?.name || appliedCoupon || t('cartVoucherSelect') || 'Chọn hoặc nhập mã ưu đãi'}
                 </Text>
                 {discountAmount > 0 ? (
-                  <Text style={styles.voucherActionSub}>
+                  <Text style={styles.voucherActionSub} numberOfLines={1} ellipsizeMode="tail">
                     -{formatCurrency(discountAmount)} ({appliedCouponItem?.code || appliedCoupon})
                   </Text>
                 ) : (
-                  <Text style={styles.voucherActionHint}>
+                  <Text style={styles.voucherActionHint} numberOfLines={1} ellipsizeMode="tail">
                     {t('singleUseOnlyNotice') || 'Mỗi voucher chỉ áp dụng 1 lần duy nhất'}
                   </Text>
                 )}
@@ -359,7 +461,7 @@ export default function CartScreen() {
 
           {discountAmount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]} numberOfLines={1} ellipsizeMode="tail">
                 {t('voucherDiscountAmount') || 'Giảm giá Voucher'}{' '}
                 {appliedCouponItem?.code || appliedCoupon ? `(${appliedCouponItem?.code || appliedCoupon})` : ''}
               </Text>
@@ -371,38 +473,94 @@ export default function CartScreen() {
 
           {memberTier.discount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: '#9C7156' }]}>
+              <Text style={[styles.summaryLabel, { color: '#9C7156' }]} numberOfLines={1} ellipsizeMode="tail">
                 {t('memberTierDiscountLabel') || 'Ưu đãi hạng'} {memberTier.name} (-{memberTier.discount}%)
               </Text>
               <Text style={[styles.summaryValue, { color: '#9C7156', fontWeight: '700' }]}>
-                Áp dụng tại bước đặt hàng
+                {t('appliedAtCheckoutNotice')}
               </Text>
             </View>
           )}
 
           <Text style={styles.vatNoteText}>{t('vatIncludedNotice') || '(Giá đã bao gồm VAT)'}</Text>
         </View>
+
+        {/* Tác phẩm bạn vừa ngắm (Recently Viewed) */}
+        {recentProducts.length > 0 && (
+          <View style={styles.crossSellSection}>
+            <Text style={styles.crossSellSectionTitle}>{t('recentlyViewedCeramics')}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.crossSellScrollContent}
+            >
+              {recentProducts.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.crossSellCard}
+                  onPress={() => router.push(`/product/${item.id}`)}
+                  activeOpacity={0.85}
+                >
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.crossSellImg}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.crossSellName} numberOfLines={2} ellipsizeMode="tail">
+                    {item.name}
+                  </Text>
+                  <View style={styles.crossSellBottomRow}>
+                    <Text
+                      style={styles.crossSellPrice}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                    >
+                      {formatCurrency(item.salePrice || item.price)}
+                    </Text>
+                    <Ionicons name="arrow-forward-circle" size={24} color="#9C7156" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Thanh thanh toán dính đáy nổi bên trên Floating Tab Bar */}
-      <View style={[styles.bottomStickyBar, { bottom: bottomBarOffset }]}>
-        <View style={styles.bottomBarContent}>
-          <View style={styles.bottomSubtotalCol}>
-            <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
-            <Text style={styles.bottomSubtotalValue}>
-              {formatCurrency(Math.max(0, subtotal - discountAmount))}
-            </Text>
-          </View>
+      {/* Thanh thanh toán dính đáy màn hình bọc Liquid Glass chuẩn hệ thống iOS */}
+      <View
+        style={[styles.bottomStickyWrapper, { bottom: bottomBarOffset }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomStickyBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          <View style={styles.bottomBarContent}>
+            <View style={styles.bottomSubtotalCol}>
+              <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
+              <Text
+                style={styles.bottomSubtotalValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {formatCurrency(Math.max(0, subtotal - discountAmount))}
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            style={styles.proceedPillBtn}
-            onPress={handleProceedToCheckout}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.proceedBtnText}>{t('proceedToCheckout') || 'Tiến hành đặt hàng'}</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={styles.proceedPillBtn}
+              onPress={handleProceedToCheckout}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.proceedBtnText}>{t('proceedToCheckout') || 'Tiến hành đặt hàng'}</Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          </View>
+        </LiquidGlass>
       </View>
     </View>
   );
@@ -433,21 +591,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
-    },
-    roundClearBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: isDark ? '#121212' : Colors.cardBackground,
-      borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : '#E8E1D8',
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.06,
-      shadowRadius: 4,
-      elevation: isDark ? 0 : 2,
     },
     scrollContent: {
       paddingHorizontal: 16,
@@ -493,6 +636,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
+      flex: 1,
+      marginRight: 8,
     },
     headerIconCircle: {
       width: 32,
@@ -507,6 +652,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
+      flexShrink: 1,
     },
     removeVoucherText: {
       fontFamily: 'ElleGaborStd',
@@ -546,7 +692,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       color: Colors.textPrimary,
     },
     voucherActionSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: '#9C7156',
@@ -615,7 +760,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     stepQtyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -625,12 +769,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
     itemRightCol: {
       alignItems: 'flex-end',
       gap: 10,
+      flexShrink: 0,
     },
     itemPriceText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
-      color: Colors.textPrimary,
+      color: '#9C7156',
     },
     itemDeleteBtn: {
       flexDirection: 'row',
@@ -693,10 +837,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
     },
     crossSellPrice: {
-      fontFamily: 'ElleGaborStd',
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: '700',
       color: '#9C7156',
+      flexShrink: 1,
+      marginRight: 6,
     },
     crossSellAddBtn: {
       width: 28,
@@ -705,6 +850,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: '#9C7156',
       alignItems: 'center',
       justifyContent: 'center',
+      flexShrink: 0,
     },
     summaryCard: {
       backgroundColor: Colors.cardBackground,
@@ -728,12 +874,14 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
+      flex: 1,
+      marginRight: 8,
     },
     summaryValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
+      flexShrink: 0,
     },
     vatNoteText: {
       fontFamily: 'ElleGaborStd',
@@ -742,21 +890,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'right',
       marginTop: 2,
     },
-    bottomStickyBar: {
+    bottomStickyWrapper: {
       position: 'absolute',
       left: 14,
       right: 14,
-      backgroundColor: isDark ? 'rgba(22, 22, 22, 0.96)' : 'rgba(255, 255, 255, 0.97)',
-      borderRadius: 28,
-      paddingHorizontal: 16,
+      zIndex: 50,
+    },
+    bottomStickyBar: {
+      borderRadius: 36,
+      paddingHorizontal: 18,
       paddingVertical: 10,
-      borderWidth: 1,
-      borderColor: isDark ? '#2A2A2A' : '#E8E1D8',
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 10,
-      elevation: 6,
+      overflow: 'hidden',
     },
     bottomBarContent: {
       flexDirection: 'row',
@@ -766,6 +910,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomSubtotalCol: {
       justifyContent: 'center',
+      flexShrink: 0,
     },
     bottomSubtotalLabel: {
       fontFamily: 'ElleGaborStd',
@@ -774,10 +919,9 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     bottomSubtotalValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
-      fontWeight: '800',
-      color: Colors.textPrimary,
+      fontWeight: '700',
+      color: '#9C7156',
     },
     proceedPillBtn: {
       flex: 1,

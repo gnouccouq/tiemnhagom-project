@@ -338,7 +338,15 @@ export default function VouchersScreen() {
                           ]}
                         >
                           <Ionicons
-                            name={isUsed ? 'checkmark-circle-outline' : isExpired ? 'time-outline' : 'sparkles-outline'}
+                            name={
+                              isUsed
+                                ? 'checkmark-circle-outline'
+                                : isExpired
+                                ? 'time-outline'
+                                : item.assignedBy || item.id.startsWith('GIFT')
+                                ? 'gift-outline'
+                                : 'pricetag-outline'
+                            }
                             size={11}
                             color={isUsed ? '#888888' : isExpired ? '#999999' : '#9C7156'}
                             style={{ marginRight: 3 }}

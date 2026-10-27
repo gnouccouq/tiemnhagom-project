@@ -22,6 +22,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { BlurButton } from '../src/components/BlurButton';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { SymbolView } from 'expo-symbols';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { CouponItem } from '../src/services/couponService';
@@ -229,7 +230,7 @@ export default function VoucherDetailScreen() {
         {
           text: t('goToCartBtn') || 'Đến giỏ hàng',
           style: 'primary',
-          onPress: () => router.push('/(tabs)/cart'),
+          onPress: () => router.push('/cart'),
         },
         {
           text: t('continueBrowsingBtn') || 'Tiếp tục xem',
@@ -338,7 +339,7 @@ export default function VoucherDetailScreen() {
           {/* Badge loại ưu đãi nổi bật */}
           <View style={styles.highlightBadgeRow}>
             <View style={styles.highlightBadge}>
-              <Ionicons name="sparkles" size={13} color="#9C7156" style={{ marginRight: 5 }} />
+              <Ionicons name="pricetag-outline" size={13} color="#9C7156" style={{ marginRight: 5 }} />
               <Text style={styles.highlightBadgeText}>{discountHighlight}</Text>
             </View>
             <View style={styles.minSpendChip}>
@@ -495,68 +496,77 @@ export default function VoucherDetailScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* ================= 5. NÚT ÁP DỤNG STICKY CỐ ĐỊNH Ở ĐÁY ================= */}
+      {/* ================= 5. NÚT ÁP DỤNG NỔI BỌC LIQUID GLASS Ở ĐÁY ================= */}
       <View
         style={[
-          styles.stickyBottomBar,
-          {
-            paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 18,
-            backgroundColor: isDark ? '#000000' : '#F6F4EC',
-          },
+          styles.stickyBottomWrapper,
+          { bottom: Math.max(insets.bottom, 14) },
         ]}
+        pointerEvents="box-none"
       >
-        {isOwnerOfFriendVoucher ? (
-          <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
-            <ScalePressable
-              style={[
-                styles.applyBtn,
-                { flex: 1, backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF', borderWidth: 1, borderColor: '#9C7156' },
-              ]}
-              onPress={handleCopyCode}
-              activeScale={0.96}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="copy-outline" size={17} color="#9C7156" />
-                <Text style={[styles.applyBtnText, { color: '#9C7156' }]}>
-                  {copied ? (t('copied') || 'Đã chép') : (t('copyCodeBtn') || 'Sao chép mã')}
-                </Text>
+        <LiquidGlass
+          style={styles.stickyBottomBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          {isOwnerOfFriendVoucher ? (
+            <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+              <View style={{ flex: 1 }}>
+                <ScalePressable
+                  style={[
+                    styles.applyBtn,
+                    { backgroundColor: isDark ? 'rgba(30, 30, 30, 0.55)' : 'rgba(255, 255, 255, 0.72)', borderWidth: 1.5, borderColor: '#9C7156' },
+                  ]}
+                  onPress={handleCopyCode}
+                  activeScale={0.96}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="copy-outline" size={17} color={isDark ? '#E8CCB2' : '#9C7156'} />
+                    <Text style={[styles.applyBtnText, { color: isDark ? '#E8CCB2' : '#9C7156' }]}>
+                      {copied ? (t('copied') || 'Đã chép') : (t('copyCodeBtn') || 'Sao chép mã')}
+                    </Text>
+                  </View>
+                </ScalePressable>
               </View>
-            </ScalePressable>
 
-            <ScalePressable
-              style={[styles.applyBtn, { flex: 1.2 }]}
-              onPress={handleShareCode}
-              activeScale={0.96}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.applyBtnText}>
-                  {t('shareCodeBtn') || 'Chia sẻ mã ngay'}
-                </Text>
+              <View style={{ flex: 1.2 }}>
+                <ScalePressable
+                  style={styles.applyBtn}
+                  onPress={handleShareCode}
+                  activeScale={0.96}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.applyBtnText}>
+                      {t('shareCodeBtn') || 'Chia sẻ mã ngay'}
+                    </Text>
+                  </View>
+                </ScalePressable>
               </View>
+            </View>
+          ) : (
+            <ScalePressable
+              style={[styles.applyBtn, voucher.isUsed && { opacity: 0.5, backgroundColor: isDark ? '#262626' : '#E0DCD5' }]}
+              onPress={() => {
+                if (voucher.isUsed) {
+                  dialog.alert(
+                    t('notice') || 'Thông báo',
+                    t('voucherAlreadyUsed') || 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.'
+                  );
+                  return;
+                }
+                handleApply();
+              }}
+              disabled={voucher.isUsed}
+              activeScale={voucher.isUsed ? 1 : 0.96}
+            >
+              <Text style={[styles.applyBtnText, voucher.isUsed && { color: isDark ? '#888888' : '#777777' }]}>
+                {voucher.isUsed ? (t('usedStatus') || 'Đã sử dụng') : t('applyVoucher')}
+              </Text>
             </ScalePressable>
-          </View>
-        ) : (
-          <ScalePressable
-            style={[styles.applyBtn, voucher.isUsed && { opacity: 0.5, backgroundColor: isDark ? '#262626' : '#E0DCD5' }]}
-            onPress={() => {
-              if (voucher.isUsed) {
-                dialog.alert(
-                  t('notice') || 'Thông báo',
-                  t('voucherAlreadyUsed') || 'Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó.'
-                );
-                return;
-              }
-              handleApply();
-            }}
-            disabled={voucher.isUsed}
-            activeScale={voucher.isUsed ? 1 : 0.96}
-          >
-            <Text style={[styles.applyBtnText, voucher.isUsed && { color: isDark ? '#888888' : '#777777' }]}>
-              {voucher.isUsed ? (t('usedStatus') || 'Đã sử dụng') : t('applyVoucher')}
-            </Text>
-          </ScalePressable>
-        )}
+          )}
+        </LiquidGlass>
       </View>
 
       {/* ================= 6. MODAL ĐIỀU KHOẢN VỚI SPRING ANIMATION UX ================= */}
@@ -1115,17 +1125,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
 
     // ================= STICKY BOTTOM BAR =================
-    stickyBottomBar: {
+    stickyBottomWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      paddingTop: 12,
-      paddingHorizontal: 20,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: isDark ? '#222222' : 'rgba(232, 225, 216, 0.7)',
+      left: 14,
+      right: 14,
       zIndex: 40,
-      elevation: 10,
+    },
+    stickyBottomBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     applyBtn: {
       height: 52,

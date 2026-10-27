@@ -165,7 +165,7 @@ export default function ArticleDetailScreen() {
           </Text>
 
           <View style={styles.brandBox}>
-            <Ionicons name="sparkles" size={18} color="#9C7156" />
+            <Ionicons name="storefront-outline" size={18} color="#9C7156" />
             <Text style={styles.brandBoxTitle}>Tiệm Nhà Gốm • Ceramics & Decor</Text>
             <Text style={styles.brandBoxDesc}>
               37 Nguyễn Duy, Phường Gia Định, TP. Hồ Chí Minh • Hotline: 0777709662

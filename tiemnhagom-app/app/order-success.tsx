@@ -8,25 +8,28 @@ import {
   TouchableOpacity,
   StatusBar,
   Linking,
-  Platform,
   Alert,
   Clipboard,
   ActivityIndicator,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, useThemeColor, checkIsDark, Typography, Spacing, BorderRadius, Shadows } from '../src/constants/theme';
+import { LiquidGlass } from '../src/components/LiquidGlass';
+import { useThemeColor, checkIsDark, Typography, Spacing } from '../src/constants/theme';
 import { formatCurrency } from '../src/utils/format';
 import { useSettings } from '../src/context/SettingsContext';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const themeColors = useThemeColor();
-  const isDark = checkIsDark(themeColors);
+  const insets = useSafeAreaInsets();
+  const Colors = useThemeColor();
+  const isDark = checkIsDark(Colors);
+  const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
   const params = useLocalSearchParams<{
     orderCode: string;
@@ -47,7 +50,6 @@ export default function OrderSuccessScreen() {
   const ACCOUNT_NO = '1059447798';
   const ACCOUNT_NAME = 'HO KINH DOANH TIEM NHA GOM';
   const BANK_NAME = 'Vietcombank (VCB)';
-  const BRANCH = 'VCB Tân Bình - PGD ETown';
 
   // Link VietQR tự động khớp với hệ thống Web
   const vietQrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderCode)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
@@ -55,10 +57,11 @@ export default function OrderSuccessScreen() {
   const copyToClipboard = async (text: string, fieldName: string) => {
     try {
       Clipboard.setString(text);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setCopiedField(fieldName);
       setTimeout(() => setCopiedField(null), 2500);
     } catch {
-      Alert.alert('Thông báo', `Đã sao chép: ${text}`);
+      Alert.alert(t('notification'), `${t('copiedShort')}: ${text}`);
     }
   };
 
@@ -69,10 +72,7 @@ export default function OrderSuccessScreen() {
       setSavingQr(true);
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Yêu cầu quyền truy cập',
-          'Vui lòng cấp quyền truy cập Thư viện ảnh trong Cài đặt máy để lưu mã QR thanh toán.'
-        );
+        Alert.alert(t('qrPermissionTitle'), t('qrPermissionDesc'));
         return;
       }
 
@@ -81,16 +81,14 @@ export default function OrderSuccessScreen() {
 
       if (downloadRes.status === 200) {
         await MediaLibrary.saveToLibraryAsync(downloadRes.uri);
-        Alert.alert(
-          'Đã lưu thành công! 🎉',
-          'Mã QR thanh toán đã được lưu vào Bộ sưu tập ảnh. Bạn có thể mở ứng dụng Ngân hàng và chọn Quét QR từ ảnh.'
-        );
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        Alert.alert(t('qrSavedSuccessTitle'), t('qrSavedSuccessDesc'));
       } else {
-        throw new Error('Tải ảnh QR thất bại');
+        throw new Error('Download failed');
       }
     } catch (err: any) {
       console.warn('Lỗi lưu mã QR:', err);
-      Alert.alert('Không thể lưu ảnh', 'Đã có lỗi xảy ra khi lưu mã QR vào máy. Vui lòng thử chụp lại màn hình.');
+      Alert.alert(t('qrSaveFailedTitle'), t('qrSaveFailedDesc'));
     } finally {
       setSavingQr(false);
     }
@@ -99,7 +97,7 @@ export default function OrderSuccessScreen() {
   // Tính năng 2: Mở ứng dụng ngân hàng hoặc danh sách app thanh toán
   const handleOpenBankingApp = async () => {
     try {
-      // Deeplink mở trực tiếp app Vietcombank Digibank hoặc danh sách app ngân hàng
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       const vcbScheme = 'vietcombank://';
       const canOpenVCB = await Linking.canOpenURL(vcbScheme);
 
@@ -108,17 +106,17 @@ export default function OrderSuccessScreen() {
         return;
       }
 
-      // Nếu không có scheme riêng, mở app ngân hàng mặc định hoặc hướng dẫn
+      Clipboard.setString(ACCOUNT_NO);
       Alert.alert(
-        'Thanh toán Ngân hàng',
-        'Đã sao chép số tài khoản & nội dung đơn hàng. Vui lòng mở ứng dụng ngân hàng trên máy bạn để tiến hành quét QR hoặc dán thông tin chuyển khoản.',
+        t('bankingAppGuideTitle'),
+        t('bankingAppGuideDesc'),
         [
           {
-            text: 'Sao chép STK',
+            text: t('copyAccountNumberAction'),
             onPress: () => copyToClipboard(ACCOUNT_NO, 'stk'),
           },
           {
-            text: 'Đã hiểu',
+            text: t('understoodAction'),
             style: 'cancel',
           },
         ]
@@ -129,25 +127,35 @@ export default function OrderSuccessScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+    <View style={styles.safeArea}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Success Icon */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + Spacing.xl,
+            paddingBottom: Math.max(insets.bottom, 20) + 110,
+          },
+        ]}
+      >
+        {/* Success Icon chuẩn màu Nâu Đất Nung #9C7156 */}
         <View style={styles.iconCircle}>
-          <Ionicons name="checkmark-circle" size={68} color={Colors.success} />
+          <Ionicons name="checkmark-circle" size={72} color="#9C7156" />
         </View>
 
         <Text style={styles.title}>{t('orderSuccessTitle')}</Text>
-        <Text style={styles.subtitle}>
-          {t('orderSuccessDesc')}
-        </Text>
+        <Text style={styles.subtitle}>{t('orderSuccessDesc')}</Text>
 
         {/* Order Details Card */}
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.label}>{t('orderCodeText')}</Text>
-            <Text style={styles.orderCode}>{orderCode}</Text>
+            <Text style={styles.orderCode} numberOfLines={1} ellipsizeMode="tail">
+              {orderCode}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>{t('orderTotal')}</Text>
@@ -165,9 +173,7 @@ export default function OrderSuccessScreen() {
         {isBanking && (
           <View style={styles.bankingCard}>
             <Text style={styles.bankingTitle}>{t('bankingInfoTitle')}</Text>
-            <Text style={styles.bankingSubtitle}>
-              {t('bankingInfoSubtitle')}
-            </Text>
+            <Text style={styles.bankingSubtitle}>{t('bankingInfoSubtitle')}</Text>
 
             <View style={styles.qrContainer}>
               <Image source={{ uri: vietQrUrl }} style={styles.qrImage} contentFit="contain" />
@@ -182,12 +188,12 @@ export default function OrderSuccessScreen() {
                 disabled={savingQr}
               >
                 {savingQr ? (
-                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <ActivityIndicator size="small" color="#9C7156" />
                 ) : (
-                  <Ionicons name="download-outline" size={16} color={Colors.primary} />
+                  <Ionicons name="download-outline" size={16} color="#9C7156" />
                 )}
-                <Text style={styles.qrActionBtnText}>
-                  {savingQr ? 'Đang lưu...' : 'Lưu ảnh QR'}
+                <Text style={styles.qrActionBtnText} numberOfLines={1}>
+                  {savingQr ? t('savingQrAction') : t('saveQrAction')}
                 </Text>
               </TouchableOpacity>
 
@@ -197,17 +203,24 @@ export default function OrderSuccessScreen() {
                 activeOpacity={0.82}
               >
                 <Ionicons name="phone-portrait-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.qrActionBtnTextPrimary}>Mở App Ngân hàng</Text>
+                <Text style={styles.qrActionBtnTextPrimary} numberOfLines={1}>
+                  {t('openBankingAppAction')}
+                </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.bankInfoBox}>
               <View style={styles.bankInfoRow}>
-                <Text style={styles.bankInfoText}>• {t('bankNameLabel')} <Text style={styles.bold}>{BANK_NAME}</Text></Text>
+                <Text style={styles.bankInfoText}>
+                  • {t('bankNameLabel')} <Text style={styles.bold}>{BANK_NAME}</Text>
+                </Text>
               </View>
 
               <View style={styles.bankInfoRow}>
-                <Text style={styles.bankInfoText}>• {t('bankAccountLabel')} <Text style={[styles.bold, { color: Colors.primaryDark, fontSize: 13 }]}>{ACCOUNT_NO}</Text></Text>
+                <Text style={styles.bankInfoText}>
+                  • {t('bankAccountLabel')}{' '}
+                  <Text style={[styles.bold, { color: '#9C7156', fontSize: 13 }]}>{ACCOUNT_NO}</Text>
+                </Text>
                 <TouchableOpacity
                   style={styles.inlineCopyBtn}
                   onPress={() => copyToClipboard(ACCOUNT_NO, 'stk')}
@@ -216,20 +229,24 @@ export default function OrderSuccessScreen() {
                   <Ionicons
                     name={copiedField === 'stk' ? 'checkmark' : 'copy-outline'}
                     size={14}
-                    color={copiedField === 'stk' ? Colors.success : Colors.primary}
+                    color="#9C7156"
                   />
-                  <Text style={[styles.inlineCopyText, copiedField === 'stk' && { color: Colors.success }]}>
-                    {copiedField === 'stk' ? 'Đã chép' : 'Sao chép'}
+                  <Text style={styles.inlineCopyText}>
+                    {copiedField === 'stk' ? t('copiedShort') : t('copyAction')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.bankInfoRow}>
-                <Text style={styles.bankInfoText}>• {t('bankOwnerLabel')} <Text style={styles.bold}>HỘ KINH DOANH TIỆM NHÀ GỐM</Text></Text>
+                <Text style={styles.bankInfoText}>
+                  • {t('bankOwnerLabel')} <Text style={styles.bold}>HỘ KINH DOANH TIỆM NHÀ GỐM</Text>
+                </Text>
               </View>
 
               <View style={styles.bankInfoRow}>
-                <Text style={styles.bankInfoText}>• {t('transferContentLabel')} <Text style={styles.boldHighlight}>{orderCode}</Text></Text>
+                <Text style={styles.bankInfoText}>
+                  • {t('transferContentLabel')} <Text style={styles.boldHighlight}>{orderCode}</Text>
+                </Text>
                 <TouchableOpacity
                   style={styles.inlineCopyBtn}
                   onPress={() => copyToClipboard(orderCode, 'code')}
@@ -238,10 +255,10 @@ export default function OrderSuccessScreen() {
                   <Ionicons
                     name={copiedField === 'code' ? 'checkmark' : 'copy-outline'}
                     size={14}
-                    color={copiedField === 'code' ? Colors.success : Colors.primary}
+                    color="#9C7156"
                   />
-                  <Text style={[styles.inlineCopyText, copiedField === 'code' && { color: Colors.success }]}>
-                    {copiedField === 'code' ? 'Đã chép' : 'Sao chép'}
+                  <Text style={styles.inlineCopyText}>
+                    {copiedField === 'code' ? t('copiedShort') : t('copyAction')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -250,288 +267,338 @@ export default function OrderSuccessScreen() {
         )}
 
         <View style={styles.noticeBox}>
-          <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
-          <Text style={styles.noticeText}>
-            {t('orderNoticeText')}
-          </Text>
-        </View>
-
-        {/* Actions */}
-        <View style={styles.actionsGroup}>
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => router.replace('/orders')}
-            activeOpacity={0.88}
-          >
-            <Ionicons name="receipt-outline" size={18} color={Colors.textInverse} />
-            <Text style={styles.primaryBtnText}>{t('trackOrder')}</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} style={{ marginLeft: 2 }} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={() => router.replace('/(tabs)')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.secondaryBtnText}>{t('continueShopping')}</Text>
-          </TouchableOpacity>
+          <Ionicons name="information-circle-outline" size={20} color="#9C7156" />
+          <Text style={styles.noticeText}>{t('orderNoticeText')}</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Thanh hành động đáy nổi dạng viên thuốc bọc LiquidGlass chuẩn hệ thống iOS */}
+      <View
+        style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          <View style={styles.bottomBarRow}>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={() => router.replace('/(tabs)')}
+              activeOpacity={0.82}
+            >
+              <Text
+                style={styles.secondaryBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {t('continueShopping')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={() => router.replace('/orders')}
+              activeOpacity={0.88}
+            >
+              <Ionicons name="receipt-outline" size={17} color="#FFFFFF" />
+              <Text
+                style={styles.primaryBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {t('trackOrder')}
+              </Text>
+              <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </LiquidGlass>
+      </View>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
-    alignItems: 'center',
-  },
-  iconCircle: {
-    marginBottom: Spacing.md,
-  },
-  title: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xxl,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.lg,
-    maxWidth: 300,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 20,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  label: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-  },
-  orderCode: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.base,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  price: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.base,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  value: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  bankingCard: {
-    width: '100%',
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 20,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-  },
-  bankingTitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.base,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  bankingSubtitle: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: Spacing.md,
-  },
-  qrContainer: {
-    width: 200,
-    height: 200,
-    backgroundColor: '#FFFFFF',
-    padding: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.md,
-  },
-  qrImage: {
-    width: '100%',
-    height: '100%',
-  },
-  qrActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: Spacing.md,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  qrActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.2,
-    borderColor: '#E8CCB2',
-    backgroundColor: '#FFFFFF',
-    gap: 6,
-    paddingHorizontal: 12,
-  },
-  qrActionBtnPrimary: {
-    backgroundColor: '#9C7156',
-    borderColor: '#9C7156',
-  },
-  qrActionBtnText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    fontWeight: '700',
-    color: '#9C7156',
-  },
-  qrActionBtnTextPrimary: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  bankInfoBox: {
-    width: '100%',
-    backgroundColor: Colors.surface,
-    padding: Spacing.md,
-    borderRadius: 14,
-    gap: 8,
-  },
-  bankInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  inlineCopyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8CCB2',
-  },
-  inlineCopyText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#9C7156',
-  },
-  bankInfoText: {
-    fontFamily: 'ElleGaborStd',
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textPrimary,
-    flexShrink: 1,
-  },
-  bold: {
-    fontWeight: '700',
-  },
-  boldHighlight: {
-    fontWeight: '800',
-    color: Colors.primaryDark,
-  },
-  noticeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF8E7',
-    padding: Spacing.md,
-    borderRadius: 16,
-    gap: Spacing.sm,
-    width: '100%',
-    marginBottom: Spacing.xl,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  noticeText: {
-    fontFamily: 'ElleGaborStd',
-    flex: 1,
-    fontSize: Typography.fontSize.xs,
-    color: '#8A6D3B',
-    lineHeight: 18,
-  },
-  actionsGroup: {
-    width: '100%',
-    gap: Spacing.md,
-  },
-  primaryBtn: {
-    backgroundColor: '#111111',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 52,
-    borderRadius: 26,
-    gap: Spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: Colors.textInverse,
-    fontWeight: '700',
-    fontSize: Typography.fontSize.base,
-  },
-  secondaryBtn: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.2,
-    borderColor: '#E4E4E7',
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  secondaryBtnText: {
-    fontFamily: 'ElleGaborStd',
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    fontSize: Typography.fontSize.sm,
-  },
-});
+const getStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    scrollContent: {
+      paddingHorizontal: Spacing.lg,
+      alignItems: 'center',
+    },
+    iconCircle: {
+      marginBottom: Spacing.md,
+    },
+    title: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xxl,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: Colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginTop: Spacing.xs,
+      marginBottom: Spacing.lg,
+      maxWidth: 320,
+    },
+    card: {
+      width: '100%',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: Spacing.lg,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : Colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+      marginBottom: Spacing.md,
+      gap: Spacing.sm,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    label: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.sm,
+      color: Colors.textSecondary,
+      flex: 1,
+      marginRight: 8,
+    },
+    orderCode: {
+      fontSize: Typography.fontSize.base,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+      letterSpacing: 0.4,
+      flexShrink: 0,
+    },
+    price: {
+      fontSize: Typography.fontSize.base,
+      fontWeight: '700',
+      color: '#9C7156',
+      flexShrink: 0,
+    },
+    value: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xs,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+      flexShrink: 0,
+    },
+    bankingCard: {
+      width: '100%',
+      backgroundColor: Colors.cardBackground,
+      borderRadius: 20,
+      padding: Spacing.lg,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : Colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.04,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 2,
+      marginBottom: Spacing.md,
+      alignItems: 'center',
+    },
+    bankingTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.base,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    bankingSubtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xs,
+      color: Colors.textMuted,
+      textAlign: 'center',
+      marginTop: 4,
+      marginBottom: Spacing.md,
+    },
+    qrContainer: {
+      width: 200,
+      height: 200,
+      backgroundColor: '#FFFFFF',
+      padding: 10,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: '#E8E1D8',
+      marginBottom: Spacing.md,
+    },
+    qrImage: {
+      width: '100%',
+      height: '100%',
+    },
+    qrActionRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginBottom: Spacing.md,
+      width: '100%',
+      justifyContent: 'center',
+    },
+    qrActionBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 1.2,
+      borderColor: '#9C7156',
+      backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+      gap: 6,
+      paddingHorizontal: 12,
+    },
+    qrActionBtnPrimary: {
+      backgroundColor: '#9C7156',
+      borderColor: '#9C7156',
+    },
+    qrActionBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xs,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    qrActionBtnTextPrimary: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xs,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    bankInfoBox: {
+      width: '100%',
+      backgroundColor: Colors.surface,
+      padding: Spacing.md,
+      borderRadius: 16,
+      gap: 8,
+    },
+    bankInfoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    inlineCopyBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 12,
+      backgroundColor: isDark ? '#121212' : '#FFFFFF',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: '#E8CCB2',
+    },
+    inlineCopyText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    bankInfoText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: Typography.fontSize.xs,
+      color: Colors.textPrimary,
+      flexShrink: 1,
+      marginRight: 8,
+    },
+    bold: {
+      fontWeight: '700',
+    },
+    boldHighlight: {
+      fontWeight: '800',
+      color: '#9C7156',
+      letterSpacing: 0.3,
+    },
+    noticeBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2',
+      padding: Spacing.md,
+      borderRadius: 16,
+      gap: Spacing.sm,
+      width: '100%',
+      marginBottom: Spacing.xl,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: '#E8CCB2',
+    },
+    noticeText: {
+      fontFamily: 'ElleGaborStd',
+      flex: 1,
+      fontSize: Typography.fontSize.xs,
+      color: Colors.textSecondary,
+      lineHeight: 18,
+    },
+    bottomBarWrapper: {
+      position: 'absolute',
+      left: 14,
+      right: 14,
+      zIndex: 100,
+    },
+    bottomBar: {
+      borderRadius: 36,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: isDark ? 0.45 : 0.14,
+      shadowRadius: 18,
+      elevation: 10,
+    },
+    bottomBarRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    secondaryBtn: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(156,113,86,0.10)',
+      borderWidth: 1.2,
+      borderColor: '#9C7156',
+      height: 50,
+      borderRadius: 25,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+    },
+    secondaryBtnText: {
+      fontFamily: 'ElleGaborStd',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    primaryBtn: {
+      flex: 1.25,
+      backgroundColor: '#9C7156',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: 50,
+      borderRadius: 25,
+      gap: 6,
+      paddingHorizontal: 14,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    primaryBtnText: {
+      fontFamily: 'ElleGaborStd',
+      color: '#FFFFFF',
+      fontWeight: '700',
+      fontSize: 14.5,
+    },
+  });

@@ -14,6 +14,7 @@ import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
@@ -164,15 +165,25 @@ export default function SelectAddressScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Nút xác nhận dính đáy màn hình */}
-      <View style={[styles.bottomStickyBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-        <TouchableOpacity
-          style={styles.confirmPillBtn}
-          onPress={handleConfirm}
-          activeOpacity={0.88}
+      {/* Nút xác nhận dính đáy màn hình bọc Liquid Glass chuẩn hệ thống iOS */}
+      <View
+        style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomStickyBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
         >
-          <Text style={styles.confirmBtnText}>{t('confirmBtn') || 'Xác nhận'}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.confirmPillBtn}
+            onPress={handleConfirm}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.confirmBtnText}>{t('confirmBtn') || 'Xác nhận'}</Text>
+          </TouchableOpacity>
+        </LiquidGlass>
       </View>
     </View>
   );
@@ -342,15 +353,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '700',
       color: '#9C7156',
     },
-    bottomStickyBar: {
+    bottomStickyWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: Colors.background,
-      paddingHorizontal: 16,
-      paddingTop: 10,
-      borderTopWidth: 0,
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomStickyBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     confirmPillBtn: {
       height: 52,

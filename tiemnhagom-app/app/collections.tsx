@@ -115,7 +115,7 @@ export default function CollectionsScreen() {
           />
           <View style={styles.heroBannerContent}>
             <View style={styles.badgeCapsule}>
-              <Ionicons name="sparkles" size={13} color="#E8CCB2" style={{ marginRight: 5 }} />
+              <Ionicons name="albums-outline" size={13} color="#E8CCB2" style={{ marginRight: 5 }} />
               <Text style={styles.badgeText}>{t('featuredThemes') || 'Chủ đề tuyển chọn'}</Text>
             </View>
             <Text style={styles.heroBannerTitle}>{t('allCollectionsTitle')}</Text>

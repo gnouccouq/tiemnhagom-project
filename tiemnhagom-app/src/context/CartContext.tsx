@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react';
 import { Dimensions } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -46,6 +47,10 @@ interface CartContextType {
   setPaymentMethod: (method: PaymentMethodType) => void;
   orderNote: string;
   setOrderNote: (note: string) => void;
+  isGiftWrap: boolean;
+  setIsGiftWrap: (val: boolean) => void;
+  giftCardMessage: string;
+  setGiftCardMessage: (msg: string) => void;
   cartBounceKey: number;
   triggerCartBounce: () => void;
   flyToCart: (imageUri: string, startX?: number, startY?: number, targetX?: number, targetY?: number) => void;
@@ -124,6 +129,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express_2h' | 'pickup'>('standard');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('cod');
   const [orderNote, setOrderNote] = useState<string>('');
+  const [isGiftWrap, setIsGiftWrap] = useState<boolean>(false);
+  const [giftCardMessage, setGiftCardMessage] = useState<string>('');
   const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null);
 
   const [cartBounceKey, setCartBounceKey] = useState<number>(0);
@@ -198,6 +205,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const triggerCartBounce = () => {
     setCartBounceKey((k) => k + 1);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   };
 
   const flyToCart = (
@@ -410,11 +418,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     saveCartState(nextCart);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   };
 
   const removeFromCart = (itemId: string) => {
     const nextCart = cart.filter((item) => item.id !== itemId);
     saveCartState(nextCart);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -432,12 +442,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return item;
     });
     saveCartState(nextCart);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   };
 
   const clearCart = () => {
     saveCartState([]);
     setAppliedCoupon(null);
     setAppliedCouponItem(null);
+    setIsGiftWrap(false);
+    setGiftCardMessage('');
   };
 
   const applyCoupon = (code: string): boolean => {
@@ -546,6 +559,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPaymentMethod,
         orderNote,
         setOrderNote,
+        isGiftWrap,
+        setIsGiftWrap,
+        giftCardMessage,
+        setGiftCardMessage,
         cartBounceKey,
         triggerCartBounce,
         flyToCart,

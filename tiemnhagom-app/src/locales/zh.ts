@@ -354,6 +354,9 @@ export const zh = {
   voucherDiscountAmount: '优惠券折扣',
   totalPayment: '总付款',
   proceedToCheckout: '去结算',
+  freeShipQualifiedNotice: '您的订单已满足免费标准配送条件！',
+  freeShipRemainingNotice: '再购满 {amount} 即可享全国包邮！',
+  appliedAtCheckoutNotice: '结账时自动抵扣',
 
   // Redesigned Cart & Order
   orderHeader: '订单',
@@ -1015,6 +1018,58 @@ export const zh = {
   rentalEventGallery: '实景案例相册',
   rentalEmptyEvents: '暂未发布活动案例。',
   rentalEmptyProducts: '该分类下暂无租赁陶瓷器物。',
+
+  // Order Success & Banking i18n
+  saveQrAction: '保存二维码',
+  savingQrAction: '保存中...',
+  openBankingAppAction: '打开银行应用',
+  copiedShort: '已复制',
+  copyAction: '复制',
+  qrPermissionTitle: '需要相册权限',
+  qrPermissionDesc: '请在系统设置中授予相册访问权限以保存付款二维码。',
+  qrSavedSuccessTitle: '二维码已保存！',
+  qrSavedSuccessDesc: '付款二维码已保存至系统相册，您可打开银行应用从相册扫码支付。',
+  qrSaveFailedTitle: '无法保存图片',
+  qrSaveFailedDesc: '保存二维码时出错，请尝试直接截屏保存。',
+  bankingAppGuideTitle: '银行转账支付',
+  bankingAppGuideDesc: '已复制收款账号与订单备注，请打开您的银行应用扫码或粘贴转账信息。',
+  copyAccountNumberAction: '复制收款账号',
+  understoodAction: '知道了',
+
+  // Gift Wrap & Handwritten Card (Checkout)
+  giftWrapTitle: '免费礼盒包装',
+  giftWrapSubtitle: '质朴牛皮纸盒配麻绳包装，并附赠为您亲笔书写祝福语的贺卡',
+  giftWrapFreeBadge: '免费礼遇',
+  giftCardMessageLabel: '手写贺卡祝福语',
+  giftCardMessagePlaceholder: '写下送给收礼人的温暖祝愿（最多150字）...',
+  giftWrapIncludedNote: '附礼盒与手写卡',
+
+  // Complete the Set & Share Card (Product Detail)
+  completeTheSetTitle: '同色釉系茶席搭配',
+  completeTheSetSubtitle: '挑选同系列手工作品，营造和谐雅致的茶席与餐桌美学',
+  addBundleToCartBtn: '加入已选组合 ({count} 件)',
+  shareCeramicCardTitle: '分享陶艺作品',
+  shareCeramicNowBtn: '立即分享',
+  copyProductLinkBtn: '复制链接',
+  handcraftedAtTiemNhaGom: '匠心手作 • 陶舍',
+  scanToViewProduct: '扫码查看器物详情',
+
+  // Photo Review & Order Detail
+  addReviewPhotoBtn: '添加实拍图 ({count}/3)',
+  reviewPointsBonusHint: '附上器物陈设实拍图可额外获赠 +20 陶瓷积分',
+  reviewThankYouTitle: '感谢您的评价！',
+  reviewThankYouWithPhotosDesc: '订单 #{code} 的 {stars} 星评价及 {photos} 张实拍图已提交，恭喜获赠 +20 陶瓷积分！',
+  reviewThankYouDesc: '订单 #{code} 的 {stars} 星评价已成功提交！',
+  reviewPlaceholderText: '分享您对釉色质感、器型与防震包装的使用感受...',
+  reviewOrderPrompt: '您对订单 #{code} 的整体体验如何？',
+  reviewTag1: '釉色温润雅致',
+  reviewTag2: '包装严密防震',
+  reviewTag3: '配送迅速准时',
+  reviewTag4: '100% 满意',
+
+  // Recently Viewed in Cart
+  recentlyViewedCeramics: '近期浏览的器物',
+  recentlyViewedSub: '轻触可再次查看或快速加入购物袋',
 };
 
 

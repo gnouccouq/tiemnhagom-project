@@ -2,6 +2,7 @@ import { useThemeColor } from '../constants/theme';
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
 import { checkOutOfStock } from '../utils/format';
 import { useRouter } from 'expo-router';
@@ -77,6 +78,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation?.();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     Animated.sequence([
       Animated.timing(heartScale, { toValue: 1.35, duration: 110, useNativeDriver: true }),
       Animated.spring(heartScale, { toValue: 1, friction: 4, tension: 70, useNativeDriver: true }),

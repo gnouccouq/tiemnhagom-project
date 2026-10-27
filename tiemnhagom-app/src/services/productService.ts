@@ -33,7 +33,7 @@ export function getCategoryIcon(name: string): string {
   if (n.includes('tea') || n.includes('trà') || n.includes('ly') || n.includes('cốc') || n.includes('drink')) return 'cafe-outline';
   if (n.includes('hoa') || n.includes('bình') || n.includes('decor') || n.includes('tượng') || n.includes('home')) return 'flower-outline';
   if (n.includes('kitchen') || n.includes('nồi') || n.includes('chảo') || n.includes('bếp')) return 'flame-outline';
-  if (n.includes('lifestyle') || n.includes('túi') || n.includes('khóa') || n.includes('nến') || n.includes('thơm')) return 'sparkles-outline';
+  if (n.includes('lifestyle') || n.includes('túi') || n.includes('khóa') || n.includes('nến') || n.includes('thơm')) return 'bag-handle-outline';
   if (n.includes('value') || n.includes('pack') || n.includes('combo') || n.includes('set') || n.includes('quà')) return 'gift-outline';
   return 'grid-outline';
 }
@@ -67,7 +67,7 @@ export const DEFAULT_CATEGORIES: ProductCategoryItem[] = [
   {
     id: 'Lifestyle',
     name: 'Lifestyle',
-    icon: 'sparkles-outline',
+    icon: 'bag-handle-outline',
     subs: ['Tinh Dầu & Nến Thơm', 'Túi & Giỏ Đan', 'Móc Khóa & Quà Tặng', 'Phụ Kiện Cá Nhân'],
   },
   {

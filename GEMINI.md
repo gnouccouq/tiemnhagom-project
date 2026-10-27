@@ -54,11 +54,16 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * Nổi khối cao cấp: `shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 4`.
   * Chữ: `fontFamily: 'ElleGaborStd'`, `fontSize: 15px - 16px`, `fontWeight: '700'`.
   * Icon đi kèm: Đặt sát chữ (mũi tên `arrow-forward`, checkmark, icon download...) để định hướng hành động.
-* **Nút hành động cố định đáy màn hình (Sticky Bottom Action Container):**
-  * Áp dụng cho các nút CTA chính ở màn hình cuộn (như nút "Kiểm tra bản cập nhật" ở `version.tsx`, nút "Đặt hàng", "Áp dụng"...):
-    * Đặt trong khối `bottomFixedContainer` nằm ngoài `ScrollView`: `position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16)`.
-    * Phía sau nút luôn có lớp `LinearGradient` mờ dần từ trong suốt đến nền màn hình (`['rgba(...,0)', 'rgba(...,0.88)', 'rgba(...,0.98)']`) để nội dung bên dưới khi cuộn không bị cắt ngang thô kệch.
-    * Trong `ScrollView`, `contentContainerStyle` bắt buộc phải có `paddingBottom: Math.max(insets.bottom, 16) + 84` để nội dung cuối trang không bị che khuất sau nút cố định.
+* **Hiển thị tràn viền toàn màn hình & Thanh hành động đáy nổi bọc Liquid Glass (Full-Bleed Screen & Floating Liquid Glass Bottom Action Bar):**
+  * **Hiển thị Full-Bleed 100% tràn viền màn hình (Không có dải đen / khoảng cắt đáy):**
+    * Tuyệt đối **không dùng `SafeAreaView`** bọc ngoài cùng các trang cuộn vì `SafeAreaView` sẽ cắt vùng `insets.bottom`, tạo ra dải nền đặc hoặc vệt đen cắt ngang dưới đáy màn hình.
+    * Luôn dùng `<View style={{ flex: 1, backgroundColor: Colors.background }}>` kết hợp `contentInsetAdjustmentBehavior="never"` trên `ScrollView` / `FlatList` để nội dung cuộn xuyên suốt tràn xuống tận mép đáy màn hình phía sau lớp kính.
+  * **Thanh hành động cố định đáy màn hình dạng viên thuốc nổi bọc Liquid Glass (`LiquidGlass` Floating Pill):**
+    * Áp dụng cho toàn bộ các thanh CTA dưới đáy trang (như thanh "Tiến hành đặt hàng" ở `cart.tsx`, "Thêm vào giỏ & Mua ngay" ở `product/[id].tsx`, "Đặt hàng" ở `checkout.tsx`, nút "Áp dụng", "Xác nhận", "Kiểm tra bản cập nhật"...):
+    * **Tuyệt đối không** dùng thanh chữ nhật đặc chạm sát đáy (`bottom: 0, left: 0, right: 0` với `backgroundColor` đặc hoặc `borderTopWidth`).
+    * Đặt trong container nổi tách khỏi mép màn hình: `position: 'absolute', left: 14, right: 14, bottom: Math.max(insets.bottom, 14), zIndex: 100` kèm `pointerEvents="box-none"`.
+    * Bọc toàn bộ nội dung thanh đáy trong `<LiquidGlass interactive={true} effect="regular" isDark={isDark} style={{ borderRadius: 36, overflow: 'hidden', ... }}>` (tự động dùng hiệu ứng khúc xạ kính thật của hệ thống iOS 26 và tự động fallback sang kính mờ `BlurView` + nền bán trong suốt đồng bộ trên Android / iOS cũ).
+    * Trong `ScrollView` / `FlatList`, `contentContainerStyle` bắt buộc có `paddingBottom: Math.max(insets.bottom, 20) + 110` để nội dung cuối trang cuộn thoải mái lên trên thanh kính nổi.
 * **Secondary / Pill Buttons (Nút phụ, chip phân loại, toggle):**
   * Dạng viên thuốc nhỏ gọn: `height: 38px - 44px`, `borderRadius: 19px - 22px`.
   * Nền trắng hoặc trong suốt viền mảnh `1px - 1.2px` tinh tế.

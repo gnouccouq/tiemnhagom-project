@@ -480,7 +480,7 @@ export default function EventDecorScreen() {
             style={styles.heroGradient}
           >
             <View style={styles.heroBadge}>
-              <Ionicons name="sparkles" size={12} color="#FFFFFF" style={{ marginRight: 5 }} />
+              <Ionicons name="color-palette-outline" size={12} color="#FFFFFF" style={{ marginRight: 5 }} />
               <Text style={styles.heroBadgeText}>{t('eventDecorHeroBadge')}</Text>
             </View>
             <Text style={styles.heroTitle}>{t('eventDecorTitle')}</Text>
@@ -660,7 +660,7 @@ export default function EventDecorScreen() {
                           activeOpacity={0.88}
                           onPress={() => handleApplyConcept(proj.name)}
                         >
-                          <Ionicons name="sparkles" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Ionicons name="brush-outline" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
                           <Text style={styles.btnApplyConceptText}>{t('btnApplyConcept')}</Text>
                         </TouchableOpacity>
                       </View>

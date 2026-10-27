@@ -678,7 +678,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/event-decor' as any)}
             >
               <Text style={styles.primaryDarkBtnText}>{t('viewDecorService')}</Text>
-              <Ionicons name="sparkles-outline" size={15} color={Colors.textInverse} />
+              <Ionicons name="color-palette-outline" size={15} color={Colors.textInverse} />
             </TouchableOpacity>
           </View>
         </View>

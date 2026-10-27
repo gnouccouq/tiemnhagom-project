@@ -51,7 +51,7 @@ const STORE_BRANCHES: StoreBranch[] = [
     mapUrl: 'https://maps.app.goo.gl/7Jxw7yJyaQG8wkHeA',
     image: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
     features: [
-      { icon: 'sparkles-outline', labelKey: 'featUniqueWorks', defaultLabel: 'Trưng bày tác phẩm độc bản' },
+      { icon: 'diamond-outline', labelKey: 'featUniqueWorks', defaultLabel: 'Trưng bày tác phẩm độc bản' },
       { icon: 'flower-outline', labelKey: 'featFlowerArranging', defaultLabel: 'Cắm hoa nghệ thuật theo yêu cầu' },
       { icon: 'gift-outline', labelKey: 'featFreeGiftWrap', defaultLabel: 'Gói quà & Viết thiệp tay miễn phí' },
       { icon: 'card-outline', labelKey: 'featMultiplePayment', defaultLabel: 'Thanh toán thẻ / Chuyển khoản / Tiền mặt' },
@@ -140,7 +140,7 @@ export default function StoresScreen() {
                 transition={200}
               />
               <View style={styles.badgePill}>
-                <Ionicons name="sparkles" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+                <Ionicons name="storefront-outline" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
                 <Text style={styles.badgePillText}>
                   {t(branch.badgeKey) || branch.defaultBadge}
                 </Text>

@@ -18,11 +18,40 @@ export interface ReleaseVersion {
 export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.1',
+    buildNumber: '3',
+    otaVersion: '20261025.01',
+    releaseDate: '25/10/2026',
+    title: 'Liquid Glass Toàn Diện, Gói Quà Miễn Phí & Nâng Cấp Trải Nghiệm Mua Sắm',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Hiển thị tràn viền & Thanh đáy nổi Liquid Glass toàn ứng dụng',
+        description: 'Đồng bộ giao diện tràn viền 100% và bọc hiệu ứng kính khúc xạ LiquidGlass dạng viên thuốc nổi dưới đáy cho toàn bộ các trang (Giỏ hàng, Chi tiết sản phẩm, Thanh toán, Chi tiết đơn hàng...).',
+      },
+      {
+        title: 'Gói quà miễn phí & Viết thiệp tay nghệ nhân',
+        description: 'Bổ sung tuỳ chọn gói quà mộc mạc miễn phí kèm ô nhập lời chúc viết tay tại bước Thanh toán.',
+      },
+      {
+        title: 'Phối cùng bộ gốm đồng điệu & Thiệp chia sẻ tác phẩm',
+        description: 'Gợi ý phối trọn bộ gốm cùng danh mục ngay trên trang Chi tiết sản phẩm và tạo thiệp ảnh nghệ thuật để lưu hoặc chia sẻ nhanh.',
+      },
+      {
+        title: 'Đánh giá kèm hình ảnh thực tế (+20 Điểm Gốm) & Đặt lại đơn nhanh',
+        description: 'Hỗ trợ đính kèm ảnh chụp sản phẩm khi đánh giá đơn hàng nhận thưởng Điểm Gốm và nút đặt lại toàn bộ giỏ hàng chỉ với 1 chạm.',
+      },
+      {
+        title: 'Tác phẩm vừa ngắm & Phản hồi xúc giác Haptics',
+        description: 'Lưu danh sách các món gốm vừa xem trong Giỏ hàng và tích hợp rung phản hồi xúc giác tinh tế trên mọi thao tác.',
+      },
+    ],
+  },
+  {
+    version: '1.0.1',
     buildNumber: '2',
     otaVersion: '20261022.01',
     releaseDate: '22/10/2026',
     title: 'Phát hành bản dựng APK Android & Hệ thống OTA Update',
-    badge: 'Mới nhất',
     changes: [
       {
         title: 'Tối ưu bản cài đặt Android APK độc lập',

@@ -353,6 +353,9 @@ export const en = {
   voucherDiscountAmount: 'Voucher Discount',
   totalPayment: 'Total Payment',
   proceedToCheckout: 'Proceed to Checkout',
+  freeShipQualifiedNotice: 'Your order qualifies for free standard nationwide shipping!',
+  freeShipRemainingNotice: 'Add {amount} more to unlock free nationwide shipping!',
+  appliedAtCheckoutNotice: 'Applied at checkout',
 
   // Redesigned Cart & Order
   orderHeader: 'Order',
@@ -1037,6 +1040,58 @@ export const en = {
   rentalEventGallery: 'Live Event Gallery',
   rentalEmptyEvents: 'No event projects published yet.',
   rentalEmptyProducts: 'No rental ceramics available in this category yet.',
+
+  // Order Success & Banking i18n
+  saveQrAction: 'Save QR Image',
+  savingQrAction: 'Saving...',
+  openBankingAppAction: 'Open Banking App',
+  copiedShort: 'Copied',
+  copyAction: 'Copy',
+  qrPermissionTitle: 'Permission Required',
+  qrPermissionDesc: 'Please grant Photo Library permission in Settings to save the payment QR code.',
+  qrSavedSuccessTitle: 'QR Code Saved!',
+  qrSavedSuccessDesc: 'The payment QR code has been saved to your Photo Library. Open your banking app and scan from photos.',
+  qrSaveFailedTitle: 'Could Not Save Image',
+  qrSaveFailedDesc: 'An error occurred while saving the QR image. Please take a screenshot instead.',
+  bankingAppGuideTitle: 'Bank Transfer Payment',
+  bankingAppGuideDesc: 'Account number & transfer note copied. Please open your banking app to scan the QR code or paste transfer details.',
+  copyAccountNumberAction: 'Copy Account No.',
+  understoodAction: 'Got It',
+
+  // Gift Wrap & Handwritten Card (Checkout)
+  giftWrapTitle: 'Free Gift Wrapping',
+  giftWrapSubtitle: 'Eco kraft box tied with jute twine and a handwritten note card with your message',
+  giftWrapFreeBadge: 'Complimentary',
+  giftCardMessageLabel: 'Handwritten Card Message',
+  giftCardMessagePlaceholder: 'Write a warm message for the recipient (up to 150 characters)...',
+  giftWrapIncludedNote: 'Gift wrap & card',
+
+  // Complete the Set & Share Card (Product Detail)
+  completeTheSetTitle: 'Complete the Ceramic Set',
+  completeTheSetSubtitle: 'Pair with matching glaze pieces for a harmonious tea or dining table',
+  addBundleToCartBtn: 'Add Selected Set ({count} items)',
+  shareCeramicCardTitle: 'Share Ceramic Piece',
+  shareCeramicNowBtn: 'Share Now',
+  copyProductLinkBtn: 'Copy Link',
+  handcraftedAtTiemNhaGom: 'Handcrafted • Tiem Nha Gom',
+  scanToViewProduct: 'Scan QR to view piece details',
+
+  // Photo Review & Order Detail
+  addReviewPhotoBtn: 'Add Real Photos ({count}/3)',
+  reviewPointsBonusHint: 'Attach real styling photos to earn +20 bonus Pottery Points',
+  reviewThankYouTitle: 'Thank You!',
+  reviewThankYouWithPhotosDesc: 'Your {stars}-star review with {photos} photo(s) for order #{code} has been recorded. You earned +20 Pottery Points!',
+  reviewThankYouDesc: 'Your {stars}-star review for order #{code} has been submitted!',
+  reviewPlaceholderText: 'Share your thoughts on the glaze finish, form, and packaging...',
+  reviewOrderPrompt: 'How was your experience with order #{code}?',
+  reviewTag1: 'Exquisite glaze',
+  reviewTag2: 'Careful packaging',
+  reviewTag3: 'Fast delivery',
+  reviewTag4: '100% Satisfied',
+
+  // Recently Viewed in Cart
+  recentlyViewedCeramics: 'Recently Admired Pieces',
+  recentlyViewedSub: 'Tap to revisit or quickly add to your cart',
 };
 
 

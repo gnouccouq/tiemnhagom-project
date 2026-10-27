@@ -352,6 +352,9 @@ export const vi = {
   voucherDiscountAmount: 'Giảm giá Voucher',
   totalPayment: 'Tổng thanh toán',
   proceedToCheckout: 'Tiến hành đặt hàng',
+  freeShipQualifiedNotice: 'Đơn hàng của bạn đã đủ điều kiện Miễn phí giao hàng tiêu chuẩn!',
+  freeShipRemainingNotice: 'Mua thêm {amount} để được Miễn phí giao hàng toàn quốc!',
+  appliedAtCheckoutNotice: 'Áp dụng tại bước đặt hàng',
 
   // Redesigned Cart & Order
   orderHeader: 'Đơn hàng',
@@ -1042,6 +1045,58 @@ export const vi = {
   rentalEventGallery: 'Hình ảnh dự án thực tế',
   rentalEmptyEvents: 'Chưa có dự án sự kiện nào được đăng tải.',
   rentalEmptyProducts: 'Hiện chưa có đồ gốm cho thuê trong danh mục này.',
+
+  // Order Success & Banking i18n
+  saveQrAction: 'Lưu ảnh QR',
+  savingQrAction: 'Đang lưu...',
+  openBankingAppAction: 'Mở App Ngân hàng',
+  copiedShort: 'Đã chép',
+  copyAction: 'Sao chép',
+  qrPermissionTitle: 'Yêu cầu quyền truy cập',
+  qrPermissionDesc: 'Vui lòng cấp quyền truy cập Thư viện ảnh trong Cài đặt máy để lưu mã QR thanh toán.',
+  qrSavedSuccessTitle: 'Đã lưu mã QR thành công!',
+  qrSavedSuccessDesc: 'Mã QR thanh toán đã được lưu vào Bộ sưu tập ảnh. Bạn có thể mở ứng dụng Ngân hàng và chọn Quét QR từ ảnh.',
+  qrSaveFailedTitle: 'Không thể lưu ảnh',
+  qrSaveFailedDesc: 'Đã có lỗi xảy ra khi lưu mã QR vào máy. Vui lòng thử chụp lại màn hình.',
+  bankingAppGuideTitle: 'Thanh toán Ngân hàng',
+  bankingAppGuideDesc: 'Đã sao chép số tài khoản & nội dung đơn hàng. Vui lòng mở ứng dụng ngân hàng trên máy bạn để quét QR hoặc dán thông tin chuyển khoản.',
+  copyAccountNumberAction: 'Sao chép STK',
+  understoodAction: 'Đã hiểu',
+
+  // Gift Wrap & Handwritten Card (Checkout)
+  giftWrapTitle: 'Gói quà miễn phí',
+  giftWrapSubtitle: 'Hộp giấy kraft thắt dây đay mộc mạc kèm thiệp viết tay theo lời nhắn của bạn',
+  giftWrapFreeBadge: 'Miễn phí',
+  giftCardMessageLabel: 'Lời nhắn trên thiệp viết tay',
+  giftCardMessagePlaceholder: 'Nhập lời chúc ấm áp gửi đến người nhận (tối đa 150 ký tự)...',
+  giftWrapIncludedNote: 'Quà tặng kèm thiệp',
+
+  // Complete the Set & Share Card (Product Detail)
+  completeTheSetTitle: 'Phối cùng bộ gốm đồng điệu',
+  completeTheSetSubtitle: 'Chọn thêm các tác phẩm cùng dòng men để trọn vẹn không gian trà & bàn ăn',
+  addBundleToCartBtn: 'Thêm bộ đã chọn ({count} món)',
+  shareCeramicCardTitle: 'Chia sẻ tác phẩm gốm',
+  shareCeramicNowBtn: 'Chia sẻ ngay',
+  copyProductLinkBtn: 'Sao chép liên kết',
+  handcraftedAtTiemNhaGom: 'Chế tác thủ công • Tiệm Nhà Gốm',
+  scanToViewProduct: 'Quét mã để xem chi tiết tác phẩm',
+
+  // Photo Review & Order Detail
+  addReviewPhotoBtn: 'Thêm ảnh thực tế ({count}/3)',
+  reviewPointsBonusHint: 'Đính kèm ảnh bài trí thực tế để nhận thêm +20 Điểm Gốm',
+  reviewThankYouTitle: 'Cảm ơn bạn!',
+  reviewThankYouWithPhotosDesc: 'Đánh giá {stars} sao kèm {photos} ảnh thực tế cho đơn #{code} đã được ghi nhận. Bạn được cộng +20 Điểm Gốm!',
+  reviewThankYouDesc: 'Đánh giá {stars} sao cho đơn #{code} đã được gửi thành công!',
+  reviewPlaceholderText: 'Chia sẻ thêm cảm nhận của bạn về lớp men, kiểu dáng và đóng gói...',
+  reviewOrderPrompt: 'Bạn cảm thấy thế nào về đơn hàng #{code}?',
+  reviewTag1: 'Men gốm tinh xảo',
+  reviewTag2: 'Đóng gói kỹ lưỡng',
+  reviewTag3: 'Giao nhanh chóng',
+  reviewTag4: 'Hài lòng 100%',
+
+  // Recently Viewed in Cart
+  recentlyViewedCeramics: 'Tác phẩm bạn vừa ngắm',
+  recentlyViewedSub: 'Chạm để xem lại hoặc thêm nhanh vào giỏ hàng',
 };
 
 

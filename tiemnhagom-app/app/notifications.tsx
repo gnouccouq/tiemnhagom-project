@@ -384,7 +384,7 @@ export default function NotificationsScreen() {
           const { timeStr, ms } = formatTimeFriendly(data.createdAt);
           const notifType = (data.type || 'promo') as NotificationType;
 
-          let iconName: keyof typeof Ionicons.glyphMap = 'sparkles';
+          let iconName: keyof typeof Ionicons.glyphMap = 'pricetag';
           let iconBg = '#F3E5DC';
           let iconColor = '#9C7156';
 
@@ -726,7 +726,7 @@ export default function NotificationsScreen() {
           <View style={styles.unreadInfo}>
             {unreadCount > 0 ? (
               <View style={styles.unreadPill}>
-                <Ionicons name="sparkles" size={13} color="#FFFFFF" />
+                <Ionicons name="notifications-outline" size={13} color="#FFFFFF" />
                 <Text style={styles.unreadPillText}>
                   {unreadCount} {t('newCount') || 'mới'}
                 </Text>

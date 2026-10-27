@@ -191,7 +191,7 @@ export default function CollectionDetailScreen() {
         {/* Tiêu đề & Tag bộ sưu tập nổi trên ảnh Hero */}
         <View style={styles.heroContent}>
           <View style={styles.heroBadgeCapsule}>
-            <Ionicons name="sparkles" size={13} color="#E8CCB2" style={{ marginRight: 5 }} />
+            <Ionicons name="albums-outline" size={13} color="#E8CCB2" style={{ marginRight: 5 }} />
             <Text style={styles.heroBadgeText}>{t('collectionDetailTitle')}</Text>
           </View>
           <Text style={styles.heroTitle}>{collectionData.name}</Text>

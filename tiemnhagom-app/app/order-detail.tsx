@@ -21,12 +21,15 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { BlurButton } from '../src/components/BlurButton';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '../src/context/AuthContext';
@@ -416,7 +419,27 @@ export default function OrderDetailScreen() {
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [starCount, setStarCount] = useState(5);
   const [reviewNote, setReviewNote] = useState('');
-  const [reviewTags, setReviewTags] = useState<string[]>(['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng']);
+  const [reviewTags, setReviewTags] = useState<string[]>(['reviewTag1', 'reviewTag2']);
+  const [reviewPhotos, setReviewPhotos] = useState<string[]>([]);
+
+  const handlePickReviewPhoto = async () => {
+    if (reviewPhotos.length >= 3) return;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: 3 - reviewPhotos.length,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.length) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        const newUris = result.assets.map((a) => a.uri);
+        setReviewPhotos((prev) => [...prev, ...newUris].slice(0, 3));
+      }
+    } catch (err) {
+      console.warn('Lỗi chọn ảnh đánh giá:', err);
+    }
+  };
 
   // Hiệu ứng cuộn
   const [scrollY, setScrollY] = useState(0);
@@ -458,17 +481,28 @@ export default function OrderDetailScreen() {
       t('reorderConfirmDesc') || 'Đã đưa các sản phẩm vào giỏ hàng của bạn. Bạn có muốn đến giỏ hàng ngay không?',
       [
         { text: t('continueBrowsingAction') || 'Tiếp tục xem', style: 'cancel' },
-        { text: t('goToCartAction') || 'Đến Giỏ Hàng', onPress: () => router.push('/(tabs)/cart') },
+        { text: t('goToCartAction') || 'Đến Giỏ Hàng', onPress: () => router.push('/cart') },
       ]
     );
   };
 
   // Gửi đánh giá
   const handleSubmitRating = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    const code = String(order.orderCode || order.id || '');
+    const photoCount = reviewPhotos.length;
     setRatingModalVisible(false);
+    setReviewPhotos([]);
     Alert.alert(
-      'Cảm ơn bạn! ✨',
-      `Đánh giá ${starCount} sao cho đơn #${order.orderCode || order.id} đã được gửi thành công!`
+      t('reviewThankYouTitle'),
+      photoCount > 0
+        ? t('reviewThankYouWithPhotosDesc')
+            .replace('{stars}', String(starCount))
+            .replace('{photos}', String(photoCount))
+            .replace('{code}', code)
+        : t('reviewThankYouDesc')
+            .replace('{stars}', String(starCount))
+            .replace('{code}', code)
     );
   };
 
@@ -910,10 +944,63 @@ export default function OrderDetailScreen() {
           </View>
         </View>
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: Math.max(insets.bottom, 20) + 100 }} />
       </ScrollView>
 
-      {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (5 SAO & NHẬN XÉT) ── */}
+      {/* ── THANH HÀNH ĐỘNG ĐÁY NỔI BỌC LIQUID GLASS CHUẨN HỆ THỐNG IOS ── */}
+      <View
+        style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          <View style={styles.bottomBarRow}>
+            <TouchableOpacity
+              style={styles.bottomReviewBtn}
+              activeOpacity={0.82}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setRatingModalVisible(true);
+              }}
+            >
+              <Ionicons name="chatbox-ellipses-outline" size={17} color={isDark ? '#E8CCB2' : '#9C7156'} />
+              <Text
+                style={styles.bottomReviewBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {t('reviewAction') || 'Đánh giá'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.bottomReorderBtn}
+              activeOpacity={0.88}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                handleReorder();
+              }}
+            >
+              <Ionicons name="refresh-outline" size={18} color="#FFFFFF" />
+              <Text
+                style={styles.bottomReorderBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {t('reorderAction') || 'Đặt lại đơn này'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </LiquidGlass>
+      </View>
+
+      {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (5 SAO, HÌNH ẢNH THỰC TẾ & NHẬN XÉT) ── */}
       <AnimatedBottomSheetModal
         visible={ratingModalVisible}
         onClose={() => setRatingModalVisible(false)}
@@ -923,18 +1010,26 @@ export default function OrderDetailScreen() {
         <View style={styles.modalHeaderRow}>
           <Text style={styles.modalHeaderTitle}>{t('reviewAction') || 'Đánh giá đơn hàng'}</Text>
           <ScalePressable onPress={() => setRatingModalVisible(false)} activeScale={0.88}>
-            <Ionicons name="close" size={22} color={BRAND.textPrimary} />
+            <Ionicons name="close" size={22} color={Colors.textPrimary} />
           </ScalePressable>
         </View>
 
         <Text style={styles.ratingSubtitle}>
-          Bạn cảm thấy thế nào về đơn hàng #{order.orderCode || order.id}?
+          {t('reviewOrderPrompt').replace('{code}', String(order.orderCode || order.id))}
         </Text>
 
         {/* 5 sao đánh giá */}
         <View style={styles.starsRow}>
           {[1, 2, 3, 4, 5].map((star) => (
-            <ScalePressable key={star} onPress={() => setStarCount(star)} activeScale={0.85} style={{ padding: 6 }}>
+            <ScalePressable
+              key={star}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setStarCount(star);
+              }}
+              activeScale={0.85}
+              style={{ padding: 6 }}
+            >
               <Ionicons
                 name={star <= starCount ? 'star' : 'star-outline'}
                 size={36}
@@ -946,31 +1041,71 @@ export default function OrderDetailScreen() {
 
         {/* Tags cảm nhận */}
         <View style={styles.tagsWrap}>
-          {['Men gốm tinh xảo', 'Đóng gói kỹ lưỡng', 'Giao nhanh chóng', 'Hài lòng 100%'].map((tag) => {
-            const isSelected = reviewTags.includes(tag);
+          {(['reviewTag1', 'reviewTag2', 'reviewTag3', 'reviewTag4'] as const).map((tagKey) => {
+            const isSelected = reviewTags.includes(tagKey);
             return (
               <ScalePressable
-                key={tag}
+                key={tagKey}
                 style={[styles.tagPill, isSelected && styles.tagPillActive]}
                 activeScale={0.92}
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
                   if (isSelected) {
-                    setReviewTags(reviewTags.filter((t) => t !== tag));
+                    setReviewTags(reviewTags.filter((item) => item !== tagKey));
                   } else {
-                    setReviewTags([...reviewTags, tag]);
+                    setReviewTags([...reviewTags, tagKey]);
                   }
                 }}
               >
-                <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{tag}</Text>
+                <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>{t(tagKey)}</Text>
               </ScalePressable>
             );
           })}
         </View>
 
+        {/* Đính kèm ảnh thực tế nhận thêm Điểm Gốm */}
+        <View style={styles.reviewPhotosBlock}>
+          <View style={styles.reviewBonusRow}>
+            <Image
+              source={require('../assets/images/icon_ceramic_point.png')}
+              style={{ width: 16, height: 16 }}
+              contentFit="contain"
+            />
+            <Text style={styles.reviewBonusText}>{t('reviewPointsBonusHint')}</Text>
+          </View>
+
+          <View style={styles.reviewPhotosList}>
+            {reviewPhotos.map((uri, idx) => (
+              <View key={idx} style={styles.reviewPhotoThumbWrap}>
+                <Image source={{ uri }} style={styles.reviewPhotoThumb} contentFit="cover" />
+                <TouchableOpacity
+                  style={styles.removePhotoBtn}
+                  onPress={() => setReviewPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                >
+                  <Ionicons name="close" size={12} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {reviewPhotos.length < 3 && (
+              <TouchableOpacity
+                style={styles.addPhotoBtn}
+                onPress={handlePickReviewPhoto}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="camera-outline" size={20} color="#9C7156" />
+                <Text style={styles.addPhotoBtnText}>
+                  {t('addReviewPhotoBtn').replace('{count}', String(reviewPhotos.length))}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
         {/* Ô ghi chú cảm nhận */}
         <TextInput
           style={styles.reviewTextInput}
-          placeholder="Chia sẻ thêm cảm nhận của bạn về sản phẩm gốm..."
+          placeholder={t('reviewPlaceholderText')}
           placeholderTextColor="#9E968D"
           multiline
           numberOfLines={3}
@@ -1596,5 +1731,130 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',
+    },
+    bottomBarWrapper: {
+      position: 'absolute',
+      left: 14,
+      right: 14,
+      zIndex: 100,
+    },
+    bottomBar: {
+      borderRadius: 36,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: isDark ? 0.45 : 0.14,
+      shadowRadius: 18,
+      elevation: 10,
+    },
+    bottomBarRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    bottomReviewBtn: {
+      flex: 1,
+      height: 50,
+      borderRadius: 25,
+      borderWidth: 1.2,
+      borderColor: BRAND.primary,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(156,113,86,0.10)',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+    },
+    bottomReviewBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : BRAND.primary,
+    },
+    bottomReorderBtn: {
+      flex: 1.35,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: BRAND.primary,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    bottomReorderBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    reviewPhotosBlock: {
+      marginBottom: 14,
+    },
+    reviewBonusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 8,
+    },
+    reviewBonusText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: BRAND.primary,
+      fontWeight: '600',
+      flex: 1,
+    },
+    reviewPhotosList: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    reviewPhotoThumbWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 14,
+      position: 'relative',
+    },
+    reviewPhotoThumb: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 14,
+    },
+    removePhotoBtn: {
+      position: 'absolute',
+      top: -5,
+      right: -5,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: '#2B2928',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addPhotoBtn: {
+      height: 64,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      borderWidth: 1.2,
+      borderStyle: 'dashed',
+      borderColor: BRAND.primary,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+    },
+    addPhotoBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      fontWeight: '700',
+      color: BRAND.primary,
     },
   });

@@ -718,7 +718,7 @@ export default function SettingsScreen() {
                     <View style={styles.linkedDivider} />
                     <View style={styles.joinDateCardRow}>
                       <View style={styles.joinDateLeft}>
-                        <Ionicons name="sparkles-outline" size={17} color="#9C7156" />
+                        <Ionicons name="calendar-outline" size={17} color="#9C7156" />
                         <Text style={styles.joinDateLabel}>Ngày tham gia Tiệm</Text>
                       </View>
                       <Text style={styles.joinDateValue}>{joinDateFormatted}</Text>

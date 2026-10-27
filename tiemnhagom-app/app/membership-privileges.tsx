@@ -134,7 +134,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
       },
       {
         id: 'upgrade_voucher',
-        icon: 'star-outline',
+        icon: 'trophy-outline',
         titleKey: 'privilegeUpgradeGiftTitle',
         defaultTitle: 'Quà thăng hạng',
         bulletKeys: ['privilegeUpgradeVoucher50k'],
@@ -183,7 +183,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
       },
       {
         id: 'upgrade_voucher',
-        icon: 'star-outline',
+        icon: 'trophy-outline',
         titleKey: 'privilegeUpgradeGiftTitle',
         defaultTitle: 'Quà thăng hạng',
         bulletKeys: ['privilegeUpgradeVoucher100k'],
@@ -240,7 +240,7 @@ export const MEMBERSHIP_TIER_CONFIGS: TierConfig[] = [
       },
       {
         id: 'upgrade_voucher',
-        icon: 'star-outline',
+        icon: 'trophy-outline',
         titleKey: 'privilegeUpgradeGiftTitle',
         defaultTitle: 'Quà thăng hạng',
         bulletKeys: ['privilegeUpgradeVoucher300k'],

@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Updates from 'expo-updates';
 import { Header } from '../src/components/Header';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
@@ -45,9 +46,9 @@ export default function VersionScreen() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  // Mặc định mở rộng bản mới nhất (20261022.01)
+  // Mặc định mở rộng bản mới nhất (20261025.01)
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({
-    '20261022.01': true,
+    '20261025.01': true,
   });
 
   const toggleExpand = (otaKey: string) => {
@@ -325,40 +326,38 @@ export default function VersionScreen() {
         </View>
       </ScrollView>
 
-      {/* Nút Kiểm Tra Cập Nhật OTA Cố Định Dưới Cùng */}
+      {/* Nút Kiểm Tra Cập Nhật OTA Cố Định Dưới Cùng Bọc Liquid Glass Chuẩn iOS */}
       <View
         style={[
           styles.bottomFixedContainer,
           {
-            paddingBottom: Math.max(insets.bottom, 16),
+            bottom: Math.max(insets.bottom, 14),
           },
         ]}
+        pointerEvents="box-none"
       >
-        <LinearGradient
-          colors={
-            isDark
-              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.98)']
-              : ['rgba(250,248,245,0)', 'rgba(250,248,245,0.88)', 'rgba(250,248,245,0.98)']
-          }
-          locations={[0, 0.38, 1]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <TouchableOpacity
-          style={styles.checkUpdateBtn}
-          onPress={handleCheckUpdate}
-          activeOpacity={0.85}
-          disabled={checkingUpdate}
+        <LiquidGlass
+          style={styles.bottomGlassBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
         >
-          {checkingUpdate ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Ionicons name="cloud-download-outline" size={19} color="#FFFFFF" />
-          )}
-          <Text style={styles.checkUpdateBtnText}>
-            {checkingUpdate ? t('checkingUpdate') : t('checkUpdateBtn')}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.checkUpdateBtn}
+            onPress={handleCheckUpdate}
+            activeOpacity={0.85}
+            disabled={checkingUpdate}
+          >
+            {checkingUpdate ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="cloud-download-outline" size={19} color="#FFFFFF" />
+            )}
+            <Text style={styles.checkUpdateBtnText}>
+              {checkingUpdate ? t('checkingUpdate') : t('checkUpdateBtn')}
+            </Text>
+          </TouchableOpacity>
+        </LiquidGlass>
       </View>
     </Animated.View>
   );
@@ -484,13 +483,15 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomFixedContainer: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomGlassBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     checkUpdateBtn: {
       width: '100%',

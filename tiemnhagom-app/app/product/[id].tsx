@@ -11,9 +11,11 @@ import {
   StatusBar,
   Share,
   Platform,
+  Clipboard,
   Animated as RNAnimated,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, SlideInDown, ZoomIn } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
@@ -31,7 +33,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
 import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop';
-import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
+import { LiquidGlass, LiquidGlassContainerView } from '../../src/components/LiquidGlass';
 import { SymbolView } from 'expo-symbols';
 import { ProductCard } from '../../src/components/ProductCard';
 import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
@@ -84,11 +86,14 @@ export default function ProductDetailScreen() {
   const [modalVariant, setModalVariant] = useState<ProductVariant | undefined>(undefined);
   const [modalQuantity, setModalQuantity] = useState<number>(1);
 
-  // Vouchers, Gợi ý, Lịch sử đã xem
+  // Vouchers, Gợi ý, Lịch sử đã xem, Phối theo bộ & Chia sẻ
   const [availableCoupons, setAvailableCoupons] = useState<CouponItem[]>([]);
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
   const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
   const [recentProducts, setRecentProducts] = useState<RecentlyViewedItem[]>([]);
+  const [selectedBundleIds, setSelectedBundleIds] = useState<string[]>([]);
+  const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
+  const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false);
 
   useEffect(() => {
     if (id) {
@@ -132,7 +137,10 @@ export default function ProductDetailScreen() {
             // Tải sản phẩm gợi ý cùng danh mục
             getProducts({ category: res.category, maxItems: 8, expandVariants: false })
               .then((sugg) => {
-                setSuggestedProducts(sugg.filter((p) => p.id !== res.id).slice(0, 6));
+                const filtered = sugg.filter((p) => p.id !== res.id).slice(0, 6);
+                setSuggestedProducts(filtered);
+                const availablePairings = filtered.filter((p) => !checkOutOfStock(p)).slice(0, 2);
+                setSelectedBundleIds(availablePairings.map((p) => p.id));
               })
               .catch(() => {});
           }
@@ -218,7 +226,7 @@ export default function ProductDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
         {/* Thanh điều hướng gốc iOS UINavigationBar */}
         <Stack.Screen
@@ -245,22 +253,26 @@ export default function ProductDetailScreen() {
             />
           </BlurButton>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingTop: insets.top + 48 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={{ paddingBottom: 40, paddingTop: insets.top + 48 }}
+        >
           <ProductDetailSkeleton />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!product) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <View style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
         <Text style={styles.errorTitle}>{t('productNotFound')}</Text>
         <TouchableOpacity style={styles.backHomeBtn} onPress={() => router.back()}>
           <Text style={styles.backHomeText}>{t('productBack')}</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -429,9 +441,16 @@ export default function ProductDetailScreen() {
   if (product.dimensions?.height) dimParts.push(`Cao ${product.dimensions.height}cm`);
   const dimString = dimParts.join(' × ');
 
-  const handleShareProduct = async () => {
+  const shareUrl = `https://tiemnhagom.vn/product/?id=${product.id}`;
+  const shareQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=2B2928&bgcolor=FFFFFF&data=${encodeURIComponent(shareUrl)}`;
+
+  const handleShareProduct = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setShareModalVisible(true);
+  };
+
+  const handleNativeShare = async () => {
     try {
-      const shareUrl = `https://tiemnhagom.vn/product/?id=${product.id}`;
       const message = `${product.name} - ${formatCurrency(currentPrice)}\nKhám phá tác phẩm gốm mộc tinh tuyển tại Tiệm Nhà Gốm: ${shareUrl}`;
       await Share.share({
         title: product.name,
@@ -443,8 +462,46 @@ export default function ProductDetailScreen() {
     }
   };
 
+  const handleCopyShareLink = () => {
+    Clipboard.setString(shareUrl);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setCopiedShareLink(true);
+    setTimeout(() => setCopiedShareLink(false), 2200);
+  };
+
+  const bundleCandidates = suggestedProducts.filter((p) => !checkOutOfStock(p)).slice(0, 3);
+  const selectedBundleProducts = bundleCandidates.filter((p) => selectedBundleIds.includes(p.id));
+  const bundleTotalPrice =
+    (!isOutOfStock ? currentPrice : 0) +
+    selectedBundleProducts.reduce((sum, p) => sum + (p.salePrice || p.price), 0);
+  const bundleTotalCount = (!isOutOfStock ? 1 : 0) + selectedBundleProducts.length;
+
+  const toggleBundleItem = (itemId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setSelectedBundleIds((prev) =>
+      prev.includes(itemId) ? prev.filter((x) => x !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const handleAddBundleToCart = () => {
+    if (bundleTotalCount === 0) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    if (!isOutOfStock) {
+      addToCart(product, 1, selectedVariant);
+    }
+    selectedBundleProducts.forEach((p) => {
+      addToCart(p, 1);
+    });
+    const flyImg =
+      selectedVariant?.imageUrl ||
+      product.imageUrl ||
+      (product.images && product.images[0]) ||
+      '';
+    triggerFlyToHeaderCart(flyImg);
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Thanh điều hướng với nút Back và 3 nút riêng biệt chuẩn Liquid Glass */}
@@ -530,7 +587,17 @@ export default function ProductDetailScreen() {
         </LiquidGlassContainerView>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top,
+            paddingBottom: Math.max(insets.bottom, 16) + 96,
+          },
+        ]}
+      >
         {/* Images Carousel */}
         <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.carouselContainer}>
           <ScrollView
@@ -889,6 +956,73 @@ export default function ProductDetailScreen() {
             </View>
           </View>
 
+          {/* Phối cùng bộ gốm đồng điệu (Complete the Set) */}
+          {bundleCandidates.length > 0 && (
+            <View style={styles.bundleCard}>
+              <View style={styles.bundleHeader}>
+                <View style={styles.bundleIconWrap}>
+                  <Ionicons name="layers-outline" size={18} color="#9C7156" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bundleTitle}>{t('completeTheSetTitle')}</Text>
+                  <Text style={styles.bundleSubtitle}>{t('completeTheSetSubtitle')}</Text>
+                </View>
+              </View>
+
+              <View style={styles.bundleItemsList}>
+                {bundleCandidates.map((item) => {
+                  const isChecked = selectedBundleIds.includes(item.id);
+                  const itemEffPrice = item.salePrice || item.price;
+                  const itemImg = item.imageUrl || (item.images && item.images[0]) || '';
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.bundleItemRow, isChecked && styles.bundleItemRowActive]}
+                      onPress={() => toggleBundleItem(item.id)}
+                      activeOpacity={0.84}
+                    >
+                      <View style={[styles.bundleCheckbox, isChecked && styles.bundleCheckboxActive]}>
+                        {isChecked && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                      </View>
+                      <Image source={{ uri: itemImg }} style={styles.bundleItemThumb} contentFit="cover" />
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.bundleItemName} numberOfLines={1} ellipsizeMode="tail">
+                          {item.name}
+                        </Text>
+                        <Text style={styles.bundleItemPrice}>{formatCurrency(itemEffPrice)}</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => router.push(`/product/${item.id}`)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="chevron-forward" size={17} color={Colors.textMuted} />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {selectedBundleProducts.length > 0 && (
+                <TouchableOpacity
+                  style={styles.bundleAddBtn}
+                  onPress={handleAddBundleToCart}
+                  activeOpacity={0.88}
+                >
+                  <Ionicons name="bag-add-outline" size={18} color="#FFFFFF" />
+                  <Text
+                    style={styles.bundleAddBtnText}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.82}
+                  >
+                    {`${t('addBundleToCartBtn').replace('{count}', String(bundleTotalCount))} • ${formatCurrency(bundleTotalPrice)}`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {/* Gợi ý sản phẩm tương tự (Suggested Products) */}
           {suggestedProducts.length > 0 && (
             <View style={styles.suggestedSection}>
@@ -933,31 +1067,58 @@ export default function ProductDetailScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Bottom Sticky CTA dạng viên thuốc Pill chuẩn GEMINI.md */}
-      <Animated.View entering={SlideInDown.duration(500).delay(300)} style={styles.bottomBar}>
-        <LiquidGlassContainerView spacing={18} style={{ flex: 1, flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity
-            style={[styles.addToCartBtn, isOutOfStock && styles.btnDisabled]}
-            onPress={() => handleOpenActionModal('cart')}
-            disabled={isOutOfStock}
-            activeOpacity={0.84}
-          >
-            <Ionicons name="bag-add-outline" size={20} color={isOutOfStock ? (isDark ? '#6E665D' : '#A8A096') : '#9C7156'} />
-            <Text style={[styles.addToCartText, isOutOfStock && { color: isDark ? '#6E665D' : '#A8A096' }]}>
-              {isOutOfStock ? t('outOfStock') : t('addToCartAction')}
-            </Text>
-          </TouchableOpacity>
+      {/* Bottom Sticky CTA bo tròn dạng viên thuốc bọc Liquid Glass chuẩn hệ thống iOS */}
+      <Animated.View
+        entering={SlideInDown.duration(500).delay(300)}
+        style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+        pointerEvents="box-none"
+      >
+        <LiquidGlass
+          style={styles.bottomBar}
+          interactive={true}
+          effect="regular"
+          isDark={isDark}
+        >
+          <View style={styles.bottomBarContent}>
+            <TouchableOpacity
+              style={[styles.addToCartBtn, isOutOfStock && styles.btnDisabled]}
+              onPress={() => handleOpenActionModal('cart')}
+              disabled={isOutOfStock}
+              activeOpacity={0.84}
+            >
+              <Ionicons
+                name="bag-add-outline"
+                size={20}
+                color={isOutOfStock ? (isDark ? '#6E665D' : '#A8A096') : (isDark ? '#E8CCB2' : '#9C7156')}
+              />
+              <Text
+                style={[styles.addToCartText, isOutOfStock && { color: isDark ? '#6E665D' : '#A8A096' }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {isOutOfStock ? t('outOfStock') : t('addToCartAction')}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.buyNowBtn, isOutOfStock && styles.btnDisabled]}
-            onPress={() => handleOpenActionModal('buy')}
-            disabled={isOutOfStock}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.buyNowText}>{isOutOfStock ? t('outOfStock') : t('buyNowAction')}</Text>
-            {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
-          </TouchableOpacity>
-        </LiquidGlassContainerView>
+            <TouchableOpacity
+              style={[styles.buyNowBtn, isOutOfStock && styles.btnDisabled]}
+              onPress={() => handleOpenActionModal('buy')}
+              disabled={isOutOfStock}
+              activeOpacity={0.88}
+            >
+              <Text
+                style={styles.buyNowText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {isOutOfStock ? t('outOfStock') : t('buyNowAction')}
+              </Text>
+              {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
+            </TouchableOpacity>
+          </View>
+        </LiquidGlass>
       </Animated.View>
 
       {/* ── MODAL CHỌN BIẾN THỂ TRƯỚC KHI THÊM GIỎ HOẶC MUA NGAY (ANIMATED BOTTOM SHEET MODAL UX) ── */}
@@ -1206,7 +1367,85 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
         </View>
       </AnimatedBottomSheetModal>
-    </SafeAreaView>
+
+      {/* ── MODAL THẺ CHIA SẺ TÁC PHẨM GỐM (CERAMIC SHARE CARD PREVIEW) ── */}
+      <AnimatedBottomSheetModal
+        visible={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        showHandle={true}
+        contentStyle={styles.modalSheet}
+      >
+        <View style={{ paddingBottom: 12 }}>
+          <View style={styles.shareModalHeaderRow}>
+            <Text style={styles.shareModalTitle}>{t('shareCeramicCardTitle')}</Text>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setShareModalVisible(false)}
+            >
+              <Ionicons name="close" size={20} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Thẻ gốm nghệ thuật màu Kem Gốm Mộc #F6F4EC */}
+          <View style={styles.sharePreviewCard}>
+            <View style={styles.shareCardImageWrap}>
+              <Image
+                source={{ uri: images[activeImageIndex] || images[0] }}
+                style={styles.shareCardImage}
+                contentFit="cover"
+              />
+              <View style={styles.shareBrandBadge}>
+                <Text style={styles.shareBrandBadgeText}>{t('handcraftedAtTiemNhaGom')}</Text>
+              </View>
+            </View>
+
+            <View style={styles.shareCardBottomRow}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={styles.shareCardCategory}>{product.category || 'Gốm sứ thủ công'}</Text>
+                <Text style={styles.shareCardProductName} numberOfLines={2}>
+                  {product.name}
+                </Text>
+                <Text style={styles.shareCardPrice}>{formatCurrency(currentPrice)}</Text>
+                <Text style={styles.shareCardQrHint}>{t('scanToViewProduct')}</Text>
+              </View>
+
+              <View style={styles.shareQrBox}>
+                <Image source={{ uri: shareQrUrl }} style={styles.shareQrImg} contentFit="contain" />
+              </View>
+            </View>
+          </View>
+
+          {/* Hàng nút Chia sẻ & Sao chép liên kết */}
+          <View style={styles.shareActionsRow}>
+            <TouchableOpacity
+              style={styles.copyLinkBtn}
+              onPress={handleCopyShareLink}
+              activeOpacity={0.84}
+            >
+              <Ionicons
+                name={copiedShareLink ? 'checkmark-circle' : 'link-outline'}
+                size={18}
+                color="#9C7156"
+              />
+              <Text style={styles.copyLinkBtnText} numberOfLines={1}>
+                {copiedShareLink ? t('copiedShort') : t('copyProductLinkBtn')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.shareNowBtn}
+              onPress={handleNativeShare}
+              activeOpacity={0.88}
+            >
+              <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
+              <Text style={styles.shareNowBtnText} numberOfLines={1}>
+                {t('shareCeramicNowBtn')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </AnimatedBottomSheetModal>
+    </View>
   );
 }
 
@@ -1883,23 +2122,24 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginTop: 2,
   },
 
-  /* Bottom Bar dạng viên thuốc chuẩn GEMINI.md */
-  bottomBar: {
+  /* Bottom Bar bo tròn dạng viên thuốc bọc Liquid Glass chuẩn GEMINI.md */
+  bottomBarWrapper: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: isDark ? 'rgba(30, 30, 30, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+    left: 14,
+    right: 14,
+    zIndex: 50,
+  },
+  bottomBar: {
+    borderRadius: 36,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    overflow: 'hidden',
+  },
+  bottomBarContent: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 20,
-    borderTopWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: isDark ? 0 : 0.06,
-    shadowRadius: 8,
-    elevation: isDark ? 0 : 6,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   addToCartBtn: {
     flex: 1,
@@ -1911,7 +2151,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: isDark ? '#2C2C2C' : '#FFFFFF',
+    paddingHorizontal: 10,
+    backgroundColor: isDark ? 'rgba(30, 30, 30, 0.55)' : 'rgba(255, 255, 255, 0.72)',
   },
   addToCartText: {
     fontFamily: 'ElleGaborStd',
@@ -2100,6 +2341,251 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   modalConfirmBtnText: {
     fontFamily: 'ElleGaborStd',
     fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  bundleCard: {
+    marginTop: 18,
+    backgroundColor: isDark ? '#181615' : '#FAF7F2',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: isDark ? 'transparent' : '#E8CCB2',
+  },
+  bundleHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 12,
+  },
+  bundleIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: isDark ? '#2A201A' : '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bundleTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  bundleSubtitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 12.5,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  bundleItemsList: {
+    gap: 8,
+  },
+  bundleItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 16,
+    padding: 10,
+    borderWidth: 1.2,
+    borderColor: isDark ? 'transparent' : '#E8E1D8',
+  },
+  bundleItemRowActive: {
+    borderColor: '#9C7156',
+  },
+  bundleCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: '#9C7156',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  bundleCheckboxActive: {
+    backgroundColor: '#9C7156',
+  },
+  bundleItemThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    marginRight: 10,
+  },
+  bundleItemName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  bundleItemPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#9C7156',
+  },
+  bundleAddBtn: {
+    marginTop: 12,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#9C7156',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  bundleAddBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  shareModalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  shareModalTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  sharePreviewCard: {
+    backgroundColor: '#F6F4EC',
+    borderRadius: 22,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+    marginBottom: 16,
+  },
+  shareCardImageWrap: {
+    width: '100%',
+    height: 210,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 12,
+  },
+  shareCardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  shareBrandBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: 'rgba(43, 41, 40, 0.78)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  shareBrandBadgeText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  shareCardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  shareCardCategory: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9C7156',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  shareCardProductName: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#2B2928',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  shareCardPrice: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#9C7156',
+    marginBottom: 4,
+  },
+  shareCardQrHint: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 11,
+    color: '#6E665D',
+  },
+  shareQrBox: {
+    width: 76,
+    height: 76,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#E8E1D8',
+  },
+  shareQrImg: {
+    width: '100%',
+    height: '100%',
+  },
+  shareActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  copyLinkBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.2,
+    borderColor: '#9C7156',
+    backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+  },
+  copyLinkBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14,
+    fontWeight: '700',
+    color: isDark ? '#E8CCB2' : '#9C7156',
+  },
+  shareNowBtn: {
+    flex: 1.25,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#9C7156',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shareNowBtnText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 14.5,
     fontWeight: '700',
     color: '#FFFFFF',
   },

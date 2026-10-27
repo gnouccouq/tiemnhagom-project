@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
+import { LiquidGlass } from '../src/components/LiquidGlass';
 import { AddressPicker } from '../src/components/AddressPicker';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { ScalePressable } from '../src/components/ScalePressable';
@@ -321,13 +322,23 @@ export default function AddressBookScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Bottom Button: Thêm địa chỉ mới */}
+      {/* Floating Bottom Button: Thêm địa chỉ mới bọc Liquid Glass chuẩn hệ thống iOS */}
       {addressList.length > 0 && (
-        <View style={[themeStyles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <ScalePressable style={themeStyles.primaryCtaBtn} onPress={openAddModal}>
-            <Ionicons name="add" size={22} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={themeStyles.primaryCtaText}>{t('addNewAddress') || 'Thêm địa chỉ mới'}</Text>
-          </ScalePressable>
+        <View
+          style={[themeStyles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+          pointerEvents="box-none"
+        >
+          <LiquidGlass
+            style={themeStyles.bottomBar}
+            interactive={true}
+            effect="regular"
+            isDark={isDark}
+          >
+            <ScalePressable style={themeStyles.primaryCtaBtn} onPress={openAddModal}>
+              <Ionicons name="add" size={22} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={themeStyles.primaryCtaText}>{t('addNewAddress') || 'Thêm địa chỉ mới'}</Text>
+            </ScalePressable>
+          </LiquidGlass>
         </View>
       )}
 
@@ -678,16 +689,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 14,
       color: '#FFFFFF',
     },
-    bottomBar: {
+    bottomBarWrapper: {
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      backgroundColor: Colors.background,
-      borderTopWidth: 1,
-      borderTopColor: isDark ? (Colors.divider || '#2A2A2A') : '#E8E1D8',
+      left: 14,
+      right: 14,
+      zIndex: 50,
+    },
+    bottomBar: {
+      borderRadius: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      overflow: 'hidden',
     },
     primaryCtaBtn: {
       flexDirection: 'row',
