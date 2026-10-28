@@ -27,7 +27,8 @@
     },
     "android": {
       "package": "vn.tiemnhagom.app",
-      "versionCode": 2,
+      "versionCode": 3,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#9C7156",
         "foregroundImage": "./assets/app-icon/app-icon-light.png"

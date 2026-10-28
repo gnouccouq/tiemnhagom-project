@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "571834989973",
+    "firebase_url": "https://tiemnhagom-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "tiemnhagom-project",
+    "storage_bucket": "tiemnhagom-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:571834989973:android:08f6d2279bb838e7afca9c",
+        "android_client_info": {
+          "package_name": "vn.tiemnhagom.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "571834989973-2hceq95tg0suavnlkit7fhs2ce6iaaua.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "vn.tiemnhagom.app",
+            "certificate_hash": "efeec2ec25f9010eeff1eed39011521974bd08d7"
+          }
+        },
+        {
+          "client_id": "571834989973-g4b640ms5fs5dbe1a9f32jorir7hh1tu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "vn.tiemnhagom.app",
+            "certificate_hash": "434712471b8bc13e5364e9205a520053af602c7f"
+          }
+        },
+        {
+          "client_id": "571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARZOyzBSDBm27bKVoHxZlRrjs6b5BBO88"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "vn.tiemnhagom.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

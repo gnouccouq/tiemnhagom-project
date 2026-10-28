@@ -475,7 +475,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const updatePromises: Promise<any>[] = [];
       orderDocsToUpdate.forEach((ref) => {
-        updatePromises.push(setDoc(ref, { userId: userId, customerId: userId }, { merge: true }));
+        updatePromises.push(
+          setDoc(ref, { userId: userId }, { merge: true }).catch((err) => {
+            console.warn('Lỗi liên kết đơn hàng đơn lẻ:', err);
+          })
+        );
       });
       if (updatePromises.length > 0) await Promise.all(updatePromises);
     } catch (e) {
@@ -549,32 +553,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Ghi nhận liên kết nếu authUid khác targetUid
         if (authUid !== targetUid) {
+          try {
+            await setDoc(
+              doc(db, 'users', authUid),
+              {
+                uid: authUid,
+                phone: p0,
+                identifiers: variants,
+                isMerged: true,
+                mergedTo: targetUid,
+                createdAt: serverTimestamp(),
+                lastLogin: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          } catch (linkErr) {
+            console.warn('Lỗi ghi nhận liên kết authUid:', linkErr);
+          }
+        }
+
+        try {
           await setDoc(
-            doc(db, 'users', authUid),
+            doc(db, 'users', targetUid),
             {
-              uid: authUid,
               phone: p0,
-              identifiers: variants,
-              isMerged: true,
-              mergedTo: targetUid,
-              createdAt: serverTimestamp(),
+              identifiers: allIdentifiers,
+              mergedAccounts: mergedAccounts,
               lastLogin: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             },
             { merge: true }
           );
+        } catch (updateErr) {
+          console.warn('Lỗi cập nhật target doc trên Firestore:', updateErr);
         }
-
-        await setDoc(
-          doc(db, 'users', targetUid),
-          {
-            phone: p0,
-            identifiers: allIdentifiers,
-            mergedAccounts: mergedAccounts,
-            lastLogin: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          { merge: true }
-        );
 
         const userProfileData = {
           uid: targetUid,
@@ -597,23 +609,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           points: 0,
           tier: 'standard',
         };
-        await setDoc(
-          doc(db, 'users', targetUid),
-          {
-            ...newProfile,
-            identifiers: variants,
-            createdAt: serverTimestamp(),
-            lastLogin: new Date().toISOString(),
-          },
-          { merge: true }
-        );
+        try {
+          await setDoc(
+            doc(db, 'users', targetUid),
+            {
+              ...newProfile,
+              identifiers: variants,
+              createdAt: serverTimestamp(),
+              lastLogin: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+        } catch (createErr) {
+          console.warn('Lỗi tạo hồ sơ user mới trên Firestore:', createErr);
+        }
         setUserProfile({ ...newProfile, identifiers: variants } as any);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(newProfile));
         await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ uid: targetUid, email: null }));
       }
 
       // Tự động liên kết các đơn hàng cũ về userId giống bản web
-      await autoLinkOrdersByPhone(targetUid, p0);
+      try {
+        await autoLinkOrdersByPhone(targetUid, p0);
+      } catch (linkErr) {
+        console.warn('Lỗi auto-link orders:', linkErr);
+      }
     } catch (e) {
       console.warn('Lỗi xử lý đăng nhập số điện thoại:', e);
       throw e;

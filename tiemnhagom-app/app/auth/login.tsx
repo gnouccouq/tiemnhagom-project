@@ -22,6 +22,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import { auth } from '../../src/config/firebase';
+import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { useAuth } from '../../src/context/AuthContext';
 import { formatPhoneNumber } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
@@ -77,6 +79,7 @@ export default function LoginScreen() {
   const phoneAuthRef = useRef<FirebasePhoneAuthWebViewHandle>(null);
   const otpInputRef = useRef<TextInput>(null);
   const [phone, setPhone] = useState('');
+  const [verificationId, setVerificationId] = useState('');
   const [otp, setOtp] = useState('');
   const [isOtpFocused, setIsOtpFocused] = useState(false);
   const [isOtpMode, setIsOtpMode] = useState(false);
@@ -124,9 +127,8 @@ export default function LoginScreen() {
   // Google OAuth Hook
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
-    webClientId: '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com',
+    webClientId: GOOGLE_CLIENT_ID,
     iosClientId: '571834989973-vvcjphjo86n4uudkd5mcqpelrp67d7kj.apps.googleusercontent.com',
-    androidClientId: '571834989973-2hceq95tg0suavnlkit7fhs2ce6iaaua.apps.googleusercontent.com',
     selectAccount: true,
   });
 
@@ -171,6 +173,9 @@ export default function LoginScreen() {
     try {
       const res = await phoneAuthRef.current?.sendOtp(rawPhone);
       if (res?.success) {
+        if (res.verificationId) {
+          setVerificationId(res.verificationId);
+        }
         setIsOtpMode(true);
         setOtpCountdown(60);
         setOtp('');
@@ -201,28 +206,45 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const res = await phoneAuthRef.current?.verifyOtp(cleanOtp);
-      if (res?.success && res.uid) {
-        // Đồng bộ ID User, liên kết tài khoản gốc và đơn hàng cũ giống bản web (utils.js)
-        await signInWithPhoneResult(res.uid, phone.trim());
-        dialog.showDialog({
-          title: t('success') || 'Thành công',
-          message: t('loginSuccess') || 'Đăng nhập thành công!',
-          type: 'success',
-          buttons: [
-            {
-              text: t('start') || 'Bắt đầu',
-              style: 'primary',
-              onPress: () => router.back(),
-            },
-          ],
-        });
-      } else {
-        dialog.alert(
-          t('error') || 'Lỗi',
-          res?.error || t('invalidOtpError') || 'Mã OTP không chính xác hoặc đã hết hạn.'
-        );
+      let phoneUid = '';
+
+      // 1. Xác thực native trực tiếp vào Firebase Auth qua PhoneAuthProvider credential
+      if (verificationId) {
+        try {
+          const credential = PhoneAuthProvider.credential(verificationId, cleanOtp);
+          const cred = await signInWithCredential(auth, credential);
+          if (cred?.user?.uid) {
+            phoneUid = cred.user.uid;
+          }
+        } catch (credErr: any) {
+          console.warn('Native signInWithCredential attempt failed, trying WebView fallback:', credErr);
+        }
       }
+
+      // 2. Dự phòng bằng WebView xác thực nếu chưa lấy được phoneUid
+      if (!phoneUid) {
+        const res = await phoneAuthRef.current?.verifyOtp(cleanOtp);
+        if (res?.success && res.uid) {
+          phoneUid = res.uid;
+        } else {
+          throw new Error(res?.error || t('invalidOtpError') || 'Mã OTP không chính xác hoặc đã hết hạn.');
+        }
+      }
+
+      // 3. Đồng bộ UserProfile & phân quyền
+      await signInWithPhoneResult(phoneUid, phone.trim());
+      dialog.showDialog({
+        title: t('success') || 'Thành công',
+        message: t('loginSuccess') || 'Đăng nhập thành công!',
+        type: 'success',
+        buttons: [
+          {
+            text: t('start') || 'Bắt đầu',
+            style: 'primary',
+            onPress: () => router.back(),
+          },
+        ],
+      });
     } catch (err: any) {
       dialog.alert(
         t('error') || 'Lỗi',
@@ -313,9 +335,9 @@ export default function LoginScreen() {
       // 1. Thử đăng nhập bằng Native Google SDK (nếu chạy trên bản build .ipa/.apk có native binary)
       if (NativeGoogleSignin) {
         try {
-          await NativeGoogleSignin.hasPlayServices();
+          await NativeGoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
           const gResponse = await NativeGoogleSignin.signIn();
-          const idToken = gResponse.data?.idToken;
+          const idToken = gResponse?.data?.idToken || gResponse?.idToken;
           if (idToken) {
             await signInWithGoogleCredential(idToken);
             dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { firebaseConfig } from '../config/firebase';
 
 export interface FirebasePhoneAuthWebViewHandle {
-  sendOtp: (phoneNumber: string) => Promise<{ success: boolean; error?: string }>;
+  sendOtp: (phoneNumber: string) => Promise<{ success: boolean; verificationId?: string; error?: string }>;
   verifyOtp: (code: string) => Promise<{ success: boolean; uid?: string; phoneNumber?: string; error?: string }>;
 }
 
@@ -21,7 +21,7 @@ export const FirebasePhoneAuthWebView = forwardRef<FirebasePhoneAuthWebViewHandl
 
     // Resolvers for asynchronous send & verify
     const sendOtpPromiseRef = useRef<{
-      resolve: (val: { success: boolean; error?: string }) => void;
+      resolve: (val: { success: boolean; verificationId?: string; error?: string }) => void;
       timer: any;
     } | null>(null);
 
@@ -97,7 +97,7 @@ export const FirebasePhoneAuthWebView = forwardRef<FirebasePhoneAuthWebViewHandl
         } else if (data.type === 'OTP_SENT') {
           if (sendOtpPromiseRef.current) {
             clearTimeout(sendOtpPromiseRef.current.timer);
-            sendOtpPromiseRef.current.resolve({ success: true });
+            sendOtpPromiseRef.current.resolve({ success: true, verificationId: data.verificationId });
             sendOtpPromiseRef.current = null;
           }
         } else if (data.type === 'OTP_ERROR') {
@@ -235,7 +235,7 @@ export const FirebasePhoneAuthWebView = forwardRef<FirebasePhoneAuthWebViewHandl
       firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier)
         .then(function(result) {
           confirmationResult = result;
-          post({ type: 'OTP_SENT' });
+          post({ type: 'OTP_SENT', verificationId: result.verificationId });
         })
         .catch(function(error) {
           post({ type: 'OTP_ERROR', error: error.message, code: error.code });
