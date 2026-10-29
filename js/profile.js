@@ -42,7 +42,7 @@ function setupTabs() {
             const targetSection = document.getElementById(btn.dataset.target);
             if (targetSection) targetSection.classList.add('active');
             if (btn.dataset.target === 'voucher-section' && auth.currentUser) {
-                fetchUserVouchers(auth.currentUser.uid);
+                fetchUserVouchers(window.currentEffectiveUid || auth.currentUser.uid);
             }
         });
     });
@@ -79,7 +79,7 @@ window.toggleFavorite = async (event, productId) => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const favRef = doc(db, "favorites", user.uid);
+    const favRef = doc(db, "favorites", window.currentEffectiveUid || user.uid);
     const favSnap = await getDoc(favRef);
     let favs = favSnap.exists() ? favSnap.data().productIds : [];
 
@@ -92,7 +92,7 @@ window.toggleFavorite = async (event, productId) => {
     }
 
     await setDoc(favRef, { productIds: favs });
-    fetchFavorites(user.uid); // Tải lại danh sách yêu thích
+    fetchFavorites(window.currentEffectiveUid || user.uid); // Tải lại danh sách yêu thích
 };
 
 // Hàm tải danh sách sản phẩm yêu thích từ Firestore
@@ -443,6 +443,7 @@ async function handleProfileAuth(user) {
         }
         
         // Cập nhật thông tin trên Sidebar
+        window.currentEffectiveUid = effectiveUid; window.currentUserData = userData; sessionStorage.setItem('tng_effective_uid', effectiveUid);
         document.getElementById('sidebar-name').innerText = userData.displayName || user.displayName || 'Khách hàng';
         const userAvatarUrl = userData.avatar || user.photoURL;
         const avatarImg = document.getElementById('sidebar-avatar');
@@ -483,7 +484,7 @@ async function handleProfileAuth(user) {
                     phone: userMainPhone,
                     updatedAt: new Date().toISOString()
                 }).catch(() => {});
-                autoLinkOrdersByPhone(user.uid, userMainPhone).catch(() => {});
+                autoLinkOrdersByPhone(effectiveUid, userMainPhone).catch(() => {});
             }
         }
 
@@ -733,7 +734,7 @@ async function handleProfileAuth(user) {
                         updatedAt: new Date().toISOString()
                     }, { merge: true });
 
-                    const linkedCount = await autoLinkOrdersByPhone(user.uid, newPhone);
+                    const linkedCount = await autoLinkOrdersByPhone(effectiveUid, newPhone);
                     if (linkedCount > 0) {
                         showToast(`Thành công! Đã liên kết ${linkedCount} đơn hàng cũ.`);
                     } else {
@@ -1033,7 +1034,13 @@ async function fetchOrderHistory(userId, authUser = null) {
         // 1.5 Hiển thị Thẻ thành viên & Tiến trình
         const cardContainer = document.getElementById('membership-card-container');
         if (cardContainer) {
-            const currentTier = getMembershipTier(totalSpent);
+            const profileSpent = Number(window.currentUserData?.totalSpent || window.currentUserData?.spentTotal || 0);
+            totalSpent = Math.max(totalSpent, profileSpent);
+            const currentTier = getMembershipTier(totalSpent, window.currentUserData?.membershipTier || window.currentUserData?.tier);
+            sessionStorage.setItem('tng_current_tier', JSON.stringify(currentTier));
+            sessionStorage.setItem('tng_total_spent', String(totalSpent));
+            if (window.updateMembershipPrices) window.updateMembershipPrices(currentTier);
+            setDoc(doc(db, "users", userId), { totalSpent: totalSpent, tier: currentTier.id, membershipTier: currentTier.name, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
             const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
             const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];
             const points = Math.floor(totalSpent / 10000);
@@ -1095,7 +1102,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                 <a href="../membership/" style="font-size:0.8rem; color:var(--text-black); text-decoration:underline; display:block; text-align:center; margin-top:10px;">Xem chi tiết quyền lợi các hạng thẻ</a>`;
             
             // Sinh voucher tự động (Thăng hạng, sinh nhật, người thân)
-            await generateAutomaticVouchers(userId, currentTier, totalSpent);
+            await generateAutomaticVouchers(userId, currentTier, Math.max(totalSpent, currentTier.min || 0));
             fetchUserVouchers(userId);
         }
         

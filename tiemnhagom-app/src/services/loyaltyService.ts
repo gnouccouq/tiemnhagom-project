@@ -205,8 +205,28 @@ export async function syncUserLoyaltyAndVouchers(
   }
 
   try {
-    const orders = await getUserOrders(userId);
-    const effectiveSpent = calculateEffectiveSpent(orders, userProfile);
+    let resolvedProfile = userProfile; let effectiveUid = userId;
+    if (!resolvedProfile) {
+      try {
+        const uSnap = await getDoc(doc(db, 'users', userId));
+        if (uSnap.exists()) {
+          const uData = uSnap.data() as any;
+          if (uData.mergedTo && uData.mergedTo !== userId) {
+            const pSnap = await getDoc(doc(db, 'users', uData.mergedTo));
+            effectiveUid = pSnap.exists() ? uData.mergedTo : userId;
+            resolvedProfile = pSnap.exists() ? { uid: effectiveUid, ...(pSnap.data() as any) } : { uid: userId, ...uData };
+          } else {
+            resolvedProfile = { uid: userId, ...uData };
+          }
+        }
+      } catch {}
+    } else if ((resolvedProfile as any).mergedTo && (resolvedProfile as any).mergedTo !== userId) {
+      effectiveUid = (resolvedProfile as any).mergedTo;
+    } else if (resolvedProfile.uid) {
+      effectiveUid = resolvedProfile.uid;
+    }
+    const orders = await getUserOrders(effectiveUid);
+    const effectiveSpent = calculateEffectiveSpent(orders, resolvedProfile);
 
     // Tính điểm đã sử dụng
     let redeemedPoints = 0;
@@ -218,11 +238,11 @@ export async function syncUserLoyaltyAndVouchers(
       }
     });
 
-    const currentTier = getMemberTier(effectiveSpent, userProfile?.tier || userProfile?.membershipTier);
+    const currentTier = getMemberTier(effectiveSpent, resolvedProfile?.membershipTier || resolvedProfile?.tier);
 
     // Tự động sinh voucher thăng hạng tương ứng
-    const userBday = userProfile?.dob || userProfile?.birthday;
-    await generateAutomaticVouchers(userId, currentTier, effectiveSpent, userBday);
+    const userBday = resolvedProfile?.dob || resolvedProfile?.birthday;
+    await generateAutomaticVouchers(effectiveUid, currentTier, Math.max(effectiveSpent, currentTier.min), userBday);
 
     // Tính điểm gốm thực tế (cứ 10.000đ = 1 điểm)
     const earnedPoints = Math.floor(effectiveSpent / 10000);
@@ -235,12 +255,12 @@ export async function syncUserLoyaltyAndVouchers(
 
     // Kiểm tra và cập nhật document users/{userId} để đồng bộ tuyệt đối với Web
     try {
-      const userDocRef = doc(db, 'users', userId);
+      const userDocRef = doc(db, 'users', effectiveUid);
       const updates: any = {};
-      if (userProfile?.totalSpent !== effectiveSpent) {
+      if (resolvedProfile?.totalSpent !== effectiveSpent) {
         updates.totalSpent = effectiveSpent;
       }
-      if (userProfile?.tier !== currentTier.id) {
+      if (resolvedProfile?.tier !== currentTier.id || resolvedProfile?.membershipTier !== currentTier.name) {
         updates.tier = currentTier.id;
         updates.membershipTier = currentTier.name;
       }

@@ -310,7 +310,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader, MEMBERSHIP_TIERS, auth, db, getMembershipTier, generateAutomaticVouchers } from "../js/utils.js";
+        import { initHeader, MEMBERSHIP_TIERS, auth, db, getMembershipTier, generateAutomaticVouchers, fetchUserMembershipInfo } from "../js/utils.js";
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -393,22 +393,13 @@
             const progressContainer = document.getElementById('personal-membership-progress');
             
             try {
-                const q = query(collection(db, "orders"), where("userId", "==", userId));
-                const snap = await getDocs(q);
-                
-                let totalSpent = 0;
-                snap.forEach(doc => {
-                    const o = doc.data();
-                    if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status)) {
-                        totalSpent += (o.totalAmount || 0);
-                    }
-                });
-                
-                const currentTier = getMembershipTier(totalSpent);
+                const memInfo = await fetchUserMembershipInfo(userId);
+                const totalSpent = memInfo.totalSpent;
+                const currentTier = memInfo.tier;
                 sessionStorage.setItem('tng_current_tier', JSON.stringify(currentTier));
                 if (window.updateMembershipPrices) window.updateMembershipPrices(currentTier);
                 
-                await generateAutomaticVouchers(userId, currentTier, totalSpent);
+                await generateAutomaticVouchers(memInfo.effectiveUid || userId, currentTier, memInfo.effectiveSpentForTier || totalSpent);
 
                 const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
                 const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];

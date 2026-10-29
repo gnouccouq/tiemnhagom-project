@@ -43,6 +43,26 @@ export function isHCMProvince(text?: string | null): boolean {
  * Lấy thông tin hạng hội viên dựa trên tổng chi tiêu hoặc tên hạng đã lưu
  */
 export function getMemberTier(totalSpent: number = 0, tierNameOrId?: string): MemberTierInfo {
+  let calculatedIdx = 0;
+  for (let i = APP_MEMBERSHIP_TIERS.length - 1; i >= 0; i--) {
+    if (totalSpent >= APP_MEMBERSHIP_TIERS[i].min) {
+      calculatedIdx = i;
+      break;
+    }
+  }
+  if (tierNameOrId) {
+    const lower = tierNameOrId.toLowerCase().trim();
+    let manualIdx = -1;
+    if (lower.includes('vip') || lower.includes('độc bản') || lower.includes('doc ban')) manualIdx = 3;
+    else if (lower.includes('mem') || lower.includes('men')) manualIdx = 2;
+    else if (lower.includes('new') || lower.includes('nung')) manualIdx = 1;
+    if (manualIdx > calculatedIdx) {
+      calculatedIdx = manualIdx;
+    }
+  }
+  return APP_MEMBERSHIP_TIERS[calculatedIdx] || APP_MEMBERSHIP_TIERS[0];
+}
+function _unusedGetMemberTierLegacy(totalSpent: number = 0, tierNameOrId?: string): MemberTierInfo {
   if (tierNameOrId) {
     const lower = tierNameOrId.toLowerCase();
     if (lower.includes('vip') || lower.includes('độc bản') || lower.includes('doc ban')) {

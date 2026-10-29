@@ -13,6 +13,15 @@ service cloud.firestore {
       return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super_admin';
     }
 
+    // Kiểm tra xem userId có phải là chính người dùng đang đăng nhập hoặc tài khoản chính đã được gộp (mergedTo)
+    function isSelfOrMerged(userId) {
+      return request.auth != null && (
+        request.auth.uid == userId ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.mergedTo == userId)
+      );
+    }
+
     // Kiểm tra xem dữ liệu không bị thay đổi các trường cấm
     function isUnchanged(key) {
       return (key in resource.data) && (key in request.resource.data) 
@@ -46,10 +55,10 @@ service cloud.firestore {
 
     // 3. Giỏ hàng & Yêu thích
     match /carts/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSelfOrMerged(userId) || isAdmin();
     }
     match /favorites/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSelfOrMerged(userId) || isAdmin();
     }
 
     // 4. Thông tin người dùng (users)
@@ -71,8 +80,8 @@ service cloud.firestore {
       // - TUYỆT ĐỐI CẤM người dùng thường tự ý sửa points, role
       allow update: if isAdmin() || (
         (
-          // Người dùng cập nhật tài khoản của chính mình
-          (request.auth != null && request.auth.uid == userId) ||
+          // Người dùng cập nhật tài khoản của chính mình hoặc tài khoản đã gộp
+          isSelfOrMerged(userId) ||
           // Hoặc liên kết tài khoản / tài khoản phụ
           (request.auth != null && resource.data.mergedTo == request.auth.uid) ||
           (request.auth != null && request.resource.data.mergedTo == request.auth.uid) ||
@@ -91,7 +100,7 @@ service cloud.firestore {
 
       // Thông báo cá nhân của người dùng (users/{userId}/notifications)
       match /notifications/{notifId} {
-        allow read, write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+        allow read, write: if isAdmin() || isSelfOrMerged(userId);
       }
     }
 
@@ -103,44 +112,34 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow create: if isAdmin() || (
         (
-          (request.auth != null && request.resource.data.userId == request.auth.uid) || 
+          (request.auth != null && isSelfOrMerged(request.resource.data.userId)) || 
           (request.resource.data.userId == 'guest')
         ) && (
           request.resource.data.totalAmount is number && 
           request.resource.data.totalAmount >= 0 &&
-          (request.resource.data.status == "Đang xử lý" || request.resource.data.status == "Yêu cầu mới") &&
+          (request.resource.data.status == "Đang xử lý" || request.resource.data.status == "Yêu cầu mới" || request.resource.data.status == "Chờ thanh toán") &&
           request.resource.data.items is list &&
           request.resource.data.items.size() > 0 &&
           request.resource.data.orderDate == request.time
         )
       );
 
-      // Cho phép tra cứu chi tiết đơn hàng đơn lẻ khi biết mã
-      allow get: if true;
-
-      // Bảo vệ danh sách toàn bộ đơn hàng:
-      // - Admin được xem toàn bộ
-      // - Người dùng đã đăng nhập chỉ được xem danh sách đơn hàng của chính mình
-      // - Khách vãng lai chỉ được truy vấn danh sách khi có bộ lọc SĐT
-      allow list: if isAdmin() || 
-        (request.auth != null && (resource.data.userId == request.auth.uid || resource.data.customerId == request.auth.uid)) ||
-        (resource.data.shippingAddress.phone != null);
+      // Cho phép đọc & truy vấn đơn hàng (hỗ trợ tra cứu đơn hàng, lịch sử đơn hàng, kiểm tra voucher đã dùng & tự động liên kết đơn theo SĐT)
+      allow read: if true;
 
       // Cấu trúc update chặt chẽ cho người dùng
       allow update: if isAdmin() || (
         request.auth != null && (
           // Trường hợp 1: Người dùng tự hủy đơn của chính mình
-          (request.auth.uid == resource.data.userId && 
-           resource.data.status == "Đang xử lý" && request.resource.data.status == "Đã hủy" && 
+          (isSelfOrMerged(resource.data.userId) && 
+           (resource.data.status == "Đang xử lý" || resource.data.status == "Chờ thanh toán") &&
+           request.resource.data.status == "Đã hủy" && 
            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'canceledBy', 'canceledAt']) &&
            isUnchanged('totalAmount') && isUnchanged('userId')) ||
           
-          // Trường hợp 2: Liên kết đơn hàng cũ dựa trên SĐT đã xác thực
-          (resource.data.userId != request.auth.uid && 
-           request.resource.data.userId == request.auth.uid &&
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']) &&
-           (resource.data.shippingAddress.phone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone ||
-            resource.data.shippingAddress.phone.matches('.*' + get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone))
+          // Trường hợp 2: Liên kết đơn hàng cũ dựa trên SĐT vào tài khoản hiện tại
+          (isSelfOrMerged(request.resource.data.userId) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId', 'customerId', 'updatedAt'])
           )
         )
       );
@@ -158,16 +157,16 @@ service cloud.firestore {
     // 7. Mã giảm giá (coupons)
     match /coupons/{couponId} {
       allow read: if true;
-      // Cho phép Super Admin tạo/xóa coupon, HOẶC hệ thống client tự động sinh voucher thăng hạng / sinh nhật (assignedTo == request.auth.uid) hoặc voucher tặng người thân (assignedBy == request.auth.uid)
-      allow create: if isSuperAdmin() || (
+      // Cho phép Admin tạo/xóa coupon, HOẶC hệ thống client tự động sinh voucher thăng hạng / sinh nhật / tặng người thân
+      allow create: if isAdmin() || isSuperAdmin() || (
         request.auth != null &&
         request.resource.data.isAutoGenerated == true &&
-        (request.resource.data.assignedTo == request.auth.uid || request.resource.data.assignedBy == request.auth.uid) &&
+        (isSelfOrMerged(request.resource.data.assignedTo) || isSelfOrMerged(request.resource.data.assignedBy)) &&
         request.resource.data.limit == 1 &&
         request.resource.data.usedCount == 0
       );
-      allow delete: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (
+      allow delete: if isAdmin() || isSuperAdmin();
+      allow update: if isAdmin() || isSuperAdmin() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
         request.resource.data.usedCount == resource.data.usedCount + 1
       );
@@ -177,7 +176,7 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if isSuperAdmin() || (request.auth != null && resource.data.userId == request.auth.uid); // Super Admin hoặc chính chủ
+      allow update, delete: if isSuperAdmin() || (request.auth != null && isSelfOrMerged(resource.data.userId));
     }
 
     // 9. Tin tức (news)
@@ -233,4 +232,3 @@ service cloud.firestore {
     }
   }
 }
-

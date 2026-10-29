@@ -181,7 +181,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isCancelled = false;
     if (currentUid) {
-      syncUserLoyaltyAndVouchers(currentUid, userProfile)
+      syncUserLoyaltyAndVouchers(userProfile?.uid || currentUid, userProfile)
         .then((res) => {
           if (!isCancelled) {
             setLoyaltySpent(res.totalSpent);
@@ -200,7 +200,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const memberTier = useMemo(() => {
     const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
     const effectiveSpent = Math.max(loyaltySpent, profileSpent);
-    return getMemberTier(effectiveSpent, userProfile?.tier || userProfile?.membershipTier);
+    return getMemberTier(effectiveSpent, userProfile?.membershipTier || userProfile?.tier);
   }, [loyaltySpent, userProfile]);
 
   const triggerCartBounce = () => {

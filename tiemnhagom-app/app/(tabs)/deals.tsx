@@ -85,7 +85,7 @@ export default function DealsScreen() {
   const { user, userProfile } = useAuth();
 
   // Loyalty calculations
-  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [totalSpent, setTotalSpent] = useState<number>(() => Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0));
   const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
   const [, setLoadingLoyalty] = useState<boolean>(true);
 
@@ -107,7 +107,7 @@ export default function DealsScreen() {
     }
 
     try {
-      const res = await syncUserLoyaltyAndVouchers(user.uid, userProfile);
+      const res = await syncUserLoyaltyAndVouchers(userProfile?.uid || user.uid, userProfile);
       setRedeemedPoints(res.redeemedPoints);
       setTotalSpent(res.totalSpent);
     } catch {
@@ -121,7 +121,7 @@ export default function DealsScreen() {
   const fetchCouponsData = useCallback(async () => {
     setLoadingCoupons(true);
     try {
-      const data = await getActiveCoupons(user?.uid);
+      const data = await getActiveCoupons(userProfile?.uid || user?.uid);
       setCoupons(data);
     } catch (e) {
       console.warn('Lỗi tải vouchers từ Firestore: ' + String(e));
@@ -153,7 +153,22 @@ export default function DealsScreen() {
     }
   }
 
-  // Cứ 10.000đ = 1 điểm
+  // Cứ 10.000đ = 1 điểm (kết hợp kiểm tra membershipTier / tier giống trang Profile)
+  const manualTierRaw = userProfile?.membershipTier || userProfile?.tier;
+  if (manualTierRaw && typeof manualTierRaw === 'string') {
+    const cTier = manualTierRaw.toLowerCase().trim();
+    let manualIdx = -1;
+    if (cTier === 'vip' || cTier.includes('độc bản') || cTier.includes('doc ban')) manualIdx = 3;
+    else if (cTier === 'mem' || cTier.includes('men') || cTier.includes('gom men')) manualIdx = 2;
+    else if (cTier === 'new' || cTier.includes('nung') || cTier.includes('gom nung')) manualIdx = 1;
+    if (manualIdx > -1) {
+      const currentIdx = MEMBERSHIP_TIERS.findIndex((t) => t.id === currentTier.id);
+      if (manualIdx > currentIdx) {
+        currentTier = MEMBERSHIP_TIERS[manualIdx];
+        nextTier = MEMBERSHIP_TIERS[manualIdx + 1] || null;
+      }
+    }
+  }
   const earnedPoints = Math.floor(totalSpent / 10000);
   const rawProfilePoints =
     userProfile?.points !== undefined && userProfile?.points !== null

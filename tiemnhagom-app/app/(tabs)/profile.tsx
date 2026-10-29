@@ -159,7 +159,7 @@ export default function ProfileScreen() {
   // Tính toán chi tiêu thực tế từ các đơn hàng đã hoàn thành để đồng bộ chuẩn xác với web
   useEffect(() => {
     const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
-    const targetUid = user?.uid || userProfile?.uid || '';
+    const targetUid = userProfile?.uid || user?.uid || '';
     if (targetUid) {
       setLoadingOrders(true);
       syncUserLoyaltyAndVouchers(targetUid, userProfile)
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
   }
 
   // Chỉ ghi đè nếu admin gán thủ công trường membershipTier cụ thể
-  const manualTierRaw = userProfile?.membershipTier;
+  const manualTierRaw = userProfile?.membershipTier || userProfile?.tier;
   if (manualTierRaw && typeof manualTierRaw === 'string') {
     const cTier = manualTierRaw.toLowerCase().trim();
     let manualIdx = -1;

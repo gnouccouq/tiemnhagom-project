@@ -377,6 +377,7 @@ function updatePriceDisplay() {
 
 // Cập nhật URL trên thanh địa chỉ & Meta SEO khi người dùng chọn biến thể
 function syncVariantStateToUrlAndSEO() {
+    window.updateV2PriceDisplay = updatePriceDisplay;
     if (!currentProductData || !currentProductId) return;
     const p = currentProductData;
     
@@ -1112,6 +1113,9 @@ async function fetchProductDetailV2() {
             snapCoupons.forEach(docSnap => {
                 const c = docSnap.data();
                 if (c.expiryDate && new Date(c.expiryDate) < new Date()) return;
+                const effUid = sessionStorage.getItem('tng_effective_uid') || auth.currentUser?.uid;
+                if (c.assignedTo && (!auth.currentUser || (c.assignedTo !== auth.currentUser.uid && c.assignedTo !== effUid))) return;
+                if (c.assignedBy || c.forNewCustomerOnly) return;
                 const valueStr = c.type === 'percent' ? `${c.value}%` : `${new Intl.NumberFormat('vi-VN').format(c.value)}đ`;
                 couponsHtml += `
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 12px; border-radius: 8px; border: 1px solid #eee;">
@@ -1199,7 +1203,7 @@ async function fetchRelatedProductsV2(currentId, category) {
     try {
         const q = query(collection(db, "products"), where("category", "==", category), limit(9));
         const snap = await getDocs(q);
-        let html = '';
+        let html = ''; let count = 0;
         const targetLink = window.location.pathname.includes('detail-test.html') ? '/product/detail-test.html' : '../product/index.html';
         snap.forEach(d => {
             if (d.id !== currentId && count < 8 && !d.data().isHidden && !d.data().isOnlyEvent) {
@@ -1229,7 +1233,7 @@ async function fetchRecentlyViewedV2(currentId) {
     if (ids.length === 0) return;
 
     try {
-        let html = '';
+        let html = ''; let count = 0;
         const targetLink = window.location.pathname.includes('detail-test.html') ? '/product/detail-test.html' : '../product/index.html';
         for (const id of ids) {
             const snap = await getDoc(doc(db, "products", id));

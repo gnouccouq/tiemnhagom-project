@@ -324,7 +324,124 @@ export const MEMBERSHIP_TIERS = [
     }
 ];
 
-export function getMembershipTier(totalSpent) {
+export function isCompletedOrderForLoyalty(order) {
+    if (!order) return false;
+    const statusLower = String(order.status || '').trim().toLowerCase();
+    if (statusLower.includes('hủy') || statusLower.includes('cancel') || statusLower.includes('hoàn trả')) return false;
+    return (
+        statusLower.includes('hoàn thành') ||
+        statusLower.includes('thành công') ||
+        statusLower.includes('completed') ||
+        statusLower.includes('đã giao') ||
+        statusLower.includes('đã nhận') ||
+        statusLower.includes('success')
+    );
+}
+
+export function getMembershipTier(totalSpent = 0, tierOverride = null) {
+    const numericSpent = Number(totalSpent) || 0;
+    let calculatedIndex = 0;
+    for (let i = MEMBERSHIP_TIERS.length - 1; i >= 0; i--) {
+        if (numericSpent >= MEMBERSHIP_TIERS[i].min) {
+            calculatedIndex = i;
+            break;
+        }
+    }
+    if (tierOverride && typeof tierOverride === 'string') {
+        const lower = tierOverride.toLowerCase().trim();
+        let manualIndex = -1;
+        if (lower === 'vip' || lower.includes('độc bản') || lower.includes('doc ban')) manualIndex = 3;
+        else if (lower === 'mem' || lower.includes('gốm men') || lower.includes('gom men') || lower === 'men') manualIndex = 2;
+        else if (lower === 'new' || lower.includes('gốm nung') || lower.includes('gom nung') || lower === 'nung') manualIndex = 1;
+        if (manualIndex > calculatedIndex) {
+            calculatedIndex = manualIndex;
+        }
+    }
+    return MEMBERSHIP_TIERS[calculatedIndex] || MEMBERSHIP_TIERS[0];
+}
+
+export async function fetchUserMembershipInfo(userOrUid = null) {
+    const currentUser = (userOrUid && typeof userOrUid === 'object') ? userOrUid : auth.currentUser;
+    const rawUid = typeof userOrUid === 'string' ? userOrUid : (currentUser ? currentUser.uid : null);
+    if (!rawUid || rawUid === 'guest') {
+        const defaultTier = MEMBERSHIP_TIERS[0];
+        return { effectiveUid: null, totalSpent: 0, tier: defaultTier, points: 0, userData: {} };
+    }
+
+    try {
+        let effectiveUid = rawUid;
+        let userSnap = await getDoc(doc(db, "users", rawUid));
+        let userData = userSnap.exists() ? userSnap.data() : {};
+
+        if (userData.mergedTo && userData.mergedTo !== rawUid) {
+            const primarySnap = await getDoc(doc(db, "users", userData.mergedTo));
+            if (primarySnap.exists()) {
+                effectiveUid = userData.mergedTo;
+                userSnap = primarySnap;
+                userData = primarySnap.data();
+            }
+        }
+
+        const uidsToQuery = Array.from(new Set([
+            effectiveUid,
+            rawUid,
+            ...(Array.isArray(userData.mergedAccounts) ? userData.mergedAccounts : [])
+        ].filter(Boolean)));
+
+        const ordersMap = new Map();
+        await Promise.all(uidsToQuery.map(async (uid) => {
+            try {
+                const qOrders = query(collection(db, "orders"), where("userId", "==", uid));
+                const snap = await getDocs(qOrders);
+                snap.forEach(d => ordersMap.set(d.id, d.data()));
+            } catch (e) {}
+        }));
+
+        let orderSpent = 0;
+        ordersMap.forEach((o) => {
+            if (isCompletedOrderForLoyalty(o)) {
+                orderSpent += (Number(o.totalAmount) || 0);
+            }
+        });
+
+        const profileSpent = Number(userData.totalSpent || userData.spentTotal || 0);
+        const totalSpent = Math.max(orderSpent, profileSpent);
+        const tier = getMembershipTier(totalSpent, userData.membershipTier || userData.tier);
+        const effectiveSpentForTier = Math.max(totalSpent, tier.min || 0);
+        const points = Math.floor(totalSpent / 10000);
+
+        sessionStorage.setItem('tng_current_tier', JSON.stringify(tier));
+        sessionStorage.setItem('tng_effective_uid', effectiveUid);
+        sessionStorage.setItem('tng_total_spent', String(totalSpent));
+
+        if (window.updateMembershipPrices) {
+            window.updateMembershipPrices(tier);
+        }
+
+        // Đồng bộ ngược lại vào document users/{effectiveUid} nếu chi tiêu thực tế cao hơn hoặc hạng thẻ chưa khớp
+        if (userSnap.exists() && (userData.totalSpent !== totalSpent || userData.tier !== tier.id || userData.membershipTier !== tier.name)) {
+            setDoc(doc(db, "users", effectiveUid), {
+                totalSpent: totalSpent,
+                tier: tier.id,
+                membershipTier: tier.name,
+                updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+        }
+
+        return { effectiveUid, totalSpent, effectiveSpentForTier, tier, points, userData };
+    } catch (err) {
+        console.error("Lỗi đồng bộ hạng thành viên:", err);
+        let fallbackTier = MEMBERSHIP_TIERS[0];
+        try {
+            const cached = sessionStorage.getItem('tng_current_tier');
+            if (cached) fallbackTier = JSON.parse(cached);
+        } catch (_) {}
+        return { effectiveUid: rawUid, totalSpent: fallbackTier.min || 0, tier: fallbackTier, points: 0, userData: {} };
+    }
+}
+window.fetchUserMembershipInfo = fetchUserMembershipInfo;
+
+export function getMembershipTierLegacy(totalSpent) {
     return MEMBERSHIP_TIERS.find((t, idx) => {
         const nextTier = MEMBERSHIP_TIERS[idx + 1];
         if (!nextTier) return true; // Hạng cao nhất
@@ -981,7 +1098,9 @@ export async function autoLinkOrdersByPhone(userId, phone) {
                             address: uData.address || ''
                         }, { merge: true }).catch(() => {});
                     }
-                    updateDoc(uSnap.ref, { isMerged: true, mergedTo: userId }).catch(() => {});
+                    if (uData.isGhost === true || uSnap.id.startsWith('cust_')) {
+                        updateDoc(uSnap.ref, { isMerged: true, mergedTo: userId }).catch(() => {});
+                    }
                 }
             });
         } catch (e) { }
@@ -1077,7 +1196,7 @@ export async function logout() {
     try {
         await signOut(auth);
         localStorage.removeItem('tng_user_hint'); // Xóa gợi ý khi logout
-        sessionStorage.removeItem('tng_current_tier'); // Xóa cache hạng thẻ
+        sessionStorage.removeItem('tng_current_tier'); sessionStorage.removeItem('tng_effective_uid'); sessionStorage.removeItem('tng_total_spent'); // Xóa cache hạng thẻ
         if (window.updateMembershipPrices) window.updateMembershipPrices(null);
         showToast("Đã đăng xuất");
         await new Promise(r => setTimeout(r, 500)); // Quan trọng: Đợi IndexedDB lưu trạng thái đăng xuất trước khi reload trang
@@ -1411,6 +1530,9 @@ export function updateMembershipPrices(tier) {
                 const tierStr = sessionStorage.getItem('tng_current_tier');
                 if (tierStr) tier = JSON.parse(tierStr);
             } catch (e) { }
+        }
+        if (typeof window.updateV2PriceDisplay === 'function') {
+            try { window.updateV2PriceDisplay(); } catch (_) {}
         }
         const containers = document.querySelectorAll('.dynamic-membership-price');
         if (!containers || containers.length === 0) return;
@@ -2246,7 +2368,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
                     // Lấy hạng thành viên và cập nhật UI thẻ sản phẩm
                     try {
-                        const qOrders = query(collection(db, "orders"), where("userId", "==", user.uid));
+                        const earlyMemInfo = await fetchUserMembershipInfo(user); const qOrders = query(collection(db, "orders"), where("userId", "==", earlyMemInfo.effectiveUid || user.uid));
                         const orderSnaps = await getDocs(qOrders);
                         let totalSpent = 0;
                         orderSnaps.forEach(docSnap => {
@@ -2255,13 +2377,13 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 totalSpent += (o.totalAmount || 0);
                             }
                         });
-                        const tier = getMembershipTier(totalSpent);
+                        const tier = earlyMemInfo.tier;
                         sessionStorage.setItem('tng_current_tier', JSON.stringify(tier));
                         if (window.updateMembershipPrices) {
                             window.updateMembershipPrices(tier);
                         }
                         // Tự động cấp voucher thăng hạng, sinh nhật, người thân nếu đủ điều kiện
-                        generateAutomaticVouchers(user.uid, tier, totalSpent);
+                        generateAutomaticVouchers(earlyMemInfo.effectiveUid || user.uid, tier, earlyMemInfo.effectiveSpentForTier || earlyMemInfo.totalSpent);
                     } catch (e) {
                         console.error("Lỗi lấy hạng thành viên & tạo voucher:", e);
                     }
@@ -2373,6 +2495,20 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 }
                             }
                         }
+                    }
+                    // Đồng bộ hạng thành viên sau khi đã xác định tài khoản chính (targetUid) và liên kết đơn SĐT
+                    try {
+                        const memInfo = await fetchUserMembershipInfo(targetUid);
+                        const tier = memInfo.tier;
+                        if (tier && tier.id !== 'null') {
+                            const userNameEl = document.getElementById('user-name-display');
+                            if (userNameEl && !userNameEl.querySelector('.member-tier-header-pill')) {
+                                userNameEl.insertAdjacentHTML('beforeend', `<span class="member-tier-header-pill" style="margin-left: 6px; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #111; color: #fff; white-space: nowrap;">${tier.name}</span>`);
+                            }
+                        }
+                        await generateAutomaticVouchers(memInfo.effectiveUid || targetUid, tier, memInfo.effectiveSpentForTier || memInfo.totalSpent);
+                    } catch (memErr) {
+                        console.error("Lỗi đồng bộ hạng thành viên:", memErr);
                     }
                 } catch (e) { console.error("Background auth tasks error:", e); }
             })();
