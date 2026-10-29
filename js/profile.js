@@ -292,7 +292,7 @@ window.viewOrderDetails = async (orderId) => {
                                     <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển</span>
                                 </div>
                             </div>
-                            <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
+                            <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
                                 Xem lộ trình ➔
                             </a>
                         </div>
@@ -954,7 +954,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                                         <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển trên bản đồ</span>
                                     </div>
                                 </div>
-                                <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
+                                <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
                                     Xem lộ trình ➔
                                 </a>
                             </div>
@@ -1249,7 +1249,7 @@ async function fetchUserVouchers(userId) {
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border: 1px dashed #ced4da; margin-bottom: 8px;">
                             <code style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #2c3e50;">${c.id}</code>
-                            <button style="background: var(--primary-color, #2c3e50); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;" onclick="window.copyVoucherCode('${c.id}')">
+                            <button style="background: var(--primary-color, #2c3e50); color: white; border: none; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;" onclick="window.copyVoucherCode('${c.id}')">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 Sao chép
                             </button>

@@ -22,7 +22,7 @@ export interface BlurButtonProps {
   testID?: string;
   hitSlop?: any;
   disabled?: boolean;
-  /** Độ phóng giãn đàn hồi giọt nước khi chạm (mặc định 1.08 để tạo cổ nối giọt nước) */
+  /** Độ phóng giãn đàn hồi giọt nước khi chạm (mặc định 1.10 để tạo cổ nối giọt nước) */
   elasticScale?: number;
 }
 
@@ -37,7 +37,7 @@ export const BlurButton: React.FC<BlurButtonProps> = ({
   testID,
   hitSlop,
   disabled = false,
-  elasticScale = 1.08,
+  elasticScale = 1.10,
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
 

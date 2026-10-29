@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EmptyState } from '../src/components/EmptyState';
 import { BlurButton } from '../src/components/BlurButton';
-import { LiquidGlass } from '../src/components/LiquidGlass';
+import { LiquidGlass, LiquidGlassContainerView } from '../src/components/LiquidGlass';
 import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
 import { useSettings } from '../src/context/SettingsContext';
@@ -222,25 +222,29 @@ export default function CartScreen() {
           />
         </View>
 
-        {/* Nút quay lại tròn 40px theo chuẩn GEMINI.md Mục 1 */}
-        <BlurButton
-          onPress={handleGoBack}
-          accessibilityLabel={t('back') || 'Quay lại'}
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
-        </BlurButton>
+        {/* Nhóm tiêu đề bên trái chuẩn GEMINI.md Mục 1: Nút quay lại + Tiêu đề cạnh nhau */}
+        <View style={styles.headerLeftGroup}>
+          <BlurButton
+            onPress={handleGoBack}
+            accessibilityLabel={t('back') || 'Quay lại'}
+          >
+            <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
+          </BlurButton>
 
-        <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-          {t('cartHeader') || 'Giỏ hàng'}
-        </Text>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {t('cartHeader') || 'Giỏ hàng'}
+          </Text>
+        </View>
 
-        {/* Nút xoá tất cả */}
-        <BlurButton
-          onPress={confirmClearCart}
-          accessibilityLabel={t('clear') || 'Xóa tất cả'}
-        >
-          <Ionicons name="trash-outline" size={20} color={Colors.error || '#DC2626'} />
-        </BlurButton>
+        {/* Nút xoá tất cả bên phải bọc LiquidGlassContainerView */}
+        <LiquidGlassContainerView spacing={20} style={styles.headerRightGroup}>
+          <BlurButton
+            onPress={confirmClearCart}
+            accessibilityLabel={t('clear') || 'Xóa tất cả'}
+          >
+            <Ionicons name="trash-outline" size={20} color={Colors.error || '#DC2626'} />
+          </BlurButton>
+        </LiquidGlassContainerView>
       </View>
 
       <ScrollView
@@ -585,6 +589,18 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingBottom: Platform.OS === 'android' ? 8 : 4,
       backgroundColor: 'transparent',
       borderBottomWidth: 0,
+    },
+    headerLeftGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      flex: 1,
+      marginRight: 8,
+    },
+    headerRightGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
     },
     headerTitle: {
       fontFamily: 'ElleGaborStd',

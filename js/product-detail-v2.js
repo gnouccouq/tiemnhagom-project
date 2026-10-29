@@ -1002,7 +1002,7 @@ async function fetchProductDetailV2() {
                     </div>
 
                     <!-- Restock button -->
-                    <button type="button" id="v2-btn-restock" class="btn-notify-restock" onclick="window.openRestockModal()" style="display: none; width: 100%; margin-top: 4px; padding: 10px; background: #fffbeb; border: 1px dashed #d97706; color: #b45309; border-radius: 8px; font-weight: 600; font-size: 0.88rem; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                    <button type="button" id="v2-btn-restock" class="btn-notify-restock" onclick="window.openRestockModal()" style="display: none; width: 100%; margin-top: 4px; padding: 10px 18px; background: #fffbeb; border: 1px dashed #d97706; color: #b45309; border-radius: 999px; font-weight: 600; font-size: 0.88rem; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                         🔔 Nhận thông báo khi có hàng lại
                     </button>
                 </div>
@@ -1122,7 +1122,7 @@ async function fetchProductDetailV2() {
                             </div>
                             <div style="font-size: 0.75rem; color: #666; margin-top: 4px;">Đơn tối thiểu ${new Intl.NumberFormat('vi-VN').format(c.minOrder || 0)}đ</div>
                         </div>
-                        <button type="button" class="btn-minimal" style="padding: 4px 10px; font-size: 0.78rem; cursor: pointer; border-radius: 4px; border: 1px solid #333;" onclick="navigator.clipboard.writeText('${docSnap.id}'); showToast('Đã sao chép mã ${docSnap.id}!');">Sao chép</button>
+                        <button type="button" class="btn-minimal" style="padding: 4px 12px; font-size: 0.78rem; cursor: pointer; border-radius: 999px; border: 1px solid #333;" onclick="navigator.clipboard.writeText('${docSnap.id}'); showToast('Đã sao chép mã ${docSnap.id}!');">Sao chép</button>
                     </div>
                 `;
             });

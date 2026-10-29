@@ -533,7 +533,7 @@ export default function ProductDetailScreen() {
         </BlurButton>
 
         {/* Cụm 3 nút kính lỏng giao nhau: Chia sẻ + Yêu thích + Giỏ hàng (kéo dãn giọt nước) */}
-        <LiquidGlassContainerView spacing={18} style={styles.headerRightGroup} pointerEvents="box-none">
+        <LiquidGlassContainerView spacing={20} style={styles.headerRightGroup} pointerEvents="box-none">
           <BlurButton
             onPress={handleShareProduct}
             accessibilityLabel="Chia sẻ sản phẩm"
@@ -1506,7 +1506,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   headerRightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   cartBadge: {
     position: 'absolute',

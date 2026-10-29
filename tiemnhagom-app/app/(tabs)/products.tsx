@@ -24,6 +24,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
+import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
@@ -425,7 +426,7 @@ export default function ProductsScreen() {
           <Ionicons name="chevron-down" size={16} color={Colors.textPrimary} style={{ marginLeft: 4 }} />
         </TouchableOpacity>
 
-        <View style={styles.headerActions}>
+        <LiquidGlassContainerView spacing={20} style={styles.headerActions}>
           <BlurButton
             style={styles.iconBtn}
             onPress={() => router.push('/search' as any)}
@@ -461,7 +462,7 @@ export default function ProductsScreen() {
               </View>
             )}
           </BlurButton>
-        </View>
+        </LiquidGlassContainerView>
       </View>
 
       {/* ── Product FlatList dạng lưới 2 cột card dọc chuẩn trang chủ ── */}
@@ -762,7 +763,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
     headerActions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 12,
     },
     iconBtn: {
       width: 40,

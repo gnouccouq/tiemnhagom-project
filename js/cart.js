@@ -620,7 +620,7 @@ async function fetchAvailableCoupons() {
                         <p style="font-size: 0.75rem; color: #666; margin: 3px 0 2px 0;">${summaryText}</p>
                         ${c.expiryDate ? `<p style="color: #e74c3c; font-size: 0.65rem; margin: 0;">HSD: ${new Date(c.expiryDate).toLocaleDateString('vi-VN')}</p>` : '<p style="color: #27ae60; font-size: 0.65rem; margin: 0;">Không giới hạn HSD</p>'}
                     </div>
-                    <div class="btn-use-coupon" style="white-space: nowrap; font-size: 0.75rem; font-weight: 600; color: ${isActive ? '#fff' : '#2c3e50'}; background: ${isActive ? 'var(--primary-color, #2c3e50)' : '#f0f2f5'}; border: 1px solid ${isActive ? 'var(--primary-color, #2c3e50)' : '#e0e0e0'}; padding: 4px 10px; border-radius: 4px; transition: all 0.2s;">
+                    <div class="btn-use-coupon" style="white-space: nowrap; font-size: 0.75rem; font-weight: 600; color: ${isActive ? '#fff' : '#2c3e50'}; background: ${isActive ? 'var(--primary-color, #2c3e50)' : '#f0f2f5'}; border: 1px solid ${isActive ? 'var(--primary-color, #2c3e50)' : '#e0e0e0'}; padding: 5px 12px; border-radius: 999px; transition: all 0.2s;">
                         ${isActive ? 'Đang dùng' : 'Dùng ngay'}
                     </div>
                 </div>

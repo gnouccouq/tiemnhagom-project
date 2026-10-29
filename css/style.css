@@ -1192,7 +1192,7 @@ footer,
     justify-content: center;
     background: var(--text-black);
     color: var(--bg-cream);
-    padding: 1rem 2.5rem;
+    padding: 1rem 2.5rem; border-radius: 999px;
     text-decoration: none;
     margin-top: 1.5rem;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -1213,7 +1213,7 @@ footer,
     background: transparent;
     color: var(--text-black);
     border: 1px solid var(--text-black);
-    padding: 0.8rem 1.5rem;
+    padding: 0.8rem 1.5rem; border-radius: 999px;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -1282,7 +1282,7 @@ footer,
 .btn-minimal {
     background: none;
     border: 1px solid var(--text-black);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem; border-radius: 999px;
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -2580,7 +2580,7 @@ footer {
 .footer-newsletter {
     display: flex;
     margin: 15px 0 25px;
-    border: 1px solid rgba(247, 246, 242, 0.2);
+    border: 1px solid rgba(247, 246, 242, 0.2); border-radius: 999px; overflow: hidden;
     padding: 2px;
 }
 
@@ -2634,7 +2634,7 @@ footer {
     background: rgba(247, 246, 242, 0.1);
     transition: all 0.3s ease;
     color: var(--bg-cream);
-    border: 1px solid rgba(247, 246, 242, 0.2);
+    border: 1px solid rgba(247, 246, 242, 0.2); border-radius: 999px; overflow: hidden;
 }
 
 .social-icon:hover {
@@ -3099,7 +3099,7 @@ footer {
     color: var(--bg-cream);
     background-color: var(--text-black);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(247, 246, 242, 0.2);
+    border: 1px solid rgba(247, 246, 242, 0.2); border-radius: 999px; overflow: hidden;
     transition: all 0.3s ease;
     cursor: pointer;
 }
@@ -3357,7 +3357,7 @@ footer {
 .pos-fast-cash button {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     padding: 6px 0 !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
@@ -6072,7 +6072,7 @@ body.admin-dashboard-layout {
 }
 
 .action-group .detail-fav-btn {
-    flex: 0 0 55px;
+    flex: 0 0 55px; border-radius: 999px;
     height: 55px;
 }
 
@@ -6190,7 +6190,7 @@ body.admin-dashboard-layout {
 }
 
 .action-group .detail-fav-btn {
-    flex: 0 0 55px;
+    flex: 0 0 55px; border-radius: 999px;
     height: 55px;
     margin: 0;
     display: flex;
@@ -6199,7 +6199,7 @@ body.admin-dashboard-layout {
 }
 
 .action-group .detail-share-btn {
-    flex: 0 0 50px;
+    flex: 0 0 50px; border-radius: 999px;
     height: 50px;
     margin: 0;
     display: flex;
@@ -7058,7 +7058,7 @@ body.admin-dashboard-layout {
 }
 
 .sort-options select {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem; border-radius: 999px;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #fff !important;
@@ -10331,7 +10331,7 @@ body { position: static !important; }
     border: 1px solid #333 !important;
     background: transparent !important;
     color: #333 !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     cursor: pointer !important;
     font-weight: 500 !important;
     transition: all 0.2s ease !important;
@@ -10350,7 +10350,7 @@ body { position: static !important; }
     cursor: pointer !important;
     font-weight: 500 !important;
     transition: all 0.2s ease !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
 }
 
 .btn-minimal:hover {
@@ -11398,7 +11398,7 @@ body.admin-dashboard-layout {
     font-weight: 700 !important;
     font-size: 0.85rem !important;
     padding: 5px 16px !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
     cursor: pointer;
@@ -13428,7 +13428,7 @@ input:checked + .slider:before {
     flex-shrink: 0 !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     padding: 14px 16px 24px !important;
     box-sizing: border-box !important;
     position: static !important;
@@ -13444,7 +13444,7 @@ input:checked + .slider:before {
     flex-direction: column !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     padding: 14px 16px 30px !important;
     box-sizing: border-box !important;
 }
@@ -13879,3 +13879,46 @@ input:checked + .slider:before {
     cursor: pointer;
 }
 
+
+/* ==========================================================================
+   UNIFIED PILL ACTION BUTTONS (MATCHING TIEMNHAGOM-APP GEOMETRY, MONOCHROME WEB PALETTE)
+   ========================================================================== */
+.btn-dark,
+.btn-outline,
+.btn-minimal,
+.btn-minimal-add,
+.btn-google,
+.btn-place-order,
+.btn-primary,
+.drawer-cart-footer .btn-primary,
+.action-group .btn-dark,
+.action-group .btn-outline,
+.action-group .detail-fav-btn,
+.action-group .detail-share-btn,
+.detail-fav-btn,
+.variant-chip,
+.profile-nav-btn,
+.tng-dialog-btn,
+.tng-loc-btn-allow,
+.tng-loc-btn-later,
+.footer-newsletter,
+.footer-newsletter button,
+.tracking-btn {
+    border-radius: 999px !important;
+}
+
+.drawer-cart-footer .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--text-black, #000000);
+    color: var(--bg-cream, #ffffff);
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.25s ease;
+}
+
+.drawer-cart-footer .btn-primary:hover {
+    opacity: 0.85;
+}

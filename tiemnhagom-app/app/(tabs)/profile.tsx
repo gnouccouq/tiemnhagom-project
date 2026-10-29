@@ -33,6 +33,7 @@ import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { getFullAppVersionString } from '../../src/utils/appVersion';
 import { BlurButton } from '../../src/components/BlurButton';
+import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
 import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
 import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
@@ -332,7 +333,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* Nút icon tròn: Thông báo trước, Cài đặt sau */}
-        <View style={styles.headerRightButtons}>
+        <LiquidGlassContainerView spacing={20} style={styles.headerRightButtons}>
           <BlurButton
             style={styles.roundHeaderBtn}
             onPress={() => router.push('/notifications')}
@@ -355,7 +356,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="settings-outline" size={20} color={Colors.textPrimary} />
           </BlurButton>
-        </View>
+        </LiquidGlassContainerView>
       </View>
 
       <ScrollView
@@ -1049,7 +1050,7 @@ const getStyles = (Colors: any) => {
     headerRightButtons: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 12,
     },
     roundHeaderBtn: {
       width: 40,

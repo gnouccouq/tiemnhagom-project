@@ -1,4 +1,3 @@
-// app/(tabs)/_layout.tsx
 import React from 'react';
 import { useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
@@ -65,7 +64,7 @@ export default function TabLayout() {
         />
       </NativeTabs.Trigger>
 
-      {/* 4. Tài khoản: icon-user */}
+      {/* 4. Tài khoản: icon avatar tròn 28px chuẩn tỉ lệ không bị vỡ khung */}
       <NativeTabs.Trigger name="profile" accessibilityLabel={t('profile')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
@@ -73,7 +72,7 @@ export default function TabLayout() {
             default: require('../../assets/icons/tabler/tabler_user.png'),
             selected: require('../../assets/icons/tabler/tabler_user_selected.png'),
           }}
-          renderingMode="template"
+          renderingMode="original"
         />
       </NativeTabs.Trigger>
 

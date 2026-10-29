@@ -49,7 +49,8 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
 ---
 
 ## 3. Quy chuẩn Button & Call-To-Action (CTA)
-* **Primary Button (Nút hành động chính - CTA):**
+* **Primary Button (Nút hành động chính - CTA trên App & Web):**
+  * **Quy chuẩn đồng bộ kiểu dáng Nút Hành Động giữa App và Web:** Toàn bộ các nút hành động trên Web (`.v2-btn-buy-now`, `.v2-btn-add-cart`, `.btn-dark`, `.btn-outline`, `.btn-minimal`, `.v2-sticky-btn-buy`, `.v2-sticky-btn-cart`, nút lưu thông tin, đặt hàng...) bắt buộc bo tròn viên thuốc đồng nhất (`border-radius: 999px` / `26px`) y hệt `tiemnhagom-app`, nhưng **tuyệt đối giữ nguyên tone màu Đen - Trắng (Monochrome) của Web**, không đổi sang màu nâu đất nung của App.
   * Dạng viên thuốc: `height: 52px, borderRadius: 26px`.
   * Nổi khối cao cấp: `shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 4`.
   * Chữ: `fontFamily: 'ElleGaborStd'`, `fontSize: 15px - 16px`, `fontWeight: '700'`.
@@ -130,7 +131,10 @@ Bảng màu quy chuẩn chính thức của Tiệm Nhà Gốm được quy đị
 * **`#FFFFFF` — Trắng Men Tinh Khiết (Pure Glaze White):**
   * Sử dụng cho: Nền các khối Card bo tròn 20px, nút bấm nổi, màu chữ/icon khi đặt trên nền nâu đất nung `#9C7156` hoặc nền tối `#2B2928`.
 
-### 6.2. Các quy tắc cấm khi áp dụng nhận diện thương hiệu (Trang 6 Brand Guidelines):
+### 6.2. Các quy tắc cấm khi áp dụng nhận diện thương hiệu (Trang 6 Brand Guidelines) & Phân tách Bảng màu Web vs App:
+* **Quy tắc Bất Khả Xâm Phạm về Bảng màu Giao diện Web (Monochrome Black & White):**
+  * **Tuyệt đối KHÔNG thay đổi màu giao diện của Web sang màu nâu đất nung (`#9C7156`) của App.**
+  * Giao diện Web Storefront sử dụng **tone màu Đen - Trắng (Monochrome: `#000000` / `#FFFFFF` / `#F7F6F2` / `#333333`)** riêng biệt và đặc trưng, khác với bảng màu gốm đất nung của `tiemnhagom-app`. Khi đồng bộ UI/UX giữa App và Web (như bo tròn nút bấm dạng viên thuốc `border-radius: 999px`), chỉ đồng bộ hình thái học (geometry/bo góc) và trải nghiệm tương tác, tuyệt đối giữ nguyên màu sắc Đen - Trắng của Web.
 * **Tuyệt đối không dùng màu khác ngoài bảng màu Brand:** Giữ trọn vẹn tinh thần gốm thủ công mộc mạc, tránh dùng các màu quá tươi, màu neon hoặc các dải màu lệch khỏi bảng mã màu quy chuẩn.
 * **Bảo toàn tính tương phản:** Không đặt logo hoặc chữ trên nền màu không đủ độ tương phản; không đặt logo trực tiếp lên ảnh chụp có nhiều chi tiết gây rối mắt.
 * **Không làm biến dạng logo:** Không xoay méo, không đổ bóng đậm (drop shadow) lên logo, không cắt xén, không tạo viền outline thô kệch.

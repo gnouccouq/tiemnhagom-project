@@ -221,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Cụm Kính lỏng chứa Thanh tìm kiếm con nhộng + Nút chuông thông báo (kéo dãn giọt nước khi chạm) */}
           <LiquidGlassContainerView
-            spacing={18}
+            spacing={20}
             style={styles.searchAndActionGroup}
           >
             {showSearch && (
@@ -329,7 +329,7 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
 
           {/* Cụm nút kính lỏng bên phải: Cài đặt + Thông báo + Nút tùy chọn (kéo dãn giọt nước) */}
-          <LiquidGlassContainerView spacing={18} style={[styles.right, { gap: 10 }]}>
+          <LiquidGlassContainerView spacing={20} style={[styles.right, { gap: 12 }]}>
             {rightComponent}
             {showSettings && (
               <BlurButton
@@ -469,8 +469,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginLeft: 10,
+    gap: 12,
+    marginLeft: 12,
   },
   searchPillWrapper: {
     flex: 1,
@@ -575,7 +575,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   headerLeftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
     flex: 1,
     marginRight: 8,
   },
@@ -608,6 +608,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   iconButton: {
     width: 40,
