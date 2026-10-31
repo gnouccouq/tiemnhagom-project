@@ -115,6 +115,7 @@ export interface UserProfile {
   fullName?: string;
   phone?: string;
   photoURL?: string | null;
+  avatar?: string | null;
   gender?: string;
   dob?: string;
   birthday?: string;

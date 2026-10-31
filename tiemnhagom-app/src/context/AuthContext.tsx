@@ -880,6 +880,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dob: effectiveDob,
         birthday: effectiveDob,
         photoURL: finalPhotoURL !== undefined ? finalPhotoURL : (userProfile?.photoURL ?? null),
+        avatar: finalPhotoURL !== undefined ? finalPhotoURL : (userProfile?.avatar ?? null),
         displayName: cleanName || userProfile?.displayName || null,
         name: cleanName || userProfile?.name,
       };

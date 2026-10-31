@@ -115,7 +115,7 @@ export default function ProfileScreen() {
   const Colors = useThemeColor();
   const styles = getStyles(Colors);
   const insets = useSafeAreaInsets();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, refreshProfile } = useAuth();
   const { favorites } = useWishlist();
   const { unreadCount } = useNotificationBadge();
   const { t } = useSettings();
@@ -143,6 +143,9 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       let isMounted = true;
+      if (user?.uid) {
+        refreshProfile().catch(() => {});
+      }
       getAllUserCoupons(user?.uid)
         .then((res) => {
           if (isMounted && res && Array.isArray(res.unused)) {
@@ -304,9 +307,9 @@ export default function ProfileScreen() {
           onPress={() => (user ? router.push('/edit-profile') : router.push('/auth/login'))}
         >
           <View style={styles.avatarWrap}>
-            {userProfile?.photoURL || user?.photoURL ? (
+            {userProfile?.photoURL || userProfile?.avatar || user?.photoURL ? (
               <Image
-                source={{ uri: userProfile?.photoURL || user?.photoURL || '' }}
+                source={{ uri: userProfile?.photoURL || userProfile?.avatar || user?.photoURL || '' }}
                 style={styles.avatarImg}
               />
             ) : (
