@@ -7919,31 +7919,82 @@ body.admin-dashboard-layout {
 }
 
 .dropdown-user-info {
-    padding: 12px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 14px;
+    border-bottom: none;
     pointer-events: none;
-    background-color: #fcfbf8;
+    background-color: #faf8f5;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(232, 225, 216, 0.7);
+}
+
+#user-name-display,
+.user-name-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.user-display-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.member-tier-header-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #111111;
+    color: #ffffff;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .user-dropdown-menu {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
     right: 0;
-    background-color: #fff !important;
-    min-width: 200px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff !important;
+    min-width: 260px;
+    width: max-content;
+    max-width: 320px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 3px 10px rgba(0, 0, 0, 0.04);
     list-style: none;
-    padding: 0.8rem 0;
+    padding: 8px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
+    transform: translateY(8px);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 1500;
-    border-radius: 4px;
-    border: 1px solid #eee;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.user-dropdown:hover .user-dropdown-menu {
+.user-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 0;
+    right: 0;
+    height: 12px;
+}
+
+.user-dropdown:hover .user-dropdown-menu,
+.user-dropdown-menu:hover {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -7951,8 +8002,8 @@ body.admin-dashboard-layout {
 
 .user-dropdown-menu li hr {
     border: none;
-    border-top: 1px solid #eee;
-    margin: 0.5rem 0;
+    border-top: 1px solid #f0ece6;
+    margin: 6px 4px;
 }
 
 .user-dropdown-menu li a,
@@ -7960,21 +8011,119 @@ body.admin-dashboard-layout {
     width: 100%;
     display: flex;
     align-items: center;
+    gap: 12px;
     text-decoration: none;
-    color: var(--text-black);
+    color: #2b2928;
     text-align: left;
-    padding: 0.6rem 1.5rem !important;
+    padding: 9px 12px !important;
     border: none !important;
-    transition: all 0.2s ease;
-    background: none;
+    border-radius: 10px;
+    transition: all 0.18s ease;
+    background: transparent;
     cursor: pointer;
     font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.user-dropdown-menu li a svg,
+.user-dropdown-menu li button svg {
+    flex-shrink: 0;
+    color: #6e665d;
+    transition: color 0.18s ease, transform 0.18s ease;
+    margin-right: 0 !important;
 }
 
 .user-dropdown-menu li a:hover,
-.user-dropdown-menu li a.active {
-    background-color: var(--bg-cream);
+.user-dropdown-menu li a.active,
+.user-dropdown-menu li button:hover {
+    background-color: #f7f5f0;
+    color: #000000;
     font-weight: 600;
+}
+
+.user-dropdown-menu li a:hover svg,
+.user-dropdown-menu li a.active svg,
+.user-dropdown-menu li button:hover svg {
+    color: #000000;
+    transform: scale(1.08);
+}
+
+.user-dropdown-menu li button#btn-logout-header {
+    color: #4a4540;
+}
+
+.user-dropdown-menu li button#btn-logout-header:hover {
+    background-color: #fff0f0;
+    color: #d32f2f;
+}
+
+.user-dropdown-menu li button#btn-logout-header:hover svg {
+    color: #d32f2f;
+}
+
+/* Header Login Button - Nút đăng nhập nổi bật & rõ nét */
+.header-login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: #1a1a1a !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.header-login-btn svg {
+    color: #1a1a1a;
+    transition: transform 0.22s ease, color 0.22s ease;
+    flex-shrink: 0;
+}
+
+.header-login-btn:hover {
+    background-color: #000000;
+    color: #ffffff !important;
+    border-color: #000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+    transform: translateY(-1px);
+}
+
+.header-login-btn:hover svg {
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+/* Tương phản cao trên navbar trong suốt hoặc nền banner/Noel */
+.navbar.transparent .header-login-btn {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #111111 !important;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.navbar.transparent .header-login-btn svg {
+    color: #111111;
+}
+
+.navbar.transparent .header-login-btn:hover {
+    background-color: #ffffff;
+    color: #000000 !important;
+    border-color: #ffffff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.navbar.transparent .header-login-btn:hover svg {
+    color: #000000;
 }
 
 /* Auth Page Styles */
@@ -10295,6 +10444,135 @@ body { position: static !important; }
     flex-wrap: wrap;
 }
 
+/* ==========================================================================
+   UNIFIED PILL INPUTS & FORMS (MATCHING TIEMNHAGOM-APP STANDARDS)
+   ========================================================================== */
+.profile-horizontal-form .form-group label,
+.profile-section .form-group label,
+.form-group label,
+.auth-form label,
+#form-add-address label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2b2928;
+    margin-bottom: 7px;
+    letter-spacing: 0.2px;
+}
+
+.profile-horizontal-form input,
+.profile-horizontal-form select,
+.profile-section .form-group input,
+.profile-section .form-group select,
+.auth-form input,
+#form-add-address input,
+#form-add-address select,
+.checkout-section input:not([type="checkbox"]):not([type="radio"]),
+.checkout-section select {
+    width: 100% !important;
+    height: 52px !important;
+    padding: 0 20px !important;
+    border-radius: 999px !important;
+    border: 1px solid #E8E1D8 !important;
+    background-color: #FAF8F5 !important;
+    color: #2B2928 !important;
+    font-family: inherit !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    transition: all 0.25s ease !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+/* Date input appearance adjustments */
+.profile-horizontal-form input[type="date"],
+.profile-section .form-group input[type="date"] {
+    padding-right: 18px !important;
+    color: #2B2928 !important;
+}
+
+/* Select dropdown pill shape & custom chevron arrow */
+.profile-horizontal-form select,
+.profile-section .form-group select,
+#form-add-address select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232B2928' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 18px center !important;
+    background-size: 16px !important;
+    padding-right: 44px !important;
+    cursor: pointer;
+}
+
+/* Focus State */
+.profile-horizontal-form input:focus,
+.profile-horizontal-form select:focus,
+.profile-section .form-group input:focus,
+.profile-section .form-group select:focus,
+.auth-form input:focus,
+#form-add-address input:focus,
+#form-add-address select:focus {
+    background-color: #FFFFFF !important;
+    border-color: #2B2928 !important;
+    box-shadow: 0 0 0 3px rgba(43, 41, 40, 0.08) !important;
+}
+
+/* Disabled & Readonly Fields (Email, Ngày tham gia) */
+.profile-horizontal-form input:disabled,
+.profile-horizontal-form input[readonly],
+.profile-section .form-group input:disabled,
+.profile-section .form-group input[readonly] {
+    background-color: #F5F2EB !important;
+    color: #7A7369 !important;
+    border-color: #E8E1D8 !important;
+    cursor: not-allowed !important;
+    opacity: 0.9;
+}
+
+/* Multiline inputs (Textarea / Địa chỉ chi tiết) */
+.profile-horizontal-form textarea,
+.profile-section .form-group textarea,
+#form-add-address textarea {
+    border-radius: 20px !important;
+    height: auto !important;
+    min-height: 84px !important;
+    padding: 14px 20px !important;
+    background-color: #FAF8F5 !important;
+    border: 1px solid #E8E1D8 !important;
+    color: #2B2928 !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    transition: all 0.25s ease !important;
+}
+
+.profile-horizontal-form textarea:focus,
+.profile-section .form-group textarea:focus,
+#form-add-address textarea:focus {
+    background-color: #FFFFFF !important;
+    border-color: #2B2928 !important;
+    box-shadow: 0 0 0 3px rgba(43, 41, 40, 0.08) !important;
+}
+
+/* OTP Digits input in profile */
+.otp-input-container .otp-digit {
+    border-radius: 16px !important;
+    width: 48px !important;
+    height: 52px !important;
+    border: 1px solid #E8E1D8 !important;
+    background-color: #FAF8F5 !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+}
+
+.otp-input-container .otp-digit:focus {
+    border-color: #2B2928 !important;
+    background-color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(43, 41, 40, 0.08) !important;
+}
+
 .form-row-3 .form-group {
     flex: 1;
     min-width: 200px;
@@ -10416,7 +10694,7 @@ body { position: static !important; }
         gap: 1rem !important;
     }
 
-    .form-row-3 .form-group {
+        .form-row-3 .form-group {
         min-width: 100% !important;
     }
 
