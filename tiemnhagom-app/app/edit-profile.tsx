@@ -112,7 +112,7 @@ export default function EditProfileScreen() {
     setProvinceCode(userProfile?.provinceCode);
     setWardCode(userProfile?.wardCode);
     setLocationName(userProfile?.locationName || '');
-    setEditAvatar(userProfile?.photoURL || user?.photoURL || null);
+    setEditAvatar(userProfile?.photoURL || userProfile?.avatar || user?.photoURL || null);
   }, [userProfile, user]);
 
   const dialog = useDialog();

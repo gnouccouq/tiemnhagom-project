@@ -2243,10 +2243,10 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     </a>
                     <ul class="user-dropdown-menu">
                         <li class="dropdown-user-info">
-                            <div id="user-name-display" style="font-weight: 300; font-size: 0.85rem; color: var(--text-black); display: flex; align-items: center;">
-                                ${displayName}
-                            </div>
-                        </li>
+                            <div id="user-name-display" class="user-name-display">
+                               <span class="user-display-name" title="${displayName}">${displayName}</span>
+                          </div>
+                      </li>
                         <li><a href="${profilePath}" class="${isProfilePage && !isOrdersTab && !isFavsTab ? 'active' : ''}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             Trang cá nhân
@@ -2529,7 +2529,14 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             });
         } else {
             const loginPath = pathPrefix === './' ? 'login/' : `${pathPrefix}login/`;
-            authSection.innerHTML = `<a href="${loginPath}" class="btn-minimal" style="text-decoration:none">Đăng nhập</a>`;
+            authSection.innerHTML = `
+                <a href="${loginPath}" class="header-login-btn" title="Đăng nhập">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Đăng nhập</span>
+                </a>`;
 
             // Xử lý kết quả kiểm tra bảo trì cho khách (vãng lai)
             const needsRedirect = await maintenancePromise;

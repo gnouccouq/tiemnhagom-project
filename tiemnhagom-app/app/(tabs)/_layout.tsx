@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useCart } from '../../src/context/CartContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useThemeColor } from '../../src/constants/theme';
+import { useAuth } from '../../src/context/AuthContext';
 
 export default function TabLayout() {
   const router = useRouter();
   const Colors = useThemeColor();
   const { cartCount } = useCart();
   const { t } = useSettings();
+  const { user, userProfile } = useAuth();
 
-  const cartTabListeners = React.useMemo(
+  const cartTabListeners = useMemo(
     () => ({
       tabPress: () => {
         router.push('/cart');
@@ -19,6 +21,26 @@ export default function TabLayout() {
     }),
     [router]
   );
+
+  // Avatar đồng bộ từ tài khoản người dùng: khi đổi avatar sẽ tự động cập nhật
+  const avatarUrl =
+    (userProfile?.photoURL && userProfile.photoURL.trim()) ||
+    (userProfile?.avatar && userProfile.avatar.trim()) ||
+    (user?.photoURL && user.photoURL.trim()) ||
+    null;
+
+  const profileIconSource = useMemo(() => {
+    if (!avatarUrl) {
+      return {
+        default: require('../../assets/icons/tabler/tabler_user.png'),
+        selected: require('../../assets/icons/tabler/tabler_user_selected.png'),
+      };
+    }
+    return {
+      default: { uri: avatarUrl, width: 28, height: 28 },
+      selected: { uri: avatarUrl, width: 28, height: 28 },
+    };
+  }, [avatarUrl]);
 
   return (
     <NativeTabs
@@ -64,15 +86,12 @@ export default function TabLayout() {
         />
       </NativeTabs.Trigger>
 
-      {/* 4. Tài khoản: icon avatar tròn 28px chuẩn tỉ lệ không bị vỡ khung */}
+      {/* 4. Tài khoản: icon avatar tròn 28px chuẩn tỉ lệ không bị vỡ khung, tự động đồng bộ khi user đổi avatar */}
       <NativeTabs.Trigger name="profile" accessibilityLabel={t('profile')}>
         <NativeTabs.Trigger.Label hidden />
         <NativeTabs.Trigger.Icon
-          src={{
-            default: require('../../assets/icons/tabler/tabler_user.png'),
-            selected: require('../../assets/icons/tabler/tabler_user_selected.png'),
-          }}
-          renderingMode="original"
+          src={profileIconSource}
+          renderingMode={avatarUrl ? 'original' : 'template'}
         />
       </NativeTabs.Trigger>
 

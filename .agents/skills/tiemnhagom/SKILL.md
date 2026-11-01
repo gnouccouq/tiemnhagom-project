@@ -1,4 +1,4 @@
----
+﻿---
 name: tiemnhagom-standards
 description: >-
   Bộ quy chuẩn thiết kế UI/UX và kiến trúc vận hành bắt buộc cho Tiệm Nhà Gốm.
@@ -288,3 +288,17 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
   * Hệ thống tự động tính toán chênh lệch: `Chênh lệch = Tiền mặt thực tế - (Tiền đầu ca + Tiền mặt thu trong ca)`.
   * Hiển thị cảnh báo lệch két (Thừa / Thiếu tiền) màu gốm trầm, không dùng màu xanh.
   * Bắt buộc có phần ghi chú bàn giao ca và lưu dữ liệu đối soát vào collection `shift_reports` trên Firestore.
+
+---
+
+## 16. Quy chuẩn Quản trị Tệp tin & Chống Sinh Tệp Rác (Zero Junk Files & Clean Workspace Standard)
+Áp dụng nghiêm ngặt cho toàn bộ hệ thống gồm Website Storefront, Web Dashboard POS, Ứng dụng di động `tiemnhagom-app` / `tiemnhagom-retail-app`, và Backend Cloud Functions:
+* **Tuyệt đối KHÔNG sinh tệp rác, tệp fix tạm bợ:**
+  * **Nghiêm cấm** tạo các thư mục hoặc tệp tạm thời như `scratch/`, `fix_*.js`, `test_*.js`, `update_*.js`, `temp_*`, `backup_*`, `*.bak`, `*.tmp`, `debug_*`... trực tiếp trong cây thư mục dự án hoặc các thư mục chức năng.
+  * Không tạo các tệp trùng lặp chức năng, không sao chép thừa thãi làm rối loạn cấu trúc danh mục đã được chuẩn hóa của dự án.
+* **Nguyên tắc Sửa đổi Trực tiếp tại chỗ (In-Place Modifications Only):**
+  * Mọi thao tác sửa lỗi, cập nhật tính năng hay refactor phải được chỉnh sửa trực tiếp trên chính các tệp mã nguồn chính thức của hệ thống (sử dụng công cụ chỉnh sửa tệp chuẩn trên đúng tệp đích).
+  * Nếu cần chạy script hỗ trợ ngắn hoặc kiểm tra dữ liệu, bắt buộc dùng cú pháp lệnh inline trong terminal (ví dụ: node eval hoặc PowerShell one-liner), **tuyệt đối không ghi ra file script .js/.ts trong repo**.
+* **Trách nhiệm Dọn dẹp & Giữ sạch Workspace (Workspace Hygiene):**
+  * Luôn kiểm tra `git status` trước và sau khi hoàn thành công việc.
+  * Nếu trong quá trình build, kiểm thử hoặc chạy lệnh phát sinh tệp rác/tệp tạm ngoài ý muốn, phải lập tức dọn dẹp và xóa bỏ ngay trước khi kết thúc phiên làm việc và bàn giao cho người dùng.

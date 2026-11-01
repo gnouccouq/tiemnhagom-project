@@ -180,6 +180,7 @@ export default function HomeScreen() {
 
   const avatarUrl =
     userProfile?.photoURL ||
+    userProfile?.avatar ||
     user?.photoURL ||
     auth.currentUser?.photoURL ||
     '';

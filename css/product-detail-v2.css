@@ -1256,6 +1256,7 @@ body.detail-v2-body {
   font-weight: 700;
   color: var(--v2-text-black);
   line-height: 1.2;
+  white-space: nowrap !important;
 }
 
 .v2-sticky-actions {
@@ -1306,6 +1307,96 @@ body.detail-v2-body {
 .v2-sticky-btn-buy:hover {
   background: #2c3e50;
   border-color: #2c3e50;
+}
+
+/* --- Mobile Responsive Sticky Bottom Bar --- */
+@media (max-width: 768px) {
+  .v2-sticky-bar {
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .v2-sticky-inner {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .v2-sticky-prod {
+    gap: 8px;
+    flex-shrink: 0; /* Giữ nguyên khối ảnh + giá, tuyệt đối không bị nút đè */
+  }
+
+  .v2-sticky-prod img {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .v2-sticky-name {
+    display: none !important; /* Ẩn tên sản phẩm trên mobile để tối ưu hàng ngang cho giá */
+  }
+
+  .v2-sticky-price {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    color: #111111;
+  }
+
+  .v2-sticky-actions {
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .v2-sticky-btn-cart,
+  .v2-sticky-btn-buy {
+    font-size: 0.8rem !important;
+    padding: 8px 10px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    flex: 1;
+    max-width: 130px;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .v2-sticky-btn-cart svg {
+    width: 15px !important;
+    height: 15px !important;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .v2-sticky-bar {
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .v2-sticky-inner {
+    gap: 6px;
+  }
+
+  .v2-sticky-prod {
+    gap: 6px;
+  }
+
+  .v2-sticky-prod img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .v2-sticky-price {
+    font-size: 0.85rem !important;
+  }
+
+  .v2-sticky-btn-cart,
+  .v2-sticky-btn-buy {
+    font-size: 0.75rem !important;
+    padding: 7px 6px !important;
+  }
 }
 
 /* Recommendations Section */
