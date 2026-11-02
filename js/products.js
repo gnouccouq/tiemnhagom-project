@@ -274,7 +274,14 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                 case 'popular': productsQuery = query(productsQuery, orderBy("sold", "desc")); break;
                 case 'price-asc': productsQuery = query(productsQuery, orderBy("price", "asc")); break;
                 case 'price-desc': productsQuery = query(productsQuery, orderBy("price", "desc")); break;
-                default: productsQuery = query(productsQuery, orderBy("updatedAt", "desc")); break;
+                default:
+                    // Với bộ lọc "mới nhất", chỉ order ở query khi không có filter phức tạp để tránh lỗi missing index
+                    if (currentCategory === 'all' && !collectionParam && !filterSale) {
+                        try {
+                            productsQuery = query(productsQuery, orderBy("updatedAt", "desc"));
+                        } catch (_) {}
+                    }
+                    break;
             }
         }
 
@@ -317,7 +324,19 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             currentLoadedCount = 0;
         }
 
-        const querySnapshot = await getDocs(finalQuery);
+        let querySnapshot;
+        try {
+            querySnapshot = await getDocs(finalQuery);
+        } catch (queryErr) {
+            console.warn("Lỗi Firestore query (có thể thiếu index), thử truy vấn dự phòng:", queryErr);
+            // Fallback: truy vấn cơ bản theo limit
+            try {
+                const fallbackQuery = query(collection(db, "products"), limit(FETCH_LIMIT));
+                querySnapshot = await getDocs(fallbackQuery);
+            } catch (fallbackErr) {
+                throw queryErr;
+            }
+        }
         
         if (querySnapshot.empty) {
             if (navigation === 'init') {
@@ -346,8 +365,63 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             ? searchAndRankProducts(allDocs, searchTerm, 1000)
             : allDocs;
 
-        // Sắp xếp lại danh sách trả về theo giá cuối cùng (đã giảm) nếu user chọn sort giá
-        if (currentSort === 'price-asc' || currentSort === 'price-desc') {
+        // Trích xuất timestamp chính xác hỗ trợ mọi định dạng (ISO string, Timestamp, Date, ms)
+        const parseProductTime = (item) => {
+            if (!item) return 0;
+            const candidates = [item.createdAt, item.updatedAt, item.createdDate, item.date, item.timestamp];
+            for (const d of candidates) {
+                if (!d) continue;
+                if (typeof d === 'number') return d < 1e11 ? d * 1000 : d;
+                if (typeof d === 'string') {
+                    const num = Number(d);
+                    if (!isNaN(num) && num > 1000000) return num < 1e11 ? num * 1000 : num;
+                    const ms = Date.parse(d);
+                    if (!isNaN(ms) && ms > 0) return ms;
+                }
+                if (d instanceof Date) {
+                    const ms = d.getTime();
+                    if (!isNaN(ms) && ms > 0) return ms;
+                }
+                if (typeof d.toMillis === 'function') {
+                    try { const ms = d.toMillis(); if (typeof ms === 'number' && ms > 0) return ms; } catch (_) {}
+                }
+                if (typeof d.toDate === 'function') {
+                    try { const ms = d.toDate().getTime(); if (typeof ms === 'number' && ms > 0) return ms; } catch (_) {}
+                }
+                if (typeof d.seconds === 'number' && d.seconds > 0) {
+                    return d.seconds * 1000 + Math.round((d.nanoseconds || 0) / 1e6);
+                }
+                if (typeof d._seconds === 'number' && d._seconds > 0) {
+                    return d._seconds * 1000 + Math.round((d._nanoseconds || 0) / 1e6);
+                }
+            }
+            const digits = (item.id || '').replace(/\D/g, '');
+            if (digits.length >= 4) {
+                const num = Number(digits);
+                if (!isNaN(num)) return num;
+            }
+            return 0;
+        };
+
+        // Sắp xếp client-side đảm bảo luôn chuẩn xác theo tiêu chí được chọn
+        if (currentSort === 'newest') {
+            finalResults.sort((a, b) => {
+                const timeA = parseProductTime(a);
+                const timeB = parseProductTime(b);
+                if (timeB !== timeA) return timeB - timeA;
+                return (b.id || '').localeCompare(a.id || '');
+            });
+        } else if (currentSort === 'popular') {
+            finalResults.sort((a, b) => {
+                const soldDiff = (Number(b.sold) || 0) - (Number(a.sold) || 0);
+                if (soldDiff !== 0) return soldDiff;
+                return parseProductTime(b) - parseProductTime(a);
+            });
+        } else if (currentSort === 'name-asc') {
+            finalResults.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+        } else if (currentSort === 'name-desc') {
+            finalResults.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'vi'));
+        } else if (currentSort === 'price-asc' || currentSort === 'price-desc') {
             finalResults.sort((a, b) => {
                 const priceA = a.salePrice || Math.round(a.price * (1 - (a.sale || 0) / 100));
                 const priceB = b.salePrice || Math.round(b.price * (1 - (b.sale || 0) / 100));

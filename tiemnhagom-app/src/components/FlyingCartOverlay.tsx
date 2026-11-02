@@ -1,6 +1,6 @@
 // src/components/FlyingCartOverlay.tsx
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Dimensions, Animated, Easing, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -120,10 +120,9 @@ interface FlyingCartOverlayProps {
 export const FlyingCartOverlay: React.FC<FlyingCartOverlayProps> = ({ items, onFinish }) => {
   const insets = useSafeAreaInsets();
 
-  // Điểm đích mặc định: icon giỏ hàng ở giữa thanh FloatingTabBar (tab 3/5)
-  const defaultTargetX = SCREEN_WIDTH / 2;
-  // Thanh FloatingTabBar có bottom khoảng max(insets.bottom - 10, 6) và cao 64px
-  const defaultTargetY = SCREEN_HEIGHT - Math.max(insets.bottom - 10, 6) - 34;
+  // Điểm đích mặc định: icon giỏ hàng ở header góc trên bên phải
+  const defaultTargetX = SCREEN_WIDTH - 36;
+  const defaultTargetY = insets.top + (Platform.OS === 'android' ? 28 : 24);
 
   if (!items || items.length === 0) return null;
 

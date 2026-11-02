@@ -41,7 +41,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: 'auth/login',
+  anchor: 'auth/login',
 };
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -351,7 +351,7 @@ function AppLockGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (
-        appState.current.match(/inactive|background/) &&
+        appState.current?.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
         // App goes to foreground

@@ -396,7 +396,8 @@ export async function getProducts(options?: {
         isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
         isFeatured: Boolean(data.isFeatured),
         rating: Number(data.rating) || 5,
-        createdAt: data.createdAt,
+        createdAt: data.createdAt || data.createdDate || data.updatedAt,
+        updatedAt: data.updatedAt,
         dimensions: data.dimensions,
         details: data.details,
         specs: data.specs,
@@ -451,7 +452,8 @@ export async function getProducts(options?: {
             isBestSeller: vIsBestSeller,
             isFeatured: Boolean(data.isFeatured),
             rating: Number(data.rating) || 5,
-            createdAt: data.createdAt,
+            createdAt: data.createdAt || data.createdDate || data.updatedAt,
+            updatedAt: data.updatedAt,
           });
         };
 
@@ -561,7 +563,8 @@ export async function getProductById(productId: string): Promise<Product | null>
       isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
       isFeatured: Boolean(data.isFeatured),
       rating: Number(data.rating) || 5,
-      createdAt: data.createdAt,
+      createdAt: data.createdAt || data.createdDate || data.updatedAt,
+      updatedAt: data.updatedAt,
       dimensions: data.dimensions,
       details: data.details,
       specs: data.specs,

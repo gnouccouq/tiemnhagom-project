@@ -266,7 +266,7 @@ function ArticleFeedCard({
 }
 
 // ─── Main Screen: NotificationsScreen ──────────────────────────────────────
-export default function NotificationsScreen() {
+export default function NotificationsScreen({ isTab = false }: { isTab?: boolean } = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
@@ -697,8 +697,8 @@ export default function NotificationsScreen() {
       <Header
         title={t('notifications') || 'Thông báo'}
         showSearch={false}
-        showBack={true}
-        showCart={false}
+        showBack={!isTab}
+        showCart={true}
         transparent={true}
         scrollY={scrollY}
       />
@@ -707,7 +707,10 @@ export default function NotificationsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
-          { paddingTop: insets.top + (Platform.OS === 'android' ? 64 : 56) },
+          {
+            paddingTop: insets.top + (Platform.OS === 'android' ? 64 : 56),
+            paddingBottom: isTab ? Math.max(insets.bottom, 20) + 110 : Math.max(insets.bottom, 16) + 40,
+          },
         ]}
         scrollEnabled={scrollEnabled}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}

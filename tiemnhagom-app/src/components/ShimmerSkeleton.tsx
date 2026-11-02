@@ -8,6 +8,7 @@ export interface ShimmerSkeletonProps {
   height?: DimensionValue;
   borderRadius?: number;
   style?: StyleProp<ViewStyle>;
+  isDark?: boolean;
 }
 
 /**
@@ -19,6 +20,7 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
   height = 16,
   borderRadius = 8,
   style,
+  isDark = false,
 }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -39,8 +41,13 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
     outputRange: [-180, 250],
   });
 
+  const baseBg = isDark ? '#262422' : '#EBE5DE';
+  const shimmerColors = isDark
+    ? (['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.09)', 'rgba(255, 255, 255, 0)'] as const)
+    : (['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.45)', 'rgba(255, 255, 255, 0)'] as const);
+
   return (
-    <View style={[styles.container, { width, height, borderRadius }, style]}>
+    <View style={[styles.container, { width, height, borderRadius, backgroundColor: baseBg }, style]}>
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
@@ -50,7 +57,7 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
         ]}
       >
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.45)', 'rgba(255, 255, 255, 0)']}
+          colors={shimmerColors}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -82,26 +89,61 @@ export const ProductCardSkeleton: React.FC<{ cardWidth?: number }> = ({ cardWidt
 /**
  * OrderCardSkeleton: Khung xương cho thẻ đơn hàng trong lịch sử
  */
-export const OrderCardSkeleton: React.FC = () => {
+export const OrderCardSkeleton: React.FC<{ isDark?: boolean }> = ({ isDark = false }) => {
   return (
-    <View style={styles.orderCard}>
+    <View style={[styles.orderCard, isDark && styles.orderCardDark]}>
       <View style={styles.rowBetween}>
-        <ShimmerSkeleton width="45%" height={14} borderRadius={6} />
-        <ShimmerSkeleton width={80} height={24} borderRadius={12} />
+        <ShimmerSkeleton width="45%" height={14} borderRadius={6} isDark={isDark} />
+        <ShimmerSkeleton width={80} height={24} borderRadius={12} isDark={isDark} />
       </View>
-      <ShimmerSkeleton width="60%" height={16} borderRadius={6} style={{ marginTop: 10, marginBottom: 12 }} />
+      <ShimmerSkeleton width="60%" height={16} borderRadius={6} style={{ marginTop: 10, marginBottom: 12 }} isDark={isDark} />
       <View style={styles.thumbnailsRow}>
         {[1, 2, 3].map((key) => (
-          <ShimmerSkeleton key={key} width={54} height={54} borderRadius={12} style={{ marginRight: 8 }} />
+          <ShimmerSkeleton key={key} width={54} height={54} borderRadius={12} style={{ marginRight: 8 }} isDark={isDark} />
         ))}
       </View>
       <View style={[styles.rowBetween, { marginTop: 14 }]}>
-        <ShimmerSkeleton width="40%" height={14} borderRadius={6} />
-        <ShimmerSkeleton width="30%" height={18} borderRadius={6} />
+        <ShimmerSkeleton width="40%" height={14} borderRadius={6} isDark={isDark} />
+        <ShimmerSkeleton width="30%" height={18} borderRadius={6} isDark={isDark} />
       </View>
       <View style={[styles.rowBetween, { marginTop: 14 }]}>
-        <ShimmerSkeleton width="48%" height={38} borderRadius={19} />
-        <ShimmerSkeleton width="48%" height={38} borderRadius={19} />
+        <ShimmerSkeleton width="48%" height={38} borderRadius={19} isDark={isDark} />
+        <ShimmerSkeleton width="48%" height={38} borderRadius={19} isDark={isDark} />
+      </View>
+    </View>
+  );
+};
+
+/**
+ * PointHistorySkeleton: Khung xương cho thẻ lịch sử tích / đổi Điểm Gốm
+ */
+export const PointHistorySkeleton: React.FC<{ isDark?: boolean }> = ({ isDark = false }) => {
+  return (
+    <View style={[styles.pointCard, isDark && styles.pointCardDark]}>
+      {/* Header: Loại giao dịch & Số điểm */}
+      <View style={styles.rowBetween}>
+        <ShimmerSkeleton width={70} height={18} borderRadius={6} isDark={isDark} />
+        <ShimmerSkeleton width={92} height={20} borderRadius={8} isDark={isDark} />
+      </View>
+
+      {/* 4 dòng thông tin chi tiết */}
+      <View style={{ marginTop: 14, gap: 10 }}>
+        <View style={styles.rowBetween}>
+          <ShimmerSkeleton width={110} height={13} borderRadius={5} isDark={isDark} />
+          <ShimmerSkeleton width={85} height={13} borderRadius={5} isDark={isDark} />
+        </View>
+        <View style={styles.rowBetween}>
+          <ShimmerSkeleton width={95} height={13} borderRadius={5} isDark={isDark} />
+          <ShimmerSkeleton width={140} height={13} borderRadius={5} isDark={isDark} />
+        </View>
+        <View style={styles.rowBetween}>
+          <ShimmerSkeleton width={75} height={13} borderRadius={5} isDark={isDark} />
+          <ShimmerSkeleton width={175} height={13} borderRadius={5} isDark={isDark} />
+        </View>
+        <View style={styles.rowBetween}>
+          <ShimmerSkeleton width={115} height={13} borderRadius={5} isDark={isDark} />
+          <ShimmerSkeleton width={80} height={13} borderRadius={5} isDark={isDark} />
+        </View>
       </View>
     </View>
   );
@@ -198,6 +240,34 @@ const styles = StyleSheet.create({
     borderColor: '#E8E1D8',
     padding: 16,
     marginBottom: 14,
+  },
+  orderCardDark: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 0,
+    borderColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  pointCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 14,
+    borderWidth: 1.2,
+    borderColor: '#F0ECE6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.035,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  pointCardDark: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 0,
+    borderColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   thumbnailsRow: {
     flexDirection: 'row',

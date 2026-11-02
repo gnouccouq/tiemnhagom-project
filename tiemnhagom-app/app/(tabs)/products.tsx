@@ -71,6 +71,69 @@ const SORT_OPTIONS = [
   { id: 'price-desc', label: 'Giá giảm ↓' },
 ];
 
+export function getProductTimestamp(p: Product): number {
+  if (!p) return 0;
+  const candidates = [
+    p.createdAt,
+    p.updatedAt,
+    (p as any).createdDate,
+    (p as any).date,
+    (p as any).timestamp,
+  ];
+
+  for (const raw of candidates) {
+    if (!raw) continue;
+    if (typeof raw === 'number') {
+      return raw < 100000000000 ? raw * 1000 : raw;
+    }
+    if (typeof raw === 'string') {
+      const num = Number(raw);
+      if (!isNaN(num) && num > 1000000) {
+        return num < 100000000000 ? num * 1000 : num;
+      }
+      const ms = Date.parse(raw);
+      if (!isNaN(ms) && ms > 0) return ms;
+    }
+    if (raw instanceof Date) {
+      const ms = raw.getTime();
+      if (!isNaN(ms) && ms > 0) return ms;
+    }
+    if (typeof raw.toMillis === 'function') {
+      try {
+        const ms = raw.toMillis();
+        if (typeof ms === 'number' && ms > 0) return ms;
+      } catch (_) {}
+    }
+    if (typeof raw.toDate === 'function') {
+      try {
+        const ms = raw.toDate().getTime();
+        if (typeof ms === 'number' && ms > 0) return ms;
+      } catch (_) {}
+    }
+    if (typeof raw.seconds === 'number' && raw.seconds > 0) {
+      return raw.seconds * 1000 + Math.round((raw.nanoseconds || 0) / 1e6);
+    }
+    if (typeof raw._seconds === 'number' && raw._seconds > 0) {
+      return raw._seconds * 1000 + Math.round((raw._nanoseconds || 0) / 1e6);
+    }
+  }
+
+  const digits = (p.id || '').replace(/\D/g, '');
+  if (digits.length >= 4) {
+    const num = Number(digits);
+    if (!isNaN(num)) return num;
+  }
+  return 0;
+}
+
+export function getProductPrice(p: Product): number {
+  if (p.salePrice && p.salePrice > 0) return p.salePrice;
+  if (p.sale && p.sale > 0 && p.price > 0) {
+    return Math.round(p.price * (1 - p.sale / 100));
+  }
+  return p.price || 0;
+}
+
 import { useThemeColor } from '../../src/constants/theme';
 
 // ─── Category Bubble ─────────────────────────────────────────────────────────
@@ -277,6 +340,7 @@ export default function ProductsScreen() {
   }, [backdropAnim, sheetTranslateY, sheetScale, itemsAnim]);
 
   const [searchVisible, setSearchVisible] = useState(false);
+  const { cartCount } = useCart();
   const { unreadCount } = useNotificationBadge();
   const { favorites } = useWishlist();
   const favoriteCount = favorites ? favorites.length : 0;
@@ -333,17 +397,24 @@ export default function ProductsScreen() {
 
     // Sắp xếp
     if (sortBy === 'price-asc') {
-      items.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
+      items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
     } else if (sortBy === 'price-desc') {
-      items.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price));
+      items.sort((a, b) => getProductPrice(b) - getProductPrice(a));
     } else if (sortBy === 'popular') {
-      items.sort((a, b) => (b.sold || 0) - (a.sold || 0));
-    } else {
-      // newest (mặc định createdAt desc)
       items.sort((a, b) => {
-        const tA = a.createdAt?.seconds || 0;
-        const tB = b.createdAt?.seconds || 0;
-        return tB - tA;
+        const soldDiff = (b.sold || 0) - (a.sold || 0);
+        if (soldDiff !== 0) return soldDiff;
+        return getProductTimestamp(b) - getProductTimestamp(a);
+      });
+    } else {
+      // newest (mặc định sản phẩm mới nhất lên đầu)
+      items.sort((a, b) => {
+        const tA = getProductTimestamp(a);
+        const tB = getProductTimestamp(b);
+        if (tB !== tA) {
+          return tB - tA;
+        }
+        return (b.id || '').localeCompare(a.id || '');
       });
     }
 
@@ -388,7 +459,7 @@ export default function ProductsScreen() {
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       {/* ── Header ── */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
@@ -428,6 +499,7 @@ export default function ProductsScreen() {
 
         <LiquidGlassContainerView spacing={20} style={styles.headerActions}>
           <BlurButton
+            isDark={isDark}
             style={styles.iconBtn}
             onPress={() => router.push('/search' as any)}
             accessibilityLabel="Tìm kiếm"
@@ -435,6 +507,7 @@ export default function ProductsScreen() {
             <Ionicons name="search-outline" size={20} color={Colors.textPrimary} />
           </BlurButton>
           <BlurButton
+            isDark={isDark}
             style={styles.iconBtn}
             onPress={() => router.push('/favorites' as any)}
             accessibilityLabel="Yêu thích"
@@ -449,15 +522,16 @@ export default function ProductsScreen() {
             )}
           </BlurButton>
           <BlurButton
+            isDark={isDark}
             style={styles.iconBtn}
-            onPress={() => router.push('/notifications' as any)}
-            accessibilityLabel="Thông báo"
+            onPress={() => router.push('/cart' as any)}
+            accessibilityLabel={t('cartTab') || 'Giỏ hàng'}
           >
-            <Ionicons name="notifications-outline" size={20} color={Colors.textPrimary} />
-            {unreadCount > 0 && (
+            <Ionicons name="cart-outline" size={20} color={Colors.textPrimary} />
+            {cartCount > 0 && (
               <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {cartCount > 99 ? '99+' : cartCount}
                 </Text>
               </View>
             )}
@@ -589,7 +663,7 @@ export default function ProductsScreen() {
             <View style={{ paddingVertical: 20, alignItems: 'center' }}>
               <ActivityIndicator size="small" color="#111111" />
             </View>
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <RefreshControl
@@ -772,11 +846,14 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'center',
       position: 'relative',
+      backgroundColor: isDark ? '#121212' : '#FFFFFF',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
     },
     notificationBadge: {
       position: 'absolute',
-      top: -2,
-      right: -2,
+      top: 0,
+      right: 0,
       backgroundColor: '#9C7156',
       minWidth: 16,
       height: 16,
@@ -786,7 +863,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 3,
       borderWidth: 1.5,
       borderColor: isDark ? '#121212' : '#FAF8F5',
-      zIndex: 10,
+      zIndex: 99,
     },
     notificationBadgeText: {
       color: '#FFFFFF',

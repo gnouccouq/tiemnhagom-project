@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColor } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
+import { useCart } from '../../src/context/CartContext';
 import { useWishlist } from '../../src/context/WishlistContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { usePageAnimation } from '../../src/hooks/usePageAnimation';
@@ -113,10 +114,12 @@ const formatNumberOnly = (amount?: number | null) => new Intl.NumberFormat('vi-V
 export default function ProfileScreen() {
   const router = useRouter();
   const Colors = useThemeColor();
+  const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors);
   const insets = useSafeAreaInsets();
-  const { user, userProfile, refreshProfile } = useAuth();
+  const { user, userProfile, refreshProfile, updateUserProfileData } = useAuth();
   const { favorites } = useWishlist();
+  const { cartCount } = useCart();
   const { unreadCount } = useNotificationBadge();
   const { t } = useSettings();
   const dialog = useDialog();
@@ -229,7 +232,10 @@ export default function ProfileScreen() {
   const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
   // Bỏ thưởng chào mừng 50 điểm cũ nếu chưa chi tiêu đủ 500k
   const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
-  const points = Math.max(0, (ordersLoaded ? earnedPoints : Math.max(earnedPoints, cleanProfilePoints)) - redeemedPoints);
+  const basePoints = Math.max(0, (ordersLoaded ? earnedPoints : Math.max(earnedPoints, cleanProfilePoints)) - redeemedPoints);
+  const giftBonus = Number((userProfile as any)?.giftPointsBonus || 0);
+  const giftDeduction = Number((userProfile as any)?.giftPointsDeduction || 0);
+  const points = Math.max(0, basePoints + giftBonus - giftDeduction);
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || '1612').substring(0, 8).toUpperCase()}`;
   const displayName = userProfile?.displayName || userProfile?.name || user?.displayName || 'Nguyễn Cường';
 
@@ -335,24 +341,26 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Nút icon tròn: Thông báo trước, Cài đặt sau */}
+        {/* Nút icon tròn: Giỏ hàng trước, Cài đặt sau */}
         <LiquidGlassContainerView spacing={20} style={styles.headerRightButtons}>
           <BlurButton
+            isDark={isDark}
             style={styles.roundHeaderBtn}
-            onPress={() => router.push('/notifications')}
-            accessibilityLabel={t('notifications') || 'Thông báo'}
+            onPress={() => router.push('/cart')}
+            accessibilityLabel={t('cartTab') || 'Giỏ hàng'}
           >
-            <Ionicons name="notifications-outline" size={20} color={Colors.textPrimary} />
-            {unreadCount > 0 && (
+            <Ionicons name="cart-outline" size={20} color={Colors.textPrimary} />
+            {cartCount > 0 && (
               <View style={styles.notificationBadge} pointerEvents="none">
                 <Text style={styles.notificationBadgeText}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {cartCount > 99 ? '99+' : cartCount}
                 </Text>
               </View>
             )}
           </BlurButton>
 
           <BlurButton
+            isDark={isDark}
             style={styles.roundHeaderBtn}
             onPress={() => router.push('/settings')}
             accessibilityLabel={t('settingsTitle') || 'Cài đặt'}
@@ -471,50 +479,54 @@ export default function ProfileScreen() {
         </View>
 
         {/* ========================================================================= */}
-        {/* 3. SECONDARY BANNER: THẺ TIỆM NHÀ GỐM & THAO TÁC NHANH                    */}
+        {/* 3. SECONDARY BANNER: THẺ TIỆM NHÀ GỐM (KẾT NỐI BẠN BÈ & TẶNG ĐIỂM)        */}
         {/* ========================================================================= */}
         <View style={styles.secondaryCard}>
           <View style={styles.secondaryCardLeft}>
-            <Text style={styles.secondaryCardTitle}>{t('tiemNhaGomCard')}</Text>
+            <Text style={styles.secondaryCardTitle}>{t('tiemNhaGomCard') || 'Thẻ Tiệm Nhà Gốm'}</Text>
 
             <View style={styles.secondaryActionsRow}>
               <TouchableOpacity
                 style={styles.pillActionBtn}
                 activeOpacity={0.8}
-                onPress={() => setQrModalVisible(true)}
+                onPress={() => setPointsModalVisible(true)}
               >
                 <Ionicons name="scan-outline" size={16} color={Colors.textPrimary} />
-                <Text style={styles.pillActionText}>{t('scanAction')}</Text>
+                <Text style={styles.pillActionText}>{t('scanAction') || 'Quét'}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.pillActionBtn}
                 activeOpacity={0.8}
-                onPress={() => router.push('/deals')}
+                onPress={() => router.push('/friends')}
               >
                 <Ionicons name="gift-outline" size={16} color={Colors.textPrimary} />
-                <Text style={styles.pillActionText}>{t('dealsAction')}</Text>
+                <Text style={styles.pillActionText}>{t('deals') || 'Ưu đãi'}</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
               style={styles.manageCardLink}
               activeOpacity={0.7}
-              onPress={() => router.push('/membership-privileges')}
+              onPress={() => router.push('/friends')}
             >
-              <Text style={styles.manageCardText}>{t('manageCard')}</Text>
-              <Ionicons name="chevron-forward" size={15} color="#8A5A2B" />
+              <Text style={styles.manageCardText}>{t('manageCard') || 'Quản lý thẻ'}</Text>
+              <Ionicons name="chevron-forward" size={14} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
             </TouchableOpacity>
           </View>
 
           {/* Right illustration / artwork */}
-          <View style={styles.secondaryCardRight}>
+          <TouchableOpacity
+            style={styles.secondaryCardRight}
+            activeOpacity={0.85}
+            onPress={() => router.push('/friends')}
+          >
             <Image
               source={require('../../assets/images/hoa-nha-gom.webp')}
               style={styles.illustrationImg}
               contentFit="cover"
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* ========================================================================= */}
@@ -974,6 +986,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </AnimatedBottomSheetModal>
+
     </View>
   );
 }
@@ -1076,7 +1089,8 @@ const getStyles = (Colors: any) => {
       paddingHorizontal: 3,
       borderWidth: 1.5,
       borderColor: isDark ? '#121212' : '#FAF8F5',
-      zIndex: 10,
+      zIndex: 99,
+      elevation: 4,
     },
     notificationBadgeText: {
       color: '#FFFFFF',
@@ -1227,25 +1241,72 @@ const getStyles = (Colors: any) => {
     secondaryCardLeft: {
       flex: 1.3,
     },
+    giftHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
     secondaryCardTitle: {
       fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    pointsBadgePill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isDark ? 'rgba(232, 204, 178, 0.15)' : 'rgba(156, 113, 86, 0.10)',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 12,
+    },
+    pointsBadgePillText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11.5,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    giftSubtitleText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       marginBottom: 12,
+      lineHeight: 16,
     },
     secondaryActionsRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       marginBottom: 12,
+    },
+    pillActionBtnPrimary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: '#9C7156',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.16,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    pillActionTextPrimary: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#FFFFFF',
     },
     pillActionBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
       backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : (Colors.background || '#FAF8F5'),
-      paddingHorizontal: 14,
+      paddingHorizontal: 13,
       paddingVertical: 8,
       borderRadius: 20,
       borderWidth: isDark ? 0 : 1,
@@ -1327,7 +1388,8 @@ const getStyles = (Colors: any) => {
       paddingHorizontal: 3,
       borderWidth: 1.5,
       borderColor: isDark ? '#121212' : '#FAF8F5',
-      zIndex: 10,
+      zIndex: 99,
+      elevation: 4,
     },
     gridBadgeText: {
       color: '#FFFFFF',
@@ -1772,6 +1834,306 @@ const getStyles = (Colors: any) => {
       height: 10,
       borderRadius: 5,
       backgroundColor: '#8A5A2B',
+    },
+
+    // 6. Gửi Tặng & Nhận Điểm Gốm Modal Styles
+    giftSheetModal: {
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      maxHeight: '85%',
+      paddingBottom: 20,
+    },
+    giftSheetBody: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 32,
+      gap: 16,
+    },
+    giftBalanceBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderRadius: 20,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+    },
+    giftBalanceLeft: {
+      gap: 2,
+    },
+    giftBalanceLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
+    },
+    giftBalanceNumber: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    formSection: {
+      gap: 8,
+    },
+    sectionSubLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    quickPointsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    quickPointChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+    },
+    quickPointChipActive: {
+      backgroundColor: '#9C7156',
+      borderColor: '#9C7156',
+    },
+    quickPointText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      fontWeight: '600',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    quickPointTextActive: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+    },
+    customPointsInput: {
+      height: 48,
+      borderRadius: 24,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    themesGrid: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    themeCard: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderRadius: 16,
+      borderWidth: 1.2,
+      borderColor: isDark ? '#2C2C2C' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+    },
+    themeCardActive: {
+      borderColor: '#9C7156',
+      backgroundColor: isDark ? '#261E1A' : '#FFF9F5',
+    },
+    themeIconWrap: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 4,
+    },
+    themeIconWrapActive: {
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.25)' : 'rgba(156, 113, 86, 0.12)',
+    },
+    themeTitleText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      fontWeight: '600',
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
+      textAlign: 'center',
+    },
+    themeTitleTextActive: {
+      color: isDark ? '#E8CCB2' : '#9C7156',
+      fontWeight: '700',
+    },
+    giftMessageInput: {
+      minHeight: 80,
+      borderRadius: 18,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+      textAlignVertical: 'top',
+    },
+    recipientInput: {
+      height: 48,
+      borderRadius: 24,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13.5,
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    primaryCtaButton: {
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: '#9C7156',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+      marginTop: 6,
+    },
+    primaryCtaButtonText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    giftSuccessCard: {
+      alignItems: 'center',
+      paddingVertical: 12,
+      gap: 12,
+    },
+    giftSuccessIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.2)' : '#FFF3EA',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 4,
+    },
+    giftSuccessTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+    },
+    giftSuccessHint: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12.5,
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
+      textAlign: 'center',
+      lineHeight: 18,
+      paddingHorizontal: 12,
+    },
+    giftCodeDisplayBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDark ? '#261E1A' : '#FFF8F4',
+      borderWidth: 1.5,
+      borderColor: '#9C7156',
+      borderRadius: 22,
+      paddingHorizontal: 18,
+      paddingVertical: 12,
+      width: '100%',
+      marginVertical: 4,
+    },
+    giftCodeHeaderLabel: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11,
+      color: isDark ? '#E8CCB2' : '#8A5A2B',
+      marginBottom: 2,
+    },
+    giftCodeDisplayText: {
+      fontSize: 19,
+      fontWeight: '800',
+      color: '#9C7156',
+      letterSpacing: 1.2,
+    },
+    copyCodeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: isDark ? 'rgba(232, 204, 178, 0.15)' : 'rgba(156, 113, 86, 0.10)',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 14,
+    },
+    copyCodeBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    secondaryDoneBtn: {
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    secondaryDoneBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '600',
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
+    },
+
+    // Claim Center Modal
+    claimCenterModal: {
+      width: '90%',
+      maxWidth: 380,
+      borderRadius: 24,
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
+      padding: 20,
+    },
+    claimModalBody: {
+      paddingTop: 8,
+      gap: 12,
+    },
+    claimSubtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
+      lineHeight: 18,
+    },
+    claimInputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 52,
+      borderRadius: 26,
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      paddingHorizontal: 16,
+      marginVertical: 4,
+    },
+    claimInput: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+      letterSpacing: 1,
+    },
+    pasteButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 14,
+      backgroundColor: isDark ? 'rgba(232, 204, 178, 0.15)' : 'rgba(156, 113, 86, 0.10)',
+    },
+    pasteButtonText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#9C7156',
     },
   });
 };

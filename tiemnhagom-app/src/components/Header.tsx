@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
   const router = useRouter();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+  const styles = getStyles(Colors, isDark, transparent);
   const { cartCount } = useCart();
   const { unreadCount } = useNotificationBadge();
   const insets = useSafeAreaInsets();
@@ -172,6 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
           <View style={styles.leftSection}>
             {showBack ? (
               <BlurButton
+                isDark={isDark}
                 style={styles.iconButton}
                 onPress={() => router.back()}
                 accessibilityLabel="Quay lại"
@@ -227,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
             {showSearch && (
               onSearchChange ? (
                 <View style={styles.searchPillWrapper}>
-                  <LiquidGlass style={styles.searchPill}>
+                  <LiquidGlass isDark={isDark} style={styles.searchPill}>
                     <TextInput
                       style={styles.searchInputInline}
                       placeholder={searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
@@ -264,7 +265,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onPress={onSearchPress || (() => router.push('/search'))}
                   accessibilityLabel="Tìm kiếm sản phẩm"
                 >
-                  <LiquidGlass style={styles.searchPill} interactive={true}>
+                  <LiquidGlass isDark={isDark} style={styles.searchPill} interactive={true}>
                     <Text style={styles.searchPlaceholder} numberOfLines={1}>
                       {searchPlaceholder || 'Bạn đang tìm sản phẩm...'}
                     </Text>
@@ -279,24 +280,25 @@ export const Header: React.FC<HeaderProps> = ({
               )
             )}
 
-            {/* Nút Thông báo (giọt nước giao nhau cùng thanh tìm kiếm) */}
+            {/* Nút Giỏ hàng (giọt nước giao nhau cùng thanh tìm kiếm) */}
             {showCart && (
               <BlurButton
+                isDark={isDark}
                 style={styles.iconButton}
                 containerStyle={styles.iconButtonContainer}
-                onPress={() => router.push('/notifications')}
-                accessibilityLabel="Thông báo"
+                onPress={() => router.push('/cart')}
+                accessibilityLabel="Giỏ hàng"
               >
                 <SymbolView
-                  name="bell"
+                  name="cart"
                   size={20}
                   tintColor={Colors.textPrimary}
-                  fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
+                  fallback={<Ionicons name="cart-outline" size={21} color={Colors.textPrimary} />}
                 />
-                {unreadCount > 0 && (
+                {cartCount > 0 && (
                   <View style={styles.notificationBadge} pointerEvents="none">
                     <Text style={styles.notificationBadgeText}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                      {cartCount > 99 ? '99+' : cartCount}
                     </Text>
                   </View>
                 )}
@@ -310,6 +312,7 @@ export const Header: React.FC<HeaderProps> = ({
           <View style={styles.headerLeftGroup}>
             {showBack ? (
               <BlurButton
+                isDark={isDark}
                 style={styles.iconButton}
                 containerStyle={styles.iconButtonContainer}
                 onPress={() => router.back()}
@@ -333,6 +336,7 @@ export const Header: React.FC<HeaderProps> = ({
             {rightComponent}
             {showSettings && (
               <BlurButton
+                isDark={isDark}
                 style={styles.iconButton}
                 containerStyle={styles.iconButtonContainer}
                 onPress={onSettingsPress}
@@ -348,21 +352,22 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             {showCart && (
               <BlurButton
+                isDark={isDark}
                 style={styles.iconButton}
                 containerStyle={styles.iconButtonContainer}
-                onPress={() => router.push('/notifications')}
-                accessibilityLabel="Thông báo"
+                onPress={() => router.push('/cart')}
+                accessibilityLabel="Giỏ hàng"
               >
                 <SymbolView
-                  name="bell"
+                  name="cart"
                   size={20}
                   tintColor={Colors.textPrimary}
-                  fallback={<Ionicons name="notifications-outline" size={21} color={Colors.textPrimary} />}
+                  fallback={<Ionicons name="cart-outline" size={21} color={Colors.textPrimary} />}
                 />
-                {unreadCount > 0 && (
+                {cartCount > 0 && (
                   <View style={styles.notificationBadge} pointerEvents="none">
                     <Text style={styles.notificationBadgeText}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                      {cartCount > 99 ? '99+' : cartCount}
                     </Text>
                   </View>
                 )}
@@ -376,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
+const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) => StyleSheet.create({
   navHeaderTitle: {
     fontFamily: 'ElleGaborStd',
     fontSize: 18,
@@ -508,6 +513,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     flexShrink: 0,
+    overflow: 'visible',
   },
   cartButton: {
     width: 50,
@@ -546,8 +552,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   notificationBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
+    top: 0,
+    right: 0,
     backgroundColor: '#9C7156',
     minWidth: 16,
     height: 16,
@@ -557,7 +563,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: isDark ? '#121212' : '#FAF8F5',
-    zIndex: 10,
+    zIndex: 99,
   },
   notificationBadgeText: {
     color: '#FFFFFF',
@@ -617,5 +623,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    backgroundColor: transparent ? undefined : (isDark ? '#121212' : '#FFFFFF'),
+    borderWidth: transparent ? undefined : (isDark ? 0 : 1),
+    borderColor: transparent ? undefined : (isDark ? 'transparent' : '#E8E1D8'),
   },
 });

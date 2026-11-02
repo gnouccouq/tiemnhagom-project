@@ -23,6 +23,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { auth, db, storage } from '../config/firebase';
 import { UserProfile, UserAddress } from '../types';
 import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../services/notificationService';
+import { autoLinkUserOrders } from '../services/orderService';
+import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 import { formatPhoneNumber, getPhoneVariants } from '../utils/format';
 
 interface AuthContextType {
@@ -155,6 +157,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUserProfile(data);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
+
+        // Tự động liên kết các đơn hàng cũ theo SĐT và Email, đồng thời đồng bộ điểm gốm
+        const uPhone = rawData.phone || rawData.phoneNumber || (Array.isArray(rawData.addresses) && rawData.addresses.find((a: any) => a?.phone)?.phone);
+        const uEmail = rawData.email || auth.currentUser?.email;
+        if (uPhone || uEmail) {
+          autoLinkUserOrders(uid, uPhone, uEmail)
+            .then(async () => {
+              const loyaltyRes = await syncUserLoyaltyAndVouchers(uid, data);
+              if (loyaltyRes && loyaltyRes.points !== undefined) {
+                setUserProfile((prev) => (prev ? { ...prev, points: loyaltyRes.points, totalSpent: loyaltyRes.totalSpent, membershipTier: loyaltyRes.tier.name } : prev));
+              }
+            })
+            .catch(() => {});
+        }
       } else {
         const initialProfile: UserProfile = {
           uid,
@@ -204,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Đăng ký nhận thông báo đẩy và lưu token
         setTimeout(async () => {
-          const token = await registerForPushNotificationsAsync();
+          const token = await registerForPushNotificationsAsync().catch(() => undefined);
           if (token) {
             await savePushTokenToFirestore(currentUser.uid, token);
           }
@@ -677,6 +693,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.provinceCode !== undefined) payload.provinceCode = data.provinceCode;
       if (data.wardCode !== undefined) payload.wardCode = data.wardCode;
       if (data.locationName !== undefined) payload.locationName = data.locationName;
+      if (data.points !== undefined) payload.points = Number(data.points);
+      if ((data as any).giftPointsBonus !== undefined) payload.giftPointsBonus = Number((data as any).giftPointsBonus);
+      if ((data as any).giftPointsDeduction !== undefined) payload.giftPointsDeduction = Number((data as any).giftPointsDeduction);
 
       if (data.addresses !== undefined) {
         payload.addresses = (data.addresses || []).map((addr, idx) => ({

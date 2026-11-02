@@ -79,7 +79,10 @@
       "expo-media-library",
       "expo-location",
       "expo-video",
-      "react-native-bottom-tabs"
+      "react-native-bottom-tabs",
+      "expo-font",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

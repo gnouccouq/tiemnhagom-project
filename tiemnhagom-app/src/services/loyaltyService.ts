@@ -225,7 +225,7 @@ export async function syncUserLoyaltyAndVouchers(
     } else if (resolvedProfile.uid) {
       effectiveUid = resolvedProfile.uid;
     }
-    const orders = await getUserOrders(effectiveUid);
+    const orders = await getUserOrders(effectiveUid, resolvedProfile?.phone, resolvedProfile?.email);
     const effectiveSpent = calculateEffectiveSpent(orders, resolvedProfile);
 
     // Tính điểm đã sử dụng

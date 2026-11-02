@@ -182,10 +182,17 @@ export function initTextScaler(initialScale: number = 1.0) {
     }
   } catch {}
 
-  // 2. TẦNG REACT NATIVE TEXT
+  // 2. TẦNG REACT NATIVE TEXT (Chỉ áp dụng nếu render writable; ở React 19 / Hermes tầng 1 JSX Runtime đã đảm nhiệm hoàn toàn)
   try {
     const TextComponent = Text as any;
-    if (TextComponent && typeof TextComponent.render === 'function' && !TextComponent.__isScaled) {
+    const desc = TextComponent ? Object.getOwnPropertyDescriptor(TextComponent, 'render') : null;
+    if (
+      TextComponent &&
+      typeof TextComponent.render === 'function' &&
+      !TextComponent.__isScaled &&
+      desc &&
+      (desc.writable || Boolean(desc.set))
+    ) {
       const originalTextRender = TextComponent.render;
       TextComponent.render = function (props: any, ref: any) {
         try {
@@ -196,17 +203,20 @@ export function initTextScaler(initialScale: number = 1.0) {
       };
       TextComponent.__isScaled = true;
     }
-  } catch (err) {
-    console.warn('Lỗi hook Text.render:', err);
+  } catch (_) {
+    // Bỏ qua vì React 19 đóng băng component (immutable), tầng 1 JSX Runtime đã scale tự động
   }
 
-  // 3. TẦNG REACT NATIVE TEXTINPUT
+  // 3. TẦNG REACT NATIVE TEXTINPUT (Chỉ áp dụng nếu render writable)
   try {
     const TextInputComponent = TextInput as any;
+    const desc = TextInputComponent ? Object.getOwnPropertyDescriptor(TextInputComponent, 'render') : null;
     if (
       TextInputComponent &&
       typeof TextInputComponent.render === 'function' &&
-      !TextInputComponent.__isScaled
+      !TextInputComponent.__isScaled &&
+      desc &&
+      (desc.writable || Boolean(desc.set))
     ) {
       const originalInputRender = TextInputComponent.render;
       TextInputComponent.render = function (props: any, ref: any) {
@@ -218,8 +228,8 @@ export function initTextScaler(initialScale: number = 1.0) {
       };
       TextInputComponent.__isScaled = true;
     }
-  } catch (err) {
-    console.warn('Lỗi hook TextInput.render:', err);
+  } catch (_) {
+    // Bỏ qua vì React 19 đóng băng component (immutable), tầng 1 JSX Runtime đã scale tự động
   }
 
   // 4. TẦNG REACT NATIVE WEB

@@ -5,9 +5,9 @@ import {
   Platform,
   StyleProp,
   ViewStyle,
-  useColorScheme,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useThemeColor, checkIsDark } from '../constants/theme';
 
 // Tải an toàn thư viện expo-glass-effect (SDK chính thức của Expo cho Apple Liquid Glass)
 let ExpoGlassView: any = null;
@@ -66,8 +66,10 @@ export interface LiquidGlassProps extends React.ComponentProps<typeof View> {
 
 /**
  * Khối kính lỏng Apple Liquid Glass chuẩn hệ thống:
- * 1. Nếu hệ thống iOS hỗ trợ Liquid Glass gốc -> RENDER TRỰC TIẾP native UIKit GlassView của Apple!
- * 2. Nếu môi trường chưa hỗ trợ native -> Fallback về BlurView quang học mờ tự nhiên (tuyệt đối không vẽ gradient giả kính).
+ * 1. Trên iOS: Dùng trực tiếp component Kính Lỏng gốc UIKit GlassView của Apple (nếu có) hoặc fallback BlurView quang học tự nhiên.
+ * 2. Trên Android: Dùng một View duy nhất với nền kính mờ bán trong suốt (Liquid Frosted Glass),
+ *    tuyệt đối KHÔNG lồng View con absoluteFill + overflow: 'hidden' vì RenderNode clipping trên phần cứng Android (HWUI)
+ *    sẽ xén góc thành hình bát giác (8-sided polygon/octagon)!
  */
 export const LiquidGlass: React.FC<LiquidGlassProps> = ({
   style,
@@ -80,11 +82,12 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
   disableGloss = false,
   ...rest
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = customIsDark !== undefined ? customIsDark : colorScheme === 'dark';
+  const Colors = useThemeColor();
+  const themeIsDark = checkIsDark(Colors);
+  const isDark = customIsDark !== undefined ? customIsDark : themeIsDark;
 
   // 1. ƯU TIÊN HÀNG ĐẦU: Dùng trực tiếp component Kính Lỏng gốc của Apple trên iOS
-  if (isExpoGlassAvailable && ExpoGlassView) {
+  if (Platform.OS === 'ios' && isExpoGlassAvailable && ExpoGlassView) {
     return (
       <ExpoGlassView
         glassEffectStyle={effect === 'clear' ? 'clear' : 'regular'}
@@ -98,7 +101,7 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
     );
   }
 
-  if (nativeSupported && NativeLiquidGlassView && NativeLiquidGlassView !== View) {
+  if (Platform.OS === 'ios' && nativeSupported && NativeLiquidGlassView && NativeLiquidGlassView !== View) {
     return (
       <NativeLiquidGlassView
         effect={effect}
@@ -111,7 +114,6 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
     );
   }
 
-  // 2. FALLBACK TỰ NHIÊN: Frosted Glass mờ quang học thuần khiết (không vẽ viền gradient/gloss giả)
   const flatStyle = (StyleSheet.flatten(style) || {}) as ViewStyle;
 
   const {
@@ -137,14 +139,15 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
     flex,
     alignSelf,
     borderRadius: rawBorderRadius,
-    backgroundColor: _ignoredBg,
-    borderWidth: _ignoredBorderWidth,
-    borderColor: _ignoredBorderColor,
+    backgroundColor: customBg,
+    borderWidth: customBorderWidth,
+    borderColor: customBorderColor,
     shadowColor: customShadowColor,
     shadowOffset: customShadowOffset,
     shadowOpacity: customShadowOpacity,
     shadowRadius: customShadowRadius,
     elevation: customElevation,
+    overflow: customOverflow,
     ...innerContentStyle
   } = flatStyle;
 
@@ -157,14 +160,79 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
           ? width / 2
           : 20;
 
-  const blurIntensity = intensity !== undefined ? intensity : Platform.OS === 'ios' ? 45 : 32;
+  // 2. GIẢI PHÁP CHUẨN MỰC CHO ANDROID:
+  // Render một View duy nhất có nền kính mờ bán trong suốt (Liquid Frosted Glass).
+  // Đặt elevation: 0 để tránh lỗi hardware outline clipping của Android (HWUI) biến hình tròn thành hình bát giác!
+  if (Platform.OS === 'android') {
+    const androidBg =
+      customBg ||
+      (isDark ? 'rgba(26, 24, 22, 0.55)' : 'rgba(255, 255, 255, 0.45)');
+    const androidBorderColor =
+      customBorderColor ||
+      (isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.65)');
+    const androidBorderWidth =
+      customBorderWidth !== undefined ? customBorderWidth : 1;
 
+    return (
+      <View
+        style={[
+          styles.androidContainer,
+          {
+            width,
+            height,
+            minWidth,
+            minHeight,
+            maxWidth,
+            maxHeight,
+            margin,
+            marginTop,
+            marginBottom,
+            marginLeft,
+            marginRight,
+            marginHorizontal,
+            marginVertical,
+            position,
+            top,
+            bottom,
+            left,
+            right,
+            zIndex,
+            flex,
+            alignSelf,
+            borderRadius,
+            backgroundColor: androidBg,
+            borderWidth: androidBorderWidth,
+            borderColor: androidBorderColor,
+            shadowColor: customShadowColor || (isDark ? '#000000' : '#2B2928'),
+            shadowOffset: customShadowOffset || { width: 0, height: 2 },
+            shadowOpacity:
+              customShadowOpacity !== undefined ? customShadowOpacity : isDark ? 0.35 : 0.06,
+            shadowRadius: customShadowRadius || 6,
+            elevation: customElevation !== undefined ? customElevation : 0,
+            overflow: customOverflow || 'visible',
+          },
+          innerContentStyle,
+        ]}
+        {...rest}
+      >
+        {children}
+      </View>
+    );
+  }
+
+  // 3. FALLBACK TỰ NHIÊN TRÊN IOS (Khi chưa có UIKit GlassView): Frosted Glass mờ quang học thuần khiết
+  const blurIntensity = intensity !== undefined ? intensity : 45;
   const isSelfSized =
     height !== undefined ||
     width !== undefined ||
     flex !== undefined ||
     minHeight !== undefined ||
     minWidth !== undefined;
+
+  const defaultBorderColor = isDark
+    ? 'rgba(255, 255, 255, 0.16)'
+    : 'rgba(255, 255, 255, 0.85)';
+  const defaultBorderWidth = 1;
 
   return (
     <View
@@ -196,9 +264,9 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
           shadowColor: customShadowColor || (isDark ? '#000000' : '#2B2928'),
           shadowOffset: customShadowOffset || { width: 0, height: 2 },
           shadowOpacity:
-            customShadowOpacity !== undefined ? customShadowOpacity : isDark ? 0.35 : 0.08,
+            customShadowOpacity !== undefined ? customShadowOpacity : isDark ? 0.35 : 0.06,
           shadowRadius: customShadowRadius || 6,
-          elevation: customElevation !== undefined ? customElevation : 3,
+          elevation: customElevation !== undefined ? customElevation : (isDark ? 0 : 2),
         },
       ]}
       {...rest}
@@ -209,8 +277,8 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
           isSelfSized && styles.flexFill,
           {
             borderRadius,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.85)',
+            borderWidth: defaultBorderWidth,
+            borderColor: defaultBorderColor,
           },
           innerContentStyle,
         ]}
@@ -244,6 +312,12 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
 export default LiquidGlass;
 
 const styles = StyleSheet.create({
+  androidContainer: {
+    overflow: 'visible',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   outerContainer: {
     backgroundColor: 'transparent',
   },

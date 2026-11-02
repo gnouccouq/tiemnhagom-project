@@ -11,6 +11,9 @@ import {
   ActivityIndicator,
   Dimensions,
   Animated,
+  RefreshControl,
+  TextInput,
+  Clipboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -21,6 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
+import { useDialog } from '../src/context/DialogContext';
 import { BlurButton } from '../src/components/BlurButton';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
@@ -29,7 +33,9 @@ import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetM
 import { ScalePressable } from '../src/components/ScalePressable';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { Order } from '../src/types';
-import { getUserOrders } from '../src/services/orderService';
+import { PointHistorySkeleton } from '../src/components/ShimmerSkeleton';
+import { getUserOrders, getCachedUserOrders } from '../src/services/orderService';
+import { getUserGiftHistory, claimGiftPoints } from '../src/services/giftPointsService';
 import { formatCurrency } from '../src/utils/format';
 
 interface PointTransaction {
@@ -41,6 +47,7 @@ interface PointTransaction {
   orderCode: string;
   store: string;
   orderValue: string;
+  badgeLabel?: string;
 }
 
 type FilterType = 'all' | 'earn' | 'redeem';
@@ -68,24 +75,156 @@ const formatVND = (num: number) => {
   return `${new Intl.NumberFormat('vi-VN').format(Math.round(num))}đ`;
 };
 
+// Helper chuyển danh sách Order thành danh sách PointTransaction và số liệu chi tiêu
+const parseOrdersToPointData = (orders: Order[]) => {
+  const list: PointTransaction[] = [];
+  let accCompletedSpent = 0;
+  let accPendingPoints = 0;
+
+  orders.forEach((o: Order, idx: number) => {
+    const code = (o.orderCode || o.id || '').toUpperCase();
+    const isPos = code.includes('POS') || (o as any).source === 'pos' || (o as any).channel === 'pos' || (o as any).inStore;
+    const status = (o.status || '').toLowerCase();
+    const isCancelled = status.includes('hủy') || status.includes('cancel');
+    const isDone =
+      !isCancelled && (
+        isPos ||
+        status.includes('hoàn') ||
+        status.includes('thành công') ||
+        status.includes('completed') ||
+        status.includes('đã giao') ||
+        status.includes('đã nhận') ||
+        status.includes('nhận') ||
+        status.includes('đã thanh toán') ||
+        status.includes('paid')
+      );
+
+    let dateObj = new Date();
+    const rawDate = o.orderDate || (o as any).createdAt || (o as any).date;
+    if (rawDate) {
+      if (typeof (rawDate as any).toDate === 'function') {
+        dateObj = (rawDate as any).toDate();
+      } else if (rawDate instanceof Date) {
+        dateObj = rawDate;
+      } else if (typeof rawDate === 'object' && (rawDate as any).seconds) {
+        dateObj = new Date((rawDate as any).seconds * 1000);
+      } else if (typeof rawDate === 'number') {
+        dateObj = new Date(rawDate);
+      } else if (typeof rawDate === 'string') {
+        const cleaned = rawDate.trim().replace(' ', 'T');
+        const d = new Date(cleaned);
+        dateObj = isNaN(d.getTime()) ? new Date(rawDate) : d;
+      }
+    }
+    if (isNaN(dateObj.getTime())) {
+      dateObj = new Date();
+    }
+
+    const orderAmount = Number(o.totalAmount || 0);
+    const pointsEarned = Math.floor(orderAmount / 10000);
+    const orderCodeStr = o.orderCode || o.id || `2107012647664951${idx}`;
+    const storeName = 'Tiệm Nhà Gốm - 37 Nguyễn Duy, Bình Thạnh';
+
+    // Giao dịch tích điểm: CHỈ TÍCH KHI ĐƠN HÀNG ĐÃ HOÀN TẤT THÀNH CÔNG
+    if (isDone && pointsEarned > 0) {
+      accCompletedSpent += orderAmount;
+      list.push({
+        id: `earn_${o.id || idx}`,
+        type: 'earn',
+        points: pointsEarned,
+        date: formatDisplayDate(dateObj),
+        dateTimestamp: dateObj.getTime(),
+        orderCode: orderCodeStr,
+        store: storeName,
+        orderValue: formatVND(orderAmount),
+        badgeLabel: 'Tích điểm',
+      });
+    } else if (!isCancelled && !isDone && pointsEarned > 0) {
+      accPendingPoints += pointsEarned;
+    }
+
+    // Giao dịch đổi điểm (nếu đơn có dùng điểm / mã giảm)
+    let pointsRedeemed = 0;
+    if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
+      pointsRedeemed = Number((o as any).pointsUsed);
+    } else if (Number(o.discountAmount || 0) >= 10000 && !o.couponCode) {
+      pointsRedeemed = Math.floor(Number(o.discountAmount) / 1000);
+    }
+    if (pointsRedeemed > 0 && !isCancelled) {
+      list.push({
+        id: `redeem_${o.id || idx}`,
+        type: 'redeem',
+        points: pointsRedeemed,
+        date: formatDisplayDate(dateObj),
+        dateTimestamp: dateObj.getTime(),
+        orderCode: orderCodeStr,
+        store: storeName,
+        orderValue: formatVND(Number(o.discountAmount || pointsRedeemed * 1000)),
+        badgeLabel: 'Đổi điểm',
+      });
+    }
+  });
+
+  list.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
+  return { transactions: list, completedSpent: accCompletedSpent, pendingPoints: accPendingPoints };
+};
+
+const runAfterTransition = (callback: () => void) => {
+  if (typeof requestIdleCallback === 'function') {
+    const handle = requestIdleCallback(callback, { timeout: 150 });
+    return {
+      cancel: () => {
+        if (typeof cancelIdleCallback === 'function') {
+          cancelIdleCallback(handle);
+        }
+      },
+    };
+  }
+  const timer = setTimeout(callback, 80);
+  return { cancel: () => clearTimeout(timer) };
+};
+
 export default function PointsHistoryScreen() {
   const router = useRouter();
+
+  // Cờ isReady: Giúp màn hình hiện NGAY LẬP TỨC 0ms kèm Skeleton Shimmer, triệt tiêu hoàn toàn delay khi bấm
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, updateUserProfileData } = useAuth();
   const { t } = useSettings();
+  const dialog = useDialog();
+
+  const [claimInputCode, setClaimInputCode] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [datePreset, setDatePreset] = useState<DatePreset>('last30Days');
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
   const [dateModalVisible, setDateModalVisible] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState<PointTransaction[]>([]);
-  const [completedSpent, setCompletedSpent] = useState<number | null>(null);
-  const [pendingPoints, setPendingPoints] = useState<number>(0);
-  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(false);
+  const targetUid = userProfile?.uid || user?.uid;
+  const initialCache = useMemo(() => {
+    if (!isReady || !targetUid) return null;
+    const cached = getCachedUserOrders(targetUid);
+    if (cached && cached.length > 0) {
+      return parseOrdersToPointData(cached);
+    }
+    return null;
+  }, [isReady, targetUid]);
+
+  const [loading, setLoading] = useState<boolean>(() => !initialCache);
+  const [refreshing, setRefreshing] = useState(false);
+  const [transactions, setTransactions] = useState<PointTransaction[]>(() => initialCache?.transactions || []);
+  const [completedSpent, setCompletedSpent] = useState<number | null>(() => initialCache ? initialCache.completedSpent : null);
+  const [pendingPoints, setPendingPoints] = useState<number>(() => initialCache?.pendingPoints || 0);
+  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(() => Boolean(initialCache));
 
   // Tính số điểm hiện tại của người dùng (10.000đ = 1 điểm, chỉ tích lũy khi đơn đã hoàn thành)
   const totalSpent = completedSpent !== null ? completedSpent : Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
@@ -95,112 +234,227 @@ export default function PointsHistoryScreen() {
 
   // Tải danh sách đơn hàng thực tế của người dùng để sinh lịch sử điểm
   useEffect(() => {
-    const fetchHistory = async () => {
-      if (!user) {
+    let isMounted = true;
+    const fetchHistory = async (force: boolean = false) => {
+      if (!targetUid) {
         setTransactions([]);
         setPendingPoints(0);
         setCompletedSpent(0);
         setOrdersLoaded(true);
+        setLoading(false);
         return;
       }
 
-      setLoading(true);
+      if (!initialCache && transactions.length === 0) {
+        setLoading(true);
+      }
+
       try {
-        const orders = await getUserOrders(user.uid);
-        const list: PointTransaction[] = [];
-        let accCompletedSpent = 0;
-        let accPendingPoints = 0;
+        const [orders, gifts] = await Promise.all([
+          getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email, force),
+          getUserGiftHistory(targetUid).catch(() => ({ sent: [], received: [] })),
+        ]);
+        if (!isMounted) return;
+        const parsed = parseOrdersToPointData(orders);
+        const allTransactions = [...parsed.transactions];
 
-        orders.forEach((o: Order, idx: number) => {
-          const status = (o.status || '').toLowerCase();
-          const isCancelled = status.includes('hủy') || status.includes('cancel');
-          const isDone =
-            !isCancelled && (
-              status.includes('hoàn thành') ||
-              status.includes('thành công') ||
-              status.includes('completed') ||
-              status.includes('đã giao') ||
-              status.includes('nhận')
-            );
+        gifts.sent.forEach((g) => {
+          allTransactions.push({
+            id: `gift_sent_${g.id}`,
+            type: 'redeem',
+            points: g.points,
+            date: formatDisplayDate(new Date(g.createdAt)),
+            dateTimestamp: new Date(g.createdAt).getTime(),
+            orderCode: g.code,
+            store: `Tặng Điểm Gốm: ${g.themeTitle || 'Quà tặng'}${g.recipientPhone ? ` (${g.recipientPhone})` : ''}`,
+            orderValue: formatVND(g.points * 1000),
+            badgeLabel: 'Tặng điểm',
+          });
 
-          let dateObj = new Date();
-          if (o.orderDate) {
-            if (typeof (o.orderDate as any).toDate === 'function') {
-              dateObj = (o.orderDate as any).toDate();
-            } else if (o.orderDate instanceof Date) {
-              dateObj = o.orderDate;
-            } else {
-              dateObj = new Date(o.orderDate);
-            }
-          }
-
-          const orderAmount = Number(o.totalAmount || 0);
-          const pointsEarned = Math.floor(orderAmount / 10000);
-          const orderCodeStr = o.orderCode || o.id || `2107012647664951${idx}`;
-          const storeName = 'Tiệm Nhà Gốm - 37 Nguyễn Duy, Bình Thạnh';
-
-          // Giao dịch tích điểm: CHỈ TÍCH KHI ĐƠN HÀNG ĐÃ HOÀN TẤT THÀNH CÔNG
-          if (isDone && pointsEarned > 0) {
-            accCompletedSpent += orderAmount;
-            list.push({
-              id: `earn_${o.id || idx}`,
+          // Nếu quà đã hết hạn và hoàn lại điểm sau 24h
+          if (g.status === 'refunded') {
+            const refDate = g.refundedAt ? new Date(g.refundedAt) : new Date(new Date(g.createdAt).getTime() + 24 * 60 * 60 * 1000);
+            allTransactions.push({
+              id: `gift_refund_${g.id}`,
               type: 'earn',
-              points: pointsEarned,
-              date: formatDisplayDate(dateObj),
-              dateTimestamp: dateObj.getTime(),
-              orderCode: orderCodeStr,
-              store: storeName,
-              orderValue: formatVND(orderAmount),
-            });
-          } else if (!isCancelled && !isDone && pointsEarned > 0) {
-            // Đơn đang xử lý hoặc đang vận chuyển: tích lũy vào điểm chờ
-            accPendingPoints += pointsEarned;
-          }
-
-          // Giao dịch đổi điểm (nếu đơn có dùng điểm / mã giảm)
-          let pointsRedeemed = 0;
-          if ((o as any).pointsUsed && Number((o as any).pointsUsed) > 0) {
-            pointsRedeemed = Number((o as any).pointsUsed);
-          } else if (Number(o.discountAmount || 0) >= 10000 && !o.couponCode) {
-            // Đổi điểm giảm giá: 1 điểm = 1.000đ
-            pointsRedeemed = Math.floor(Number(o.discountAmount) / 1000);
-          }
-          if (pointsRedeemed > 0 && !isCancelled) {
-            list.push({
-              id: `redeem_${o.id || idx}`,
-              type: 'redeem',
-              points: pointsRedeemed,
-              date: formatDisplayDate(dateObj),
-              dateTimestamp: dateObj.getTime(),
-              orderCode: orderCodeStr,
-              store: storeName,
-              orderValue: formatVND(Number(o.discountAmount || pointsRedeemed * 1000)),
+              points: g.points,
+              date: formatDisplayDate(refDate),
+              dateTimestamp: refDate.getTime(),
+              orderCode: g.code,
+              store: `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
+              orderValue: formatVND(g.points * 1000),
+              badgeLabel: 'Hoàn điểm',
             });
           }
         });
 
-        setCompletedSpent(accCompletedSpent);
-        setPendingPoints(accPendingPoints);
-        setOrdersLoaded(true);
+        gifts.received.forEach((g) => {
+          allTransactions.push({
+            id: `gift_recv_${g.id}`,
+            type: 'earn',
+            points: g.points,
+            date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
+            dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
+            orderCode: g.code,
+            store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
+            orderValue: formatVND(g.points * 1000),
+            badgeLabel: 'Nhận điểm',
+          });
+        });
 
-        if (list.length > 0) {
-          // Sắp xếp giảm dần theo thời gian
-          list.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
-          setTransactions(list);
-        } else {
-          // Chưa có đơn hàng -> để mảng rỗng để hiển thị EmptyState thực tế
+        allTransactions.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
+        setTransactions(allTransactions);
+        setCompletedSpent(parsed.completedSpent);
+        setPendingPoints(parsed.pendingPoints);
+        setOrdersLoaded(true);
+      } catch (err) {
+        if (!isMounted) return;
+        if (transactions.length === 0) {
           setTransactions([]);
         }
-      } catch (err) {
-        setTransactions([]);
         setOrdersLoaded(true);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
-    fetchHistory();
-  }, [user]);
+    let task: any = null;
+    task = runAfterTransition(() => {
+      fetchHistory();
+    });
+    return () => {
+      isMounted = false;
+      if (task && typeof task.cancel === 'function') task.cancel();
+    };
+  }, [targetUid, userProfile?.phone, user?.email]);
+
+  const handlePasteClaimCode = async () => {
+    try {
+      const text = await Clipboard.getString();
+      if (text) {
+        const match = text.match(/GIFT-[A-Z0-9]{6}/i);
+        setClaimInputCode(match ? match[0].toUpperCase() : text.trim().toUpperCase());
+      }
+    } catch {}
+  };
+
+  const handleClaimGiftCode = async () => {
+    const code = claimInputCode.trim().toUpperCase();
+    if (!code) {
+      dialog.alert('Nhận Điểm Gốm', 'Vui lòng nhập mã quà tặng.');
+      return;
+    }
+    if (!user) {
+      dialog.confirm(
+        'Nhận Điểm Gốm',
+        'Vui lòng đăng nhập để nhận điểm thưởng.',
+        () => router.push('/auth/login'),
+        'Đăng nhập',
+        'Đóng'
+      );
+      return;
+    }
+
+    try {
+      setIsClaiming(true);
+      const res = await claimGiftPoints({
+        code,
+        recipientUid: targetUid || 'guest',
+        recipientName: userProfile?.displayName || userProfile?.name || user?.displayName || 'Thành viên',
+        recipientPhone: userProfile?.phone || '',
+      });
+
+      if (!res.success) {
+        let msg = 'Mã quà tặng không hợp lệ hoặc không tồn tại.';
+        if (res.error === 'already_claimed') msg = 'Mã quà tặng này đã được nhận trước đó.';
+        if (res.error === 'cannot_claim_own') msg = 'Bạn không thể tự nhận mã quà tặng do chính mình tạo ra.';
+        if (res.error === 'expired') msg = 'Mã quà tặng đã hết hạn 24 giờ và điểm đã được hoàn lại cho người gửi.';
+        dialog.alert('Nhận Điểm Gốm', msg);
+        return;
+      }
+
+      const pts = res.gift?.points || 0;
+      const currentBonus = Number((userProfile as any)?.giftPointsBonus || 0);
+      if (updateUserProfileData) {
+        await updateUserProfileData({ giftPointsBonus: currentBonus + pts } as any);
+      }
+      setClaimInputCode('');
+      dialog.alert('Nạp điểm thành công', `Bạn đã nhận được +${pts} Điểm Gốm từ ${res.gift?.senderName || 'Bạn bè'}!`);
+      await onRefresh();
+    } catch (err) {
+      console.warn('Lỗi nhận điểm:', err);
+      dialog.alert('Nhận Điểm Gốm', 'Có lỗi xảy ra khi nạp điểm. Vui lòng thử lại sau.');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    if (!targetUid) return;
+    setRefreshing(true);
+    try {
+      const [orders, gifts] = await Promise.all([
+        getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email, true),
+        getUserGiftHistory(targetUid).catch(() => ({ sent: [], received: [] })),
+      ]);
+      const parsed = parseOrdersToPointData(orders);
+      const allTransactions = [...parsed.transactions];
+
+      gifts.sent.forEach((g) => {
+        allTransactions.push({
+          id: `gift_sent_${g.id}`,
+          type: 'redeem',
+          points: g.points,
+          date: formatDisplayDate(new Date(g.createdAt)),
+          dateTimestamp: new Date(g.createdAt).getTime(),
+          orderCode: g.code,
+          store: `Tặng Điểm Gốm: ${g.themeTitle || 'Quà tặng'}${g.recipientPhone ? ` (${g.recipientPhone})` : ''}`,
+          orderValue: formatVND(g.points * 1000),
+          badgeLabel: 'Tặng điểm',
+        });
+
+        // Nếu quà đã hết hạn và hoàn lại điểm sau 24h
+        if (g.status === 'refunded') {
+          const refDate = g.refundedAt ? new Date(g.refundedAt) : new Date(new Date(g.createdAt).getTime() + 24 * 60 * 60 * 1000);
+          allTransactions.push({
+            id: `gift_refund_${g.id}`,
+            type: 'earn',
+            points: g.points,
+            date: formatDisplayDate(refDate),
+            dateTimestamp: refDate.getTime(),
+            orderCode: g.code,
+            store: `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
+            orderValue: formatVND(g.points * 1000),
+            badgeLabel: 'Hoàn điểm',
+          });
+        }
+      });
+
+      gifts.received.forEach((g) => {
+        allTransactions.push({
+          id: `gift_recv_${g.id}`,
+          type: 'earn',
+          points: g.points,
+          date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
+          dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
+          orderCode: g.code,
+          store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
+          orderValue: formatVND(g.points * 1000),
+          badgeLabel: 'Nhận điểm',
+        });
+      });
+
+      allTransactions.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
+      setTransactions(allTransactions);
+      setCompletedSpent(parsed.completedSpent);
+      setPendingPoints(parsed.pendingPoints);
+      setOrdersLoaded(true);
+    } catch (e) {
+      console.warn('Lỗi refresh points history:', e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Tính tổng điểm tích & điểm đã đổi từ danh sách giao dịch
   const totalEarnedInHistory = useMemo(() => {
@@ -245,6 +499,7 @@ export default function PointsHistoryScreen() {
 
   // Lọc danh sách giao dịch theo loại (Tích/Đổi) và theo thời gian
   const filteredList = useMemo(() => {
+    if (!isReady) return [];
     const now = new Date();
     let minTimestamp = 0;
 
@@ -271,7 +526,7 @@ export default function PointsHistoryScreen() {
       }
       return true;
     });
-  }, [transactions, filterType, datePreset]);
+  }, [isReady, transactions, filterType, datePreset]);
 
   const toggleFilter = (type: 'earn' | 'redeem') => {
     if (filterType === type) {
@@ -287,11 +542,7 @@ export default function PointsHistoryScreen() {
 
   return (
     <Animated.View style={[styles.container, pageStyle]}>
-      <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
       <Stack.Screen
@@ -389,6 +640,14 @@ export default function PointsHistoryScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={isDark ? '#E8CCB2' : '#9C7156'}
+            colors={['#9C7156']}
+          />
+        }
       >
         {/* THẺ ĐIỂM ĐANG CHỜ TÍCH LŨY (KHI CÓ ĐƠN HÀNG ĐANG XỬ LÝ / ĐANG VẬN CHUYỂN) */}
         {!loading && pendingPoints > 0 && filterType !== 'redeem' && (
@@ -411,12 +670,56 @@ export default function PointsHistoryScreen() {
           </View>
         )}
 
-        {loading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator
-              size="small"
-              color={isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B'}
+        {/* THẺ NHẬP MÃ QUÀ TẶNG / NHẬN ĐIỂM GỐM */}
+        <View style={styles.claimGiftCard}>
+          <View style={styles.claimGiftHeader}>
+            <View style={styles.claimGiftIconWrap}>
+              <Ionicons name="gift" size={16} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.claimGiftTitle}>Nhận Điểm Gốm từ bạn bè</Text>
+              <Text style={styles.claimGiftSubtitle}>Nhập mã GIFT-XXXXXX để nạp điểm</Text>
+            </View>
+          </View>
+          <View style={styles.claimInputRow}>
+            <TextInput
+              style={styles.claimTextInput}
+              placeholder="Nhập mã GIFT-XXXXXX..."
+              placeholderTextColor={isDark ? '#888888' : '#A0988F'}
+              value={claimInputCode}
+              onChangeText={(txt) => setClaimInputCode(txt.toUpperCase())}
+              autoCapitalize="characters"
+              autoCorrect={false}
             />
+            <TouchableOpacity
+              style={styles.pasteIconBtn}
+              activeOpacity={0.7}
+              onPress={handlePasteClaimCode}
+            >
+              <Ionicons name="clipboard-outline" size={16} color={isDark ? '#E8CCB2' : '#9C7156'} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.claimSubmitBtn,
+                (!claimInputCode.trim() || isClaiming) && styles.claimSubmitBtnDisabled,
+              ]}
+              disabled={!claimInputCode.trim() || isClaiming}
+              onPress={handleClaimGiftCode}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.claimSubmitBtnText}>
+                {isClaiming ? '...' : 'Nhận điểm'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {!isReady || (loading && transactions.length === 0) ? (
+          <View style={{ paddingTop: 8 }}>
+            <PointHistorySkeleton isDark={isDark} />
+            <PointHistorySkeleton isDark={isDark} />
+            <PointHistorySkeleton isDark={isDark} />
+            <PointHistorySkeleton isDark={isDark} />
           </View>
         ) : filteredList.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -440,10 +743,10 @@ export default function PointsHistoryScreen() {
 
             return (
               <View key={item.id} style={styles.transactionCard}>
-                {/* DÒNG TIÊU ĐỀ: LOẠI (TÍCH / ĐỔI) & SỐ ĐIỂM (+/- X ĐIỂM) */}
+                {/* DÒNG TIÊU ĐỀ: LOẠI (TÍCH / ĐỔI / TẶNG / NHẬN / HOÀN ĐIỂM) & SỐ ĐIỂM (+/- X ĐIỂM) */}
                 <View style={styles.cardHeaderRow}>
                   <Text style={styles.cardTypeTitle}>
-                    {isEarn ? (t('filterEarn') || 'Tích') : (t('filterRedeem') || 'Đổi')}
+                    {item.badgeLabel || (isEarn ? (t('filterEarn') || 'Tích') : (t('filterRedeem') || 'Đổi'))}
                   </Text>
                   <Text
                     style={[
@@ -789,6 +1092,91 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontSize: 13,
       lineHeight: 19,
       color: isDark ? Colors.textMuted : '#6E665D',
+    },
+
+    // Claim Gift Points Card (Nhận Điểm Gốm từ bạn bè)
+    claimGiftCard: {
+      backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
+      borderRadius: 18,
+      padding: 16,
+      marginBottom: 14,
+      borderWidth: isDark ? 0 : 1.2,
+      borderColor: isDark ? 'transparent' : '#F0ECE6',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0 : 0.035,
+      shadowRadius: 6,
+      elevation: isDark ? 0 : 1,
+    },
+    claimGiftHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 12,
+    },
+    claimGiftIconWrap: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    claimGiftTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14.5,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
+    },
+    claimGiftSubtitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      color: isDark ? Colors.textMuted : '#8C7A70',
+      marginTop: 2,
+    },
+    claimInputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    claimTextInput: {
+      flex: 1,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: isDark ? '#141414' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? '#333333' : '#E8E1D8',
+      paddingHorizontal: 14,
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+      letterSpacing: 0.5,
+    },
+    pasteIconBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: isDark ? 'rgba(232, 204, 178, 0.12)' : 'rgba(156, 113, 86, 0.08)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    claimSubmitBtn: {
+      height: 44,
+      paddingHorizontal: 16,
+      borderRadius: 22,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    claimSubmitBtnDisabled: {
+      opacity: 0.45,
+    },
+    claimSubmitBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#FFFFFF',
     },
 
     // Transaction Card

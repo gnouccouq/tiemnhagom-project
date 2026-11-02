@@ -4,6 +4,7 @@ import { db } from '../config/firebase';
 import { Product } from '../types';
 import { useAuth } from './AuthContext';
 import { syncOrderNotificationsForUser } from '../services/orderNotificationService';
+import { getUserOrders } from '../services/orderService';
 
 interface RealtimeDataContextProps {
   products: Product[];
@@ -76,7 +77,8 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
           isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
           isFeatured: Boolean(data.isFeatured),
           rating: Number(data.rating) || 5,
-          createdAt: data.createdAt,
+          createdAt: data.createdAt || data.createdDate || data.updatedAt,
+          updatedAt: data.updatedAt,
         };
         items.push(baseProduct);
         
@@ -127,7 +129,8 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
             isBestSeller: vIsBestSeller,
             isFeatured: Boolean(data.isFeatured),
             rating: Number(data.rating) || 5,
-            createdAt: data.createdAt,
+            createdAt: data.createdAt || data.createdDate || data.updatedAt,
+            updatedAt: data.updatedAt,
           });
         };
 
@@ -186,42 +189,56 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
 
   // Listen to User Orders
   useEffect(() => {
+    const targetUid = userProfile?.uid || user?.uid;
     const phone = userProfile?.phone;
-    if (!user && !phone) {
+    if (!targetUid && !phone) {
       setOrders([]);
       return;
     }
 
-    let q;
-    if (user) {
-      q = query(collection(db, 'orders'), where('userId', '==', user.uid));
-    } else if (phone) {
-      q = query(collection(db, 'orders'), where('customerInfo.phone', '==', phone));
+    if (targetUid) {
+      getUserOrders(targetUid, phone, user?.email || userProfile?.email)
+        .then((linked) => {
+          if (linked && linked.length > 0) {
+            setOrders(linked);
+          }
+        })
+        .catch(() => {});
     }
 
-    if (q) {
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+    const q = targetUid
+      ? query(collection(db, 'orders'), where('userId', '==', targetUid))
+      : query(collection(db, 'orders'), where('customerInfo.phone', '==', phone));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
         let items: any[] = [];
         snapshot.forEach((d) => {
           items.push({ id: d.id, ...d.data() });
         });
-        
-        // Sort manually by createdAt desc to avoid composite index requirement
+
+        // Sort manually by createdAt/orderDate desc
         items.sort((a, b) => {
-          const timeA = a.createdAt?.seconds || 0;
-          const timeB = b.createdAt?.seconds || 0;
+          const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+          const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
           return timeB - timeA;
         });
-        
-        setOrders(items);
+
+        if (items.length > 0) {
+          setOrders(items);
+        }
 
         // Tự động đồng bộ thông báo đơn hàng cho tài khoản người dùng
-        if (user && user.uid) {
-          syncOrderNotificationsForUser(user.uid, items).catch(() => {});
+        if (targetUid) {
+          syncOrderNotificationsForUser(targetUid, items).catch(() => {});
         }
-      });
-      return () => unsubscribe();
-    }
+      },
+      (error) => {
+        console.warn('Realtime Orders Error:', error);
+      }
+    );
+    return () => unsubscribe();
   }, [user, userProfile]);
 
   return (

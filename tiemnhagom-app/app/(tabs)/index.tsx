@@ -250,7 +250,12 @@ export default function HomeScreen() {
   // Chiều cao banner full màn hình & Hiệu ứng Stretchy Parallax Hero (giống voucher-detail.tsx)
   const HERO_HEIGHT = HERO_BANNER_HEIGHT;
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [scrollYNum, setScrollYNum] = useState(0);
+  // Tối ưu hiệu năng 60fps trên Android: Chỉ trigger re-render khi vượt qua các ngưỡng chuyển trạng thái,
+  // tuyệt đối không gọi setState trên từng khung hình 16ms!
+  const isHeaderScrolledRef = useRef(false);
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const isBannerPastRef = useRef(false);
+  const [isBannerPast, setIsBannerPast] = useState(false);
 
   // Hiệu ứng kéo dãn khi kéo xuống (overscroll elastic zoom ra)
   const heroScale = scrollY.interpolate({
@@ -276,7 +281,11 @@ export default function HomeScreen() {
     extrapolate: 'clamp',
   });
 
-  const topGradientOpacity = Math.max(0, 1 - scrollYNum / 65);
+  const topGradientOpacity = scrollY.interpolate({
+    inputRange: [0, 65],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -284,7 +293,16 @@ export default function HomeScreen() {
       useNativeDriver: true,
       listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const currentY = event.nativeEvent.contentOffset.y;
-        setScrollYNum(currentY);
+        const headerScrolled = currentY > 5;
+        if (headerScrolled !== isHeaderScrolledRef.current) {
+          isHeaderScrolledRef.current = headerScrolled;
+          setIsHeaderScrolled(headerScrolled);
+        }
+        const bannerPast = currentY > 160;
+        if (bannerPast !== isBannerPastRef.current) {
+          isBannerPastRef.current = bannerPast;
+          setIsBannerPast(bannerPast);
+        }
       },
     }
   );
@@ -307,15 +325,16 @@ export default function HomeScreen() {
   const callHotline = () => {
     Linking.openURL('tel:0777709662');
   };
+  const StatusBarComp = StatusBar as any;
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar
+      <StatusBarComp
         barStyle={isDark ? 'light-content' : 'dark-content'}
         translucent
         backgroundColor="transparent"
       />
-      <View style={[styles.topGradientWrap, { opacity: topGradientOpacity }]} pointerEvents="none">
+      <Animated.View style={[styles.topGradientWrap, { opacity: topGradientOpacity }]} pointerEvents="none">
         <LinearGradient
           colors={
             isDark
@@ -324,8 +343,8 @@ export default function HomeScreen() {
           }
           style={StyleSheet.absoluteFill}
         />
-      </View>
-      <Header transparent scrollY={scrollYNum} />
+      </Animated.View>
+      <Header transparent isScrolled={isHeaderScrolled} />
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
@@ -355,7 +374,7 @@ export default function HomeScreen() {
           ]}
         >
           <BannerSlider
-            scrollY={scrollYNum}
+            scrollY={isBannerPast ? 200 : 0}
             onBannerPress={(slide) => {
               if (slide.link) {
                 const match = slide.link.match(/id=([^&]+)/);

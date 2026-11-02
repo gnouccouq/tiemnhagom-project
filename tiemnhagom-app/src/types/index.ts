@@ -42,6 +42,7 @@ export interface Product {
   selectedVariant?: ProductVariant;
   rating?: number;
   createdAt?: any;
+  updatedAt?: any;
   dimensions?: { length?: number; width?: number; height?: number };
   details?: { material?: string; origin?: string };
   specs?: { weight?: number; capacity?: number };

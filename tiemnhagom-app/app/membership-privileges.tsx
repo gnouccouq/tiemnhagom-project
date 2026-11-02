@@ -36,7 +36,7 @@ if (
   typeof UIManager !== 'undefined' &&
   UIManager &&
   typeof (UIManager as any).setLayoutAnimationEnabledExperimental === 'function' &&
-  typeof (globalThis as any)._IS_FABRIC === 'undefined'
+  !(globalThis as any).nativeFabricUIManager
 ) {
   try {
     (UIManager as any).setLayoutAnimationEnabledExperimental(true);

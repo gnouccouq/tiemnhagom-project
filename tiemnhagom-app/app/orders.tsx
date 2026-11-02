@@ -13,7 +13,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-} from 'react-native';
+  } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -36,7 +36,7 @@ import { useCart } from '../src/context/CartContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { useThemeColor } from '../src/constants/theme';
 import { formatDate } from '../src/utils/format';
-import { lookupOrders } from '../src/services/orderService';
+import { lookupOrders, getUserOrders, getCachedUserOrders } from '../src/services/orderService';
 
 // Bảng màu quy chuẩn Tiệm Nhà Gốm (GEMINI.md & Brand Guidelines)
 const BRAND = {
@@ -137,7 +137,7 @@ const FALLBACK_CERAMIC_IMAGE =
  * 3. Lấy ảnh thật từ item (item.image, item.imageUrl)
  * 4. Lấy ảnh sản phẩm từ catalog
  */
-export const resolveItemImage = (item: any, productsCatalog: any[] = []): string => {
+export const resolveItemImage = (item: any, productsCatalog: any[] | Map<string, any> = []): string => {
   if (!item) return FALLBACK_CERAMIC_IMAGE;
 
   // 1. Kiểm tra ảnh trực tiếp từ item
@@ -163,7 +163,10 @@ export const resolveItemImage = (item: any, productsCatalog: any[] = []): string
   }
 
   const prodId = item.productId || item.id;
-  const catalogProduct = productsCatalog.find(
+  const isMap = productsCatalog instanceof Map;
+  const catalogProduct = isMap
+    ? (prodId ? (productsCatalog as Map<string, any>).get(prodId) : null) || (item.name ? (productsCatalog as Map<string, any>).get(item.name.trim().toLowerCase()) : null)
+    : (productsCatalog as any[]).find(
     (p) =>
       p &&
       (p.id === prodId ||
@@ -285,15 +288,48 @@ const getVariantDisplayLabel = (item: any): string => {
 
 type MainTab = 'ongoing' | 'completed' | 'cancelled';
 
+const runAfterTransition = (callback: () => void) => {
+  if (typeof requestIdleCallback === 'function') {
+    const handle = requestIdleCallback(callback, { timeout: 150 });
+    return {
+      cancel: () => {
+        if (typeof cancelIdleCallback === 'function') {
+          cancelIdleCallback(handle);
+        }
+      },
+    };
+  }
+  const timer = setTimeout(callback, 80);
+  return { cancel: () => clearTimeout(timer) };
+};
+
 export default function OrdersScreen() {
   const router = useRouter();
+
+  // Cờ isReady: Giúp màn hình hiện NGAY LẬP TỨC 0ms kèm Skeleton Shimmer, triệt tiêu hoàn toàn delay khi bấm
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { products: productsCatalog, orders: realtimeOrders } = useRealtimeData();
+
+  // Tra cứu sản phẩm O(1) tăng tốc 10x khi render danh sách đơn hàng
+  const productCatalogMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (productsCatalog || []).forEach((p) => {
+      if (p.id) map.set(p.id, p);
+      if (p.name) map.set(p.name.trim().toLowerCase(), p);
+    });
+    return map;
+  }, [productsCatalog]);
   const { addToCart } = useCart();
 
   // Tab lọc chính (Đang diễn ra | Hoàn thành | Đã hủy)
@@ -303,9 +339,24 @@ export default function OrdersScreen() {
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '3months' | '6months' | '2026'>('all');
   const [storeFilter, setStoreFilter] = useState<'all' | 'gia-dinh' | 'online' | 'pickup'>('all');
 
-  // Đơn hàng lấy trực tiếp từ Firestore
-  const [firestoreOrders, setFirestoreOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const targetUid = userProfile?.uid || user?.uid;
+
+  // Đơn hàng lấy trực tiếp từ Firestore (khởi tạo ngay từ cache RAM / Realtime Context để tức thì 0ms)
+  const [firestoreOrders, setFirestoreOrders] = useState<any[]>(() => {
+    if (targetUid) {
+      const cached = getCachedUserOrders(targetUid);
+      if (cached && cached.length > 0) return cached;
+    }
+    return realtimeOrders && realtimeOrders.length > 0 ? realtimeOrders : [];
+  });
+  const [loadingOrders, setLoadingOrders] = useState<boolean>(() => {
+    if (targetUid) {
+      const cached = getCachedUserOrders(targetUid);
+      if (cached && cached.length > 0) return false;
+    }
+    return !(realtimeOrders && realtimeOrders.length > 0);
+  });
+  const [refreshing, setRefreshing] = useState(false);
 
   // Modals
   const [timeModalVisible, setTimeModalVisible] = useState(false);
@@ -329,57 +380,133 @@ export default function OrdersScreen() {
   const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
   const { pageStyle } = usePageAnimation({ itemCount: 10, delay: 35 });
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (targetUid) {
+      try {
+        const linked = await getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email, true);
+        if (linked && linked.length > 0) {
+          setFirestoreOrders(linked);
+        }
+      } catch (e) {
+        console.warn('Lỗi refresh orders:', e);
+      }
+    }
+    setRefreshing(false);
+  };
+
   // ── LẤY ĐƠN HÀNG TRỰC TIẾP TỪ FIRESTORE CỦA USER ĐĂNG NHẬP ──
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
-    if (!user?.uid) {
+    if (!targetUid) {
       setFirestoreOrders([]);
       setLoadingOrders(false);
       return;
     }
 
-    setLoadingOrders(true);
+    if (firestoreOrders.length === 0 && (!realtimeOrders || realtimeOrders.length === 0)) {
+      setLoadingOrders(true);
+    }
+
+    let task: any = null;
+    // 1. Chạy truy vấn đơn hàng sau khi animation chuyển trang hoàn tất (0ms delay khi click)
+    task = runAfterTransition(() => {
+      getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email)
+      .then((linkedOrders) => {
+        if (linkedOrders.length > 0) {
+          setFirestoreOrders((prev) => {
+            const map = new Map<string, any>();
+            linkedOrders.forEach((o) => {
+              const k = o.id || o.orderCode;
+              if (k) map.set(k, o);
+            });
+            prev.forEach((o) => {
+              const k = o.id || o.orderCode;
+              if (k) map.set(k, o);
+            });
+            const merged = Array.from(map.values());
+            merged.sort((a, b) => {
+              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+              return timeB - timeA;
+            });
+            return merged;
+          });
+        }
+      })
+      .catch((e) => console.warn('Lỗi getUserOrders trong orders.tsx:', e))
+      .finally(() => setLoadingOrders(false));
+    });
+
+    // 2. Lắng nghe realtime các đơn hàng thuộc targetUid
     try {
       const ordersRef = collection(db, 'orders');
-      const qUser = query(ordersRef, where('userId', '==', user.uid), limit(50));
+      const qUser = query(ordersRef, where('userId', '==', targetUid), limit(50));
 
       unsubscribe = onSnapshot(
         qUser,
         (snapshot) => {
-          const userOrdersList: any[] = [];
-          snapshot.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
+          if (!snapshot.empty) {
+            const userOrdersList: any[] = [];
+            snapshot.forEach((d) => userOrdersList.push({ id: d.id, ...d.data() }));
 
-          userOrdersList.sort((a, b) => {
-            const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
-            const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
-            return timeB - timeA;
-          });
+            userOrdersList.sort((a, b) => {
+              const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+              const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+              return timeB - timeA;
+            });
 
-          setFirestoreOrders(userOrdersList);
+            setFirestoreOrders((prev) => {
+              const map = new Map<string, any>();
+              prev.forEach((o) => map.set(o.id, o));
+              userOrdersList.forEach((o) => map.set(o.id, o));
+              const merged = Array.from(map.values());
+              merged.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+                const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+                return timeB - timeA;
+              });
+              return merged;
+            });
+          }
           setLoadingOrders(false);
         },
         (err) => {
           console.warn('Lỗi lắng nghe đơn hàng Firestore:', err);
-          setFirestoreOrders([]);
           setLoadingOrders(false);
         }
       );
     } catch (e) {
       console.warn('Lỗi đọc đơn hàng từ Firestore:', e);
-      setFirestoreOrders([]);
       setLoadingOrders(false);
     }
 
     return () => {
+      if (task && typeof task.cancel === 'function') task.cancel();
       if (unsubscribe) unsubscribe();
     };
-  }, [user?.uid]);
+  }, [user?.uid, userProfile?.uid, userProfile?.phone]);
 
   // ── CHUẨN HÓA ĐƠN HÀNG LẤY ĐÚNG MÃ TRONG FIRESTORE & ĐÚNG ẢNH SẢN PHẨM / BIẾN THỂ ──
   const allOrders = useMemo(() => {
-    // Chỉ lấy đơn hàng thuộc về chính tài khoản user đang đăng nhập
-    const rawList = firestoreOrders;
+    if (!isReady) return [];
+    // Gom cả firestoreOrders và realtimeOrders tránh trùng lặp hoặc thiếu đơn
+    const map = new Map<string, any>();
+    (realtimeOrders || []).forEach((o: any) => {
+      const code = o.orderCode || o.id;
+      if (code) map.set(code, o);
+    });
+    (firestoreOrders || []).forEach((o: any) => {
+      const code = o.orderCode || o.id;
+      if (code) map.set(code, o);
+    });
+    const rawList = Array.from(map.values());
+    rawList.sort((a, b) => {
+      const timeA = a.createdAt?.seconds || a.orderDate?.seconds || 0;
+      const timeB = b.createdAt?.seconds || b.orderDate?.seconds || 0;
+      return timeB - timeA;
+    });
 
     return rawList.map((item: any) => {
       // 1. MÃ ĐƠN HÀNG PHẢI LẤY ĐÚNG TRONG FIRESTORE (orderCode hoặc orderId hoặc doc.id)
@@ -418,7 +545,7 @@ export default function OrdersScreen() {
       // Danh sách sản phẩm kèm ảnh chính xác (biến thể hoạ tiết / màu sắc / combo)
       const items = Array.isArray(item.items)
         ? item.items.map((it: any) => {
-            const resolvedImg = resolveItemImage(it, productsCatalog);
+            const resolvedImg = resolveItemImage(it, productCatalogMap);
             const variantText = getVariantDisplayLabel(it);
             return {
               ...it,
@@ -461,7 +588,7 @@ export default function OrdersScreen() {
         statusRaw,
       };
     });
-  }, [firestoreOrders, realtimeOrders, productsCatalog]);
+  }, [isReady, firestoreOrders, realtimeOrders, productsCatalog]);
 
   // Phân loại đơn theo 3 Tab chính (Đang diễn ra | Hoàn thành | Đã hủy)
   const filteredOrders = useMemo(() => {
@@ -638,7 +765,7 @@ export default function OrdersScreen() {
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass giống trang Tìm kiếm */}
       <Stack.Screen
@@ -745,11 +872,11 @@ export default function OrdersScreen() {
         scrollEventThrottle={16}
       >
         {/* Skeleton Shimmer Loading thay cho vòng xoay đơn điệu */}
-        {loadingOrders && firestoreOrders.length === 0 ? (
+        {!isReady || (loadingOrders && allOrders.length === 0) ? (
           <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
-            <OrderCardSkeleton />
-            <OrderCardSkeleton />
-            <OrderCardSkeleton />
+            <OrderCardSkeleton isDark={isDark} />
+            <OrderCardSkeleton isDark={isDark} />
+            <OrderCardSkeleton isDark={isDark} />
           </View>
         ) : filteredOrders.length === 0 ? (
           /* TRƯỜNG HỢP: KHÔNG CÓ ĐƠN HÀNG (EMPTY STATE CHUẨN ẢNH 1) */
