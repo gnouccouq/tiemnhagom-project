@@ -202,7 +202,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Props
         style={[styles.shadow, { transform: [{ scale: barScale }] }]}
         onLayout={onLayout}
       >
-        <LiquidGlass style={styles.bar} {...panResponder.panHandlers}>
+        <LiquidGlass style={styles.bar} isDark={isDark} {...panResponder.panHandlers}>
           {/* Sliding Apple Liquid Glass active pill */}
           {itemWidth > 0 && (
             <Animated.View

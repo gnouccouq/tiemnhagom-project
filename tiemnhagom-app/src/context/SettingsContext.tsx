@@ -1,5 +1,6 @@
 // src/context/SettingsContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -60,6 +61,16 @@ const SettingsContext = createContext<SettingsContextType>({
   t: (key: string, params?: Record<string, string | number>) => key,
 });
 
+const syncSystemAppearance = (mode: ThemeMode) => {
+  try {
+    if (typeof Appearance.setColorScheme === 'function') {
+      Appearance.setColorScheme(mode === 'system' ? 'unspecified' : mode);
+    }
+  } catch (err) {
+    console.warn('L?i ??ng b? Appearance.setColorScheme:', err);
+  }
+};
+
 const getScaleFromSize = (size: FontSize): number => {
   if (size === 'large') return 1.18;
   if (size === 'small') return 0.88;
@@ -84,6 +95,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const savedTheme = await AsyncStorage.getItem(STORAGE_KEY_THEME_MODE);
         if (savedTheme === 'system' || savedTheme === 'light' || savedTheme === 'dark') {
           setThemeModeState(savedTheme);
+          syncSystemAppearance(savedTheme);
+        } else {
+          syncSystemAppearance('system');
         }
         const savedLang = await AsyncStorage.getItem(STORAGE_KEY_LANGUAGE);
         if (savedLang === 'vi' || savedLang === 'en' || savedLang === 'zh') {
@@ -119,6 +133,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setThemeMode = async (mode: ThemeMode) => {
     setThemeModeState(mode);
+    syncSystemAppearance(mode);
     try {
       await AsyncStorage.setItem(STORAGE_KEY_THEME_MODE, mode);
     } catch (err) {
