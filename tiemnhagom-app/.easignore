@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+web-build/
+scratch/
+android/.gradle/
+android/build/
+android/app/build/
+.kotlin/
+*.log
