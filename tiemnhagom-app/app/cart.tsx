@@ -17,6 +17,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EmptyState } from '../src/components/EmptyState';
 import { BlurButton } from '../src/components/BlurButton';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { LiquidGlass, LiquidGlassContainerView } from '../src/components/LiquidGlass';
 import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
@@ -113,12 +114,7 @@ export default function CartScreen() {
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
         {/* Header với nút quay lại khi giỏ hàng trống */}
         <View style={[styles.customHeader, { paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4), height: insets.top + 56 }]}>
-          <BlurButton
-            onPress={handleGoBack}
-            accessibilityLabel={t('back') || 'Quay lại'}
-          >
-            <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
-          </BlurButton>
+          <HeaderBackButton onPress={handleGoBack} />
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {t('cartHeader') || 'Giỏ hàng'}
           </Text>
@@ -224,12 +220,7 @@ export default function CartScreen() {
 
         {/* Nhóm tiêu đề bên trái chuẩn GEMINI.md Mục 1: Nút quay lại + Tiêu đề cạnh nhau */}
         <View style={styles.headerLeftGroup}>
-          <BlurButton
-            onPress={handleGoBack}
-            accessibilityLabel={t('back') || 'Quay lại'}
-          >
-            <Ionicons name="arrow-back" size={20} color={isDark ? '#F5F5F5' : '#2B2928'} />
-          </BlurButton>
+          <HeaderBackButton onPress={handleGoBack} />
 
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {t('cartHeader') || 'Giỏ hàng'}
@@ -531,40 +522,36 @@ export default function CartScreen() {
         )}
       </ScrollView>
 
-      {/* Thanh thanh toán dính đáy màn hình bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới thanh thanh toán */}
+      <FadingBottomBackdrop height={bottomBarOffset + 68 + 36} />
+
+      {/* Thanh thanh toán dính đáy màn hình dạng nút nổi (Không bọc LiquidGlass) */}
       <View
         style={[styles.bottomStickyWrapper, { bottom: bottomBarOffset }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomStickyBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <View style={styles.bottomBarContent}>
-            <View style={styles.bottomSubtotalCol}>
-              <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
-              <Text
-                style={styles.bottomSubtotalValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {formatCurrency(Math.max(0, subtotal - discountAmount))}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.proceedPillBtn}
-              onPress={handleProceedToCheckout}
-              activeOpacity={0.88}
+        <View style={styles.bottomBarContent}>
+          <View style={styles.bottomSubtotalCol}>
+            <Text style={styles.bottomSubtotalLabel}>{t('subtotal') || 'Tạm tính'}</Text>
+            <Text
+              style={styles.bottomSubtotalValue}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
             >
-              <Text style={styles.proceedBtnText}>{t('proceedToCheckout') || 'Tiến hành đặt hàng'}</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
-            </TouchableOpacity>
+              {formatCurrency(Math.max(0, subtotal - discountAmount))}
+            </Text>
           </View>
-        </LiquidGlass>
+
+          <TouchableOpacity
+            style={styles.proceedPillBtn}
+            onPress={handleProceedToCheckout}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.proceedBtnText}>{t('proceedToCheckout') || 'Tiến hành đặt hàng'}</Text>
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

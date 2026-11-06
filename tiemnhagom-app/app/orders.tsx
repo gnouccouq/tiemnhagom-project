@@ -26,6 +26,7 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { OrderCardSkeleton } from '../src/components/ShimmerSkeleton';
@@ -767,34 +768,23 @@ export default function OrdersScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass giống trang Tìm kiếm */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle}>
-              {t('orderHistoryTitle') || 'Lịch sử mua hàng'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => setLookupModalVisible(true)}
-              style={styles.headerRightBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="Tra cứu đơn hàng"
-            >
-              <Ionicons name="search-outline" size={21} color={Colors.textPrimary} />
-            </TouchableOpacity>
-          ),
-        }}
+      <Header
+        title={t('orderHistoryTitle') || 'Lịch sử mua hàng'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        rightComponent={
+          <BlurButton
+            onPress={() => setLookupModalVisible(true)}
+            accessibilityLabel="Tra cứu đơn hàng"
+          >
+            <Ionicons name="search-outline" size={20} color={Colors.textPrimary} />
+          </BlurButton>
+        }
       />
-      <FadingHeaderBackdrop />
 
       {/* ── KHỐI BỘ LỌC CỐ ĐỊNH TRÊN CÙNG (3 TABS + HÀNG THỜI GIAN/CỬA HÀNG) ── */}
-      <View style={[styles.fixedFilterContainer, { paddingTop: Platform.OS === 'ios' ? insets.top + 48 : insets.top + 54 }]}>
+      <View style={[styles.fixedFilterContainer, { paddingTop: 4 }]}>
         {/* 1. Hàng 3 Tab Viên Thuốc: Đang diễn ra | Hoàn thành | Đã hủy */}
         <View style={styles.tabsRow}>
           <TouchableOpacity

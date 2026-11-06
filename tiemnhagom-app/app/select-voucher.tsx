@@ -20,7 +20,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../src/config/firebase';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { LiquidGlass } from '../src/components/LiquidGlass';
+import { Header } from '../src/components/Header';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -33,7 +35,7 @@ import {
   CouponItem,
 } from '../src/services/couponService';
 import { getUserOrders } from '../src/services/orderService';
-import { syncUserLoyaltyAndVouchers } from '../src/services/loyaltyService';
+import { syncUserLoyaltyAndVouchers, calculateCeramicPoints } from '../src/services/loyaltyService';
 import { formatCurrency } from '../src/utils/format';
 
 type TabType = 'unused' | 'used' | 'expired';
@@ -88,13 +90,7 @@ export default function SelectVoucherScreen() {
     };
   }, [user, userProfile]);
 
-  const earnedPoints = Math.floor(totalSpent / 10000);
-  const rawProfilePoints =
-    userProfile?.points !== undefined && userProfile?.points !== null
-      ? Number(userProfile.points)
-      : 0;
-  const cleanProfilePoints = rawProfilePoints === 50 && totalSpent < 500000 ? 0 : rawProfilePoints;
-  const userPoints = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
+  const userPoints = calculateCeramicPoints(totalSpent, userProfile, redeemedPoints);
 
   // Tải danh sách voucher đồng bộ 100% với trang Kho quà (app/vouchers.tsx)
   const loadCoupons = useCallback(async () => {
@@ -385,38 +381,29 @@ export default function SelectVoucherScreen() {
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle} numberOfLines={1}>
-              {t('selectOfferBtn') || 'Chọn Ưu Đãi'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-          headerRight: () => (
-            <View style={styles.pointsBadge}>
-              <Text style={styles.pointsText}>{userPoints}</Text>
-              <Image
-                source={require('../assets/images/icon_ceramic_point.png')}
-                style={styles.pointsIcon}
-                contentFit="contain"
-              />
-            </View>
-          ),
-        }}
+      <Header
+        title={t('selectOfferBtn') || 'Chọn Ưu Đãi'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        rightComponent={
+          <View style={styles.pointsBadge}>
+            <Text style={styles.pointsText}>{userPoints}</Text>
+            <Image
+              source={require('../assets/images/icon_ceramic_point.png')}
+              style={styles.pointsIcon}
+              contentFit="contain"
+            />
+          </View>
+        }
       />
-      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 54 + 10,
+            paddingTop: 10,
             paddingBottom: Math.max(insets.bottom, 16) + 120,
           },
         ]}
@@ -679,18 +666,15 @@ export default function SelectVoucherScreen() {
         )}
       </ScrollView>
 
-      {/* Khối Xác nhận dính chân trang bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới thanh xác nhận */}
+      <FadingBottomBackdrop />
+
+      {/* Khối Xác nhận dính chân trang (Không bọc LiquidGlass) */}
       <View
         style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomStickyBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <View style={styles.bottomBarRow}>
+        <View style={styles.bottomBarRow}>
             {appliedCouponItem || selectedItem ? (
               <TouchableOpacity
                 style={styles.removePillBtn}
@@ -715,7 +699,6 @@ export default function SelectVoucherScreen() {
               <Ionicons name="arrow-forward" size={17} color="#FFFFFF" style={{ marginLeft: 6 }} />
             </TouchableOpacity>
           </View>
-        </LiquidGlass>
       </View>
     </View>
   );
@@ -1018,8 +1001,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomStickyWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 50,
     },
     bottomStickyBar: {

@@ -26,7 +26,7 @@ import { useWishlist } from '../../src/context/WishlistContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { usePageAnimation } from '../../src/hooks/usePageAnimation';
 import { getUserOrders } from '../../src/services/orderService';
-import { syncUserLoyaltyAndVouchers } from '../../src/services/loyaltyService';
+import { syncUserLoyaltyAndVouchers, calculateCeramicPoints } from '../../src/services/loyaltyService';
 import { getAllUserCoupons } from '../../src/services/couponService';
 import { formatCurrency } from '../../src/utils/format';
 import { openWebLink } from '../../src/utils/openWebLink';
@@ -132,9 +132,11 @@ export default function ProfileScreen() {
   const [totalSpent, setTotalSpent] = useState<number>(() => {
     return Number(userProfile?.totalSpent || userProfile?.spentTotal || 0);
   });
-  const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
+  const [redeemedPoints, setRedeemedPoints] = useState<number>(() => {
+    return Number((userProfile as any)?.redeemedPoints || 0);
+  });
   const [, setLoadingOrders] = useState<boolean>(false);
-  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(false);
+  const [ordersLoaded, setOrdersLoaded] = useState<boolean>(() => Boolean(userProfile?.totalSpent));
 
   // Modals state
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -227,15 +229,8 @@ export default function ProfileScreen() {
     ? Math.min(100, Math.max(0, Math.round((totalSpent / nextTier.min) * 100)))
     : 100;
 
-  // Hệ thống tính điểm: Cứ 10.000đ = 1 điểm. Chỉ tích lũy khi đơn hàng đã hoàn thành thành công
-  const earnedPoints = Math.floor(totalSpent / 10000);
-  const rawProfilePoints = userProfile?.points !== undefined && userProfile?.points !== null ? Number(userProfile.points) : 0;
-  // Bỏ thưởng chào mừng 50 điểm cũ nếu chưa chi tiêu đủ 500k
-  const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
-  const basePoints = Math.max(0, (ordersLoaded ? earnedPoints : Math.max(earnedPoints, cleanProfilePoints)) - redeemedPoints);
-  const giftBonus = Number((userProfile as any)?.giftPointsBonus || 0);
-  const giftDeduction = Number((userProfile as any)?.giftPointsDeduction || 0);
-  const points = Math.max(0, basePoints + giftBonus - giftDeduction);
+  // Hệ thống tính điểm: Đồng bộ 100% chuẩn xác giữa App và Web
+  const points = calculateCeramicPoints(totalSpent, userProfile, redeemedPoints);
   const memberCode = `TNG-${(user?.uid || userProfile?.uid || '1612').substring(0, 8).toUpperCase()}`;
   const displayName = userProfile?.displayName || userProfile?.name || user?.displayName || 'Nguyễn Cường';
 
@@ -482,51 +477,54 @@ export default function ProfileScreen() {
         {/* 3. SECONDARY BANNER: THẺ TIỆM NHÀ GỐM (KẾT NỐI BẠN BÈ & TẶNG ĐIỂM)        */}
         {/* ========================================================================= */}
         <View style={styles.secondaryCard}>
-          <View style={styles.secondaryCardLeft}>
-            <Text style={styles.secondaryCardTitle}>{t('tiemNhaGomCard') || 'Thẻ Tiệm Nhà Gốm'}</Text>
+          <Image
+            source={require('../../assets/images/banner_card_profile.png')}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            contentPosition="right center"
+          />
 
-            <View style={styles.secondaryActionsRow}>
-              <TouchableOpacity
-                style={styles.pillActionBtn}
-                activeOpacity={0.8}
-                onPress={() => setPointsModalVisible(true)}
-              >
-                <Ionicons name="scan-outline" size={16} color={Colors.textPrimary} />
-                <Text style={styles.pillActionText}>{t('scanAction') || 'Quét'}</Text>
-              </TouchableOpacity>
+          <View style={styles.secondaryCardInner}>
+            <View style={styles.secondaryCardLeft}>
+              <Text style={styles.secondaryCardTitle}>{t('tiemNhaGomCard') || 'Thẻ Tiệm Nhà Gốm'}</Text>
+
+              <View style={styles.secondaryActionsRow}>
+                <TouchableOpacity
+                  style={styles.pillActionBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setPointsModalVisible(true)}
+                >
+                  <Ionicons name="scan-outline" size={16} color="#231B15" />
+                  <Text style={styles.pillActionText}>{t('scanAction') || 'Quét'}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.pillActionBtn}
+                  activeOpacity={0.8}
+                  onPress={() => router.push('/friends')}
+                >
+                  <Ionicons name="gift-outline" size={16} color="#231B15" />
+                  <Text style={styles.pillActionText}>{t('deals') || 'Ưu đãi'}</Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
-                style={styles.pillActionBtn}
-                activeOpacity={0.8}
+                style={styles.manageCardLink}
+                activeOpacity={0.7}
                 onPress={() => router.push('/friends')}
               >
-                <Ionicons name="gift-outline" size={16} color={Colors.textPrimary} />
-                <Text style={styles.pillActionText}>{t('deals') || 'Ưu đãi'}</Text>
+                <Text style={styles.manageCardText}>{t('manageCard') || 'Quản lý thẻ'}</Text>
+                <Ionicons name="chevron-forward" size={14} color="#8A5A2B" />
               </TouchableOpacity>
             </View>
 
+            {/* Right illustration / artwork touch area */}
             <TouchableOpacity
-              style={styles.manageCardLink}
-              activeOpacity={0.7}
+              style={styles.secondaryCardRight}
+              activeOpacity={0.85}
               onPress={() => router.push('/friends')}
-            >
-              <Text style={styles.manageCardText}>{t('manageCard') || 'Quản lý thẻ'}</Text>
-              <Ionicons name="chevron-forward" size={14} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Right illustration / artwork */}
-          <TouchableOpacity
-            style={styles.secondaryCardRight}
-            activeOpacity={0.85}
-            onPress={() => router.push('/friends')}
-          >
-            <Image
-              source={require('../../assets/images/hoa-nha-gom.webp')}
-              style={styles.illustrationImg}
-              contentFit="cover"
             />
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* ========================================================================= */}
@@ -1223,12 +1221,8 @@ const getStyles = (Colors: any) => {
 
     // 3. Secondary Card (Thẻ Tiệm Nhà Gốm)
     secondaryCard: {
-      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
+      backgroundColor: '#FAF5EE',
       borderRadius: 20,
-      padding: 16,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
       marginBottom: 16,
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
@@ -1237,9 +1231,19 @@ const getStyles = (Colors: any) => {
       shadowOpacity: isDark ? 0 : 0.04,
       shadowRadius: 6,
       elevation: isDark ? 0 : 2,
+      overflow: 'hidden',
+      position: 'relative',
+    },
+    secondaryCardInner: {
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 120,
     },
     secondaryCardLeft: {
-      flex: 1.3,
+      flex: 1.15,
+      zIndex: 2,
     },
     giftHeaderRow: {
       flexDirection: 'row',
@@ -1251,7 +1255,8 @@ const getStyles = (Colors: any) => {
       fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
-      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+      color: '#231B15',
+      marginBottom: 8,
     },
     pointsBadgePill: {
       flexDirection: 'row',
@@ -1305,18 +1310,23 @@ const getStyles = (Colors: any) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : (Colors.background || '#FAF8F5'),
+      backgroundColor: '#FFFFFF',
       paddingHorizontal: 13,
       paddingVertical: 8,
       borderRadius: 20,
-      borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+      borderWidth: 1,
+      borderColor: 'rgba(232, 225, 216, 0.85)',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 3,
+      elevation: 1,
     },
     pillActionText: {
       fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
-      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
+      color: '#231B15',
     },
     manageCardLink: {
       flexDirection: 'row',
@@ -1327,11 +1337,11 @@ const getStyles = (Colors: any) => {
       fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
-      color: isDark ? '#E8CCB2' : '#8A5A2B',
+      color: '#8A5A2B',
     },
     secondaryCardRight: {
-      flex: 0.9,
-      alignItems: 'flex-end',
+      flex: 0.85,
+      alignSelf: 'stretch',
     },
     illustrationImg: {
       width: 100,

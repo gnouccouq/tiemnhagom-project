@@ -14,6 +14,8 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBottomSheetModal } from './AnimatedBottomSheetModal';
 import { useThemeColor } from '../constants/theme';
+import { calculateCeramicPoints } from '../services/loyaltyService';
+import { HeaderBackButton } from './HeaderBackButton';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import { useDialog } from '../context/DialogContext';
@@ -48,7 +50,9 @@ export const VoucherSelectorModal: React.FC<VoucherSelectorModalProps> = ({
   const [promoInput, setPromoInput] = useState<string>('');
   const [selectedItem, setSelectedItem] = useState<CouponItem | null>(null);
 
-  const userPoints = Number(userProfile?.points || 0);
+  const userTotalSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
+  const redeemedPoints = Number((userProfile as any)?.redeemedPoints || 0);
+  const userPoints = calculateCeramicPoints(userTotalSpent, userProfile, redeemedPoints);
 
   // Tải danh sách Voucher từ Firestore khi mở Modal
   useEffect(() => {
@@ -142,9 +146,7 @@ export const VoucherSelectorModal: React.FC<VoucherSelectorModalProps> = ({
     >
       {/* Header Modal */}
       <View style={styles.modalHeader}>
-        <TouchableOpacity style={styles.headerBackBtn} onPress={onClose} activeOpacity={0.8}>
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        <HeaderBackButton onPress={onClose} />
 
         <Text style={styles.modalTitle}>{t('selectOfferBtn') || 'Chọn Ưu Đãi'}</Text>
 

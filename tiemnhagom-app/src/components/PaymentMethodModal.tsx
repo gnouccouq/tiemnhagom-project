@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBottomSheetModal } from './AnimatedBottomSheetModal';
 import { useThemeColor } from '../constants/theme';
+import { HeaderBackButton } from './HeaderBackButton';
 import { useSettings } from '../context/SettingsContext';
 import { PaymentMethodType } from '../context/CartContext';
 
@@ -81,9 +82,7 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
     >
       {/* Header */}
       <View style={styles.modalHeader}>
-        <TouchableOpacity style={styles.headerBackBtn} onPress={onClose} activeOpacity={0.8}>
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        <HeaderBackButton onPress={onClose} />
 
         <Text style={styles.modalTitle}>{t('paymentMethodSection') || 'Phương thức thanh toán'}</Text>
         <View style={{ width: 40 }} />

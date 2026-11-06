@@ -174,7 +174,7 @@ export default function VouchersScreen() {
       />
 
       {/* Bộ lọc 3 Tabs (Chưa dùng, Đã dùng, Hết hạn) đúng theo ảnh mẫu */}
-      <View style={[styles.tabsWrapper, { paddingTop: insets.top + 54 }]}>
+      <View style={styles.tabsWrapper}>
         <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[
@@ -243,7 +243,7 @@ export default function VouchersScreen() {
       ) : (
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) + 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl

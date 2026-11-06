@@ -15,6 +15,7 @@ import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
@@ -45,35 +46,25 @@ export default function WebViewScreen() {
         backgroundColor={Colors.background}
       />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle} numberOfLines={1}>
-              {pageTitle}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('close')}
-            >
-              <SymbolView
-                name="xmark"
-                size={18}
-                tintColor={Colors.textPrimary}
-                fallback={<Ionicons name="close" size={20} color={Colors.textPrimary} />}
-              />
-            </TouchableOpacity>
-          ),
-        }}
+      <Header
+        title={pageTitle}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        rightComponent={
+          <BlurButton
+            onPress={() => router.back()}
+            accessibilityLabel={t('close') || 'Đóng'}
+          >
+            <SymbolView
+              name="xmark"
+              size={18}
+              tintColor={Colors.textPrimary}
+              fallback={<Ionicons name="close" size={20} color={Colors.textPrimary} />}
+            />
+          </BlurButton>
+        }
       />
-      <FadingHeaderBackdrop />
 
       {/* Loading bar */}
       {loading && (

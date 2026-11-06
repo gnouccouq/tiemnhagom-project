@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Linking,
   Modal,
   Animated,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -48,6 +49,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 import { auth } from '../../src/config/firebase';
+import { trimImageMemory } from '../../src/utils/memoryManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -96,7 +98,7 @@ const MEMBERSHIP_TIERS = [
 export default function HomeScreen() {
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+  const styles = useMemo(() => getStyles(Colors, isDark), [Colors, isDark]);
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { t } = useSettings();
@@ -117,8 +119,8 @@ export default function HomeScreen() {
   const effectiveUid = user?.uid || userProfile?.uid || auth.currentUser?.uid;
 
   // Tính toán dữ liệu người dùng thực tế (chi tiêu, điểm, hạng)
-  const [totalSpent, setTotalSpent] = useState<number>(0);
-  const [redeemedPoints, setRedeemedPoints] = useState<number>(0);
+  const [totalSpent, setTotalSpent] = useState<number>(() => Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0));
+  const [redeemedPoints, setRedeemedPoints] = useState<number>(() => Number((userProfile as any)?.redeemedPoints || 0));
 
   useEffect(() => {
     let isCancelled = false;
@@ -217,6 +219,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData();
+    // Memory cache preserved on mount for smooth scroll
   }, [loadData]);
 
   useEffect(() => {
@@ -266,20 +269,25 @@ export default function HomeScreen() {
   });
 
   // Khi kéo xuống (scrollY < 0): counter-translate để mép trên ảnh luôn ghim chặt ở top: 0, KHÔNG BAO GIỜ bị hở khoảng đen phía trên
-  // Khi kéo lên (scrollY > 0): giữ ảnh cố định (sticky parallax) để nội dung trượt lên phủ qua ảnh
+  // Trên iOS: Giữ ảnh cố định (sticky parallax)
+  // Trên Android: Cho banner cuộn tự nhiên lên phía trên khi scrollY > 0 để rời khỏi màn hình (viewport), giúp bộ render GPU (SurfaceFlinger/HWUI) không phải composite đè 2 lớp (banner + mainContentSheet) liên tục ở 16fps!
   const heroTranslateY = scrollY.interpolate({
     inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
-    outputRange: [-HERO_HEIGHT / 2, 0, HERO_HEIGHT],
+    outputRange: Platform.OS === 'android'
+      ? [-HERO_HEIGHT / 2, 0, 0]
+      : [-HERO_HEIGHT / 2, 0, HERO_HEIGHT],
     extrapolateLeft: 'extend',
     extrapolateRight: 'clamp',
   });
 
-  // Mờ dần nhẹ khi nội dung cuộn lên che qua
-  const heroOpacity = scrollY.interpolate({
-    inputRange: [0, HERO_HEIGHT * 0.85],
-    outputRange: [1, 0.4],
-    extrapolate: 'clamp',
-  });
+  // Mờ dần nhẹ khi nội dung cuộn lên che qua (Chỉ áp dụng trên iOS vì trên Android, animating opacity trên View chứa video/image buộc GPU cấp phát Offscreen FBO Buffer tốn hàng chục ms mỗi frame gây tụt fps nghiêm trọng)
+  const heroOpacity = Platform.OS === 'android'
+    ? 1
+    : scrollY.interpolate({
+        inputRange: [0, HERO_HEIGHT * 0.85],
+        outputRange: [1, 0.4],
+        extrapolate: 'clamp',
+      });
 
   const topGradientOpacity = scrollY.interpolate({
     inputRange: [0, 65],
@@ -353,6 +361,8 @@ export default function HomeScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
         nestedScrollEnabled={true}
+        removeClippedSubviews={false}
+        overScrollMode="never"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -434,6 +444,8 @@ export default function HomeScreen() {
                     style={styles.collectionImage}
                     contentFit="cover"
                     cachePolicy="memory-disk"
+                    allowDownscaling={true}
+                    decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
                   />
                   <View style={styles.collectionFooter}>
                     <Text style={styles.collectionName} numberOfLines={1}>
@@ -512,6 +524,8 @@ export default function HomeScreen() {
                             source={{ uri: cat.imageUrl }}
                             style={styles.curatedImage}
                             contentFit="cover"
+                            allowDownscaling={true}
+                            decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
                           />
                         ) : (
                           <Text style={styles.curatedEmoji}>{emoji}</Text>
@@ -624,6 +638,9 @@ export default function HomeScreen() {
               source={require('../../assets/images/hoa-nha-gom.webp')}
               style={styles.editorialImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              allowDownscaling={true}
+              decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
             />
             <View style={styles.editorialTagBadge}>
               <Text style={styles.editorialTagBadgeText}>{t('flowerArt')}</Text>
@@ -667,6 +684,9 @@ export default function HomeScreen() {
               source={require('../../assets/images/decor-su-kien.jpg')}
               style={styles.editorialImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              allowDownscaling={true}
+              decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
             />
             <View style={styles.editorialTagBadge}>
               <Text style={styles.editorialTagBadgeText}>{t('setupWorkshop')}</Text>
@@ -710,6 +730,9 @@ export default function HomeScreen() {
               source={require('../../assets/images/about-story.jpg')}
               style={styles.editorialImage}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              allowDownscaling={true}
+              decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
             />
             <View style={styles.editorialTagBadge}>
               <Text style={styles.editorialTagBadgeText}>{t('breathOfEarthAndFire')}</Text>
@@ -765,6 +788,8 @@ export default function HomeScreen() {
                       style={styles.newsImage}
                       contentFit="cover"
                       cachePolicy="memory-disk"
+                      allowDownscaling={true}
+                      decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
                     />
                     <View style={styles.newsBadge}>
                       <Text style={styles.newsBadgeText}>{t('blog')}</Text>
@@ -944,7 +969,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     height: HERO_BANNER_HEIGHT,
     backgroundColor: '#FAF8F5',
     zIndex: 1,
-    overflow: 'visible',
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
   },
   mainContentSheet: {
     borderTopLeftRadius: 28,
@@ -956,7 +981,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: isDark ? 0.35 : 0.08,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: isDark ? 0 : (Platform.OS === 'android' ? 2 : 6),
     zIndex: 2,
   },
 

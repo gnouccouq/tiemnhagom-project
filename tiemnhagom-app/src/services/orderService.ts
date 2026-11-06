@@ -104,8 +104,10 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
       const initialLength = productSnapshots.length;
       for (let i = 0; i < initialLength; i++) {
           const { item, productData } = productSnapshots[i];
-          if (productData.isCombo && item.variant && item.variant.type === 'combo') {
-              const cv = productData.comboVariants?.find((v: any) => v.name === item.variant.name);
+          if (productData.isCombo && Array.isArray(productData.comboVariants) && productData.comboVariants.length > 0) {
+              const variantName = (item.variant && item.variant.name) || (typeof item.variant === 'string' ? item.variant : null) || item.comboVariant || item.combo;
+              const cv = productData.comboVariants.find((v: any) => v.name === variantName)
+                      || (productData.comboVariants.length === 1 ? productData.comboVariants[0] : null);
               if (cv && cv.items) {
                   for (const child of cv.items) {
                       if (!productDocsMap[child.id]) {
@@ -162,9 +164,10 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
              pInfo.totalSold += item.quantity; 
          }
          
-         if (item.variant && item.variant.type === 'combo') {
-            const vName = item.variant.name;
-            pInfo.comboQtyMap[vName] = (pInfo.comboQtyMap[vName] || 0) + item.quantity;
+         const comboVName = (item.variant && item.variant.type === 'combo' && item.variant.name) 
+                         || (productData.isCombo ? ((item.variant && item.variant.name) || item.comboVariant || item.combo || (productData.comboVariants?.length === 1 ? productData.comboVariants[0].name : null)) : null);
+         if (comboVName) {
+            pInfo.comboQtyMap[comboVName] = (pInfo.comboQtyMap[comboVName] || 0) + item.quantity;
          } else if (item.variant && item.variant.type === 'color') {
             const vName = item.variant.name;
             pInfo.colorQtyMap[vName] = (pInfo.colorQtyMap[vName] || 0) + item.quantity;
@@ -461,7 +464,7 @@ export async function getUserOrders(
   // Trả về ngay lập tức nếu đã có cache RAM còn mới (< 45 giây) và không yêu cầu forceRefresh
   if (!forceRefresh) {
     const cached = _ordersMemoryCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < 45000 && cached.orders.length > 0) {
+    if (cached && Date.now() - cached.timestamp < 45000) {
       return cached.orders;
     }
   }

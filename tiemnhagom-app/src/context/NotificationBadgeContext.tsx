@@ -7,6 +7,11 @@ import { db, auth } from '../config/firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { DELETED_NOTIFS_KEY } from '../services/orderNotificationService';
+import { initPersistedNotificationFeed } from '../services/notificationFeedService';
+import { READ_IDS_KEY, LOCAL_NOTIFS_KEY } from '../constants/notificationKeys';
+import { showInAppNotification, inAppNotification } from '../services/inAppNotificationService';
+
+export { READ_IDS_KEY, LOCAL_NOTIFS_KEY };
 
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 let Notifications: any = null;
@@ -17,9 +22,6 @@ if (!(isExpoGo && Platform.OS === 'android')) {
     // Graceful fallback
   }
 }
-
-export const READ_IDS_KEY = '@tiemnhagom_read_ids';
-export const LOCAL_NOTIFS_KEY = '@tiemnhagom_notifications';
 
 interface NotificationBadgeContextType {
   unreadCount: number;
@@ -136,6 +138,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
     let unsubscribeNews: (() => void) | null = null;
 
     const setupListeners = async () => {
+      await initPersistedNotificationFeed();
       await loadDeletedIds();
       await loadReadIds();
 
@@ -158,6 +161,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
           orderBy('createdAt', 'desc'),
           limit(30)
         );
+        let isFirstNotifSnapshot = true;
         unsubscribeNotifs = onSnapshot(
           notifQuery,
           (snapshot) => {
@@ -165,6 +169,38 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
             const combined = Array.from(new Set([...firestoreIds, ...localIds]));
             latestGlobalNotifIdsRef.current = combined;
             recomputeCounts(readIdsRef.current);
+
+            // Bỏ qua pop-up cho lần đọc dữ liệu đầu tiên khi mở app
+            if (isFirstNotifSnapshot) {
+              isFirstNotifSnapshot = false;
+              return;
+            }
+
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const data = change.doc.data();
+                const notifId = change.doc.id;
+
+                // Nếu thông báo đã xem hoặc đã xóa -> tuyệt đối không hiện push lặp lại
+                if (
+                  readIdsRef.current.has(notifId) ||
+                  deletedIdsRef.current.has(notifId) ||
+                  data.isRead
+                ) {
+                  return;
+                }
+
+                showInAppNotification({
+                  id: notifId,
+                  title: data.title || 'Thông báo mới từ Tiệm',
+                  message: data.message || data.body || '',
+                  imageUrl: data.imageUrl || data.image,
+                  link: data.link || data.url || `/notification-detail?id=${notifId}`,
+                  type: 'system',
+                  isRead: Boolean(data.isRead),
+                });
+              }
+            });
           },
           () => {} // Bỏ qua lỗi thầm lặng
         );
@@ -197,10 +233,29 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
       try {
         pushSub = Notifications.addNotificationReceivedListener((notification: any) => {
           const id = notification?.request?.identifier || Date.now().toString();
+          const content = notification?.request?.content;
+          const title = content?.title || 'Thông báo mới';
+          const body = content?.body || '';
+          const data = content?.data || {};
+
           if (!latestGlobalNotifIdsRef.current.includes(id)) {
             latestGlobalNotifIdsRef.current = [id, ...latestGlobalNotifIdsRef.current];
             recomputeCounts(readIdsRef.current);
           }
+
+          // Kiểm tra nếu thông báo này đã được xem / xóa
+          if (readIdsRef.current.has(id) || deletedIdsRef.current.has(id)) {
+            return;
+          }
+
+          showInAppNotification({
+            id,
+            title,
+            message: body,
+            imageUrl: data?.imageUrl || data?.image,
+            link: data?.link || data?.url,
+            type: data?.type || 'system',
+          });
         });
       } catch {}
     }
@@ -242,6 +297,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
           collection(db, 'orders'),
           where('userId', '==', user.uid)
         );
+        let isFirstOrderSnapshot = true;
         unsubscribeOrders = onSnapshot(
           ordersQuery,
           (snapshot) => {
@@ -273,6 +329,62 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
 
             latestOrderDerivedNotifIdsRef.current = derivedIds;
             recomputeCounts(readIdsRef.current);
+
+            // Bỏ qua pop-up cho lần đọc dữ liệu đầu tiên khi mở app
+            if (isFirstOrderSnapshot) {
+              isFirstOrderSnapshot = false;
+              return;
+            }
+
+            snapshot.docChanges().forEach((change) => {
+              const order = change.doc.data();
+              const orderId = change.doc.id;
+              const orderCode = (order.orderCode || order.orderId || order.code || orderId).toString().toUpperCase();
+              const statusRaw = (order.status || '').toString().toLowerCase();
+
+              if (change.type === 'added') {
+                const derivedId = `order_${orderId}_created`;
+                if (readIdsRef.current.has(derivedId) || deletedIdsRef.current.has(derivedId)) {
+                  return;
+                }
+                showInAppNotification({
+                  id: derivedId,
+                  title: `Đơn hàng #${orderCode} đã đặt thành công`,
+                  message: `Tiệm Nhà Gốm đã ghi nhận đơn hàng và đang chuẩn bị đóng gói.`,
+                  link: `/order-detail?orderId=${orderId}`,
+                  type: 'order',
+                  icon: 'cube',
+                });
+              } else if (change.type === 'modified') {
+                if (statusRaw === 'shipping' || statusRaw.includes('đang giao') || statusRaw.includes('vận chuyển')) {
+                  const derivedId = `order_${orderId}_shipping`;
+                  if (readIdsRef.current.has(derivedId) || deletedIdsRef.current.has(derivedId)) {
+                    return;
+                  }
+                  showInAppNotification({
+                    id: derivedId,
+                    title: `Đơn hàng #${orderCode} đang giao`,
+                    message: `Đơn hàng của bạn đang trên đường vận chuyển tới địa chỉ nhận.`,
+                    link: `/order-detail?orderId=${orderId}`,
+                    type: 'order',
+                    icon: 'bicycle',
+                  });
+                } else if (statusRaw === 'completed' || statusRaw.includes('hoàn thành') || statusRaw.includes('đã giao') || statusRaw.includes('hoàn tất')) {
+                  const derivedId = `order_${orderId}_completed`;
+                  if (readIdsRef.current.has(derivedId) || deletedIdsRef.current.has(derivedId)) {
+                    return;
+                  }
+                  showInAppNotification({
+                    id: derivedId,
+                    title: `Đơn hàng #${orderCode} giao thành công`,
+                    message: `Cảm ơn bạn đã mua sắm tại Tiệm Nhà Gốm! Điểm gốm đã được cộng vào tài khoản.`,
+                    link: `/order-detail?orderId=${orderId}`,
+                    type: 'order',
+                    icon: 'checkmark-circle',
+                  });
+                }
+              }
+            });
           },
           () => {} // Thầm lặng bỏ qua nếu có lỗi
         );
@@ -285,7 +397,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
           orderBy('createdAt', 'desc'),
           limit(50)
         );
-
+        let isFirstUserNotifSnapshot = true;
         unsubscribeUserNotifs = onSnapshot(
           userNotifQuery,
           (snapshot) => {
@@ -319,6 +431,37 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
             }
 
             recomputeCounts(readIdsRef.current);
+
+            // Bỏ qua pop-up cho lần đọc dữ liệu đầu tiên khi mở app
+            if (isFirstUserNotifSnapshot) {
+              isFirstUserNotifSnapshot = false;
+              return;
+            }
+
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const data = change.doc.data();
+                const notifId = change.doc.id;
+
+                if (
+                  readIdsRef.current.has(notifId) ||
+                  deletedIdsRef.current.has(notifId) ||
+                  data.isRead
+                ) {
+                  return;
+                }
+
+                showInAppNotification({
+                  id: notifId,
+                  title: data.title || 'Thông báo mới',
+                  message: data.message || data.body || '',
+                  imageUrl: data.imageUrl || data.image,
+                  link: data.link || data.url || `/notification-detail?id=${notifId}`,
+                  type: 'system',
+                  isRead: Boolean(data.isRead),
+                });
+              }
+            });
           },
           () => {} // Thầm lặng bỏ qua nếu rules hoặc mạng chưa sẵn sàng
         );
@@ -350,6 +493,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
       if (changed) {
         setReadIds(updated);
         readIdsRef.current = updated;
+        inAppNotification.markAsRead(idsToAdd);
         recomputeCounts(updated);
         try {
           await AsyncStorage.setItem(READ_IDS_KEY, JSON.stringify(Array.from(updated)));
@@ -385,6 +529,7 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
     const updated = new Set<string>(allIds);
     setReadIds(updated);
     readIdsRef.current = updated;
+    inAppNotification.markAsRead(allIds);
     recomputeCounts(updated);
     try {
       await AsyncStorage.setItem(READ_IDS_KEY, JSON.stringify(allIds));

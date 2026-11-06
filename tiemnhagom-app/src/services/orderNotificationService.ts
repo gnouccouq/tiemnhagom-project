@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { db } from '../config/firebase';
+import { showInAppNotification } from './inAppNotificationService';
 
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 let Notifications: any = null;
@@ -87,6 +88,17 @@ export const formatFriendlyTime = (timestamp: any): { timeStr: string; ms: numbe
 
 // Trigger local push notification banner
 async function triggerLocalPush(title: string, body: string, dataPayload: any) {
+  // 1. Hiển thị ngay banner đẩy trên Header nếu người dùng đang mở app
+  try {
+    showInAppNotification({
+      id: dataPayload?.id || Date.now().toString(),
+      title,
+      message: body,
+      imageUrl: dataPayload?.imageUrl,
+      link: dataPayload?.link,
+      type: 'order',
+    });
+  } catch {}
   if (Notifications && typeof Notifications.scheduleNotificationAsync === 'function') {
     try {
       await Notifications.scheduleNotificationAsync({

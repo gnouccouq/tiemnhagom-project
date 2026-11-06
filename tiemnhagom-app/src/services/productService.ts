@@ -527,6 +527,7 @@ export async function getProducts(options?: {
       items = items.slice(0, options.maxItems);
     }
 
+    seedProductCache(items);
     return items;
   } catch (error) {
     console.error('Lỗi khi tải danh sách sản phẩm:', error);
@@ -534,17 +535,44 @@ export async function getProducts(options?: {
   }
 }
 
+// In-memory cache cho chi tiết sản phẩm, giúp mở trang sản phẩm tức thì (0ms) trên iOS/Android
+const productDetailCache = new Map<string, { product: Product; timestamp: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 phút
+
+export function seedProductCache(products: Product[]): void {
+  const now = Date.now();
+  for (const p of products) {
+    if (p && p.id) {
+      productDetailCache.set(p.id, { product: p, timestamp: now });
+      if (p.parentProductId) {
+        productDetailCache.set(p.parentProductId, { product: p, timestamp: now });
+      }
+    }
+  }
+}
+
+export function getCachedProductById(productId: string): Product | null {
+  const cached = productDetailCache.get(productId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.product;
+  }
+  return null;
+}
+
 /**
  * Lấy chi tiết 1 sản phẩm theo ID
  */
 export async function getProductById(productId: string): Promise<Product | null> {
+  const cached = getCachedProductById(productId);
+  if (cached) return cached;
+
   try {
     const docRef = doc(db, 'products', productId);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
 
     const data = snap.data();
-    return {
+    const product: Product = {
       id: snap.id,
       name: data.name || '',
       price: Number(data.price) || 0,
@@ -570,6 +598,8 @@ export async function getProductById(productId: string): Promise<Product | null>
       specs: data.specs,
       usage: data.usage,
     };
+    productDetailCache.set(productId, { product, timestamp: Date.now() });
+    return product;
   } catch (error) {
     console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
     return null;

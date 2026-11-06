@@ -1,6 +1,6 @@
 // src/services/loyaltyService.ts
 import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import { Order, UserProfile } from '../types';
 import { APP_MEMBERSHIP_TIERS, MemberTierInfo, getMemberTier } from '../utils/shipping';
 import { getUserOrders } from './orderService';
@@ -38,6 +38,31 @@ export function calculateEffectiveSpent(orders: Order[], userProfile?: UserProfi
   const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
   // Lấy giá trị lớn nhất giữa tổng đơn hàng thực tế và chi tiêu đã lưu trong profile
   return Math.max(orderSpent, profileSpent);
+}
+
+/**
+ * Công thức tính Điểm Gốm chuẩn xác và đồng bộ 100% giữa toàn bộ các màn hình App và Web:
+ * 1. Điểm tích lũy từ chi tiêu đơn hàng hợp lệ: 10.000đ = 1 Điểm Gốm
+ * 2. Điểm cơ bản từ profile (bỏ 50đ welcome cũ nếu tổng chi tiêu < 500k)
+ * 3. Trừ đi số điểm đã sử dụng trong các đơn hàng (redeemedPoints / pointsUsed)
+ * 4. Cộng điểm nhận quà từ bạn bè (giftPointsBonus)
+ * 5. Trừ điểm đã gửi tặng bạn bè (giftPointsDeduction)
+ */
+export function calculateCeramicPoints(
+  totalSpent: number,
+  userProfile?: any,
+  redeemedPoints: number = 0
+): number {
+  const earnedPoints = Math.floor(Math.max(0, totalSpent) / 10000);
+  const rawProfilePoints =
+    userProfile?.points !== undefined && userProfile?.points !== null
+      ? Number(userProfile.points)
+      : 0;
+  const cleanProfilePoints = rawProfilePoints === 50 && totalSpent < 500000 ? 0 : rawProfilePoints;
+  const basePoints = Math.max(earnedPoints, cleanProfilePoints);
+  const giftBonus = Number(userProfile?.giftPointsBonus || 0);
+  const giftDeduction = Number(userProfile?.giftPointsDeduction || 0);
+  return Math.max(0, basePoints - redeemedPoints + giftBonus - giftDeduction);
 }
 
 /**
@@ -189,9 +214,40 @@ export interface LoyaltySyncResult {
  * - Tự động tặng Voucher thăng hạng
  * - Cập nhật document users/{userId} nếu có sự thay đổi
  */
+interface LoyaltyCacheEntry {
+  result: LoyaltySyncResult;
+  timestamp: number;
+}
+const _loyaltyMemoryCache = new Map<string, LoyaltyCacheEntry>();
+const LOYALTY_CACHE_TTL = 30000; // 30s TTL
+
+export function getCachedLoyalty(userId: string): LoyaltySyncResult | null {
+  const cached = _loyaltyMemoryCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < LOYALTY_CACHE_TTL) {
+    return cached.result;
+  }
+  return null;
+}
+
+/**
+ * Tải sẵn toàn bộ dữ liệu tài khoản Firestore (Profile, Chi tiêu, Hạng hội viên, Đơn hàng, Điểm gốm, Voucher)
+ * Chạy ngay khi app ở màn hình SplashScreen để vào màn hình chính không cần tải lại.
+ */
+export async function preloadAccountData(userId: string): Promise<LoyaltySyncResult | null> {
+  if (!userId || userId === 'guest') return null;
+  try {
+    const res = await syncUserLoyaltyAndVouchers(userId, null, false);
+    return res;
+  } catch (e) {
+    console.warn('Lỗi preloadAccountData:', e);
+    return null;
+  }
+}
+
 export async function syncUserLoyaltyAndVouchers(
   userId: string,
-  userProfile?: UserProfile | null
+  userProfile?: UserProfile | null,
+  forceRefresh: boolean = false
 ): Promise<LoyaltySyncResult> {
   const defaultTier = APP_MEMBERSHIP_TIERS[0];
   if (!userId || userId === 'guest') {
@@ -202,6 +258,11 @@ export async function syncUserLoyaltyAndVouchers(
       points: 0,
       redeemedPoints: 0,
     };
+  }
+
+  if (!forceRefresh) {
+    const cached = getCachedLoyalty(userId);
+    if (cached) return cached;
   }
 
   try {
@@ -245,40 +306,40 @@ export async function syncUserLoyaltyAndVouchers(
     await generateAutomaticVouchers(effectiveUid, currentTier, Math.max(effectiveSpent, currentTier.min), userBday);
 
     // Tính điểm gốm thực tế (cứ 10.000đ = 1 điểm)
-    const earnedPoints = Math.floor(effectiveSpent / 10000);
-    const rawProfilePoints =
-      userProfile?.points !== undefined && userProfile?.points !== null
-        ? Number(userProfile.points)
-        : 0;
-    const cleanProfilePoints = rawProfilePoints === 50 && effectiveSpent < 500000 ? 0 : rawProfilePoints;
-    const totalPoints = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints);
+    const totalPoints = calculateCeramicPoints(effectiveSpent, resolvedProfile, redeemedPoints);
 
-    // Kiểm tra và cập nhật document users/{userId} để đồng bộ tuyệt đối với Web
+    // Kiểm tra và cập nhật document users/{userId} nếu có quyền ghi (chỉ cập nhật totalSpent và tier, tuân thủ Firestore rules)
     try {
-      const userDocRef = doc(db, 'users', effectiveUid);
-      const updates: any = {};
-      if (resolvedProfile?.totalSpent !== effectiveSpent) {
-        updates.totalSpent = effectiveSpent;
+      const currentAuthUid = auth?.currentUser?.uid;
+      if (currentAuthUid && (currentAuthUid === effectiveUid || currentAuthUid === userId)) {
+        const userDocRef = doc(db, 'users', effectiveUid);
+        const updates: any = {};
+        if (resolvedProfile?.totalSpent !== effectiveSpent) {
+          updates.totalSpent = effectiveSpent;
+        }
+        if (resolvedProfile?.tier !== currentTier.id || resolvedProfile?.membershipTier !== currentTier.name) {
+          updates.tier = currentTier.id;
+          updates.membershipTier = currentTier.name;
+        }
+        if (Object.keys(updates).length > 0) {
+          updates.updatedAt = new Date().toISOString();
+          await setDoc(userDocRef, updates, { merge: true }).catch(() => {});
+        }
       }
-      if (resolvedProfile?.tier !== currentTier.id || resolvedProfile?.membershipTier !== currentTier.name) {
-        updates.tier = currentTier.id;
-        updates.membershipTier = currentTier.name;
-      }
-      if (Object.keys(updates).length > 0) {
-        updates.updatedAt = new Date().toISOString();
-        await setDoc(userDocRef, updates, { merge: true });
-      }
-    } catch (updateErr) {
-      console.warn('Lỗi cập nhật users doc trong syncUserLoyaltyAndVouchers:', updateErr);
-    }
+    } catch {}
 
-    return {
+    const syncResult: LoyaltySyncResult = {
       totalSpent: effectiveSpent,
       tier: currentTier,
       orders,
       points: totalPoints,
       redeemedPoints,
     };
+    _loyaltyMemoryCache.set(userId, { result: syncResult, timestamp: Date.now() });
+    if (effectiveUid !== userId) {
+      _loyaltyMemoryCache.set(effectiveUid, { result: syncResult, timestamp: Date.now() });
+    }
+    return syncResult;
   } catch (error) {
     console.error('Lỗi syncUserLoyaltyAndVouchers:', error);
     const fallbackSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
@@ -287,7 +348,7 @@ export async function syncUserLoyaltyAndVouchers(
       totalSpent: fallbackSpent,
       tier: fallbackTier,
       orders: [],
-      points: Math.floor(fallbackSpent / 10000),
+      points: calculateCeramicPoints(fallbackSpent, userProfile, 0),
       redeemedPoints: 0,
     };
   }

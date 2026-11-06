@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   AppState,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -39,7 +40,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
   const [slides, setSlides] = useState<BannerSlide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const currentIndexRef = useRef(0);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
   const autoPlayTimer = useRef<any>(null);
 
   // Video mặc định theo yêu cầu người dùng
@@ -264,42 +265,43 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
   return (
     <View style={styles.container}>
       {/* ================= 0. LỚP VIDEO BANNER CHẠY LOOP (MẶC ĐỊNH) ================= */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            opacity: bannerMode === 'video' ? 1 : 0,
-            zIndex: bannerMode === 'video' ? 10 : -1,
-          },
-        ]}
-        pointerEvents={bannerMode === 'video' ? 'auto' : 'none'}
-      >
-        <TouchableOpacity
-          activeOpacity={0.96}
-          onPress={togglePlayPause}
-          style={StyleSheet.absoluteFill}
+      {bannerMode === 'video' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              zIndex: 10,
+            },
+          ]}
+          pointerEvents="auto"
         >
-          <VideoView
+          <TouchableOpacity
+            activeOpacity={0.96}
+            onPress={togglePlayPause}
             style={StyleSheet.absoluteFill}
-            player={player}
-            nativeControls={false}
-            contentFit="cover"
-            allowsPictureInPicture={false}
-          />
-        </TouchableOpacity>
-      </View>
+          >
+            <VideoView
+              style={StyleSheet.absoluteFill}
+              player={player}
+              nativeControls={false}
+              contentFit="cover"
+              allowsPictureInPicture={false}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ================= 1. LỚP ẢNH XẾP CHỒNG CROSSFADE LAYER ================= */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            opacity: bannerMode === 'image' ? 1 : 0,
-            zIndex: bannerMode === 'image' ? 5 : -2,
-          },
-        ]}
-        pointerEvents="none"
-      >
+      {bannerMode === 'image' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              zIndex: 5,
+            },
+          ]}
+          pointerEvents="none"
+        >
         {slides.map((item, index) => {
           const bannerSource =
             item.mobileImageUrl && item.mobileImageUrl.trim() !== ''
@@ -350,13 +352,16 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
                 style={styles.bannerImage}
                 contentFit="cover"
                 priority={index === 0 ? 'high' : 'normal'}
-                cachePolicy="disk"
+                cachePolicy="memory-disk"
                 recyclingKey={bannerSource}
+                allowDownscaling={true}
+                decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
               />
             </Animated.View>
           );
         })}
-      </View>
+        </View>
+      )}
 
       {/* ================= 2. LỚP ĐIỀU KHIỂN CỬ CHỈ LƯỚT TAY KHI Ở CHẾ ĐỘ ẢNH ================= */}
       {bannerMode === 'image' && (

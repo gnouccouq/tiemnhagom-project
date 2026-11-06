@@ -19,6 +19,7 @@ import { useCart } from '../context/CartContext';
 import { useNotificationBadge } from '../context/NotificationBadgeContext';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
+import { HeaderBackButton } from './HeaderBackButton';
 import { LiquidGlass, LiquidGlassContainerView } from './LiquidGlass';
 import { SymbolView } from 'expo-symbols';
 import { FadingHeaderBackdrop } from './FadingHeaderBackdrop';
@@ -171,19 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 1. Logo tiệm (logongang.webp) hoặc nút quay lại */}
           <View style={styles.leftSection}>
             {showBack ? (
-              <BlurButton
-                isDark={isDark}
-                style={styles.iconButton}
-                onPress={() => router.back()}
-                accessibilityLabel="Quay lại"
-              >
-                <SymbolView
-                  name="chevron.left"
-                  size={20}
-                  tintColor={Colors.textPrimary}
-                  fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
-                />
-              </BlurButton>
+              <HeaderBackButton onPress={() => router.back()} />
             ) : (
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -311,20 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleHeaderRow}>
           <View style={styles.headerLeftGroup}>
             {showBack ? (
-              <BlurButton
-                isDark={isDark}
-                style={styles.iconButton}
-                containerStyle={styles.iconButtonContainer}
-                onPress={() => router.back()}
-                accessibilityLabel="Quay lại"
-              >
-                <SymbolView
-                  name="chevron.left"
-                  size={20}
-                  tintColor={Colors.textPrimary}
-                  fallback={<Ionicons name="chevron-back" size={22} color={Colors.textPrimary} style={{ marginLeft: -1 }} />}
-                />
-              </BlurButton>
+              <HeaderBackButton onPress={() => router.back()} />
             ) : null}
             <Text style={styles.screenTitle} numberOfLines={1}>
               {title}

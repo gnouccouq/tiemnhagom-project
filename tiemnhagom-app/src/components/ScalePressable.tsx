@@ -7,6 +7,7 @@ import {
   StyleProp,
   StyleSheet,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { triggerHaptic } from '../utils/haptics';
@@ -32,9 +33,9 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+  const pressTimer = useRef<any>(null);
 
-  const handlePressIn = (e: any) => {
-    if (disabled) return;
+  const startAnimation = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
     Animated.parallel([
       Animated.spring(scaleAnim, {
@@ -49,11 +50,29 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
+  };
+
+  const handlePressIn = (e: any) => {
+    if (disabled) return;
+    const delay = Platform.OS === 'android' ? 60 : 0;
+    if (delay > 0) {
+      if (pressTimer.current) clearTimeout(pressTimer.current);
+      pressTimer.current = setTimeout(() => {
+        startAnimation();
+        pressTimer.current = null;
+      }, delay);
+    } else {
+      startAnimation();
+    }
     onPressIn?.(e);
   };
 
   const handlePressOut = (e: any) => {
     if (disabled) return;
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
@@ -114,7 +133,7 @@ export const ScalePressable: React.FC<ScalePressableProps> = ({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
-      {...rest}
+            {...rest}
     >
       <Animated.View
         style={[

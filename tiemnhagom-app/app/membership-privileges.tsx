@@ -22,6 +22,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { openWebLink } from '../src/utils/openWebLink';
 import { getUserOrders } from '../src/services/orderService';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { SymbolView } from 'expo-symbols';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { useThemeColor } from '../src/constants/theme';
@@ -573,21 +574,13 @@ export default function MembershipPrivilegesScreen() {
           );
         })}
 
-        {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            headerTransparent: true,
-            headerShadowVisible: false,
-            headerTitle: () => (
-              <Text style={styles.navHeaderTitle}>
-                {t('memberBenefitsTitle') || 'Quyền lợi thành viên'}
-              </Text>
-            ),
-            headerTintColor: '#FFFFFF',
-          }}
+        <Header
+          title={t('memberBenefitsTitle') || 'Quyền lợi thành viên'}
+          showBack={true}
+          showCart={false}
+          showSearch={false}
+          transparent={true}
         />
-        <FadingHeaderBackdrop height={insets.top + 56 + 24} />
 
         {/* HERO CAROUSEL VỚI ANIMATED SCROLLX CHO DOTS VÀ TRANSITION MÀU */}
         <View style={[styles.carouselWrapper, { paddingTop: insets.top + (Platform.OS === 'android' ? 56 : 48) }]}>

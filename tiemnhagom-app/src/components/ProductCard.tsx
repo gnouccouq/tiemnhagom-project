@@ -1,6 +1,6 @@
 import { useThemeColor } from '../constants/theme';
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -14,6 +14,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useSettings } from '../context/SettingsContext';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
+import { seedProductCache } from '../services/productService';
 
 interface ProductCardProps {
   product: Product;
@@ -40,7 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
   const heartScale = useRef(new Animated.Value(1)).current;
   const addScale = useRef(new Animated.Value(1)).current;
-  const quickAddRef = useRef<View>(null);
+  const quickAddRef = useRef<any>(null);
 
   const effectivePrice = (product.salePrice && product.salePrice > 0)
     ? product.salePrice
@@ -66,6 +67,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
     'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d';
 
   const handleCardPress = () => {
+    seedProductCache([product]);
     router.push({
       pathname: '/product/[id]',
       params: {
@@ -97,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
     ]).start();
 
     if (quickAddRef.current?.measureInWindow) {
-      quickAddRef.current.measureInWindow((x, y, w, h) => {
+      quickAddRef.current.measureInWindow((x: number, y: number, w: number, h: number) => {
         const validX = typeof x === 'number' && !isNaN(x) && x > 0 ? x + w / 2 : undefined;
         const validY = typeof y === 'number' && !isNaN(y) && y > 0 ? y + h / 2 : undefined;
         flyToCart(imageUri, validX, validY);
@@ -118,19 +120,26 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
       {/* 1. KHU VỰC HÌNH ẢNH SẢN PHẨM */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: imageUri }}
+          source={{
+            uri: imageUri,
+            width: Math.round(cardWidth * 2),
+            height: Math.round(cardWidth * 2),
+          }}
           style={styles.image}
           contentFit="cover"
-          transition={150}
-          cachePolicy="disk"
+          transition={Platform.OS === 'android' ? 0 : 150}
+          cachePolicy="memory-disk"
           recyclingKey={imageUri}
+          allowDownscaling={true}
+          decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
         />
 
         {/* Nút Yêu Thích hình tròn rõ ràng với animation nảy */}
         <Animated.View style={{ transform: [{ scale: heartScale }], position: 'absolute', top: 8, right: 8, zIndex: 12 }}>
-          <ScalePressable
+          <TouchableOpacity
             style={styles.favoriteButton}
             onPress={handleFavoritePress}
+            activeOpacity={0.85}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Thêm vào yêu thích"
           >
@@ -139,7 +148,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
               size={17}
               color={favorite ? '#E53935' : '#6E665D'}
             />
-          </ScalePressable>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Huy Hiệu Badges Hình Tròn Chuẩn Web (.product-badge-circle) */}
@@ -162,9 +171,15 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         {/* Overlay Hết hàng */}
         {isSoldOut && (
           <View style={styles.outOfStockOverlay}>
-            <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} blurMethod="none">
-              <Text style={styles.outOfStockText}>{t('outOfStock')}</Text>
-            </BlurView>
+            {Platform.OS === 'android' ? (
+              <View style={styles.outOfStockCircle}>
+                <Text style={styles.outOfStockText}>{t('outOfStock')}</Text>
+              </View>
+            ) : (
+              <BlurView intensity={30} tint="dark" style={styles.outOfStockCircle} blurMethod="none">
+                <Text style={styles.outOfStockText}>{t('outOfStock')}</Text>
+              </BlurView>
+            )}
           </View>
         )}
       </View>
@@ -235,10 +250,11 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
           <View ref={quickAddRef} collapsable={false}>
             <Animated.View style={{ transform: [{ scale: addScale }] }}>
-              <ScalePressable
+              <TouchableOpacity
                 style={[styles.quickAddButton, isSoldOut && styles.quickAddButtonDisabled]}
                 onPress={handleQuickAdd}
                 disabled={isSoldOut}
+                activeOpacity={0.85}
                 accessibilityLabel={t('addToCartAction')}
               >
                 <Ionicons
@@ -246,7 +262,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
                   size={18}
                   color={isSoldOut ? '#A8A096' : '#FFFFFF'}
                 />
-              </ScalePressable>
+              </TouchableOpacity>
             </Animated.View>
           </View>
         </View>
@@ -267,7 +283,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: isDark ? 0 : 0.05,
     shadowRadius: 8,
-    elevation: isDark ? 0 : 3,
+    elevation: isDark ? 0 : (Platform.OS === 'android' ? 1.5 : 3),
   },
   imageContainer: {
     width: '100%',

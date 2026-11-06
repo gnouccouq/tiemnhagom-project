@@ -12,8 +12,6 @@ import {
   Dimensions,
   Animated,
   RefreshControl,
-  TextInput,
-  Clipboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -26,6 +24,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { useThemeColor } from '../src/constants/theme';
 import { useDialog } from '../src/context/DialogContext';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { AnimatedCenterModal } from '../src/components/AnimatedCenterModal';
@@ -35,7 +34,7 @@ import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { Order } from '../src/types';
 import { PointHistorySkeleton } from '../src/components/ShimmerSkeleton';
 import { getUserOrders, getCachedUserOrders } from '../src/services/orderService';
-import { getUserGiftHistory, claimGiftPoints } from '../src/services/giftPointsService';
+import { getUserGiftHistory } from '../src/services/giftPointsService';
 import { formatCurrency } from '../src/utils/format';
 
 interface PointTransaction {
@@ -202,9 +201,6 @@ export default function PointsHistoryScreen() {
   const { t } = useSettings();
   const dialog = useDialog();
 
-  const [claimInputCode, setClaimInputCode] = useState('');
-  const [isClaiming, setIsClaiming] = useState(false);
-
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [datePreset, setDatePreset] = useState<DatePreset>('all');
   const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -250,9 +246,10 @@ export default function PointsHistoryScreen() {
       }
 
       try {
+        const userPhoneClean = userProfile?.phone || (user as any)?.phoneNumber || '';
         const [orders, gifts] = await Promise.all([
-          getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email, force),
-          getUserGiftHistory(targetUid).catch(() => ({ sent: [], received: [] })),
+          getUserOrders(targetUid, userPhoneClean, user?.email || userProfile?.email, force),
+          getUserGiftHistory(targetUid, userPhoneClean, user?.uid).catch(() => ({ sent: [], received: [] })),
         ]);
         if (!isMounted) return;
         const parsed = parseOrdersToPointData(orders);
@@ -260,7 +257,7 @@ export default function PointsHistoryScreen() {
 
         gifts.sent.forEach((g) => {
           allTransactions.push({
-            id: `gift_sent_${g.id}`,
+            id: `gift_sent_${g.id || g.code}`,
             type: 'redeem',
             points: g.points,
             date: formatDisplayDate(new Date(g.createdAt)),
@@ -271,17 +268,19 @@ export default function PointsHistoryScreen() {
             badgeLabel: 'Tặng điểm',
           });
 
-          // Nếu quà đã hết hạn và hoàn lại điểm sau 24h
-          if (g.status === 'refunded') {
+          // Nếu quà đã hết hạn hoặc bị từ chối và hoàn lại điểm
+          if (g.status === 'refunded' || g.status === 'canceled') {
             const refDate = g.refundedAt ? new Date(g.refundedAt) : new Date(new Date(g.createdAt).getTime() + 24 * 60 * 60 * 1000);
             allTransactions.push({
-              id: `gift_refund_${g.id}`,
+              id: `gift_refund_${g.id || g.code}`,
               type: 'earn',
               points: g.points,
               date: formatDisplayDate(refDate),
               dateTimestamp: refDate.getTime(),
               orderCode: g.code,
-              store: `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
+              store: g.status === 'canceled'
+                ? `Hoàn điểm: Món quà ${g.code} đã được từ chối & hoàn lại`
+                : `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
               orderValue: formatVND(g.points * 1000),
               badgeLabel: 'Hoàn điểm',
             });
@@ -289,17 +288,19 @@ export default function PointsHistoryScreen() {
         });
 
         gifts.received.forEach((g) => {
-          allTransactions.push({
-            id: `gift_recv_${g.id}`,
-            type: 'earn',
-            points: g.points,
-            date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
-            dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
-            orderCode: g.code,
-            store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
-            orderValue: formatVND(g.points * 1000),
-            badgeLabel: 'Nhận điểm',
-          });
+          if (g.status === 'claimed') {
+            allTransactions.push({
+              id: `gift_recv_${g.id || g.code}`,
+              type: 'earn',
+              points: g.points,
+              date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
+              dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
+              orderCode: g.code,
+              store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
+              orderValue: formatVND(g.points * 1000),
+              badgeLabel: 'Nhận điểm',
+            });
+          }
         });
 
         allTransactions.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
@@ -328,81 +329,21 @@ export default function PointsHistoryScreen() {
     };
   }, [targetUid, userProfile?.phone, user?.email]);
 
-  const handlePasteClaimCode = async () => {
-    try {
-      const text = await Clipboard.getString();
-      if (text) {
-        const match = text.match(/GIFT-[A-Z0-9]{6}/i);
-        setClaimInputCode(match ? match[0].toUpperCase() : text.trim().toUpperCase());
-      }
-    } catch {}
-  };
-
-  const handleClaimGiftCode = async () => {
-    const code = claimInputCode.trim().toUpperCase();
-    if (!code) {
-      dialog.alert('Nhận Điểm Gốm', 'Vui lòng nhập mã quà tặng.');
-      return;
-    }
-    if (!user) {
-      dialog.confirm(
-        'Nhận Điểm Gốm',
-        'Vui lòng đăng nhập để nhận điểm thưởng.',
-        () => router.push('/auth/login'),
-        'Đăng nhập',
-        'Đóng'
-      );
-      return;
-    }
-
-    try {
-      setIsClaiming(true);
-      const res = await claimGiftPoints({
-        code,
-        recipientUid: targetUid || 'guest',
-        recipientName: userProfile?.displayName || userProfile?.name || user?.displayName || 'Thành viên',
-        recipientPhone: userProfile?.phone || '',
-      });
-
-      if (!res.success) {
-        let msg = 'Mã quà tặng không hợp lệ hoặc không tồn tại.';
-        if (res.error === 'already_claimed') msg = 'Mã quà tặng này đã được nhận trước đó.';
-        if (res.error === 'cannot_claim_own') msg = 'Bạn không thể tự nhận mã quà tặng do chính mình tạo ra.';
-        if (res.error === 'expired') msg = 'Mã quà tặng đã hết hạn 24 giờ và điểm đã được hoàn lại cho người gửi.';
-        dialog.alert('Nhận Điểm Gốm', msg);
-        return;
-      }
-
-      const pts = res.gift?.points || 0;
-      const currentBonus = Number((userProfile as any)?.giftPointsBonus || 0);
-      if (updateUserProfileData) {
-        await updateUserProfileData({ giftPointsBonus: currentBonus + pts } as any);
-      }
-      setClaimInputCode('');
-      dialog.alert('Nạp điểm thành công', `Bạn đã nhận được +${pts} Điểm Gốm từ ${res.gift?.senderName || 'Bạn bè'}!`);
-      await onRefresh();
-    } catch (err) {
-      console.warn('Lỗi nhận điểm:', err);
-      dialog.alert('Nhận Điểm Gốm', 'Có lỗi xảy ra khi nạp điểm. Vui lòng thử lại sau.');
-    } finally {
-      setIsClaiming(false);
-    }
-  };
-
   const onRefresh = async () => {
     if (!targetUid) return;
     setRefreshing(true);
     try {
+      const userPhoneClean = userProfile?.phone || (user as any)?.phoneNumber || '';
       const [orders, gifts] = await Promise.all([
-        getUserOrders(targetUid, userProfile?.phone, user?.email || userProfile?.email, true),
-        getUserGiftHistory(targetUid).catch(() => ({ sent: [], received: [] })),
+        getUserOrders(targetUid, userPhoneClean, user?.email || userProfile?.email, true),
+        getUserGiftHistory(targetUid, userPhoneClean, user?.uid).catch(() => ({ sent: [], received: [] })),
       ]);
       const parsed = parseOrdersToPointData(orders);
       const allTransactions = [...parsed.transactions];
 
       gifts.sent.forEach((g) => {
         allTransactions.push({
-          id: `gift_sent_${g.id}`,
+          id: `gift_sent_${g.id || g.code}`,
           type: 'redeem',
           points: g.points,
           date: formatDisplayDate(new Date(g.createdAt)),
@@ -413,17 +354,19 @@ export default function PointsHistoryScreen() {
           badgeLabel: 'Tặng điểm',
         });
 
-        // Nếu quà đã hết hạn và hoàn lại điểm sau 24h
-        if (g.status === 'refunded') {
+        // Nếu quà đã hết hạn hoặc bị từ chối và hoàn lại điểm
+        if (g.status === 'refunded' || g.status === 'canceled') {
           const refDate = g.refundedAt ? new Date(g.refundedAt) : new Date(new Date(g.createdAt).getTime() + 24 * 60 * 60 * 1000);
           allTransactions.push({
-            id: `gift_refund_${g.id}`,
+            id: `gift_refund_${g.id || g.code}`,
             type: 'earn',
             points: g.points,
             date: formatDisplayDate(refDate),
             dateTimestamp: refDate.getTime(),
             orderCode: g.code,
-            store: `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
+            store: g.status === 'canceled'
+              ? `Hoàn điểm: Món quà ${g.code} đã được từ chối & hoàn lại`
+              : `Hoàn điểm: Mã ${g.code} hết hạn 24h`,
             orderValue: formatVND(g.points * 1000),
             badgeLabel: 'Hoàn điểm',
           });
@@ -431,17 +374,19 @@ export default function PointsHistoryScreen() {
       });
 
       gifts.received.forEach((g) => {
-        allTransactions.push({
-          id: `gift_recv_${g.id}`,
-          type: 'earn',
-          points: g.points,
-          date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
-          dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
-          orderCode: g.code,
-          store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
-          orderValue: formatVND(g.points * 1000),
-          badgeLabel: 'Nhận điểm',
-        });
+        if (g.status === 'claimed') {
+          allTransactions.push({
+            id: `gift_recv_${g.id || g.code}`,
+            type: 'earn',
+            points: g.points,
+            date: formatDisplayDate(new Date(g.claimedAt || g.createdAt)),
+            dateTimestamp: new Date(g.claimedAt || g.createdAt).getTime(),
+            orderCode: g.code,
+            store: `Nhận Điểm Gốm từ: ${g.senderName || 'Bạn bè'}`,
+            orderValue: formatVND(g.points * 1000),
+            badgeLabel: 'Nhận điểm',
+          });
+        }
       });
 
       allTransactions.sort((a, b) => b.dateTimestamp - a.dateTimestamp);
@@ -544,37 +489,26 @@ export default function PointsHistoryScreen() {
     <Animated.View style={[styles.container, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle}>
-              {t('pointsHistoryTitle') || 'Lịch sử Điểm'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => setRulesModalVisible(true)}
-              style={styles.headerRightBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('pointsRulesInfo') || 'Quy tắc tích điểm'}
-            >
-              <Ionicons
-                name="information-circle-outline"
-                size={22}
-                color={Colors.textPrimary}
-              />
-            </TouchableOpacity>
-          ),
-        }}
+      <Header
+        title={t('pointsHistoryTitle') || 'Lịch sử Điểm'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        rightComponent={
+          <BlurButton
+            onPress={() => setRulesModalVisible(true)}
+            accessibilityLabel={t('pointsRulesInfo') || 'Quy tắc tích điểm'}
+          >
+            <Ionicons
+              name="information-circle-outline"
+              size={22}
+              color={Colors.textPrimary}
+            />
+          </BlurButton>
+        }
       />
-      <FadingHeaderBackdrop />
 
-      <View style={[styles.headerSafeArea, { paddingTop: Platform.OS === 'ios' ? insets.top + 46 : insets.top + 54 }]}>
+      <View style={[styles.headerSafeArea, { paddingTop: 8 }]}>
 
         {/* BỘ LỌC PILLS (TÍCH / ĐỔI / KHOẢNG NGÀY) */}
         <View style={styles.filtersBar}>
@@ -670,50 +604,6 @@ export default function PointsHistoryScreen() {
           </View>
         )}
 
-        {/* THẺ NHẬP MÃ QUÀ TẶNG / NHẬN ĐIỂM GỐM */}
-        <View style={styles.claimGiftCard}>
-          <View style={styles.claimGiftHeader}>
-            <View style={styles.claimGiftIconWrap}>
-              <Ionicons name="gift" size={16} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.claimGiftTitle}>Nhận Điểm Gốm từ bạn bè</Text>
-              <Text style={styles.claimGiftSubtitle}>Nhập mã GIFT-XXXXXX để nạp điểm</Text>
-            </View>
-          </View>
-          <View style={styles.claimInputRow}>
-            <TextInput
-              style={styles.claimTextInput}
-              placeholder="Nhập mã GIFT-XXXXXX..."
-              placeholderTextColor={isDark ? '#888888' : '#A0988F'}
-              value={claimInputCode}
-              onChangeText={(txt) => setClaimInputCode(txt.toUpperCase())}
-              autoCapitalize="characters"
-              autoCorrect={false}
-            />
-            <TouchableOpacity
-              style={styles.pasteIconBtn}
-              activeOpacity={0.7}
-              onPress={handlePasteClaimCode}
-            >
-              <Ionicons name="clipboard-outline" size={16} color={isDark ? '#E8CCB2' : '#9C7156'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.claimSubmitBtn,
-                (!claimInputCode.trim() || isClaiming) && styles.claimSubmitBtnDisabled,
-              ]}
-              disabled={!claimInputCode.trim() || isClaiming}
-              onPress={handleClaimGiftCode}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.claimSubmitBtnText}>
-                {isClaiming ? '...' : 'Nhận điểm'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {!isReady || (loading && transactions.length === 0) ? (
           <View style={{ paddingTop: 8 }}>
             <PointHistorySkeleton isDark={isDark} />
@@ -766,30 +656,36 @@ export default function PointsHistoryScreen() {
                   <Text style={styles.cardInfoValue}>{item.date}</Text>
                 </View>
 
-                {/* DÒNG 2: MÃ ĐƠN HÀNG */}
+                {/* DÒNG 2: MÃ ĐƠN HÀNG HOẶC MÃ QUÀ TẶNG */}
                 <View style={styles.cardInfoRow}>
                   <Text style={styles.cardInfoLabel}>
-                    {t('orderCode') || 'Mã đơn hàng'}
+                    {item.badgeLabel && item.badgeLabel.includes('điểm')
+                      ? 'Mã quà tặng'
+                      : (t('orderCode') || 'Mã đơn hàng')}
                   </Text>
                   <Text style={styles.cardInfoValue} numberOfLines={1}>
                     {item.orderCode}
                   </Text>
                 </View>
 
-                {/* DÒNG 3: CỬA HÀNG */}
+                {/* DÒNG 3: CỬA HÀNG HOẶC CHI TIẾT */}
                 <View style={styles.cardInfoRow}>
                   <Text style={styles.cardInfoLabel}>
-                    {t('storeLabel') || 'Cửa hàng'}
+                    {item.badgeLabel && item.badgeLabel.includes('điểm')
+                      ? 'Nội dung'
+                      : (t('storeLabel') || 'Cửa hàng')}
                   </Text>
                   <Text style={styles.cardInfoValue} numberOfLines={1}>
                     {item.store}
                   </Text>
                 </View>
 
-                {/* DÒNG 4: GIÁ TRỊ ĐƠN HÀNG (MÀU ĐỎ/NÂU NỔI BẬT GIỐNG ẢNH MẪU) */}
+                {/* DÒNG 4: GIÁ TRỊ ĐƠN HÀNG HOẶC GIÁ TRỊ QUY ĐỔI */}
                 <View style={styles.cardInfoRow}>
                   <Text style={styles.cardInfoLabel}>
-                    {t('orderValue') || 'Giá trị đơn hàng'}
+                    {item.badgeLabel && item.badgeLabel.includes('điểm')
+                      ? 'Giá trị quy đổi'
+                      : (t('orderValue') || 'Giá trị đơn hàng')}
                   </Text>
                   <Text style={styles.cardOrderValueHighlight}>
                     {item.orderValue}
@@ -1094,90 +990,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       color: isDark ? Colors.textMuted : '#6E665D',
     },
 
-    // Claim Gift Points Card (Nhận Điểm Gốm từ bạn bè)
-    claimGiftCard: {
-      backgroundColor: isDark ? (Colors.cardBackground || '#1E1E1E') : '#FFFFFF',
-      borderRadius: 18,
-      padding: 16,
-      marginBottom: 14,
-      borderWidth: isDark ? 0 : 1.2,
-      borderColor: isDark ? 'transparent' : '#F0ECE6',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0 : 0.035,
-      shadowRadius: 6,
-      elevation: isDark ? 0 : 1,
-    },
-    claimGiftHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginBottom: 12,
-    },
-    claimGiftIconWrap: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: '#9C7156',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    claimGiftTitle: {
-      fontFamily: 'ElleGaborStd',
-      fontSize: 14.5,
-      fontWeight: '700',
-      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
-    },
-    claimGiftSubtitle: {
-      fontFamily: 'ElleGaborStd',
-      fontSize: 12,
-      color: isDark ? Colors.textMuted : '#8C7A70',
-      marginTop: 2,
-    },
-    claimInputRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    claimTextInput: {
-      flex: 1,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: isDark ? '#141414' : '#FAF8F5',
-      borderWidth: 1,
-      borderColor: isDark ? '#333333' : '#E8E1D8',
-      paddingHorizontal: 14,
-      fontFamily: 'ElleGaborStd',
-      fontSize: 13,
-      fontWeight: '700',
-      color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
-      letterSpacing: 0.5,
-    },
-    pasteIconBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: isDark ? 'rgba(232, 204, 178, 0.12)' : 'rgba(156, 113, 86, 0.08)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    claimSubmitBtn: {
-      height: 44,
-      paddingHorizontal: 16,
-      borderRadius: 22,
-      backgroundColor: '#9C7156',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    claimSubmitBtnDisabled: {
-      opacity: 0.45,
-    },
-    claimSubmitBtnText: {
-      fontFamily: 'ElleGaborStd',
-      fontSize: 13,
-      fontWeight: '700',
-      color: '#FFFFFF',
-    },
 
     // Transaction Card
     transactionCard: {

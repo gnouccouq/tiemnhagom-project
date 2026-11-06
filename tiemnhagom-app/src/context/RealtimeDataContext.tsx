@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { useAuth } from './AuthContext';
 import { syncOrderNotificationsForUser } from '../services/orderNotificationService';
+import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 import { getUserOrders } from '../services/orderService';
+import { seedProductCache } from '../services/productService';
 
 interface RealtimeDataContextProps {
   products: Product[];
@@ -146,6 +148,7 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setProducts(items);
+      seedProductCache(items);
       setLoadingProducts(false);
     }, (error) => {
       console.warn('Realtime Products Error:', error);
@@ -232,6 +235,7 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
         // Tự động đồng bộ thông báo đơn hàng cho tài khoản người dùng
         if (targetUid) {
           syncOrderNotificationsForUser(targetUid, items).catch(() => {});
+          syncUserLoyaltyAndVouchers(targetUid, userProfile, true).catch(() => {});
         }
       },
       (error) => {
@@ -241,8 +245,13 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [user, userProfile]);
 
+  const value = useMemo(
+    () => ({ products, orders, news, loadingProducts }),
+    [products, orders, news, loadingProducts]
+  );
+
   return (
-    <RealtimeDataContext.Provider value={{ products, orders, news, loadingProducts }}>
+    <RealtimeDataContext.Provider value={value}>
       {children}
     </RealtimeDataContext.Provider>
   );

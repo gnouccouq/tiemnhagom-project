@@ -5,13 +5,14 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
 import { useSettings } from '../../src/context/SettingsContext';
-import { useThemeColor } from '../../src/constants/theme';
+import { useThemeColor, checkIsDark } from '../../src/constants/theme';
 import { useAuth } from '../../src/context/AuthContext';
 import { CircularAvatarProcessor, getAvatarHash } from '../../src/components/CircularAvatarProcessor';
 
 export default function TabLayout() {
   const router = useRouter();
   const Colors = useThemeColor();
+  const isDark = checkIsDark(Colors);
   const { unreadCount } = useNotificationBadge();
   const { t } = useSettings();
   const { user, userProfile } = useAuth();
@@ -63,12 +64,37 @@ export default function TabLayout() {
       <NativeTabs
         tintColor="#9C7156"
         backgroundColor={Colors.background}
+        blurEffect={isDark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
+        indicatorColor={isDark ? '#2B2928' : '#E8CCB2'}
+        iconColor={{
+          default: isDark ? '#9E968D' : '#6E665D',
+          selected: '#9C7156',
+        }}
+        labelStyle={{
+          default: {
+            color: isDark ? '#9E968D' : '#6E665D',
+            fontFamily: 'ElleGaborStd',
+            fontSize: 11,
+            fontWeight: '600',
+          },
+          selected: {
+            color: '#9C7156',
+            fontFamily: 'ElleGaborStd',
+            fontSize: 11,
+            fontWeight: '700',
+          },
+        }}
+        rippleColor={isDark ? 'rgba(232, 204, 178, 0.15)' : 'rgba(156, 113, 86, 0.12)'}
+        shadowColor={isDark ? 'transparent' : 'rgba(0, 0, 0, 0.06)'}
+        disableTransparentOnScrollEdge={true}
+        badgeBackgroundColor="#9C7156"
+        badgeTextColor="#FFFFFF"
         minimizeBehavior="automatic"
-        labelVisibilityMode="unlabeled"
+        labelVisibilityMode="labeled"
       >
         {/* 1. Trang chủ: icon-smart-home */}
         <NativeTabs.Trigger name="index" accessibilityLabel={t('home')}>
-          <NativeTabs.Trigger.Label hidden />
+          <NativeTabs.Trigger.Label>{t('home') || 'Trang chủ'}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             src={{
               default: require('../../assets/icons/tabler/tabler_home.png'),
@@ -80,7 +106,7 @@ export default function TabLayout() {
 
         {/* 2. Danh mục: icon-layout-grid */}
         <NativeTabs.Trigger name="products" accessibilityLabel={t('categories')}>
-          <NativeTabs.Trigger.Label hidden />
+          <NativeTabs.Trigger.Label>{t('categories') || 'Danh mục'}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             src={{
               default: require('../../assets/icons/tabler/tabler_grid.png'),
@@ -92,7 +118,7 @@ export default function TabLayout() {
 
         {/* 3. Ưu đãi: icon-tag */}
         <NativeTabs.Trigger name="deals" accessibilityLabel={t('deals')}>
-          <NativeTabs.Trigger.Label hidden />
+          <NativeTabs.Trigger.Label>{t('deals') || 'Ưu đãi'}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             src={{
               default: require('../../assets/icons/tabler/tabler_tag.png'),
@@ -104,7 +130,7 @@ export default function TabLayout() {
 
         {/* 4. Thông báo: icon-bell với badge số lượng chưa đọc */}
         <NativeTabs.Trigger name="notifications-tab" accessibilityLabel={t('notifications') || 'Thông báo'}>
-          <NativeTabs.Trigger.Label hidden />
+          <NativeTabs.Trigger.Label>{t('notifications') || 'Thông báo'}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             src={{
               default: require('../../assets/icons/tabler/tabler_bell.png'),
@@ -136,7 +162,7 @@ export default function TabLayout() {
             },
           }}
         >
-          <NativeTabs.Trigger.Label hidden />
+          <NativeTabs.Trigger.Label>{t('profile') || 'Tài khoản'}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon
             src={profileIconSource}
             renderingMode={activeAvatar ? 'original' : 'template'}

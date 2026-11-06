@@ -1,5 +1,5 @@
 // app/product/[id].tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
-import { getProductById, getProducts } from '../../src/services/productService';
+import { getProductById, getProducts, getCachedProductById } from '../../src/services/productService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
 import { Product, ProductVariant } from '../../src/types';
 import { formatCurrency, checkOutOfStock } from '../../src/utils/format';
@@ -33,17 +33,20 @@ import { useAuth } from '../../src/context/AuthContext';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
 import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop';
+import { FadingBottomBackdrop } from '../../src/components/FadingBottomBackdrop';
 import { LiquidGlass, LiquidGlassContainerView } from '../../src/components/LiquidGlass';
 import { SymbolView } from 'expo-symbols';
 import { ProductCard } from '../../src/components/ProductCard';
 import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
 import { ProductDetailSkeleton } from '../../src/components/ShimmerSkeleton';
+import { RichDescription } from '../../src/components/RichDescription';
 import { useDialog } from '../../src/context/DialogContext';
 import { useSettings } from '../../src/context/SettingsContext';
 
 const { width } = Dimensions.get('window');
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const StatusBarComp = StatusBar as any;
 
 export default function ProductDetailScreen() {
   const { id, variant: variantParam } = useLocalSearchParams<{ id: string; variant?: string }>();
@@ -58,10 +61,10 @@ export default function ProductDetailScreen() {
   const { isFavorite, toggleFavorite } = useWishlist();
   const dialog = useDialog();
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const thumbnailScrollRef = useRef<ScrollView>(null);
-  const headerCartRef = useRef<View>(null);
-  const ctaBtnRef = useRef<View>(null);
+  const scrollViewRef = useRef<any>(null);
+  const thumbnailScrollRef = useRef<any>(null);
+  const headerCartRef = useRef<any>(null);
+  const ctaBtnRef = useRef<any>(null);
 
   // Hiệu ứng nảy giỏ hàng ở header
   const headerCartScale = useRef(new RNAnimated.Value(1)).current;
@@ -73,8 +76,9 @@ export default function ProductDetailScreen() {
     ]).start();
   };
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const cachedInitial = useMemo(() => (id ? getCachedProductById(id) : null), [id]);
+  const [product, setProduct] = useState<Product | null>(cachedInitial);
+  const [loading, setLoading] = useState<boolean>(!cachedInitial);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(undefined);
   const [quantity, setQuantity] = useState<number>(1);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
@@ -97,7 +101,9 @@ export default function ProductDetailScreen() {
 
   useEffect(() => {
     if (id) {
-      setLoading(true);
+      if (!cachedInitial) {
+        setLoading(true);
+      }
       getProductById(id)
         .then((res) => {
           setProduct(res);
@@ -227,7 +233,7 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <View style={styles.safeArea}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+        <StatusBarComp barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
         {/* Thanh điều hướng gốc iOS UINavigationBar */}
         <Stack.Screen
           options={{
@@ -346,11 +352,11 @@ export default function ProductDetailScreen() {
 
   // Kích hoạt animation bay vào giỏ hàng ở header
   const triggerFlyToHeaderCart = (imageUrl: string) => {
-    headerCartRef.current?.measureInWindow((hx, hy, hw, hh) => {
+    headerCartRef.current?.measureInWindow((hx: number, hy: number, hw: number, hh: number) => {
       const targetX = typeof hx === 'number' && !isNaN(hx) ? hx + hw / 2 : width - 40;
       const targetY = typeof hy === 'number' && !isNaN(hy) ? hy + hh / 2 : 44 + 20;
 
-      ctaBtnRef.current?.measureInWindow((cx, cy, cw, ch) => {
+      ctaBtnRef.current?.measureInWindow((cx: number, cy: number, cw: number, ch: number) => {
         const startX = typeof cx === 'number' && !isNaN(cx) ? cx + cw / 2 : width / 2;
         const startY = typeof cy === 'number' && !isNaN(cy) ? cy + ch / 2 : Dimensions.get('window').height - 60;
         flyToCart(imageUrl, startX, startY, targetX, targetY);
@@ -426,15 +432,6 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const parsedDesc = product.description
-    ? product.description
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n\n')
-        .replace(/<[^>]*>?/gm, '')
-        .replace(/&nbsp;/g, ' ')
-        .trim()
-    : 'Sản phẩm gốm sứ mộc mạc được chế tác thủ công tinh xảo bởi nghệ nhân Tiệm Nhà Gốm. Lớp men tự nhiên, nung ở nhiệt độ cao trên 1200°C đảm bảo an toàn tuyệt đối cho sức khỏe khi dùng với thực phẩm nóng hoặc lò vi sóng.';
-
   const dimParts: string[] = [];
   if (product.dimensions?.length) dimParts.push(`Dài ${product.dimensions.length}cm`);
   if (product.dimensions?.width) dimParts.push(`Rộng ${product.dimensions.width}cm`);
@@ -502,7 +499,7 @@ export default function ProductDetailScreen() {
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+      <StatusBarComp barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
       {/* Thanh điều hướng với nút Back và 3 nút riêng biệt chuẩn Liquid Glass */}
       <Stack.Screen
@@ -871,7 +868,12 @@ export default function ProductDetailScreen() {
           {/* Description */}
           <View style={styles.descSection}>
             <Text style={styles.descTitle}>{t('productDescTitle')}</Text>
-            <Text style={styles.descText}>{parsedDesc}</Text>
+            <RichDescription
+              htmlContent={product.description || t('defaultProductDesc')}
+              isDark={isDark}
+              textColor={Colors.textPrimary}
+              cardBackground={Colors.cardBackground}
+            />
           </View>
 
           {/* Specifications */}
@@ -917,25 +919,29 @@ export default function ProductDetailScreen() {
           <View style={styles.descSection}>
             <Text style={styles.descTitle}>{t('careGuideTitle')}</Text>
             <View style={styles.careGrid}>
-              <View style={styles.careCard}>
-                <Ionicons name="thermometer-outline" size={24} color="#9C7156" style={styles.careIcon} />
-                <Text style={styles.careTitle}>{t('careThermalShock')}</Text>
-                <Text style={styles.careText}>{t('careThermalShockSub')}</Text>
+              <View style={styles.careRow}>
+                <View style={styles.careCard}>
+                  <Ionicons name="thermometer-outline" size={24} color="#9C7156" style={styles.careIcon} />
+                  <Text style={styles.careTitle}>{t('careThermalShock')}</Text>
+                  <Text style={styles.careText}>{t('careThermalShockSub')}</Text>
+                </View>
+                <View style={styles.careCard}>
+                  <Ionicons name="water-outline" size={24} color="#9C7156" style={styles.careIcon} />
+                  <Text style={styles.careTitle}>{t('careCleaning')}</Text>
+                  <Text style={styles.careText}>{t('careCleaningSub')}</Text>
+                </View>
               </View>
-              <View style={styles.careCard}>
-                <Ionicons name="water-outline" size={24} color="#9C7156" style={styles.careIcon} />
-                <Text style={styles.careTitle}>{t('careCleaning')}</Text>
-                <Text style={styles.careText}>{t('careCleaningSub')}</Text>
-              </View>
-              <View style={styles.careCard}>
-                <Ionicons name="snow-outline" size={24} color="#9C7156" style={styles.careIcon} />
-                <Text style={styles.careTitle}>{t('careDishwasher')}</Text>
-                <Text style={styles.careText}>{t('careDishwasherSub')}</Text>
-              </View>
-              <View style={styles.careCard}>
-                <Ionicons name="cube-outline" size={24} color="#9C7156" style={styles.careIcon} />
-                <Text style={styles.careTitle}>{t('careStorage')}</Text>
-                <Text style={styles.careText}>{t('careStorageSub')}</Text>
+              <View style={styles.careRow}>
+                <View style={styles.careCard}>
+                  <Ionicons name="snow-outline" size={24} color="#9C7156" style={styles.careIcon} />
+                  <Text style={styles.careTitle}>{t('careDishwasher')}</Text>
+                  <Text style={styles.careText}>{t('careDishwasherSub')}</Text>
+                </View>
+                <View style={styles.careCard}>
+                  <Ionicons name="cube-outline" size={24} color="#9C7156" style={styles.careIcon} />
+                  <Text style={styles.careTitle}>{t('careStorage')}</Text>
+                  <Text style={styles.careText}>{t('careStorageSub')}</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -1067,58 +1073,54 @@ export default function ProductDetailScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Bottom Sticky CTA bo tròn dạng viên thuốc bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới các nút hành động */}
+      <FadingBottomBackdrop />
+
+      {/* Bottom Sticky CTA bo tròn dạng viên thuốc (Không bọc LiquidGlass) */}
       <Animated.View
         entering={SlideInDown.duration(500).delay(300)}
         style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <View style={styles.bottomBarContent}>
-            <TouchableOpacity
-              style={[styles.addToCartBtn, isOutOfStock && styles.btnDisabled]}
-              onPress={() => handleOpenActionModal('cart')}
-              disabled={isOutOfStock}
-              activeOpacity={0.84}
+        <View style={styles.bottomBarContent}>
+          <TouchableOpacity
+            style={[styles.addToCartBtn, isOutOfStock && styles.btnDisabled]}
+            onPress={() => handleOpenActionModal('cart')}
+            disabled={isOutOfStock}
+            activeOpacity={0.84}
+          >
+            <Ionicons
+              name="bag-add-outline"
+              size={20}
+              color={isOutOfStock ? (isDark ? '#6E665D' : '#A8A096') : (isDark ? '#E8CCB2' : '#9C7156')}
+            />
+            <Text
+              style={[styles.addToCartText, isOutOfStock && { color: isDark ? '#6E665D' : '#A8A096' }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
             >
-              <Ionicons
-                name="bag-add-outline"
-                size={20}
-                color={isOutOfStock ? (isDark ? '#6E665D' : '#A8A096') : (isDark ? '#E8CCB2' : '#9C7156')}
-              />
-              <Text
-                style={[styles.addToCartText, isOutOfStock && { color: isDark ? '#6E665D' : '#A8A096' }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
-                {isOutOfStock ? t('outOfStock') : t('addToCartAction')}
-              </Text>
-            </TouchableOpacity>
+              {isOutOfStock ? t('outOfStock') : t('addToCartAction')}
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.buyNowBtn, isOutOfStock && styles.btnDisabled]}
-              onPress={() => handleOpenActionModal('buy')}
-              disabled={isOutOfStock}
-              activeOpacity={0.88}
+          <TouchableOpacity
+            style={[styles.buyNowBtn, isOutOfStock && styles.btnDisabled]}
+            onPress={() => handleOpenActionModal('buy')}
+            disabled={isOutOfStock}
+            activeOpacity={0.88}
+          >
+            <Text
+              style={styles.buyNowText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
             >
-              <Text
-                style={styles.buyNowText}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
-                {isOutOfStock ? t('outOfStock') : t('buyNowAction')}
-              </Text>
-              {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
-            </TouchableOpacity>
-          </View>
-        </LiquidGlass>
+              {isOutOfStock ? t('outOfStock') : t('buyNowAction')}
+            </Text>
+            {!isOutOfStock && <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />}
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* ── MODAL CHỌN BIẾN THỂ TRƯỚC KHI THÊM GIỎ HOẶC MUA NGAY (ANIMATED BOTTOM SHEET MODAL UX) ── */}
@@ -1997,20 +1999,20 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
   },
   careGrid: {
+    gap: 10,
+  },
+  careRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   careCard: {
-    width: '48%',
+    flex: 1,
     backgroundColor: isDark ? '#2C2C2C' : '#FAF8F5',
     borderRadius: 16,
     padding: 12,
     borderWidth: isDark ? 0 : 1,
     borderColor: isDark ? 'transparent' : '#E8E1D8',
     alignItems: 'center',
-    marginBottom: 8,
   },
   careIcon: {
     marginBottom: 6,
@@ -2125,34 +2127,33 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   /* Bottom Bar bo tròn dạng viên thuốc bọc Liquid Glass chuẩn GEMINI.md */
   bottomBarWrapper: {
     position: 'absolute',
-    left: 14,
-    right: 14,
+    left: 16,
+    right: 16,
     zIndex: 50,
-  },
-  bottomBar: {
-    borderRadius: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    overflow: 'hidden',
   },
   bottomBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 12,
   },
   addToCartBtn: {
     flex: 1,
     height: 52,
     borderRadius: 26,
     borderWidth: 1.5,
-    borderColor: '#9C7156',
+    borderColor: isDark ? '#3A3A3A' : '#E8CCB2',
+    backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    backgroundColor: isDark ? 'rgba(30, 30, 30, 0.55)' : 'rgba(255, 255, 255, 0.72)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.35 : 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   addToCartText: {
     fontFamily: 'ElleGaborStd',

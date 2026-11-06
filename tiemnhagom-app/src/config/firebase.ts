@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import * as FirebaseAuth from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, Firestore, setLogLevel } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -38,11 +38,15 @@ try {
 let db: Firestore;
 try {
   db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
   });
 } catch {
   db = getFirestore(app);
 }
+
+try {
+  setLogLevel('error');
+} catch {}
 
 const storage: FirebaseStorage = getStorage(app);
 

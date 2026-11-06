@@ -22,6 +22,7 @@ export interface AnimatedCenterModalProps {
   backdropStyle?: StyleProp<ViewStyle>;
   dismissOnBackdropPress?: boolean;
   avoidKeyboard?: boolean;
+  isDark?: boolean;
 }
 
 export function AnimatedCenterModal({
@@ -32,9 +33,10 @@ export function AnimatedCenterModal({
   backdropStyle,
   dismissOnBackdropPress = true,
   avoidKeyboard = false,
+  isDark: customIsDark,
 }: AnimatedCenterModalProps): React.JSX.Element | null {
   const Colors = useThemeColor();
-  const isDark = Colors.cardBackground !== '#FFFFFF';
+  const isDark = customIsDark !== undefined ? customIsDark : Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const [isRendered, setIsRendered] = useState(visible);
   const backdropAnim = useRef(new Animated.Value(0)).current;

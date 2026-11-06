@@ -19,14 +19,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../src/config/firebase';
-import { collection, getDocs, query, orderBy, limit, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, orderBy, limit, doc, deleteDoc } from 'firebase/firestore';
 import { Header } from '../src/components/Header';
 import { useThemeColor, Typography } from '../src/constants/theme';
-import {
-  useNotificationBadge,
-  READ_IDS_KEY,
-  LOCAL_NOTIFS_KEY,
-} from '../src/context/NotificationBadgeContext';
+import { useNotificationBadge } from '../src/context/NotificationBadgeContext';
+import { READ_IDS_KEY, LOCAL_NOTIFS_KEY } from '../src/constants/notificationKeys';
 import { useAuth } from '../src/context/AuthContext';
 import { useSettings } from '../src/context/SettingsContext';
 import { ScalePressable } from '../src/components/ScalePressable';
@@ -35,28 +32,19 @@ import {
   generateOrderNotificationsFromOrders,
   DELETED_NOTIFS_KEY,
 } from '../src/services/orderNotificationService';
+import { getRemainingExpiryTime, getLocalGiftsCache } from '../src/services/giftPointsService';
+import {
+  UnifiedFeedItem,
+  FilterType,
+  NotificationType,
+  getCachedNotificationFeed,
+  preloadNotificationFeed,
+} from '../src/services/notificationFeedService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = 80;
 
-export type NotificationType = 'promo' | 'order' | 'system';
-export type FilterType = 'all' | 'news' | 'promo' | 'order' | 'system';
-
-export interface UnifiedFeedItem {
-  id: string;
-  kind: 'article' | 'notification';
-  type: 'news' | 'promo' | 'order' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  createdAtMs: number;
-  isRead: boolean;
-  imageUrl?: string;
-  link?: string;
-  icon?: keyof typeof Ionicons.glyphMap;
-  iconBg?: string;
-  iconColor?: string;
-}
+// UnifiedFeedItem, FilterType, NotificationType imported from notificationFeedService
 
 // ─── SwipeableNotificationCard: Trượt sang trái để xóa thông báo đẩy ───────
 function SwipeableNotificationCard({
@@ -79,11 +67,53 @@ function SwipeableNotificationCard({
   const translateX = useRef(new Animated.Value(0)).current;
   const deleteOpacity = useRef(new Animated.Value(0)).current;
 
+  // Tính toán thời gian hết hạn cho thông báo tặng điểm gốm
+  const isGift = Boolean(item.isGift || item.giftId || (item.link && item.link.includes('gift-claim')));
+  const isClaimed =
+    item.giftStatus === 'claimed' ||
+    item.id.startsWith('claimed_') ||
+    Boolean(item.title && (item.title.includes('đã nhận') || item.title.includes('da nhan'))) ||
+    Boolean(item.message && (item.message.includes('trao gửi trọn vẹn') || item.message.includes('trao goi tron ven')));
+  const isCanceled =
+    item.giftStatus === 'canceled' ||
+    item.id.startsWith('rejected_') ||
+    Boolean(item.title && (item.title.includes('từ chối') || item.title.includes('tu choi')));
+
+  // Nếu điểm đã nhận hoặc đã từ chối -> KHÔNG hiện thời gian hết hạn nữa
+  const showExpiryBadge = isGift && !isClaimed && !isCanceled && item.giftStatus === 'pending';
+  const giftExpiresAt = showExpiryBadge ? (item.expiresAt || (item.createdAtMs ? new Date(item.createdAtMs + 24 * 3600 * 1000).toISOString() : '')) : '';
+
+  const [remainingText, setRemainingText] = useState<string>(() => {
+    if (!showExpiryBadge || !giftExpiresAt) return '';
+    return typeof getRemainingExpiryTime === 'function' ? getRemainingExpiryTime(giftExpiresAt).text : '';
+  });
+  const [isExpired, setIsExpired] = useState<boolean>(() => {
+    if (!showExpiryBadge || !giftExpiresAt) return false;
+    return typeof getRemainingExpiryTime === 'function' ? getRemainingExpiryTime(giftExpiresAt).isExpired : false;
+  });
+
+  useEffect(() => {
+    if (!showExpiryBadge || !giftExpiresAt || typeof getRemainingExpiryTime !== 'function') return;
+    const updateExpiry = () => {
+      const res = getRemainingExpiryTime(giftExpiresAt);
+      setRemainingText(res.text);
+      setIsExpired(res.isExpired);
+    };
+    updateExpiry();
+    const interval = setInterval(updateExpiry, 30000);
+    return () => clearInterval(interval);
+  }, [showExpiryBadge, giftExpiresAt]);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, g) =>
-        Math.abs(g.dx) > 10 && Math.abs(g.dy) < 15 && g.dx < 0,
+        Math.abs(g.dx) > 15 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5 && g.dx < 0,
+      onMoveShouldSetPanResponderCapture: (_, g) =>
+        Math.abs(g.dx) > 15 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5 && g.dx < 0,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => false,
       onPanResponderGrant: () => {
         setScrollEnabled(false);
       },
@@ -165,13 +195,43 @@ function SwipeableNotificationCard({
               {item.message}
             </Text>
 
+            {/* HUY HIỆU THỜI GIAN HẾT HẠN CHO THÔNG BÁO TẶNG ĐIỂM GỐM (CHỈ HIỆN KHI CHƯA NHẬN ĐIỂM) */}
+            {showExpiryBadge && (
+              <View
+                style={[
+                  styles.giftExpiryBadge,
+                  isExpired ? styles.giftBadgeExpired : styles.giftBadgePending,
+                ]}
+              >
+                <Ionicons
+                  name={isExpired ? 'time-outline' : 'hourglass-outline'}
+                  size={12.5}
+                  color={isExpired ? (isDark ? '#807A73' : '#9E968D') : '#9C7156'}
+                />
+                <Text
+                  style={[
+                    styles.giftExpiryText,
+                    isExpired ? styles.giftTextExpired : styles.giftTextPending,
+                  ]}
+                >
+                  {isExpired
+                    ? 'Đã hết hạn 24h nhận điểm'
+                    : `Hết hạn sau: ${remainingText}`}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.cardFooterRow}>
               <Text style={styles.cardTime}>{item.time}</Text>
               <View style={styles.cardActionRow}>
                 <Text style={styles.cardActionText}>
-                  {item.type === 'order'
+                  {item.link && item.link.includes('gift-claim') && !isClaimed
+                    ? 'Mở thiệp nhận điểm'
+                    : isGift || isClaimed || isCanceled || (item.link && item.link.includes('type=gift'))
+                    ? t('viewNotificationDetail') || 'Xem chi tiết thông báo'
+                    : item.type === 'order'
                     ? t('viewOrder') || 'Xem đơn hàng'
-                    : t('viewDetails') || 'Xem chi tiết'}
+                    : t('viewNotificationDetail') || 'Xem chi tiết'}
                 </Text>
                 <Ionicons
                   name="chevron-forward"
@@ -285,263 +345,22 @@ export default function NotificationsScreen({ isTab = false }: { isTab?: boolean
     refreshBadge,
   } = useNotificationBadge();
 
-  const [feedItems, setFeedItems] = useState<UnifiedFeedItem[]>([]);
+  const [feedItems, setFeedItems] = useState<UnifiedFeedItem[]>(() => getCachedNotificationFeed());
   const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [scrollY, setScrollY] = useState(0);
 
-  // Helper chuyển đổi Date sang chuỗi thời gian thân thiện
-  const formatTimeFriendly = (timestamp: any): { timeStr: string; ms: number } => {
-    let date = new Date();
-    let ms = Date.now();
-    if (timestamp) {
-      try {
-        if (typeof timestamp.toDate === 'function') {
-          date = timestamp.toDate();
-        } else if (timestamp instanceof Date) {
-          date = timestamp;
-        } else if (typeof timestamp === 'number') {
-          date = new Date(timestamp);
-        } else if (typeof timestamp === 'string') {
-          date = new Date(timestamp);
-        }
-        ms = date.getTime();
-      } catch {}
-    }
-
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / (1000 * 60));
-    const diffHr = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHr / 24);
-
-    let timeStr = 'Vừa xong';
-    if (diffMin < 1) timeStr = 'Vừa xong';
-    else if (diffMin < 60) timeStr = `${diffMin} phút trước`;
-    else if (diffHr < 24) timeStr = `${diffHr} giờ trước`;
-    else if (diffDay < 7) timeStr = `${diffDay} ngày trước`;
-    else {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      timeStr = `${day}/${month}/${year}`;
-    }
-
-    return { timeStr, ms };
-  };
-
-  // Tải đồng thời cả Tin tức bài viết và Thông báo Firestore + Cục bộ
+  // Tải đồng thời cả Tin tức bài viết và Thông báo từ Cache RAM hoặc Firestore
   const loadFeedData = useCallback(async () => {
     try {
-      // 1. Tải readIds mới nhất từ storage
-      let currentReadIds = readIds;
-      try {
-        const raw = await AsyncStorage.getItem(READ_IDS_KEY);
-        if (raw) currentReadIds = new Set(JSON.parse(raw));
-      } catch {}
-
-      // 2. Tải bài viết tin tức từ Firestore collection('news')
-      let newsItems: UnifiedFeedItem[] = [];
-      try {
-        const qNews = query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(25));
-        const snapNews = await getDocs(qNews);
-        newsItems = snapNews.docs.map((docSnap) => {
-          const data = docSnap.data();
-          const { timeStr, ms } = formatTimeFriendly(data.createdAt);
-          const plainText = (data.content || '').replace(/<[^>]*>?/gm, '').trim();
-          const excerpt = plainText.length > 110 ? plainText.substring(0, 110) + '...' : plainText;
-
-          return {
-            id: docSnap.id,
-            kind: 'article',
-            type: 'news',
-            title: data.title || 'Bài viết từ Tiệm Nhà Gốm',
-            message: excerpt,
-            time: timeStr,
-            createdAtMs: ms,
-            isRead: currentReadIds.has(docSnap.id),
-            imageUrl:
-              data.imageUrl ||
-              'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
-          };
-        });
-      } catch (err) {
-        console.warn('Lỗi tải tin tức bài viết:', err);
-      }
-
-      // 3. Tải thông báo Firestore collection('global_notifications')
-      let firestoreNotifs: UnifiedFeedItem[] = [];
-      try {
-        const qNotifs = query(
-          collection(db, 'global_notifications'),
-          orderBy('createdAt', 'desc'),
-          limit(25)
-        );
-        const snapNotifs = await getDocs(qNotifs);
-        firestoreNotifs = snapNotifs.docs.map((docSnap) => {
-          const data = docSnap.data();
-          const { timeStr, ms } = formatTimeFriendly(data.createdAt);
-          const notifType = (data.type || 'promo') as NotificationType;
-
-          let iconName: keyof typeof Ionicons.glyphMap = 'pricetag';
-          let iconBg = '#F3E5DC';
-          let iconColor = '#9C7156';
-
-          if (notifType === 'order') {
-            iconName = 'cube';
-            iconBg = '#F6F4EC';
-            iconColor = '#9C7156';
-          } else if (notifType === 'system') {
-            iconName = 'shield-checkmark';
-            iconBg = '#F1F5F9';
-            iconColor = '#2B2928';
-          }
-
-          return {
-            id: docSnap.id,
-            kind: 'notification',
-            type: notifType,
-            title: data.title || 'Thông báo từ Tiệm Nhà Gốm',
-            message: data.body || '',
-            time: timeStr,
-            createdAtMs: ms,
-            isRead: currentReadIds.has(docSnap.id),
-            icon: iconName,
-            iconBg,
-            iconColor,
-            imageUrl: data.imageUrl || undefined,
-            link: data.link || (notifType === 'promo' ? '/(tabs)/deals' : undefined),
-          };
-        });
-      } catch (err) {
-        console.warn('Lỗi tải thông báo Firestore:', err);
-      }
-
-      // 4. Tải thông báo đẩy cục bộ
-      let localNotifs: UnifiedFeedItem[] = [];
-      try {
-        const rawLocal = await AsyncStorage.getItem(LOCAL_NOTIFS_KEY);
-        if (rawLocal) {
-          const parsed = JSON.parse(rawLocal);
-          if (Array.isArray(parsed)) {
-            localNotifs = parsed.map((item: any) => ({
-              id: item.id || Date.now().toString(),
-              kind: 'notification',
-              type: (item.type || 'promo') as NotificationType,
-              title: item.title || 'Thông báo mới',
-              message: item.message || '',
-              time: item.time || 'Vừa xong',
-              createdAtMs: Number(item.id) || Date.now(),
-              isRead: currentReadIds.has(item.id),
-              icon: item.icon || 'notifications',
-              iconBg: item.iconBg || '#F3E5DC',
-              iconColor: item.iconColor || '#9C7156',
-              imageUrl: item.imageUrl,
-              link: item.link,
-            }));
-          }
-        }
-      } catch {}
-
-      // 4.5. Tải thông báo đơn hàng của tài khoản khách hàng (tự động tạo từ đơn hàng & subcollection)
-      let userOrderNotifs: UnifiedFeedItem[] = [];
-      let deletedIds = new Set<string>();
-      try {
-        const delRaw = await AsyncStorage.getItem(DELETED_NOTIFS_KEY);
-        if (delRaw) {
-          const parsed = JSON.parse(delRaw);
-          if (Array.isArray(parsed)) deletedIds = new Set<string>(parsed);
-        }
-      } catch {}
-
-      if (user && user.uid) {
-        // A. Tạo thông báo chi tiết từ các đơn hàng thực tế của khách (Online & POS tại quầy)
-        try {
-          const userOrders = await getUserOrders(user.uid);
-          const generatedNotifs = generateOrderNotificationsFromOrders(
-            userOrders,
-            currentReadIds,
-            deletedIds
-          );
-          userOrderNotifs = generatedNotifs.map((item) => ({
-            id: item.id,
-            kind: 'notification',
-            type: 'order',
-            title: item.title,
-            message: item.message,
-            time: item.time,
-            createdAtMs: item.createdAtMs,
-            isRead: item.isRead,
-            icon: item.icon as any,
-            iconBg: item.iconBg,
-            iconColor: item.iconColor,
-            imageUrl: item.imageUrl,
-            link: item.link,
-          }));
-        } catch {}
-
-        // B. Đồng thời tải thêm các thông báo riêng do Admin/Hệ thống gửi vào users/{userId}/notifications (nếu có)
-        try {
-          const qUserNotifs = query(
-            collection(db, 'users', user.uid, 'notifications'),
-            orderBy('createdAt', 'desc'),
-            limit(50)
-          );
-          const snapUser = await getDocs(qUserNotifs);
-          const customUserNotifs: UnifiedFeedItem[] = snapUser.docs
-            .filter((docSnap) => !deletedIds.has(docSnap.id))
-            .map((docSnap) => {
-              const data = docSnap.data();
-              const { timeStr, ms } = formatTimeFriendly(data.createdAt);
-              const isRead = currentReadIds.has(docSnap.id) || Boolean(data.isRead);
-
-              let iconName: keyof typeof Ionicons.glyphMap = 'receipt';
-              if (data.stage === 'pos') iconName = 'storefront';
-              else if (data.stage === 'shipping') iconName = 'cube';
-              else if (data.stage === 'completed') iconName = 'checkmark-circle';
-              else if (data.icon) iconName = data.icon;
-
-              return {
-                id: docSnap.id,
-                kind: 'notification',
-                type: 'order',
-                title: data.title || `Đơn hàng #${data.orderCode || ''}`,
-                message: data.message || '',
-                time: timeStr,
-                createdAtMs: data.createdAtMs || ms,
-                isRead,
-                icon: iconName,
-                iconBg: data.iconBg || (data.stage === 'pos' ? '#FAF7F2' : '#F6F4EC'),
-                iconColor: data.iconColor || '#9C7156',
-                imageUrl: data.imageUrl,
-                link: data.link || (data.orderId ? `/order-detail?orderId=${data.orderId}` : '/orders'),
-              };
-            });
-
-          userOrderNotifs = [...userOrderNotifs, ...customUserNotifs];
-        } catch (err) {
-          // Bỏ qua thầm lặng nếu mạng yếu hoặc quyền chưa cấp, không ném lỗi ra console
-        }
-      }
-
-      // 5. Gộp thông báo và loại trừ trùng lặp
-      const combinedNotifs = [...userOrderNotifs, ...firestoreNotifs, ...localNotifs].filter(
-        (val, idx, arr) =>
-          idx === arr.findIndex((x) => x.id === val.id || (x.title === val.title && x.message === val.message))
-      );
-
-      // 6. Hợp nhất cả Thông báo và Bài viết, sắp xếp theo thời gian mới nhất lên đầu
-      const allUnified = [...combinedNotifs, ...newsItems].sort(
-        (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
-      );
-
-      setFeedItems(allUnified);
+      const items = await preloadNotificationFeed(user?.uid);
+      setFeedItems(items);
       refreshBadge();
     } catch (e) {
       console.warn('Lỗi tải feed thông báo:', e);
     }
-  }, [readIds, refreshBadge, user?.uid]);
+  }, [refreshBadge, user?.uid]);
 
   useFocusEffect(
     useCallback(() => {
@@ -564,7 +383,23 @@ export default function NotificationsScreen({ isTab = false }: { isTab?: boolean
       );
     }
 
-    // Điều hướng theo loại
+    const isClaimedGift =
+      item.giftStatus === 'claimed' ||
+      item.id.startsWith('claimed_') ||
+      Boolean(item.title && (item.title.includes('đã nhận') || item.title.includes('da nhan')));
+    const isCanceledGift =
+      item.giftStatus === 'canceled' ||
+      item.id.startsWith('rejected_') ||
+      Boolean(item.title && (item.title.includes('từ chối') || item.title.includes('tu choi')));
+    const isGiftNotif = item.isGift || Boolean(item.giftId) || isClaimedGift || isCanceledGift;
+
+    // Nếu là thông báo quà tặng điểm cho người nhận chưa nhận
+    if (item.link && item.link.includes('gift-claim') && !isClaimedGift) {
+      router.push(item.link as any);
+      return;
+    }
+
+    // Điều hướng theo loại bài viết
     if (item.kind === 'article') {
       router.push({
         pathname: '/article/[id]',
@@ -573,11 +408,25 @@ export default function NotificationsScreen({ isTab = false }: { isTab?: boolean
       return;
     }
 
-    // Nếu là thông báo đẩy / sự kiện
-    if (item.link) {
-      router.push(item.link as any);
-      return;
+    // Nếu có link trực tiếp hợp lệ (không phải fallback /orders của quà tặng)
+    if (item.link && !item.link.startsWith('/notification-detail')) {
+      if (item.link === '/orders' && isGiftNotif) {
+        // Bỏ qua /orders khi đây là thông báo quà tặng điểm
+      } else {
+        router.push(item.link as any);
+        return;
+      }
     }
+
+    const cleanGiftId =
+      item.giftId ||
+      (item.id.startsWith('claimed_')
+        ? item.id.replace('claimed_', '')
+        : item.id.startsWith('rejected_')
+        ? item.id.replace('rejected_', '')
+        : item.id.startsWith('gift_')
+        ? item.id.replace('gift_', '')
+        : '');
 
     router.push({
       pathname: '/notification-detail',
@@ -586,9 +435,11 @@ export default function NotificationsScreen({ isTab = false }: { isTab?: boolean
         title: item.title,
         message: item.message,
         time: item.time,
-        type: item.type,
+        type: isGiftNotif ? 'gift' : item.type,
         imageUrl: item.imageUrl || '',
         link: item.link || '',
+        giftId: cleanGiftId,
+        giftStatus: item.giftStatus || (isClaimedGift ? 'claimed' : isCanceledGift ? 'canceled' : ''),
       },
     });
   };
@@ -687,11 +538,7 @@ export default function NotificationsScreen({ isTab = false }: { isTab?: boolean
 
   return (
     <View style={styles.safeArea}>
-      <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {/* Header chuẩn Tiệm Nhà Gốm với nút back tròn và gradient mờ dần */}
       <Header
@@ -1055,6 +902,51 @@ const getStyles = (Colors: any, isDark: boolean) =>
       color: isDark ? '#9E968D' : '#6E665D',
       lineHeight: 18,
       marginBottom: 8,
+    },
+    // Huy hiệu thời gian hết hạn quà tặng điểm gốm
+    giftExpiryBadge: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      paddingHorizontal: 9,
+      paddingVertical: 3.5,
+      borderRadius: 12,
+      marginBottom: 8,
+      borderWidth: 1,
+    },
+    giftBadgePending: {
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.16)' : '#FAF7F2',
+      borderColor: isDark ? 'rgba(232, 204, 178, 0.25)' : '#E8CCB2',
+    },
+    giftBadgeExpired: {
+      backgroundColor: isDark ? '#1C1C1C' : '#F5F5F4',
+      borderColor: isDark ? '#333333' : '#E7E5E4',
+    },
+    giftBadgeClaimed: {
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.18)' : '#FAF7F2',
+      borderColor: isDark ? '#9C7156' : '#9C7156',
+    },
+    giftBadgeCanceled: {
+      backgroundColor: isDark ? '#1A1816' : '#F5F5F4',
+      borderColor: isDark ? '#2E2B28' : '#E8E1D8',
+    },
+    giftExpiryText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 11.5,
+      fontWeight: '600',
+    },
+    giftTextPending: {
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    giftTextExpired: {
+      color: isDark ? '#807A73' : '#9E968D',
+    },
+    giftTextClaimed: {
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    giftTextCanceled: {
+      color: isDark ? '#807A73' : '#9E968D',
     },
     cardFooterRow: {
       flexDirection: 'row',

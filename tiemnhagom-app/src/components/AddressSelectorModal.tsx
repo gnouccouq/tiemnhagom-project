@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBottomSheetModal } from './AnimatedBottomSheetModal';
 import { useThemeColor } from '../constants/theme';
+import { HeaderBackButton } from './HeaderBackButton';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import { UserAddress } from '../types';
@@ -69,9 +70,7 @@ export const AddressSelectorModal: React.FC<AddressSelectorModalProps> = ({
     >
       {/* Header */}
       <View style={styles.modalHeader}>
-        <TouchableOpacity style={styles.headerBackBtn} onPress={onClose} activeOpacity={0.8}>
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        <HeaderBackButton onPress={onClose} />
 
         <Text style={styles.modalTitle}>{t('selectAddressModalTitle') || 'Sổ địa chỉ nhận hàng'}</Text>
         <View style={{ width: 40 }} />

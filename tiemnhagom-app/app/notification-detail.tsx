@@ -13,13 +13,15 @@ import {
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
-import { LiquidGlass } from '../src/components/LiquidGlass';
-import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
+import { useThemeColor, Typography } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
+import { useAuth } from '../src/context/AuthContext';
 import { db } from '../src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getGiftPointsById, GiftPointsTransaction } from '../src/services/giftPointsService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -30,9 +32,35 @@ export default function NotificationDetailScreen() {
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
+  const { user } = useAuth();
   const params = useLocalSearchParams();
 
+  const notifId = (params.id as string) || '';
+  const initialType = (params.type as string) || '';
+  const initialGiftId = (params.giftId as string) || '';
+
+  // Nhận biết thông báo quà tặng điểm gốm
+  const isGift =
+    initialType === 'gift' ||
+    Boolean(initialGiftId) ||
+    notifId.startsWith('claimed_') ||
+    notifId.startsWith('rejected_') ||
+    notifId.startsWith('gift_') ||
+    Boolean(params.title && ((params.title as string).includes('đã nhận') || (params.title as string).includes('Điểm Gốm')));
+
+  const cleanGiftId =
+    initialGiftId ||
+    (notifId.startsWith('claimed_')
+      ? notifId.replace('claimed_', '')
+      : notifId.startsWith('rejected_')
+      ? notifId.replace('rejected_', '')
+      : notifId.startsWith('gift_')
+      ? notifId.replace('gift_', '')
+      : '');
+
   const [loading, setLoading] = useState(false);
+  const [giftTransaction, setGiftTransaction] = useState<GiftPointsTransaction | null>(null);
+
   const [detailData, setDetailData] = useState<{
     title: string;
     message: string;
@@ -40,26 +68,52 @@ export default function NotificationDetailScreen() {
     type: string;
     time: string;
     link?: string;
+    giftStatus?: 'pending' | 'claimed' | 'canceled';
   }>({
     title: (params.title as string) || '',
     message: (params.message as string) || '',
     imageUrl: (params.imageUrl as string) || '',
-    type: (params.type as string) || 'promo',
+    type: isGift ? 'gift' : initialType || 'promo',
     time: (params.time as string) || 'Mới đây',
     link: (params.link as string) || '',
+    giftStatus: (params.giftStatus as any) || (notifId.startsWith('claimed_') ? 'claimed' : notifId.startsWith('rejected_') ? 'canceled' : undefined),
   });
 
-  const notifId = params.id as string | undefined;
-
-  // Tự động tải từ Firestore nếu thiếu tiêu đề hoặc nội dung (khi mở từ Deep Link / Push)
+  // Tự động tải từ Firestore và Gift Cache
   useEffect(() => {
-    if (notifId && (!detailData.title || !detailData.message)) {
-      const fetchFromFirestore = async () => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      // 1. Tải giao dịch quà tặng nếu có giftId
+      if (cleanGiftId) {
+        try {
+          const gift = await getGiftPointsById(cleanGiftId);
+          if (gift && isMounted) {
+            setGiftTransaction(gift);
+            if (gift.status) {
+              setDetailData((prev) => ({
+                ...prev,
+                giftStatus: gift.status === 'refunded' ? 'canceled' : (gift.status as any),
+              }));
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Tải thông báo từ Firestore nếu thiếu tiêu đề hoặc nội dung
+      if (notifId && (!detailData.title || !detailData.message)) {
         try {
           setLoading(true);
-          const docRef = doc(db, 'global_notifications', notifId);
-          const snap = await getDoc(docRef);
-          if (snap.exists()) {
+
+          // Thử tải từ global_notifications trước
+          let snap = await getDoc(doc(db, 'global_notifications', notifId));
+
+          // Nếu không có, thử tải từ hộp thư cá nhân của user
+          if (!snap.exists() && user?.uid) {
+            snap = await getDoc(doc(db, 'users', user.uid, 'notifications', notifId));
+          }
+
+          if (snap.exists() && isMounted) {
             const data = snap.data();
             let timeStr = 'Mới đây';
             if (data.createdAt) {
@@ -71,24 +125,34 @@ export default function NotificationDetailScreen() {
                 timeStr = `${day}/${month}/${year}`;
               } catch {}
             }
-            setDetailData({
-              title: data.title || 'Thông báo từ Tiệm Nhà Gốm',
-              message: data.body || '',
-              imageUrl: data.imageUrl || '',
-              type: data.type || 'promo',
+
+            const notifType = data.type === 'gift' || isGift ? 'gift' : data.type || 'promo';
+
+            setDetailData((prev) => ({
+              ...prev,
+              title: data.title || prev.title || 'Thông báo từ Tiệm Nhà Gốm',
+              message: data.message || data.body || prev.message || '',
+              imageUrl: data.imageUrl || prev.imageUrl || '',
+              type: notifType,
               time: timeStr,
-              link: data.link || '',
-            });
+              link: data.link || prev.link || '',
+              giftStatus: data.giftStatus || prev.giftStatus,
+            }));
           }
         } catch (err) {
           console.log('Lỗi tải chi tiết thông báo:', err);
         } finally {
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
-      };
-      fetchFromFirestore();
-    }
-  }, [notifId]);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [notifId, cleanGiftId]);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -108,6 +172,11 @@ export default function NotificationDetailScreen() {
   };
 
   const handleAction = () => {
+    if (detailData.type === 'gift') {
+      router.push('/points-history' as any);
+      return;
+    }
+
     if (detailData.link) {
       router.push(detailData.link as any);
       return;
@@ -122,9 +191,28 @@ export default function NotificationDetailScreen() {
     }
   };
 
+  const handleViewGreetingCard = () => {
+    if (cleanGiftId) {
+      router.push({
+        pathname: '/gift-claim',
+        params: { id: cleanGiftId },
+      });
+    }
+  };
+
   // Xác định cấu hình theme theo loại thông báo
   const getTypeBadgeConfig = () => {
     switch (detailData.type) {
+      case 'gift':
+        return {
+          label: t('giftPointsBadge') || 'Món quà Điểm Gốm',
+          icon: 'gift-outline' as const,
+          bgColor: isDark ? '#2C2C2C' : '#FAF7F2',
+          textColor: '#9C7156',
+          borderColor: isDark ? 'transparent' : '#E8CCB2',
+          actionText: t('viewPointsHistoryAction') || 'Xem lịch sử Điểm Gốm',
+          actionIcon: 'sparkles-outline' as const,
+        };
       case 'order':
         return {
           label: t('notifTabOrder'),
@@ -159,12 +247,24 @@ export default function NotificationDetailScreen() {
   };
 
   const badgeConfig = getTypeBadgeConfig();
-
   const [scrollY, setScrollY] = useState(0);
+
+  const isClaimedState =
+    detailData.giftStatus === 'claimed' ||
+    giftTransaction?.status === 'claimed' ||
+    notifId.startsWith('claimed_') ||
+    detailData.title.includes('đã nhận');
+
+  const isCanceledState =
+    detailData.giftStatus === 'canceled' ||
+    giftTransaction?.status === 'canceled' ||
+    giftTransaction?.status === 'refunded' ||
+    notifId.startsWith('rejected_') ||
+    detailData.title.includes('từ chối');
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {/* Header chuẩn trang trong app với nút quay lại */}
       <Header
@@ -221,7 +321,13 @@ export default function NotificationDetailScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.shareBtn, { borderColor: isDark ? 'transparent' : Colors.border, backgroundColor: isDark ? '#2C2C2C' : 'transparent' }]}
+                  style={[
+                    styles.shareBtn,
+                    {
+                      borderColor: isDark ? 'transparent' : Colors.border,
+                      backgroundColor: isDark ? '#2C2C2C' : 'transparent',
+                    },
+                  ]}
                   onPress={handleShare}
                   activeOpacity={0.7}
                   accessibilityLabel="Chia sẻ thông báo"
@@ -251,12 +357,155 @@ export default function NotificationDetailScreen() {
               </View>
             )}
 
+            {/* Giao diện đặc biệt dành cho Món quà Điểm Gốm của Người Gửi */}
+            {isGift && (
+              <View style={styles.giftShowcaseBox}>
+                {/* Status pill header */}
+                <View style={styles.giftStatusHeader}>
+                  <View
+                    style={[
+                      styles.giftStatusBadge,
+                      {
+                        backgroundColor: isDark ? '#1E1E1E' : '#FAF7F2',
+                        borderColor: isDark ? '#9C7156' : '#E8CCB2',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        isClaimedState
+                          ? 'checkmark-circle'
+                          : isCanceledState
+                          ? 'refresh-circle'
+                          : 'time-outline'
+                      }
+                      size={15}
+                      color="#9C7156"
+                    />
+                    <Text style={styles.giftStatusBadgeText}>
+                      {isClaimedState
+                        ? t('giftClaimedBadge') || 'Đã nhận thành công'
+                        : isCanceledState
+                        ? t('giftRefundedBadge') || 'Đã hoàn lại vào ví'
+                        : t('giftPendingBadge') || 'Đang chờ nhận điểm'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Khối Điểm Gốm nổi bật */}
+                <View style={styles.giftPointsHero}>
+                  <View style={styles.pointsIconCircle}>
+                    <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.pointsHeroTextWrap}>
+                    <Text style={styles.pointsHeroAmount}>
+                      {giftTransaction?.points ? `+${giftTransaction.points} Điểm Gốm` : 'Điểm Gốm'}
+                    </Text>
+                    <Text style={[styles.pointsHeroDesc, { color: Colors.textSecondary }]}>
+                      {isClaimedState
+                        ? t('giftSenderSuccessDesc') || 'Món quà Điểm Gốm kèm lời chúc của bạn đã được trao gửi trọn vẹn đến người nhận.'
+                        : isCanceledState
+                        ? t('giftSenderRefundedDesc') || 'Món quà Điểm Gốm đã hết hạn hoặc được hoàn lại đầy đủ vào số dư tài khoản của bạn.'
+                        : 'Món quà đang chờ người nhận mở thiệp để nạp điểm.'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Chi tiết người nhận & thiệp */}
+                {(Boolean(giftTransaction?.recipientName) || Boolean(giftTransaction?.themeTitle)) && (
+                  <View
+                    style={[
+                      styles.giftDetailGrid,
+                      {
+                        backgroundColor: isDark ? '#1A1816' : '#FAF7F2',
+                        borderColor: isDark ? 'transparent' : '#E8E1D8',
+                      },
+                    ]}
+                  >
+                    {Boolean(giftTransaction?.recipientName) && (
+                      <View style={styles.giftGridRow}>
+                        <Text style={[styles.giftGridLabel, { color: Colors.textMuted }]}>
+                          Người nhận:
+                        </Text>
+                        <Text style={[styles.giftGridValue, { color: Colors.textPrimary }]}>
+                          {giftTransaction?.recipientName}
+                        </Text>
+                      </View>
+                    )}
+
+                    {Boolean(giftTransaction?.themeTitle) && (
+                      <View style={styles.giftGridRow}>
+                        <Text style={[styles.giftGridLabel, { color: Colors.textMuted }]}>
+                          Chủ đề thiệp:
+                        </Text>
+                        <Text style={[styles.giftGridValue, { color: '#9C7156' }]}>
+                          {giftTransaction?.themeTitle}
+                        </Text>
+                      </View>
+                    )}
+
+                    {Boolean(cleanGiftId) && (
+                      <View style={styles.giftGridRow}>
+                        <Text style={[styles.giftGridLabel, { color: Colors.textMuted }]}>
+                          Mã quà tặng:
+                        </Text>
+                        <Text style={[styles.giftGridValue, { color: Colors.textPrimary }]}>
+                          {cleanGiftId}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Lời chúc đã gửi */}
+                {Boolean(giftTransaction?.message) && (
+                  <View
+                    style={[
+                      styles.giftQuoteBox,
+                      {
+                        backgroundColor: isDark ? '#161412' : '#F6F4EC',
+                        borderColor: isDark ? 'transparent' : '#E8CCB2',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="chatbubble-ellipses-outline" size={16} color="#9C7156" />
+                    <Text style={[styles.giftQuoteText, { color: Colors.textPrimary }]}>
+                      "{giftTransaction?.message}"
+                    </Text>
+                  </View>
+                )}
+
+                {/* Nút xem thiệp chúc mừng đã gửi */}
+                {Boolean(cleanGiftId) && (
+                  <TouchableOpacity
+                    style={[
+                      styles.viewGreetingCardBtn,
+                      {
+                        backgroundColor: isDark ? '#231F1C' : '#FAF7F2',
+                        borderColor: isDark ? '#3D342D' : '#E8CCB2',
+                      },
+                    ]}
+                    onPress={handleViewGreetingCard}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="mail-open-outline" size={18} color="#9C7156" />
+                    <Text style={styles.viewGreetingCardText}>
+                      {t('viewSentGreetingCard') || 'Xem thiệp chúc mừng đã gửi'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={15} color="#9C7156" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
             {/* Nội dung chi tiết thông báo */}
-            <View style={styles.bodyWrap}>
-              <Text style={[styles.message, { color: Colors.textSecondary }]}>
-                {detailData.message || 'Không có nội dung chi tiết.'}
-              </Text>
-            </View>
+            {!isGift && (
+              <View style={styles.bodyWrap}>
+                <Text style={[styles.message, { color: Colors.textSecondary }]}>
+                  {detailData.message || 'Không có nội dung chi tiết.'}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Hộp gợi ý dịch vụ & hỗ trợ */}
@@ -274,22 +523,20 @@ export default function NotificationDetailScreen() {
         </ScrollView>
       )}
 
-      {/* Thanh Action Bar cố định dưới đáy bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Thanh Action Bar cố định dưới đáy */}
       {!loading && (
-        <View
-          style={[
-            styles.bottomBarWrapper,
-            {
-              bottom: Math.max(insets.bottom, 14),
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-          <LiquidGlass
-            style={styles.bottomBar}
-            interactive={true}
-            effect="regular"
-            isDark={isDark}
+        <>
+          {/* Lớp phủ mờ dần đáy màn hình bên dưới các nút */}
+          <FadingBottomBackdrop />
+
+          <View
+            style={[
+              styles.bottomBarWrapper,
+              {
+                bottom: Math.max(insets.bottom, 14),
+              },
+            ]}
+            pointerEvents="box-none"
           >
             <View style={styles.bottomBarContent}>
               <TouchableOpacity
@@ -306,14 +553,19 @@ export default function NotificationDetailScreen() {
                 onPress={handleGoBack}
                 activeOpacity={0.7}
               >
-                <Ionicons name="chevron-back" size={16} color={Colors.textSecondary} style={{ marginLeft: -1 }} />
+                <Ionicons
+                  name="chevron-back"
+                  size={16}
+                  color={Colors.textSecondary}
+                  style={{ marginLeft: -1 }}
+                />
                 <Text style={[styles.secondaryBtnText, { color: Colors.textSecondary }]}>
                   {t('back')}
                 </Text>
               </TouchableOpacity>
             </View>
-          </LiquidGlass>
-        </View>
+          </View>
+        </>
       )}
     </View>
   );
@@ -395,8 +647,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     title: {
       fontFamily: Typography.fontFamily.bold,
-      fontSize: 21,
-      lineHeight: 28,
+      fontSize: 20,
+      lineHeight: 27,
       fontWeight: '700',
       marginBottom: 16,
     },
@@ -425,6 +677,110 @@ const getStyles = (Colors: any, isDark: boolean) =>
       lineHeight: 25,
       letterSpacing: 0.2,
     },
+    giftShowcaseBox: {
+      gap: 14,
+      marginTop: 4,
+    },
+    giftStatusHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    giftStatusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      borderWidth: 1,
+    },
+    giftStatusBadgeText: {
+      fontSize: 12.5,
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    giftPointsHero: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 4,
+    },
+    pointsIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: '#9C7156',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#9C7156',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    pointsHeroTextWrap: {
+      flex: 1,
+    },
+    pointsHeroAmount: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: '#9C7156',
+      letterSpacing: -0.3,
+    },
+    pointsHeroDesc: {
+      fontSize: 13,
+      lineHeight: 18,
+      marginTop: 2,
+    },
+    giftDetailGrid: {
+      borderRadius: 16,
+      padding: 14,
+      gap: 8,
+      borderWidth: isDark ? 0 : 1,
+    },
+    giftGridRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    giftGridLabel: {
+      fontSize: 13,
+    },
+    giftGridValue: {
+      fontSize: 13.5,
+      fontWeight: '600',
+    },
+    giftQuoteBox: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      borderRadius: 16,
+      padding: 14,
+      borderWidth: isDark ? 0 : 1,
+    },
+    giftQuoteText: {
+      flex: 1,
+      fontSize: 13.5,
+      lineHeight: 20,
+      fontStyle: 'italic',
+    },
+    viewGreetingCardBtn: {
+      height: 48,
+      borderRadius: 24,
+      borderWidth: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      marginTop: 2,
+    },
+    viewGreetingCardText: {
+      flex: 1,
+      fontSize: 13.5,
+      fontWeight: '600',
+      color: '#9C7156',
+      marginLeft: 8,
+    },
     supportBox: {
       borderRadius: 20,
       backgroundColor: Colors.cardBackground,
@@ -448,15 +804,9 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomBarWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 50,
-    },
-    bottomBar: {
-      borderRadius: 36,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      overflow: 'hidden',
     },
     bottomBarContent: {
       flexDirection: 'row',

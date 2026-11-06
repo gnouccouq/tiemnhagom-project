@@ -27,6 +27,7 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
 import { Header } from '../src/components/Header';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -51,6 +52,16 @@ export default function EditProfileScreen() {
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [joinDate, setJoinDate] = useState('');
+
+  const linkedPhone = (userProfile?.phone || user?.phoneNumber || '').trim();
+  const hasLinkedPhone = Boolean(linkedPhone);
+
+  const handlePhoneLockedNotice = () => {
+    dialog.alert(
+      t('phoneLockedTitle') || 'Số điện thoại đã liên kết',
+      t('phoneLockedDesc') || 'Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin nếu bạn cần cập nhật.'
+    );
+  };
 
   // States cho bộ chọn ngày sinh
   const now = new Date();
@@ -159,7 +170,7 @@ export default function EditProfileScreen() {
       await updateUserProfileData({
         displayName: editName.trim(),
         name: editName.trim(),
-        phone: editPhone.trim(),
+        phone: hasLinkedPhone ? linkedPhone : editPhone.trim(),
         gender: editGender,
         dob: editDob.trim(),
         birthday: editDob.trim(),
@@ -208,7 +219,7 @@ export default function EditProfileScreen() {
       >
         <ScrollView 
           showsVerticalScrollIndicator={false} 
-          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 10 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 10, paddingBottom: Math.max(insets.bottom, 20) + 80 }]}
           onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
           scrollEventThrottle={16}
         >
@@ -254,18 +265,57 @@ export default function EditProfileScreen() {
 
             {/* Form Input: Số điện thoại */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('phoneLabel')}</Text>
-              <View style={styles.pillInputWrapper}>
-                <Ionicons name="call-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.pillInput}
-                  placeholder={t('phoneInputPlaceholder')}
-                  placeholderTextColor="#A0A8A4"
-                  keyboardType="phone-pad"
-                  value={editPhone}
-                  onChangeText={setEditPhone}
-                />
+              <View style={styles.phoneLabelRow}>
+                <Text style={styles.inputLabel}>{t('phoneLabel')}</Text>
+                {hasLinkedPhone && (
+                  <TouchableOpacity
+                    onPress={handlePhoneLockedNotice}
+                    activeOpacity={0.7}
+                    style={styles.phoneLockBadge}
+                  >
+                    <Ionicons name="lock-closed" size={11} color="#9C7156" />
+                    <Text style={styles.phoneLockBadgeText}>
+                      {t('fixedPhoneBadge') || 'Cố định'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
+              {hasLinkedPhone ? (
+                <TouchableOpacity
+                  style={[styles.pillInputWrapper, styles.disabledPillWrapper]}
+                  activeOpacity={0.8}
+                  onPress={handlePhoneLockedNotice}
+                >
+                  <Ionicons name="call-outline" size={18} color={isDark ? '#E8CCB2' : '#8E8E93'} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.pillInput, styles.disabledInput]}
+                    value={editPhone}
+                    editable={false}
+                    pointerEvents="none"
+                  />
+                  <Ionicons name="lock-closed-outline" size={16} color={isDark ? '#807A73' : '#8E8E93'} style={{ marginRight: 6 }} />
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.pillInputWrapper}>
+                  <Ionicons name="call-outline" size={18} color={isDark ? '#E8CCB2' : '#8E8E93'} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.pillInput}
+                    placeholder={t('phoneInputPlaceholder')}
+                    placeholderTextColor={isDark ? '#807A73' : '#A0A8A4'}
+                    keyboardType="phone-pad"
+                    value={editPhone}
+                    onChangeText={setEditPhone}
+                  />
+                </View>
+              )}
+              {hasLinkedPhone && (
+                <View style={styles.phoneLockHintRow}>
+                  <Ionicons name="information-circle-outline" size={13} color={isDark ? '#E8CCB2' : '#9C7156'} />
+                  <Text style={[styles.phoneLockHintText, { color: isDark ? '#A0988E' : '#7D756C' }]}>
+                    {t('phoneLockedDesc') || 'Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.'}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Form Input: Email (Tương tự web, hiển thị thông tin tài khoản) */}
@@ -312,8 +362,18 @@ export default function EditProfileScreen() {
                 activeOpacity={0.75}
                 onPress={() => setDatePickerVisible(true)}
               >
-                <Ionicons name="calendar-outline" size={18} color="#8E8E93" style={styles.inputIcon} />
-                <Text style={[styles.pillInput, { lineHeight: 50, color: editDob ? '#2B2928' : '#A0A8A4' }]}>
+                <Ionicons name="calendar-outline" size={18} color={isDark ? '#E8CCB2' : '#8E8E93'} style={styles.inputIcon} />
+                <Text
+                  style={[
+                    styles.pillInput,
+                    {
+                      lineHeight: 50,
+                      color: editDob
+                        ? (isDark ? '#F5F5F5' : Colors.textPrimary)
+                        : (isDark ? '#807A73' : '#A0A8A4'),
+                    },
+                  ]}
+                >
                   {editDob ? (() => {
                     if (editDob.includes('-')) {
                       const parts = editDob.split('-');
@@ -322,7 +382,7 @@ export default function EditProfileScreen() {
                     return editDob;
                   })() : t('selectDobPlaceholder')}
                 </Text>
-                <Ionicons name="chevron-down" size={18} color="#7A827E" style={{ marginRight: 16 }} />
+                <Ionicons name="chevron-down" size={18} color={isDark ? '#E8CCB2' : '#7A827E'} style={{ marginRight: 16 }} />
               </TouchableOpacity>
             </View>
 
@@ -513,8 +573,19 @@ export default function EditProfileScreen() {
           </View>
         </AnimatedBottomSheetModal>
 
-        {/* Bottom CTA Action Button */}
-        <View style={styles.footerAction}>
+        {/* Lớp phủ mờ dần đáy màn hình bên dưới nút */}
+        <FadingBottomBackdrop />
+
+        {/* Bottom CTA Action Button nổi */}
+        <View
+          style={[
+            styles.bottomBarWrapper,
+            {
+              bottom: Math.max(insets.bottom, 14),
+            },
+          ]}
+          pointerEvents="box-none"
+        >
           <TouchableOpacity
             style={[styles.saveBtn, savingProfile && styles.saveBtnDisabled]}
             onPress={handleSaveProfile}
@@ -658,6 +729,42 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#222222' : '#F3EFEA',
     borderColor: isDark ? 'transparent' : '#DFD8CE',
   },
+  phoneLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  phoneLockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: isDark ? '#2A201A' : '#FAF7F2',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: isDark ? '#3D2F24' : '#E8CCB2',
+    marginBottom: 6,
+    marginRight: 4,
+  },
+  phoneLockBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9C7156',
+  },
+  phoneLockHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+    marginLeft: 6,
+    marginRight: 6,
+  },
+  phoneLockHintText: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -736,13 +843,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
 
   // 3. Bottom CTA Button
-  footerAction: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
-    backgroundColor: Colors.cardBackground,
-    borderTopWidth: 1,
-    borderTopColor: isDark ? (Colors.divider || '#2A2A2A') : '#E8E1D8',
+  bottomBarWrapper: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 50,
   },
   saveBtn: {
     width: '100%',

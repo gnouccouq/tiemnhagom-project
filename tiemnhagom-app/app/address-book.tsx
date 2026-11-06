@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../src/components/Header';
-import { LiquidGlass } from '../src/components/LiquidGlass';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { AddressPicker } from '../src/components/AddressPicker';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { ScalePressable } from '../src/components/ScalePressable';
@@ -322,24 +322,20 @@ export default function AddressBookScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Bottom Button: Thêm địa chỉ mới bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Floating Bottom Button: Thêm địa chỉ mới dạng nút nổi (Không bọc LiquidGlass) */}
       {addressList.length > 0 && (
-        <View
-          style={[themeStyles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
-          pointerEvents="box-none"
-        >
-          <LiquidGlass
-            style={themeStyles.bottomBar}
-            interactive={true}
-            effect="regular"
-            isDark={isDark}
+        <>
+          <FadingBottomBackdrop />
+          <View
+            style={[themeStyles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
+            pointerEvents="box-none"
           >
             <ScalePressable style={themeStyles.primaryCtaBtn} onPress={openAddModal}>
               <Ionicons name="add" size={22} color="#FFFFFF" style={{ marginRight: 6 }} />
               <Text style={themeStyles.primaryCtaText}>{t('addNewAddress') || 'Thêm địa chỉ mới'}</Text>
             </ScalePressable>
-          </LiquidGlass>
-        </View>
+          </View>
+        </>
       )}
 
       {/* Modal / BottomSheet: Thêm & Sửa Địa Chỉ */}

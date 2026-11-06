@@ -6,7 +6,7 @@
  * - runEntrance(): gọi thủ công nếu cần trigger lại
  */
 import { useRef, useEffect, useCallback } from 'react';
-import { Animated, ViewStyle } from 'react-native';
+import { Animated, ViewStyle, Platform } from 'react-native';
 
 interface PageAnimationOptions {
   /** Delay trước khi bắt đầu animation (ms). Mặc định: 0 */
@@ -24,7 +24,7 @@ interface PageAnimationOptions {
 export function usePageAnimation(options: PageAnimationOptions = {}) {
   const {
     delay = 0,
-    slideOffset = 22,
+    slideOffset = Platform.OS === 'ios' ? 0 : 22,
     duration = 280,
     itemCount = 12,
     staggerDelay = 55,

@@ -128,7 +128,7 @@ export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> =
               style={[
                 styles.sheet,
                 {
-                  paddingBottom: Math.max(insets.bottom, 16) + 8,
+                  paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
                   transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
                 },
                 contentStyle,
@@ -143,7 +143,7 @@ export const AnimatedBottomSheetModal: React.FC<AnimatedBottomSheetModalProps> =
             style={[
               styles.sheet,
               {
-                paddingBottom: Math.max(insets.bottom, 16) + 8,
+                paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
                 transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
               },
               contentStyle,

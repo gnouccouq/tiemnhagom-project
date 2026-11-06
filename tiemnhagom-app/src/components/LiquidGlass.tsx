@@ -48,7 +48,12 @@ try {
   nativeSupported = false;
 }
 
-export const LiquidGlassView = NativeLiquidGlassView;
+export const LiquidGlassView: React.FC<any> = ({ colorScheme, ...props }) => {
+  const Colors = useThemeColor();
+  const isDark = checkIsDark(Colors);
+  const resolvedColorScheme = colorScheme ?? (isDark ? 'dark' : 'light');
+  return <NativeLiquidGlassView colorScheme={resolvedColorScheme} {...props} />;
+};
 export const LiquidGlassContainerView = NativeLiquidGlassContainerView;
 export const isLiquidGlassSupported = nativeSupported || isExpoGlassAvailable;
 
@@ -106,6 +111,7 @@ export const LiquidGlass: React.FC<LiquidGlassProps> = ({
       <NativeLiquidGlassView
         effect={effect}
         interactive={interactive}
+        colorScheme={isDark ? 'dark' : 'light'}
         style={style}
         {...rest}
       >

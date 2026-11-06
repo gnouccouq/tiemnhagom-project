@@ -1,5 +1,5 @@
 // app/(tabs)/products.tsx
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,11 +25,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
 import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
+import * as Haptics from 'expo-haptics';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
+import { AnimatedBottomSheetModal } from '../../src/components/AnimatedBottomSheetModal';
+import { PriceRangeSlider, SLIDER_MAX_LIMIT } from '../../src/components/PriceRangeSlider';
 import { DEFAULT_CATEGORIES, getCategories, ProductCategoryItem, getProducts } from '../../src/services/productService';
 import { Product } from '../../src/types';
-import { formatCurrency, removeVietnameseTones } from '../../src/utils/format';
+import { formatCurrency, removeVietnameseTones, checkOutOfStock } from '../../src/utils/format';
 import { searchAndRankProducts } from '../../src/utils/searchHelper';
 import { useCart } from '../../src/context/CartContext';
 import { useNotificationBadge } from '../../src/context/NotificationBadgeContext';
@@ -70,6 +73,8 @@ const SORT_OPTIONS = [
   { id: 'price-asc', label: 'Giá tăng ↑' },
   { id: 'price-desc', label: 'Giá giảm ↓' },
 ];
+
+export type PriceRangeOption = 'all' | 'under-150k' | '150k-350k' | '350k-700k' | 'above-700k';
 
 export function getProductTimestamp(p: Product): number {
   if (!p) return 0;
@@ -248,6 +253,7 @@ export default function ProductsScreen() {
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const modalStyles = getModalStyles(Colors, isDark);
+  const filterModalStyles = getFilterModalStyles(Colors, isDark);
   const params = useLocalSearchParams<{ category?: string; search?: string; collection?: string }>();
   const router = useRouter();
   const { t } = useSettings();
@@ -270,6 +276,24 @@ export default function ProductsScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
+
+  // ─── Bộ lọc chuyên sâu (Advanced Filter State) ───
+  const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(SLIDER_MAX_LIMIT);
+  const [saleOnly, setSaleOnly] = useState<boolean>(false);
+  const [comboOnly, setComboOnly] = useState<boolean>(false);
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+  const [sliderDragging, setSliderDragging] = useState<boolean>(false);
+
+  // Draft filter state trong modal
+  const [tempMinPrice, setTempMinPrice] = useState<number>(0);
+  const [tempMaxPrice, setTempMaxPrice] = useState<number>(SLIDER_MAX_LIMIT);
+  const [tempSaleOnly, setTempSaleOnly] = useState<boolean>(false);
+  const [tempComboOnly, setTempComboOnly] = useState<boolean>(false);
+  const [tempInStockOnly, setTempInStockOnly] = useState<boolean>(false);
+  const [tempSortBy, setTempSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'popular'>('newest');
+
   const [modalVisible, setModalVisible] = useState(false);
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(340)).current;
@@ -362,6 +386,146 @@ export default function ProductsScreen() {
     if (params.category) setSelectedCategory(params.category);
   }, [params.category]);
 
+  // ─── Filter Modal Handlers & Logic ───
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (minPrice > 0 || maxPrice < SLIDER_MAX_LIMIT) count++;
+    if (saleOnly) count++;
+    if (comboOnly) count++;
+    if (inStockOnly) count++;
+    return count;
+  }, [minPrice, maxPrice, saleOnly, comboOnly, inStockOnly]);
+
+  const openFilterModal = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setTempMinPrice(minPrice);
+    setTempMaxPrice(maxPrice);
+    setTempSaleOnly(saleOnly);
+    setTempComboOnly(comboOnly);
+    setTempInStockOnly(inStockOnly);
+    setTempSortBy(sortBy);
+    setFilterModalVisible(true);
+  }, [minPrice, maxPrice, saleOnly, comboOnly, inStockOnly, sortBy]);
+
+  const closeFilterModal = useCallback(() => {
+    setFilterModalVisible(false);
+  }, []);
+
+  const handleApplyFilter = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setMinPrice(tempMinPrice);
+    setMaxPrice(tempMaxPrice);
+    setSaleOnly(tempSaleOnly);
+    setComboOnly(tempComboOnly);
+    setInStockOnly(tempInStockOnly);
+    setSortBy(tempSortBy);
+    setFilterModalVisible(false);
+  }, [tempMinPrice, tempMaxPrice, tempSaleOnly, tempComboOnly, tempInStockOnly, tempSortBy]);
+
+  const handleResetFilters = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    setTempMinPrice(0);
+    setTempMaxPrice(SLIDER_MAX_LIMIT);
+    setTempSaleOnly(false);
+    setTempComboOnly(false);
+    setTempInStockOnly(false);
+    setTempSortBy('newest');
+  }, []);
+
+  const handleClearAllActiveFilters = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setMinPrice(0);
+    setMaxPrice(SLIDER_MAX_LIMIT);
+    setSaleOnly(false);
+    setComboOnly(false);
+    setInStockOnly(false);
+  }, []);
+
+  const previewCount = useMemo(() => {
+    if (!filterModalVisible) return allProducts.length;
+
+    let items = [...realtimeProducts];
+
+    // Lọc theo category
+    const catTarget = (selectedSubCategory || selectedCategory).toLowerCase().trim();
+    if (catTarget && catTarget !== 'all') {
+      const matchedGroup = categories.find(
+        (g) =>
+          g.id.toLowerCase() === catTarget ||
+          g.name.toLowerCase() === catTarget ||
+          (g.enName && g.enName.toLowerCase() === catTarget)
+      );
+
+      const targetSubs = matchedGroup?.subs ? matchedGroup.subs.map((s) => s.toLowerCase()) : [];
+      const matchCriteria = [
+        catTarget,
+        ...(matchedGroup?.id ? [matchedGroup.id.toLowerCase()] : []),
+        ...(matchedGroup?.name ? [matchedGroup.name.toLowerCase()] : []),
+        ...(matchedGroup?.enName ? [matchedGroup.enName.toLowerCase()] : []),
+        ...targetSubs,
+      ];
+
+      items = items.filter((p) => {
+        const pCat = (p.category || '').toLowerCase();
+        return matchCriteria.some((c) => pCat.includes(c) || c.includes(pCat));
+      });
+    }
+
+    // Lọc theo search
+    if (params.search && params.search.trim() !== '') {
+      items = searchAndRankProducts(items, params.search.trim(), 1000);
+    }
+
+    // Lọc theo khoảng giá tạm thời
+    if (tempMinPrice > 0 || tempMaxPrice < SLIDER_MAX_LIMIT) {
+      items = items.filter((p) => {
+        const price = getProductPrice(p);
+        if (price < tempMinPrice) return false;
+        if (tempMaxPrice < SLIDER_MAX_LIMIT && price > tempMaxPrice) return false;
+        return true;
+      });
+    }
+
+    // Lọc theo giảm giá
+    if (tempSaleOnly) {
+      items = items.filter((p) => {
+        const hasSale = (p.sale && p.sale > 0) || (p.salePrice && p.price && p.salePrice < p.price);
+        return Boolean(hasSale);
+      });
+    }
+
+    // Lọc theo combo
+    if (tempComboOnly) {
+      items = items.filter((p) =>
+        Boolean(
+          (p as any).isCombo ||
+          (p.category || '').toLowerCase().includes('combo') ||
+          (p.category || '').toLowerCase().includes('value')
+        )
+      );
+    }
+
+    // Lọc theo còn hàng
+    if (tempInStockOnly) {
+      items = items.filter((p) => !checkOutOfStock(p));
+    }
+
+    return items.length;
+  }, [
+    filterModalVisible,
+    realtimeProducts,
+    selectedCategory,
+    selectedSubCategory,
+    categories,
+    params.search,
+    tempMinPrice,
+    tempMaxPrice,
+    tempSaleOnly,
+    tempComboOnly,
+    tempInStockOnly,
+    allProducts.length,
+  ]);
+
   const fetchItems = useCallback(() => {
     let items = [...realtimeProducts];
 
@@ -395,6 +559,40 @@ export default function ProductsScreen() {
       items = searchAndRankProducts(items, params.search.trim(), 1000);
     }
 
+    // Lọc theo khoảng giá
+    if (minPrice > 0 || maxPrice < SLIDER_MAX_LIMIT) {
+      items = items.filter((p) => {
+        const price = getProductPrice(p);
+        if (price < minPrice) return false;
+        if (maxPrice < SLIDER_MAX_LIMIT && price > maxPrice) return false;
+        return true;
+      });
+    }
+
+    // Lọc theo giảm giá
+    if (saleOnly) {
+      items = items.filter((p) => {
+        const hasSale = (p.sale && p.sale > 0) || (p.salePrice && p.price && p.salePrice < p.price);
+        return Boolean(hasSale);
+      });
+    }
+
+    // Lọc theo combo quà tặng
+    if (comboOnly) {
+      items = items.filter((p) =>
+        Boolean(
+          (p as any).isCombo ||
+          (p.category || '').toLowerCase().includes('combo') ||
+          (p.category || '').toLowerCase().includes('value')
+        )
+      );
+    }
+
+    // Lọc theo còn hàng
+    if (inStockOnly) {
+      items = items.filter((p) => !checkOutOfStock(p));
+    }
+
     // Sắp xếp
     if (sortBy === 'price-asc') {
       items.sort((a, b) => getProductPrice(a) - getProductPrice(b));
@@ -423,7 +621,19 @@ export default function ProductsScreen() {
     setProducts(items.slice(0, PAGE_SIZE));
     setLoading(false);
     setRefreshing(false);
-  }, [selectedCategory, selectedSubCategory, params.search, sortBy, realtimeProducts, categories]);
+  }, [
+    selectedCategory,
+    selectedSubCategory,
+    params.search,
+    sortBy,
+    minPrice,
+    maxPrice,
+    saleOnly,
+    comboOnly,
+    inStockOnly,
+    realtimeProducts,
+    categories,
+  ]);
 
   // Load thêm khi cuộn xuống gần cuối
   const loadMore = useCallback(() => {
@@ -625,6 +835,39 @@ export default function ProductsScreen() {
             </View>
             <View style={styles.sortContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortRow}>
+                {/* Nút Kích hoạt Bộ lọc chuyên sâu */}
+                <ScalePressable
+                  style={[styles.filterTriggerChip, activeFilterCount > 0 && styles.filterTriggerChipActive]}
+                  onPress={openFilterModal}
+                  activeScale={0.93}
+                >
+                  <Ionicons
+                    name="options-outline"
+                    size={15}
+                    color={activeFilterCount > 0 ? '#FFFFFF' : (isDark ? '#E8CCB2' : '#9C7156')}
+                  />
+                  <Text style={[styles.filterTriggerText, activeFilterCount > 0 && styles.filterTriggerTextActive]}>
+                    {t('filterBtn')}
+                  </Text>
+                  {activeFilterCount > 0 && (
+                    <View style={styles.filterTriggerBadge}>
+                      <Text style={styles.filterTriggerBadgeText}>{activeFilterCount}</Text>
+                    </View>
+                  )}
+                </ScalePressable>
+
+                {/* Nút Xóa nhanh tất cả bộ lọc */}
+                {activeFilterCount > 0 && (
+                  <ScalePressable
+                    style={styles.clearFilterChip}
+                    onPress={handleClearAllActiveFilters}
+                    activeScale={0.93}
+                  >
+                    <Ionicons name="close-circle" size={14} color="#9C7156" />
+                    <Text style={styles.clearFilterText}>{t('clearActiveFilters')}</Text>
+                  </ScalePressable>
+                )}
+
                 {SORT_OPTIONS.map(opt => {
                   const isActive = sortBy === opt.id;
                   return (
@@ -784,6 +1027,228 @@ export default function ProductsScreen() {
           </Animated.View>
         </Animated.View>
       </Modal>
+
+      {/* ── Modal: Bộ lọc chuyên sâu (Advanced Filter Bottom Sheet) ── */}
+      <AnimatedBottomSheetModal
+        visible={filterModalVisible}
+        onClose={closeFilterModal}
+        contentStyle={{ paddingHorizontal: 0 }}
+      >
+        <View style={filterModalStyles.container}>
+          {/* Header */}
+          <View style={filterModalStyles.header}>
+            <View style={filterModalStyles.titleGroup}>
+              <View style={filterModalStyles.iconCircle}>
+                <Ionicons name="options" size={17} color="#9C7156" />
+              </View>
+              <Text style={filterModalStyles.title}>{t('filterModalTitle')}</Text>
+            </View>
+
+            <View style={filterModalStyles.headerActions}>
+              {(tempMinPrice > 0 || tempMaxPrice < SLIDER_MAX_LIMIT || tempSaleOnly || tempComboOnly || tempInStockOnly || tempSortBy !== 'newest') && (
+                <TouchableOpacity
+                  onPress={handleResetFilters}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={filterModalStyles.resetBtn}
+                >
+                  <Text style={filterModalStyles.resetBtnText}>{t('resetFilterBtn')}</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={closeFilterModal}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={filterModalStyles.closeBtn}
+              >
+                <Ionicons name="close" size={18} color={Colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Scrollable Content */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!sliderDragging}
+            style={filterModalStyles.scrollBody}
+            contentContainerStyle={filterModalStyles.scrollContent}
+          >
+            {/* 1. Khoảng giá với thanh Progress Range Slider */}
+            <View style={filterModalStyles.section}>
+              <View style={filterModalStyles.sectionHeader}>
+                <Ionicons name="pricetag-outline" size={15} color="#9C7156" />
+                <Text style={filterModalStyles.sectionTitle}>{t('priceRangeSection')}</Text>
+              </View>
+              <PriceRangeSlider
+                minPrice={tempMinPrice}
+                maxPrice={tempMaxPrice}
+                maxLimit={SLIDER_MAX_LIMIT}
+                onChange={(min, max) => {
+                  setTempMinPrice(min);
+                  setTempMaxPrice(max);
+                }}
+                onDragStateChange={setSliderDragging}
+                isDark={isDark}
+              />
+            </View>
+
+            {/* 2. Ưu đãi & Kiểu loại */}
+            <View style={filterModalStyles.section}>
+              <View style={filterModalStyles.sectionHeader}>
+                <Ionicons name="sparkles-outline" size={15} color="#9C7156" />
+                <Text style={filterModalStyles.sectionTitle}>{t('filterOffersSection')}</Text>
+              </View>
+              <View style={filterModalStyles.chipsGrid}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    setTempSaleOnly((prev) => !prev);
+                  }}
+                  style={[
+                    filterModalStyles.filterPill,
+                    tempSaleOnly && filterModalStyles.filterPillActive,
+                  ]}
+                >
+                  {tempSaleOnly && <View style={filterModalStyles.pillActiveDot} />}
+                  <Text
+                    style={[
+                      filterModalStyles.filterPillText,
+                      tempSaleOnly && filterModalStyles.filterPillTextActive,
+                    ]}
+                  >
+                    🏷️ {t('filterSaleOnly')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    setTempComboOnly((prev) => !prev);
+                  }}
+                  style={[
+                    filterModalStyles.filterPill,
+                    tempComboOnly && filterModalStyles.filterPillActive,
+                  ]}
+                >
+                  {tempComboOnly && <View style={filterModalStyles.pillActiveDot} />}
+                  <Text
+                    style={[
+                      filterModalStyles.filterPillText,
+                      tempComboOnly && filterModalStyles.filterPillTextActive,
+                    ]}
+                  >
+                    🎁 {t('filterComboOnly')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 3. Tình trạng hàng */}
+            <View style={filterModalStyles.section}>
+              <View style={filterModalStyles.sectionHeader}>
+                <Ionicons name="cube-outline" size={15} color="#9C7156" />
+                <Text style={filterModalStyles.sectionTitle}>{t('stockSection')}</Text>
+              </View>
+              <View style={filterModalStyles.chipsGrid}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    setTempInStockOnly(false);
+                  }}
+                  style={[
+                    filterModalStyles.filterPill,
+                    !tempInStockOnly && filterModalStyles.filterPillActive,
+                  ]}
+                >
+                  {!tempInStockOnly && <View style={filterModalStyles.pillActiveDot} />}
+                  <Text
+                    style={[
+                      filterModalStyles.filterPillText,
+                      !tempInStockOnly && filterModalStyles.filterPillTextActive,
+                    ]}
+                  >
+                    {t('filterAllStock')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    setTempInStockOnly(true);
+                  }}
+                  style={[
+                    filterModalStyles.filterPill,
+                    tempInStockOnly && filterModalStyles.filterPillActive,
+                  ]}
+                >
+                  {tempInStockOnly && <View style={filterModalStyles.pillActiveDot} />}
+                  <Text
+                    style={[
+                      filterModalStyles.filterPillText,
+                      tempInStockOnly && filterModalStyles.filterPillTextActive,
+                    ]}
+                  >
+                    📦 {t('filterInStockOnly')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 4. Sắp xếp hiển thị */}
+            <View style={filterModalStyles.section}>
+              <View style={filterModalStyles.sectionHeader}>
+                <Ionicons name="swap-vertical-outline" size={15} color="#9C7156" />
+                <Text style={filterModalStyles.sectionTitle}>{t('sortSection')}</Text>
+              </View>
+              <View style={filterModalStyles.chipsGrid}>
+                {SORT_OPTIONS.map((opt) => {
+                  const isSelected = tempSortBy === opt.id;
+                  return (
+                    <TouchableOpacity
+                      key={opt.id}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        Haptics.selectionAsync().catch(() => {});
+                        setTempSortBy(opt.id as any);
+                      }}
+                      style={[
+                        filterModalStyles.filterPill,
+                        isSelected && filterModalStyles.filterPillActive,
+                      ]}
+                    >
+                      {isSelected && <View style={filterModalStyles.pillActiveDot} />}
+                      <Text
+                        style={[
+                          filterModalStyles.filterPillText,
+                          isSelected && filterModalStyles.filterPillTextActive,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Footer CTA */}
+          <View style={filterModalStyles.footer}>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={handleApplyFilter}
+              style={filterModalStyles.applyBtn}
+            >
+              <Text style={filterModalStyles.applyBtnText}>
+                {t('applyFilterBtn').replace('{count}', String(previewCount))}
+              </Text>
+              <Ionicons name="arrow-forward" size={17} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </AnimatedBottomSheetModal>
     </View>
   );
 }
@@ -965,6 +1430,69 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
+    // Nút Bộ lọc trigger
+    filterTriggerChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      height: 34,
+      paddingHorizontal: 13,
+      borderRadius: 17,
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(232, 204, 178, 0.22)' : '#E8E1D8',
+      marginRight: 8,
+    },
+    filterTriggerChipActive: {
+      backgroundColor: '#9C7156',
+      borderColor: '#9C7156',
+    },
+    filterTriggerText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '600',
+      color: isDark ? '#E8CCB2' : '#9C7156',
+    },
+    filterTriggerTextActive: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+    },
+    filterTriggerBadge: {
+      minWidth: 17,
+      height: 17,
+      borderRadius: 8.5,
+      backgroundColor: '#FFFFFF',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 3,
+      marginLeft: 2,
+    },
+    filterTriggerBadgeText: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: '#9C7156',
+      lineHeight: 12,
+    },
+    clearFilterChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      height: 34,
+      paddingHorizontal: 11,
+      borderRadius: 17,
+      backgroundColor: isDark ? '#231C18' : '#F6EFEB',
+      borderWidth: 1,
+      borderColor: '#9C7156',
+      marginRight: 8,
+    },
+    clearFilterText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#9C7156',
+    },
+
+    // Sort chips
     sortChip: {
       height: 34,
       borderRadius: 17,
@@ -1163,5 +1691,149 @@ const getModalStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 1,
       backgroundColor: '#9C7156',
       marginTop: 2,
+    },
+  });
+
+const getFilterModalStyles = (Colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      paddingTop: 2,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#222222' : '#F0ECE6',
+    },
+    titleGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    iconCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.2)' : '#FAF4EF',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 17,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    resetBtn: {
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+    },
+    resetBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#9C7156',
+    },
+    closeBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: isDark ? '#1E1E1E' : '#F0ECE6',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scrollBody: {
+      maxHeight: Dimensions.get('window').height * 0.48,
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 14,
+      paddingBottom: 10,
+    },
+    section: {
+      marginBottom: 16,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    chipsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    filterPill: {
+      height: 38,
+      borderRadius: 19,
+      paddingHorizontal: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? '#1E1E1E' : '#FAF8F5',
+      borderWidth: 1,
+      borderColor: isDark ? 'transparent' : '#E8E1D8',
+    },
+    filterPillActive: {
+      borderColor: '#9C7156',
+      borderWidth: 1.5,
+      backgroundColor: isDark ? 'rgba(156, 113, 86, 0.22)' : 'rgba(156, 113, 86, 0.08)',
+    },
+    pillActiveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: '#9C7156',
+      marginRight: 6,
+    },
+    filterPillText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 13,
+      color: Colors.textPrimary,
+    },
+    filterPillTextActive: {
+      fontWeight: '700',
+      color: '#9C7156',
+    },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: Platform.OS === 'ios' ? 0 : 4,
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#222222' : '#F0ECE6',
+    },
+    applyBtn: {
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: '#9C7156',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    applyBtnText: {
+      fontFamily: 'ElleGaborStd',
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#FFFFFF',
     },
   });

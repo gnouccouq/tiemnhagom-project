@@ -22,6 +22,8 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor, Typography } from '../src/constants/theme';
 import { BlurButton } from '../src/components/BlurButton';
+import { HeaderBackButton } from '../src/components/HeaderBackButton';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { LiquidGlass } from '../src/components/LiquidGlass';
 import { SymbolView } from 'expo-symbols';
 import { ScalePressable } from '../src/components/ScalePressable';
@@ -302,16 +304,10 @@ export default function VoucherDetailScreen() {
 
 
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: '',
-          headerTintColor: '#9C7156',
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.floatingHeader, { top: insets.top + (Platform.OS === 'android' ? 8 : 4) }]} pointerEvents="box-none">
+        <HeaderBackButton onPress={() => router.back()} />
+      </View>
 
       <Animated.ScrollView
         style={styles.scrollView}
@@ -497,6 +493,9 @@ export default function VoucherDetailScreen() {
       </Animated.ScrollView>
 
       {/* ================= 5. NÚT ÁP DỤNG NỔI BỌC LIQUID GLASS Ở ĐÁY ================= */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới nút hành động */}
+      <FadingBottomBackdrop />
+
       <View
         style={[
           styles.stickyBottomWrapper,
@@ -504,12 +503,7 @@ export default function VoucherDetailScreen() {
         ]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.stickyBottomBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
+        
           {isOwnerOfFriendVoucher ? (
             <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
               <View style={{ flex: 1 }}>
@@ -566,8 +560,7 @@ export default function VoucherDetailScreen() {
               </Text>
             </ScalePressable>
           )}
-        </LiquidGlass>
-      </View>
+        </View>
 
       {/* ================= 6. MODAL ĐIỀU KHOẢN VỚI SPRING ANIMATION UX ================= */}
       <Modal
@@ -1127,8 +1120,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
     // ================= STICKY BOTTOM BAR =================
     stickyBottomWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 40,
     },
     stickyBottomBar: {

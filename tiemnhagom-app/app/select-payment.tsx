@@ -14,8 +14,10 @@ import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { LiquidGlass } from '../src/components/LiquidGlass';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
@@ -69,28 +71,19 @@ export default function SelectPaymentScreen() {
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle}>
-              {t('paymentMethodSection') || 'Phương thức thanh toán'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-        }}
+      <Header
+        title={t('paymentMethodSection') || 'Phương thức thanh toán'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
       />
-      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 54 + 10,
+            paddingTop: 10,
             paddingBottom: Math.max(insets.bottom, 16) + 100,
           },
         ]}
@@ -128,25 +121,21 @@ export default function SelectPaymentScreen() {
         })}
       </ScrollView>
 
-      {/* Nút xác nhận dính đáy bọc Liquid Glass chuẩn hệ thống iOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới nút xác nhận */}
+      <FadingBottomBackdrop />
+
+      {/* Nút xác nhận dính đáy (Không bọc LiquidGlass) */}
       <View
         style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomStickyBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <TouchableOpacity
+        <TouchableOpacity
             style={styles.confirmPillBtn}
             onPress={handleConfirm}
             activeOpacity={0.88}
           >
             <Text style={styles.confirmBtnText}>{t('confirmBtn') || 'Xác nhận'}</Text>
           </TouchableOpacity>
-        </LiquidGlass>
       </View>
     </View>
   );
@@ -263,8 +252,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomStickyWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 50,
     },
     bottomStickyBar: {

@@ -20,6 +20,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LiquidGlass } from '../src/components/LiquidGlass';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { useThemeColor, checkIsDark, Typography, Spacing } from '../src/constants/theme';
 import { formatCurrency } from '../src/utils/format';
 import { useSettings } from '../src/context/SettingsContext';
@@ -272,18 +273,15 @@ export default function OrderSuccessScreen() {
         </View>
       </ScrollView>
 
-      {/* Thanh hành động đáy nổi dạng viên thuốc bọc LiquidGlass chuẩn hệ thống iOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới các nút hành động */}
+      <FadingBottomBackdrop />
+
+      {/* Thanh hành động đáy nổi dạng viên thuốc (Không bọc LiquidGlass) */}
       <View
         style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <View style={styles.bottomBarRow}>
+        <View style={styles.bottomBarRow}>
             <TouchableOpacity
               style={styles.secondaryBtn}
               onPress={() => router.replace('/(tabs)')}
@@ -315,8 +313,7 @@ export default function OrderSuccessScreen() {
               </Text>
               <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
             </TouchableOpacity>
-          </View>
-        </LiquidGlass>
+        </View>
       </View>
     </View>
   );
@@ -543,41 +540,36 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomBarWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 100,
-    },
-    bottomBar: {
-      borderRadius: 36,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: isDark ? 0.45 : 0.14,
-      shadowRadius: 18,
-      elevation: 10,
     },
     bottomBarRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 12,
     },
     secondaryBtn: {
       flex: 1,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(156,113,86,0.10)',
-      borderWidth: 1.2,
-      borderColor: '#9C7156',
-      height: 50,
-      borderRadius: 25,
+      backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
+      borderWidth: 1.5,
+      borderColor: isDark ? '#3A3A3A' : '#E8CCB2',
+      height: 52,
+      borderRadius: 26,
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 12,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.35 : 0.08,
+      shadowRadius: 8,
+      elevation: 4,
     },
     secondaryBtnText: {
       fontFamily: 'ElleGaborStd',
-      color: isDark ? '#E8CCB2' : '#9C7156',
+      color: isDark ? '#E8CCB2' : '#6E665D',
       fontWeight: '700',
-      fontSize: 14,
+      fontSize: 14.5,
     },
     primaryBtn: {
       flex: 1.25,
@@ -585,20 +577,20 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      height: 50,
-      borderRadius: 25,
+      height: 52,
+      borderRadius: 26,
       gap: 6,
       paddingHorizontal: 14,
-      shadowColor: '#000',
+      shadowColor: '#9C7156',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.16,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      elevation: 5,
     },
     primaryBtnText: {
       fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontWeight: '700',
-      fontSize: 14.5,
+      fontSize: 15,
     },
   });

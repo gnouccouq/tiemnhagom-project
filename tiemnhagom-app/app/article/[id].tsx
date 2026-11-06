@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getArticleById, NewsArticle } from '../../src/services/productService';
 import { ScalePressable } from '../../src/components/ScalePressable';
 import { BlurButton } from '../../src/components/BlurButton';
+import { Header } from '../../src/components/Header';
 import { FadingHeaderBackdrop } from '../../src/components/FadingHeaderBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor, checkIsDark } from '../../src/constants/theme';
@@ -97,40 +98,29 @@ export default function ArticleDetailScreen() {
     <View style={styles.safeArea}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={[styles.navHeaderTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
-              {t('newsAndArticles')}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={handleShare}
-              accessibilityLabel={t('share') || 'Chia sẻ'}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ padding: 4 }}
-            >
-              <SymbolView
-                name="square.and.arrow.up"
-                size={19}
-                tintColor={Colors.textPrimary}
-                fallback={<Ionicons name="share-outline" size={20} color={Colors.textPrimary} />}
-              />
-            </TouchableOpacity>
-          ),
-        }}
+      <Header
+        title={t('newsAndArticles')}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        rightComponent={
+          <BlurButton
+            onPress={handleShare}
+            accessibilityLabel={t('share') || 'Chia sẻ'}
+          >
+            <SymbolView
+              name="square.and.arrow.up"
+              size={19}
+              tintColor={Colors.textPrimary}
+              fallback={<Ionicons name="share-outline" size={20} color={Colors.textPrimary} />}
+            />
+          </BlurButton>
+        }
       />
-      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: 8 }]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >

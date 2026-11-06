@@ -19,11 +19,40 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.1',
     buildNumber: '3',
+    otaVersion: '20261106.01',
+    releaseDate: '06/11/2026',
+    title: 'Đổi Quà Điểm Gốm, Bộ Lọc Khoảng Giá & Trung Tâm Thông Báo Realtime',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Đổi Quà Điểm Gốm độc quyền & Nhận quà tức thì',
+        description: 'Bổ sung danh mục quà tặng tinh hoa gốm sứ đổi bằng Điểm Gốm tích lũy, quy trình xác nhận đổi quà và quản lý quà đã đổi nhanh chóng.',
+      },
+      {
+        title: 'Bộ lọc khoảng giá & Nâng cấp tìm kiếm sản phẩm',
+        description: 'Tích hợp thanh trượt chọn khoảng giá trực quan, bộ lọc danh mục gốm chi tiết và sắp xếp sản phẩm linh hoạt.',
+      },
+      {
+        title: 'Hệ thống thông báo Realtime & Biểu ngữ In-App',
+        description: 'Cập nhật tức thì trạng thái đơn hàng, ưu đãi mới với biểu ngữ nổi trong app và huy hiệu badge thông báo tự động cập nhật.',
+      },
+      {
+        title: 'Cập nhật hồ sơ cá nhân & Đổi ảnh đại diện',
+        description: 'Hỗ trợ chụp ảnh trực tiếp từ camera hoặc chọn từ thư viện để tải lên ảnh đại diện cá nhân, hoàn thiện chỉnh sửa thông tin.',
+      },
+      {
+        title: 'Hiệu ứng nền mờ mềm mại & Nút quay lại Liquid Glass',
+        description: 'Hoàn thiện trải nghiệm thị giác cao cấp với nút quay lại phủ kính Liquid Glass và lớp phủ mờ chân trang thanh thoát.',
+      },
+    ],
+  },
+  {
+    version: '1.0.1',
+    buildNumber: '3',
     otaVersion: '20261025.01',
     releaseDate: '25/10/2026',
     title: 'Liquid Glass Toàn Diện, Gói Quà Miễn Phí & Nâng Cấp Trải Nghiệm Mua Sắm',
-    badge: 'Mới nhất',
-    changes: [
+        changes: [
       {
         title: 'Hiển thị tràn viền & Thanh đáy nổi Liquid Glass toàn ứng dụng',
         description: 'Đồng bộ giao diện tràn viền 100% và bọc hiệu ứng kính khúc xạ LiquidGlass dạng viên thuốc nổi dưới đáy cho toàn bộ các trang (Giỏ hàng, Chi tiết sản phẩm, Thanh toán, Chi tiết đơn hàng...).',

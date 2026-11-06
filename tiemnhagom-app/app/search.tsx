@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ProductCard } from '../src/components/ProductCard';
 import { EmptyState } from '../src/components/EmptyState';
+import { Header } from '../src/components/Header';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 import { useThemeColor, Typography, Spacing, BorderRadius } from '../src/constants/theme';
 import { getProducts } from '../src/services/productService';
@@ -92,47 +93,22 @@ export default function SearchScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
 
-      {/* Kích hoạt thanh điều hướng gốc UINavigationBar & UISearchController Liquid Glass của iOS 26 */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: '',
-          headerTintColor: '#9C7156',
-          headerSearchBarOptions: {
-            placement: 'automatic',
-            placeholder: t('searchPlaceholder') || 'Tìm kiếm sản phẩm...',
-            tintColor: '#9C7156',
-            textColor: isDark ? '#F5F5F5' : '#2B2928',
-            headerIconColor: '#9C7156',
-            hintTextColor: isDark ? 'rgba(245, 245, 245, 0.6)' : 'rgba(43, 41, 40, 0.6)',
-            autoCapitalize: 'none',
-            hideWhenScrolling: false,
-            autoFocus: true,
-            cancelButtonText: t('cancel') || 'Hủy',
-            onChangeText: (e) => setSearchText(e.nativeEvent.text),
-            onSearchButtonPress: (e) => {
-              saveRecentSearch(e.nativeEvent.text);
-              Keyboard.dismiss();
-            },
-            onCancelButtonPress: () => setSearchText(''),
-          },
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/cart')}
-              style={styles.cartHeaderBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('cartTab') || 'Giỏ hàng'}
-            >
-              <Ionicons name="bag-outline" size={22} color={isDark ? '#F5F5F5' : '#2B2928'} />
-            </TouchableOpacity>
-          ),
+      <Header
+        showBack={true}
+        showSearch={true}
+        showCart={true}
+        searchValue={searchText}
+        onSearchChange={setSearchText}
+        onSubmitEditing={() => {
+          saveRecentSearch(searchText);
+          Keyboard.dismiss();
         }}
+        onClearSearch={() => setSearchText('')}
+        autoFocus={true}
+        searchPlaceholder={t('searchPlaceholder') || 'Tìm kiếm sản phẩm...'}
       />
-      <FadingHeaderBackdrop />
 
-      <View style={[styles.container, { paddingTop: Platform.OS === 'ios' ? insets.top + 48 : insets.top + 54 }]}>
+      <View style={[styles.container, { paddingTop: 8 }]}>
         {!searchText.trim() ? (
           // Hiển thị Lịch sử tìm kiếm
           <ScrollView

@@ -155,22 +155,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: effectiveAvatar,
           avatar: effectiveAvatar,
         };
-        setUserProfile(data);
-        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
-
-        // Tự động liên kết các đơn hàng cũ theo SĐT và Email, đồng thời đồng bộ điểm gốm
+        // Tự động liên kết các đơn hàng cũ theo SĐT và Email, đồng thời đồng bộ điểm gốm & loyalty ngay lập tức
         const uPhone = rawData.phone || rawData.phoneNumber || (Array.isArray(rawData.addresses) && rawData.addresses.find((a: any) => a?.phone)?.phone);
         const uEmail = rawData.email || auth.currentUser?.email;
         if (uPhone || uEmail) {
-          autoLinkUserOrders(uid, uPhone, uEmail)
-            .then(async () => {
-              const loyaltyRes = await syncUserLoyaltyAndVouchers(uid, data);
-              if (loyaltyRes && loyaltyRes.points !== undefined) {
-                setUserProfile((prev) => (prev ? { ...prev, points: loyaltyRes.points, totalSpent: loyaltyRes.totalSpent, membershipTier: loyaltyRes.tier.name } : prev));
-              }
-            })
-            .catch(() => {});
+          try {
+            await autoLinkUserOrders(uid, uPhone, uEmail);
+            const loyaltyRes = await syncUserLoyaltyAndVouchers(uid, data);
+            if (loyaltyRes && loyaltyRes.points !== undefined) {
+              data.points = loyaltyRes.points;
+              data.totalSpent = loyaltyRes.totalSpent;
+              data.membershipTier = loyaltyRes.tier.name;
+              data.tier = loyaltyRes.tier.id;
+              (data as any).redeemedPoints = loyaltyRes.redeemedPoints;
+            }
+          } catch (syncErr) {
+            console.warn('Lỗi đồng bộ loyalty khi fetchUserProfile:', syncErr);
+          }
         }
+
+        setUserProfile(data);
+        await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
       } else {
         const initialProfile: UserProfile = {
           uid,
@@ -673,6 +678,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         payload.name = cleanName;
       }
       if (data.phone !== undefined) {
+        const existingPhone = (userProfile?.phone || '').trim();
+        const newPhone = (data.phone || '').trim();
+        // Số điện thoại khi đã thêm vào account thì sẽ không tự đổi được nữa, phải liên hệ admin
+        if (existingPhone && newPhone && formatPhoneNumber(existingPhone) !== formatPhoneNumber(newPhone)) {
+          throw new Error('Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.');
+        }
         const normalizedPhone = formatPhoneNumber(data.phone);
         const variants = getPhoneVariants(data.phone);
         payload.phone = normalizedPhone;

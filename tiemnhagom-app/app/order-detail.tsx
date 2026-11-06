@@ -29,8 +29,10 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { GlazeFluidCard } from '../src/components/GlazeFluidCard';
 import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { BlurButton } from '../src/components/BlurButton';
+import { Header } from '../src/components/Header';
 import { LiquidGlass } from '../src/components/LiquidGlass';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
@@ -583,21 +585,14 @@ export default function OrderDetailScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle}>
-              {t('orderDetailTitle') || 'Đơn hàng'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-        }}
+      <Header
+        title={t('orderDetailTitle') || 'Đơn hàng'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
+        transparent={true}
+        scrollY={scrollY}
       />
-      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -947,18 +942,15 @@ export default function OrderDetailScreen() {
         <View style={{ height: Math.max(insets.bottom, 20) + 100 }} />
       </ScrollView>
 
-      {/* ── THANH HÀNH ĐỘNG ĐÁY NỔI BỌC LIQUID GLASS CHUẨN HỆ THỐNG IOS ── */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới các nút hành động */}
+      <FadingBottomBackdrop />
+
+      {/* ── THANH HÀNH ĐỘNG ĐÁY NỔI DẠNG VIÊN THUỐC (Không bọc LiquidGlass) ── */}
       <View
         style={[styles.bottomBarWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
-        >
-          <View style={styles.bottomBarRow}>
+        <View style={styles.bottomBarRow}>
             <TouchableOpacity
               style={styles.bottomReviewBtn}
               activeOpacity={0.82}
@@ -996,8 +988,7 @@ export default function OrderDetailScreen() {
                 {t('reorderAction') || 'Đặt lại đơn này'}
               </Text>
             </TouchableOpacity>
-          </View>
-        </LiquidGlass>
+        </View>
       </View>
 
       {/* ── MODAL ĐÁNH GIÁ ĐƠN HÀNG (5 SAO, HÌNH ẢNH THỰC TẾ & NHẬN XÉT) ── */}
@@ -1734,32 +1725,27 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomBarWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 100,
-    },
-    bottomBar: {
-      borderRadius: 36,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: isDark ? 0.45 : 0.14,
-      shadowRadius: 18,
-      elevation: 10,
     },
     bottomBarRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 12,
     },
     bottomReviewBtn: {
       flex: 1,
-      height: 50,
-      borderRadius: 25,
-      borderWidth: 1.2,
-      borderColor: BRAND.primary,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(156,113,86,0.10)',
+      height: 52,
+      borderRadius: 26,
+      borderWidth: 1.5,
+      borderColor: isDark ? '#3A3A3A' : '#E8CCB2',
+      backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.35 : 0.08,
+      shadowRadius: 8,
+      elevation: 4,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

@@ -21,7 +21,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurButton } from '../src/components/BlurButton';
 import { LiquidGlass } from '../src/components/LiquidGlass';
+import { Header } from '../src/components/Header';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
+import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { SymbolView } from 'expo-symbols';
 import { useThemeColor } from '../src/constants/theme';
 import { useCart } from '../src/context/CartContext';
@@ -249,21 +251,12 @@ export default function CheckoutScreen() {
     <Animated.View style={[styles.safeArea, pageStyle]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
 
-      {/* Thanh điều hướng gốc iOS UINavigationBar chuẩn Liquid Glass */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text style={styles.navHeaderTitle}>
-              {t('orderHeader') || 'Đơn hàng'}
-            </Text>
-          ),
-          headerTintColor: '#9C7156',
-        }}
+      <Header
+        title={t('orderHeader') || 'Đơn hàng'}
+        showBack={true}
+        showCart={false}
+        showSearch={false}
       />
-      <FadingHeaderBackdrop />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -271,7 +264,7 @@ export default function CheckoutScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 54 + 8,
+            paddingTop: 10,
             paddingBottom: Math.max(insets.bottom, 16) + 100,
           },
         ]}
@@ -806,37 +799,33 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
-      {/* 9. NÚT ĐẶT HÀNG DÍNH CHÂN TRANG BỌC LIQUID GLASS CHUẨN IOS */}
+      {/* Lớp phủ mờ dần đáy màn hình bên dưới nút đặt hàng */}
+      <FadingBottomBackdrop />
+
+      {/* 9. NÚT ĐẶT HÀNG DÍNH CHÂN TRANG (Không bọc LiquidGlass) */}
       <View
         style={[styles.bottomStickyWrapper, { bottom: Math.max(insets.bottom, 14) }]}
         pointerEvents="box-none"
       >
-        <LiquidGlass
-          style={styles.bottomStickyBar}
-          interactive={true}
-          effect="regular"
-          isDark={isDark}
+        <TouchableOpacity
+          style={[styles.checkoutPillBtn, isSubmittingOrder && { opacity: 0.75 }]}
+          onPress={handlePlaceOrder}
+          disabled={isSubmittingOrder}
+          activeOpacity={0.88}
         >
-          <TouchableOpacity
-            style={[styles.checkoutPillBtn, isSubmittingOrder && { opacity: 0.75 }]}
-            onPress={handlePlaceOrder}
-            disabled={isSubmittingOrder}
-            activeOpacity={0.88}
-          >
-            {isSubmittingOrder ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text
-                style={styles.checkoutBtnText}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {`${t('orderNowBtn') || 'Đặt hàng ngay'} • ${cartCount} ${t('dishes') || 'Sản phẩm'} • ${formatCurrency(totalAmount)}`}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </LiquidGlass>
+          {isSubmittingOrder ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text
+              style={styles.checkoutBtnText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
+              {`${t('orderNowBtn') || 'Đặt hàng ngay'} • ${cartCount} ${t('dishes') || 'Sản phẩm'} • ${formatCurrency(totalAmount)}`}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     </Animated.View>
   );
@@ -1448,8 +1437,8 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     bottomStickyWrapper: {
       position: 'absolute',
-      left: 14,
-      right: 14,
+      left: 16,
+      right: 16,
       zIndex: 50,
     },
     bottomStickyBar: {
@@ -1465,11 +1454,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: '#9C7156',
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000000',
+      shadowColor: '#9C7156',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.16,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      elevation: 5,
     },
     checkoutBtnText: {
       fontFamily: 'ElleGaborStd',

@@ -1,3 +1,6 @@
+const _activeCouponsCache = new Map<string, { data: CouponItem[]; timestamp: number }>();
+const _allCouponsCache = new Map<string, { data: CategorizedCoupons; timestamp: number }>();
+const COUPON_CACHE_TTL = 30000; // 30s TTL
 import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { syncUserLoyaltyAndVouchers } from './loyaltyService';
@@ -27,7 +30,14 @@ export interface CouponItem {
  * Lấy danh sách Voucher thật từ Firestore collection "coupons"
  * Có kết hợp lọc voucher đã dùng nếu truyền userId
  */
-export async function getActiveCoupons(userId?: string): Promise<CouponItem[]> {
+export async function getActiveCoupons(userId?: string, forceRefresh: boolean = false): Promise<CouponItem[]> {
+  const cacheKey = userId || 'all';
+  if (!forceRefresh) {
+    const cached = _activeCouponsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < COUPON_CACHE_TTL) {
+      return cached.data;
+    }
+  }
   try {
     if (userId) {
       try {
@@ -185,7 +195,14 @@ export interface CategorizedCoupons {
 /**
  * Lấy tất cả voucher của người dùng và phân loại thành: Chưa dùng, Đã dùng, Hết hạn
  */
-export async function getAllUserCoupons(userId?: string): Promise<CategorizedCoupons> {
+export async function getAllUserCoupons(userId?: string, forceRefresh: boolean = false): Promise<CategorizedCoupons> {
+  const cacheKey = userId || 'all';
+  if (!forceRefresh) {
+    const cached = _allCouponsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < COUPON_CACHE_TTL) {
+      return cached.data;
+    }
+  }
   const result: CategorizedCoupons = {
     unused: [],
     used: [],
@@ -366,6 +383,7 @@ export async function getAllUserCoupons(userId?: string): Promise<CategorizedCou
       ];
     }
 
+    _allCouponsCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return result;
   } catch (error) {
     console.error('Lỗi phân loại vouchers:', error);

@@ -1,13 +1,17 @@
 // app/_layout.tsx
 import '../src/utils/textScaler';
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, Image, LogBox } from 'react-native';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { View, StyleSheet, ActivityIndicator, AppState, Text, TouchableOpacity, Image, LogBox, Platform } from 'react-native';
 
 LogBox.ignoreLogs([
   'expo-notifications: Android Push notifications',
   '`expo-notifications` functionality is not fully supported in Expo Go',
   '[expo-notifications]: `shouldShowAlert` is deprecated',
   'setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture',
+  'setLayoutAnimationEnabledExperimental',
+  'Cannot record touch move without a touch start',
+  '@firebase/firestore: Firestore',
+  'WebChannelConnection RPC',
 ]);
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,9 +24,10 @@ import 'react-native-reanimated';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { enableScreens } from 'react-native-screens';
+import { enableScreens, enableFreeze } from 'react-native-screens';
 
 enableScreens(true);
+enableFreeze(true);
 
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
@@ -31,10 +36,15 @@ import { SettingsProvider, useSettings } from '../src/context/SettingsContext';
 import { Colors, useThemeColor, checkIsDark } from '../src/constants/theme';
 import { NotificationBadgeProvider } from '../src/context/NotificationBadgeContext';
 import ForceUpdateChecker from '../src/components/ForceUpdateChecker';
+import { InAppNotificationBanner } from '../src/components/InAppNotificationBanner';
 import NetworkOverlay from '../src/components/NetworkOverlay';
 import { RealtimeDataProvider } from '../src/context/RealtimeDataContext';
 import { DialogProvider } from '../src/context/DialogContext';
 import { initMemoryManager } from '../src/utils/memoryManager';
+import { auth } from '../src/config/firebase';
+import { preloadNotificationFeed } from '../src/services/notificationFeedService';
+import { preloadAccountData } from '../src/services/loyaltyService';
+import { setupPushNotificationListeners } from '../src/services/notificationService';
 
 export {
   ErrorBoundary,
@@ -76,30 +86,53 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
     let isMounted = true;
 
-    // Kiểm tra OTA Update thông minh
-    const checkAndDownloadUpdate = async () => {
+    // Kiểm tra OTA Update thông minh kết hợp tải trước dữ liệu Firestore Thông báo & Tài khoản
+    const runSplashPreloader = async () => {
+      const startTime = Date.now();
       try {
-        if (!__DEV__ && Updates.isEnabled) {
-          const update = await Updates.checkForUpdateAsync();
-          if (update.isAvailable) {
-            if (isMounted) setDownloadingOta(true);
-            await Updates.fetchUpdateAsync();
-            await Updates.reloadAsync();
-            return;
-          }
+        // Xác định ID tài khoản người dùng ngay lập tức từ Auth hoặc bộ nhớ phiên
+        let targetUid: string | undefined = auth.currentUser?.uid;
+        if (!targetUid) {
+          try {
+            const rawSession = await AsyncStorage.getItem('tng_user_session');
+            if (rawSession) {
+              const parsed = JSON.parse(rawSession);
+              if (parsed?.uid) targetUid = parsed.uid;
+            }
+          } catch {}
         }
+
+        // Tải sẵn đồng thời ngay trong SplashScreen:
+        // 1. Kiểm tra bản cập nhật OTA
+        // 2. Tải sẵn thông báo Firestore (Tin tức, Thông báo chung, Thông báo riêng, Đơn hàng, Quà tặng gốm)
+        // 3. Tải sẵn tài khoản Firestore (Profile, Chi tiêu, Điểm gốm, Hạng hội viên, Đơn hàng, Voucher)
+        await Promise.allSettled([
+          (async () => {
+            if (!__DEV__ && Updates.isEnabled) {
+              const update = await Updates.checkForUpdateAsync();
+              if (update.isAvailable) {
+                if (isMounted) setDownloadingOta(true);
+                await Updates.fetchUpdateAsync();
+                await Updates.reloadAsync();
+              }
+            }
+          })(),
+          preloadNotificationFeed(targetUid),
+          targetUid ? preloadAccountData(targetUid) : Promise.resolve(null),
+        ]);
       } catch (e) {
-        // Nếu lỗi mạng hoặc timeout, bỏ qua và vào app bình thường
-        console.log('OTA Check Error:', e);
+        console.log('Lỗi preload trong SplashScreen:', e);
       }
 
-      // Khi sẵn sàng chuyển trang: kích hoạt hiệu ứng zoom ra để chuyển tiếp mượt mà
+      // Đảm bảo thời gian hiển thị logo tối thiểu 600ms để hoạt ảnh mượt mà, tối đa không quá 1200ms
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, 600 - elapsed);
       setTimeout(() => {
         if (isMounted) startExitTransition();
-      }, 700);
+      }, remainingTime);
     };
 
-    checkAndDownloadUpdate();
+    runSplashPreloader();
 
     return () => {
       isMounted = false;
@@ -138,49 +171,71 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
 // Cờ ghi nhớ đã hoàn thành splash trong phiên làm việc, tránh phát lại khi đổi cài đặt
 let hasFinishedSplashOnce = false;
 
-// Cổng bảo vệ xác thực (Auth Gate)
-function NavigationRoot() {
+// Cổng bảo vệ xác thực (Auth Gate riêng biệt không gây re-render toàn bộ NavigationRoot)
+function AuthGate() {
   const { user, userProfile, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const isAuth = Boolean(user || userProfile);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = pathname.startsWith('/auth');
+    const inOnboarding =
+      pathname === '/onboarding' ||
+      pathname === '/setup-preferences' ||
+      pathname === '/setup-permissions';
+
+    // Tối ưu hiệu năng: Khi người dùng đã đăng nhập và đang dùng các trang trong app,
+    // bỏ qua kiểm tra AsyncStorage để không làm chậm thao tác chuyển trang.
+    if (isAuth && !inAuthGroup && !inOnboarding) {
+      return;
+    }
+
+    AsyncStorage.getItem('has_seen_onboarding').then((value) => {
+      const seenOnboarding = value === 'true' || isAuth;
+
+      if (!seenOnboarding && !inOnboarding) {
+        router.replace('/onboarding');
+      } else if (seenOnboarding && !isAuth && !inAuthGroup) {
+        router.replace('/auth/login');
+      } else if (isAuth && (inAuthGroup || inOnboarding)) {
+        router.replace('/(tabs)');
+      }
+    });
+  }, [isAuth, loading, pathname]);
+
+  return null;
+}
+
+function NavigationRoot() {
+  const { loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    const cleanup = setupPushNotificationListeners(router);
+    return () => {
+      cleanup?.();
+    };
+  }, [router]);
   const [splashFinished, setSplashFinished] = useState(() => hasFinishedSplashOnce);
   const themeColors = useThemeColor();
   const isDark = checkIsDark(themeColors);
 
-  const navigationTheme = {
-    ...(isDark ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-      background: themeColors.background,
-      card: themeColors.cardBackground,
-      text: themeColors.textPrimary,
-      border: themeColors.border,
-    },
-  };
-
-  const isAuth = Boolean(user || userProfile);
-
-  useEffect(() => {
-    if (loading || !splashFinished) return;
-
-    AsyncStorage.getItem('has_seen_onboarding').then((value) => {
-      // Nếu đã đăng nhập thì ngầm định là đã qua onboarding
-      const seenOnboarding = (value === 'true') || isAuth;
-      const inAuthGroup = pathname.startsWith('/auth');
-      const inOnboarding = pathname === '/onboarding' || pathname === '/setup-preferences' || pathname === '/setup-permissions';
-
-      if (!seenOnboarding && !inOnboarding) {
-        // Chưa xem onboarding -> vào trang onboarding
-        router.replace('/onboarding');
-      } else if (seenOnboarding && !isAuth && !inAuthGroup) {
-        // Đã xem onboarding nhưng chưa đăng nhập -> vào trang login
-        router.replace('/auth/login');
-      } else if (isAuth && (inAuthGroup || inOnboarding)) {
-        // Đã đăng nhập nhưng lại đang ở trang login hoặc onboarding -> vào trang chính
-        router.replace('/(tabs)');
-      }
-    });
-  }, [isAuth, loading, pathname, splashFinished]);
+  const navigationTheme = useMemo(
+    () => ({
+      ...(isDark ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+        background: themeColors.background,
+        card: themeColors.cardBackground,
+        text: themeColors.textPrimary,
+        border: themeColors.border,
+      },
+    }),
+    [isDark, themeColors]
+  );
 
   if (loading || !splashFinished) {
     return (
@@ -193,14 +248,19 @@ function NavigationRoot() {
     );
   }
 
+  // Trên iOS: Dùng hoạt ảnh native UIKit 'default' mượt mà 120Hz, không delay và hỗ trợ swipe-back gốc.
+  // Trên Android: Dùng 'slide_from_right' để giữ trải nghiệm trượt ngang hiện đại.
+  const stackAnimation = Platform.OS === 'ios' ? 'default' : 'slide_from_right';
+
   return (
     <ThemeProvider value={navigationTheme}>
+      <AuthGate />
       <Stack
         screenOptions={{
           headerShown: false,
           headerTransparent: true,
           headerShadowVisible: false,
-          headerTintColor: '#9C7156',
+          headerTintColor: themeColors.textPrimary,
           headerTitleStyle: {
             fontFamily: 'ElleGaborStd',
             fontSize: 17,
@@ -209,7 +269,8 @@ function NavigationRoot() {
           },
           headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: themeColors.background },
-          animation: 'slide_from_right',
+          animation: stackAnimation,
+          freezeOnBlur: true,
         }}
       >
         <Stack.Screen
@@ -225,7 +286,7 @@ function NavigationRoot() {
           options={{
             headerShown: false,
             gestureEnabled: false,
-            animation: 'slide_from_right',
+            animation: stackAnimation,
           }}
         />
         <Stack.Screen
@@ -233,7 +294,7 @@ function NavigationRoot() {
           options={{
             headerShown: false,
             gestureEnabled: false,
-            animation: 'slide_from_right',
+            animation: stackAnimation,
           }}
         />
         {/* Trang Login riêng biệt, bắt buộc trước khi vào app */}
@@ -246,20 +307,20 @@ function NavigationRoot() {
           }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="cart" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="product/[id]" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="checkout" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="cart" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="product/[id]" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="checkout" options={{ animation: stackAnimation }} />
         <Stack.Screen name="order-success" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="edit-profile" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="edit-profile" options={{ animation: stackAnimation }} />
         <Stack.Screen
           name="search"
           options={{
-            headerShown: true,
+            headerShown: false,
             headerTransparent: true,
             headerShadowVisible: false,
             headerTitle: '',
-            headerTintColor: '#9C7156',
-            animation: 'slide_from_right',
+            headerTintColor: themeColors.textPrimary,
+            animation: stackAnimation,
             headerSearchBarOptions: {
               placement: 'automatic',
               placeholder: 'Tìm kiếm sản phẩm...',
@@ -272,11 +333,11 @@ function NavigationRoot() {
             },
           }}
         />
-        <Stack.Screen name="membership-privileges" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="points-history" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="vouchers" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="voucher-detail" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="order-detail" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="membership-privileges" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="points-history" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="vouchers" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="voucher-detail" options={{ animation: stackAnimation }} />
+        <Stack.Screen name="order-detail" options={{ animation: stackAnimation }} />
 
         {/* WebView: mở từ dưới lên */}
         <Stack.Screen
@@ -291,7 +352,7 @@ function NavigationRoot() {
         <Stack.Screen
           name="notification-detail"
           options={{
-            animation: 'slide_from_right',
+            animation: stackAnimation,
           }}
         />
 
@@ -299,7 +360,7 @@ function NavigationRoot() {
         <Stack.Screen
           name="flash-sale"
           options={{
-            animation: 'slide_from_right',
+            animation: stackAnimation,
           }}
         />
       </Stack>
@@ -399,6 +460,7 @@ function AppWrapper() {
       <AppLockGuard>
         <NavigationRoot />
       </AppLockGuard>
+      <InAppNotificationBanner />
       <NetworkOverlay />
     </View>
   );

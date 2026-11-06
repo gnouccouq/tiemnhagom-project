@@ -119,3 +119,72 @@ export async function savePushTokenToFirestore(userId: string, token: string) {
     console.error('Error saving push token:', error);
   }
 }
+
+
+/**
+ * Lắng nghe và điều hướng khi người dùng nhấn vào Push Notification
+ * (Hỗ trợ cả khi app đang chạy ngầm hoặc khi mở từ trạng thái tắt hẳn - Cold Start)
+ */
+export function setupPushNotificationListeners(router: any) {
+  if (!Notifications || typeof Notifications.addNotificationResponseReceivedListener !== 'function') {
+    return () => {};
+  }
+
+  try {
+    // 1. Lắng nghe khi người dùng chạm vào banner thông báo (Background/Foreground)
+    const subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
+      try {
+        const data = response?.notification?.request?.content?.data;
+        if (!data) return;
+
+        if (data.url) {
+          router.push(data.url);
+        } else if (data.orderId) {
+          router.push(`/order-detail?id=${data.orderId}`);
+        } else if (data.giftCode) {
+          router.push(`/gift-claim?code=${data.giftCode}`);
+        } else if (data.type === 'order') {
+          router.push('/orders');
+        } else if (data.type === 'gift') {
+          router.push('/points-history');
+        }
+      } catch (err) {
+        console.warn('Lỗi xử lý điều hướng push notification:', err);
+      }
+    });
+
+    // 2. Xử lý Cold Start: Khi app bị tắt hẳn (kill app) và được khởi động bằng việc chạm vào thông báo
+    if (typeof Notifications.getLastNotificationResponseAsync === 'function') {
+      Notifications.getLastNotificationResponseAsync()
+        .then((response: any) => {
+          if (!response) return;
+          const data = response?.notification?.request?.content?.data;
+          if (!data) return;
+
+          setTimeout(() => {
+            try {
+              if (data.url) {
+                router.push(data.url);
+              } else if (data.orderId) {
+                router.push(`/order-detail?id=${data.orderId}`);
+              } else if (data.giftCode) {
+                router.push(`/gift-claim?code=${data.giftCode}`);
+              }
+            } catch {}
+          }, 800);
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      try {
+        if (typeof Notifications.removeNotificationSubscription === 'function') {
+          Notifications.removeNotificationSubscription(subscription);
+        }
+      } catch {}
+    };
+  } catch (e) {
+    console.warn('Lỗi setupPushNotificationListeners:', e);
+    return () => {};
+  }
+}
