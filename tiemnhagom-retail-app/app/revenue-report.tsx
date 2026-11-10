@@ -25,6 +25,85 @@ import { ScalePressable } from '../src/components/ScalePressable';
 import { FadingHeaderBackdrop } from '../src/components/FadingHeaderBackdrop';
 
 type CycleType = 'quarterly' | 'monthly' | 'daily' | 'all';
+type SalesChannelFilter = 'all' | 'web_app' | 'pos' | 'social';
+
+const CHANNEL_META: Record<
+  'web_app' | 'pos' | 'social',
+  { key: 'web_app' | 'pos' | 'social'; label: string; shortLabel: string; subLabel: string; color: string; bgTint: string; icon: any }
+> = {
+  web_app: {
+    key: 'web_app',
+    label: 'Web & App (Gộp chung)',
+    shortLabel: 'Web & App',
+    subLabel: 'Website & Ứng dụng di động',
+    color: '#B45309',
+    bgTint: 'rgba(180, 83, 9, 0.12)',
+    icon: 'globe-outline',
+  },
+  pos: {
+    key: 'pos',
+    label: 'POS (Bán tại quầy)',
+    shortLabel: 'POS (Tại quầy)',
+    subLabel: 'Hóa đơn thu ngân trực tiếp',
+    color: '#7E22CE',
+    bgTint: 'rgba(126, 34, 206, 0.12)',
+    icon: 'storefront-outline',
+  },
+  social: {
+    key: 'social',
+    label: 'Mạng xã hội (FB/IG/Zalo)',
+    shortLabel: 'Mạng xã hội',
+    subLabel: 'Facebook, Instagram, Zalo, TikTok, Shopee',
+    color: '#BE185D',
+    bgTint: 'rgba(190, 24, 93, 0.12)',
+    icon: 'share-social-outline',
+  },
+};
+
+const getOrderSalesChannelGroup = (o: Order): 'web_app' | 'pos' | 'social' => {
+  const raw: any = o || {};
+  const idStr = String(raw.id || raw.orderCode || raw.code || '').toUpperCase();
+  const chStr = String(raw.channel || raw.salesChannel || '').trim().toLowerCase();
+  const srcStr = String(raw.source || raw.orderSource || '').trim().toLowerCase();
+
+  // 1. Kênh POS (Bán tại quầy)
+  if (
+    idStr.startsWith('POS') ||
+    idStr.includes('POS-') ||
+    srcStr === 'pos' ||
+    chStr === 'pos' ||
+    chStr.includes('bán trực tiếp') ||
+    chStr.includes('tại quầy') ||
+    chStr.includes('cửa hàng') ||
+    raw.inStore === true ||
+    Boolean(raw.cashierId)
+  ) {
+    return 'pos';
+  }
+
+  // 2. Kênh Mạng xã hội (Facebook, Instagram, Zalo, TikTok, Shopee)
+  if (
+    srcStr === 'social' ||
+    chStr.includes('facebook') ||
+    chStr === 'fb' ||
+    chStr.includes('fanpage') ||
+    chStr.includes('mess') ||
+    chStr.includes('instagram') ||
+    chStr === 'ig' ||
+    chStr.includes('zalo') ||
+    chStr.includes('tiktok') ||
+    chStr.includes('shopee') ||
+    chStr.includes('mạng xã hội') ||
+    chStr.includes('social') ||
+    chStr.includes('khác') ||
+    (srcStr === 'online' && !chStr.includes('web') && !chStr.includes('app'))
+  ) {
+    return 'social';
+  }
+
+  // 3. Kênh Web & App (gộp chung)
+  return 'web_app';
+};
 
 export default function RevenueReportScreen() {
   const insets = useSafeAreaInsets();
@@ -42,6 +121,7 @@ export default function RevenueReportScreen() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedCycle, setSelectedCycle] = useState<CycleType>('quarterly');
+  const [selectedChannel, setSelectedChannel] = useState<SalesChannelFilter>('all');
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -68,18 +148,90 @@ export default function RevenueReportScreen() {
     const yearStart = new Date(selectedYear, 0, 1).getTime();
     const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59).getTime();
 
-    // Các đơn trong năm được chọn
-    const yearOrders = orders.filter((o) => {
+    // Toàn bộ đơn trong năm (để tính báo cáo tổng quan 3 kênh)
+    const allYearOrders = orders.filter((o) => {
       const time = getOrderTime(o);
       return time >= yearStart && time <= yearEnd;
     });
+
+    // Thống kê chi tiết 3 kênh bán hàng (Web & App, POS, Mạng xã hội)
+    const channelStatsMap: Record<
+      'web_app' | 'pos' | 'social',
+      {
+        key: 'web_app' | 'pos' | 'social';
+        revenue: number;
+        orders: number;
+        cancelled: number;
+        lostRevenue: number;
+        cost: number;
+      }
+    > = {
+      web_app: { key: 'web_app', revenue: 0, orders: 0, cancelled: 0, lostRevenue: 0, cost: 0 },
+      pos: { key: 'pos', revenue: 0, orders: 0, cancelled: 0, lostRevenue: 0, cost: 0 },
+      social: { key: 'social', revenue: 0, orders: 0, cancelled: 0, lostRevenue: 0, cost: 0 },
+    };
+
+    allYearOrders.forEach((o) => {
+      const chKey = getOrderSalesChannelGroup(o);
+      const total = o.totalAmount || 0;
+      if (o.status === 'cancelled') {
+        channelStatsMap[chKey].cancelled += 1;
+        channelStatsMap[chKey].lostRevenue += total;
+      } else {
+        channelStatsMap[chKey].revenue += total;
+        channelStatsMap[chKey].orders += 1;
+        let orderCost = 0;
+        if (Array.isArray(o.items)) {
+          o.items.forEach((it) => {
+            const raw = it as any;
+            const cost = raw.cost || (it.price ? it.price * 0.45 : 0);
+            orderCost += cost * (it.quantity || 1);
+          });
+        } else {
+          orderCost = total * 0.45;
+        }
+        channelStatsMap[chKey].cost += orderCost;
+      }
+    });
+
+    const allChannelsRevenueTotal =
+      channelStatsMap.web_app.revenue + channelStatsMap.pos.revenue + channelStatsMap.social.revenue;
+
+    const channelBreakdown = (['web_app', 'pos', 'social'] as const).map((k) => {
+      const st = channelStatsMap[k];
+      const meta = CHANNEL_META[k];
+      const sharePercent =
+        allChannelsRevenueTotal > 0 ? Math.round((st.revenue / allChannelsRevenueTotal) * 1000) / 10 : 0;
+      const aov = st.orders > 0 ? Math.round(st.revenue / st.orders) : 0;
+      const estProfit = Math.max(0, st.revenue - st.cost);
+      const totalTax = Math.round(st.revenue * 0.015);
+      return {
+        ...meta,
+        revenue: st.revenue,
+        orders: st.orders,
+        cancelled: st.cancelled,
+        lostRevenue: st.lostRevenue,
+        sharePercent,
+        aov,
+        estProfit,
+        totalTax,
+      };
+    });
+
+    // Các đơn trong năm được chọn (đã lọc theo kênh nếu chọn kênh cụ thể)
+    const yearOrders =
+      selectedChannel === 'all'
+        ? allYearOrders
+        : allYearOrders.filter((o) => getOrderSalesChannelGroup(o) === selectedChannel);
 
     // Các đơn năm trước để so sánh tăng trưởng
     const prevYearStart = new Date(selectedYear - 1, 0, 1).getTime();
     const prevYearEnd = new Date(selectedYear - 1, 11, 31, 23, 59, 59).getTime();
     const prevYearOrders = orders.filter((o) => {
       const time = getOrderTime(o);
-      return time >= prevYearStart && time <= prevYearEnd;
+      if (time < prevYearStart || time > prevYearEnd) return false;
+      if (selectedChannel !== 'all' && getOrderSalesChannelGroup(o) !== selectedChannel) return false;
+      return true;
     });
 
     let grossRevenue = 0;
@@ -364,13 +516,27 @@ export default function RevenueReportScreen() {
       yearVat,
       yearPit,
       yearTotalTax,
+      channelBreakdown,
+      allChannelsRevenueTotal,
     };
-  }, [orders, selectedYear, selectedCycle]);
+  }, [orders, selectedYear, selectedCycle, selectedChannel]);
 
   // Chia sẻ / Xuất tóm tắt báo cáo
   const handleShareReport = async () => {
     try {
+      const channelLines = reportData.channelBreakdown
+        .map(
+          (ch) =>
+            `• ${ch.shortLabel}: ${formatCurrency(ch.revenue)} (${ch.orders} đơn • ${ch.sharePercent}%)`
+        )
+        .join('\n');
+      const activeChannelText =
+        selectedChannel === 'all'
+          ? 'Tất cả kênh (Web & App + POS + MXH)'
+          : CHANNEL_META[selectedChannel].label;
+
       const summaryText = `📊 BÁO CÁO DOANH THU TIỆM NHÀ GỐM - NĂM ${selectedYear}
+🌐 Kênh đang lọc: ${activeChannelText}
 ---------------------------------
 💰 Tổng doanh thu: ${formatCurrency(reportData.grossRevenue)}
 💵 Doanh thu thuần: ${formatCurrency(reportData.netRevenue)}
@@ -379,6 +545,9 @@ export default function RevenueReportScreen() {
 🧾 Giá trị TB đơn (AOV): ${formatCurrency(reportData.aov)}
 ⚠️ Tỷ lệ hủy/hoàn: ${reportData.cancelRate}% (Thất thoát: ${formatCurrency(reportData.lostRevenue)})
 🏦 Tổng thuế ước tính (1.5%): ${formatCurrency(reportData.yearTotalTax)}
+---------------------------------
+🌐 DOANH THU THEO KÊNH BÁN HÀNG (${selectedYear}):
+${channelLines}
 ---------------------------------
 Xuất từ Tiệm Nhà Gốm Retail App • Thu ngân: ${adminProfile?.displayName || 'Admin'}`;
 
@@ -396,6 +565,13 @@ Xuất từ Tiệm Nhà Gốm Retail App • Thu ngân: ${adminProfile?.displayN
     { key: 'monthly', label: t('cycleMonthly') },
     { key: 'daily', label: t('cycleDaily') },
     { key: 'all', label: 'Toàn năm' },
+  ];
+
+  const channelFilterOptions: { key: SalesChannelFilter; label: string; color: string }[] = [
+    { key: 'all', label: 'Tất cả kênh', color: '#9C7156' },
+    { key: 'web_app', label: '🌐 Web & App', color: '#B45309' },
+    { key: 'pos', label: '🏪 POS (Tại quầy)', color: '#7E22CE' },
+    { key: 'social', label: '📱 Mạng xã hội', color: '#BE185D' },
   ];
 
   return (
@@ -529,6 +705,203 @@ Xuất từ Tiệm Nhà Gốm Retail App • Thu ngân: ${adminProfile?.displayN
                   );
                 })}
               </ScrollView>
+            </View>
+
+            {/* Hàng chọn Kênh bán hàng */}
+            <View style={[styles.divider, { backgroundColor: isDark ? '#222' : '#F0ECE6' }]} />
+
+            <View style={styles.cycleRow}>
+              <Text style={[styles.filterLabel, { color: Colors.textSecondary }]}>
+                Lọc theo kênh bán hàng:
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cycleChipsScroll}
+              >
+                {channelFilterOptions.map((opt) => {
+                  const active = selectedChannel === opt.key;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[
+                        styles.cycleChip,
+                        active && styles.cycleChipActive,
+                        {
+                          backgroundColor: active ? opt.color : isDark ? '#1E1E1E' : '#FAF8F5',
+                          borderColor: active ? opt.color : Colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedChannel(opt.key);
+                        setSelectedBarIndex(null);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.cycleChipText,
+                          { color: active ? '#FFFFFF' : Colors.textPrimary },
+                          active && { fontWeight: '700' },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+
+          {/* SECTION 1.5: 🌐 BÁO CÁO DOANH THU THEO KÊNH BÁN HÀNG (Web/App • POS • Mạng xã hội) */}
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: isDark ? Colors.cardBackground : '#FFFFFF',
+                borderColor: isDark ? 'transparent' : '#E8E1D8',
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeaderTitleGroup}>
+                <Text style={[styles.cardTitle, { color: Colors.textPrimary }]} numberOfLines={1}>
+                  🌐 Doanh thu theo Kênh bán hàng
+                </Text>
+                <Text style={[styles.cardSubtitle, { color: Colors.textSecondary }]} numberOfLines={1}>
+                  Web & App (chung) • POS tại quầy • Mạng xã hội
+                </Text>
+              </View>
+              {selectedChannel !== 'all' && (
+                <TouchableOpacity
+                  style={styles.channelResetBadge}
+                  onPress={() => setSelectedChannel('all')}
+                >
+                  <Text style={styles.channelResetBadgeText} numberOfLines={1}>
+                    Xem tất cả
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Thanh tỷ trọng 3 kênh */}
+            <View
+              style={[
+                styles.channelShareBarTrack,
+                { backgroundColor: isDark ? '#222' : '#F0ECE6' },
+              ]}
+            >
+              {reportData.channelBreakdown.map((ch) => {
+                const widthPct = Math.max(ch.revenue > 0 ? 6 : 0, ch.sharePercent);
+                if (widthPct <= 0) return null;
+                return (
+                  <View
+                    key={ch.key}
+                    style={[
+                      styles.channelShareBarSegment,
+                      {
+                        flex: widthPct,
+                        backgroundColor: ch.color,
+                        opacity: selectedChannel === 'all' || selectedChannel === ch.key ? 1 : 0.35,
+                      },
+                    ]}
+                  />
+                );
+              })}
+            </View>
+
+            {/* 3 Thẻ kênh bán hàng chi tiết */}
+            <View style={styles.channelCardsList}>
+              {reportData.channelBreakdown.map((ch) => {
+                const isSelected = selectedChannel === ch.key;
+                return (
+                  <TouchableOpacity
+                    key={ch.key}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      setSelectedChannel(selectedChannel === ch.key ? 'all' : ch.key)
+                    }
+                    style={[
+                      styles.channelItemCard,
+                      {
+                        backgroundColor: isDark ? '#1A1816' : '#FAF8F5',
+                        borderColor: isSelected ? ch.color : isDark ? '#2A2623' : '#E8E1D8',
+                        borderWidth: isSelected ? 1.5 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={styles.channelItemTopRow}>
+                      <View style={styles.channelItemTitleRow}>
+                        <View style={[styles.channelIconCircle, { backgroundColor: ch.bgTint }]}>
+                          <Ionicons name={ch.icon} size={16} color={ch.color} />
+                        </View>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <Text
+                            style={[styles.channelItemTitle, { color: Colors.textPrimary }]}
+                            numberOfLines={1}
+                          >
+                            {ch.label}
+                          </Text>
+                          <Text
+                            style={[styles.channelItemSub, { color: Colors.textSecondary }]}
+                            numberOfLines={1}
+                          >
+                            {ch.subLabel}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={[styles.channelSharePill, { backgroundColor: ch.bgTint }]}>
+                        <Text style={[styles.channelSharePillText, { color: ch.color }]}>
+                          {ch.sharePercent}%
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.channelItemMetricsRow}>
+                      <View style={styles.channelMetricCol}>
+                        <Text style={[styles.channelMetricLabel, { color: Colors.textMuted }]}>
+                          Doanh thu thuần
+                        </Text>
+                        <Text
+                          style={[styles.channelMetricValue, { color: ch.color }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.75}
+                        >
+                          {formatCurrency(ch.revenue)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.channelMetricCol}>
+                        <Text style={[styles.channelMetricLabel, { color: Colors.textMuted }]}>
+                          Số đơn / TB đơn
+                        </Text>
+                        <Text
+                          style={[styles.channelMetricValueSmall, { color: Colors.textPrimary }]}
+                          numberOfLines={1}
+                        >
+                          {ch.orders} đơn • {formatCurrency(ch.aov)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.channelItemFooterRow,
+                        { borderTopColor: isDark ? '#262320' : '#EAE3DA' },
+                      ]}
+                    >
+                      <Text style={[styles.channelFooterText, { color: Colors.textSecondary }]}>
+                        Lợi nhuận gộp: <Text style={{ fontWeight: '700', color: Colors.textPrimary }}>{formatCurrency(ch.estProfit)}</Text>
+                      </Text>
+                      <Text style={[styles.channelFooterText, { color: Colors.textSecondary }]}>
+                        Thuế (1.5%): <Text style={{ fontWeight: '700', color: '#B45309' }}>{formatCurrency(ch.totalTax)}</Text>
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
@@ -1434,5 +1807,108 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     flexShrink: 0,
+  },
+  channelResetBadge: {
+    backgroundColor: 'rgba(156, 113, 86, 0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  channelResetBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#9C7156',
+  },
+  channelShareBarTrack: {
+    height: 10,
+    borderRadius: 6,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 14,
+    gap: 2,
+  },
+  channelShareBarSegment: {
+    height: '100%',
+  },
+  channelCardsList: {
+    gap: 10,
+  },
+  channelItemCard: {
+    borderRadius: 16,
+    padding: 12,
+    overflow: 'hidden',
+  },
+  channelItemTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  channelItemTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  channelIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  channelItemTitle: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
+  channelItemSub: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  channelSharePill: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
+  channelSharePillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  channelItemMetricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    gap: 12,
+    marginBottom: 8,
+  },
+  channelMetricCol: {
+    flex: 1,
+  },
+  channelMetricLabel: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  channelMetricValue: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  channelMetricValueSmall: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  channelItemFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 8,
+  },
+  channelFooterText: {
+    fontSize: 11,
   },
 });

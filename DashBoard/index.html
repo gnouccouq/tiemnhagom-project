@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Tiệm Nhà Gốm</title>
-    <link rel="stylesheet" href="../css/style.css?v=50">
+    <link rel="stylesheet" href="../css/style.css?v=51">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <!-- Google Fonts -->
@@ -482,18 +482,43 @@
 
                         <!-- 2. Biểu đồ Doanh Thu Thuần -->
                         <div class="kiot-card" style="margin-top: 16px;">
-                            <div class="kiot-card-header flex-between">
+                            <div class="kiot-card-header flex-between" style="flex-wrap: wrap; gap: 8px;">
                                 <div class="kiot-title-group">
                                     <h3 class="kiot-card-title">Doanh thu thuần</h3>
                                     <span id="kiot-net-revenue-total" class="kiot-total-badge">0 VND</span>
                                 </div>
-                                <div class="kiot-filter-group">
+                                <div class="kiot-filter-group" style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="kiot-revenue-channel-filter" class="kiot-select-sm" title="Lọc doanh thu theo kênh bán hàng">
+                                        <option value="all" selected>🌐 Tất cả kênh</option>
+                                        <option value="web_app">💻📱 Web &amp; App (Chung)</option>
+                                        <option value="pos">🏪 Bán tại quầy (POS)</option>
+                                        <option value="social">💬 Mạng xã hội (FB/IG/Zalo)</option>
+                                    </select>
                                     <select id="kiot-revenue-period-filter" class="kiot-select-sm">
                                         <option value="month" selected>Tháng này</option>
                                         <option value="today">Hôm nay</option>
                                         <option value="week">Tuần này</option>
                                         <option value="year">Năm nay</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- Thanh tóm tắt nhanh Doanh thu 3 Kênh bán hàng trên Tổng quan -->
+                            <div id="overview-channel-breakdown-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 0 6px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px;">
+                                <div onclick="window.selectOverviewChannelQuick('web_app')" style="cursor: pointer; background: #FFFBF7; border: 1px solid #F3E5D8; border-left: 3.5px solid #B45309; border-radius: 6px; padding: 8px 12px;">
+                                    <div style="font-size: 0.75rem; color: #6E665D; font-weight: 600;">💻📱 Web &amp; App (Chung)</div>
+                                    <div id="ov-chan-webapp-rev" style="font-size: 0.96rem; font-weight: 700; color: #B45309; margin-top: 2px;">0 VND</div>
+                                    <div id="ov-chan-webapp-sub" style="font-size: 0.71rem; color: #8C8278;">0 đơn (0%)</div>
+                                </div>
+                                <div onclick="window.selectOverviewChannelQuick('pos')" style="cursor: pointer; background: #FAF7FF; border: 1px solid #E9D5FF; border-left: 3.5px solid #7E22CE; border-radius: 6px; padding: 8px 12px;">
+                                    <div style="font-size: 0.75rem; color: #6E665D; font-weight: 600;">🏪 Bán tại quầy (POS)</div>
+                                    <div id="ov-chan-pos-rev" style="font-size: 0.96rem; font-weight: 700; color: #7E22CE; margin-top: 2px;">0 VND</div>
+                                    <div id="ov-chan-pos-sub" style="font-size: 0.71rem; color: #8C8278;">0 đơn (0%)</div>
+                                </div>
+                                <div onclick="window.selectOverviewChannelQuick('social')" style="cursor: pointer; background: #FFF5F8; border: 1px solid #FBCFE8; border-left: 3.5px solid #BE185D; border-radius: 6px; padding: 8px 12px;">
+                                    <div style="font-size: 0.75rem; color: #6E665D; font-weight: 600;">💬 Mạng xã hội (FB/IG/Zalo)</div>
+                                    <div id="ov-chan-social-rev" style="font-size: 0.96rem; font-weight: 700; color: #BE185D; margin-top: 2px;">0 VND</div>
+                                    <div id="ov-chan-social-sub" style="font-size: 0.71rem; color: #8C8278;">0 đơn (0%)</div>
                                 </div>
                             </div>
 
@@ -937,8 +962,41 @@
                                     <input type="text" id="holiday-message" placeholder="Ví dụ: Tiệm Nhà Gốm chúc bạn mùa Giáng Sinh ấm áp & an lành!">
                                 </div>
 
-                                <button type="submit" class="btn-dark" style="width: 100%; border-radius: 8px; padding: 12px;">Lưu Cài Đặt Lễ Hội</button>
+                                <div style="border-top: 1px solid #e2e8f0; margin: 1.25rem 0; padding-top: 1.25rem;">
+                                    <h4 style="font-size: 1rem; color: #7f1d1d; margin: 0 0 10px 0;">🎁 Không Gian Trưng Bày Hàng Noel (Trang chủ &amp; Trang /noel/)</h4>
+                                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+                                        <input type="checkbox" id="holiday-show-showcase" checked style="width: 18px; height: 18px; cursor: pointer;">
+                                        <label for="holiday-show-showcase" style="margin-bottom: 0; cursor: pointer; font-size: 0.95rem; font-weight: 600;">Hiển thị khu vực "Góc Giáng Sinh Ấm Áp" trên Trang chủ &amp; Menu</label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight: 600;">Tiêu đề Kệ Gốm Giáng Sinh</label>
+                                        <input type="text" id="holiday-showcase-title" placeholder="Góc Giáng Sinh Ấm Áp">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight: 600;">Mô tả ngắn dưới tiêu đề</label>
+                                        <input type="text" id="holiday-showcase-subtitle" placeholder="Trao gửi hơi ấm mùa lễ hội qua những món gốm thủ công mộc mạc — Gói quà & viết thiệp tay miễn phí từ Tiệm Nhà Gốm.">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-dark" style="width: 100%; border-radius: 8px; padding: 12px;">Lưu Cài Đặt Lễ Hội &amp; Kệ Noel</button>
                             </form>
+
+                            <!-- Chọn nhanh sản phẩm trưng bày lên Góc Giáng Sinh -->
+                            <div style="border-top: 1px solid #e2e8f0; margin-top: 1.5rem; padding-top: 1.25rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                                    <div>
+                                        <h4 style="font-size: 1rem; color: #0f172a; margin: 0;">🎄 Chọn nhanh sản phẩm lên Kệ Gốm Noel</h4>
+                                        <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0 0;">Tick chọn sản phẩm và phân nhóm để trưng bày tại Góc Giáng Sinh Trang chủ &amp; trang <a href="../noel/" target="_blank" style="color:#991b1b; font-weight:600;">/noel/</a></p>
+                                    </div>
+                                    <span id="holiday-noel-selected-count" style="background:#fef2f2; color:#991b1b; border:1px solid #fecaca; padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:700;">Đã chọn: 0 món</span>
+                                </div>
+                                <div style="display:flex; gap:8px; margin-bottom:10px;">
+                                    <input type="text" id="holiday-noel-product-search" placeholder="🔍 Tìm tên hoặc mã sản phẩm để đưa lên kệ Noel..." style="flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                </div>
+                                <div id="holiday-noel-products-list" style="max-height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; padding: 8px;">
+                                    <div style="padding:16px; text-align:center; color:#64748b; font-size:0.85rem;">Đang tải danh sách sản phẩm...</div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -1451,6 +1509,7 @@
                                 <option value="all">Chọn loại hàng</option>
                                 <option value="normal">Hàng hóa thường</option>
                                 <option value="combo">Hàng combo</option>
+                                <option value="noel">🎄 Hàng trưng bày Noel</option>
                             </select>
                         </div>
 
@@ -1938,13 +1997,21 @@
                                 <a href="javascript:void(0)" style="font-size: 0.76rem; color: #0066cc; text-decoration: none;" onclick="if(typeof showToast!=='undefined') showToast('Thêm kênh bán mới');">Tạo mới</a>
                             </div>
                             <select id="order-filter-channel" class="kiot-filter-select" onchange="window.renderOrdersFiltered()">
-                                <option value="all" selected>Chọn kênh bán</option>
-                                <option value="Facebook">Facebook</option>
-                                <option value="Instagram">Instagram</option>
-                                <option value="POS">Bán trực tiếp (POS)</option>
-                                <option value="Website">Website</option>
-                                <option value="Shopee">Shopee</option>
-                                <option value="TikTok">TikTok Shop</option>
+                                <option value="all" selected>Tất cả kênh bán</option>
+                                <optgroup label="Nhóm Kênh Chính">
+                                    <option value="group_web_app">💻📱 Web &amp; App (Chung)</option>
+                                    <option value="group_pos">🏪 Bán tại quầy (POS)</option>
+                                    <option value="group_social">💬 Mạng xã hội (FB, IG, Zalo...)</option>
+                                </optgroup>
+                                <optgroup label="Chi tiết từng kênh">
+                                    <option value="Website">Website / App</option>
+                                    <option value="POS">Bán trực tiếp (POS)</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Zalo / Khác">Zalo / Khác</option>
+                                    <option value="Shopee">Shopee</option>
+                                    <option value="TikTok">TikTok Shop</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
@@ -2584,8 +2651,9 @@
                         <!-- 1. Nhóm khách hàng / Hạng Membership -->
                         <div class="filter-group">
                             <label class="filter-label">Hạng Gốm Membership</label>
-                            <select id="user-filter-group" class="kiot-filter-select" onchange="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
+                            <select id="user-filter-group" class="kiot-filter-select" onchange="window.handleUserFilterGroupChange(this.value)">
                                 <option value="all" selected>Tất cả các nhóm / Hạng</option>
+                                <option value="registered_newest">🆕 User đăng ký mới nhất</option>
                                 <option value="Kim Cương">💎 Kim Cương (Kim Cương Membership)</option>
                                 <option value="Vàng">🥇 Vàng (Gold Membership)</option>
                                 <option value="Bạc">🥈 Bạc (Silver Membership)</option>
@@ -2716,7 +2784,16 @@
                                 <span class="search-icon">🔍</span>
                                 <input type="text" id="admin-user-search" placeholder="Theo mã KH, tên khách hàng, SĐT, email..." onkeyup="if(typeof window.renderAdminUserTable==='function') window.renderAdminUserTable()">
                             </div>
-                            <div class="toolbar-actions">
+                            <div class="toolbar-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" id="btn-quick-newest-users" class="kiot-btn-outline" onclick="window.toggleNewestRegisteredUsersView()" style="border-color: #0066cc; color: #0066cc; font-weight: 600;">🆕 User đăng ký mới nhất</button>
+                                <select id="user-sort-preset-select" class="kiot-filter-select" style="width: auto; min-width: 195px; height: 34px; margin: 0; font-weight: 600;" onchange="window.applyUserSortPreset(this.value)">
+                                    <option value="spent_desc" selected>💰 Chi tiêu cao nhất</option>
+                                    <option value="registered_newest">🆕 Đăng ký mới nhất (Tài khoản)</option>
+                                    <option value="created_desc">🕒 Ngày tham gia: Mới → Cũ</option>
+                                    <option value="created_asc">🕒 Ngày tham gia: Cũ → Mới</option>
+                                    <option value="points_desc">💎 Điểm tích lũy cao nhất</option>
+                                    <option value="name_asc">🔤 Tên khách hàng (A → Z)</option>
+                                </select>
                                 <button type="button" class="kiot-btn-primary" onclick="window.openAddCustomerModal()">+ Khách hàng</button>
                                 <button type="button" class="kiot-btn-outline" onclick="window.exportUsersExcel()">📤 Xuất file</button>
                             </div>
@@ -2738,13 +2815,14 @@
                                         <th class="user-sortable-header" data-user-sort="id" style="width: 120px; cursor: pointer;" onclick="window.sortUsers('id')" title="Click để sắp xếp">Mã KH (ID) <span class="sort-icon">↕</span></th>
                                         <th class="user-sortable-header" data-user-sort="name" style="width: 150px; cursor: pointer;" onclick="window.sortUsers('name')" title="Click để sắp xếp">Tên khách hàng <span class="sort-icon">↕</span></th>
                                         <th class="user-sortable-header" data-user-sort="phone" style="width: 110px; cursor: pointer;" onclick="window.sortUsers('phone')" title="Click để sắp xếp">Điện thoại <span class="sort-icon">↕</span></th>
+                                        <th class="user-sortable-header" data-user-sort="createdAt" style="width: 115px; cursor: pointer;" onclick="window.sortUsers('createdAt')" title="Click để sắp xếp theo ngày đăng ký">Ngày đăng ký <span class="sort-icon">↕</span></th>
                                         <th style="width: 130px;">Hạng Membership</th>
                                         <th class="user-sortable-header" data-user-sort="points" style="text-align: center; width: 90px; cursor: pointer;" onclick="window.sortUsers('points')" title="Click để sắp xếp">Điểm tích lũy <span class="sort-icon">↕</span></th>
                                         <th class="user-sortable-header" data-user-sort="debt" style="text-align: right; width: 100px; cursor: pointer;" onclick="window.sortUsers('debt')" title="Click để sắp xếp">Nợ hiện tại <span class="sort-icon">↕</span></th>
                                         <th class="user-sortable-header" data-user-sort="spent" style="text-align: right; width: 120px; cursor: pointer;" onclick="window.sortUsers('spent')" title="Click để sắp xếp">Tổng bán (Chi tiêu) <span class="sort-icon">▼</span></th>
                                     </tr>
                                     <tr id="user-table-summary-row" style="background: #f0f7ff; font-size: 0.76rem; border-bottom: 2px solid #cbd5e1;">
-                                        <td colspan="7" style="padding: 6px 8px;"></td>
+                                        <td colspan="8" style="padding: 6px 8px;"></td>
                                         <td id="user-summary-debt" style="text-align: right; font-weight: 700; color: #dc2626; padding: 6px 8px;">0</td>
                                         <td id="user-summary-spent" style="text-align: right; font-weight: 700; color: #0066cc; padding: 6px 8px;">0</td>
                                     </tr>
@@ -2878,6 +2956,15 @@
                                 <option value="all">Toàn bộ năm</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Lọc theo Kênh bán hàng</label>
+                            <select id="stats-channel-filter" class="kiot-filter-select">
+                                <option value="all" selected>🌐 Tất cả kênh bán hàng</option>
+                                <option value="web_app">💻📱 Web &amp; App (Chung)</option>
+                                <option value="pos">🏪 Bán tại quầy (POS)</option>
+                                <option value="social">💬 Mạng xã hội (FB, IG, Zalo...)</option>
+                            </select>
+                        </div>
 
                         <button id="btn-refresh-stats" class="kiot-btn-primary" style="width: 100%; margin-top: 10px; justify-content: center;">
                             📊 Cập nhật báo cáo
@@ -2949,6 +3036,77 @@
                                         <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Hàng Kênh Bán Hàng: Báo cáo doanh thu theo từng kênh (Web/App • POS • Mạng xã hội) -->
+                        <div class="admin-card" id="stats-channel-report-card" style="border: 1.5px solid #E8CCB2; background: #FFFFFF;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #F0ECE6;">
+                                <div>
+                                    <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #2B2928;">
+                                        <span>🌐</span> Báo cáo Doanh thu theo Kênh bán hàng (Web/App • POS • Mạng xã hội)
+                                    </h3>
+                                    <div style="font-size: 0.82rem; color: #6E665D; margin-top: 3px;">
+                                        So sánh tỷ trọng doanh thu, số lượng đơn, lợi nhuận và thuế giữa Website &amp; App (gộp chung), Bán tại quầy (POS) và Mạng xã hội
+                                    </div>
+                                </div>
+                                <div id="stats-channel-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                    <button type="button" class="stats-channel-pill active" data-channel="all" onclick="window.selectStatsChannelFilter('all')" style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #2B2928; background: #2B2928; color: #ffffff; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                                        🌐 Tất cả kênh
+                                    </button>
+                                    <button type="button" class="stats-channel-pill" data-channel="web_app" onclick="window.selectStatsChannelFilter('web_app')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E8CCB2; background: #FFFBF7; color: #B45309; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                        💻📱 Web &amp; App (Chung)
+                                    </button>
+                                    <button type="button" class="stats-channel-pill" data-channel="pos" onclick="window.selectStatsChannelFilter('pos')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E9D5FF; background: #FAF7FF; color: #7E22CE; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                        🏪 Bán tại quầy (POS)
+                                    </button>
+                                    <button type="button" class="stats-channel-pill" data-channel="social" onclick="window.selectStatsChannelFilter('social')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #FBCFE8; background: #FFF5F8; color: #BE185D; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                        💬 Mạng xã hội (FB/IG/Zalo)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 3 Thẻ Scorecard cho 3 Kênh Bán Hàng -->
+                            <div id="stats-channel-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                                <!-- Điền động bằng JS -->
+                            </div>
+
+                            <!-- 2 Biểu đồ Kênh Bán Hàng: Biểu đồ cột theo chu kỳ & Biểu đồ tỷ trọng -->
+                            <div class="admin-grid" style="grid-template-columns: 1.45fr 1fr; gap: 1.25rem; margin-bottom: 18px;">
+                                <div style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;">
+                                        📊 Biến động doanh thu 3 Kênh bán hàng theo chu kỳ
+                                    </div>
+                                    <div style="height: 290px;"><canvas id="channelRevenueTrendChart"></canvas></div>
+                                </div>
+                                <div style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;">
+                                        🍩 Cơ cấu tỷ trọng doanh thu theo Kênh bán
+                                    </div>
+                                    <div style="height: 290px;"><canvas id="channelShareDoughnutChart"></canvas></div>
+                                </div>
+                            </div>
+
+                            <!-- Bảng kê chi tiết Doanh thu, Lợi nhuận & Thuế theo từng Kênh bán hàng -->
+                            <div class="table-responsive">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Kênh bán hàng</th>
+                                            <th style="text-align: center;">Đơn hoàn tất</th>
+                                            <th style="text-align: center;">Đơn hủy</th>
+                                            <th style="text-align: center;">Tỷ trọng DT</th>
+                                            <th style="text-align: right;">DT Thuần (Net)</th>
+                                            <th style="text-align: right;">Thuế (1.5%)</th>
+                                            <th style="text-align: right;">Tổng DT (Gross)</th>
+                                            <th style="text-align: right;">Lợi nhuận (Est)</th>
+                                            <th style="text-align: right;">TB / Đơn (AOV)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stats-channel-breakdown-table">
+                                        <tr><td colspan="9" style="text-align: center; color: #888;">Đang tổng hợp dữ liệu kênh bán hàng...</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -3481,6 +3639,21 @@
                                     <select id="flash-sale-group-select">
                                         <option value="">-- Không tham gia --</option>
                                     </select>
+                                </div>
+                                <div class="form-group" style="margin-top: 14px; margin-bottom: 0; padding: 12px; background: #fef2f2; border: 1px dashed #fca5a5; border-radius: 8px;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                        <label style="margin:0; display:flex; align-items:center; gap:8px; cursor:pointer; color:#991b1b; font-weight:700; font-size:0.88rem;">
+                                            <input type="checkbox" id="product-is-noel" style="width:16px; height:16px; accent-color:#991b1b; cursor:pointer;">
+                                            🎄 Trưng bày tại Góc Giáng Sinh / Noel
+                                        </label>
+                                        <select id="product-noel-tag" style="padding:6px 10px; border-radius:6px; border:1px solid #fecaca; background:#fff; font-size:0.82rem; color:#7f1d1d; font-weight:600;">
+                                            <option value="all">✨ Tự động phân nhóm Noel</option>
+                                            <option value="cups">☕ Ly &amp; Tách mùa lễ hội</option>
+                                            <option value="dining">🍽️ Bàn tiệc Giáng Sinh</option>
+                                            <option value="gifts">🎁 Set quà tặng Noel</option>
+                                            <option value="decor">🕯️ Decor &amp; Bình hoa</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4155,8 +4328,11 @@
                     <div>
                         <label class="filter-label">Kênh bán</label>
                         <select id="edit-order-channel" class="kiot-filter-select">
+                            <option value="Website">Website / App (Chung)</option>
                             <option value="POS">Bán trực tiếp (POS)</option>
-                            <option value="Website">Website</option>
+                            <option value="Facebook">Facebook (Mạng xã hội)</option>
+                            <option value="Instagram">Instagram (Mạng xã hội)</option>
+                            <option value="Zalo / Khác">Zalo / Khác (Mạng xã hội)</option>
                             <option value="Shopee">Shopee</option>
                             <option value="TikTok">TikTok Shop</option>
                         </select>
@@ -5094,7 +5270,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=73"></script>
+    <script type="module" src="../js/DashBoard.js?v=76"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

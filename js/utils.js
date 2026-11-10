@@ -394,7 +394,7 @@ export async function fetchUserMembershipInfo(userOrUid = null) {
                 const qOrders = query(collection(db, "orders"), where("userId", "==", uid));
                 const snap = await getDocs(qOrders);
                 snap.forEach(d => ordersMap.set(d.id, d.data()));
-            } catch (e) {}
+            } catch (e) { }
         }));
 
         let orderSpent = 0;
@@ -440,7 +440,7 @@ export async function fetchUserMembershipInfo(userOrUid = null) {
             if (userData.membershipTier !== tier.name) updates.membershipTier = tier.name;
             if (Object.keys(updates).length > 0) {
                 updates.updatedAt = new Date().toISOString();
-                setDoc(doc(db, "users", effectiveUid), updates, { merge: true }).catch(() => {});
+                setDoc(doc(db, "users", effectiveUid), updates, { merge: true }).catch(() => { });
             }
         }
 
@@ -451,7 +451,7 @@ export async function fetchUserMembershipInfo(userOrUid = null) {
         try {
             const cached = sessionStorage.getItem('tng_current_tier');
             if (cached) fallbackTier = JSON.parse(cached);
-        } catch (_) {}
+        } catch (_) { }
         return { effectiveUid: rawUid, totalSpent: fallbackTier.min || 0, tier: fallbackTier, points: 0, userData: {} };
     }
 }
@@ -974,7 +974,7 @@ if (typeof window !== 'undefined') {
     window.showCustomAlert = showModalAlert;
     window.showCustomConfirm = showModalConfirm;
     window.showCustomPrompt = showModalPrompt;
-    window.handleHeaderAvatarError = function(img) {
+    window.handleHeaderAvatarError = function (img) {
         if (!img) return;
         img.onerror = null;
         const placeholder = document.createElement('div');
@@ -1112,10 +1112,10 @@ export async function autoLinkOrdersByPhone(userId, phone) {
                         updateDoc(doc(db, "users", userId), {
                             displayName: uData.displayName || '',
                             address: uData.address || ''
-                        }, { merge: true }).catch(() => {});
+                        }, { merge: true }).catch(() => { });
                     }
                     if (uData.isGhost === true || uSnap.id.startsWith('cust_')) {
-                        updateDoc(uSnap.ref, { isMerged: true, mergedTo: userId }).catch(() => {});
+                        updateDoc(uSnap.ref, { isMerged: true, mergedTo: userId }).catch(() => { });
                     }
                 }
             });
@@ -1339,7 +1339,7 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                     const currentPrice = hasSale ? (p.salePrice || Math.round(p.price * (1 - p.sale / 100))) : p.price;
                     const safeName = escapeHTML(p.name);
                     const isOutOfStock = (p.stock || 0) <= 0;
-                    
+
                     let displayImg = p.imageUrl;
                     if (!displayImg || displayImg.includes('placehold.co') || displayImg === 'https://placehold.co/400?text=No+Image') {
                         if (p.colorVariants && p.colorVariants[0] && p.colorVariants[0].imageUrl) displayImg = p.colorVariants[0].imageUrl;
@@ -1548,7 +1548,7 @@ export function updateMembershipPrices(tier) {
             } catch (e) { }
         }
         if (typeof window.updateV2PriceDisplay === 'function') {
-            try { window.updateV2PriceDisplay(); } catch (_) {}
+            try { window.updateV2PriceDisplay(); } catch (_) { }
         }
         const containers = document.querySelectorAll('.dynamic-membership-price');
         if (!containers || containers.length === 0) return;
@@ -1615,8 +1615,8 @@ function getDistanceFromHcmCenter(lat, lon) {
     const dLat = (lat - HCM_LAT) * Math.PI / 180;
     const dLon = (lon - HCM_LON) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(HCM_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.cos(HCM_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Khoảng cách tính bằng km
 }
@@ -1730,15 +1730,21 @@ export function updateExpressDeliveryBadges(isHcm = null) {
 window.updateExpressDeliveryBadges = updateExpressDeliveryBadges;
 window.getExpressDeliveryStatus = getExpressDeliveryStatus;
 
+export function getProductDisplayPrice(product = {}) {
+    const base = Number(product.price) || 0;
+    const salePrice = Number(product.salePrice) || (product.sale > 0 ? Math.round(base * (1 - Number(product.sale) / 100)) : base);
+    return { minPrice: salePrice || base, maxPrice: base };
+}
+
 export function renderProductCardWithVariants(product, id, favsList = [], linkBase = 'product/index.html', options = {}) {
     const onlyBestSellers = Boolean(options.onlyBestSellers);
     const productIsBestSeller = !((product.stock || 0) <= 0) && ((Number(product.sold) || 0) >= 5 || Boolean(product.isBestSeller));
-    
+
     let cardsHtml = '';
     if (!onlyBestSellers || productIsBestSeller) {
         cardsHtml += renderProductCard(product, id, favsList, linkBase);
     }
-            
+
     // Render independent color variants
     if (product.colorVariants && Array.isArray(product.colorVariants)) {
         product.colorVariants.forEach(v => {
@@ -1768,7 +1774,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
             }
         });
     }
-            
+
     // Render independent pattern variants
     if (product.patternVariants && Array.isArray(product.patternVariants)) {
         product.patternVariants.forEach(v => {
@@ -1826,7 +1832,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
             }
         });
     }
-            
+
     return cardsHtml;
 }
 
@@ -1907,9 +1913,12 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
 
     const bestSellerBadge = isBestSeller ? `<div class="product-badge-circle badge-hot" title="Sản phẩm bán chạy"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Bán</span><span style="font-size: 0.68rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Chạy</span></div>` : '';
     const newArrivalBadge = isNewArrival ? `<div class="product-badge-circle badge-new" title="Hàng mới về trong 2 tuần"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Hàng</span><span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Mới</span></div>` : '';
+    const isNoelProduct = !isOutOfStock && Boolean(product.isNoel);
+    const noelBadge = isNoelProduct ? `<div class="product-badge-circle badge-noel" title="Bộ sưu tập Giáng Sinh"><span style="font-size: 0.68rem; line-height: 1;">🎄</span><span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; letter-spacing: 0.3px;">Noel</span></div>` : '';
 
-    const badgesCorner = (isBestSeller || isNewArrival) ? `
+    const badgesCorner = (isBestSeller || isNewArrival || isNoelProduct) ? `
         <div class="product-badges-corner" style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none;">
+            ${noelBadge}
             ${bestSellerBadge}
             ${newArrivalBadge}
         </div>
@@ -2246,7 +2255,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             // Lấy avatar từ hint lưu trước đó hoặc từ Firebase Auth user
             const cachedAvatar = userHint?.avatar || user.photoURL;
             const defaultAvatarHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
-            const avatarContentHTML = cachedAvatar ? 
+            const avatarContentHTML = cachedAvatar ?
                 `<img id="header-user-avatar-img" src="${cachedAvatar}" alt="${displayName}" class="header-user-avatar" onerror="if(typeof window.handleHeaderAvatarError==='function'){window.handleHeaderAvatarError(this);}else{this.style.display='none';}">` :
                 `<div id="header-user-avatar-img">${defaultAvatarHTML}</div>`;
 
@@ -2296,7 +2305,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
             if (bottomAuthBtn && bottomAuthMenu) {
                 // Đổi thành link # để kích hoạt dropdown
                 bottomAuthBtn.href = "#";
-                
+
                 bottomAuthMenu.innerHTML = `
                     <li class="dropdown-user-info" style="padding: 10px 20px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
                         <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-black);">${displayName}</div>
@@ -2324,9 +2333,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         Đăng xuất
                     </button></li>
                 `;
-                
+
                 document.getElementById('btn-logout-bottom').onclick = () => logout().then(() => window.location.href = `${pathPrefix}index.html`);
-                
+
                 // Click để toggle dropdown
                 bottomAuthBtn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -2338,7 +2347,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         bottomAuthBtn.classList.add('active');
                     }
                 });
-                
+
                 // Click ra ngoài để đóng
                 document.addEventListener('click', (e) => {
                     if (!bottomAuthBtn.contains(e.target) && !bottomAuthMenu.contains(e.target)) {
@@ -2365,7 +2374,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 10px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                                 Trang quản trị
                             </a>`;
-                            
+
                         const mobileAdminPlaceholder = document.getElementById('mobile-admin-link-placeholder');
                         if (mobileAdminPlaceholder) {
                             mobileAdminPlaceholder.innerHTML = `
@@ -2419,6 +2428,10 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         }
                     }
 
+                    const authCreationIso = (user.metadata && user.metadata.creationTime && !isNaN(new Date(user.metadata.creationTime).getTime()))
+                        ? new Date(user.metadata.creationTime).toISOString()
+                        : null;
+
                     if (!userSnap.exists()) {
                         const rawPhone = user.phoneNumber || '';
                         const p0 = rawPhone ? formatPhoneNumber(rawPhone) : '';
@@ -2453,13 +2466,15 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         if (existingPrimaryDoc) {
                             // Gán tài khoản SĐT mới này liên kết vào tài khoản chính có Email
                             targetUid = existingPrimaryDoc.data().mergedTo || existingPrimaryDoc.id;
+                            const firstRegIso = authCreationIso || new Date().toISOString();
                             await setDoc(userRef, {
                                 uid: user.uid,
                                 phone: p0,
                                 identifiers: phoneVariants,
                                 isMerged: true,
                                 mergedTo: targetUid,
-                                createdAt: new Date().toISOString(),
+                                createdAt: firstRegIso,
+                                registeredAt: firstRegIso,
                                 lastLogin: new Date().toISOString()
                             }, { merge: true });
 
@@ -2476,6 +2491,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                             const identifiers = [];
                             if (user.email) identifiers.push(user.email);
                             if (phoneVariants.length > 0) identifiers.push(...phoneVariants);
+                            const firstRegIso = authCreationIso || new Date().toISOString();
 
                             await setDoc(userRef, {
                                 uid: user.uid,
@@ -2483,6 +2499,8 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 phone: p0,
                                 identifiers: identifiers,
                                 isGhost: false,
+                                createdAt: firstRegIso,
+                                registeredAt: firstRegIso,
                                 lastLogin: new Date().toISOString()
                             }, { merge: true });
 
@@ -2490,7 +2508,18 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                         }
                     } else {
                         const userData = userSnap.data();
-                        await updateDoc(doc(db, "users", targetUid), { lastLogin: new Date().toISOString() });
+                        const loginUpdatePayload = { lastLogin: new Date().toISOString() };
+                        if (authCreationIso && targetUid === user.uid) {
+                            if (!userData.registeredAt) {
+                                loginUpdatePayload.registeredAt = authCreationIso;
+                            }
+                            const existingCreatedMs = userData.createdAt ? new Date(userData.createdAt).getTime() : NaN;
+                            const authCreatedMs = new Date(authCreationIso).getTime();
+                            if (!userData.createdAt || isNaN(existingCreatedMs) || authCreatedMs < existingCreatedMs) {
+                                loginUpdatePayload.createdAt = authCreationIso;
+                            }
+                        }
+                        await updateDoc(doc(db, "users", targetUid), loginUpdatePayload);
                         // Tự động cập nhật liên kết đơn hàng nếu user đã có SĐT lưu sẵn
                         if (userData.phone) await autoLinkOrdersByPhone(targetUid, userData.phone);
 
@@ -2727,6 +2756,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                 .replace(/href="collections\//g, `href="${pathPrefix}collections/`)
                 .replace(/href="about\//g, `href="${pathPrefix}about/`)
                 .replace(/href="membership\//g, `href="${pathPrefix}membership/`)
+                .replace(/href="noel\//g, `href="${pathPrefix}noel/`)
                 .replace(/href="flash-sale\//g, `href="${pathPrefix}flash-sale/`)
                 .replace(/href="lookbook\//g, `href="${pathPrefix}lookbook/`)
                 .replace(/href="blog\//g, `href="${pathPrefix}blog/`)
@@ -2757,7 +2787,7 @@ export async function loadSharedComponents(pathPrefix = './') {
             const headerHTML = fixPaths(await h.text());
             document.getElementById('header-placeholder').innerHTML = headerHTML;
             const prefix = pathPrefix === './' ? '' : pathPrefix;
-            
+
             // Khởi tạo lại các event listener cho giỏ hàng sau khi load header
             if (typeof initDrawerCart === 'function') {
                 initDrawerCart();
@@ -2765,8 +2795,8 @@ export async function loadSharedComponents(pathPrefix = './') {
 
             // Khởi tạo Google Translate và nút đổi ngôn ngữ
             if (!window.googleTranslateElementInit) {
-                window.googleTranslateElementInit = function() {
-                    new google.translate.TranslateElement({pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false}, 'google_translate_element');
+                window.googleTranslateElementInit = function () {
+                    new google.translate.TranslateElement({ pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false }, 'google_translate_element');
                 };
                 const gtScript = document.createElement('script');
                 gtScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
@@ -2789,7 +2819,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                     option.addEventListener('click', (e) => {
                         e.preventDefault();
                         const nextLang = option.getAttribute('data-lang');
-                        
+
                         if (nextLang === 'vi') {
                             // Trở về ngôn ngữ gốc: Xóa cookie googtrans
                             document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -2826,12 +2856,12 @@ export async function loadSharedComponents(pathPrefix = './') {
                 const toggleMenu = () => {
                     const isActive = navLinks.classList.toggle('active');
                     if (menuToggle) menuToggle.classList.toggle('active', isActive);
-                    
+
                     document.body.classList.toggle('menu-open', isActive);
                 };
 
                 if (menuToggle) menuToggle.onclick = toggleMenu;
-                
+
 
                 // Đóng menu khi click ra ngoài hoặc vào link
                 document.addEventListener('click', (e) => {
@@ -2904,6 +2934,7 @@ export async function loadSharedComponents(pathPrefix = './') {
             if (footerList) {
                 let footerHtml = `
                     <li><a href="${pathPrefix}products/">Tất cả sản phẩm</a></li>
+                    <li><a href="${pathPrefix}noel/">🎄 Góc Giáng Sinh</a></li>
                     <li><a href="${pathPrefix}flash-sale/">Flash Sale</a></li>
                 `;
                 dynamicCategories.forEach(group => { // Iterate over array
@@ -3005,7 +3036,7 @@ export function getOtpValue(containerId) {
 // 14. Logic: Realtime Presence & Page View Tracking
 function detectDeviceInfo() {
     const ua = navigator.userAgent || '';
-    
+
     // OS Detection
     let os = 'Khác';
     if (/android/i.test(ua)) os = 'Android';
@@ -3125,7 +3156,7 @@ function getUtmInfo() {
 
         const saved = sessionStorage.getItem('tng_utm_data');
         if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
 
     return { source: null, medium: null, campaign: null };
 }
@@ -3308,10 +3339,10 @@ export async function renderDrawerCart() {
             const pSnap = await getDoc(doc(db, "products", item.id));
             if (!pSnap.exists()) continue;
             const pData = pSnap.data();
-            
+
             const hasSale = pData.sale > 0;
             const currentPrice = hasSale ? (pData.salePrice || Math.round(pData.price * (1 - pData.sale / 100))) : pData.price;
-            
+
             const itemTotal = currentPrice * item.quantity;
             totalAmount += itemTotal;
 
@@ -3350,7 +3381,7 @@ window.updateDrawerCartItem = async (id, color, pattern, change) => {
             const cartRef = doc(db, "carts", user.uid);
             const cartSnap = await getDoc(cartRef);
             if (cartSnap.exists()) cart = cartSnap.data().items || [];
-            
+
             const idx = cart.findIndex(i => i.id === id && (i.color || '') === color && (i.pattern || '') === pattern);
             if (idx !== -1) {
                 cart[idx].quantity += change;
@@ -3398,7 +3429,7 @@ if (document.readyState === 'loading') {
 }
 
 // --- Mobile Hover Fix for Collection Banners ---
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     if (window.innerWidth <= 768) {
         const banner = e.target.closest('.collection-banner');
         if (banner) {

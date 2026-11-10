@@ -439,7 +439,13 @@ async function renderCheckoutForm(container) {
                 </div>
             </div>
             <div class="form-group"><label>Shipping Address | Địa chỉ nhận hàng *</label><input type="text" id="shipping-address" required></div>
-            <div class="form-group"><label>Order Note</label><textarea id="order-note" rows="3"></textarea></div>
+            <div class="form-group">
+                <label style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <span>Order Note | Ghi chú đơn hàng &amp; Thiệp quà tặng</span>
+                    ${localStorage.getItem('tng_noel_gift_note') ? `<span style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">🎄 Đã đính kèm lời chúc Thiệp Giáng Sinh</span>` : `<a href="../noel/#noel-gift-writer" style="font-size:0.75rem; color:#991B1B; font-weight:600; text-decoration:underline;">🎄 Viết thiệp Giáng Sinh miễn phí</a>`}
+                </label>
+                <textarea id="order-note" rows="3" placeholder="Ghi chú giao hàng hoặc lời chúc viết tay lên thiệp Giáng Sinh...">${(localStorage.getItem('tng_noel_gift_note') || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+            </div>
             
             <div class="form-group">
                 <label>Delivery Method | Phương thức nhận hàng</label>

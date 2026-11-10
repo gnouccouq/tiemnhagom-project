@@ -89,6 +89,30 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
   const isSoldOut = checkOutOfStock(product, product.selectedVariant);
 
+  // Kiểm tra hàng mới chuẩn Web (js/utils.js): Được tạo trong vòng 14 ngày (2 tuần)
+  const FOURTEEN_DAYS_MS = 1209600000;
+  const createdAtMs = (() => {
+    const raw = product.createdAt;
+    if (!raw) return NaN;
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string') return new Date(raw).getTime();
+    if (typeof raw?.toDate === 'function') {
+      try {
+        return raw.toDate().getTime();
+      } catch {
+        return NaN;
+      }
+    }
+    if (typeof raw?.seconds === 'number') return raw.seconds * 1000;
+    return NaN;
+  })();
+  const isNewArrival =
+    !isSoldOut &&
+    (Boolean(product.isNew) ||
+      (!isNaN(createdAtMs) &&
+        Date.now() - createdAtMs <= FOURTEEN_DAYS_MS &&
+        Date.now() - createdAtMs >= 0));
+
   const handleQuickAdd = (e: any) => {
     e.stopPropagation?.();
     if (isSoldOut) return;
@@ -164,6 +188,13 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
             <View style={styles.circleBadgeHot}>
               <Text style={styles.circleBadgeHotSmall}>BÁN</Text>
               <Text style={styles.circleBadgeHotText}>CHẠY</Text>
+            </View>
+          ) : null}
+
+          {isNewArrival ? (
+            <View style={styles.circleBadgeNew}>
+              <Text style={styles.circleBadgeNewSmall}>HÀNG</Text>
+              <Text style={styles.circleBadgeNewText}>MỚI</Text>
             </View>
           ) : null}
         </View>
@@ -382,6 +413,40 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '800',
     color: Colors.badgeSale,
+    lineHeight: 11,
+    textTransform: 'uppercase',
+  },
+  circleBadgeNew: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#D6E8DC',
+    borderWidth: 1,
+    borderColor: 'rgba(30, 75, 45, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    transform: [{ rotate: '15deg' }],
+  },
+  circleBadgeNewSmall: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 7.5,
+    fontWeight: '700',
+    color: '#1E4B2D',
+    opacity: 0.85,
+    lineHeight: 8.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  circleBadgeNewText: {
+    fontFamily: 'ElleGaborStd',
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1E4B2D',
     lineHeight: 11,
     textTransform: 'uppercase',
   },

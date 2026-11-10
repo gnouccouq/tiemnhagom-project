@@ -3357,7 +3357,7 @@ footer {
 .pos-fast-cash button {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 999px !important;
+    border-radius: 6px !important;
     padding: 6px 0 !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
@@ -11676,7 +11676,7 @@ body.admin-dashboard-layout {
     font-weight: 700 !important;
     font-size: 0.85rem !important;
     padding: 5px 16px !important;
-    border-radius: 999px !important;
+    border-radius: 6px !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
     cursor: pointer;
@@ -13706,7 +13706,7 @@ input:checked + .slider:before {
     flex-shrink: 0 !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 999px !important;
+    border-radius: 6px !important;
     padding: 14px 16px 24px !important;
     box-sizing: border-box !important;
     position: static !important;
@@ -13722,7 +13722,7 @@ input:checked + .slider:before {
     flex-direction: column !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 999px !important;
+    border-radius: 6px !important;
     padding: 14px 16px 30px !important;
     box-sizing: border-box !important;
 }
@@ -14199,4 +14199,16 @@ input:checked + .slider:before {
 
 .drawer-cart-footer .btn-primary:hover {
     opacity: 0.85;
+}
+
+/* Bảo vệ giao diện Admin Dashboard khỏi bo tròn 999px (Giữ chuẩn góc vuông nhẹ 6px-8px) */
+body.admin-dashboard-layout .kiot-filter-sidebar,
+body.admin-dashboard-layout .kiot-product-main,
+body.admin-dashboard-layout .btn-dark,
+body.admin-dashboard-layout .btn-outline,
+body.admin-dashboard-layout .btn-minimal,
+body.admin-dashboard-layout .btn-primary,
+body.admin-dashboard-layout .form-group input:not([type="checkbox"]):not([type="radio"]),
+body.admin-dashboard-layout .form-group select {
+    border-radius: 6px !important;
 }

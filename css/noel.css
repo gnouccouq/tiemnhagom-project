@@ -290,3 +290,560 @@ body.noel-active .noel-fairy-lights {
         display: none !important;
     }
 }
+
+/* ============================================================
+   6. NAVBAR NOEL LINK & PRODUCT CARD NOEL BADGE
+   ============================================================ */
+.nav-links .noel-nav-link {
+    color: #991B1B !important;
+    font-weight: 700 !important;
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.08), rgba(217, 119, 6, 0.14));
+    border: 1px solid rgba(180, 83, 9, 0.28);
+    padding: 4px 12px !important;
+    border-radius: 999px;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.25s ease !important;
+}
+
+.navbar.transparent .nav-links .noel-nav-link {
+    background: rgba(127, 29, 29, 0.72);
+    color: #FEF3C7 !important;
+    border-color: rgba(252, 211, 77, 0.45);
+    backdrop-filter: blur(6px);
+}
+
+.nav-links .noel-nav-link:hover,
+.nav-links .noel-nav-link.active {
+    background: linear-gradient(135deg, #881337, #991B1B) !important;
+    color: #FEF3C7 !important;
+    border-color: #F59E0B !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(153, 27, 27, 0.22);
+}
+
+.product-badge-circle.badge-noel {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%);
+    color: #FEF3C7;
+    border: 1.5px solid #FCD34D;
+    box-shadow: 0 3px 10px rgba(127, 29, 29, 0.28);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transform: rotate(8deg);
+}
+
+/* ============================================================
+   7. HOMEPAGE NOEL SHOWCASE SECTION (Gợi ý 1: Góc Giáng Sinh Ấm Áp)
+   ============================================================ */
+.noel-showcase-section {
+    position: relative;
+    margin: 3rem auto;
+    padding: 3.5rem 5%;
+    background: radial-gradient(circle at 15% 20%, rgba(153, 27, 27, 0.06) 0%, transparent 55%),
+                radial-gradient(circle at 85% 80%, rgba(217, 119, 6, 0.08) 0%, transparent 55%),
+                linear-gradient(180deg, #FDF8F3 0%, #FAF2EA 100%);
+    border-top: 1px solid #EBD9C8;
+    border-bottom: 1px solid #EBD9C8;
+    overflow: hidden;
+}
+
+.noel-showcase-inner,
+.noel-showcase-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.noel-showcase-banner-top,
+.noel-showcase-banner {
+    background: linear-gradient(135deg, #4A151B 0%, #6E1D24 52%, #542318 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    color: #FFFBEB;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 14px 34px rgba(74, 21, 27, 0.18);
+    border: 1px solid rgba(252, 211, 77, 0.28);
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.noel-showcase-banner-top::after,
+.noel-showcase-banner::after {
+    content: '✦ ❄ ✦';
+    position: absolute;
+    right: 28px;
+    top: 12px;
+    font-size: 0.9rem;
+    letter-spacing: 8px;
+    color: rgba(253, 230, 138, 0.25);
+    pointer-events: none;
+}
+
+.noel-showcase-header-left,
+.noel-banner-left {
+    flex: 1;
+    min-width: 280px;
+}
+
+.noel-eyebrow-pill,
+.noel-season-badge,
+.noel-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(254, 243, 199, 0.14);
+    border: 1px solid rgba(252, 211, 77, 0.4);
+    color: #FDE68A;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.noel-showcase-title,
+.noel-banner-left h2 {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(1.65rem, 3vw, 2.35rem);
+    color: #FFFBEB;
+    margin: 0 0 8px 0;
+    line-height: 1.25;
+}
+
+.noel-showcase-subtitle,
+.noel-banner-left p {
+    color: #F3E5D8;
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: 620px;
+    line-height: 1.55;
+    opacity: 0.92;
+}
+
+.noel-showcase-countdown-box,
+.noel-countdown-box {
+    background: rgba(28, 10, 12, 0.42);
+    border: 1px solid rgba(252, 211, 77, 0.35);
+    border-radius: 12px;
+    padding: 14px 22px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+}
+
+.noel-countdown-label-top,
+.noel-countdown-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #FDE68A;
+    font-weight: 700;
+}
+
+.noel-countdown-digits,
+.noel-countdown-timer {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 12px;
+}
+
+.noel-cd-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    background: rgba(255, 251, 235, 0.12);
+    border: 1px solid rgba(254, 243, 199, 0.28);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.noel-cd-num {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #FEF3C7;
+    line-height: 1.1;
+}
+
+.noel-cd-txt {
+    font-size: 0.68rem;
+    color: #E7D5C5;
+    text-transform: uppercase;
+    margin-top: 3px;
+    font-weight: 600;
+}
+
+/* Noel Category Tabs */
+.noel-tabs-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.noel-tabs-scroll,
+.noel-tabs-list {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+}
+
+.noel-tabs-scroll::-webkit-scrollbar,
+.noel-tabs-list::-webkit-scrollbar {
+    display: none;
+}
+
+.noel-tab-btn {
+    border: 1px solid #DFC8B4;
+    background: #FFFFFF;
+    color: #4A3525;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.22s ease;
+    font-family: inherit;
+}
+
+.noel-tab-btn:hover {
+    border-color: #991B1B;
+    color: #991B1B;
+    transform: translateY(-1px);
+}
+
+.noel-tab-btn.active {
+    background: linear-gradient(135deg, #7F1D1D, #991B1B);
+    color: #FEF3C7;
+    border-color: #7F1D1D;
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.22);
+}
+
+.noel-gift-perk-pill,
+.noel-perk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #7C2D12;
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.noel-perk-pill:hover {
+    background: #FDE68A;
+    color: #4A151B;
+}
+
+.noel-showcase-footer {
+    margin-top: 2.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.btn-noel-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+    color: #FEF3C7 !important;
+    border: 1px solid #F59E0B;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    letter-spacing: 0.4px;
+    box-shadow: 0 6px 18px rgba(127, 29, 29, 0.22);
+    transition: all 0.25s ease;
+}
+
+.btn-noel-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(127, 29, 29, 0.32);
+    background: linear-gradient(135deg, #651515 0%, #881337 100%);
+}
+
+/* ============================================================
+   8. LANDING PAGE /noel/ (Gợi ý 2: Không Gian Giáng Sinh Riêng)
+   ============================================================ */
+.noel-landing-hero {
+    margin-top: -80px;
+    padding: 135px 5% 65px 5%;
+    background: radial-gradient(circle at 50% 25%, rgba(217, 119, 6, 0.22), transparent 60%),
+                linear-gradient(160deg, #3B0D11 0%, #5B161C 50%, #3E1D14 100%);
+    color: #FFFBEB;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.noel-landing-hero-inner,
+.noel-hero-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.noel-landing-hero h1 {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(2rem, 4.2vw, 3.2rem);
+    color: #FFFBEB;
+    margin: 10px 0 14px 0;
+    line-height: 1.2;
+}
+
+.noel-landing-hero p {
+    font-size: 1.02rem;
+    color: #F3E5D8;
+    line-height: 1.65;
+    max-width: 680px;
+    margin: 0 auto 24px auto;
+}
+
+.noel-hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.btn-noel-gold {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: #2B090C !important;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-noel-gold:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+}
+
+.btn-noel-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 251, 235, 0.12);
+    border: 1px solid rgba(254, 243, 199, 0.45);
+    color: #FEF3C7 !important;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-noel-ghost:hover {
+    background: rgba(255, 251, 235, 0.22);
+    transform: translateY(-2px);
+}
+
+.noel-page-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 5% 4rem 5%;
+}
+
+.noel-perks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    max-width: 1280px;
+    margin: -34px auto 32px auto;
+    position: relative;
+    z-index: 10;
+}
+
+.noel-perk-card {
+    background: #FFFFFF;
+    border: 1px solid #EBD9C8;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: 0 8px 24px rgba(74, 21, 27, 0.07);
+}
+
+.noel-perk-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #FEF3C7;
+    color: #991B1B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.noel-perk-card h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+    color: #2B2928;
+    font-weight: 700;
+}
+
+.noel-perk-card p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #6E665D;
+    line-height: 1.45;
+}
+
+.noel-filter-toolbar {
+    background: #FAF6F0;
+    border: 1px solid #E8CCB2;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.noel-price-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.noel-price-pill {
+    border: 1px solid #D6C3B0;
+    background: #FFFFFF;
+    color: #4A3525;
+    padding: 6px 13px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.noel-price-pill.active,
+.noel-price-pill:hover {
+    background: #9C7156;
+    color: #FFFFFF;
+    border-color: #9C7156;
+}
+
+/* Gift Card Writer Section on /noel/ */
+.noel-gift-writer-box {
+    max-width: 1280px;
+    margin: 3.5rem auto 1rem auto;
+    background: linear-gradient(135deg, #FFFBF5 0%, #FDF2E9 100%);
+    border: 1.5px dashed #D97706;
+    border-radius: 14px;
+    padding: 28px 32px;
+    display: block;
+}
+
+.noel-gift-writer-box h3 {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 1.5rem;
+    color: #4A151B;
+    margin: 0 0 8px 0;
+}
+
+.noel-gift-writer-box > p {
+    color: #57534E;
+    font-size: 0.92rem;
+    margin: 0 0 18px 0;
+    line-height: 1.55;
+}
+
+.noel-gift-form-row {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 14px;
+    align-items: stretch;
+}
+
+.noel-gift-form-row textarea {
+    width: 100%;
+    min-height: 92px;
+    padding: 12px 14px;
+    border: 1px solid #D6D3D1;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background: #FFFFFF;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+@media (max-width: 768px) {
+    .noel-showcase-banner-top,
+    .noel-showcase-banner {
+        padding: 20px 18px;
+    }
+    .noel-showcase-countdown-box,
+    .noel-countdown-box {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .noel-cd-unit {
+        min-width: 54px;
+        padding: 6px 8px;
+    }
+    .noel-gift-writer-box {
+        padding: 20px 18px;
+    }
+    .noel-gift-form-row {
+        grid-template-columns: 1fr;
+    }
+}

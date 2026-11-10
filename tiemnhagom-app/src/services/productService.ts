@@ -337,6 +337,19 @@ export async function getArticleById(id: string): Promise<NewsArticle | null> {
 }
 
 /**
+ * Gom đầy đủ danh sách ảnh sản phẩm chuẩn Web (imageUrl + additionalImages + images)
+ */
+export function extractProductImages(data: any, fallbackMainUrl?: string): string[] {
+  const main = fallbackMainUrl || data?.imageUrl || data?.thumbUrl || '';
+  const additionals = Array.isArray(data?.additionalImages) ? data.additionalImages : [];
+  const legacyImages = Array.isArray(data?.images) ? data.images : [];
+  const rawList = [main, ...additionals, ...legacyImages].filter(
+    (u): u is string => typeof u === 'string' && u.trim().length > 0
+  );
+  return Array.from(new Set(rawList));
+}
+
+/**
  * Lấy danh sách sản phẩm từ Firestore
  */
 export async function getProducts(options?: {
@@ -377,6 +390,8 @@ export async function getProducts(options?: {
         }
       }
 
+      const baseImages = extractProductImages(data, finalImageUrl);
+
       const baseProduct: Product = {
         id: docSnap.id,
         name: data.name || 'Sản phẩm gốm',
@@ -387,16 +402,19 @@ export async function getProducts(options?: {
         sold: Number(data.sold) || 0,
         category: data.category || 'Gốm sứ',
         description: data.description || '',
-        images: Array.isArray(data.images) && data.images.length > 0 ? data.images : (finalImageUrl ? [finalImageUrl] : []),
+        images: baseImages,
+        additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+        hoverImageUrl: data.hoverImageUrl || undefined,
         imageUrl: finalImageUrl,
         colorVariants: data.colorVariants || [],
         patternVariants: data.patternVariants || [],
         comboVariants: data.comboVariants || [],
         collections: data.collections || [],
         isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
+        isNew: Boolean(data.isNew),
         isFeatured: Boolean(data.isFeatured),
         rating: Number(data.rating) || 5,
-        createdAt: data.createdAt || data.createdDate || data.updatedAt,
+        createdAt: data.createdAt || data.createdDate,
         updatedAt: data.updatedAt,
         dimensions: data.dimensions,
         details: data.details,
@@ -443,16 +461,19 @@ export async function getProducts(options?: {
             sold: vSold,
             category: data.category || 'Gốm sứ',
             description: data.description || '',
-            images: v.imageUrl ? [v.imageUrl] : (finalImageUrl ? [finalImageUrl] : []),
+            images: Array.from(new Set([v.imageUrl || v.thumbUrl, ...baseImages].filter(Boolean))),
+            additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+            hoverImageUrl: data.hoverImageUrl || undefined,
             imageUrl: v.imageUrl || v.thumbUrl || finalImageUrl,
             colorVariants: data.colorVariants || [],
             patternVariants: data.patternVariants || [],
             comboVariants: data.comboVariants || [],
             collections: data.collections || [],
             isBestSeller: vIsBestSeller,
+            isNew: Boolean(data.isNew),
             isFeatured: Boolean(data.isFeatured),
             rating: Number(data.rating) || 5,
-            createdAt: data.createdAt || data.createdDate || data.updatedAt,
+            createdAt: data.createdAt || data.createdDate,
             updatedAt: data.updatedAt,
           });
         };
@@ -544,7 +565,7 @@ export function seedProductCache(products: Product[]): void {
   for (const p of products) {
     if (p && p.id) {
       productDetailCache.set(p.id, { product: p, timestamp: now });
-      if (p.parentProductId) {
+      if (p.parentProductId && !productDetailCache.has(p.parentProductId)) {
         productDetailCache.set(p.parentProductId, { product: p, timestamp: now });
       }
     }
@@ -564,14 +585,15 @@ export function getCachedProductById(productId: string): Product | null {
  */
 export async function getProductById(productId: string): Promise<Product | null> {
   const cached = getCachedProductById(productId);
-  if (cached) return cached;
 
   try {
     const docRef = doc(db, 'products', productId);
     const snap = await getDoc(docRef);
-    if (!snap.exists()) return null;
+    if (!snap.exists()) return cached || null;
 
     const data = snap.data();
+    const finalImageUrl = data.imageUrl || (Array.isArray(data.images) && data.images[0]) || '';
+    const baseImages = extractProductImages(data, finalImageUrl);
     const product: Product = {
       id: snap.id,
       name: data.name || '',
@@ -582,16 +604,19 @@ export async function getProductById(productId: string): Promise<Product | null>
       sold: Number(data.sold) || 0,
       category: data.category || 'Gốm sứ',
       description: data.description || '',
-      images: Array.isArray(data.images) ? data.images : (data.imageUrl ? [data.imageUrl] : []),
-      imageUrl: data.imageUrl || (Array.isArray(data.images) && data.images[0]) || '',
+      images: baseImages,
+      additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+      hoverImageUrl: data.hoverImageUrl || undefined,
+      imageUrl: finalImageUrl,
       colorVariants: data.colorVariants || [],
       patternVariants: data.patternVariants || [],
       comboVariants: data.comboVariants || [],
       collections: data.collections || [],
       isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
+      isNew: Boolean(data.isNew),
       isFeatured: Boolean(data.isFeatured),
       rating: Number(data.rating) || 5,
-      createdAt: data.createdAt || data.createdDate || data.updatedAt,
+      createdAt: data.createdAt || data.createdDate,
       updatedAt: data.updatedAt,
       dimensions: data.dimensions,
       details: data.details,

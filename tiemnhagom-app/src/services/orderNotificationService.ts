@@ -16,7 +16,8 @@ if (!(isExpoGo && Platform.OS === 'android')) {
   }
 }
 
-export const DELETED_NOTIFS_KEY = '@tiemnhagom_deleted_notif_ids';
+import { DELETED_NOTIFS_KEY } from '../constants/notificationKeys';
+export { DELETED_NOTIFS_KEY };
 
 export type OrderNotificationStage = 'created' | 'shipping' | 'completed' | 'pos' | 'rental' | 'cancelled';
 

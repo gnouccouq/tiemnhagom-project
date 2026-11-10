@@ -51,7 +51,7 @@ class NoelThemeEngine {
             const link = document.createElement('link');
             link.id = 'noel-theme-styles';
             link.rel = 'stylesheet';
-            link.href = `${this.pathPrefix}css/noel.css?v=3`;
+            link.href = `${this.pathPrefix}css/noel.css?v=5`;
             document.head.appendChild(link);
         }
     }
@@ -238,6 +238,11 @@ class NoelThemeEngine {
         // Thêm/Xóa class trên body
         document.body.classList.toggle('noel-active', active);
 
+        // Ẩn/Hiện mục menu Giáng Sinh trên thanh điều hướng
+        document.querySelectorAll('.noel-nav-item').forEach(el => {
+            el.style.display = active ? '' : 'none';
+        });
+
         if (active) {
             this.startSnow();
         } else {
@@ -365,8 +370,42 @@ class NoelThemeEngine {
             } else {
                 this.removeHolidayBanner();
             }
+            const showcaseSec = document.getElementById('noel-showcase-section');
+            if (showcaseSec) {
+                const showShowcase = hs.active !== false && hs.showShowcase !== false;
+                showcaseSec.style.display = showShowcase ? '' : 'none';
+                if (hs.showcaseTitle) {
+                    const titleEl = document.getElementById('noel-showcase-title-text');
+                    if (titleEl) titleEl.textContent = hs.showcaseTitle;
+                }
+                if (hs.showcaseSubtitle) {
+                    const subEl = document.getElementById('noel-showcase-subtitle-text');
+                    if (subEl) subEl.textContent = hs.showcaseSubtitle;
+                }
+            }
         }
     }
+}
+
+/**
+ * Phân loại sản phẩm thuộc nhóm kệ Noel nào:
+ * 'cups' (Ly & Tách), 'dining' (Bàn tiệc), 'gifts' (Set quà tặng), 'decor' (Decor & Bình hoa)
+ */
+export function classifyNoelSubCategory(product = {}) {
+    if (product.noelTag && product.noelTag !== 'all') {
+        return product.noelTag;
+    }
+    const text = `${product.name || ''} ${product.category || ''} ${product.subCategory || ''} ${(product.collections || []).join(' ')}`.toLowerCase();
+    if (product.isCombo || /combo|set|bộ quà|quà tặng|gift|hộp/i.test(text)) {
+        return 'gifts';
+    }
+    if (/ly|tách|cốc|mug|cup|ấm|trà|teatime|drink|lót ly/i.test(text)) {
+        return 'cups';
+    }
+    if (/bình|lọ|hoa|đèn|nến|tượng|decor|trang trí|thông/i.test(text)) {
+        return 'decor';
+    }
+    return 'dining';
 }
 
 // Singleton Instance
@@ -383,4 +422,5 @@ export function initNoelTheme(pathPrefix = './') {
 if (typeof window !== 'undefined') {
     window.initNoelTheme = initNoelTheme;
     window.noelEngine = noelEngine;
+    window.classifyNoelSubCategory = classifyNoelSubCategory;
 }

@@ -1022,11 +1022,19 @@ function updateTodayMetrics(orders) {
 
 // Đăng ký Event Listeners cho tất cả bộ lọc trên Overview
 function bindOverviewEventListeners() {
-    // A. Bộ lọc thời gian cho Biểu đồ Doanh Thu Thuần
+    // A. Bộ lọc thời gian & kênh bán cho Biểu đồ Doanh Thu Thuần
     const revPeriodSelect = document.getElementById('kiot-revenue-period-filter');
+    const revChannelSelect = document.getElementById('kiot-revenue-channel-filter');
     if (revPeriodSelect) {
         revPeriodSelect.onchange = (e) => {
-            renderNetRevenueChart(overviewOrdersData, e.target.value, activeRevenueTab);
+            const chan = revChannelSelect?.value || 'all';
+            renderNetRevenueChart(overviewOrdersData, e.target.value, activeRevenueTab, chan);
+        };
+    }
+    if (revChannelSelect) {
+        revChannelSelect.onchange = (e) => {
+            const period = revPeriodSelect?.value || 'month';
+            renderNetRevenueChart(overviewOrdersData, period, activeRevenueTab, e.target.value);
         };
     }
 
@@ -1038,7 +1046,8 @@ function bindOverviewEventListeners() {
             e.currentTarget.classList.add('active');
             activeRevenueTab = e.currentTarget.getAttribute('data-chart-tab') || 'day';
             const period = document.getElementById('kiot-revenue-period-filter')?.value || 'month';
-            renderNetRevenueChart(overviewOrdersData, period, activeRevenueTab);
+            const chan = document.getElementById('kiot-revenue-channel-filter')?.value || 'all';
+            renderNetRevenueChart(overviewOrdersData, period, activeRevenueTab, chan);
         };
     });
 
@@ -1095,12 +1104,60 @@ function filterOrdersByPeriod(orders, period) {
     });
 }
 
+window.selectOverviewChannelQuick = function (channelGroup) {
+    const chanSel = document.getElementById('kiot-revenue-channel-filter');
+    const periodSel = document.getElementById('kiot-revenue-period-filter');
+    if (!chanSel) return;
+    chanSel.value = (chanSel.value === channelGroup) ? 'all' : channelGroup;
+    renderNetRevenueChart(overviewOrdersData, periodSel?.value || 'month', activeRevenueTab, chanSel.value);
+};
+
 // Render Biểu đồ Doanh Thu Thuần
-function renderNetRevenueChart(orders, period = 'month', viewTab = 'day') {
+function renderNetRevenueChart(orders, period = 'month', viewTab = 'day', channelFilter = null) {
     const ctx = document.getElementById('overview-net-revenue-chart');
     if (!ctx) return;
 
-    const filteredOrders = filterOrdersByPeriod(orders, period);
+    const effectiveChannel = channelFilter || document.getElementById('kiot-revenue-channel-filter')?.value || 'all';
+    const periodOrders = filterOrdersByPeriod(orders, period);
+
+    // Tính doanh thu 3 nhóm kênh bán hàng trên toàn bộ đơn trong kỳ (để hiển thị thanh tóm tắt 3 kênh)
+    const ovChannelSummary = {
+        web_app: { rev: 0, count: 0 },
+        pos: { rev: 0, count: 0 },
+        social: { rev: 0, count: 0 }
+    };
+    let ovAllRev = 0;
+    periodOrders.forEach(o => {
+        const grp = typeof window.getOrderSalesChannelGroup === 'function' ? window.getOrderSalesChannelGroup(o) : 'web_app';
+        const amt = Number(o.totalAmount) || 0;
+        if (ovChannelSummary[grp]) {
+            ovChannelSummary[grp].rev += amt;
+            ovChannelSummary[grp].count += 1;
+        }
+        ovAllRev += amt;
+    });
+
+    const fmtMoney = (v) => `${new Intl.NumberFormat('vi-VN').format(Math.round(v || 0))} VND`;
+    const fmtPct = (v) => ovAllRev > 0 ? `${((v / ovAllRev) * 100).toFixed(1)}%` : '0%';
+
+    const elWebRev = document.getElementById('ov-chan-webapp-rev');
+    const elWebSub = document.getElementById('ov-chan-webapp-sub');
+    if (elWebRev) elWebRev.innerText = fmtMoney(ovChannelSummary.web_app.rev);
+    if (elWebSub) elWebSub.innerText = `${ovChannelSummary.web_app.count} đơn (${fmtPct(ovChannelSummary.web_app.rev)})`;
+
+    const elPosRev = document.getElementById('ov-chan-pos-rev');
+    const elPosSub = document.getElementById('ov-chan-pos-sub');
+    if (elPosRev) elPosRev.innerText = fmtMoney(ovChannelSummary.pos.rev);
+    if (elPosSub) elPosSub.innerText = `${ovChannelSummary.pos.count} đơn (${fmtPct(ovChannelSummary.pos.rev)})`;
+
+    const elSocRev = document.getElementById('ov-chan-social-rev');
+    const elSocSub = document.getElementById('ov-chan-social-sub');
+    if (elSocRev) elSocRev.innerText = fmtMoney(ovChannelSummary.social.rev);
+    if (elSocSub) elSocSub.innerText = `${ovChannelSummary.social.count} đơn (${fmtPct(ovChannelSummary.social.rev)})`;
+
+    const filteredOrders = effectiveChannel === 'all'
+        ? periodOrders
+        : periodOrders.filter(o => (typeof window.getOrderSalesChannelGroup === 'function' ? window.getOrderSalesChannelGroup(o) : 'web_app') === effectiveChannel);
 
     let labels = [];
     let dataValues = [];
@@ -5622,6 +5679,8 @@ if (productForm) {
                 slug: document.getElementById('slug').value.trim(),
                 isHidden: document.getElementById('product-is-hidden').checked,
                 isOnlyEvent: document.getElementById('product-only-event').checked,
+                isNoel: document.getElementById('product-is-noel') ? document.getElementById('product-is-noel').checked : false,
+                noelTag: document.getElementById('product-noel-tag') ? document.getElementById('product-noel-tag').value : 'all',
                 isCombo: isCombo,
                 comboVariants: isCombo ? window.comboVariants : [],
                 comboItems: isCombo && window.comboVariants.length > 0 ? window.comboVariants[0].items : [], // Backward compatibility
@@ -6250,7 +6309,8 @@ function renderAdminProductTable() {
 
         const matchesType = typeValue === 'all' ||
             (typeValue === 'combo' && p.isCombo) ||
-            (typeValue === 'normal' && !p.isCombo);
+            (typeValue === 'normal' && !p.isCombo) ||
+            (typeValue === 'noel' && Boolean(p.isNoel));
 
         let matchesStatus = true;
         if (statusValue === 'active') matchesStatus = !p.isHidden;
@@ -6349,6 +6409,7 @@ function renderAdminProductTable() {
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Đã ẩn</span>' : ''}
                     ${p.isOnlyEvent ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #e0f2fe; color: #0284c7; border: 1px solid #7dd3fc; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sự kiện</span>' : ''}
                     ${p.isFlashSale ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #ffeaa7; color: #d63031; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sale</span>' : ''}
+                    ${p.isNoel ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.72rem; border-radius: 4px; font-weight: 700;">🎄 Noel</span>' : ''}
                 </td>
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
                 <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
@@ -6722,6 +6783,8 @@ async function editProduct(id) {
             if (elCostPrice) elCostPrice.value = window.formatCurrencyDisplay(p.costPrice || 0);
             document.getElementById('product-is-hidden').checked = p.isHidden || false;
             document.getElementById('product-only-event').checked = p.isOnlyEvent || false;
+            if (document.getElementById('product-is-noel')) document.getElementById('product-is-noel').checked = Boolean(p.isNoel);
+            if (document.getElementById('product-noel-tag')) document.getElementById('product-noel-tag').value = p.noelTag || 'all';
             document.getElementById('stock').value = p.stock || 0;
             if (document.getElementById('usage-food-safe')) document.getElementById('usage-food-safe').checked = p.usage?.isFoodSafe !== false;
             if (document.getElementById('usage-oven-safe')) document.getElementById('usage-oven-safe').checked = p.usage?.isOvenSafe || false;
@@ -7390,6 +7453,63 @@ window.getItemFinancials = function (item) {
     };
 };
 
+window.getOrderSalesChannelGroup = function (order) {
+    if (!order) return 'web_app';
+    const orderIdStr = String(order.id || order.orderId || order.orderCode || '').toUpperCase();
+    const rawChannel = String(order.channel || '').trim().toLowerCase();
+    const rawSource = String(order.orderSource || order.source || '').trim().toLowerCase();
+
+    // 1. Kênh Bán tại quầy (POS)
+    if (
+        orderIdStr.startsWith('POS') ||
+        orderIdStr.includes('POS-') ||
+        rawSource === 'pos' ||
+        rawChannel === 'pos' ||
+        rawChannel.includes('bán trực tiếp') ||
+        rawChannel.includes('tại quầy') ||
+        order.inStore === true ||
+        Boolean(order.cashierId)
+    ) {
+        return 'pos';
+    }
+
+    // 2. Kênh Mạng xã hội (Facebook, Instagram, Zalo, TikTok, Shopee, Social...)
+    if (
+        rawChannel.includes('facebook') ||
+        rawChannel === 'fb' ||
+        rawChannel.includes('instagram') ||
+        rawChannel === 'ig' ||
+        rawChannel.includes('zalo') ||
+        rawChannel.includes('tiktok') ||
+        rawChannel.includes('shopee') ||
+        rawChannel.includes('mạng xã hội') ||
+        rawChannel.includes('social') ||
+        rawChannel.includes('fanpage') ||
+        rawChannel.includes('mess') ||
+        rawSource === 'social' ||
+        (rawSource === 'online' && rawChannel && !rawChannel.includes('web') && !rawChannel.includes('app'))
+    ) {
+        return 'social';
+    }
+
+    // 3. Mặc định: Website & App (Gộp chung)
+    return 'web_app';
+};
+
+window.getOrderSalesChannelDetail = function (order) {
+    const grp = window.getOrderSalesChannelGroup(order);
+    if (grp === 'pos') return 'Bán tại quầy (POS)';
+    if (grp === 'web_app') return 'Web & App (Chung)';
+    const rawChannel = String(order?.channel || '').trim();
+    const lower = rawChannel.toLowerCase();
+    if (lower.includes('facebook') || lower === 'fb') return 'Facebook';
+    if (lower.includes('instagram') || lower === 'ig') return 'Instagram';
+    if (lower.includes('zalo')) return 'Zalo / Khác';
+    if (lower.includes('tiktok')) return 'TikTok Shop';
+    if (lower.includes('shopee')) return 'Shopee';
+    return rawChannel || 'Mạng xã hội';
+};
+
 window.getOrderFinancialMetrics = function (order) {
     if (!order) {
         return {
@@ -7402,6 +7522,12 @@ window.getOrderFinancialMetrics = function (order) {
             totalDiscounts: 0,
             finalTotal: 0,
             paidAmount: 0,
+            remainingAmount: 0,
+            isPaid: false,
+            isCod: false,
+            isCancelled: false,
+            paymentMethodDisplay: 'Tiền mặt',
+            paymentStatusText: 'Chưa trả tiền',
             totalQty: 0
         };
     }
@@ -7447,8 +7573,71 @@ window.getOrderFinancialMetrics = function (order) {
         finalTotal = Math.max(0, subtotal + shippingFee - billDiscount - memberDiscount);
     }
 
-    const paidAmount = order.cashGiven ? Math.max(finalTotal, Number(order.cashGiven)) : finalTotal;
+    // Xác định trạng thái thanh toán thực tế (Đã trả tiền hay Chưa trả tiền / Thu hộ COD)
+    const orderIdStr = String(order.id || order.orderId || order.orderCode || '').toUpperCase();
+    const isPosOrder = orderIdStr.startsWith('POS') ||
+        orderIdStr.includes('POS-') ||
+        order.source === 'pos' ||
+        order.orderSource === 'pos' ||
+        order.channel === 'pos' ||
+        order.channel === 'POS' ||
+        order.channel === 'Bán trực tiếp (POS)' ||
+        order.inStore === true ||
+        Boolean(order.cashierId);
+
+    const statusRaw = String(order.status || '').trim().toLowerCase();
+    const payStatusRaw = String(order.paymentStatus || '').trim().toLowerCase();
+    const payMethodRaw = String(order.paymentMethod || order.actualPaymentMethod || '').trim().toLowerCase();
+
+    const isCancelled = statusRaw.includes('hủy') || statusRaw.includes('cancel');
+    const isCod = payMethodRaw === 'cod' ||
+        payMethodRaw.includes('cod') ||
+        payMethodRaw.includes('khi nhận hàng') ||
+        payMethodRaw.includes('thu hộ');
+
+    let isPaid = false;
+    if (isCancelled) {
+        isPaid = false;
+    } else if (isPosOrder) {
+        isPaid = true;
+    } else if (['đã thanh toán', 'đã hoàn thành', 'hoàn thành', 'hoàn tất', 'completed', 'paid', 'đã giao'].includes(statusRaw)) {
+        isPaid = true;
+    } else if (statusRaw === 'chờ thanh toán') {
+        isPaid = false;
+    } else if (['paid', 'đã thanh toán', 'completed', 'success', 'đã trả'].includes(payStatusRaw)) {
+        isPaid = true;
+    } else if (['pending', 'unpaid', 'chưa thanh toán', 'chờ thanh toán', 'cod'].includes(payStatusRaw)) {
+        isPaid = false;
+    } else if (order.isPaid === true) {
+        isPaid = true;
+    } else if (order.isPaid === false) {
+        isPaid = false;
+    } else if (isCod) {
+        isPaid = false;
+    } else if (Number(order.cashGiven) > 0) {
+        isPaid = true;
+    } else {
+        isPaid = !isCod;
+    }
+
+    const paidAmount = isPaid
+        ? (order.cashGiven ? Math.max(finalTotal, Number(order.cashGiven)) : finalTotal)
+        : 0;
+    const remainingAmount = isPaid ? 0 : (isCancelled ? 0 : finalTotal);
     const totalDiscounts = itemsDiscountTotal + billDiscount + memberDiscount;
+
+    let paymentMethodDisplay = order.paymentMethod || (isPosOrder ? 'Tiền mặt' : 'COD');
+    if (payMethodRaw === 'cod') paymentMethodDisplay = 'Thu hộ (COD)';
+    else if (payMethodRaw === 'banking') paymentMethodDisplay = 'Chuyển khoản (VietQR)';
+
+    let paymentStatusText = '';
+    if (isCancelled) {
+        paymentStatusText = 'Đã hủy';
+    } else if (isPaid) {
+        paymentStatusText = isCod ? 'Đã thu tiền (COD)' : 'Đã trả tiền';
+    } else {
+        paymentStatusText = isCod ? 'Chưa trả tiền (Thu hộ COD)' : 'Chưa trả tiền';
+    }
 
     return {
         subtotal,
@@ -7460,6 +7649,12 @@ window.getOrderFinancialMetrics = function (order) {
         totalDiscounts,
         finalTotal,
         paidAmount,
+        remainingAmount,
+        isPaid,
+        isCod,
+        isCancelled,
+        paymentMethodDisplay,
+        paymentStatusText,
         totalQty: totalQty || (Number(order.totalQuantity) || (items.length > 0 ? items.length : 1))
     };
 };
@@ -7722,7 +7917,23 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
         const matchesPricelist = pricelistVal === 'all' || orderPricelist === pricelistVal;
 
         const orderChannel = order.channel || (order.id.startsWith('POS') ? 'POS' : 'Website');
-        const matchesChannel = channelVal === 'all' || orderChannel === channelVal;
+        const orderChannelGroup = window.getOrderSalesChannelGroup(order);
+        let matchesChannel = false;
+        if (channelVal === 'all') {
+            matchesChannel = true;
+        } else if (channelVal === 'group_web_app') {
+            matchesChannel = orderChannelGroup === 'web_app';
+        } else if (channelVal === 'group_pos') {
+            matchesChannel = orderChannelGroup === 'pos';
+        } else if (channelVal === 'group_social') {
+            matchesChannel = orderChannelGroup === 'social';
+        } else if (channelVal === 'Website') {
+            matchesChannel = orderChannelGroup === 'web_app' || orderChannel === 'Website';
+        } else if (channelVal === 'POS') {
+            matchesChannel = orderChannelGroup === 'pos';
+        } else {
+            matchesChannel = orderChannel.toLowerCase().includes(channelVal.toLowerCase());
+        }
         const matchesUserId = !currentOrderUserIdFilter || order.userId === currentOrderUserIdFilter;
 
         let matchesDate = true;
@@ -7900,7 +8111,10 @@ function renderOrderRows(ordersList, tableElement) {
                 </td>
                 <td style="text-align: right; font-weight: 600; font-size: 0.74rem; white-space: nowrap;">${formatVND(metrics.subtotal)}</td>
                 <td style="text-align: right; color: #64748b; font-size: 0.74rem; white-space: nowrap;">${metrics.totalDiscounts > 0 ? formatVND(metrics.totalDiscounts) : '0'}</td>
-                <td style="text-align: right; font-weight: 700; color: #0f172a; font-size: 0.74rem; white-space: nowrap;">${formatVND(metrics.paidAmount)}</td>
+                <td style="text-align: right; font-weight: 700; color: ${metrics.isPaid ? '#16a34a' : '#dc2626'}; font-size: 0.74rem; white-space: nowrap;" title="${metrics.paymentStatusText}">
+                    ${formatVND(metrics.paidAmount)}
+                    ${!metrics.isPaid && !metrics.isCancelled ? `<span style="display: block; font-size: 0.62rem; font-weight: 600; color: #d97706;">${metrics.isCod ? 'Chưa thu (COD)' : 'Chưa trả'}</span>` : ''}
+                </td>
                 <td style="text-align: center; white-space: nowrap;">
                     <span class="qv-tag ${tagClass}" style="padding: 2px 5px; font-weight: 600; border-radius: 4px; font-size: 0.68rem;">${status}</span>
                 </td>
@@ -7909,6 +8123,317 @@ function renderOrderRows(ordersList, tableElement) {
     });
     tableElement.innerHTML = htmlContent || '<tr><td colspan="10" style="text-align:center; padding: 2rem; color: #94a3b8;">Chưa có hóa đơn nào.</td></tr>';
 }
+
+window.toggleOrderPaymentPaid = async function (orderId, markAsPaid, event) {
+    if (event) event.stopPropagation();
+    try {
+        const order = allOrdersCache.find(o => o.id === orderId);
+        const newPayStatus = markAsPaid ? 'paid' : 'pending';
+        const updateData = {
+            paymentStatus: newPayStatus,
+            isPaid: Boolean(markAsPaid)
+        };
+
+        await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
+
+        if (order) {
+            order.paymentStatus = newPayStatus;
+            order.isPaid = Boolean(markAsPaid);
+        }
+
+        if (typeof renderOrdersFiltered === 'function') {
+            renderOrdersFiltered();
+        }
+        // Mở lại QuickView cho đơn hàng vừa cập nhật
+        setTimeout(() => {
+            window.toggleOrderQuickView(orderId);
+        }, 30);
+
+        if (typeof showToast === 'function') {
+            showToast(markAsPaid ? `Đã đánh dấu đơn #${orderId} là ĐÃ TRẢ TIỀN` : `Đã chuyển đơn #${orderId} sang CHƯA TRẢ TIỀN`, "success");
+        }
+    } catch (err) {
+        console.error("Lỗi cập nhật trạng thái thanh toán:", err);
+        if (typeof showToast === 'function') {
+            showToast("Không thể cập nhật trạng thái thanh toán: " + err.message, "error");
+        }
+    }
+};
+
+window.filterOrdersByCustomerKeyword = function (keyword) {
+    const modal = document.getElementById('order-customer-quick-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+    const searchInput = document.getElementById('order-search-input');
+    if (searchInput) {
+        searchInput.value = keyword || '';
+        window.currentOrderPage = 1;
+        if (typeof window.renderOrdersFiltered === 'function') {
+            window.renderOrdersFiltered();
+        }
+        if (typeof showToast === 'function') {
+            showToast(`Đang lọc các đơn hàng của khách: ${keyword}`, "info");
+        }
+    }
+};
+
+window.openOrderCustomerQuickModal = async function (orderId, event) {
+    if (event) event.stopPropagation();
+
+    const order = (allOrdersCache || []).find(o => o.id === orderId);
+    if (!order) return;
+
+    const rawUserId = String(order.userId || order.customerId || '').trim();
+    const isGuestId = !rawUserId || ['guest', 'guest_online', 'khách vãng lai', 'n/a'].includes(rawUserId.toLowerCase());
+    const orderPhoneRaw = order.shippingAddress?.phone || order.customerPhone || order.phone || order.rentalInfo?.phone || '';
+    const cleanPhone = (p) => String(p || '').replace(/\D/g, '').replace(/^84/, '0');
+    const targetPhoneClean = cleanPhone(orderPhoneRaw);
+
+    const allCusts = typeof getAllCustomersCombined === 'function' ? getAllCustomersCombined() : [];
+    let matchedCust = null;
+    let rawUserDoc = null;
+
+    if (!isGuestId) {
+        rawUserDoc = (posUsersLocal || []).find(u => String(u.id) === rawUserId) || null;
+        matchedCust = allCusts.find(c => String(c.id) === rawUserId) || null;
+    }
+    if (!matchedCust && targetPhoneClean.length >= 8) {
+        matchedCust = allCusts.find(c => {
+            const cp = cleanPhone(c.phone || c.phoneNumber);
+            return cp && (cp === targetPhoneClean || cp.endsWith(targetPhoneClean.slice(-8)) || targetPhoneClean.endsWith(cp.slice(-8)));
+        }) || null;
+    }
+    if (!rawUserDoc && targetPhoneClean.length >= 8) {
+        rawUserDoc = (posUsersLocal || []).find(u => {
+            const up = cleanPhone(u.phone || u.phoneNumber);
+            return up && (up === targetPhoneClean || up.endsWith(targetPhoneClean.slice(-8)) || targetPhoneClean.endsWith(up.slice(-8)));
+        }) || null;
+    }
+
+    // Nếu chưa có trong cache local nhưng có UID hợp lệ, thử đọc trực tiếp từ Firestore
+    if (!rawUserDoc && !isGuestId && typeof db !== 'undefined' && typeof getDoc === 'function') {
+        try {
+            const uSnap = await getDoc(doc(db, "users", rawUserId));
+            if (uSnap.exists()) {
+                rawUserDoc = { id: uSnap.id, ...uSnap.data() };
+            }
+        } catch (e) {
+            console.warn("Không đọc được user doc từ Firestore:", e);
+        }
+    }
+
+    const effectiveUid = rawUserDoc?.id || matchedCust?.id || (!isGuestId ? rawUserId : 'Khách vãng lai');
+    const hasRealAccount = Boolean(rawUserDoc && rawUserDoc.id);
+
+    const custName = matchedCust?.displayName || rawUserDoc?.displayName || rawUserDoc?.fullName || rawUserDoc?.name || order.shippingAddress?.fullName || order.customerName || order.rentalInfo?.companyName || 'Khách mua tại shop';
+    const custPhone = formatPhoneNumber(matchedCust?.phone || rawUserDoc?.phoneNumber || rawUserDoc?.phone || orderPhoneRaw) || 'Chưa có SĐT';
+    const custEmail = matchedCust?.email || rawUserDoc?.email || order.customerEmail || 'Chưa cập nhật';
+    const custGender = matchedCust?.gender || rawUserDoc?.gender || 'Chưa cập nhật';
+    const rawDob = matchedCust?.birthday || matchedCust?.dob || rawUserDoc?.birthday || rawUserDoc?.dob || '';
+    const custBirthday = rawDob ? (isNaN(new Date(rawDob).getTime()) ? rawDob : new Date(rawDob).toLocaleDateString('vi-VN')) : 'Chưa cập nhật';
+    const custAddress = order.shippingAddress?.address || order.rentalInfo?.address || matchedCust?.address || rawUserDoc?.address || 'Chưa có địa chỉ';
+    const avatarUrl = matchedCust?.photoURL || matchedCust?.avatar || rawUserDoc?.photoURL || rawUserDoc?.avatar || '';
+
+    // Tìm toàn bộ lịch sử đơn hàng của khách này
+    const customerOrders = (allOrdersCache || []).filter(o => {
+        if (!isGuestId && o.userId && String(o.userId) === rawUserId) return true;
+        if (hasRealAccount && o.userId && String(o.userId) === String(rawUserDoc.id)) return true;
+        if (targetPhoneClean.length >= 8) {
+            const op = cleanPhone(o.shippingAddress?.phone || o.customerPhone || o.phone || o.rentalInfo?.phone);
+            if (op && (op === targetPhoneClean || op.endsWith(targetPhoneClean.slice(-8)) || targetPhoneClean.endsWith(op.slice(-8)))) {
+                return true;
+            }
+        }
+        return o.id === orderId;
+    }).sort((a, b) => {
+        const da = getOrderDateObj(a) || new Date(0);
+        const db2 = getOrderDateObj(b) || new Date(0);
+        return db2 - da;
+    });
+
+    const earliestOrderObj = customerOrders.length > 0 ? getOrderDateObj(customerOrders[customerOrders.length - 1]) : getOrderDateObj(order);
+    const rawUserCreatedObj = parseUserCreatedDateObj(rawUserDoc) || parseUserCreatedDateObj(matchedCust);
+    let finalCreatedObj = rawUserCreatedObj || earliestOrderObj;
+    if (rawUserCreatedObj && earliestOrderObj && earliestOrderObj.getTime() < rawUserCreatedObj.getTime()) {
+        finalCreatedObj = earliestOrderObj;
+    }
+    const createdAtStr = finalCreatedObj && !isNaN(finalCreatedObj.getTime())
+        ? finalCreatedObj.toLocaleDateString('vi-VN')
+        : 'Chưa rõ';
+
+    let calcSpent = 0;
+    let completedCount = 0;
+    customerOrders.forEach(o => {
+        const m = window.getOrderFinancialMetrics(o);
+        if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status) || m.isPaid) {
+            if (!m.isCancelled) {
+                calcSpent += m.finalTotal;
+            }
+        }
+        if (['Đã hoàn thành', 'Hoàn thành'].includes(o.status)) {
+            completedCount++;
+        }
+    });
+
+    const spent = Math.max(
+        calcSpent,
+        Number(matchedCust?.totalSpent) || 0,
+        Number(rawUserDoc?.totalSpent) || 0,
+        (!isGuestId && userTotalSpentLocal[rawUserId]) ? Number(userTotalSpentLocal[rawUserId]) : 0
+    );
+    const tier = typeof getMembershipTier === 'function' ? getMembershipTier(spent) : { name: 'Thành viên', color: '#9C7156' };
+    const points = matchedCust?.points !== undefined
+        ? matchedCust.points
+        : (rawUserDoc?.points !== undefined && rawUserDoc.points !== 50 ? Number(rawUserDoc.points) : Math.floor(spent / 10000));
+
+    let modal = document.getElementById('order-customer-quick-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'order-customer-quick-modal';
+        modal.className = 'modal';
+        modal.onclick = function (e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+        };
+        document.body.appendChild(modal);
+    }
+
+    const avatarHtml = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${escapeHTML(custName)}" style="width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2.5px solid ${tier.color || '#0066cc'}; box-shadow: 0 4px 12px rgba(0,0,0,0.12); flex-shrink: 0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div style="display: none; width: 68px; height: 68px; border-radius: 50%; background: ${tier.color || '#0066cc'}; color: #fff; font-size: 1.7rem; font-weight: 700; align-items: center; justify-content: center; flex-shrink: 0;">${escapeHTML(custName.charAt(0).toUpperCase())}</div>`
+        : `<div style="display: flex; width: 68px; height: 68px; border-radius: 50%; background: ${tier.color || '#0066cc'}; color: #fff; font-size: 1.7rem; font-weight: 700; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">${escapeHTML(custName.charAt(0).toUpperCase())}</div>`;
+
+    const recentOrdersHtml = customerOrders.slice(0, 5).map(o => {
+        const od = getOrderDateObj(o);
+        const odStr = od ? od.toLocaleString('vi-VN') : 'N/A';
+        const om = window.getOrderFinancialMetrics(o);
+        const st = o.status || 'Đang xử lý';
+        let stColor = '#d97706';
+        if (st === 'Đã hoàn thành' || st === 'Hoàn thành') stColor = '#16a34a';
+        else if (st === 'Đã hủy') stColor = '#dc2626';
+
+        return `
+            <tr style="border-bottom: 1px solid #f1f5f9; background: ${o.id === orderId ? '#f0f9ff' : '#ffffff'};">
+                <td style="padding: 7px 8px; font-weight: 700; color: #0066cc; font-size: 0.78rem;">
+                    ${o.id} ${o.id === orderId ? '<span style="font-size: 0.65rem; background: #0066cc; color: #fff; padding: 1px 5px; border-radius: 3px; margin-left: 4px;">Đơn này</span>' : ''}
+                </td>
+                <td style="padding: 7px 8px; color: #64748b; font-size: 0.76rem;">${odStr}</td>
+                <td style="padding: 7px 8px; text-align: right; font-weight: 700; color: #0f172a; font-size: 0.78rem;">${formatVND(om.finalTotal)} đ</td>
+                <td style="padding: 7px 8px; text-align: center; font-size: 0.73rem;">
+                    <span style="padding: 2px 6px; border-radius: 4px; font-weight: 600; background: ${om.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${om.isPaid ? '#15803d' : '#dc2626'};">
+                        ${om.isPaid ? '✓ Đã trả' : (om.isCod ? '⏳ COD' : '⏳ Chưa trả')}
+                    </span>
+                </td>
+                <td style="padding: 7px 8px; text-align: center; font-size: 0.74rem; font-weight: 600; color: ${stColor};">${st}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const filterKey = (!isGuestId ? rawUserId : (orderPhoneRaw || custName)).replace(/'/g, "\\'");
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 650px; width: 95%; padding: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22); border: 1px solid #e2e8f0;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); padding: 18px 22px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    ${avatarHtml}
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong style="font-size: 1.18rem; color: #0f172a;">${escapeHTML(custName)}</strong>
+                            <span style="background: ${tier.color || '#0066cc'}; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;">👑 ${tier.name}</span>
+                            ${hasRealAccount ? '<span style="background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">Đã đăng ký App/Web</span>' : '<span style="background: #f1f5f9; color: #64748b; font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;">Khách vãng lai / Online</span>'}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                            Mã User (UID): <strong style="color: #0066cc; user-select: all;">${escapeHTML(effectiveUid)}</strong>
+                            <span style="margin: 0 6px;">•</span>
+                            Ngày tham gia: <strong>${createdAtStr}</strong>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="const m = document.getElementById('order-customer-quick-modal'); if (m) { m.classList.remove('active'); m.style.display='none'; }" style="background: #ffffff; border: 1px solid #cbd5e1; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; line-height: 1; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            </div>
+
+            <!-- Body -->
+            <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 16px; max-height: 75vh; overflow-y: auto; background: #ffffff;">
+                <!-- Contact & Personal Info Grid -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; font-size: 0.85rem; color: #334155; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div><span style="color: #64748b;">📞 Điện thoại:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custPhone)}</strong></div>
+                    <div><span style="color: #64748b;">✉️ Email:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custEmail)}</strong></div>
+                    <div><span style="color: #64748b;">🎂 Ngày sinh:</span> <strong>${escapeHTML(custBirthday)}</strong></div>
+                    <div><span style="color: #64748b;">🚻 Giới tính:</span> <strong>${escapeHTML(custGender)}</strong></div>
+                    <div style="grid-column: 1 / -1;"><span style="color: #64748b;">📍 Địa chỉ giao hàng:</span> <strong style="color: #0f172a;">${escapeHTML(custAddress)}</strong></div>
+                </div>
+
+                <!-- Membership & Spending Stats -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.73rem; color: #0369a1; font-weight: 600;">Hạng thành viên</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: ${tier.color || '#0284c7'}; margin-top: 3px;">${tier.name}</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.73rem; color: #15803d; font-weight: 600;">Điểm tích lũy</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #16a34a; margin-top: 3px;">💎 ${points} điểm</div>
+                    </div>
+                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.73rem; color: #b45309; font-weight: 600;">Tổng số đơn</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #d97706; margin-top: 3px;">🛍️ ${customerOrders.length} đơn (${completedCount} HT)</div>
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.73rem; color: #1d4ed8; font-weight: 600;">Tổng chi tiêu</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #0066cc; margin-top: 3px;">${formatVND(spent)} đ</div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div>
+                    <div style="font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 Các đơn hàng gần đây của khách (${customerOrders.length} đơn)</span>
+                    </div>
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc; color: #475569; font-size: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 7px 8px; text-align: left;">Mã đơn</th>
+                                    <th style="padding: 7px 8px; text-align: left;">Thời gian</th>
+                                    <th style="padding: 7px 8px; text-align: right;">Tổng tiền</th>
+                                    <th style="padding: 7px 8px; text-align: center;">Thanh toán</th>
+                                    <th style="padding: 7px 8px; text-align: center;">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recentOrdersHtml || '<tr><td colspan="5" style="text-align: center; padding: 12px; color: #94a3b8; font-size: 0.8rem;">Chưa có dữ liệu đơn hàng.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding: 12px 22px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    ${hasRealAccount ? `
+                    <button type="button" onclick="const m = document.getElementById('order-customer-quick-modal'); if (m) { m.classList.remove('active'); m.style.display='none'; } window.viewAdminUserDetail('${rawUserDoc.id}')" style="background: #ffffff; border: 1px solid #0066cc; color: #0066cc; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
+                        ✏️ Chỉnh sửa hồ sơ khách hàng
+                    </button>` : ''}
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" onclick="window.filterOrdersByCustomerKeyword('${filterKey}')" style="background: #0066cc; border: none; color: #ffffff; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
+                        🔍 Lọc tất cả đơn của khách này
+                    </button>
+                    <button type="button" onclick="const m = document.getElementById('order-customer-quick-modal'); if (m) { m.classList.remove('active'); m.style.display='none'; }" style="background: #e2e8f0; border: none; color: #334155; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+};
 
 window.toggleOrderQuickView = function (orderId, event) {
     if (event) event.stopPropagation();
@@ -7972,10 +8497,13 @@ window.toggleOrderQuickView = function (orderId, event) {
                 <div class="quickview-body order-qv-info-body" style="flex-direction: column; gap: 14px; padding: 16px 20px;">
                     <!-- Order Header Info Row -->
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <strong style="font-size: 1.05rem; color: #0066cc;">${custCode} - ${custName}</strong>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #0066cc; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#eff6ff'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';">👤 ${custCode} - ${custName}</strong>
                             <span style="font-size: 0.85rem; color: #64748b;">📝 ${orderId}</span>
                             <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
+                            <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: ${metrics.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${metrics.isPaid ? '#15803d' : '#dc2626'}; border: 1px solid ${metrics.isPaid ? '#86efac' : '#fecaca'};">
+                                ${metrics.isPaid ? '✓ ' + metrics.paymentStatusText : '⏳ ' + metrics.paymentStatusText}
+                            </span>
                         </div>
                         <div style="font-size: 0.85rem; color: #64748b;">Chi nhánh trung tâm</div>
                     </div>
@@ -7983,7 +8511,7 @@ window.toggleOrderQuickView = function (orderId, event) {
                     <!-- Metadata Grid -->
                     <div class="quickview-fields-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; font-size: 0.85rem; color: #334155;">
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Người tạo:</span> <strong>${sellerName}</strong></div>
-                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Người bán:</span> <span style="font-weight: 600; color: #0f172a;">${sellerName}</span></div>
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Phương thức TT:</span> <strong style="color: #0f172a;">${metrics.paymentMethodDisplay}</strong></div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Ngày bán:</span> <strong>${orderDate}</strong></div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Kênh bán:</span> <span style="font-weight: 600; color: #0f172a;">${channelName}</span></div>
                         
@@ -8034,7 +8562,7 @@ window.toggleOrderQuickView = function (orderId, event) {
                     </div>
 
                     <!-- Bottom Note & Totals Summary Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; width: 100%; align-items: flex-start; margin-top: 4px;">
+                    <div style="display: grid; grid-template-columns: 1fr 360px; gap: 20px; width: 100%; align-items: flex-start; margin-top: 4px;">
                         <div>
                             <textarea placeholder="Ghi chú đơn hàng..." style="width: 100%; height: 95px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; font-size: 0.85rem; font-family: inherit; outline: none; resize: vertical;" onchange="window.updateOrderNote('${orderId}', this.value)">${order.note || ''}</textarea>
                         </div>
@@ -8065,10 +8593,30 @@ window.toggleOrderQuickView = function (orderId, event) {
                                 <strong style="color: #0f172a;">Khách cần trả:</strong>
                                 <strong style="color: #0066cc; font-size: 1.1rem;">${formatVND(finalTotal)}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
                                 <strong style="color: #0f172a;">Khách đã trả:</strong>
-                                <strong style="color: #0f172a; font-size: 1.1rem;">${formatVND(cashPaid)}</strong>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: ${metrics.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${metrics.isPaid ? '#15803d' : '#dc2626'}; border: 1px solid ${metrics.isPaid ? '#86efac' : '#fecaca'}; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                                        ${metrics.isPaid ? '✓ ' + metrics.paymentStatusText : '⏳ ' + metrics.paymentStatusText}
+                                    </span>
+                                    <strong style="color: ${metrics.isPaid ? '#16a34a' : '#dc2626'}; font-size: 1.1rem;">${formatVND(cashPaid)}</strong>
+                                </div>
                             </div>
+                            ${!metrics.isPaid && !metrics.isCancelled ? `
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #fffbeb; border: 1px dashed #f59e0b; padding: 6px 10px; border-radius: 6px; margin-top: 2px;">
+                                <strong style="color: #b45309; font-size: 0.83rem;">${metrics.isCod ? '📦 Cần thu hộ (COD):' : '💳 Còn phải thu:'}</strong>
+                                <strong style="color: #d97706; font-size: 1.05rem;">${formatVND(metrics.remainingAmount)}</strong>
+                            </div>` : ''}
+                            ${!metrics.isCancelled ? `
+                            <div style="display: flex; justify-content: flex-end; margin-top: 2px;">
+                                ${metrics.isPaid ? `
+                                <button type="button" onclick="window.toggleOrderPaymentPaid('${orderId}', false, event)" style="background: #fff; border: 1px solid #cbd5e1; color: #64748b; font-size: 0.74rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+                                    ↩ Đổi sang Chưa trả tiền
+                                </button>` : `
+                                <button type="button" onclick="window.toggleOrderPaymentPaid('${orderId}', true, event)" style="background: #16a34a; border: none; color: #ffffff; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
+                                    ✓ Xác nhận khách đã trả đủ (${formatVND(finalTotal)})
+                                </button>`}
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -8089,9 +8637,15 @@ window.toggleOrderQuickView = function (orderId, event) {
                                 <tr>
                                     <td style="padding: 8px; color: #0066cc; font-weight: 600;">TT_${orderId.slice(-6)}</td>
                                     <td style="padding: 8px;">${orderDate}</td>
-                                    <td style="padding: 8px;">${order.paymentMethod || 'Tiền mặt'}</td>
-                                    <td style="padding: 8px; text-align: right; font-weight: 700;">${formatVND(cashPaid)}</td>
-                                    <td style="padding: 8px; text-align: center;"><span class="qv-tag success">Thành công</span></td>
+                                    <td style="padding: 8px; font-weight: 600;">${metrics.paymentMethodDisplay}</td>
+                                    <td style="padding: 8px; text-align: right; font-weight: 700; color: ${metrics.isPaid ? '#16a34a' : '#dc2626'};">
+                                        ${metrics.isPaid ? formatVND(cashPaid) : `0 (Cần thu: ${formatVND(finalTotal)})`}
+                                    </td>
+                                    <td style="padding: 8px; text-align: center;">
+                                        <span class="qv-tag ${metrics.isPaid ? 'success' : (metrics.isCancelled ? 'danger' : 'warning')}">
+                                            ${metrics.paymentStatusText}
+                                        </span>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -10138,7 +10692,7 @@ window.toggleRentalQuickView = function (orderId, event) {
                 <div class="quickview-body order-qv-info-body" style="flex-direction: column; gap: 14px; padding: 16px 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <strong style="font-size: 1.05rem; color: #166534;">${custCode} - ${custName}</strong>
+                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #166534; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#f0fdf4'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';">👤 ${custCode} - ${custName}</strong>
                             <span style="font-size: 0.85rem; color: #64748b;">🏺 ${orderId}</span>
                             <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
                         </div>
@@ -10778,10 +11332,27 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
             showToast(`Đã hủy đơn hàng #${orderId} và hoàn lại tồn kho thành công!`, "success");
         } else {
             const updateData = { status: newStatus };
+            if (newStatus === 'Đã thanh toán' || newStatus === 'Đã hoàn thành') {
+                updateData.paymentStatus = 'paid';
+                updateData.isPaid = true;
+            } else if (newStatus === 'Chờ thanh toán') {
+                updateData.paymentStatus = 'pending';
+                updateData.isPaid = false;
+            }
             if (trackingLink) {
                 updateData.trackingLink = trackingLink.trim();
             }
             await setDoc(doc(db, "orders", orderId), updateData, { merge: true });
+            const cachedOrder = allOrdersCache.find(o => o.id === orderId);
+            if (cachedOrder) {
+                Object.assign(cachedOrder, updateData);
+            }
+            if (typeof renderOrdersFiltered === 'function') {
+                renderOrdersFiltered();
+                setTimeout(() => {
+                    window.toggleOrderQuickView(orderId);
+                }, 30);
+            }
             showToast(`Đã cập nhật trạng thái đơn hàng #${orderId} thành: ${newStatus}`);
         }
     } catch (error) {
@@ -10851,8 +11422,8 @@ window.printPackingSlip = async (orderId) => {
         const discountAmount = metrics.totalDiscounts;
         const totalAmount = metrics.finalTotal;
 
-        // Xác định COD
-        const isPaidOnline = ['Chuyển khoản', 'VNPAY', 'MoMo', 'Thẻ ATM / QR', 'Đã thanh toán', 'ZaloPay'].includes(order.paymentMethod) || order.status === 'Đã thanh toán' || order.isPaid === true;
+        // Xác định COD dựa trên trạng thái thanh toán chuẩn
+        const isPaidOnline = metrics.isPaid;
         const codAmount = isPaidOnline ? 0 : totalAmount;
 
         const printWindow = window.open('', '_blank', 'width=800,height=950');
@@ -11484,6 +12055,119 @@ window.selectUserGenderFilter = function (gender, btn) {
     window.renderAdminUserTable();
 };
 
+window.onlyRegisteredUsersFilter = false;
+
+window.syncNewestUsersButtonState = function () {
+    const btn = document.getElementById('btn-quick-newest-users');
+    const sortSel = document.getElementById('user-sort-preset-select');
+    const groupSel = document.getElementById('user-filter-group');
+    const isNewestActive = window.onlyRegisteredUsersFilter && window.currentCustomerSortCol === 'createdAt' && window.currentCustomerSortDir === 'desc';
+
+    if (btn) {
+        if (isNewestActive) {
+            btn.style.background = '#0066cc';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#0066cc';
+        } else {
+            btn.style.background = '#ffffff';
+            btn.style.color = '#0066cc';
+            btn.style.borderColor = '#0066cc';
+        }
+    }
+
+    if (sortSel) {
+        if (isNewestActive) {
+            sortSel.value = 'registered_newest';
+        } else if (window.currentCustomerSortCol === 'createdAt' && window.currentCustomerSortDir === 'desc') {
+            sortSel.value = 'created_desc';
+        } else if (window.currentCustomerSortCol === 'createdAt' && window.currentCustomerSortDir === 'asc') {
+            sortSel.value = 'created_asc';
+        } else if (window.currentCustomerSortCol === 'points' && window.currentCustomerSortDir === 'desc') {
+            sortSel.value = 'points_desc';
+        } else if (window.currentCustomerSortCol === 'name' && window.currentCustomerSortDir === 'asc') {
+            sortSel.value = 'name_asc';
+        } else if (window.currentCustomerSortCol === 'spent' && window.currentCustomerSortDir === 'desc') {
+            sortSel.value = 'spent_desc';
+        }
+    }
+
+    if (groupSel && groupSel.value === 'registered_newest' && !isNewestActive) {
+        groupSel.value = 'all';
+    }
+};
+
+window.handleUserFilterGroupChange = function (val) {
+    if (val === 'registered_newest') {
+        window.onlyRegisteredUsersFilter = true;
+        window.currentCustomerSortCol = 'createdAt';
+        window.currentCustomerSortDir = 'desc';
+    } else {
+        window.onlyRegisteredUsersFilter = false;
+    }
+    window.currentAdminUserPage = 1;
+    window.syncNewestUsersButtonState();
+    if (typeof window.renderAdminUserTable === 'function') {
+        window.renderAdminUserTable();
+    }
+};
+
+window.toggleNewestRegisteredUsersView = function () {
+    const isNewestActive = window.onlyRegisteredUsersFilter && window.currentCustomerSortCol === 'createdAt' && window.currentCustomerSortDir === 'desc';
+    const groupSel = document.getElementById('user-filter-group');
+
+    if (isNewestActive) {
+        window.onlyRegisteredUsersFilter = false;
+        window.currentCustomerSortCol = 'spent';
+        window.currentCustomerSortDir = 'desc';
+        if (groupSel && groupSel.value === 'registered_newest') groupSel.value = 'all';
+    } else {
+        window.onlyRegisteredUsersFilter = true;
+        window.currentCustomerSortCol = 'createdAt';
+        window.currentCustomerSortDir = 'desc';
+        if (groupSel) groupSel.value = 'registered_newest';
+    }
+    window.currentAdminUserPage = 1;
+    window.syncNewestUsersButtonState();
+    if (typeof window.renderAdminUserTable === 'function') {
+        window.renderAdminUserTable();
+    }
+};
+
+window.applyUserSortPreset = function (presetVal) {
+    const groupSel = document.getElementById('user-filter-group');
+    if (presetVal === 'registered_newest') {
+        window.onlyRegisteredUsersFilter = true;
+        window.currentCustomerSortCol = 'createdAt';
+        window.currentCustomerSortDir = 'desc';
+        if (groupSel) groupSel.value = 'registered_newest';
+    } else {
+        window.onlyRegisteredUsersFilter = false;
+        if (groupSel && groupSel.value === 'registered_newest') groupSel.value = 'all';
+
+        if (presetVal === 'created_desc') {
+            window.currentCustomerSortCol = 'createdAt';
+            window.currentCustomerSortDir = 'desc';
+        } else if (presetVal === 'created_asc') {
+            window.currentCustomerSortCol = 'createdAt';
+            window.currentCustomerSortDir = 'asc';
+        } else if (presetVal === 'points_desc') {
+            window.currentCustomerSortCol = 'points';
+            window.currentCustomerSortDir = 'desc';
+        } else if (presetVal === 'name_asc') {
+            window.currentCustomerSortCol = 'name';
+            window.currentCustomerSortDir = 'asc';
+        } else {
+            window.currentCustomerSortCol = 'spent';
+            window.currentCustomerSortDir = 'desc';
+        }
+    }
+    window.currentAdminUserPage = 1;
+    window.syncNewestUsersButtonState();
+    if (typeof window.renderAdminUserTable === 'function') {
+        window.renderAdminUserTable();
+    }
+};
+
 window.resetUserFilters = function () {
     const search = document.getElementById('admin-user-search');
     if (search) search.value = '';
@@ -11496,11 +12180,15 @@ window.resetUserFilters = function () {
         if (el) el.value = '';
     });
 
+    window.onlyRegisteredUsersFilter = false;
+    window.currentCustomerSortCol = 'spent';
+    window.currentCustomerSortDir = 'desc';
     window.selectedUserType = 'all';
     window.selectedUserGender = 'all';
     document.querySelectorAll('.user-type-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
     document.querySelectorAll('.user-gender-pill').forEach((b, i) => b.classList.toggle('active', i === 0));
 
+    window.syncNewestUsersButtonState();
     window.selectUserTimePreset('all', 'Tất cả thời gian', null);
 };
 
@@ -11517,6 +12205,60 @@ window.goUserPage = function (page) {
     window.currentAdminUserPage = page;
     window.renderAdminUserTable();
 };
+
+function parseSingleDateVal(raw) {
+    if (!raw) return null;
+    if ( raw instanceof Date ) {
+        return !isNaN(raw.getTime()) ? raw : null;
+    }
+    if (typeof raw.toDate === 'function') {
+        const d = raw.toDate();
+        return !isNaN(d.getTime()) ? d : null;
+    }
+    if (typeof raw.seconds === 'number') {
+        const d = new Date(raw.seconds * 1000);
+        return !isNaN(d.getTime()) ? d : null;
+    }
+    const d = new Date(raw);
+    return !isNaN(d.getTime()) ? d : null;
+}
+
+function parseUserCreatedDateObj(u) {
+    if (!u) return null;
+    // Tuyệt đối KHÔNG lấy u.lastLogin hoặc u.updatedAt vì đó là lần đăng nhập/cập nhật cuối cùng, không phải ngày đăng ký đầu tiên
+    const candidates = [
+        u.registeredAt,
+        u.creationTime,
+        u.metadata && u.metadata.creationTime ? u.metadata.creationTime : null,
+        u.createdAt,
+        u.createdAtMs,
+        u.joinDate,
+        u.createdDate,
+        u.firstOrderDate
+    ];
+
+    let earliestDate = null;
+    for (const raw of candidates) {
+        const d = parseSingleDateVal(raw);
+        if (d && d.getTime() > 946684800000) { // > năm 2000
+            if (!earliestDate || d.getTime() < earliestDate.getTime()) {
+                earliestDate = d;
+            }
+        }
+    }
+
+    const idStr = String(u.id || u.uid || '');
+    const matchTs = idStr.match(/_(\d{13})$/);
+    if (matchTs) {
+        const d = new Date(Number(matchTs[1]));
+        if (!isNaN(d.getTime()) && d.getTime() > 946684800000) {
+            if (!earliestDate || d.getTime() < earliestDate.getTime()) {
+                earliestDate = d;
+            }
+        }
+    }
+    return earliestDate;
+}
 
 function getAllCustomersCombined() {
     const userMap = new Map();
@@ -11547,6 +12289,8 @@ function getAllCustomersCombined() {
             fullAddr = [u.streetAddress, u.locationName].filter(Boolean).join(', ');
         }
 
+        const parsedCreated = parseUserCreatedDateObj(u);
+
         userMap.set(u.id, {
             id: u.id,
             displayName: u.displayName || u.fullName || u.name || u.email || 'Khách hàng',
@@ -11555,7 +12299,10 @@ function getAllCustomersCombined() {
             address: fullAddr,
             gender: u.gender || '',
             birthday: u.dob || u.birthday || '',
-            createdAt: u.createdAt || (u.metadata && u.metadata.creationTime ? u.metadata.creationTime : null),
+            createdAt: parsedCreated || null,
+            registeredAt: u.registeredAt || (u.metadata && u.metadata.creationTime) || null,
+            firstOrderDate: null,
+            isRegisteredUser: true,
             isCompany: u.isCompany || false,
             totalSpent: spent,
             debt: u.debt || 0,
@@ -11572,6 +12319,7 @@ function getAllCustomersCombined() {
         const userId = order.userId || (phone ? 'KH_' + phone : order.id);
 
         const spent = userTotalSpentLocal[userId] || 0;
+        const orderDateObj = getOrderDateObj(order);
 
         if (!userMap.has(userId)) {
             userMap.set(userId, {
@@ -11582,7 +12330,9 @@ function getAllCustomersCombined() {
                 address: order.shippingAddress?.address || order.rentalInfo?.address || '',
                 gender: '',
                 birthday: '',
-                createdAt: order.orderDate || null,
+                createdAt: orderDateObj || null,
+                firstOrderDate: orderDateObj || null,
+                isRegisteredUser: false,
                 isCompany: !!(order.rentalInfo?.companyName),
                 totalSpent: spent,
                 debt: 0,
@@ -11594,6 +12344,15 @@ function getAllCustomersCombined() {
             if ((!existing.displayName || existing.displayName === 'Khách hàng') && name) existing.displayName = name;
             if (!existing.address && (order.shippingAddress?.address || order.rentalInfo?.address)) {
                 existing.address = order.shippingAddress?.address || order.rentalInfo?.address;
+            }
+            if (orderDateObj) {
+                if (!existing.firstOrderDate || orderDateObj.getTime() < existing.firstOrderDate.getTime()) {
+                    existing.firstOrderDate = orderDateObj;
+                }
+                const existingCreatedObj = parseSingleDateVal(existing.createdAt);
+                if (!existingCreatedObj || orderDateObj.getTime() < existingCreatedObj.getTime()) {
+                    existing.createdAt = orderDateObj;
+                }
             }
         }
     });
@@ -11620,22 +12379,26 @@ function getAllCustomersCombined() {
             phoneMap.set(normPhone, customer);
         } else {
             const existing = phoneMap.get(normPhone);
-            // Quyết định ai là tài khoản chính: Ưu tiên có email, hoặc tổng chi tiêu / điểm cao hơn
+            // Quyết định ai là tài khoản chính: Ưu tiên tài khoản đã đăng ký, có email, hoặc tổng chi tiêu / điểm cao hơn
             const existingHasEmail = !!(existing.email && existing.email.includes('@'));
             const currentHasEmail = !!(customer.email && customer.email.includes('@'));
 
             let primary = existing;
             let secondary = customer;
 
-            if (!existingHasEmail && currentHasEmail) {
+            if (!existing.isRegisteredUser && customer.isRegisteredUser) {
                 primary = customer;
                 secondary = existing;
-            } else if (existingHasEmail === currentHasEmail && (customer.totalSpent > existing.totalSpent || customer.points > existing.points)) {
+            } else if (existing.isRegisteredUser === customer.isRegisteredUser && !existingHasEmail && currentHasEmail) {
+                primary = customer;
+                secondary = existing;
+            } else if (existing.isRegisteredUser === customer.isRegisteredUser && existingHasEmail === currentHasEmail && (customer.totalSpent > existing.totalSpent || customer.points > existing.points)) {
                 primary = customer;
                 secondary = existing;
             }
 
             // Gộp thông tin
+            primary.isRegisteredUser = Boolean(primary.isRegisteredUser || secondary.isRegisteredUser);
             primary.totalSpent = Math.max(primary.totalSpent || 0, secondary.totalSpent || 0);
             primary.points = Math.max(primary.points || 0, secondary.points || 0);
             primary.debt = Math.max(primary.debt || 0, secondary.debt || 0);
@@ -11644,6 +12407,21 @@ function getAllCustomersCombined() {
             if (!primary.address && secondary.address) primary.address = secondary.address;
             if (!primary.gender && secondary.gender) primary.gender = secondary.gender;
             if (!primary.birthday && secondary.birthday) primary.birthday = secondary.birthday;
+            const primDate = parseUserCreatedDateObj(primary);
+            const secDate = parseUserCreatedDateObj(secondary);
+            if (!primDate && secDate) {
+                primary.createdAt = secDate;
+            } else if (primDate && secDate && secDate.getTime() < primDate.getTime()) {
+                primary.createdAt = secDate;
+            }
+            if (!primary.registeredAt && secondary.registeredAt) {
+                primary.registeredAt = secondary.registeredAt;
+            }
+            if (!primary.firstOrderDate && secondary.firstOrderDate) {
+                primary.firstOrderDate = secondary.firstOrderDate;
+            } else if (primary.firstOrderDate && secondary.firstOrderDate && secondary.firstOrderDate.getTime() < primary.firstOrderDate.getTime()) {
+                primary.firstOrderDate = secondary.firstOrderDate;
+            }
             if (!primary.avatar && secondary.avatar) {
                 primary.avatar = secondary.avatar;
                 primary.photoURL = secondary.photoURL;
@@ -11667,6 +12445,7 @@ window.sortUsers = function (sortCol) {
         window.currentCustomerSortCol = sortCol;
         window.currentCustomerSortDir = (sortCol === 'spent' || sortCol === 'points' || sortCol === 'debt' || sortCol === 'createdAt') ? 'desc' : 'asc';
     }
+    window.syncNewestUsersButtonState();
     if (typeof window.renderAdminUserTable === 'function') {
         window.renderAdminUserTable();
     }
@@ -11698,6 +12477,10 @@ window.renderAdminUserTable = function renderAdminUserTable() {
     const dateTo = document.getElementById('user-date-to')?.value;
 
     const filtered = allCustomers.filter(u => {
+        if (window.onlyRegisteredUsersFilter && !u.isRegisteredUser) {
+            return false;
+        }
+
         const matchesTerm = !term || (u.displayName || "").toLowerCase().includes(term) ||
             (u.phone || "").includes(term) ||
             (u.email || "").toLowerCase().includes(term) ||
@@ -11705,7 +12488,10 @@ window.renderAdminUserTable = function renderAdminUserTable() {
 
         const spent = userTotalSpentLocal[u.id] || u.totalSpent || 0;
         const tier = getMembershipTier(spent);
-        const matchesGroup = groupVal === 'all' || tier.name.toLowerCase().includes(groupVal.toLowerCase()) || (groupVal === 'Mới' && spent === 0);
+        const matchesGroup = groupVal === 'all' ||
+            groupVal === 'registered_newest' ||
+            tier.name.toLowerCase().includes(groupVal.toLowerCase()) ||
+            (groupVal === 'Mới' && spent === 0);
 
         const isCompany = u.isCompany || (u.displayName && u.displayName.toLowerCase().includes('công ty'));
         let matchesType = true;
@@ -11728,27 +12514,66 @@ window.renderAdminUserTable = function renderAdminUserTable() {
         if (debtTo > 0) matchesDebt = matchesDebt && (debt <= debtTo);
 
         let matchesDate = true;
-        const uDate = u.createdAt ? (u.createdAt.toDate ? u.createdAt.toDate() : new Date(u.createdAt)) : null;
-        if (uDate && datePreset !== 'all') {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            if (datePreset === 'today') {
-                matchesDate = uDate >= today;
-            } else if (datePreset === 'yesterday') {
-                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-                matchesDate = uDate >= yesterday && uDate < today;
-            } else if (datePreset === 'this_month') {
-                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                matchesDate = uDate >= firstDay;
-            } else if (datePreset === 'custom') {
-                if (dateFrom) {
-                    const from = new Date(dateFrom);
-                    matchesDate = matchesDate && (uDate >= from);
-                }
-                if (dateTo) {
-                    const to = new Date(dateTo);
-                    to.setHours(23, 59, 59, 999);
-                    matchesDate = matchesDate && (uDate <= to);
+        const uDate = parseUserCreatedDateObj(u);
+        if (datePreset !== 'all') {
+            if (!uDate) {
+                matchesDate = false;
+            } else {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                if (datePreset === 'today') {
+                    matchesDate = uDate >= today;
+                } else if (datePreset === 'yesterday') {
+                    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                    matchesDate = uDate >= yesterday && uDate < today;
+                } else if (datePreset === 'this_week') {
+                    const day = today.getDay() || 7;
+                    const monday = new Date(today); monday.setDate(monday.getDate() - day + 1);
+                    matchesDate = uDate >= monday;
+                } else if (datePreset === 'last_week') {
+                    const day = today.getDay() || 7;
+                    const lastMonday = new Date(today); lastMonday.setDate(lastMonday.getDate() - day - 6);
+                    const thisMonday = new Date(today); thisMonday.setDate(thisMonday.getDate() - day + 1);
+                    matchesDate = uDate >= lastMonday && uDate < thisMonday;
+                } else if (datePreset === 'last_7_days') {
+                    const d7 = new Date(today); d7.setDate(d7.getDate() - 7);
+                    matchesDate = uDate >= d7;
+                } else if (datePreset === 'this_month') {
+                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                    matchesDate = uDate >= firstDay;
+                } else if (datePreset === 'last_month') {
+                    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                    matchesDate = uDate >= firstDayLastMonth && uDate <= lastDayLastMonth;
+                } else if (datePreset === 'last_30_days') {
+                    const d30 = new Date(today); d30.setDate(d30.getDate() - 30);
+                    matchesDate = uDate >= d30;
+                } else if (datePreset === 'this_quarter') {
+                    const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+                    const firstDay = new Date(now.getFullYear(), quarterMonth, 1);
+                    matchesDate = uDate >= firstDay;
+                } else if (datePreset === 'last_quarter') {
+                    const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+                    const firstDayThisQ = new Date(now.getFullYear(), quarterMonth, 1);
+                    const firstDayLastQ = new Date(now.getFullYear(), quarterMonth - 3, 1);
+                    matchesDate = uDate >= firstDayLastQ && uDate < firstDayThisQ;
+                } else if (datePreset === 'this_year') {
+                    const firstDay = new Date(now.getFullYear(), 0, 1);
+                    matchesDate = uDate >= firstDay;
+                } else if (datePreset === 'last_year') {
+                    const firstDayLastYear = new Date(now.getFullYear() - 1, 0, 1);
+                    const lastDayLastYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+                    matchesDate = uDate >= firstDayLastYear && uDate <= lastDayLastYear;
+                } else if (datePreset === 'custom') {
+                    if (dateFrom) {
+                        const from = new Date(dateFrom);
+                        matchesDate = matchesDate && (uDate >= from);
+                    }
+                    if (dateTo) {
+                        const to = new Date(dateTo);
+                        to.setHours(23, 59, 59, 999);
+                        matchesDate = matchesDate && (uDate <= to);
+                    }
                 }
             }
         }
@@ -11795,9 +12620,9 @@ window.renderAdminUserTable = function renderAdminUserTable() {
             const sB = userTotalSpentLocal[b.id] || b.totalSpent || 0;
             cmp = sA - sB;
         } else if (col === 'createdAt') {
-            const dateA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : new Date(0);
-            const dateB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : new Date(0);
-            cmp = dateA - dateB;
+            const dateA = parseUserCreatedDateObj(a) || new Date(0);
+            const dateB = parseUserCreatedDateObj(b) || new Date(0);
+            cmp = dateA.getTime() - dateB.getTime();
         }
 
         return dir === 'asc' ? cmp : -cmp;
@@ -11838,6 +12663,9 @@ window.renderAdminUserTable = function renderAdminUserTable() {
 
 function renderAdminUserRows(usersList, tableElement) {
     let htmlContent = '';
+    const nowMs = Date.now();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
     usersList.forEach((u) => {
         const spent = u.totalSpent !== undefined ? u.totalSpent : (userTotalSpentLocal[u.id] || 0);
         const points = u.points !== undefined && u.points !== null ? u.points : Math.floor(spent / 10000);
@@ -11848,6 +12676,11 @@ function renderAdminUserRows(usersList, tableElement) {
         const custName = u.displayName || u.fullName || u.name || u.email || 'Khách vãng lai';
         const phone = formatPhoneNumber(u.phoneNumber || u.phone) || '---';
         const avatarUrl = u.photoURL || u.avatar || '';
+
+        const createdDateObj = parseUserCreatedDateObj(u);
+        const createdDateStr = createdDateObj ? createdDateObj.toLocaleDateString('vi-VN') : '---';
+        const createdTimeStr = createdDateObj ? createdDateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+        const isRecentNew = Boolean(u.isRegisteredUser && createdDateObj && (nowMs - createdDateObj.getTime()) <= sevenDaysMs && (nowMs - createdDateObj.getTime()) >= -86400000);
 
         const tierBadge = `<span class="stock-badge" style="background:${tier.color}; color:#fff; border:none; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-size: 0.70rem;">${tier.name}</span>`;
 
@@ -11863,10 +12696,17 @@ function renderAdminUserRows(usersList, tableElement) {
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         ${avatarThumb}
-                        <strong style="color: #0f172a; font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;" title="${custName}">${custName}</strong>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; display: inline-block; vertical-align: middle;" title="${custName}">${custName}</strong>
+                            ${isRecentNew ? `<span style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.62rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: middle;">MỚI</span>` : ''}
+                        </div>
                     </div>
                 </td>
                 <td style="color: #475569; font-size: 0.72rem; white-space: nowrap;">${phone}</td>
+                <td style="color: #475569; font-size: 0.71rem; white-space: nowrap;">
+                    <span style="font-weight: 600; color: #0f172a;">${createdDateStr}</span>
+                    ${createdTimeStr ? `<small style="color: #64748b; display: block; font-size: 0.65rem;">${createdTimeStr}</small>` : ''}
+                </td>
                 <td style="white-space: nowrap;">${tierBadge}</td>
                 <td style="text-align: center; font-weight: 700; color: #0284c7; font-size: 0.74rem; white-space: nowrap;">💎 ${points} điểm</td>
                 <td style="text-align: right; font-weight: 600; color: #dc2626; font-size: 0.74rem; white-space: nowrap;">${formatVND(debt)}</td>
@@ -11874,7 +12714,7 @@ function renderAdminUserRows(usersList, tableElement) {
             </tr>
         `;
     });
-    tableElement.innerHTML = htmlContent || '<tr><td colspan="9" style="text-align:center; padding: 2rem; color: #94a3b8;">Không tìm thấy khách hàng nào.</td></tr>';
+    tableElement.innerHTML = htmlContent || '<tr><td colspan="10" style="text-align:center; padding: 2rem; color: #94a3b8;">Không tìm thấy khách hàng nào.</td></tr>';
 }
 
 window.toggleUserQuickView = function (userId, event) {
@@ -11910,8 +12750,8 @@ window.toggleUserQuickView = function (userId, event) {
     const address = custData.address || u.address || (u.shippingAddress ? u.shippingAddress.address : 'Chưa có địa chỉ');
     const birthday = (custData.birthday || custData.dob || u.birthday || u.dob) ? new Date(custData.birthday || custData.dob || u.birthday || u.dob).toLocaleDateString('vi-VN') : 'Chưa có';
     const gender = custData.gender || u.gender || 'Chưa có';
-    const rawCreated = custData.createdAt || u.createdAt;
-    const createdAt = rawCreated ? (rawCreated.toDate ? new Date(rawCreated.toDate()).toLocaleDateString('vi-VN') : new Date(rawCreated).toLocaleDateString('vi-VN')) : 'Chưa rõ';
+    const parsedCreatedObj = parseUserCreatedDateObj(custData) || parseUserCreatedDateObj(u);
+    const createdAt = parsedCreatedObj ? parsedCreatedObj.toLocaleString('vi-VN') : 'Chưa rõ';
     const avatarUrl = custData.photoURL || custData.avatar || u.photoURL || u.avatar || '';
 
     const avatarBig = avatarUrl
@@ -11922,7 +12762,7 @@ window.toggleUserQuickView = function (userId, event) {
     detailRow.id = `user-detail-row-${userId}`;
     detailRow.className = 'kiot-detail-row';
     detailRow.innerHTML = `
-        <td colspan="9" style="padding: 0; background: #ffffff;">
+        <td colspan="10" style="padding: 0; background: #ffffff;">
             <div class="kiot-quickview-card" style="border: 2px solid #0066cc; margin: 8px 0; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 102, 204, 0.12);">
                 <div class="quickview-tabs">
                     <button type="button" class="qv-tab-item active">Thông tin khách hàng</button>
@@ -14809,11 +15649,75 @@ let comparisonChart = null;
 let paymentMethodChart = null;
 let hourlyShoppingChart = null;
 let orderStatusFunnelChart = null;
+let channelTrendChart = null;
+let channelShareChart = null;
 let cachedReportOrders = []; // Cache đơn hàng để chuyển đổi nhanh giữa các chế độ xem
+
+const CHANNEL_REPORT_META = {
+    web_app: {
+        key: 'web_app',
+        label: 'Web & App (Chung)',
+        shortLabel: 'Web / App',
+        icon: '💻📱',
+        color: '#B45309',
+        bg: '#FFFBF7',
+        border: '#E8CCB2',
+        desc: 'Đơn hàng đặt từ Website & Ứng dụng di động'
+    },
+    pos: {
+        key: 'pos',
+        label: 'Bán tại quầy (POS)',
+        shortLabel: 'Bán tại quầy (POS)',
+        icon: '🏪',
+        color: '#7E22CE',
+        bg: '#FAF7FF',
+        border: '#E9D5FF',
+        desc: 'Đơn bán trực tiếp tại cửa hàng'
+    },
+    social: {
+        key: 'social',
+        label: 'Mạng xã hội (FB, IG, Zalo...)',
+        shortLabel: 'Mạng xã hội',
+        icon: '💬',
+        color: '#BE185D',
+        bg: '#FFF5F8',
+        border: '#FBCFE8',
+        desc: 'Đơn từ Facebook, Instagram, Zalo, TikTok, Shopee...'
+    }
+};
+
+window.selectStatsChannelFilter = function (channelVal) {
+    const channelSelect = document.getElementById('stats-channel-filter');
+    if (channelSelect) {
+        channelSelect.value = channelVal || 'all';
+        channelSelect.dispatchEvent(new Event('change'));
+    }
+};
+
+function syncStatsChannelPillsUI(activeChannel) {
+    document.querySelectorAll('.stats-channel-pill').forEach(btn => {
+        const ch = btn.getAttribute('data-channel');
+        const isActive = ch === activeChannel;
+        btn.classList.toggle('active', isActive);
+        if (ch === 'all') {
+            btn.style.background = isActive ? '#2B2928' : '#FFFFFF';
+            btn.style.color = isActive ? '#FFFFFF' : '#2B2928';
+            btn.style.borderColor = '#2B2928';
+            btn.style.fontWeight = isActive ? '700' : '600';
+        } else {
+            const meta = CHANNEL_REPORT_META[ch] || CHANNEL_REPORT_META.web_app;
+            btn.style.background = isActive ? meta.color : meta.bg;
+            btn.style.color = isActive ? '#FFFFFF' : meta.color;
+            btn.style.borderColor = isActive ? meta.color : meta.border;
+            btn.style.fontWeight = isActive ? '700' : '600';
+        }
+    });
+}
 
 async function initFullReport() {
     const yearSelect = document.getElementById('stats-year-filter');
     const periodSelect = document.getElementById('stats-period-type');
+    const channelSelect = document.getElementById('stats-channel-filter');
     const btnRefresh = document.getElementById('btn-refresh-stats');
     if (!yearSelect || !periodSelect) return;
 
@@ -14830,7 +15734,6 @@ async function initFullReport() {
 
     const updateReport = async () => {
         const selectedYear = parseInt(yearSelect.value);
-        const periodType = periodSelect.value;
         const loadingEl = document.getElementById('stats-detail-loading');
 
         try {
@@ -14838,13 +15741,13 @@ async function initFullReport() {
             document.getElementById('stats-detail-table').innerHTML = '';
             if (typeof showToast !== 'undefined') showToast("Đang phân tích dữ liệu chuyên sâu...", "info");
 
-            // Lấy toàn bộ đơn hàng (gồm cả hoàn thành, đang giao, và đã hủy) để phân tích tỷ lệ hủy & khung giờ
+            // Lấy toàn bộ đơn hàng (gồm cả hoàn thành, đang giao, và đã hủy) để phân tích tỷ lệ hủy, kênh bán & khung giờ
             const snap = await getDocs(collection(db, "orders"));
 
             const prevYear = selectedYear - 1;
             cachedReportOrders = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => {
-                if (!o.orderDate) return false;
-                const d = o.orderDate.toDate ? o.orderDate.toDate() : new Date(o.orderDate);
+                const d = getOrderDateObj(o);
+                if (!d) return false;
                 const y = d.getFullYear();
                 return y === selectedYear || y === prevYear;
             });
@@ -14862,6 +15765,9 @@ async function initFullReport() {
         const selectedYear = parseInt(yearSelect.value);
         const prevYear = selectedYear - 1;
         const periodType = periodSelect.value;
+        const selectedChannel = channelSelect ? channelSelect.value : 'all';
+
+        syncStatsChannelPillsUI(selectedChannel);
 
         const statsMap = {}; // Key: "Tháng 01", "Quý 1", hoặc "Ngày 01/01"
         const productStatsMap = {}; // Thống kê sản phẩm
@@ -14869,11 +15775,19 @@ async function initFullReport() {
         const categoryStatsMap = {}; // Thống kê danh mục
         const paymentMethodMap = {}; // Thống kê theo phương thức thanh toán
 
+        // Thống kê chuyên sâu theo 3 Kênh bán hàng (luôn tính trên toàn bộ 3 kênh để so sánh tỷ trọng)
+        const channelStatsMap = {
+            web_app: { rev: 0, net: 0, vat: 0, tncn: 0, profit: 0, completedOrders: 0, validOrders: 0, canceledOrders: 0, lostRev: 0, subChannels: {} },
+            pos: { rev: 0, net: 0, vat: 0, tncn: 0, profit: 0, completedOrders: 0, validOrders: 0, canceledOrders: 0, lostRev: 0, subChannels: {} },
+            social: { rev: 0, net: 0, vat: 0, tncn: 0, profit: 0, completedOrders: 0, validOrders: 0, canceledOrders: 0, lostRev: 0, subChannels: {} }
+        };
+        const channelPeriodMap = {}; // Key: periodKey -> { web_app: 0, pos: 0, social: 0 }
+
         // 24 Giờ mua sắm
         const hourlyOrdersCount = new Array(24).fill(0);
         const hourlyRevenueSum = new Array(24).fill(0);
 
-        // Trạng thái đơn & Tỷ lệ hủy
+        // Trạng thái đơn & Tỷ lệ hủy (áp dụng theo bộ lọc kênh đang chọn)
         let totalCreatedOrders = 0;
         let totalCompletedOrders = 0;
         let totalCanceledOrders = 0;
@@ -14891,13 +15805,18 @@ async function initFullReport() {
         let prevTotalOrders = 0;
 
         cachedReportOrders.forEach(o => {
-            const date = o.orderDate.toDate ? o.orderDate.toDate() : new Date(o.orderDate);
+            const date = getOrderDateObj(o);
+            if (!date) return;
             const orderYear = date.getFullYear();
             const monthIdx = date.getMonth();
             const orderHour = date.getHours();
             const status = (o.status || '').trim();
-            const isCompleted = ['Đã hoàn thành', 'Hoàn thành'].includes(status);
-            const isCanceled = ['Đã hủy', 'Hủy đơn'].includes(status);
+            const isCanceled = ['Đã hủy', 'Hủy đơn', 'Hủy', 'cancelled'].includes(status) || status.toLowerCase().includes('hủy');
+            const isCompleted = !isCanceled && (['Đã hoàn thành', 'Hoàn thành', 'completed', 'Đã thanh toán', 'Đã giao'].includes(status) || window.getOrderSalesChannelGroup(o) === 'pos');
+
+            const orderChanGroup = window.getOrderSalesChannelGroup(o);
+            const orderChanDetail = window.getOrderSalesChannelDetail(o);
+            const matchesSelectedChannel = selectedChannel === 'all' || orderChanGroup === selectedChannel;
 
             const revGross = Number(o.totalAmount) || 0;
             const vatVal = Math.round(revGross * VAT_RATE);
@@ -14905,6 +15824,58 @@ async function initFullReport() {
             const netRev = revGross - (vatVal + tncnVal);
             const orderCost = o.items ? o.items.reduce((sum, i) => sum + ((Number(i.cost) || 0) * (Number(i.quantity) || 1)), 0) : 0;
             const orderProfit = netRev - orderCost;
+
+            // Gom nhóm theo thời gian (kỳ báo cáo)
+            let periodKey = '';
+            if (orderYear === selectedYear) {
+                if (periodType === 'monthly') {
+                    periodKey = `Tháng ${(monthIdx + 1).toString().padStart(2, '0')}`;
+                } else if (periodType === 'quarterly') {
+                    periodKey = `Quý ${Math.floor(monthIdx / 3) + 1}`;
+                } else if (periodType === 'daily') {
+                    if (monthIdx === new Date().getMonth()) {
+                        periodKey = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                    }
+                } else {
+                    periodKey = `Năm ${selectedYear}`;
+                }
+            }
+
+            // A. Luôn cộng dồn vào bảng phân tích 3 Kênh bán hàng (cho năm được chọn)
+            if (orderYear === selectedYear) {
+                const cBucket = channelStatsMap[orderChanGroup] || channelStatsMap.web_app;
+                if (isCanceled) {
+                    cBucket.canceledOrders++;
+                    cBucket.lostRev += revGross;
+                } else {
+                    // Nếu đang xem theo ngày trong tháng hiện tại thì chỉ tính các đơn thuộc kỳ đang xét
+                    if (periodType !== 'daily' || periodKey) {
+                        cBucket.rev += revGross;
+                        cBucket.net += netRev;
+                        cBucket.vat += vatVal;
+                        cBucket.tncn += tncnVal;
+                        cBucket.profit += orderProfit;
+                        cBucket.validOrders++;
+                        if (isCompleted) cBucket.completedOrders++;
+
+                        if (!cBucket.subChannels[orderChanDetail]) {
+                            cBucket.subChannels[orderChanDetail] = { rev: 0, count: 0 };
+                        }
+                        cBucket.subChannels[orderChanDetail].rev += revGross;
+                        cBucket.subChannels[orderChanDetail].count += 1;
+
+                        if (periodKey) {
+                            if (!channelPeriodMap[periodKey]) {
+                                channelPeriodMap[periodKey] = { web_app: 0, pos: 0, social: 0 };
+                            }
+                            channelPeriodMap[periodKey][orderChanGroup] += revGross;
+                        }
+                    }
+                }
+            }
+
+            // B. Nếu không khớp với kênh đang lọc thì bỏ qua phần tổng hợp bên dưới
+            if (!matchesSelectedChannel) return;
 
             if (orderYear === selectedYear) {
                 totalCreatedOrders++;
@@ -14939,28 +15910,14 @@ async function initFullReport() {
                     hourlyOrdersCount[orderHour]++;
                     hourlyRevenueSum[orderHour] += revGross;
 
-                    // Gom nhóm theo thời gian (kỳ báo cáo)
-                    let key = '';
-                    if (periodType === 'monthly') {
-                        key = `Tháng ${(monthIdx + 1).toString().padStart(2, '0')}`;
-                    } else if (periodType === 'quarterly') {
-                        key = `Quý ${Math.floor(monthIdx / 3) + 1}`;
-                    } else if (periodType === 'daily') {
-                        if (monthIdx === new Date().getMonth()) {
-                            key = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                        }
-                    } else {
-                        key = `Năm ${selectedYear}`;
-                    }
-
-                    if (key) {
-                        if (!statsMap[key]) statsMap[key] = { rev: 0, net: 0, vat: 0, tncn: 0, count: 0, profit: 0 };
-                        statsMap[key].rev += revGross;
-                        statsMap[key].net += netRev;
-                        statsMap[key].vat += vatVal;
-                        statsMap[key].tncn += tncnVal;
-                        statsMap[key].count++;
-                        statsMap[key].profit += orderProfit;
+                    if (periodKey) {
+                        if (!statsMap[periodKey]) statsMap[periodKey] = { rev: 0, net: 0, vat: 0, tncn: 0, count: 0, profit: 0 };
+                        statsMap[periodKey].rev += revGross;
+                        statsMap[periodKey].net += netRev;
+                        statsMap[periodKey].vat += vatVal;
+                        statsMap[periodKey].tncn += tncnVal;
+                        statsMap[periodKey].count++;
+                        statsMap[periodKey].profit += orderProfit;
                     }
 
                     totalRev += revGross;
@@ -15008,6 +15965,9 @@ async function initFullReport() {
                 }
             }
         });
+
+        // --- 0. RENDER BÁO CÁO DOANH THU THEO 3 KÊNH BÁN HÀNG (WEB/APP • POS • MẠNG XÃ HỘI) ---
+        renderSalesChannelReport(channelStatsMap, channelPeriodMap, selectedChannel);
 
         // Hàm hỗ trợ tính growth HTML
         const getGrowthHtml = (current, previous) => {
@@ -15173,10 +16133,221 @@ async function initFullReport() {
 
         // Lưu dữ liệu vào biến global để xuất Excel
         currentReportData = {
-            labels, statsMap,
+            labels, statsMap, channelStatsMap,
             totals: { orders: totalCompletedOrders, net: totalNetAll, vat: totalVatAll, tncn: totalTncnAll, gross: totalRev, profit: totalProfit },
-            info: { year: selectedYear, type: periodType }
+            info: { year: selectedYear, type: periodType, channel: selectedChannel }
         };
+    };
+
+    // Hàm vẽ Báo cáo Doanh thu theo 3 Kênh bán hàng (Web & App chung • POS • Mạng xã hội)
+    const renderSalesChannelReport = (channelStatsMap, channelPeriodMap, selectedChannel) => {
+        const channelOrder = ['web_app', 'pos', 'social'];
+        const allChannelRev = channelOrder.reduce((sum, k) => sum + (channelStatsMap[k]?.rev || 0), 0);
+        const allChannelValidOrders = channelOrder.reduce((sum, k) => sum + (channelStatsMap[k]?.validOrders || 0), 0);
+        const allChannelCanceledOrders = channelOrder.reduce((sum, k) => sum + (channelStatsMap[k]?.canceledOrders || 0), 0);
+        const allChannelNet = channelOrder.reduce((sum, k) => sum + (channelStatsMap[k]?.net || 0), 0);
+        const allChannelTax = channelOrder.reduce((sum, k) => sum + ((channelStatsMap[k]?.vat || 0) + (channelStatsMap[k]?.tncn || 0)), 0);
+        const allChannelProfit = channelOrder.reduce((sum, k) => sum + (channelStatsMap[k]?.profit || 0), 0);
+        const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
+
+        // 1. Render 3 Thẻ Scorecard
+        const cardsGrid = document.getElementById('stats-channel-cards-grid');
+        if (cardsGrid) {
+            cardsGrid.innerHTML = channelOrder.map(k => {
+                const meta = CHANNEL_REPORT_META[k];
+                const stat = channelStatsMap[k];
+                const sharePct = allChannelRev > 0 ? ((stat.rev / allChannelRev) * 100).toFixed(1) : '0.0';
+                const aov = stat.validOrders > 0 ? Math.round(stat.rev / stat.validOrders) : 0;
+                const isSelected = selectedChannel === k;
+
+                // Hiển thị chi tiết kênh con nếu là Mạng xã hội
+                let subChannelHtml = '';
+                if (k === 'social') {
+                    const subEntries = Object.entries(stat.subChannels || {}).sort((a, b) => b[1].rev - a[1].rev);
+                    if (subEntries.length > 0) {
+                        subChannelHtml = `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${meta.border}; display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${subEntries.map(([sName, sVal]) => `
+                                    <span style="font-size: 0.72rem; background: #ffffff; border: 1px solid ${meta.border}; color: #2B2928; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                                        ${sName}: <strong style="color: ${meta.color};">${fmt(sVal.rev)}đ</strong> (${sVal.count} đơn)
+                                    </span>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        subChannelHtml = `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${meta.border}; font-size: 0.72rem; color: #8C8278;">
+                                Bao gồm: Facebook, Instagram, Zalo, TikTok, Shopee...
+                            </div>
+                        `;
+                    }
+                } else {
+                    subChannelHtml = `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed ${meta.border}; font-size: 0.72rem; color: #6E665D; display: flex; justify-content: space-between;">
+                            <span>DT Thuần: <strong>${fmt(stat.net)}đ</strong></span>
+                            <span>Lợi nhuận: <strong style="color: #9C7156;">${fmt(stat.profit)}đ</strong></span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div onclick="window.selectStatsChannelFilter('${isSelected ? 'all' : k}')" title="Nhấn để lọc báo cáo theo kênh ${meta.label}"
+                        style="cursor: pointer; background: ${meta.bg}; border: ${isSelected ? '2px solid ' + meta.color : '1px solid ' + meta.border}; border-radius: 8px; padding: 14px 16px; transition: all 0.2s ease; box-shadow: ${isSelected ? '0 4px 14px rgba(0,0,0,0.08)' : 'none'};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                            <div>
+                                <div style="font-size: 0.86rem; font-weight: 700; color: #2B2928; display: flex; align-items: center; gap: 6px;">
+                                    <span>${meta.icon}</span>
+                                    <span>${meta.label}</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: #6E665D; margin-top: 2px;">${meta.desc}</div>
+                            </div>
+                            <span style="background: ${meta.color}; color: #ffffff; font-size: 0.73rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap;">
+                                ${sharePct}% DT
+                            </span>
+                        </div>
+
+                        <div style="font-size: 1.35rem; font-weight: 800; color: ${meta.color}; margin: 10px 0 6px 0;">
+                            ${fmt(stat.rev)} VND
+                        </div>
+
+                        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
+                            <div style="width: ${Math.min(100, Math.max(0, Number(sharePct)))}%; height: 100%; background: ${meta.color}; border-radius: 4px;"></div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 0.75rem; color: #334155;">
+                            <div style="background: #ffffff; padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.05);">
+                                <div style="color: #64748b; font-size: 0.68rem;">Số đơn</div>
+                                <div style="font-weight: 700; color: #0f172a;">${stat.validOrders} đơn</div>
+                            </div>
+                            <div style="background: #ffffff; padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.05);">
+                                <div style="color: #64748b; font-size: 0.68rem;">TB / Đơn</div>
+                                <div style="font-weight: 700; color: #0f172a;">${fmt(aov)}đ</div>
+                            </div>
+                            <div style="background: #ffffff; padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.05);">
+                                <div style="color: #64748b; font-size: 0.68rem;">Đơn hủy</div>
+                                <div style="font-weight: 700; color: #dc2626;">${stat.canceledOrders} đơn</div>
+                            </div>
+                        </div>
+                        ${subChannelHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 2. Render Biểu đồ cột so sánh 3 kênh theo chu kỳ (channelRevenueTrendChart)
+        const periodKeys = Object.keys(channelPeriodMap).sort();
+        const trendCanvas = document.getElementById('channelRevenueTrendChart');
+        if (trendCanvas) {
+            if (channelTrendChart) channelTrendChart.destroy();
+            channelTrendChart = new Chart(trendCanvas, {
+                type: 'bar',
+                data: {
+                    labels: periodKeys.length > 0 ? periodKeys : ['Chưa có dữ liệu'],
+                    datasets: channelOrder.map(k => ({
+                        label: CHANNEL_REPORT_META[k].shortLabel,
+                        data: periodKeys.length > 0 ? periodKeys.map(pk => channelPeriodMap[pk][k] || 0) : [0],
+                        backgroundColor: CHANNEL_REPORT_META[k].color,
+                        borderRadius: 4
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.dataset.label}: ${fmt(ctx.raw)} VND`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (v) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Render Biểu đồ Doughnut tỷ trọng 3 kênh (channelShareDoughnutChart)
+        const shareCanvas = document.getElementById('channelShareDoughnutChart');
+        if (shareCanvas) {
+            if (channelShareChart) channelShareChart.destroy();
+            channelShareChart = new Chart(shareCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: channelOrder.map(k => CHANNEL_REPORT_META[k].shortLabel),
+                    datasets: [{
+                        data: channelOrder.map(k => channelStatsMap[k].rev || 0),
+                        backgroundColor: channelOrder.map(k => CHANNEL_REPORT_META[k].color),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const val = Number(ctx.raw) || 0;
+                                    const pct = allChannelRev > 0 ? ((val / allChannelRev) * 100).toFixed(1) : '0.0';
+                                    return ` ${ctx.label}: ${fmt(val)} VND (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Render Bảng kê chi tiết theo Kênh bán hàng
+        const chanTableBody = document.getElementById('stats-channel-breakdown-table');
+        if (chanTableBody) {
+            const chanRowsHtml = channelOrder.map(k => {
+                const meta = CHANNEL_REPORT_META[k];
+                const s = channelStatsMap[k];
+                const pct = allChannelRev > 0 ? ((s.rev / allChannelRev) * 100).toFixed(1) : '0.0';
+                const aov = s.validOrders > 0 ? Math.round(s.rev / s.validOrders) : 0;
+                const tax = s.vat + s.tncn;
+                return `
+                    <tr onclick="window.selectStatsChannelFilter('${selectedChannel === k ? 'all' : k}')" style="cursor: pointer; ${selectedChannel === k ? 'background: ' + meta.bg + ';' : ''}">
+                        <td>
+                            <strong style="color: ${meta.color};">${meta.icon} ${meta.label}</strong>
+                        </td>
+                        <td style="text-align: center; font-weight: 700;">${s.validOrders} ĐH</td>
+                        <td style="text-align: center; color: #dc2626; font-weight: 600;">${s.canceledOrders} ĐH</td>
+                        <td style="text-align: center;"><span style="background: ${meta.bg}; color: ${meta.color}; border: 1px solid ${meta.border}; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.78rem;">${pct}%</span></td>
+                        <td style="text-align: right; font-weight: 600;">${fmt(s.net)} VND</td>
+                        <td style="text-align: right; color: #d35400; font-weight: 600;">${fmt(tax)} VND</td>
+                        <td style="text-align: right; font-weight: 700; color: ${meta.color};">${fmt(s.rev)} VND</td>
+                        <td style="text-align: right; font-weight: 700; color: #9C7156;">${fmt(s.profit)} VND</td>
+                        <td style="text-align: right;">${fmt(aov)} VND</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalAvgAll = allChannelValidOrders > 0 ? Math.round(allChannelRev / allChannelValidOrders) : 0;
+            chanTableBody.innerHTML = chanRowsHtml + `
+                <tr style="background: #FAF8F5; font-weight: 800; border-top: 2px solid #E8CCB2;">
+                    <td>TỔNG CỘNG 3 KÊNH</td>
+                    <td style="text-align: center;">${allChannelValidOrders} ĐH</td>
+                    <td style="text-align: center; color: #dc2626;">${allChannelCanceledOrders} ĐH</td>
+                    <td style="text-align: center;">100%</td>
+                    <td style="text-align: right;">${fmt(allChannelNet)} VND</td>
+                    <td style="text-align: right; color: #d35400;">${fmt(allChannelTax)} VND</td>
+                    <td style="text-align: right; color: #2B2928;">${fmt(allChannelRev)} VND</td>
+                    <td style="text-align: right; color: #9C7156;">${fmt(allChannelProfit)} VND</td>
+                    <td style="text-align: right;">${fmt(totalAvgAll)} VND</td>
+                </tr>
+            `;
+        }
     };
 
     // Hàm vẽ Top Bán chạy với các bộ lọc Metric / GroupBy / ChartType
@@ -15392,6 +16563,9 @@ async function initFullReport() {
     // Gắn sự kiện chuyển đổi linh hoạt không cần fetch lại Firebase
     btnRefresh.onclick = updateReport;
     document.getElementById('btn-export-stats-excel').onclick = exportStatsToExcel;
+    if (yearSelect) yearSelect.onchange = updateReport;
+    if (periodSelect) periodSelect.onchange = renderAllAnalyticsViews;
+    if (channelSelect) channelSelect.onchange = renderAllAnalyticsViews;
 
     // Tự động vẽ lại Top Bán chạy khi thay đổi metric/groupBy/type
     const topSoldMetricEl = document.getElementById('topSoldMetric');
@@ -15407,8 +16581,52 @@ async function initFullReport() {
 async function exportStatsToExcel() {
     if (!currentReportData) return showToast("Vui lòng xem báo cáo trước khi xuất", "error");
 
-    const { labels, statsMap, totals, info } = currentReportData;
+    const { labels, statsMap, channelStatsMap, totals, info } = currentReportData;
     const headers = ["Thời gian", "Số đơn", "DT Thuần (Net)", "Thuế VAT (1%)", "Thuế TNCN (0.5%)", "Tổng Thuế (1.5%)", "Doanh thu (Gross)", "Lợi nhuận (Est)"];
+    const channelKeys = ['web_app', 'pos', 'social'];
+    const totalChanRev = channelStatsMap ? channelKeys.reduce((s, k) => s + (channelStatsMap[k]?.rev || 0), 0) : 0;
+
+    const channelTableExcel = channelStatsMap ? `
+        <h3 style="margin-top: 20px;">1. BÁO CÁO DOANH THU THEO KÊNH BÁN HÀNG (WEB/APP - POS - MẠNG XÃ HỘI)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kênh bán hàng</th>
+                    <th>Đơn hoàn tất</th>
+                    <th>Đơn hủy</th>
+                    <th>Tỷ trọng (%)</th>
+                    <th>DT Thuần (Net)</th>
+                    <th>Tổng Thuế (1.5%)</th>
+                    <th>Doanh thu (Gross)</th>
+                    <th>Lợi nhuận (Est)</th>
+                    <th>TB / Đơn (AOV)</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${channelKeys.map(k => {
+                    const meta = CHANNEL_REPORT_META[k];
+                    const c = channelStatsMap[k];
+                    const pct = totalChanRev > 0 ? ((c.rev / totalChanRev) * 100).toFixed(1) : '0.0';
+                    const aov = c.validOrders > 0 ? Math.round(c.rev / c.validOrders) : 0;
+                    return `
+                        <tr>
+                            <td>${meta.label}</td>
+                            <td class="num">${c.validOrders}</td>
+                            <td class="num">${c.canceledOrders}</td>
+                            <td style="text-align: center;">${pct}%</td>
+                            <td class="num">${c.net}</td>
+                            <td class="num">${c.vat + c.tncn}</td>
+                            <td class="num">${c.rev}</td>
+                            <td class="num">${c.profit}</td>
+                            <td class="num">${aov}</td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+        <br/>
+        <h3>2. BẢNG KÊ CHI TIẾT DOANH THU & THUẾ THEO KỲ</h3>
+    ` : '';
 
     let excelHtml = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -15420,7 +16638,8 @@ async function exportStatsToExcel() {
         </style></head>
         <body>
             <h2>BÁO CÁO DOANH THU & THUẾ - TIỆM NHÀ GỐM</h2>
-            <p>Năm: ${info.year} | Chế độ: ${info.type === 'monthly' ? 'Từng tháng' : info.type === 'quarterly' ? 'Từng quý' : 'Từng ngày'}</p>
+            <p>Năm: ${info.year} | Chế độ: ${info.type === 'monthly' ? 'Từng tháng' : info.type === 'quarterly' ? 'Từng quý' : 'Từng ngày'} | Kênh lọc: ${info.channel === 'all' || !info.channel ? 'Tất cả kênh' : (CHANNEL_REPORT_META[info.channel]?.label || info.channel)}</p>
+            ${channelTableExcel}
             <table>
                 <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
                 <tbody>
@@ -15573,15 +16792,114 @@ async function initMaintenanceSettings() {
 }
 
 // --- Quản lý Cài đặt Giao diện Noel & Lễ Hội ---
+window.toggleProductNoelQuick = async function(productId, isChecked) {
+    try {
+        const tagSelect = document.getElementById(`quick-noel-tag-${productId}`);
+        const noelTag = tagSelect ? tagSelect.value : 'all';
+        await updateDoc(doc(db, "products", productId), {
+            isNoel: Boolean(isChecked),
+            noelTag,
+            updatedAt: new Date().toISOString()
+        });
+        const localItem = posProductsLocal.find(p => p.id === productId);
+        if (localItem) {
+            localItem.isNoel = Boolean(isChecked);
+            localItem.noelTag = noelTag;
+        }
+        if (typeof window.renderHolidayNoelProductPicker === 'function') {
+            window.renderHolidayNoelProductPicker();
+        }
+        showToast(isChecked ? `🎄 Đã đưa "${localItem?.name || productId}" lên Kệ Gốm Noel!` : `Đã gỡ "${localItem?.name || productId}" khỏi Kệ Noel`);
+    } catch (err) {
+        showToast("Lỗi cập nhật kệ Noel: " + err.message, "error");
+    }
+};
+
+window.changeProductNoelTagQuick = async function(productId, newTag) {
+    try {
+        await updateDoc(doc(db, "products", productId), {
+            isNoel: true,
+            noelTag: newTag || 'all',
+            updatedAt: new Date().toISOString()
+        });
+        const localItem = posProductsLocal.find(p => p.id === productId);
+        if (localItem) {
+            localItem.isNoel = true;
+            localItem.noelTag = newTag || 'all';
+        }
+        if (typeof window.renderHolidayNoelProductPicker === 'function') {
+            window.renderHolidayNoelProductPicker();
+        }
+        showToast(`🎄 Đã cập nhật phân nhóm Noel cho "${localItem?.name || productId}"`);
+    } catch (err) {
+        showToast("Lỗi lưu nhóm Noel: " + err.message, "error");
+    }
+};
+
+window.renderHolidayNoelProductPicker = function() {
+    const listEl = document.getElementById('holiday-noel-products-list');
+    const countEl = document.getElementById('holiday-noel-selected-count');
+    const searchEl = document.getElementById('holiday-noel-product-search');
+    if (!listEl) return;
+
+    const allProducts = Array.isArray(posProductsLocal) ? posProductsLocal.filter(p => !p.isHidden) : [];
+    const selectedCount = allProducts.filter(p => p.isNoel).length;
+    if (countEl) countEl.textContent = `Đã chọn: ${selectedCount} món`;
+
+    const term = (searchEl?.value || '').trim().toLowerCase();
+    const filtered = allProducts
+        .filter(p => !term || (p.name || '').toLowerCase().includes(term) || (p.id || '').toLowerCase().includes(term))
+        .sort((a, b) => (b.isNoel ? 1 : 0) - (a.isNoel ? 1 : 0));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = '<div style="padding:14px; text-align:center; color:#64748b; font-size:0.84rem;">Không tìm thấy sản phẩm nào.</div>';
+        return;
+    }
+
+    listEl.innerHTML = filtered.slice(0, 60).map(p => {
+        const img = p.thumbUrl || p.imageUrl || 'https://placehold.co/36';
+        const tag = p.noelTag || 'all';
+        return `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; background:${p.isNoel ? '#fff1f2' : '#ffffff'}; border:1px solid ${p.isNoel ? '#fecdd3' : '#e2e8f0'}; border-radius:6px; margin-bottom:6px;">
+                <label style="display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; margin:0; min-width:0;">
+                    <input type="checkbox" ${p.isNoel ? 'checked' : ''} onchange="window.toggleProductNoelQuick('${p.id}', this.checked)" style="width:16px; height:16px; accent-color:#991b1b; cursor:pointer; flex-shrink:0;">
+                    <img src="${img}" style="width:34px; height:34px; border-radius:4px; object-fit:cover; border:1px solid #e2e8f0; flex-shrink:0;">
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-size:0.85rem; font-weight:600; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                        <div style="font-size:0.75rem; color:#64748b;">Mã: <strong>${p.id}</strong> • Giá: ${new Intl.NumberFormat('vi-VN').format(p.price || 0)}đ</div>
+                    </div>
+                </label>
+                <select id="quick-noel-tag-${p.id}" onchange="window.changeProductNoelTagQuick('${p.id}', this.value)" style="padding:5px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.78rem; background:#fff; color:#334155; font-weight:600;">
+                    <option value="all" ${tag === 'all' ? 'selected' : ''}>✨ Tự động</option>
+                    <option value="cups" ${tag === 'cups' ? 'selected' : ''}>☕ Ly &amp; Tách</option>
+                    <option value="dining" ${tag === 'dining' ? 'selected' : ''}>🍽️ Bàn tiệc</option>
+                    <option value="gifts" ${tag === 'gifts' ? 'selected' : ''}>🎁 Set quà</option>
+                    <option value="decor" ${tag === 'decor' ? 'selected' : ''}>🕯️ Decor</option>
+                </select>
+            </div>
+        `;
+    }).join('');
+};
+
 async function initHolidaySettings() {
     const toggle = document.getElementById('holiday-active-toggle');
     const statusText = document.getElementById('holiday-status-text');
     const densitySelect = document.getElementById('holiday-snow-density');
     const lightsToggle = document.getElementById('holiday-show-lights');
     const messageInput = document.getElementById('holiday-message');
+    const showShowcaseToggle = document.getElementById('holiday-show-showcase');
+    const showcaseTitleInput = document.getElementById('holiday-showcase-title');
+    const showcaseSubtitleInput = document.getElementById('holiday-showcase-subtitle');
+    const searchInput = document.getElementById('holiday-noel-product-search');
     const form = document.getElementById('holiday-settings-form');
 
     if (!toggle || !form || !db) return;
+
+    if (searchInput && !searchInput.dataset.boundNoelSearch) {
+        searchInput.dataset.boundNoelSearch = '1';
+        searchInput.addEventListener('input', () => window.renderHolidayNoelProductPicker());
+    }
+    window.renderHolidayNoelProductPicker();
 
     const systemRef = doc(db, "settings", "system");
 
@@ -15599,6 +16917,9 @@ async function initHolidaySettings() {
                 densitySelect.value = hs.snowDensity || 'medium';
                 lightsToggle.checked = hs.showLights !== false;
                 messageInput.value = hs.message || '';
+                if (showShowcaseToggle) showShowcaseToggle.checked = hs.showShowcase !== false;
+                if (showcaseTitleInput) showcaseTitleInput.value = hs.showcaseTitle || '';
+                if (showcaseSubtitleInput) showcaseSubtitleInput.value = hs.showcaseSubtitle || '';
             }
         } catch (err) {
             console.error("Lỗi tải cài đặt lễ hội:", err);
@@ -15620,11 +16941,14 @@ async function initHolidaySettings() {
                     snowDensity: densitySelect.value,
                     showLights: lightsToggle.checked,
                     message: messageInput.value.trim(),
+                    showShowcase: showShowcaseToggle ? showShowcaseToggle.checked : true,
+                    showcaseTitle: showcaseTitleInput ? showcaseTitleInput.value.trim() : '',
+                    showcaseSubtitle: showcaseSubtitleInput ? showcaseSubtitleInput.value.trim() : '',
                     updatedAt: serverTimestamp(),
                     updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
                 }
             }, { merge: true });
-            showToast("Đã lưu cài đặt giao diện Noel thành công!");
+            showToast("🎄 Đã lưu cài đặt giao diện & Kệ Gốm Giáng Sinh thành công!");
         } catch (err) {
             showToast("Lỗi lưu cài đặt Noel: " + err.message, "error");
         }

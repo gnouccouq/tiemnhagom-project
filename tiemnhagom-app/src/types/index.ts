@@ -29,12 +29,15 @@ export interface Product {
   category?: string;
   description?: string;
   images?: string[];
+  additionalImages?: string[];
+  hoverImageUrl?: string;
   imageUrl?: string;
   colorVariants?: ProductVariant[];
   patternVariants?: ProductVariant[];
   comboVariants?: ProductVariant[];
   collections?: string[];
   isBestSeller?: boolean;
+  isNew?: boolean;
   isFeatured?: boolean;
   isHidden?: boolean;
   isOnlyEvent?: boolean;

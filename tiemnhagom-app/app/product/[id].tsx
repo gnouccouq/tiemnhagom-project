@@ -167,14 +167,20 @@ export default function ProductDetailScreen() {
     }
   }, [id, variantParam, user?.uid]);
 
-  // Danh sách hình ảnh: Nếu có biến thể đang chọn có ảnh riêng, đưa ảnh đó lên đầu tiên
-  const baseImages = (product?.images && product.images.length > 0)
-    ? product.images
-    : product?.imageUrl
-    ? [product.imageUrl]
-    : product
-    ? ['https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800&auto=format&fit=crop']
-    : [];
+  // Danh sách hình ảnh chuẩn Web (js/product-detail-v2.js):
+  // Gộp đầy đủ imageUrl + additionalImages + images + ảnh các biến thể
+  const baseImages = (() => {
+    if (!product) return [];
+    const list = [
+      product.imageUrl,
+      ...(Array.isArray(product.additionalImages) ? product.additionalImages : []),
+      ...(Array.isArray(product.images) ? product.images : []),
+    ].filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
+    const unique = Array.from(new Set(list));
+    return unique.length > 0
+      ? unique
+      : ['https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800&auto=format&fit=crop'];
+  })();
 
   const variantImg = selectedVariant?.imageUrl || selectedVariant?.thumbUrl;
   const allImages = variantImg ? [variantImg] : [];

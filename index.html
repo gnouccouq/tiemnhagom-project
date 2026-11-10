@@ -175,6 +175,67 @@
             </div>
         </section>
 
+        <!-- Gợi ý 1: Không Gian Trưng Bày Hàng Noel (Góc Giáng Sinh Ấm Áp) -->
+        <section id="noel-showcase-section" class="noel-showcase-section reveal-on-scroll">
+            <div class="noel-showcase-container">
+                <div class="noel-showcase-banner">
+                    <div class="noel-banner-left">
+                        <span class="noel-season-badge">🎄 MÙA LỄ HỘI 2026 • HANDCRAFTED POTTERY</span>
+                        <h2 id="noel-showcase-title-text">Góc Giáng Sinh Ấm Áp</h2>
+                        <p id="noel-showcase-subtitle-text">Trao gửi hơi ấm mùa lễ hội qua những món gốm thủ công mộc mạc — Gói quà &amp; viết thiệp tay miễn phí từ Tiệm Nhà Gốm.</p>
+                    </div>
+                    <div class="noel-countdown-box">
+                        <span class="noel-countdown-label">⏳ Đếm ngược đến Đêm Giáng Sinh (24/12)</span>
+                        <div class="noel-countdown-timer" style="display:flex; flex-direction:row; align-items:center; justify-content:center; gap:12px;">
+                            <div class="noel-cd-unit">
+                                <span class="noel-cd-num" id="noel-cd-days">00</span>
+                                <span class="noel-cd-txt">Ngày</span>
+                            </div>
+                            <div class="noel-cd-unit">
+                                <span class="noel-cd-num" id="noel-cd-hours">00</span>
+                                <span class="noel-cd-txt">Giờ</span>
+                            </div>
+                            <div class="noel-cd-unit">
+                                <span class="noel-cd-num" id="noel-cd-mins">00</span>
+                                <span class="noel-cd-txt">Phút</span>
+                            </div>
+                            <div class="noel-cd-unit">
+                                <span class="noel-cd-num" id="noel-cd-secs">00</span>
+                                <span class="noel-cd-txt">Giây</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="noel-tabs-bar">
+                    <div class="noel-tabs-list" id="noel-home-tabs">
+                        <button type="button" class="noel-tab-btn active" data-noel-tab="all" onclick="window.filterHomeNoelTab('all', this)">🎄 Tất cả món Noel</button>
+                        <button type="button" class="noel-tab-btn" data-noel-tab="cups" onclick="window.filterHomeNoelTab('cups', this)">☕ Ly &amp; Tách mùa lễ hội</button>
+                        <button type="button" class="noel-tab-btn" data-noel-tab="dining" onclick="window.filterHomeNoelTab('dining', this)">🍽️ Bàn tiệc Giáng Sinh</button>
+                        <button type="button" class="noel-tab-btn" data-noel-tab="gifts" onclick="window.filterHomeNoelTab('gifts', this)">🎁 Set quà tặng Noel</button>
+                        <button type="button" class="noel-tab-btn" data-noel-tab="decor" onclick="window.filterHomeNoelTab('decor', this)">🕯️ Decor &amp; Bình hoa</button>
+                    </div>
+                    <a href="noel/#noel-gift-writer" class="noel-perk-pill" style="text-decoration:none;">
+                        🎁 Tặng kèm thiệp Giáng Sinh viết tay &rarr;
+                    </a>
+                </div>
+
+                <div id="noel-product-grid" class="grid">
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text skeleton-title"></div>
+                        <div class="skeleton skeleton-text skeleton-price"></div>
+                    </div>
+                </div>
+
+                <div class="noel-showcase-footer">
+                    <a href="noel/" class="btn-noel-primary">
+                        🎄 Khám phá trọn bộ Không Gian Giáng Sinh &amp; Viết thiệp miễn phí &rarr;
+                    </a>
+                </div>
+            </div>
+        </section>
+
         <section id="sale-section" class="special-offers">
             <div class="section-header">
                 <h2 class="shimmer-title">Flash Sale
@@ -409,7 +470,7 @@
     <div id="footer-placeholder"></div>
 
     <!-- Firebase SDKs -->
-    <script type="module" src="js/main.js?v=6"></script>
+    <script type="module" src="js/main.js?v=8"></script>
 </body>
 
 </html>

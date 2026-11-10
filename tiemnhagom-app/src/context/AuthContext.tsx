@@ -143,6 +143,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // ignore
           }
         }
+        // Đồng bộ ngày đăng ký đầu tiên từ Firebase Auth metadata.creationTime nếu có
+        const authCreationTime = auth.currentUser?.metadata?.creationTime;
+        if (authCreationTime && auth.currentUser?.uid === uid && (!rawData.registeredAt || !rawData.createdAt)) {
+          const authCreationIso = new Date(authCreationTime).toISOString();
+          rawData.registeredAt = rawData.registeredAt || authCreationIso;
+          rawData.createdAt = rawData.createdAt || authCreationIso;
+          setDoc(userDocRef, { registeredAt: rawData.registeredAt, createdAt: rawData.createdAt }, { merge: true }).catch(() => {});
+        }
+
         // Đồng bộ 2 chiều giữa avatar (Web) và photoURL (App & Firebase Auth)
         const effectiveAvatar = rawData.photoURL || rawData.avatar || auth.currentUser?.photoURL || null;
         const effectiveDob = rawData.dob || rawData.birthday || '';

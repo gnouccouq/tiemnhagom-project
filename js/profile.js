@@ -1106,12 +1106,23 @@ async function fetchOrderHistory(userId, authUser = null) {
             sessionStorage.setItem('tng_user_points', String(points));
             if (window.updateMembershipPrices) window.updateMembershipPrices(currentTier);
 
-            setDoc(doc(db, "users", userId), {
+            const currentUserForSync = authUser || auth.currentUser;
+            const authCreationTimeIso = (currentUserForSync?.metadata?.creationTime && !isNaN(new Date(currentUserForSync.metadata.creationTime).getTime()))
+                ? new Date(currentUserForSync.metadata.creationTime).toISOString()
+                : null;
+            const profileSyncPayload = {
                 totalSpent: totalSpent,
                 tier: currentTier.id,
                 membershipTier: currentTier.name,
                 updatedAt: new Date().toISOString()
-            }, { merge: true }).catch(() => {});
+            };
+            if (authCreationTimeIso && currentUserForSync?.uid === userId) {
+                profileSyncPayload.registeredAt = authCreationTimeIso;
+                if (!window.currentUserData?.createdAt) {
+                    profileSyncPayload.createdAt = authCreationTimeIso;
+                }
+            }
+            setDoc(doc(db, "users", userId), profileSyncPayload, { merge: true }).catch(() => {});
             
             let progressHtml = '';
             if (nextTier) {

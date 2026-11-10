@@ -1,8 +1,7 @@
 // src/services/inAppNotificationService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { READ_IDS_KEY } from '../constants/notificationKeys';
-import { DELETED_NOTIFS_KEY } from './orderNotificationService';
+import { READ_IDS_KEY, DELETED_NOTIFS_KEY } from '../constants/notificationKeys';
 
 export const SHOWN_IN_APP_NOTIFS_KEY = '@tiemnhagom_shown_in_app_notif_ids';
 

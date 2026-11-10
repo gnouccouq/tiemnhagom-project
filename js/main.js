@@ -14,6 +14,7 @@ window.toggleFavorite = async (event, productId) => {
     await toggleFavoriteLogic(productId, () => {
         fetchFeaturedProducts();
         initFlashSaleSync(); // Đồng bộ lại trạng thái sau khi toggle
+        if (window.renderHomeNoelGrid) window.renderHomeNoelGrid();
     });
 };
 
@@ -148,6 +149,153 @@ async function fetchComboProducts() {
     } catch (error) {
         console.error("Lỗi lấy dữ liệu Combo:", error);
         grid.innerHTML = '<p>Không thể tải Combo. Vui lòng thử lại sau.</p>';
+    }
+}
+
+// --- GỢI Ý 1: KHÔNG GIAN TRƯNG BÀY HÀNG NOEL TRÊN TRANG CHỦ ---
+let homeNoelProductsCache = [];
+let currentHomeNoelTab = 'all';
+let noelCountdownTimerId = null;
+
+function classifyNoelProductLocal(product = {}) {
+    if (typeof window.classifyNoelSubCategory === 'function') {
+        return window.classifyNoelSubCategory(product);
+    }
+    if (product.noelTag && product.noelTag !== 'all') return product.noelTag;
+    const text = `${product.name || ''} ${product.category || ''} ${(product.collections || []).join(' ')} ${product.description || ''}`.toLowerCase();
+    if (product.isCombo || /combo|set quà|hộp quà|quà tặng|gift/i.test(text)) return 'gifts';
+    if (/ly|cốc|tách|mug|cup|ấm trà|tách trà/i.test(text)) return 'cups';
+    if (/bình|lọ|nến|decor|trang trí|tượng|chuông|cây thông|đèn/i.test(text)) return 'decor';
+    if (/đĩa|dĩa|tô|chén|bát|khay|bàn ăn|thố/i.test(text)) return 'dining';
+    return 'gifts';
+}
+
+function startNoelCountdown() {
+    const dEl = document.getElementById('noel-cd-days');
+    const hEl = document.getElementById('noel-cd-hours');
+    const mEl = document.getElementById('noel-cd-mins');
+    const sEl = document.getElementById('noel-cd-secs');
+    if (!dEl || !hEl || !mEl || !sEl) return;
+
+    const updateTimer = () => {
+        const now = new Date();
+        let targetYear = now.getFullYear();
+        let xmas = new Date(targetYear, 11, 24, 23, 59, 59);
+        if (now > new Date(targetYear, 11, 26, 0, 0, 0)) {
+            xmas = new Date(targetYear + 1, 11, 24, 23, 59, 59);
+        }
+        const diff = Math.max(0, xmas.getTime() - now.getTime());
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const mins = Math.floor((diff / 1000 / 60) % 60);
+        const secs = Math.floor((diff / 1000) % 60);
+
+        dEl.textContent = String(days).padStart(2, '0');
+        hEl.textContent = String(hours).padStart(2, '0');
+        mEl.textContent = String(mins).padStart(2, '0');
+        sEl.textContent = String(secs).padStart(2, '0');
+    };
+
+    updateTimer();
+    if (noelCountdownTimerId) clearInterval(noelCountdownTimerId);
+    noelCountdownTimerId = setInterval(updateTimer, 1000);
+}
+
+window.renderHomeNoelGrid = async function() {
+    const grid = document.getElementById('noel-product-grid');
+    if (!grid) return;
+
+    let favs = [];
+    if (auth.currentUser) {
+        try {
+            const snap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
+            if (snap.exists()) favs = snap.data().productIds || [];
+        } catch (e) {}
+    } else {
+        favs = JSON.parse(localStorage.getItem('favorites')) || [];
+    }
+
+    const filtered = homeNoelProductsCache.filter(item => {
+        if (currentHomeNoelTab === 'all') return true;
+        return classifyNoelProductLocal(item.data) === currentHomeNoelTab;
+    });
+
+    const displayList = filtered.slice(0, 12);
+    if (displayList.length === 0) {
+        grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#78716C; padding:2rem;">Chưa có sản phẩm Noel nào trong danh mục này.</p>';
+        return;
+    }
+
+    grid.innerHTML = displayList.map(item =>
+        renderProductCardWithVariants(item.data, item.id, favs, 'product/index.html')
+    ).join('');
+
+    if (window.updateMembershipPrices) window.updateMembershipPrices();
+};
+
+window.filterHomeNoelTab = function(tabKey, btnEl) {
+    currentHomeNoelTab = tabKey || 'all';
+    const tabsContainer = document.getElementById('noel-home-tabs');
+    if (tabsContainer) {
+        tabsContainer.querySelectorAll('.noel-tab-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    if (btnEl) btnEl.classList.add('active');
+    window.renderHomeNoelGrid();
+};
+
+async function initNoelShowcase() {
+    const section = document.getElementById('noel-showcase-section');
+    const grid = document.getElementById('noel-product-grid');
+    if (!section || !grid) return;
+
+    startNoelCountdown();
+
+    try {
+        grid.innerHTML = Array(5).fill(0).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-img"></div>
+                <div class="skeleton skeleton-text skeleton-title"></div>
+                <div class="skeleton skeleton-text skeleton-small"></div>
+                <div class="skeleton skeleton-text skeleton-price"></div>
+            </div>
+        `).join('');
+
+        // Kiểm tra cấu hình hệ thống trước khi hiển thị
+        const sysSnap = await getDoc(doc(db, "settings", "system")).catch(() => null);
+        if (sysSnap && sysSnap.exists()) {
+            const sysData = sysSnap.data();
+            const hs = sysData.holidaySeason || {};
+            if (hs.showShowcase === false) {
+                section.style.display = 'none';
+                return;
+            }
+            if (hs.showcaseTitle) {
+                const tEl = document.getElementById('noel-showcase-title-text');
+                if (tEl) tEl.textContent = hs.showcaseTitle;
+            }
+            if (hs.showcaseSubtitle) {
+                const sEl = document.getElementById('noel-showcase-subtitle-text');
+                if (sEl) sEl.textContent = hs.showcaseSubtitle;
+            }
+        }
+
+        // Chỉ lấy danh sách sản phẩm đã được Admin tick chọn trưng bày Noel (isNoel == true)
+        const q = query(collection(db, "products"), where("isNoel", "==", true));
+        const snap = await getDocs(q);
+
+        const explicitNoel = [];
+        snap.forEach(docSnap => {
+            const d = docSnap.data();
+            if (d.isHidden || d.isOnlyEvent) return;
+            if (d.isNoel === true) {
+                explicitNoel.push({ id: docSnap.id, data: d });
+            }
+        });
+
+        homeNoelProductsCache = explicitNoel;
+        await window.renderHomeNoelGrid();
+    } catch (err) {
+        console.error("Lỗi khởi tạo Góc Giáng Sinh:", err);
     }
 }
 
@@ -757,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Kích hoạt ngay lập tức mà không cần chờ Auth để tăng tốc độ load
     initHeroCarousel();
+    initNoelShowcase();
     fetchFeaturedProducts();
     fetchBestSellingProducts();
     fetchComboProducts();

@@ -1,4 +1,4 @@
-﻿---
+---
 name: tiemnhagom-standards
 description: >-
   Bộ quy chuẩn thiết kế UI/UX và kiến trúc vận hành bắt buộc cho Tiệm Nhà Gốm.
@@ -302,3 +302,15 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 * **Trách nhiệm Dọn dẹp & Giữ sạch Workspace (Workspace Hygiene):**
   * Luôn kiểm tra `git status` trước và sau khi hoàn thành công việc.
   * Nếu trong quá trình build, kiểm thử hoặc chạy lệnh phát sinh tệp rác/tệp tạm ngoài ý muốn, phải lập tức dọn dẹp và xóa bỏ ngay trước khi kết thúc phiên làm việc và bàn giao cho người dùng.
+
+---
+
+## 17. Quy chuẩn Bo Góc (Border-Radius) — Chống Lỗi Bo Tròn 999px Trên Khung Chứa & Dashboard
+* **Tuyệt đối KHÔNG áp dụng `border-radius: 999px` (hoặc `50%`) cho các khối khung chứa (Containers, Cards, Sidebars, Panels, Tables, Modals):**
+  * Các khung bố cục lớn như `.kiot-filter-sidebar`, `.kiot-product-main`, `.admin-card`, `.modal-content`, bảng dữ liệu (`.admin-table`), hoặc các khối vùng nội dung **bắt buộc sử dụng góc bo tiêu chuẩn `6px` – `12px`** (riêng trên Admin Dashboard chuẩn KiotViet là `6px` – `8px`).
+  * Nếu đặt `border-radius: 999px` lên khối có chiều cao và chiều rộng lớn, trình duyệt sẽ biến toàn bộ khung chứa thành hình elip/hình tròn khổng lồ và cắt mất các góc nội dung bên trong.
+* **Phân tách rõ Bo góc giữa Web Storefront và Admin Dashboard (`body.admin-dashboard-layout`):**
+  * `border-radius: 999px` (dạng viên thuốc - pill shape) **chỉ được phép dùng cho các nút bấm đơn lẻ (CTA buttons), nhãn trạng thái nhỏ (badges/chips/tags) trên Web Storefront hoặc App**.
+  * Trong giao diện Quản trị (`body.admin-dashboard-layout`), toàn bộ khung lọc bên trái (`.kiot-filter-sidebar`), khung nội dung chính bên phải (`.kiot-product-main`), các ô nhập liệu (`input`, `select`) và các nút thao tác (`.kiot-btn-primary`, `.kiot-btn-outline`, `.btn-dark`, `.btn-outline`, `.btn-minimal`) **giữ nguyên bo góc vuông thanh lịch `6px`**, tuyệt đối không dùng `999px`.
+* **Nghiêm cấm Tìm & Thay thế hàng loạt (Blind Find-and-Replace) thuộc tính `border-radius`:**
+  * Tuyệt đối không chạy lệnh thay thế hàng loạt kiểu `border-radius: 6px` -> `border-radius: 999px` trên toàn bộ file `css/style.css`, vì `css/style.css` dùng chung cho cả Storefront và Admin Dashboard. Mọi chỉnh sửa `border-radius` phải chỉ định rõ selector cụ thể.

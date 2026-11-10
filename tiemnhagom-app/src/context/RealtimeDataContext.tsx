@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { syncOrderNotificationsForUser } from '../services/orderNotificationService';
 import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 import { getUserOrders } from '../services/orderService';
-import { seedProductCache } from '../services/productService';
+import { seedProductCache, extractProductImages } from '../services/productService';
 
 interface RealtimeDataContextProps {
   products: Product[];
@@ -60,6 +60,8 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
+        const baseImages = extractProductImages(data, finalImageUrl);
+
         const baseProduct: Product = {
           id: docSnap.id,
           name: data.name || 'Sản phẩm gốm',
@@ -70,17 +72,24 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
           sold: Number(data.sold) || 0,
           category: data.category || 'Gốm sứ',
           description: data.description || '',
-          images: Array.isArray(data.images) && data.images.length > 0 ? data.images : (finalImageUrl ? [finalImageUrl] : []),
+          images: baseImages,
+          additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+          hoverImageUrl: data.hoverImageUrl || undefined,
           imageUrl: finalImageUrl,
           colorVariants: data.colorVariants || [],
           patternVariants: data.patternVariants || [],
           comboVariants: data.comboVariants || [],
           collections: data.collections || [],
           isBestSeller: Boolean(data.isBestSeller || (Number(data.sold) >= 5)),
+          isNew: Boolean(data.isNew),
           isFeatured: Boolean(data.isFeatured),
           rating: Number(data.rating) || 5,
-          createdAt: data.createdAt || data.createdDate || data.updatedAt,
+          createdAt: data.createdAt || data.createdDate,
           updatedAt: data.updatedAt,
+          dimensions: data.dimensions,
+          details: data.details,
+          specs: data.specs,
+          usage: data.usage,
         };
         items.push(baseProduct);
         
@@ -121,18 +130,25 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
             stock: vStock,
             sold: vSold,
             category: data.category || 'Gốm sứ',
-            description: '',
-            images: v.imageUrl ? [v.imageUrl] : (finalImageUrl ? [finalImageUrl] : []),
+            description: data.description || '',
+            images: Array.from(new Set([v.imageUrl || v.thumbUrl, ...baseImages].filter(Boolean))),
+            additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+            hoverImageUrl: data.hoverImageUrl || undefined,
             imageUrl: v.imageUrl || v.thumbUrl || finalImageUrl,
-            colorVariants: [],
-            patternVariants: [],
-            comboVariants: [],
+            colorVariants: data.colorVariants || [],
+            patternVariants: data.patternVariants || [],
+            comboVariants: data.comboVariants || [],
             collections: data.collections || [],
             isBestSeller: vIsBestSeller,
+            isNew: Boolean(data.isNew),
             isFeatured: Boolean(data.isFeatured),
             rating: Number(data.rating) || 5,
-            createdAt: data.createdAt || data.createdDate || data.updatedAt,
+            createdAt: data.createdAt || data.createdDate,
             updatedAt: data.updatedAt,
+            dimensions: data.dimensions,
+            details: data.details,
+            specs: data.specs,
+            usage: data.usage,
           });
         };
 
