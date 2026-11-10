@@ -398,9 +398,15 @@ export async function fetchUserMembershipInfo(userOrUid = null) {
         }));
 
         let orderSpent = 0;
+        let redeemedPoints = 0;
         ordersMap.forEach((o) => {
             if (isCompletedOrderForLoyalty(o)) {
                 orderSpent += (Number(o.totalAmount) || 0);
+            }
+            const status = (o.status || '').toLowerCase();
+            const isCancelled = status.includes('hủy') || status.includes('cancel');
+            if (!isCancelled && o.pointsUsed && Number(o.pointsUsed) > 0) {
+                redeemedPoints += Number(o.pointsUsed);
             }
         });
 
@@ -408,24 +414,34 @@ export async function fetchUserMembershipInfo(userOrUid = null) {
         const totalSpent = Math.max(orderSpent, profileSpent);
         const tier = getMembershipTier(totalSpent, userData.membershipTier || userData.tier);
         const effectiveSpentForTier = Math.max(totalSpent, tier.min || 0);
-        const points = Math.floor(totalSpent / 10000);
+
+        const earnedPoints = Math.floor(totalSpent / 10000);
+        const rawProfilePoints = userData.points !== undefined && userData.points !== null ? Number(userData.points) : 0;
+        const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
+        const giftBonus = Number(userData.giftPointsBonus || 0);
+        const giftDeduction = Number(userData.giftPointsDeduction || 0);
+        const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints + giftBonus - giftDeduction);
 
         sessionStorage.setItem('tng_current_tier', JSON.stringify(tier));
         sessionStorage.setItem('tng_effective_uid', effectiveUid);
         sessionStorage.setItem('tng_total_spent', String(totalSpent));
+        sessionStorage.setItem('tng_user_points', String(points));
 
         if (window.updateMembershipPrices) {
             window.updateMembershipPrices(tier);
         }
 
-        // Đồng bộ ngược lại vào document users/{effectiveUid} nếu chi tiêu thực tế cao hơn hoặc hạng thẻ chưa khớp
-        if (userSnap.exists() && (userData.totalSpent !== totalSpent || userData.tier !== tier.id || userData.membershipTier !== tier.name)) {
-            setDoc(doc(db, "users", effectiveUid), {
-                totalSpent: totalSpent,
-                tier: tier.id,
-                membershipTier: tier.name,
-                updatedAt: new Date().toISOString()
-            }, { merge: true }).catch(() => {});
+        // Đồng bộ ngược lại vào document users/{effectiveUid} nếu chi tiêu, điểm hoặc hạng thẻ chưa khớp
+        if (userSnap.exists()) {
+            const updates = {};
+            if (userData.totalSpent !== totalSpent) updates.totalSpent = totalSpent;
+            if (userData.points !== points) updates.points = points;
+            if (userData.tier !== tier.id) updates.tier = tier.id;
+            if (userData.membershipTier !== tier.name) updates.membershipTier = tier.name;
+            if (Object.keys(updates).length > 0) {
+                updates.updatedAt = new Date().toISOString();
+                setDoc(doc(db, "users", effectiveUid), updates, { merge: true }).catch(() => {});
+            }
         }
 
         return { effectiveUid, totalSpent, effectiveSpentForTier, tier, points, userData };

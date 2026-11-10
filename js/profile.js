@@ -489,7 +489,39 @@ async function handleProfileAuth(user) {
         }
 
         if (editName) editName.value = user.displayName || '';
-        if (editPhone) editPhone.value = userMainPhone;
+        if (editPhone) {
+            editPhone.value = userMainPhone;
+            if (userMainPhone) {
+                editPhone.readOnly = true;
+                editPhone.disabled = true;
+                editPhone.style.backgroundColor = '#f1f5f9';
+                editPhone.style.cursor = 'not-allowed';
+                editPhone.title = 'Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.';
+
+                let phoneLockHint = document.getElementById('phone-locked-hint');
+                if (!phoneLockHint && editPhone.parentElement) {
+                    phoneLockHint = document.createElement('small');
+                    phoneLockHint.id = 'phone-locked-hint';
+                    phoneLockHint.className = 'phone-locked-hint';
+                    phoneLockHint.style.cssText = 'color: #64748b; font-size: 0.78rem; margin-top: 5px; display: flex; align-items: center; gap: 4px;';
+                    phoneLockHint.innerHTML = '🔒 Số điện thoại đã liên kết cố định. Muốn đổi vui lòng liên hệ Admin.';
+                    editPhone.parentElement.appendChild(phoneLockHint);
+                }
+
+                editPhone.parentElement.onclick = () => {
+                    if (editPhone.disabled || editPhone.readOnly) {
+                        showToast('Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.', 'info');
+                    }
+                };
+            } else {
+                editPhone.readOnly = false;
+                editPhone.disabled = false;
+                editPhone.style.backgroundColor = '';
+                editPhone.style.cursor = '';
+                const phoneLockHint = document.getElementById('phone-locked-hint');
+                if (phoneLockHint) phoneLockHint.remove();
+            }
+        }
         if (editEmail) editEmail.value = user.email || '';
         if (editDob) editDob.value = userData.dob || userData.birthday || '';
         if (editGender) editGender.value = userData.gender || '';
@@ -675,7 +707,14 @@ async function handleProfileAuth(user) {
                 const otpGroup = document.getElementById('otp-group-profile');
 
                 try {
-                    const phoneChanged = newPhone && newPhone !== (userData.phone || '');
+                    const existingPhone = formatPhoneNumber(userData.phone || user.phoneNumber || '');
+                    if (existingPhone && newPhone && existingPhone !== newPhone) {
+                        showToast("Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.", "error");
+                        if (editPhone) editPhone.value = existingPhone;
+                        return;
+                    }
+
+                    const phoneChanged = !existingPhone && Boolean(newPhone);
                     
                     if (phoneChanged && !confirmationResult) {
                         submitBtn.disabled = true;
@@ -807,6 +846,7 @@ async function fetchOrderHistory(userId, authUser = null) {
 
         let htmlContent = '';
         let totalSpent = 0;
+        let redeemedPoints = 0;
 
         if (querySnapshot.empty) {
             orderListContainer.style.display = 'none';
@@ -818,10 +858,26 @@ async function fetchOrderHistory(userId, authUser = null) {
 
                 const rawStatus = (order.status || 'Đang xử lý').trim();
                 const statusLower = rawStatus.toLowerCase();
+                const isCancelled = statusLower.includes('hủy') || statusLower.includes('cancel');
 
-                // Chỉ tích lũy chi tiêu cho đơn hàng đã hoàn thành để thăng hạng
-                if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('completed')) {
+                // Tích lũy chi tiêu hợp lệ cho đơn hàng thành công, đã giao, đang giao, đã thanh toán
+                const isEligible = !isCancelled && (
+                    statusLower.includes('hoàn thành') ||
+                    statusLower.includes('thành công') ||
+                    statusLower.includes('completed') ||
+                    statusLower.includes('đã giao') ||
+                    statusLower.includes('nhận') ||
+                    statusLower.includes('đang giao') ||
+                    statusLower.includes('vận chuyển') ||
+                    statusLower.includes('đã thanh toán') ||
+                    statusLower.includes('paid')
+                );
+                if (isEligible) {
                     totalSpent += (order.totalAmount || 0);
+                }
+
+                if (!isCancelled && order.pointsUsed && Number(order.pointsUsed) > 0) {
+                    redeemedPoints += Number(order.pointsUsed);
                 }
 
                 const orderDate = order.orderDate ? new Date(order.orderDate.toDate()).toLocaleString('vi-VN') : 
@@ -1039,11 +1095,23 @@ async function fetchOrderHistory(userId, authUser = null) {
             const currentTier = getMembershipTier(totalSpent, window.currentUserData?.membershipTier || window.currentUserData?.tier);
             sessionStorage.setItem('tng_current_tier', JSON.stringify(currentTier));
             sessionStorage.setItem('tng_total_spent', String(totalSpent));
+
+            const earnedPoints = Math.floor(totalSpent / 10000);
+            const rawProfilePoints = window.currentUserData?.points !== undefined && window.currentUserData?.points !== null ? Number(window.currentUserData.points) : 0;
+            const cleanProfilePoints = (rawProfilePoints === 50 && totalSpent < 500000) ? 0 : rawProfilePoints;
+            const giftBonus = Number(window.currentUserData?.giftPointsBonus || 0);
+            const giftDeduction = Number(window.currentUserData?.giftPointsDeduction || 0);
+            const points = Math.max(0, Math.max(earnedPoints, cleanProfilePoints) - redeemedPoints + giftBonus - giftDeduction);
+
+            sessionStorage.setItem('tng_user_points', String(points));
             if (window.updateMembershipPrices) window.updateMembershipPrices(currentTier);
-            setDoc(doc(db, "users", userId), { totalSpent: totalSpent, tier: currentTier.id, membershipTier: currentTier.name, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
-            const currentIndex = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
-            const nextTier = MEMBERSHIP_TIERS[currentIndex + 1];
-            const points = Math.floor(totalSpent / 10000);
+
+            setDoc(doc(db, "users", userId), {
+                totalSpent: totalSpent,
+                tier: currentTier.id,
+                membershipTier: currentTier.name,
+                updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
             
             let progressHtml = '';
             if (nextTier) {

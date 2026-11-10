@@ -59,12 +59,17 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * **Hiển thị Full-Bleed 100% tràn viền màn hình (Không có dải đen / khoảng cắt đáy):**
     * Tuyệt đối **không dùng `SafeAreaView`** bọc ngoài cùng các trang cuộn vì `SafeAreaView` sẽ cắt vùng `insets.bottom`, tạo ra dải nền đặc hoặc vệt đen cắt ngang dưới đáy màn hình.
     * Luôn dùng `<View style={{ flex: 1, backgroundColor: Colors.background }}>` kết hợp `contentInsetAdjustmentBehavior="never"` trên `ScrollView` / `FlatList` để nội dung cuộn xuyên suốt tràn xuống tận mép đáy màn hình phía sau lớp kính.
-  * **Thanh hành động cố định đáy màn hình dạng viên thuốc nổi bọc Liquid Glass (`LiquidGlass` Floating Pill):**
-    * Áp dụng cho toàn bộ các thanh CTA dưới đáy trang (như thanh "Tiến hành đặt hàng" ở `cart.tsx`, "Thêm vào giỏ & Mua ngay" ở `product/[id].tsx`, "Đặt hàng" ở `checkout.tsx`, nút "Áp dụng", "Xác nhận", "Kiểm tra bản cập nhật"...):
-    * **Tuyệt đối không** dùng thanh chữ nhật đặc chạm sát đáy (`bottom: 0, left: 0, right: 0` với `backgroundColor` đặc hoặc `borderTopWidth`).
-    * Đặt trong container nổi tách khỏi mép màn hình: `position: 'absolute', left: 14, right: 14, bottom: Math.max(insets.bottom, 14), zIndex: 100` kèm `pointerEvents="box-none"`.
-    * Bọc toàn bộ nội dung thanh đáy trong `<LiquidGlass interactive={true} effect="regular" isDark={isDark} style={{ borderRadius: 36, overflow: 'hidden', ... }}>` (tự động dùng hiệu ứng khúc xạ kính thật của hệ thống iOS 26 và tự động fallback sang kính mờ `BlurView` + nền bán trong suốt đồng bộ trên Android / iOS cũ).
-    * Trong `ScrollView` / `FlatList`, `contentContainerStyle` bắt buộc có `paddingBottom: Math.max(insets.bottom, 20) + 110` để nội dung cuối trang cuộn thoải mái lên trên thanh kính nổi.
+  * **Thanh hành động cố định đáy màn hình dạng viên thuốc nổi kết hợp lớp mờ dần (`FadingBottomBackdrop`):**
+    * Áp dụng cho toàn bộ các cụm CTA dưới đáy trang (như thanh "Thêm vào giỏ & Mua ngay" ở `product/[id].tsx`, "Từ chối & Nhận điểm" ở `gift-claim.tsx`, "Đặt hàng" ở `checkout.tsx`, "Tiến hành đặt hàng" ở `cart.tsx`, nút "Xác nhận", "Kiểm tra bản cập nhật"...):
+    * **Tuyệt đối không dùng thanh chữ nhật đặc chạm sát đáy** (`bottom: 0, left: 0, right: 0` với `backgroundColor` đặc hoặc `borderTopWidth`).
+    * **Tuyệt đối không bọc cả cụm nút vào một vỏ capsule `LiquidGlass` bên ngoài:** Tránh hiện tượng "capsule trong capsule" (khung kính kép lồng vào các nút viên thuốc bên trong làm che khuất nội dung phía sau).
+    * **Lớp phủ Gradient mờ dần chân trang (`FadingBottomBackdrop`):**
+      * Đặt `<FadingBottomBackdrop />` ngay bên dưới container chứa các nút (`zIndex: 40, pointerEvents="none"`).
+      * Phủ lớp `LinearGradient` từ trong suốt `rgba(..., 0)` ở mép trên mờ dần xuống màu nền canvas của hệ thống (`#FAF8F5` ở Light Mode, `#000000` ở Dark Mode) tại đáy màn hình, giúp nội dung trang khi cuộn xuống sẽ mờ dần thanh thoát phía sau các nút bấm.
+    * **Cụm nút nổi độc lập:**
+      * Đặt trong container nổi tách khỏi mép màn hình: `position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom, 14), zIndex: 50` kèm `pointerEvents="box-none"`.
+      * Các nút bấm ("Thêm vào giỏ", "Mua ngay", "Từ chối", "Nhận điểm"...) là các viên thuốc độc lập chuẩn (`height: 52px, borderRadius: 26px`), có độ đổ bóng (`shadowColor`, `elevation`) và viền men gốm riêng biệt sắc sảo.
+    * Trong `ScrollView` / `FlatList`, `contentContainerStyle` bắt buộc có `paddingBottom: Math.max(insets.bottom, 20) + 110` để nội dung cuối trang cuộn thoải mái lên trên các nút nổi.
 * **Secondary / Pill Buttons (Nút phụ, chip phân loại, toggle):**
   * Dạng viên thuốc nhỏ gọn: `height: 38px - 44px`, `borderRadius: 19px - 22px`.
   * Nền trắng hoặc trong suốt viền mảnh `1px - 1.2px` tinh tế.

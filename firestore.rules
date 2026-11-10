@@ -86,7 +86,9 @@ service cloud.firestore {
           (request.auth != null && resource.data.mergedTo == request.auth.uid) ||
           (request.auth != null && request.resource.data.mergedTo == request.auth.uid) ||
           // Hoặc ghost account do hệ thống tạo khi mua hàng
-          (resource.data.isGhost == true)
+          (resource.data.isGhost == true) ||
+          // Hoặc hoàn điểm quà tặng giữa người dùng (chỉ được cập nhật giftPointsDeduction)
+          (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['giftPointsDeduction', 'updatedAt']))
         ) && (
           // BẢO VỆ ĐIỂM THƯỞNG: Cấm client tự ý sửa đổi điểm gốm (points)
           isUnchanged('points') || !('points' in request.resource.data)
@@ -100,7 +102,11 @@ service cloud.firestore {
 
       // Thông báo cá nhân của người dùng (users/{userId}/notifications)
       match /notifications/{notifId} {
-        allow read, write: if isAdmin() || isSelfOrMerged(userId);
+        allow read: if isAdmin() || isSelfOrMerged(userId);
+        allow write: if isAdmin() || isSelfOrMerged(userId) || (
+          request.auth != null &&
+          request.resource.data.type == 'gift'
+        );
       }
     }
 

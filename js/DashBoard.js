@@ -9569,10 +9569,40 @@ window.submitCreateOnlineOrder = async function () {
         // 1. Lưu đơn vào Firestore collection orders
         await setDoc(doc(db, "orders", orderId), orderData);
 
-        // 2. Trừ kho sản phẩm thời gian thực
+        // 2. Trừ kho sản phẩm thời gian thực (bao gồm cả các sản phẩm con trong combo)
         try {
+            const childItemsToAdd = [];
+            for (const item of window.onlineOrderCart) {
+                const pId = String(item.id || item.productId).trim();
+                const productRef = doc(db, "products", pId);
+                const pSnap = await getDoc(productRef);
+                if (pSnap.exists()) {
+                    const pData = pSnap.data();
+                    if (pData.isCombo && Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                        const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant?.name || null));
+                        const cv = pData.comboVariants.find(v => v.name === cName) || (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                        if (cv && Array.isArray(cv.items)) {
+                            const parentQty = Number(item.quantity) || 1;
+                            cv.items.forEach(child => {
+                                if (child.id) {
+                                    const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                    childItemsToAdd.push({
+                                        id: child.id,
+                                        quantity: childQty,
+                                        color: child.selectedColor || null,
+                                        pattern: child.selectedPattern || null,
+                                        isChild: true
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            const allItemsToDeduct = [...window.onlineOrderCart, ...childItemsToAdd];
             const itemsByProduct = {};
-            window.onlineOrderCart.forEach(item => {
+            allItemsToDeduct.forEach(item => {
                 const pId = String(item.id || item.productId).trim();
                 if (!itemsByProduct[pId]) itemsByProduct[pId] = [];
                 itemsByProduct[pId].push(item);
@@ -10644,7 +10674,40 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                             const productRef = doc(db, "products", item.id);
                             const pSnap = await transaction.get(productRef);
                             if (pSnap.exists()) {
-                                productSnapshots.push({ item, productRef, pSnap });
+                                productSnapshots.push({ item, productRef, pSnap, isChild: false });
+                            }
+                        }
+                    }
+
+                    // Lượt 2: Tìm các sản phẩm con của combo để hoàn lại tồn kho và giảm số đã bán
+                    const initialSnapLength = productSnapshots.length;
+                    for (let i = 0; i < initialSnapLength; i++) {
+                        const { item, pSnap } = productSnapshots[i];
+                        const pData = pSnap.data();
+                        if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                            const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant?.name || null));
+                            const cv = pData.comboVariants.find(v => v.name === cName) || (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                            if (cv && Array.isArray(cv.items)) {
+                                const parentQty = Number(item.quantity) || 1;
+                                for (const child of cv.items) {
+                                    if (!child.id) continue;
+                                    const childRef = doc(db, "products", child.id);
+                                    const childSnap = await transaction.get(childRef);
+                                    if (childSnap.exists()) {
+                                        const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                        productSnapshots.push({
+                                            item: {
+                                                id: child.id,
+                                                quantity: childQty,
+                                                color: child.selectedColor || null,
+                                                pattern: child.selectedPattern || null
+                                            },
+                                            productRef: childRef,
+                                            pSnap: childSnap,
+                                            isChild: true
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
@@ -10695,9 +10758,10 @@ window.updateOrderStatus = async (orderId, newStatus, selectElement) => {
                             });
                         }
 
-                        if (item.comboVariant && Array.isArray(pData.comboVariants)) {
+                        if (Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                            const cName = item.comboVariant?.name || item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant?.name || null));
                             pUpdate.comboVariants = pData.comboVariants.map(v => {
-                                if (v.id === item.comboVariant.id || v.name === item.comboVariant.name) {
+                                if (v.name === cName || (item.comboVariant && v.id === item.comboVariant.id)) {
                                     return {
                                         ...v,
                                         sold: Math.max(0, (Number(v.sold) || 0) - itemQty)
@@ -14415,9 +14479,46 @@ window.createPOSOrder = async () => {
                 }
             }
 
-            // Update inventory grouped by product ID to support multiple color/pattern/combo variants of the same product
+            // Update inventory grouped by product ID to support multiple color/pattern/combo variants of the same product (bao gồm các sản phẩm con của combo)
+            const childItemsToAdd = [];
+            for (const item of bill.cart) {
+                const pId = String(item.id).trim();
+                const productRef = doc(db, "products", pId);
+                const pSnap = await getDoc(productRef);
+                if (pSnap.exists()) {
+                    const pData = pSnap.data();
+                    if (pData.isCombo && Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                        let cName = item.comboVariant || item.variantName || item.combo;
+                        if (!cName && item.variant) {
+                            const matchedCV = pData.comboVariants.find(cv => item.variant.includes(cv.name));
+                            if (matchedCV) cName = matchedCV.name;
+                        }
+                        if (!cName && pData.comboVariants.length === 1) {
+                            cName = pData.comboVariants[0].name;
+                        }
+                        const cv = pData.comboVariants.find(v => v.name === cName);
+                        if (cv && Array.isArray(cv.items)) {
+                            const parentQty = Number(item.quantity) || 1;
+                            cv.items.forEach(child => {
+                                if (child.id) {
+                                    const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                    childItemsToAdd.push({
+                                        id: child.id,
+                                        quantity: childQty,
+                                        color: child.selectedColor || null,
+                                        pattern: child.selectedPattern || null,
+                                        isChild: true
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            const allItemsToDeduct = [...bill.cart, ...childItemsToAdd];
             const itemsByProduct = {};
-            bill.cart.forEach(item => {
+            allItemsToDeduct.forEach(item => {
                 const pId = String(item.id).trim();
                 if (!itemsByProduct[pId]) itemsByProduct[pId] = [];
                 itemsByProduct[pId].push(item);

@@ -299,7 +299,40 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
             for (const item of orderItems) {
                 const pRef = db.collection("products").doc(item.id);
                 const pSnap = await transaction.get(pRef);
-                productSnapshots.push({ item, pRef, pSnap });
+                productSnapshots.push({ item, pRef, pSnap, isChild: false });
+            }
+
+            // Lượt 2: Tìm các sản phẩm con của combo để trừ kho và cộng đã bán cho từng món con
+            const initialSnapLen1 = productSnapshots.length;
+            for (let i = 0; i < initialSnapLen1; i++) {
+                const { item, pSnap } = productSnapshots[i];
+                const pData = pSnap.data() || {};
+                if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                    const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                    const cv = pData.comboVariants.find(v => v.name === cName) || (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                    if (cv && Array.isArray(cv.items)) {
+                        const parentQty = Number(item.quantity) || 1;
+                        for (const child of cv.items) {
+                            if (!child.id) continue;
+                            const childRef = db.collection("products").doc(child.id);
+                            const childSnap = await transaction.get(childRef);
+                            if (childSnap.exists) {
+                                const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                productSnapshots.push({
+                                    item: {
+                                        id: child.id,
+                                        quantity: childQty,
+                                        color: child.selectedColor || null,
+                                        pattern: child.selectedPattern || null
+                                    },
+                                    pRef: childRef,
+                                    pSnap: childSnap,
+                                    isChild: true
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
             // 2. Thực hiện tất cả các thao tác ghi (ALL WRITES AFTER READS)
@@ -308,15 +341,17 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
                 const pData = pSnap.data() || {};
 
                 let updateData = {
-                    stock: admin.firestore.FieldValue.increment(-item.quantity),
                     sold: admin.firestore.FieldValue.increment(item.quantity)
                 };
+                if (!pData.isCombo) {
+                    updateData.stock = admin.firestore.FieldValue.increment(-item.quantity);
+                }
 
                 // Nếu khách hàng có chọn biến thể màu sắc, cập nhật kho riêng của biến thể đó
                 if (item.color && pData.colorVariants) {
                     const updatedVariants = pData.colorVariants.map(v => {
                         if (v.name === item.color) {
-                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                            return { ...v, stock: (v.stock || 0) - item.quantity, sold: (v.sold || 0) + item.quantity };
                         }
                         return v;
                     });
@@ -327,11 +362,22 @@ exports.createOrderSecure = onCall({ cors: true }, async (request) => {
                 if (item.pattern && pData.patternVariants) {
                     const updatedPatternVariants = pData.patternVariants.map(v => {
                         if (v.name === item.pattern) {
-                            return { ...v, stock: (v.stock || 0) - item.quantity };
+                            return { ...v, stock: (v.stock || 0) - item.quantity, sold: (v.sold || 0) + item.quantity };
                         }
                         return v;
                     });
                     updateData.patternVariants = updatedPatternVariants;
+                }
+
+                // Cập nhật số lượng đã bán của biến thể combo nếu có
+                if (pData.isCombo && Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                    const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                    updateData.comboVariants = pData.comboVariants.map(v => {
+                        if (v.name === cName || (pData.comboVariants.length === 1)) {
+                            return { ...v, sold: (Number(v.sold) || 0) + item.quantity };
+                        }
+                        return v;
+                    });
                 }
 
                 transaction.update(pRef, updateData);
@@ -1550,7 +1596,40 @@ exports.vnpayIpn = onRequest(async (req, res) => {
                             const productRef = db.collection('products').doc(item.id);
                             const pSnap = await transaction.get(productRef);
                             if (pSnap.exists) {
-                                productSnapshots.push({ item, productRef, pSnap });
+                                productSnapshots.push({ item, productRef, pSnap, isChild: false });
+                            }
+                        }
+                    }
+
+                    // Lượt 2: Tìm các sản phẩm con của combo để hoàn lại tồn kho và giảm số đã bán
+                    const initialVnPayLen = productSnapshots.length;
+                    for (let i = 0; i < initialVnPayLen; i++) {
+                        const { item, pSnap } = productSnapshots[i];
+                        const pData = pSnap.data() || {};
+                        if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                            const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                            const cv = pData.comboVariants.find(v => v.name === cName) || (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                            if (cv && Array.isArray(cv.items)) {
+                                const parentQty = Number(item.quantity) || 1;
+                                for (const child of cv.items) {
+                                    if (!child.id) continue;
+                                    const childRef = db.collection('products').doc(child.id);
+                                    const childSnap = await transaction.get(childRef);
+                                    if (childSnap.exists) {
+                                        const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                        productSnapshots.push({
+                                            item: {
+                                                id: child.id,
+                                                quantity: childQty,
+                                                color: child.selectedColor || null,
+                                                pattern: child.selectedPattern || null
+                                            },
+                                            productRef: childRef,
+                                            pSnap: childSnap,
+                                            isChild: true
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
@@ -1572,17 +1651,27 @@ exports.vnpayIpn = onRequest(async (req, res) => {
 
                         if (item.color && Array.isArray(pData.colorVariants)) {
                             const updatedColorVariants = pData.colorVariants.map(v => {
-                                if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                if (v.name === item.color) return { ...v, stock: (v.stock || 0) + item.quantity, sold: Math.max(0, (Number(v.sold) || 0) - item.quantity) };
                                 return v;
                             });
                             updateData.colorVariants = updatedColorVariants;
                         }
                         if (item.pattern && Array.isArray(pData.patternVariants)) {
                             const updatedPatternVariants = pData.patternVariants.map(v => {
-                                if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity };
+                                if (v.name === item.pattern) return { ...v, stock: (v.stock || 0) + item.quantity, sold: Math.max(0, (Number(v.sold) || 0) - item.quantity) };
                                 return v;
                             });
                             updateData.patternVariants = updatedPatternVariants;
+                        }
+
+                        if (pData.isCombo && Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                            const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                            updateData.comboVariants = pData.comboVariants.map(v => {
+                                if (v.name === cName || (pData.comboVariants.length === 1)) {
+                                    return { ...v, sold: Math.max(0, (Number(v.sold) || 0) - item.quantity) };
+                                }
+                                return v;
+                            });
                         }
                         
                         transaction.update(productRef, updateData);
@@ -1639,7 +1728,7 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
                 throw new HttpsError("failed-precondition", "Không thể hủy đơn hàng đã hoàn thành.");
             }
 
-            // Đọc tồn kho tất cả sản phẩm liên quan
+            // Đọc tồn kho tất cả sản phẩm liên quan (bao gồm cả sản phẩm con của combo)
             const productSnapshots = [];
             if (orderData.items && Array.isArray(orderData.items)) {
                 for (const item of orderData.items) {
@@ -1647,7 +1736,40 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
                     const productRef = db.collection('products').doc(item.id);
                     const pSnap = await transaction.get(productRef);
                     if (pSnap.exists) {
-                        productSnapshots.push({ item, productRef, pSnap });
+                        productSnapshots.push({ item, productRef, pSnap, isChild: false });
+                    }
+                }
+            }
+
+            // Lượt 2: Tìm các sản phẩm con của combo để hoàn lại tồn kho và giảm số đã bán
+            const initialCancelLen = productSnapshots.length;
+            for (let i = 0; i < initialCancelLen; i++) {
+                const { item, pSnap } = productSnapshots[i];
+                const pData = pSnap.data() || {};
+                if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                    const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                    const cv = pData.comboVariants.find(v => v.name === cName) || (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                    if (cv && Array.isArray(cv.items)) {
+                        const parentQty = Number(item.quantity) || 1;
+                        for (const child of cv.items) {
+                            if (!child.id) continue;
+                            const childRef = db.collection('products').doc(child.id);
+                            const childSnap = await transaction.get(childRef);
+                            if (childSnap.exists) {
+                                const childQty = parentQty * Math.max(1, parseInt(child.quantity, 10) || 1);
+                                productSnapshots.push({
+                                    item: {
+                                        id: child.id,
+                                        quantity: childQty,
+                                        color: child.selectedColor || null,
+                                        pattern: child.selectedPattern || null
+                                    },
+                                    productRef: childRef,
+                                    pSnap: childSnap,
+                                    isChild: true
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -1674,17 +1796,27 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
 
                 if (item.color && Array.isArray(pData.colorVariants)) {
                     const updatedColorVariants = pData.colorVariants.map(v => {
-                        if (v.name === item.color) return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                        if (v.name === item.color) return { ...v, stock: (Number(v.stock) || 0) + itemQty, sold: Math.max(0, (Number(v.sold) || 0) - itemQty) };
                         return v;
                     });
                     updateData.colorVariants = updatedColorVariants;
                 }
                 if (item.pattern && Array.isArray(pData.patternVariants)) {
                     const updatedPatternVariants = pData.patternVariants.map(v => {
-                        if (v.name === item.pattern) return { ...v, stock: (Number(v.stock) || 0) + itemQty };
+                        if (v.name === item.pattern) return { ...v, stock: (Number(v.stock) || 0) + itemQty, sold: Math.max(0, (Number(v.sold) || 0) - itemQty) };
                         return v;
                     });
                     updateData.patternVariants = updatedPatternVariants;
+                }
+
+                if (pData.isCombo && Array.isArray(pData.comboVariants) && pData.comboVariants.length > 0) {
+                    const cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                    updateData.comboVariants = pData.comboVariants.map(v => {
+                        if (v.name === cName || (pData.comboVariants.length === 1)) {
+                            return { ...v, sold: Math.max(0, (Number(v.sold) || 0) - itemQty) };
+                        }
+                        return v;
+                    });
                 }
                 
                 transaction.update(productRef, updateData);
@@ -1700,5 +1832,396 @@ exports.cancelOrderSecure = onCall({ cors: true }, async (request) => {
             throw error;
         }
         throw new HttpsError("internal", error.message);
+    }
+});
+
+
+// =========================================================================
+// HỆ THỐNG BACKGROUND PUSH NOTIFICATIONS (EXPO PUSH API - APNS / FCM)
+// Gửi thông báo đến thiết bị kể cả khi ứng dụng đã tắt hẳn (Kill app)
+// =========================================================================
+
+/**
+ * Gửi thông báo đẩy qua Expo Push Notification API
+ */
+async function sendExpoPushNotification(token, title, body, dataPayload = {}) {
+    if (!token || typeof token !== 'string') return null;
+    const cleanToken = token.trim();
+    if (!cleanToken.startsWith('ExponentPushToken[') && !cleanToken.startsWith('ExpoPushToken[')) {
+        functions.logger.warn(`Push token không hợp lệ (không phải Expo token): ${cleanToken}`);
+        return null;
+    }
+
+    try {
+        const payload = {
+            to: cleanToken,
+            sound: 'default',
+            title,
+            body,
+            data: dataPayload,
+            priority: 'high',
+            channelId: 'default',
+            badge: 1,
+        };
+
+        const response = await axios.post('https://exp.host/--/api/v2/push/send', payload, {
+            headers: {
+                'Accept': 'application/json',
+                'Accept-Encoding': 'gzip, deflate',
+                'Content-Type': 'application/json',
+            },
+            timeout: 8000,
+        });
+
+        functions.logger.info(`Đã gửi Push Notification thành công tới ${cleanToken}:`, response.data);
+        return response.data;
+    } catch (err) {
+        functions.logger.error(`Lỗi gửi Expo Push Notification tới ${cleanToken}:`, err.message);
+        return null;
+    }
+}
+
+/**
+ * Tìm token thông báo của khách hàng từ userId hoặc số điện thoại
+ */
+async function findUserPushToken(userId, phone) {
+    if (userId && userId !== 'guest') {
+        try {
+            const uSnap = await db.collection('users').doc(userId).get();
+            if (uSnap.exists) {
+                const uData = uSnap.data();
+                if (uData.expoPushToken) return uData.expoPushToken;
+                if (uData.mergedTo && uData.mergedTo !== userId) {
+                    const parentSnap = await db.collection('users').doc(uData.mergedTo).get();
+                    if (parentSnap.exists && parentSnap.data().expoPushToken) {
+                        return parentSnap.data().expoPushToken;
+                    }
+                }
+            }
+        } catch (e) {
+            functions.logger.warn(`Lỗi tìm token theo userId ${userId}:`, e.message);
+        }
+    }
+
+    if (phone) {
+        try {
+            const cleanPhone = phone.replace(/\D/g, '');
+            const phoneVariants = [
+                cleanPhone,
+                cleanPhone.startsWith('84') ? '0' + cleanPhone.slice(2) : cleanPhone,
+                cleanPhone.startsWith('0') ? '84' + cleanPhone.slice(1) : '+84' + cleanPhone,
+                cleanPhone.startsWith('0') ? '+84' + cleanPhone.slice(1) : cleanPhone,
+            ];
+
+            for (const p of phoneVariants) {
+                const querySnap = await db.collection('users').where('phone', '==', p).limit(1).get();
+                if (!querySnap.empty) {
+                    const token = querySnap.docs[0].data().expoPushToken;
+                    if (token) return token;
+                }
+            }
+        } catch (e) {
+            functions.logger.warn(`Lỗi tìm token theo phone ${phone}:`, e.message);
+        }
+    }
+
+    return null;
+}
+
+/**
+ * 1. Tự động gửi Push Notification khi Đơn hàng thay đổi trạng thái
+ * (Admin duyệt, Shipper đang giao, Đã giao thành công, Đã hủy, v.v.)
+ */
+exports.onOrderStatusPushNotification = functions.firestore
+    .document('orders/{orderId}')
+    .onUpdate(async (change, context) => {
+        const orderId = context.params.orderId;
+        const beforeData = change.before.data();
+        const afterData = change.after.data();
+
+        const oldStatus = (beforeData.status || '').trim();
+        const newStatus = (afterData.status || '').trim();
+
+        // Chỉ gửi khi trạng thái thực sự thay đổi
+        if (oldStatus.toLowerCase() === newStatus.toLowerCase()) {
+            return null;
+        }
+
+        const token = await findUserPushToken(
+            afterData.userId || afterData.customerId,
+            afterData.shippingAddress?.phone
+        );
+
+        if (!token) {
+            functions.logger.info(`Đơn hàng #${orderId}: Không tìm thấy expoPushToken của khách để gửi push.`);
+            return null;
+        }
+
+        const statusLower = newStatus.toLowerCase();
+        let title = 'Cập nhật trạng thái đơn hàng 📦';
+        let body = `Đơn hàng #${orderId} của bạn vừa chuyển sang trạng thái: "${newStatus}".`;
+
+        if (statusLower.includes('đang giao') || statusLower.includes('vận chuyển') || statusLower.includes('shipping')) {
+            title = 'Đơn hàng đang trên đường giao đến bạn 🚚';
+            body = `Đơn hàng #${orderId} đang được vận chuyển. Bạn chú ý điện thoại để nhận đồ gốm từ shipper nhé!`;
+        } else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('completed') || statusLower.includes('đã giao')) {
+            title = 'Đơn hàng đã giao thành công! 🎉';
+            body = `Đơn hàng #${orderId} đã hoàn tất. Điểm Gốm tích lũy đã được cộng vào tài khoản của bạn.`;
+        } else if (statusLower.includes('đã xác nhận') || statusLower.includes('confirmed')) {
+            title = 'Đơn hàng đã được xác nhận ✅';
+            body = `Tiệm Nhà Gốm đã xác nhận đơn #${orderId} và đang đóng gói cẩn thận cho bạn.`;
+        } else if (statusLower.includes('hủy') || statusLower.includes('cancel')) {
+            title = 'Đơn hàng đã bị hủy ⚠️';
+            const reason = afterData.cancelReason ? ` Lý do: ${afterData.cancelReason}` : '';
+            body = `Đơn hàng #${orderId} đã bị hủy.${reason} Liên hệ Tiệm nếu bạn cần hỗ trợ thêm.`;
+        } else if (statusLower.includes('đã thanh toán') || statusLower.includes('paid')) {
+            title = 'Thanh toán thành công 💳';
+            body = `Tiệm đã nhận được thanh toán cho đơn hàng #${orderId}. Cảm ơn bạn!`;
+        }
+
+        return sendExpoPushNotification(token, title, body, {
+            type: 'order',
+            orderId,
+            status: newStatus,
+            url: `/order-detail?id=${orderId}`,
+        });
+    });
+
+/**
+ * 2. Tự động gửi Push Notification khi khách hàng đặt hàng thành công
+ */
+exports.onOrderCreatedPushNotification = functions.firestore
+    .document('orders/{orderId}')
+    .onCreate(async (snap, context) => {
+        const orderId = context.params.orderId;
+        const orderData = snap.data();
+
+        const token = await findUserPushToken(
+            orderData.userId || orderData.customerId,
+            orderData.shippingAddress?.phone
+        );
+
+        if (!token) return null;
+
+        const totalFormatted = new Intl.NumberFormat('vi-VN').format(orderData.totalAmount || 0) + 'đ';
+        const title = 'Đặt hàng thành công! 🎉';
+        const body = `Cảm ơn bạn! Đơn hàng #${orderId} trị giá ${totalFormatted} đã được ghi nhận. Tiệm đang chuẩn bị đóng gói.`;
+
+        return sendExpoPushNotification(token, title, body, {
+            type: 'order',
+            orderId,
+            url: `/order-detail?id=${orderId}`,
+        });
+    });
+
+/**
+ * 3. Tự động gửi Push Notification khi có bạn bè gửi quà tặng Điểm Gốm
+ */
+exports.onPointGiftCreatedPushNotification = functions.firestore
+    .document('points_gifts/{giftCode}')
+    .onCreate(async (snap, context) => {
+        const giftCode = context.params.giftCode;
+        const giftData = snap.data();
+
+        if (!giftData.recipientPhone) return null;
+
+        const token = await findUserPushToken(null, giftData.recipientPhone);
+        if (!token) {
+            functions.logger.info(`Quà tặng #${giftCode}: Không tìm thấy token của người nhận với SĐT ${giftData.recipientPhone}.`);
+            return null;
+        }
+
+        const sender = giftData.senderName || 'Một người bạn';
+        const points = giftData.points || 0;
+        const title = 'Bạn nhận được một món quà Điểm Gốm! 🎁';
+        const body = `${sender} vừa gửi tặng bạn +${points} Điểm Gốm cùng lời nhắn thân thương. Mở app để nhận ngay!`;
+
+        return sendExpoPushNotification(token, title, body, {
+            type: 'gift',
+            giftCode,
+            url: `/gift-claim?code=${giftCode}`,
+        });
+    });
+
+
+/**
+ * 4. Kiểm tra và đồng bộ số lượng đã bán (sold) cho các sản phẩm con trong combo từ lịch sử đơn hàng
+ * Gọi qua HTTP GET/POST:
+ * - Chế độ kiểm tra (Dry-run): /syncComboSoldHistory?key=tiemnhagom_admin_sync
+ * - Chế độ thực thi cập nhật: /syncComboSoldHistory?key=tiemnhagom_admin_sync&apply=true
+ */
+exports.syncComboSoldHistory = onRequest({ cors: true, timeoutSeconds: 300, memory: '512MiB' }, async (req, res) => {
+    try {
+        const adminKey = req.query.key;
+        if (adminKey !== 'tiemnhagom_admin_sync') {
+            return res.status(403).json({ error: 'Unauthorized: sai khoa bao mat' });
+        }
+
+        const isApply = req.query.apply === 'true';
+
+        // 1. Tải toàn bộ products vào RAM
+        const productsSnap = await db.collection('products').get();
+        const productsMap = {};
+        const comboProducts = [];
+
+        productsSnap.forEach(docSnap => {
+            const data = docSnap.data();
+            productsMap[docSnap.id] = { id: docSnap.id, ...data };
+            if (data.isCombo || data.productType === 'combo' || (Array.isArray(data.comboVariants) && data.comboVariants.length > 0)) {
+                comboProducts.push({ id: docSnap.id, name: data.name, sold: data.sold || 0, comboVariants: data.comboVariants || [] });
+            }
+        });
+
+        // 2. Tải toàn bộ orders hợp lệ (không bị hủy)
+        const ordersSnap = await db.collection('orders').get();
+        const validOrders = [];
+        const comboSales = {}; // comboId -> { name, totalSold, variants: { variantName: count } }
+        const childProductsSoldMap = {}; // childId -> { name, currentSold, soldFromCombos, colorVariants: {}, patternVariants: {}, combosContributing: [] }
+
+        ordersSnap.forEach(docSnap => {
+            const order = docSnap.data();
+            const status = (order.status || '').trim().toLowerCase();
+            if (status.includes('hủy') || status.includes('cancel')) {
+                return; // Bỏ qua đơn đã hủy
+            }
+            validOrders.push({ id: docSnap.id, status: order.status, itemsCount: (order.items || []).length });
+
+            if (Array.isArray(order.items)) {
+                for (const item of order.items) {
+                    if (item.isChild) continue; // Bỏ qua nếu là món con đã bị thêm trùng lặp
+                    const pId = String(item.id || item.productId).trim();
+                    const product = productsMap[pId];
+                    if (!product) continue;
+
+                    const isCombo = product.isCombo || product.productType === 'combo' || (Array.isArray(product.comboVariants) && product.comboVariants.length > 0);
+                    if (!isCombo) continue;
+
+                    const qty = Number(item.quantity) || 1;
+                    if (!comboSales[pId]) {
+                        comboSales[pId] = {
+                            id: pId,
+                            name: product.name,
+                            totalSold: 0,
+                            variants: {}
+                        };
+                    }
+                    comboSales[pId].totalSold += qty;
+
+                    // Xác định biến thể combo
+                    let cName = item.comboVariant || item.combo || (typeof item.variant === 'string' ? item.variant : (item.variant && item.variant.name));
+                    if (!cName && Array.isArray(product.comboVariants) && product.comboVariants.length === 1) {
+                        cName = product.comboVariants[0].name;
+                    }
+
+                    if (cName) {
+                        comboSales[pId].variants[cName] = (comboSales[pId].variants[cName] || 0) + qty;
+                    }
+
+                    // Tìm các món con trong biến thể
+                    let cv = null;
+                    if (Array.isArray(product.comboVariants)) {
+                        cv = product.comboVariants.find(v => v.name === cName) || (product.comboVariants.length === 1 ? product.comboVariants[0] : null);
+                    }
+
+                    if (cv && Array.isArray(cv.items)) {
+                        for (const child of cv.items) {
+                            if (!child.id) continue;
+                            const childId = String(child.id).trim();
+                            const childProduct = productsMap[childId];
+                            const childName = childProduct?.name || child.name || childId;
+                            const childQtyPerCombo = Math.max(1, parseInt(child.quantity, 10) || 1);
+                            const totalChildQty = qty * childQtyPerCombo;
+
+                            if (!childProductsSoldMap[childId]) {
+                                childProductsSoldMap[childId] = {
+                                    id: childId,
+                                    name: childName,
+                                    currentSold: Number(childProduct?.sold) || 0,
+                                    soldFromCombos: 0,
+                                    colorVariants: {},
+                                    patternVariants: {},
+                                    combosContributing: []
+                                };
+                            }
+
+                            childProductsSoldMap[childId].soldFromCombos += totalChildQty;
+                            childProductsSoldMap[childId].combosContributing.push({
+                                orderId: docSnap.id,
+                                comboName: product.name,
+                                variantName: cName || 'Mặc định',
+                                qtySold: totalChildQty
+                            });
+
+                            if (child.selectedColor) {
+                                childProductsSoldMap[childId].colorVariants[child.selectedColor] = 
+                                    (childProductsSoldMap[childId].colorVariants[child.selectedColor] || 0) + totalChildQty;
+                            }
+                            if (child.selectedPattern) {
+                                childProductsSoldMap[childId].patternVariants[child.selectedPattern] = 
+                                    (childProductsSoldMap[childId].patternVariants[child.selectedPattern] || 0) + totalChildQty;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Nếu apply === true, tiến hành cập nhật Firestore
+        const updateResults = [];
+        if (isApply) {
+            const batch = db.batch();
+            for (const childId of Object.keys(childProductsSoldMap)) {
+                const info = childProductsSoldMap[childId];
+                const childProduct = productsMap[childId];
+                if (!childProduct) continue;
+
+                const pRef = db.collection('products').doc(childId);
+                const updatePayload = {
+                    sold: admin.firestore.FieldValue.increment(info.soldFromCombos)
+                };
+
+                if (Array.isArray(childProduct.colorVariants) && Object.keys(info.colorVariants).length > 0) {
+                    updatePayload.colorVariants = childProduct.colorVariants.map(v => {
+                        const addQty = info.colorVariants[v.name] || 0;
+                        return addQty > 0 ? { ...v, sold: (Number(v.sold) || 0) + addQty } : v;
+                    });
+                }
+
+                if (Array.isArray(childProduct.patternVariants) && Object.keys(info.patternVariants).length > 0) {
+                    updatePayload.patternVariants = childProduct.patternVariants.map(v => {
+                        const addQty = info.patternVariants[v.name] || 0;
+                        return addQty > 0 ? { ...v, sold: (Number(v.sold) || 0) + addQty } : v;
+                    });
+                }
+
+                batch.update(pRef, updatePayload);
+                updateResults.push({
+                    id: childId,
+                    name: info.name,
+                    previousSold: info.currentSold,
+                    addedFromCombos: info.soldFromCombos,
+                    newEstimatedSold: info.currentSold + info.soldFromCombos
+                });
+            }
+            await batch.commit();
+        }
+
+        return res.status(200).json({
+            success: true,
+            mode: isApply ? 'APPLIED (Đã cập nhật Firestore thành công)' : 'DRY_RUN (Kiểm tra xem trước, chưa sửa dữ liệu)',
+            stats: {
+                totalOrdersScanned: ordersSnap.size,
+                validNonCancelledOrders: validOrders.length,
+                comboProductsCount: comboProducts.length,
+                childProductsAffectedCount: Object.keys(childProductsSoldMap).length
+            },
+            comboProductsFound: comboProducts.map(c => ({ id: c.id, name: c.name, sold: c.sold, variantsCount: c.comboVariants.length })),
+            comboSalesFromOrders: comboSales,
+            childProductsToSync: childProductsSoldMap,
+            updateResults: isApply ? updateResults : 'Gọi lại với tham số &apply=true để áp dụng cập nhật vào Firestore.'
+        });
+    } catch (error) {
+        console.error('Lỗi syncComboSoldHistory:', error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });

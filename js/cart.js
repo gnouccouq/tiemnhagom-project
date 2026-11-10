@@ -1172,21 +1172,23 @@ window.placeOrder = async () => {
                 } else {
                     mockProduct.salePrice = null;
                 }
-                const currentUnitPrice = getProductCurrentPrice(mockProduct, fsSettings);
-                finalSubtotal += currentUnitPrice * item.quantity;
+                if (!isChild) {
+                    const currentUnitPrice = getProductCurrentPrice(mockProduct, fsSettings);
+                    finalSubtotal += currentUnitPrice * item.quantity;
 
-                processedOrderItems.push({
-                    id: item.id,
-                    name: product.name,
-                    price: currentUnitPrice,
-                    image: variantImage,
-                    quantity: item.quantity,
-                    color: item.color || null,
-                    pattern: item.pattern || null,
-                    comboVariant: matchedComboName || item.comboVariant || null,
-                    variant: item.variant || [matchedComboName, item.color, item.pattern].filter(Boolean).join(' / ') || null
-                });
-                productNames.push(product.name);
+                    processedOrderItems.push({
+                        id: item.id,
+                        name: product.name,
+                        price: currentUnitPrice,
+                        image: variantImage,
+                        quantity: item.quantity,
+                        color: item.color || null,
+                        pattern: item.pattern || null,
+                        comboVariant: matchedComboName || item.comboVariant || null,
+                        variant: item.variant || [matchedComboName, item.color, item.pattern].filter(Boolean).join(' / ') || null
+                    });
+                    productNames.push(product.name);
+                }
 
                 // Gom nhóm cập nhật kho theo Product ID
                 const pId = item.id;
@@ -1311,7 +1313,7 @@ window.placeOrder = async () => {
                     const userRef = doc(db, "users", auth.currentUser.uid);
                     const userSnap = await getDoc(userRef);
                     const uData = userSnap.exists() ? userSnap.data() : {};
-                    if (!uData.phone || uData.phone !== formattedPhone) {
+                    if (!uData.phone) {
                         const p84 = formattedPhone.startsWith('0') ? '+84' + formattedPhone.substring(1) : formattedPhone;
                         const newIdentifiers = Array.from(new Set([...(uData.identifiers || []), formattedPhone, p84]));
                         await setDoc(userRef, { phone: formattedPhone, identifiers: newIdentifiers }, { merge: true });
