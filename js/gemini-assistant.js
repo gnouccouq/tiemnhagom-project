@@ -63,7 +63,7 @@ function injectChatWidgetHTML() {
             <div id="gemini-chat-window" class="gemini-chat-window">
                 <div class="gemini-chat-header">
                     <div class="header-info">
-                        <div class="ai-avatar">✨</div>
+                        <div class="ai-avatar"><i class="ti ti-sparkles"></i></div>
                         <div>
                             <h4>Trợ Lý AI - Tiệm Nhà Gốm</h4>
                             <span class="ai-status">● Đang trực tuyến</span>
@@ -75,16 +75,16 @@ function injectChatWidgetHTML() {
                 <div id="gemini-chat-messages" class="gemini-chat-messages">
                     <div class="chat-msg ai-msg">
                         <div class="msg-content">
-                            Xin chào! Mình là Trợ lý AI của **Tiệm Nhà Gốm**. ✨<br>
+                            Xin chào! Mình là Trợ lý AI của **Tiệm Nhà Gốm**. <i class="ti ti-sparkles"></i><br>
                             Bạn cần tư vấn quà tặng, phối bình hoa hay chọn món đồ decor hợp không gian nào hôm nay?
                         </div>
                     </div>
                 </div>
 
                 <div class="chat-quick-chips">
-                    <button class="chip-btn" data-query="Gợi ý quà tân gia dưới 500k">🎁 Quà tân gia < 500k</button>
-                    <button class="chip-btn" data-query="Bình hoa gốm mộc cắm hoa tuyết mai">🏺 Bình hoa mộc</button>
-                    <button class="chip-btn" data-query="Bộ ấm trà biếu sếp sang trọng">🍵 Bộ ấm trà biếu sếp</button>
+                    <button class="chip-btn" data-query="Gợi ý quà tân gia dưới 500k"><i class="ti ti-gift"></i> Quà tân gia < 500k</button>
+                    <button class="chip-btn" data-query="Bình hoa gốm mộc cắm hoa tuyết mai"><i class="ti ti-teapot"></i> Bình hoa mộc</button>
+                    <button class="chip-btn" data-query="Bộ ấm trà biếu sếp sang trọng"><i class="ti ti-cup"></i> Bộ ấm trà biếu sếp</button>
                 </div>
 
                 <div class="gemini-chat-input-area">
@@ -241,7 +241,7 @@ function appendMessage(sender, text) {
 
     // Thay thế mã [ID: xxx] thành linh hoạt hoặc link
     let formattedText = text.replace(/\[ID:\s*([^\]]+)\]/g, (match, id) => {
-        return `<a href="../product/index.html?id=${id.trim()}" target="_blank" class="ai-product-link">👉 Xem sản phẩm #${id.trim()}</a>`;
+        return `<a href="../product/index.html?id=${id.trim()}" target="_blank" class="ai-product-link"><i class="ti ti-arrow-right"></i> Xem sản phẩm #${id.trim()}</a>`;
     });
 
     // Format markdown đơn giản (in đậm, xuống dòng)

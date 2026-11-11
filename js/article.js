@@ -158,7 +158,7 @@ async function fetchArticle() {
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            showToast(isSatisfied ? "Cảm ơn bạn đã đánh giá bài viết hữu ích! 🥰" : "Cảm ơn bạn đã góp ý. Chúng tôi sẽ cải thiện bài viết! 🌸");
+            showToast(isSatisfied ? "Cảm ơn bạn đã đánh giá bài viết hữu ích! <i class='ti ti-mood-heart'></i>" : "Cảm ơn bạn đã góp ý. Chúng tôi sẽ cải thiện bài viết! <i class='ti ti-flower'></i>");
         };
 
         container.innerHTML = `
@@ -192,8 +192,8 @@ async function fetchArticle() {
             
             <div class="article-feedback-container">
                 <div class="feedback-question">Bạn có hài lòng với bài viết này không ?</div>
-                <button class="feedback-btn" onclick="submitFeedback(true, this)">🥰 Hài lòng</button>
-                <button class="feedback-btn" onclick="submitFeedback(false, this)">😞 Không hài lòng</button>
+                <button class="feedback-btn" onclick="submitFeedback(true, this)"><i class="ti ti-mood-heart"></i> Hài lòng</button>
+                <button class="feedback-btn" onclick="submitFeedback(false, this)"><i class="ti ti-mood-sad"></i> Không hài lòng</button>
             </div>
             
             <a href="/blog/index.html" class="article-back-btn">

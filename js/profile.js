@@ -131,7 +131,7 @@ async function fetchFavorites(userId) {
 // Hàm hủy đơn hàng
 window.cancelOrder = async (orderId) => {
     const ok = await showModalConfirm(
-        "Bạn có chắc chắn muốn hủy đơn hàng này không?\n\n⚠️ Hành động này sẽ hủy yêu cầu đặt hàng và không thể hoàn tác.",
+        "Bạn có chắc chắn muốn hủy đơn hàng này không?\n\nHành động này sẽ hủy yêu cầu đặt hàng và không thể hoàn tác.",
         "Xác nhận hủy đơn hàng",
         { confirmText: "Hủy đơn hàng", cancelText: "Giữ lại đơn", type: "danger" }
     );
@@ -279,21 +279,21 @@ window.viewOrderDetails = async (orderId) => {
                         </div>
                     ` : `
                         <div style="padding: 10px 14px; background: #fef2f2; border-radius: 6px; color: #991b1b; font-size: 0.85rem; margin-bottom: 15px;">
-                            ⚠️ Đơn hàng này đã được hủy.
+                            <i class="ti ti-alert-triangle-filled"></i> Đơn hàng này đã được hủy.
                         </div>
                     `}
 
                     ${(order.trackingLink || order.trackingUrl) ? `
                         <div style="margin-bottom: 15px; padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 8px; color: #1e40af; font-size: 0.88rem;">
-                                <span style="font-size: 1.3rem;">🚚</span>
+                                <span style="font-size: 1.3rem;"><i class="ti ti-truck-delivery"></i></span>
                                 <div>
                                     <strong style="display: block;">Lộ trình giao hàng trực tiếp</strong>
                                     <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển</span>
                                 </div>
                             </div>
                             <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
-                                Xem lộ trình ➔
+                                Xem lộ trình <i class="ti ti-arrow-right"></i>
                             </a>
                         </div>
                     ` : ''}
@@ -338,13 +338,13 @@ window.viewOrderDetails = async (orderId) => {
                         </div>
                         ${couponDiscountVal > 0 ? `
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ea580c; font-weight: 500;">
-                                <span>🏷️ ${order.couponCode ? `Mã ưu đãi (${escapeHTML(order.couponCode)})` : (order.source === 'pos' ? 'Giảm giá trực tiếp tại shop (POS)' : 'Giảm giá')}:</span>
+                                <span><i class="ti ti-tag"></i> ${order.couponCode ? `Mã ưu đãi (${escapeHTML(order.couponCode)})` : (order.source === 'pos' ? 'Giảm giá trực tiếp tại shop (POS)' : 'Giảm giá')}:</span>
                                 <span>-${new Intl.NumberFormat('vi-VN').format(couponDiscountVal)}đ</span>
                             </div>
                         ` : ''}
                         ${vipDiscountVal > 0 ? `
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #d97706; font-weight: 600;">
-                                <span>👑 Ưu đãi thành viên (Membership):</span>
+                                <span><i class="ti ti-crown"></i> Ưu đãi thành viên (Membership):</span>
                                 <span>-${new Intl.NumberFormat('vi-VN').format(vipDiscountVal)}đ</span>
                             </div>
                         ` : ''}
@@ -504,7 +504,7 @@ async function handleProfileAuth(user) {
                     phoneLockHint.id = 'phone-locked-hint';
                     phoneLockHint.className = 'phone-locked-hint';
                     phoneLockHint.style.cssText = 'color: #64748b; font-size: 0.78rem; margin-top: 5px; display: flex; align-items: center; gap: 4px;';
-                    phoneLockHint.innerHTML = '🔒 Số điện thoại đã liên kết cố định. Muốn đổi vui lòng liên hệ Admin.';
+                    phoneLockHint.innerHTML = '<i class="ti ti-lock"></i> Số điện thoại đã liên kết cố định. Muốn đổi vui lòng liên hệ Admin.';
                     editPhone.parentElement.appendChild(phoneLockHint);
                 }
 
@@ -600,7 +600,7 @@ async function handleProfileAuth(user) {
                 linkedGoogleStatus.style.color = '#9C7156';
                 linkedGoogleAction.innerHTML = `
                     <span style="display: inline-flex; align-items: center; gap: 4px; background: #F6F4EC; color: #9C7156; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; border: 1px solid #E8CCB2;">
-                        ✓ Đã nối
+                        <i class="ti ti-check"></i> Đã nối
                     </span>
                 `;
             } else {
@@ -996,21 +996,21 @@ async function fetchOrderHistory(userId, authUser = null) {
                             </div>
                         ` : `
                             <div style="padding: 10px 14px; background: #fef2f2; border-radius: 6px; color: #991b1b; font-size: 0.85rem; margin-bottom: 15px;">
-                                ⚠️ Đơn hàng này đã được hủy.
+                                <i class="ti ti-alert-triangle-filled"></i> Đơn hàng này đã được hủy.
                             </div>
                         `}
 
                         ${(order.trackingLink || order.trackingUrl) ? `
                             <div style="margin-bottom: 15px; padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px; color: #1e40af; font-size: 0.88rem;">
-                                    <span style="font-size: 1.3rem;">🚚</span>
+                                    <span style="font-size: 1.3rem;"><i class="ti ti-truck-delivery"></i></span>
                                     <div>
                                         <strong style="display: block;">Đơn hàng có link theo dõi trực tiếp</strong>
                                         <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển trên bản đồ</span>
                                     </div>
                                 </div>
                                 <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600;">
-                                    Xem lộ trình ➔
+                                    Xem lộ trình <i class="ti ti-arrow-right"></i>
                                 </a>
                             </div>
                         ` : ''}
@@ -1173,8 +1173,8 @@ async function fetchOrderHistory(userId, authUser = null) {
                         <div class="member-label">MEMBER TIER</div>
                         <div class="tier-name">${currentTier.name}</div>
                         <div class="tier-discount">Ưu đãi: Giảm ${currentTier.discount}% đơn hàng</div>
-                        <div class="tier-points" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600; color: #fff; opacity: 0.95;">💎 Điểm tích lũy: ${points} điểm</div>
-                        ${memberSinceWeb ? `<div style="margin-top: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.85); font-style: italic;">📅 Thành viên từ: ${memberSinceWeb}</div>` : ''}
+                        <div class="tier-points" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600; color: #fff; opacity: 0.95;"><i class="ti ti-diamond"></i> Điểm tích lũy: ${points} điểm</div>
+                        ${memberSinceWeb ? `<div style="margin-top: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.85); font-style: italic;"><i class="ti ti-calendar"></i> Thành viên từ: ${memberSinceWeb}</div>` : ''}
                     </div>
                 </div>
                 ${progressHtml}

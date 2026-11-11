@@ -395,7 +395,7 @@ async function applyEventConcept(eventName) {
 
         if (addedCount > 0) {
             renderRentalCart();
-            showToast(`✨ Đã tự động chọn ${addedCount} món đồ từ dự án "${eventName}" vào danh sách thuê!`, "success");
+            showToast(`<i class="ti ti-sparkles"></i> Đã tự động chọn ${addedCount} món đồ từ dự án "${eventName}" vào danh sách thuê!`, "success");
             
             setTimeout(() => {
                 const consultSection = document.getElementById('consult-section');
@@ -523,7 +523,7 @@ function renderRentalCart() {
                 <span style="font-weight: 600;">${formatCurrencyDisplay(depositAmount)}đ</span>
             </div>
             <button type="button" onclick="window.shareRentalConcept()" style="width: 100%; margin-top: 12px; padding: 10px; border: 1px solid #2b2b2b; background: #2b2b2b; color: #fff; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; letter-spacing: 0.5px; transition: all 0.2s;" onmouseover="this.style.background='#444';" onmouseout="this.style.background='#2b2b2b';">
-                🔗 CHIA SẺ CONCEPT NÀY
+                <i class="ti ti-link"></i> CHIA SẺ CONCEPT NÀY
             </button>
         </div>
     </div>

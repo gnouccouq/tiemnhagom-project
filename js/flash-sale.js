@@ -66,7 +66,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
         initDynamicCountdown(endTime);
         renderPriceTabs();
     } else if (isUpcoming) {
-        if (bannerTitle) bannerTitle.innerText = `⏰ ${flashSaleSettings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
+        if (bannerTitle) bannerTitle.innerHTML = `<i class="ti ti-alarm"></i> ${flashSaleSettings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
         if (bannerSub) {
             bannerSub.style.display = 'block';
             bannerSub.innerText = `Chương trình sẽ chính thức mở bán vào lúc ${startTime.toLocaleString('vi-VN')}. Hãy thêm sản phẩm vào giỏ trước!`;
@@ -281,7 +281,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                         <div style="background: #fffaf5; border: 1.5px dashed #E8CCB2; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 2.5rem;">
-                            <h2 style="color: #9C7156; margin-bottom: 8px; font-size: 1.35rem; font-family: 'Playfair Display', serif;">🎁 Danh Sách Sản Phẩm Flash Sale 20/10</h2>
+                            <h2 style="color: #9C7156; margin-bottom: 8px; font-size: 1.35rem; font-family: 'Playfair Display', serif;"><i class="ti ti-gift"></i> Danh Sách Sản Phẩm Flash Sale 20/10</h2>
                             <p style="color: #6E665D; font-size: 0.92rem; margin: 0;">Các deal Mua 1 Tặng 1 & Giảm giá sốc có hạn dưới đây sẽ chính thức mở bán khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
                         </div>
                         <div class="grid" style="padding: 0;">
@@ -306,10 +306,10 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
                             <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
-                                🎁 ĐẶC QUYỀN 20/10 — MUA 1 TẶNG 1
+                                <i class="ti ti-gift"></i> ĐẶC QUYỀN 20/10 — MUA 1 TẶNG 1
                             </h2>
                             <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
-                                ✨ Số lượng quà tặng có hạn
+                                <i class="ti ti-sparkles"></i> Số lượng quà tặng có hạn
                             </span>
                         </div>
                         <div class="grid" style="padding: 0;">
@@ -326,10 +326,10 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
                             <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
-                                ⚡ ${flashSaleSettings?.title || "Flash Sale 20/10 — Giá Sốc"}
+                                <i class="ti ti-bolt-filled"></i> ${flashSaleSettings?.title || "Flash Sale 20/10 — Giá Sốc"}
                             </h2>
                             <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
-                                🔥 Giá ưu đãi có hạn
+                                <i class="ti ti-flame-filled"></i> Giá ưu đãi có hạn
                             </span>
                         </div>
                         <div class="grid" style="padding: 0;">
@@ -348,7 +348,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     sortProducts(products);
                     htmlContent += `
                         <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                            <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left; color: #2B2928;">⚡ Đồng giá ${price/1000}k</h2>
+                            <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left; color: #2B2928;"><i class="ti ti-bolt-filled"></i> Đồng giá ${price/1000}k</h2>
                             <div class="grid" style="padding: 0;">
                                 ${products.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                             </div>
@@ -360,7 +360,7 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             // 4. Render nhóm Sale khác (nếu đang chạy chiến dịch và chưa lọc)
             if (otherSales.length > 0 && selectedPriceGroup === null) {
                 sortProducts(otherSales);
-                const sectionTitle = isFsRunning ? "🏺 Ưu đãi gốm sứ khác" : "Sản phẩm ưu đãi";
+                const sectionTitle = isFsRunning ? "<i class='ti ti-teapot'></i> Ưu đãi gốm sứ khác" : "Sản phẩm ưu đãi";
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
                         <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #E8CCB2; padding-bottom: 10px; color: #2B2928;">${sectionTitle}</h2>

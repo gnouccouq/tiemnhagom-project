@@ -317,7 +317,9 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             lastVisible = null;
         }
 
-        if (navigation === 'load-more' && lastVisible) {
+        if (hasSearchTerm) {
+            finalQuery = query(productsQuery, limit(500));
+        } else if (navigation === 'load-more' && lastVisible) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(FETCH_LIMIT));
         } else {
             finalQuery = query(productsQuery, limit(FETCH_LIMIT));
@@ -331,7 +333,8 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             console.warn("Lỗi Firestore query (có thể thiếu index), thử truy vấn dự phòng:", queryErr);
             // Fallback: truy vấn cơ bản theo limit
             try {
-                const fallbackQuery = query(collection(db, "products"), limit(FETCH_LIMIT));
+                const fallbackLimit = hasSearchTerm ? 500 : FETCH_LIMIT;
+                const fallbackQuery = query(collection(db, "products"), limit(fallbackLimit));
                 querySnapshot = await getDocs(fallbackQuery);
             } catch (fallbackErr) {
                 throw queryErr;
@@ -608,7 +611,7 @@ function handleInitialFilters() {
         }
     }
 
-    const searchParam = urlParams.get('search');
+    const searchParam = urlParams.get('search') || urlParams.get('q');
     if (searchParam) {
         const sidebarSearch = document.getElementById('search-name');
         if (sidebarSearch) sidebarSearch.value = searchParam;

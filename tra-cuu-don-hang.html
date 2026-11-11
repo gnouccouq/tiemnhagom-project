@@ -238,7 +238,7 @@
                             </button>
                         </div>
                         <small style="color: #64748b; font-size: 0.8rem; display: block; margin-top: 8px;">
-                            💡 Bạn có thể nhập <strong>Số điện thoại</strong> để xem tất cả các đơn hàng, hoặc <strong>Mã đơn hàng</strong> (gửi trong tin nhắn/email xác nhận).
+                            <i class="ti ti-bulb"></i> Bạn có thể nhập <strong>Số điện thoại</strong> để xem tất cả các đơn hàng, hoặc <strong>Mã đơn hàng</strong> (gửi trong tin nhắn/email xác nhận).
                         </small>
                     </div>
                 </form>
@@ -251,7 +251,7 @@
 
             <!-- Vùng thông báo khi không tìm thấy -->
             <div id="tracking-not-found" style="display: none; background: #fff; border-radius: 12px; padding: 3rem 2rem; text-align: center; border: 1px solid #e2e8f0;">
-                <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+                <div style="font-size: 2.5rem; margin-bottom: 12px;"><i class="ti ti-search"></i></div>
                 <h3 style="margin: 0 0 8px; font-size: 1.2rem; color: #1e293b; font-family: var(--font-serif);">Không tìm thấy đơn hàng phù hợp</h3>
                 <p style="color: #64748b; font-size: 0.9rem; max-width: 500px; margin: 0 auto 1.5rem;">
                     Vui lòng kiểm tra lại Số điện thoại hoặc Mã đơn hàng đã nhập. Nếu bạn cần hỗ trợ nhanh, hãy liên hệ với Tiệm nhé!
@@ -272,10 +272,10 @@
 
         initHeader('./');
 
-        // Tự động tìm kiếm nếu có param trên URL (?q=... hoặc ?phone=... hoặc ?id=...)
+        // Tự động tìm kiếm nếu có param trên URL (?orderId=... hoặc ?orderCode=... hoặc ?q=... hoặc ?phone=... hoặc ?id=...)
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const queryParam = urlParams.get('q') || urlParams.get('phone') || urlParams.get('id');
+            const queryParam = urlParams.get('orderId') || urlParams.get('orderCode') || urlParams.get('id') || urlParams.get('q') || urlParams.get('phone') || urlParams.get('code');
             if (queryParam) {
                 const input = document.getElementById('lookup-input');
                 if (input) {
@@ -330,12 +330,30 @@
                         } catch (err) { }
                     }
 
-                    // Nếu chưa tìm thấy theo Document ID trực tiếp, thử query theo trường orderId / code trong Firestore
+                    // Nếu chưa tìm thấy theo Document ID trực tiếp, thử query theo trường orderId / orderCode / code trong Firestore
                     if (ordersFound.length === 0) {
                         try {
                             const qOrderField = query(ordersRef, where("orderId", "in", idCandidates.slice(0, 10)));
                             const sOrderField = await getDocs(qOrderField);
                             sOrderField.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (err) { }
+                    }
+                    if (ordersFound.length === 0) {
+                        try {
+                            const qOrderCode = query(ordersRef, where("orderCode", "in", idCandidates.slice(0, 10)));
+                            const sOrderCode = await getDocs(qOrderCode);
+                            sOrderCode.forEach(d => {
+                                if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
+                            });
+                        } catch (err) { }
+                    }
+                    if (ordersFound.length === 0) {
+                        try {
+                            const qCode = query(ordersRef, where("code", "in", idCandidates.slice(0, 10)));
+                            const sCode = await getDocs(qCode);
+                            sCode.forEach(d => {
                                 if (!ordersFound.some(o => o.id === d.id)) ordersFound.push({ id: d.id, ...d.data() });
                             });
                         } catch (err) { }
@@ -528,7 +546,7 @@
                             </div>
                         ` : `
                             <div style="padding: 10px 14px; background: #fef2f2; border-radius: 6px; color: #991b1b; font-size: 0.88rem; margin-bottom: 15px;">
-                                ⚠️ Đơn hàng này đã được hủy. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline để được hỗ trợ.
+                                <i class="ti ti-alert-triangle-filled"></i> Đơn hàng này đã được hủy. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline để được hỗ trợ.
                             </div>
                         `}
 
@@ -559,14 +577,14 @@
                         ${(order.trackingLink || order.trackingUrl) ? `
                             <div style="margin-bottom: 15px; padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px; color: #1e40af; font-size: 0.88rem;">
-                                    <span style="font-size: 1.3rem;">🚚</span>
+                                    <span style="font-size: 1.3rem;"><i class="ti ti-truck-delivery"></i></span>
                                     <div>
                                         <strong style="display: block;">Đơn hàng có link theo dõi trực tiếp</strong>
                                         <span style="color: #64748b; font-size: 0.78rem;">Bấm để xem shipper đang di chuyển trên bản đồ</span>
                                     </div>
                                 </div>
                                 <a href="${escapeHTML(order.trackingLink || order.trackingUrl)}" target="_blank" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #0066cc; color: #fff; font-weight: 600; transition: opacity 0.2s;">
-                                    Xem lộ trình shipper ➔
+                                    Xem lộ trình shipper <i class="ti ti-arrow-right"></i>
                                 </a>
                             </div>
                         ` : ''}
@@ -598,14 +616,14 @@
                                     const label = order.couponCode ? `Mã ưu đãi (${escapeHTML(order.couponCode)})` : (order.source === 'pos' ? 'Giảm giá trực tiếp tại shop (POS)' : 'Giảm giá');
                                     return `
                                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ea580c; font-weight: 500;">
-                                            <span>🏷️ ${label}:</span>
+                                            <span><i class="ti ti-tag"></i> ${label}:</span>
                                             <span>-${new Intl.NumberFormat('vi-VN').format(discVal)}đ</span>
                                         </div>
                                     `;
                                 })()}
                                 ${order.membershipDiscount && Number(order.membershipDiscount) > 0 ? `
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #d97706; font-weight: 600;">
-                                        <span>👑 Ưu đãi hạng thành viên:</span>
+                                        <span><i class="ti ti-crown"></i> Ưu đãi hạng thành viên:</span>
                                         <span>-${new Intl.NumberFormat('vi-VN').format(order.membershipDiscount)}đ</span>
                                     </div>
                                 ` : ''}

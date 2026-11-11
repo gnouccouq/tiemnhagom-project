@@ -183,7 +183,7 @@ async function fetchProductDetail() {
         today.setHours(0, 0, 0, 0);
         const qCoupons = query(collection(db, "coupons"), orderBy("createdAt", "desc"));
 
-        let usedCouponsPromise = Promise.resolve({ empty: true, forEach: () => {} });
+        let usedCouponsPromise = Promise.resolve({ empty: true, forEach: () => { } });
         if (auth.currentUser) {
             usedCouponsPromise = getDocs(query(collection(db, "orders"), where("userId", "==", auth.currentUser.uid)));
         }
@@ -241,8 +241,8 @@ async function fetchProductDetail() {
             // Lưu vào lịch sử kèm danh mục để tối ưu gợi ý ở trang chủ
             addToHistory(productId, p.category);
             try {
-                updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => {});
-            } catch (e) {}
+                updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => { });
+            } catch (e) { }
 
             const currentPrice = getProductCurrentPrice(p, fsSettings);
             const displaySale = getProductEffectiveSale(p, fsSettings);
@@ -251,7 +251,7 @@ async function fetchProductDetail() {
 
             let starsHtml = '';
             const displayRating = (p.rating !== undefined && p.rating !== null) ? p.rating : 5;
-            for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '★' : '☆';
+            for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(displayRating) ? '<i class="ti ti-star-filled"></i>' : '<i class="ti ti-star"></i>';
 
             // Lấy tham số biến thể từ URL
             const urlColor = urlParams.get('color');
@@ -485,7 +485,7 @@ async function fetchProductDetail() {
                     </div>
                 `;
             }
-            
+
             window.scrollThumbnails = (direction) => {
                 const gallery = document.getElementById('product-image-gallery');
                 if (gallery) {
@@ -563,8 +563,8 @@ async function fetchProductDetail() {
                     const c0 = p.comboVariants[0];
                     const cStock = c0.stock !== undefined ? c0.stock : 0;
                     const cName = c0.name || 'Phân loại 1';
-                    initialStockText = c0.isOutOfStock || cStock <= 0 
-                        ? 'Rất tiếc, phân loại combo này đã hết hàng' 
+                    initialStockText = c0.isOutOfStock || cStock <= 0
+                        ? 'Rất tiếc, phân loại combo này đã hết hàng'
                         : `Trong kho: ${cStock} sản phẩm (${cName})`;
                 } else if (colorVariants.length > 0) {
                     initialStockText = `Trong kho: ${colorVariants[0].stock || 0} sản phẩm (màu ${colorVariants[0].name})`;
@@ -590,8 +590,8 @@ async function fetchProductDetail() {
                     `;
                 } else {
                     const percentSold = fsInfo.limit > 0 ? Math.min(100, Math.round((fsInfo.sold / fsInfo.limit) * 100)) : 0;
-                    const statusText = percentSold >= 80 ? `⚡ SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `🔥 ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
-                    const badgeText = fsInfo.isBogo ? '🎁 MUA 1 TẶNG 1 — 20/10' : (fsSettings?.title ? `⚡ ${fsSettings.title.toUpperCase()}` : '⚡ FLASH SALE 20/10');
+                    const statusText = percentSold >= 80 ? `<i class="ti ti-bolt-filled"></i> SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `<i class="ti ti-flame-filled"></i> ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
+                    const badgeText = fsInfo.isBogo ? '<i class="ti ti-gift"></i> MUA 1 TẶNG 1 — 20/10' : (fsSettings?.title ? `<i class="ti ti-bolt-filled"></i> ${fsSettings.title.toUpperCase()}` : '<i class="ti ti-bolt-filled"></i> FLASH SALE 20/10');
                     detailFlashSaleBarHtml = `
                         <div class="flashsale-progress-wrapper" style="margin-top: 12px; margin-bottom: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -609,7 +609,7 @@ async function fetchProductDetail() {
                 detailFlashSaleBarHtml = `
                     <div class="flashsale-progress-wrapper" style="margin-top: 12px; margin-bottom: 8px;">
                         <div class="flashsale-progress-bar" style="height: 22px; background: #fffaf5; border-color: #E8CCB2;">
-                            <span class="flashsale-progress-text" style="color: #9C7156; text-shadow: none; font-size: 0.78rem;">⏰ Sắp mở bán 20/10 (${fsInfo.limit} suất ưu đãi)</span>
+                            <span class="flashsale-progress-text" style="color: #9C7156; text-shadow: none; font-size: 0.78rem;"><i class="ti ti-alarm"></i> Sắp mở bán 20/10 (${fsInfo.limit} suất ưu đãi)</span>
                         </div>
                     </div>
                 `;
@@ -647,8 +647,8 @@ async function fetchProductDetail() {
                         <div class="product-main-meta">
                             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
                                 <span class="category-tag" style="margin-bottom: 0;">${p.category}</span>
-                                ${isNewArrival ? `<span class="product-badge badge-new" style="background: #d6e8dc; color: #1e4b2d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(30,75,45,0.2); display: inline-flex; align-items: center; gap: 3px;">✨ Hàng mới</span>` : ''}
-                                ${isBestSeller ? `<span class="product-badge badge-hot" style="background: #fcd9c6; color: #9c3615; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(156,54,21,0.2); display: inline-flex; align-items: center; gap: 3px;">🔥 Bán chạy</span>` : ''}
+                                ${isNewArrival ? `<span class="product-badge badge-new" style="background: #d6e8dc; color: #1e4b2d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(30,75,45,0.2); display: inline-flex; align-items: center; gap: 3px;"><i class="ti ti-sparkles"></i> Hàng mới</span>` : ''}
+                                ${isBestSeller ? `<span class="product-badge badge-hot" style="background: #fcd9c6; color: #9c3615; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(156,54,21,0.2); display: inline-flex; align-items: center; gap: 3px;"><i class="ti ti-flame-filled"></i> Bán chạy</span>` : ''}
                             </div>
                             <div style="margin-bottom: 12px;">
                                 <span class="product-sku" style="margin-bottom: 0; display: inline-block;">Mã: ${productId}</span>
@@ -733,20 +733,20 @@ async function fetchProductDetail() {
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span>📦 <strong>Đóng gói 5 lớp chuẩn gốm:</strong> Màng bóng khí & xốp định hình dày</span>
+                                    <span><i class="ti ti-package"></i> <strong>Đóng gói 5 lớp chuẩn gốm:</strong> Màng bóng khí & xốp định hình dày</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span>🛡️ <strong>Bảo hiểm 100% vỡ nứt:</strong> Đổi mới ngay lập tức không phụ phí</span>
+                                    <span><i class="ti ti-shield-check"></i> <strong>Bảo hiểm 100% vỡ nứt:</strong> Đổi mới ngay lập tức không phụ phí</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span>🔍 <strong>Đồng kiểm khi nhận:</strong> Mở hộp kiểm tra trước khi thanh toán</span>
+                                    <span><i class="ti ti-search"></i> <strong>Đồng kiểm khi nhận:</strong> Mở hộp kiểm tra trước khi thanh toán</span>
                                 </div>
                                 <div class="express-2h-detail-item" style="display: ${isUserInHCM() ? 'flex' : 'none'}; align-items: center; gap: 8px; margin-top: 2px;">
                                     <span class="express-2h-badge" style="margin-top: 0; padding: 2px 6px; font-size: 0.68rem;" title="${deliveryInfo.fullDesc}">
                                         <svg viewBox="0 0 20 16" fill="currentColor"><path d="M1 4h3v1.5H1V4zm-1 3.5h4V9H0V7.5zm2 3.5h3v1.5H2V11z"/><path d="M6 3h8v6h3.5l2.5 3v3h-2a2 2 0 0 1-4 0h-4a2 2 0 0 1-4 0H5V3h1zm9.5 2.5V8H18l-1.67-2.5H15.5zM7.5 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
-                                        <span>2 Giờ</span>
+                                        <span>4 Giờ</span>
                                     </span>
-                                    <span>⚡ <strong>Giao nhanh 2 Giờ:</strong> <span class="express-detail-time-text" style="color: #c2410c; font-weight: 700;">${deliveryInfo.timeText}</span> <span class="express-detail-desc-text" style="color: #64748b; font-size: 0.78rem;">(${deliveryInfo.fullDesc})</span></span>
+                                    <span><i class="ti ti-bolt-filled"></i> <strong>Giao nhanh 4 Giờ:</strong> <span class="express-detail-time-text" style="color: #c2410c; font-weight: 700;">${deliveryInfo.timeText}</span> <span class="express-detail-desc-text" style="color: #64748b; font-size: 0.78rem;">(${deliveryInfo.fullDesc})</span></span>
                                 </div>
                             </div>
                         </div>
@@ -765,23 +765,54 @@ async function fetchProductDetail() {
                             </div>
                         ` : ''}
 
-                        <!-- Specs and Safety Usage Icons Box -->
+                        <!-- Specs and Safety Usage Icons Box (Phương án 2: Metric Tiles - Thẻ Ô Vuông Trực Quan) -->
                         <div class="product-specs-box">
-                            <div class="product-specs-title">THÔNG SỐ SẢN PHẨM</div>
-                            <div class="product-specs-divider"></div>
-                            
-                            <div class="product-specs-details">
-                                <div class="product-specs-row">Chất liệu: <span>${p.details?.material || 'Gốm'}</span></div>
-                                ${p.details?.origin ? `<div class="product-specs-row">Xuất xứ: <span>${p.details.origin}</span></div>` : ''}
+                            <div class="product-specs-header">
+                                <div class="product-specs-title">
+                                    <i class="ti ti-clipboard-list" style="color: #111111; font-size: 1.05rem;"></i>
+                                    <span>Thông số sản phẩm</span>
+                                </div>
+                                <span class="product-specs-subtitle">Chế tác thủ công</span>
+                            </div>
+
+                            <div class="product-specs-tiles-grid">
+                                <div class="product-spec-tile">
+                                    <div class="spec-tile-icon"><i class="ti ti-cup"></i></div>
+                                    <div class="spec-tile-label">Chất liệu</div>
+                                    <div class="spec-tile-value">${p.details?.material || 'Gốm men bóng'}</div>
+                                </div>
+
                                 ${(p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) ? `
-                                    <div class="product-specs-row">Kích thước: <span>${[
-                                        p.dimensions.length ? `Dài ${p.dimensions.length}cm` : '',
-                                        p.dimensions.width ? `Rộng ${p.dimensions.width}cm` : '',
-                                        p.dimensions.height ? `Cao ${p.dimensions.height}cm` : ''
-                                    ].filter(Boolean).join(' × ')}</span></div>
+                                    <div class="product-spec-tile">
+                                        <div class="spec-tile-icon"><i class="ti ti-ruler"></i></div>
+                                        <div class="spec-tile-label">Kích thước (cm)</div>
+                                        <div class="spec-tile-value">${[p.dimensions.length, p.dimensions.width, p.dimensions.height].filter(Boolean).join(' &times; ')}</div>
+                                    </div>
                                 ` : ''}
-                                ${p.specs?.weight ? `<div class="product-specs-row">Trọng lượng: <span>${p.specs.weight} g</span></div>` : ''}
-                                ${p.specs?.capacity ? `<div class="product-specs-row">Dung tích: <span>${p.specs.capacity} ml</span></div>` : ''}
+
+                                ${p.specs?.capacity ? `
+                                    <div class="product-spec-tile">
+                                        <div class="spec-tile-icon"><i class="ti ti-droplet"></i></div>
+                                        <div class="spec-tile-label">Dung tích</div>
+                                        <div class="spec-tile-value highlight">${p.specs.capacity} ml</div>
+                                    </div>
+                                ` : ''}
+
+                                ${p.specs?.weight ? `
+                                    <div class="product-spec-tile">
+                                        <div class="spec-tile-icon"><i class="ti ti-scale"></i></div>
+                                        <div class="spec-tile-label">Trọng lượng</div>
+                                        <div class="spec-tile-value">${p.specs.weight} g</div>
+                                    </div>
+                                ` : ''}
+
+                                ${p.details?.origin ? `
+                                    <div class="product-spec-tile">
+                                        <div class="spec-tile-icon"><i class="ti ti-map-pin"></i></div>
+                                        <div class="spec-tile-label">Xuất xứ</div>
+                                        <div class="spec-tile-value">${p.details.origin}</div>
+                                    </div>
+                                ` : ''}
                             </div>
 
                             ${(p.usage?.isDishwasherSafe !== false || p.usage?.isMicrowaveSafe !== false || p.usage?.isFoodSafe !== false) ? `
@@ -954,7 +985,7 @@ async function fetchProductDetail() {
                     if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
                     if (pattern && pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
                 }
-                
+
                 let mockProduct = { ...p };
                 const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : p.price;
                 let effSale = 0;
@@ -998,7 +1029,7 @@ async function fetchProductDetail() {
             // Nút Mua ngay
             document.getElementById('btn-buy-now').onclick = async (e) => {
                 const btn = e.currentTarget;
-                
+
                 if (!auth.currentUser) {
                     showToast("Bạn cần đăng nhập để thực hiện chức năng này", "error");
                     setTimeout(() => {
@@ -1034,7 +1065,7 @@ async function fetchProductDetail() {
                     if (pattern && pattern.sale !== undefined && pattern.sale !== null && pattern.sale !== '') variantSaleValue = Number(pattern.sale);
                     if (pattern && pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
                 }
-                
+
                 let mockProduct = { ...p };
                 const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : p.price;
                 let effSale = 0;
@@ -1248,10 +1279,10 @@ function renderVariantSelectors(product) {
                 <div class="variant-title">Phân loại Combo: <span id="selected-combo-variant-display" style="font-weight: 500; color: var(--text-black);">${selectedComboVariant || product.comboVariants[0].name || 'Phân loại 1'}</span></div>
                 <div class="variant-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
                     ${product.comboVariants.map((v, i) => {
-                        const name = v.name || `Phân loại ${i+1}`;
-                        const isActive = name === selectedComboVariant;
-                        const isOut = v.isOutOfStock || (v.stock !== undefined && v.stock !== null && v.stock <= 0);
-                        return `
+            const name = v.name || `Phân loại ${i + 1}`;
+            const isActive = name === selectedComboVariant;
+            const isOut = v.isOutOfStock || (v.stock !== undefined && v.stock !== null && v.stock <= 0);
+            return `
                             <div class="variant-chip combo-variant-chip ${isActive ? 'active' : ''} ${isOut ? 'disabled-variant' : ''}"
                                  style="display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;"
                                  onclick="window.selectComboVariant(${i})"
@@ -1260,7 +1291,7 @@ function renderVariantSelectors(product) {
                                 ${name}${isOut ? ' <small style="color:#ef4444; font-weight:bold;">(Hết)</small>' : ''}
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -1274,7 +1305,7 @@ window.selectComboVariant = (idx) => {
     if (!currentProductData || !currentProductData.comboVariants || !currentProductData.comboVariants[idx]) return;
     const variant = currentProductData.comboVariants[idx];
     selectedComboVariant = variant.name || `Phân loại ${idx + 1}`;
-    
+
     const displayEl = document.getElementById('selected-combo-variant-display');
     if (displayEl) displayEl.innerText = selectedComboVariant;
 
@@ -1509,10 +1540,10 @@ window.updateDisplayPrice = () => {
             if (pattern.salePrice && Number(pattern.salePrice) > 0) variantSalePriceValue = Number(pattern.salePrice);
         }
     }
-    
+
     let mockProduct = { ...currentProductData };
     const basePrice = (variantPriceValue !== null && variantPriceValue > 0) ? variantPriceValue : currentProductData.price;
-    
+
     // Nếu biến thể có giảm % riêng (kể cả 0%): dùng mức giảm riêng đó
     // Nếu không nhập giảm % riêng: lấy mức giảm chính của sản phẩm
     let effSale = 0;
@@ -1536,13 +1567,13 @@ window.updateDisplayPrice = () => {
         mockProduct.salePrice = null;
     }
     const currentPrice = getProductCurrentPrice(mockProduct);
-    
+
     const priceSpan = document.querySelector('.main-price');
     if (priceSpan) priceSpan.innerText = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
-    
+
     const oldPriceSpan = document.querySelector('.old-price');
     const saleLabel = document.querySelector('.sale-label');
-    
+
     if (mockProduct.sale > 0) {
         if (oldPriceSpan) {
             oldPriceSpan.style.display = 'inline';
@@ -1556,7 +1587,7 @@ window.updateDisplayPrice = () => {
         if (oldPriceSpan) oldPriceSpan.style.display = 'none';
         if (saleLabel) saleLabel.style.display = 'none';
     }
-    
+
     const dynamicPriceDivs = document.querySelectorAll('.dynamic-membership-price');
     dynamicPriceDivs.forEach(div => {
         div.dataset.price = currentPrice;
@@ -1570,7 +1601,7 @@ window.shareProduct = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const pid = urlParams.get('id');
     const shareUrl = pid ? `https://tiemnhagom.vn/share?type=product&id=${pid}` : window.location.href;
-    
+
     const shareData = {
         title: document.title,
         text: 'Mời bạn xem sản phẩm gốm sứ thủ công tinh xảo tại Tiệm Nhà Gốm!',
@@ -1774,7 +1805,7 @@ function initProductDescriptionToggle() {
             wrapper.style.maxHeight = MAX_COLLAPSED_HEIGHT + 'px';
             if (toggleText) toggleText.textContent = 'Xem thêm mô tả';
             if (toggleBtn) toggleBtn.classList.remove('expanded');
-            
+
             const container = document.getElementById('product-description-container');
             if (container) {
                 container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

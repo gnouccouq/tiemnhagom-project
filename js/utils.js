@@ -16,6 +16,10 @@ import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 import { initGeminiAssistant } from "./gemini-assistant.js";
 import { initNoelTheme, noelEngine } from "./noel-theme.js";
 export { initNoelTheme, noelEngine };
+import { initWebNotifications } from "./notifications.js";
+export { initWebNotifications };
+import { initSearchModal, openSearchModal, closeSearchModal } from "./search-modal.js";
+export { initSearchModal, openSearchModal, closeSearchModal };
 
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -1383,7 +1387,7 @@ function setupCookieConsent(pathPrefix) {
         <div class="cookie-content">
             <div class="cookie-text">
                 <p>
-                    <strong>🍪 Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
+                    <strong><i class="ti ti-cookie"></i> Tiệm Nhà Gốm:</strong> Chúng tôi sử dụng cookie để mang lại trải nghiệm tốt nhất. Bằng cách tiếp tục, bạn đồng ý với 
                     <a href="${pathPrefix}chinh-sach/privacy-policy.html">Chính sách bảo mật</a> của chúng tôi.
                 </p>
             </div>
@@ -1456,7 +1460,7 @@ export function setupLocationPrompt() {
                 </div>
             </div>
             <p class="tng-loc-desc">
-                Cho phép Tiệm Nhà Gốm biết vị trí của bạn để tự động kích hoạt dịch vụ <strong>Giao nhanh 2 Giờ</strong> (nội thành TP.HCM) và ước tính phí ship nhanh nhất.
+                Cho phép Tiệm Nhà Gốm biết vị trí của bạn để tự động kích hoạt dịch vụ <strong>Giao nhanh 4 Giờ</strong> (nội thành TP.HCM) và ước tính phí ship nhanh nhất.
             </p>
             <div class="tng-loc-actions">
                 <button id="btn-later-location" class="tng-loc-btn-later">Để sau</button>
@@ -1500,9 +1504,9 @@ export function setupLocationPrompt() {
                     const isHcm = isUserInHCM(null, lat, lon);
                     if (isHcm) {
                         sessionStorage.setItem('tng_user_location', 'TP. Hồ Chí Minh');
-                        showToast('🎉 Vị trí: Nội thành TP.HCM (Hỗ trợ Giao nhanh 2 Giờ!)', 'success');
+                        showToast('<i class="ti ti-confetti"></i> Vị trí: Nội thành TP.HCM (Hỗ trợ Giao nhanh 4 Giờ!)', 'success');
                     } else {
-                        showToast('📍 Đã cập nhật vị trí của bạn thành công.', 'info');
+                        showToast('<i class="ti ti-map-pin"></i> Đã cập nhật vị trí của bạn thành công.', 'info');
                     }
                     updateExpressDeliveryBadges(isHcm);
                     closePrompt();
@@ -1590,8 +1594,8 @@ export function updateMembershipPrices(tier) {
 }
 window.updateMembershipPrices = updateMembershipPrices;
 
-// 8.1 Kiểm tra vị trí khách hàng tại nội thành TP. Hồ Chí Minh để hiển thị nhãn Giao Nhanh 2h
-// Danh sách các khu vực ngoại thành hoặc tỉnh lân cận KHÔNG hỗ trợ giao hỏa tốc 2h
+// 8.1 Kiểm tra vị trí khách hàng tại nội thành TP. Hồ Chí Minh để hiển thị nhãn Giao Nhanh 4h
+// Danh sách các khu vực ngoại thành hoặc tỉnh lân cận KHÔNG hỗ trợ giao hỏa tốc 4h
 const EXCLUDED_OUTER_AREAS = [
     'hoc mon', 'hóc môn',
     'cu chi', 'củ chi',
@@ -1649,7 +1653,7 @@ export function isUserInHCM(locStr = null, lat = null, lon = null) {
     if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
         const dist = getDistanceFromHcmCenter(lat, lon);
         if (dist !== null) {
-            // Nếu khoảng cách > 16km từ trung tâm TP.HCM -> Ngoại thành hoặc tỉnh khác -> Không giao 2h
+            // Nếu khoảng cách > 16km từ trung tâm TP.HCM -> Ngoại thành hoặc tỉnh khác -> Không giao 4h
             if (dist > 16) return false;
             // Nếu trong bán kính <= 16km -> Thuộc nội thành TP.HCM
             return true;
@@ -1667,21 +1671,21 @@ export function getExpressDeliveryStatus() {
 
     if (hour < 10) {
         return {
-            badgeText: '2 Giờ',
+            badgeText: '4 Giờ',
             timeText: 'Giao trước 12h',
             fullDesc: 'Giao nhanh trước 12:00 trưa hôm nay (đặt từ sáng sớm trước 10h)',
             status: 'morning_before_10'
         };
     } else if (hour >= 10 && hour < 19) {
         return {
-            badgeText: '2 Giờ',
-            timeText: 'Giao trong 2h',
-            fullDesc: 'Giao hỏa tốc nhận hàng trong 2 giờ tại nội thành TP.HCM (khung giờ 10h - 19h)',
+            badgeText: '4 Giờ',
+            timeText: 'Giao trong 4h',
+            fullDesc: 'Giao hỏa tốc nhận hàng trong 4 giờ tại nội thành TP.HCM (khung giờ 10h - 19h)',
             status: 'active_window'
         };
     } else {
         return {
-            badgeText: '2 Giờ',
+            badgeText: '4 Giờ',
             timeText: 'Giao vào ngày mai',
             fullDesc: 'Giao nhanh trước 12:00 trưa ngày mai (áp dụng đơn đặt sau 19h tối)',
             status: 'evening_after_19'
@@ -1761,6 +1765,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'color',
                     name: v.name,
                     imageUrl: v.imageUrl,
+                    hoverImageUrl: v.hoverImageUrl || null,
                     price: v.price,
                     sale: v.sale,
                     salePrice: v.salePrice,
@@ -1791,6 +1796,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'pattern',
                     name: v.name,
                     imageUrl: v.imageUrl,
+                    hoverImageUrl: v.hoverImageUrl || null,
                     price: v.price,
                     sale: v.sale,
                     salePrice: v.salePrice,
@@ -1820,6 +1826,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
                     type: 'combo',
                     name: v.name,
                     imageUrl: v.imageUrl || v.thumbUrl,
+                    hoverImageUrl: v.hoverImageUrl || null,
                     price: v.price,
                     sale: v.sale,
                     salePrice: v.salePrice,
@@ -1839,7 +1846,7 @@ export function renderProductCardWithVariants(product, id, favsList = [], linkBa
 export function renderProductCard(product, id, favsList = [], linkBase = 'product/index.html', variantOverride = null) {
     const rating = product.rating || 5;
     let starsHtml = '';
-    for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '★' : '☆';
+    for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(rating) ? '<i class="ti ti-star-filled"></i>' : '<i class="ti ti-star"></i>';
 
     let variantPriceValue = null;
     let variantSaleValue = null;
@@ -1914,7 +1921,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const bestSellerBadge = isBestSeller ? `<div class="product-badge-circle badge-hot" title="Sản phẩm bán chạy"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Bán</span><span style="font-size: 0.68rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Chạy</span></div>` : '';
     const newArrivalBadge = isNewArrival ? `<div class="product-badge-circle badge-new" title="Hàng mới về trong 2 tuần"><span style="font-size: 0.56rem; font-weight: 700; text-transform: uppercase; line-height: 1; opacity: 0.85;">Hàng</span><span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; line-height: 1.1;">Mới</span></div>` : '';
     const isNoelProduct = !isOutOfStock && Boolean(product.isNoel);
-    const noelBadge = isNoelProduct ? `<div class="product-badge-circle badge-noel" title="Bộ sưu tập Giáng Sinh"><span style="font-size: 0.68rem; line-height: 1;">🎄</span><span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; letter-spacing: 0.3px;">Noel</span></div>` : '';
+    const noelBadge = isNoelProduct ? `<div class="product-badge-circle badge-noel" title="Bộ sưu tập Giáng Sinh"><span style="font-size: 0.68rem; line-height: 1;"><i class="ti ti-christmas-tree"></i></span><span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; letter-spacing: 0.3px;">Noel</span></div>` : '';
 
     const badgesCorner = (isBestSeller || isNewArrival || isNoelProduct) ? `
         <div class="product-badges-corner" style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none;">
@@ -1942,7 +1949,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
             `;
         } else {
             const percentSold = fsInfo.limit > 0 ? Math.min(100, Math.round((fsInfo.sold / fsInfo.limit) * 100)) : 0;
-            const statusText = percentSold >= 80 ? `⚡ SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `🔥 ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
+            const statusText = percentSold >= 80 ? `<i class="ti ti-bolt-filled"></i> SẮP CHÁY HÀNG ${fsInfo.sold}/${fsInfo.limit}` : `<i class="ti ti-flame-filled"></i> ĐÃ BÁN ${fsInfo.sold}/${fsInfo.limit}`;
             flashSaleBarHtml = `
                 <div class="flashsale-progress-wrapper">
                     <div class="flashsale-progress-bar">
@@ -1956,7 +1963,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         flashSaleBarHtml = `
             <div class="flashsale-progress-wrapper">
                 <div class="flashsale-progress-bar" style="background: #e0f2fe; border-color: #bae6fd;">
-                    <span class="flashsale-progress-text" style="color: #0369a1; text-shadow: none;">⏰ Sắp mở bán 9.9 (${fsInfo.limit} suất)</span>
+                    <span class="flashsale-progress-text" style="color: #0369a1; text-shadow: none;"><i class="ti ti-alarm"></i> Sắp mở bán 9.9 (${fsInfo.limit} suất)</span>
                 </div>
             </div>
         `;
@@ -2034,8 +2041,10 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
         }
     }
 
-    // Ảnh thứ 2 khi di chuột: Tải riêng biệt, không liên quan tới ảnh chung của sản phẩm
-    const secondaryImageUrl = product.hoverImageUrl || null;
+    // Ảnh thứ 2 khi di chuột: Nếu là biến thể độc lập thì lấy ảnh hover riêng của biến thể đó, ngược lại lấy ảnh hover chung của sản phẩm
+    const secondaryImageUrl = variantOverride
+        ? (variantOverride.hoverImageUrl || null)
+        : (product.hoverImageUrl || product.hoverImage || null);
 
     const isHcm = isUserInHCM();
     const deliveryInfo = getExpressDeliveryStatus();
@@ -2109,7 +2118,7 @@ export async function addToCart(productData) {
         const fsInfo = getProductFlashSaleInfo({ id: productData.id, price: productData.price }, productData.id, fsSettings);
         if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.isBogo) {
             productData.isBogoMain = true;
-            productData.dealNote = "🎁 Mua 1 Tặng 1 (20/10)";
+            productData.dealNote = "Mua 1 Tặng 1 (20/10)";
 
             // Xác định sản phẩm quà tặng (cùng loại hoặc sản phẩm khác)
             let giftPid = fsInfo.giftProductId || productData.id;
@@ -2132,7 +2141,7 @@ export async function addToCart(productData) {
             bogoGiftItem = {
                 id: `gift_${giftPid}_for_${productData.id}`,
                 realProductId: giftPid,
-                name: `🎁 ${giftName}`,
+                name: giftName,
                 price: 0,
                 originalPrice: productData.price,
                 image: giftImage,
@@ -2595,7 +2604,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         updateCartCount(user);
         updateFavoriteCount(user);
 
-        // Lấy vị trí địa lý của khách hàng để hiển thị nhãn Giao Nhanh 2 Giờ nếu ở nội thành TP. Hồ Chí Minh
+        // Lấy vị trí địa lý của khách hàng để hiển thị nhãn Giao Nhanh 4 Giờ nếu ở nội thành TP. Hồ Chí Minh
         fetchUserLocation().then(loc => {
             const isHcm = isUserInHCM(loc);
             updateExpressDeliveryBadges(isHcm);
@@ -2627,35 +2636,8 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
         // Khởi tạo tính năng xem ảnh full screen
         setupFullScreenImages();
 
-        // Khởi tạo thanh tìm kiếm chính trong Header Overlay
-        initAutocomplete('header-search-input', 'search-suggestions', pathPrefix);
-
-        // Setup logic cho Header Search Overlay
-        const btnOpenSearch = document.getElementById('btn-open-search');
-        const searchOverlay = document.getElementById('search-overlay');
-        const btnCloseSearch = document.getElementById('btn-close-search');
-        const headerSearchInput = document.getElementById('header-search-input');
-        if (btnOpenSearch && searchOverlay && btnCloseSearch) {
-            const closeHeaderSearch = () => {
-                searchOverlay.classList.remove('active');
-                document.body.style.overflow = '';
-            };
-            btnOpenSearch.addEventListener('click', (e) => {
-                e.preventDefault();
-                searchOverlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                setTimeout(() => headerSearchInput?.focus(), 100);
-            });
-            btnCloseSearch.addEventListener('click', closeHeaderSearch);
-            searchOverlay.addEventListener('click', (e) => {
-                if (e.target === searchOverlay) closeHeaderSearch();
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
-                    closeHeaderSearch();
-                }
-            });
-        }
+        // Khởi tạo Modal Tìm kiếm Command Palette cao cấp (Apple / Zara Style)
+        initSearchModal(pathPrefix);
 
         // Khởi tạo nút cuộn lên đầu trang
         setupScrollToTop();
@@ -2793,6 +2775,16 @@ export async function loadSharedComponents(pathPrefix = './') {
                 initDrawerCart();
             }
 
+            // Khởi tạo Hệ thống Thông báo Web (Đồng bộ 100% Mobile App)
+            if (typeof initWebNotifications === 'function') {
+                initWebNotifications(prefix);
+            }
+
+            // Khởi tạo Modal Tìm kiếm Command Palette cao cấp (Apple / Zara Style)
+            if (typeof initSearchModal === 'function') {
+                initSearchModal(prefix);
+            }
+
             // Khởi tạo Google Translate và nút đổi ngôn ngữ (chỉ nạp khi dropdown ngôn ngữ đang hiển thị)
             const langWrapper = document.querySelector('.lang-dropdown');
             const isLangVisible = langWrapper && window.getComputedStyle(langWrapper).display !== 'none';
@@ -2801,7 +2793,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                 window.googleTranslateElementInit = function () {
                     try {
                         new google.translate.TranslateElement({ pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false }, 'google_translate_element');
-                    } catch (_) {}
+                    } catch (_) { }
                 };
                 const gtScript = document.createElement('script');
                 gtScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
@@ -2939,7 +2931,7 @@ export async function loadSharedComponents(pathPrefix = './') {
             if (footerList) {
                 let footerHtml = `
                     <li><a href="${pathPrefix}products/">Tất cả sản phẩm</a></li>
-                    <li><a href="${pathPrefix}noel/">🎄 Góc Giáng Sinh</a></li>
+                    <li><a href="${pathPrefix}noel/"><i class="ti ti-christmas-tree"></i> Góc Giáng Sinh</a></li>
                     <li><a href="${pathPrefix}flash-sale/">Flash Sale</a></li>
                 `;
                 dynamicCategories.forEach(group => { // Iterate over array

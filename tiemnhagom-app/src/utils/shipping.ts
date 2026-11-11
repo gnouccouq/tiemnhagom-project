@@ -99,11 +99,11 @@ export function calculateMembershipDiscount(subtotal: number, tier: MemberTierIn
  * 2. Hạng Gốm Men & Gốm Độc Bản (freeShipping: true): 0đ
  * 3. Giao tiêu chuẩn đơn từ 500.000đ: 0đ (Freeship)
  * 4. Nội thành TP.HCM:
- *    - Giao nhanh 2 Giờ (express_2h): 30.000đ
+ *    - Giao nhanh 4 Giờ (express_2h): 30.000đ
  *    - Giao thông thường (standard): 20.000đ
  * 5. Toàn quốc ngoài TP.HCM:
  *    - Giao tiêu chuẩn: 40.000đ
- *    - Hỏa tốc 2 giờ: Không khả dụng (quay về tiêu chuẩn)
+ *    - Hỏa tốc 4 giờ: Không khả dụng (quay về tiêu chuẩn)
  */
 export function calculateAppShippingFee(
   method: 'standard' | 'express_2h' | 'pickup',

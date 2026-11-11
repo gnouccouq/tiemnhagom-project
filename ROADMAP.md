@@ -24,7 +24,7 @@ Tài liệu này theo dõi tiến độ phát triển, kế hoạch nâng cấp 
   - [x] Thanh mua hàng ghim chân trang (Sticky bottom bar) trên di động và khi cuộn trang.
 - [x] **Giỏ hàng & Đặt hàng cơ bản**:
   - [x] Thêm/bớt số lượng sản phẩm, lưu giỏ hàng vào LocalStorage.
-  - [x] Bảng tính phí vận chuyển theo khu vực (Nội thành HCM 20k, Hỏa tốc 2h 30k, Toàn quốc 40k).
+  - [x] Bảng tính phí vận chuyển theo khu vực (Nội thành HCM 20k, Hỏa tốc 4h 30k, Toàn quốc 40k).
   - [x] Hệ thống áp dụng mã giảm giá / coupon voucher.
 - [x] **Trung tâm điều hành Admin & POS**:
   - [x] Dashboard quản trị sản phẩm, biến thể, giá bán, tồn kho.
@@ -40,12 +40,14 @@ Tài liệu này theo dõi tiến độ phát triển, kế hoạch nâng cấp 
 ## ⚡ Phase 2: Tối Ưu Trải Nghiệm & Tăng Tỉ Lệ Chuyển Đổi (ĐANG TRIỂN KHAI 🔄)
 
 ### 1. Thanh toán & Xác nhận đơn hàng thông minh
+
 - [ ] **Mã QR chuyển khoản tự động (VietQR)**: Tạo mã QR ngân hàng kèm sẵn số tiền và mã đơn hàng sau khi khách nhấn Đặt hàng, giúp khách quét thanh toán không cần nhập tay.
 - [ ] **Thông báo đơn hàng tức thì (Instant Alert)**:
   - Tích hợp thông báo qua **Telegram Bot** hoặc **Zalo OA** gửi tin nhắn ngay cho chủ tiệm khi có đơn đặt mới từ web.
   - Gửi email xác nhận đơn hàng tự động cho khách.
 
 ### 2. Tối ưu hiệu năng & Hình ảnh
+
 - [ ] **Chuyển đổi ảnh sang WebP**: Giảm 60–80% dung lượng ảnh sản phẩm tải từ Firebase Storage, giúp khách lướt web mượt mà ngay cả khi mạng 3G/4G yếu.
 - [ ] **Bộ lọc sản phẩm nâng cao (`products/`)**:
   - Lọc theo khoảng giá (Dưới 100k, 100k–300k, trên 500k).
@@ -53,6 +55,7 @@ Tài liệu này theo dõi tiến độ phát triển, kế hoạch nâng cấp 
   - Lọc theo màu sắc men gốm.
 
 ### 3. Nâng cấp giao diện Giỏ hàng (`cart/`)
+
 - [ ] Đồng bộ phong cách thiết kế sang trọng, tối giản như trang chi tiết V2.
 - [ ] Thanh tiến trình "Freeship" (Ví dụ: *Mua thêm 150.000đ để được Freeship toàn quốc*).
 

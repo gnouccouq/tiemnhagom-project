@@ -144,8 +144,8 @@ function renderOnlineUsersTable(usersList) {
 
     tbody.innerHTML = usersList.map(u => {
         const timeAgo = formatOnlineTimeAgo(u?.startTime);
-        const deviceIcon = u.deviceType === 'Mobile' ? '📱' : (u.deviceType === 'Tablet' ? '📟' : '💻');
-        const userAvatar = u.isGuest ? '👤' : '⭐';
+        const deviceIcon = u.deviceType === 'Mobile' ? '<i class="ti ti-device-mobile"></i>' : (u.deviceType === 'Tablet' ? '<i class="ti ti-device-tablet"></i>' : '<i class="ti ti-device-laptop"></i>');
+        const userAvatar = u.isGuest ? '<i class="ti ti-user"></i>' : '<i class="ti ti-star-filled"></i>';
         const userBadge = u.isGuest
             ? `<span style="font-size:0.75rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:4px;">Khách</span>`
             : `<span style="font-size:0.75rem; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:4px; font-weight:600;">Thành viên</span>`;
@@ -156,13 +156,13 @@ function renderOnlineUsersTable(usersList) {
         else if (u.os === 'Windows') osColor = '#0277bd';
 
         const cartBadge = u.cartCount > 0
-            ? `<span style="background:#e8f5e9; color:#2e7d32; padding:4px 10px; border-radius:6px; font-weight:600; font-size:0.82rem; border:1px solid #c8e6c9; display:inline-block;">🛒 ${u.cartCount} món (${u.cartTotal.toLocaleString('vi-VN')}đ)</span>`
+            ? `<span style="background:#e8f5e9; color:#2e7d32; padding:4px 10px; border-radius:6px; font-weight:600; font-size:0.82rem; border:1px solid #c8e6c9; display:inline-block;"><i class="ti ti-shopping-cart"></i> ${u.cartCount} món (${u.cartTotal.toLocaleString('vi-VN')}đ)</span>`
             : `<span style="color:#aaa; font-size:0.8rem;">Trống (0đ)</span>`;
 
-        const journeyStr = u.journeyHistory.map(p => safeHtmlStr(p)).join(' ➔ ');
+        const journeyStr = u.journeyHistory.map(p => safeHtmlStr(p)).join(' → ');
 
         const utmDisplay = u.utmSource
-            ? `<div style="font-size:0.78rem; color:#e65100; font-weight:600; margin-bottom:2px;">🎯 QC: ${safeHtmlStr(u.utmSource)} ${u.utmCampaign ? `(${safeHtmlStr(u.utmCampaign)})` : ''}</div>`
+            ? `<div style="font-size:0.78rem; color:#e65100; font-weight:600; margin-bottom:2px;"><i class="ti ti-target-arrow"></i> QC: ${safeHtmlStr(u.utmSource)} ${u.utmCampaign ? `(${safeHtmlStr(u.utmCampaign)})` : ''}</div>`
             : '';
 
         return `
@@ -181,12 +181,12 @@ function renderOnlineUsersTable(usersList) {
                 </td>
                 <td style="padding: 12px 10px; max-width: 250px;">
                     <div style="font-weight: 600; color: #2e7d32; display: flex; align-items: center; gap: 4px;">
-                        <span>📄</span> <span>${safeHtmlStr(u.pageTitle)}</span>
+                        <span><i class="ti ti-file-text"></i></span> <span>${safeHtmlStr(u.pageTitle)}</span>
                     </div>
                     <a href="${safeHtmlStr(u.pageUrl)}" target="_blank" style="font-size: 0.75rem; color: #1976d2; text-decoration: none; word-break: break-all; display: inline-block; margin-top: 2px;">
-                        ${safeHtmlStr(u.pageUrl)} ↗
+                        ${safeHtmlStr(u.pageUrl)} <i class="ti ti-arrow-up-right"></i>
                     </a>
-                    ${u.journeyHistory.length > 1 ? `<div style="font-size:0.73rem; color:#777; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${journeyStr}">🗺️ ${journeyStr}</div>` : ''}
+                    ${u.journeyHistory.length > 1 ? `<div style="font-size:0.73rem; color:#777; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${journeyStr}"><i class="ti ti-map"></i> ${journeyStr}</div>` : ''}
                 </td>
                 <td style="padding: 12px 10px;">
                     ${cartBadge}
@@ -203,12 +203,12 @@ function renderOnlineUsersTable(usersList) {
                 <td style="padding: 12px 10px;">
                     ${utmDisplay}
                     <span style="background: #f5f5f5; color: #444; padding: 3px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid #eee; display: inline-block;">
-                        🌐 ${safeHtmlStr(u.referrer)}
+                        <i class="ti ti-world"></i> ${safeHtmlStr(u.referrer)}
                     </span>
                 </td>
                 <td style="padding: 12px 10px;">
                     <span style="color: #333; font-weight: 500; font-size: 0.83rem;">
-                        📍 ${safeHtmlStr(u.location)}
+                        <i class="ti ti-map-pin"></i> ${safeHtmlStr(u.location)}
                     </span>
                 </td>
                 <td style="padding: 12px 10px; color: #666; font-size: 0.82rem;">
@@ -229,21 +229,21 @@ listenToOnlineUsers();
 // Cấu hình Phân nhóm Quyền hạn và Phân hệ hệ thống
 const PERMISSION_GROUPS = [
     {
-        title: "🛍️ Nghiệp vụ Bán hàng & Thu ngân",
+        title: "<i class='ti ti-shopping-bag'></i> Nghiệp vụ Bán hàng & Thu ngân",
         items: [
             { id: 'pos-section', label: 'Bán tại shop (POS)' },
             { id: 'shift-report-section', label: 'Báo cáo ca thu ngân' }
         ]
     },
     {
-        title: "📦 Quản lý Đơn hàng",
+        title: "<i class='ti ti-package'></i> Quản lý Đơn hàng",
         items: [
             { id: 'order-section', label: 'Đơn mua trực tuyến' },
             { id: 'rental-order-section', label: 'Đơn thuê đồ decor / sự kiện' }
         ]
     },
     {
-        title: "🏺 Kho hàng & Sản phẩm",
+        title: "<i class='ti ti-teapot'></i> Kho hàng & Sản phẩm",
         items: [
             { id: 'product-section', label: 'Sản phẩm & Tồn kho' },
             { id: 'category-section', label: 'Danh mục sản phẩm' },
@@ -252,7 +252,7 @@ const PERMISSION_GROUPS = [
         ]
     },
     {
-        title: "👥 Khách hàng & Marketing",
+        title: "<i class='ti ti-users'></i> Khách hàng & Marketing",
         items: [
             { id: 'user-section', label: 'Khách hàng & Hội viên' },
             { id: 'customer-analytics-section', label: 'Khách tiềm năng & Lượt xem' },
@@ -261,7 +261,7 @@ const PERMISSION_GROUPS = [
         ]
     },
     {
-        title: "📰 Nội dung Website",
+        title: "<i class='ti ti-news'></i> Nội dung Website",
         items: [
             { id: 'banner-section', label: 'Banner trang chủ' },
             { id: 'news-section', label: 'Tin tức & Blog' },
@@ -271,7 +271,7 @@ const PERMISSION_GROUPS = [
         ]
     },
     {
-        title: "⚙️ Báo cáo & Quản trị Hệ thống",
+        title: "<i class='ti ti-settings'></i> Báo cáo & Quản trị Hệ thống",
         items: [
             { id: 'overview-section', label: 'Tổng quan hệ thống' },
             { id: 'stats-section', label: 'Báo cáo & Thống kê doanh thu' },
@@ -576,7 +576,7 @@ function setupAdminLoginForm() {
         togglePwBtn.addEventListener('click', () => {
             const isPassword = pwInput.type === 'password';
             pwInput.type = isPassword ? 'text' : 'password';
-            togglePwBtn.innerText = isPassword ? '🙈' : '👁️';
+            togglePwBtn.innerHTML = isPassword ? '<i class="ti ti-eye-off"></i>' : '<i class="ti ti-eye"></i>';
         });
     }
 
@@ -596,7 +596,7 @@ function setupAdminLoginForm() {
             try {
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span>⏳ Đang xác thực...</span>';
+                    submitBtn.innerHTML = '<span><i class="ti ti-hourglass-low"></i> Đang xác thực...</span>';
                 }
                 await signInWithEmailAndPassword(auth, email, password);
                 // onAuthStateChanged sẽ tự động kích hoạt checkAdminRights(user)
@@ -614,7 +614,7 @@ function setupAdminLoginForm() {
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>Đăng nhập hệ thống</span> <span>➔</span>';
+                    submitBtn.innerHTML = '<span>Đăng nhập hệ thống</span> <span><i class="ti ti-arrow-right"></i></span>';
                 }
             }
         });
@@ -812,7 +812,7 @@ function setupNewOrderNotification() {
                 // Phát âm thanh thông báo
                 notificationSound.play().catch(e => console.warn("Trình duyệt chặn tự động phát âm thanh:", e));
 
-                showToast(`🔔 Đơn hàng mới từ ${customerName}: ${total}`, "success");
+                showToast(`<i class="ti ti-bell"></i> Đơn hàng mới từ ${customerName}: ${total}`, "success");
 
                 if (Notification.permission === "granted") {
                     new Notification("Tiệm Nhà Gốm: Đơn hàng mới!", {
@@ -1453,7 +1453,7 @@ function renderRecentActivities(orders) {
 
         return `
             <div class="activity-item" style="cursor: pointer;" onclick="document.querySelector('.admin-tab-btn[data-target=\'${isRental ? 'rental-order-section' : 'order-section'}\']')?.click()" title="Bấm để xem đơn hàng">
-                <div class="activity-avatar">${isRental ? '🛋️' : '🛒'}</div>
+                <div class="activity-avatar">${isRental ? '<i class="ti ti-armchair"></i>' : '<i class="ti ti-shopping-cart"></i>'}</div>
                 <div class="activity-content">
                     <strong>${customerName}</strong> vừa đặt ${isRental ? 'đơn thuê Decor' : 'đơn mua hàng'} trị giá <strong>${amountStr}</strong>
                     <div class="activity-time">${timeAgo}</div>
@@ -1588,7 +1588,7 @@ function updateDashboardNotificationsAndAlerts() {
         notifications.push({
             type: 'order',
             level: 'info',
-            icon: '📦',
+            icon: '<i class="ti ti-package"></i>',
             title: `Đơn hàng #${o.id.substring(0, 6).toUpperCase()} (${amountStr} VND)`,
             desc: `${customerName} vừa đặt đơn hàng mới cần xác nhận.`,
             action: () => {
@@ -1602,7 +1602,7 @@ function updateDashboardNotificationsAndAlerts() {
         notifications.push({
             type: 'stock_out',
             level: 'danger',
-            icon: '🔴',
+            icon: '<i class="ti ti-circle-filled" style="color: #ef4444; font-size: 0.75em;"></i>',
             title: `Hết hàng: ${item.name}`,
             desc: `Mã: ${item.productId} • Tồn kho đã chạm mốc 0.`,
             action: () => {
@@ -1619,7 +1619,7 @@ function updateDashboardNotificationsAndAlerts() {
         notifications.push({
             type: 'stock_low',
             level: 'warning',
-            icon: '⚠️',
+            icon: '<i class="ti ti-alert-triangle-filled"></i>',
             title: `Sắp hết hàng: ${item.name}`,
             desc: `Mã: ${item.productId} • Chỉ còn ${item.stock} sản phẩm trong kho.`,
             action: () => {
@@ -1656,7 +1656,7 @@ function updateDashboardNotificationsAndAlerts() {
         if (notifications.length === 0) {
             notifList.innerHTML = `
                 <div style="padding: 24px 16px; text-align: center; color: #16a34a; font-size: 0.85rem;">
-                    <div style="font-size: 1.6rem; margin-bottom: 6px;">✅</div>
+                    <div style="font-size: 1.6rem; margin-bottom: 6px;"><i class="ti ti-circle-check-filled"></i></div>
                     <strong>Kho hàng & Đơn hàng ổn định</strong>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 2px;">Không có sản phẩm hết hàng hoặc đơn chờ.</div>
                 </div>
@@ -1701,7 +1701,7 @@ function updateDashboardNotificationsAndAlerts() {
             smartCard.style.borderColor = '#fde68a';
             if (smartIcon) {
                 smartIcon.className = 'widget-icon orange';
-                smartIcon.innerText = '⚠️';
+                smartIcon.innerHTML = '<i class="ti ti-alert-triangle-filled"></i>';
             }
             smartTitle.style.color = '#92400e';
             smartTitle.innerText = 'Cảnh báo kho hàng';
@@ -1726,7 +1726,7 @@ function updateDashboardNotificationsAndAlerts() {
             smartCard.style.borderColor = '#bfdbfe';
             if (smartIcon) {
                 smartIcon.className = 'widget-icon blue';
-                smartIcon.innerText = '📦';
+                smartIcon.innerHTML = '<i class="ti ti-package"></i>';
             }
             smartTitle.style.color = '#0369a1';
             smartTitle.innerText = 'Đơn hàng mới chờ xử lý';
@@ -1742,7 +1742,7 @@ function updateDashboardNotificationsAndAlerts() {
             smartCard.style.borderColor = '#bbf7d0';
             if (smartIcon) {
                 smartIcon.className = 'widget-icon green';
-                smartIcon.innerText = '✅';
+                smartIcon.innerHTML = '<i class="ti ti-circle-check-filled"></i>';
             }
             smartTitle.style.color = '#15803d';
             smartTitle.innerText = 'Kho hàng & Đơn hàng ổn định';
@@ -2174,7 +2174,7 @@ function renderImagePreviews() {
     if (window.productGalleryImages.length === 0) {
         container.innerHTML = `
             <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px 6px; color: #94a3b8; font-size: 0.75rem; text-align: center;">
-                <span style="font-size: 1.2rem; margin-bottom: 2px;">🖼️</span>
+                <span style="font-size: 1.2rem; margin-bottom: 2px;"><i class="ti ti-photo"></i></span>
                 <span>Chưa có ảnh nào</span>
                 <span style="font-size: 0.68rem; color: #cbd5e1;">Bấm ô trên hoặc kéo thả tệp vào đây</span>
             </div>`;
@@ -2196,18 +2196,18 @@ function renderImagePreviews() {
 
         card.innerHTML = `
             <img src="${imgSrc}" alt="Ảnh ${idx + 1}" loading="lazy">
-            ${isMain ? `<span class="gallery-badge-cover">⭐ Đại diện</span>` : `<span class="gallery-badge-index">#${idx + 1}</span>`}
+            ${isMain ? `<span class="gallery-badge-cover"><i class="ti ti-star-filled"></i> Đại diện</span>` : `<span class="gallery-badge-index">#${idx + 1}</span>`}
             
             <div class="gallery-card-actions">
                 <div style="display: flex; gap: 2px;">
                     ${!isMain ? `
-                        <button type="button" class="gallery-action-btn btn-make-main" title="Đặt làm ảnh đại diện" onclick="event.stopPropagation(); window.setAsMainProductImage(${idx});">⭐</button>
+                        <button type="button" class="gallery-action-btn btn-make-main" title="Đặt làm ảnh đại diện" onclick="event.stopPropagation(); window.setAsMainProductImage(${idx});"><i class="ti ti-star-filled"></i></button>
                     ` : ''}
                     ${idx > 0 ? `
-                        <button type="button" class="gallery-action-btn" title="Chuyển sang trái" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, -1);">◀</button>
+                        <button type="button" class="gallery-action-btn" title="Chuyển sang trái" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, -1);"><i class="ti ti-chevron-left"></i></button>
                     ` : ''}
                     ${idx < window.productGalleryImages.length - 1 ? `
-                        <button type="button" class="gallery-action-btn" title="Chuyển sang phải" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, 1);">▶</button>
+                        <button type="button" class="gallery-action-btn" title="Chuyển sang phải" onclick="event.stopPropagation(); window.moveProductGalleryImage(${idx}, 1);"><i class="ti ti-chevron-right"></i></button>
                     ` : ''}
                 </div>
                 <button type="button" class="gallery-action-btn btn-del" title="Xóa ảnh này" onclick="event.stopPropagation(); window.removeProductGalleryImage(${idx});">&times;</button>
@@ -2492,19 +2492,22 @@ window.removeHoverImage = function () {
     if (typeof showToast === 'function') showToast("Đã gỡ ảnh hover thứ 2", "info");
 };
 
-// Helper gắn sự kiện tương tác kéo thả và chọn ảnh cho biến thể
-function setupVariantImageInteraction(previewEl, row, fileInput) {
+// Helper gắn sự kiện tương tác kéo thả và chọn ảnh cho biến thể (hỗ trợ cả Ảnh 1 chính và Ảnh 2 hover)
+function setupVariantImageInteraction(previewEl, row, fileInput, dataUrlKey = 'currentUrl', emptyBadgeText = '+1') {
     if (!previewEl) return;
 
     previewEl.setAttribute('draggable', 'true');
-    previewEl.title = "Kéo thả ảnh vào đây, kéo để đổi ảnh, hoặc click để chọn";
+    const isHover = (dataUrlKey === 'currentHoverUrl');
+    previewEl.title = isHover
+        ? "Ảnh 2: Kéo thả ảnh vào đây, hoặc click để chọn ảnh hover thứ 2"
+        : "Ảnh 1: Kéo thả ảnh vào đây, hoặc click để chọn ảnh đại diện chính";
 
     // 1. Kéo ô ảnh biến thể này để gán sang biến thể khác
     previewEl.addEventListener('dragstart', (e) => {
         const img = previewEl.querySelector('img');
         if (img && img.src) {
             window.draggedVariantMedia = {
-                url: row.dataset.currentUrl || '',
+                url: row.dataset[dataUrlKey] || '',
                 src: img.src,
                 file: fileInput && fileInput.files ? fileInput.files[0] : null
             };
@@ -2543,14 +2546,14 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
                 const dt = new DataTransfer();
                 dt.items.add(media.file);
                 fileInput.files = dt.files;
-                row.dataset.currentUrl = '';
+                row.dataset[dataUrlKey] = '';
                 previewEl.innerHTML = `<img src="${media.previewUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
             } else if (media.url) {
-                row.dataset.currentUrl = media.url;
+                row.dataset[dataUrlKey] = media.url;
                 fileInput.value = '';
                 previewEl.innerHTML = `<img src="${media.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
             }
-            if (typeof showToast === 'function') showToast("Đã gán ảnh từ thư viện cho biến thể!", "success");
+            if (typeof showToast === 'function') showToast(`Đã gán ${isHover ? 'Ảnh 2' : 'Ảnh 1'} từ thư viện cho biến thể!`, "success");
             return;
         }
 
@@ -2561,14 +2564,14 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
                 const dt = new DataTransfer();
                 dt.items.add(vm.file);
                 fileInput.files = dt.files;
-                row.dataset.currentUrl = '';
+                row.dataset[dataUrlKey] = '';
                 previewEl.innerHTML = `<img src="${vm.src}" style="width: 100%; height: 100%; object-fit: cover;">`;
             } else if (vm.url || vm.src) {
-                row.dataset.currentUrl = vm.url || vm.src;
+                row.dataset[dataUrlKey] = vm.url || vm.src;
                 fileInput.value = '';
                 previewEl.innerHTML = `<img src="${vm.src || vm.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
             }
-            if (typeof showToast === 'function') showToast("Đã sao chép ảnh biến thể!", "success");
+            if (typeof showToast === 'function') showToast(`Đã sao chép sang ${isHover ? 'Ảnh 2' : 'Ảnh 1'}!`, "success");
             return;
         }
 
@@ -2579,13 +2582,13 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
                 const dt = new DataTransfer();
                 dt.items.add(file);
                 fileInput.files = dt.files;
-                row.dataset.currentUrl = '';
+                row.dataset[dataUrlKey] = '';
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     previewEl.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
                 };
                 reader.readAsDataURL(file);
-                if (typeof showToast === 'function') showToast("Đã tải ảnh cho biến thể!", "success");
+                if (typeof showToast === 'function') showToast(`Đã tải ${isHover ? 'Ảnh 2' : 'Ảnh 1'} cho biến thể!`, "success");
             }
         }
     });
@@ -2612,9 +2615,12 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
         popover.style.top = `${Math.min(window.innerHeight - 250, rect.bottom + 4)}px`;
         popover.style.left = `${Math.max(10, rect.left - 100)}px`;
 
+        const titleColor = isHover ? '#b45309' : '#1e293b';
+        const titleLabel = isHover ? 'Chọn Ảnh 2 (Hover) biến thể' : 'Chọn Ảnh 1 (Chính) biến thể';
+
         popover.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-size: 0.75rem; font-weight: 700; color: #1e293b;">Chọn ảnh biến thể</span>
+                <span style="font-size: 0.75rem; font-weight: 700; color: ${titleColor};">${titleLabel}</span>
                 <button type="button" style="background: none; border: none; font-size: 14px; cursor: pointer; color: #94a3b8;" onclick="this.closest('#variant-img-picker-popover').remove()">&times;</button>
             </div>
             <div style="font-size: 0.68rem; color: #64748b; margin-bottom: 6px;">Chọn từ thư viện ảnh sản phẩm:</div>
@@ -2626,9 +2632,9 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
                 `).join('')}
             </div>
             <div style="display: flex; gap: 4px; flex-direction: column;">
-                <button type="button" class="btn-pop-upload-pc" style="width: 100%; padding: 4px; font-size: 0.72rem; border: 1px solid #cbd5e1; border-radius: 4px; background: #f1f5f9; cursor: pointer; color: #1e293b; font-weight: 600;">📁 Tải từ máy tính</button>
-                ${(row.dataset.currentUrl || (fileInput.files && fileInput.files.length > 0)) ? `
-                    <button type="button" class="btn-pop-remove-img" style="width: 100%; padding: 4px; font-size: 0.72rem; border: none; border-radius: 4px; background: #fee2e2; cursor: pointer; color: #dc2626; font-weight: 600;">✕ Gỡ ảnh biến thể</button>
+                <button type="button" class="btn-pop-upload-pc" style="width: 100%; padding: 4px; font-size: 0.72rem; border: 1px solid #cbd5e1; border-radius: 4px; background: #f1f5f9; cursor: pointer; color: #1e293b; font-weight: 600;"><i class="ti ti-folder"></i> Tải từ máy tính</button>
+                ${(row.dataset[dataUrlKey] || (fileInput.files && fileInput.files.length > 0)) ? `
+                    <button type="button" class="btn-pop-remove-img" style="width: 100%; padding: 4px; font-size: 0.72rem; border: none; border-radius: 4px; background: #fee2e2; cursor: pointer; color: #dc2626; font-weight: 600;"><i class="ti ti-x"></i> Gỡ ${isHover ? 'Ảnh 2' : 'Ảnh 1'}</button>
                 ` : ''}
             </div>
         `;
@@ -2645,14 +2651,14 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
                         const dt = new DataTransfer();
                         dt.items.add(media.file);
                         fileInput.files = dt.files;
-                        row.dataset.currentUrl = '';
+                        row.dataset[dataUrlKey] = '';
                         previewEl.innerHTML = `<img src="${media.previewUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
                     } else if (media.url) {
-                        row.dataset.currentUrl = media.url;
+                        row.dataset[dataUrlKey] = media.url;
                         fileInput.value = '';
                         previewEl.innerHTML = `<img src="${media.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
                     }
-                    if (typeof showToast === 'function') showToast("Đã chọn ảnh cho biến thể!", "success");
+                    if (typeof showToast === 'function') showToast(`Đã chọn ${isHover ? 'Ảnh 2' : 'Ảnh 1'} cho biến thể!`, "success");
                 }
                 popover.remove();
             };
@@ -2668,11 +2674,12 @@ function setupVariantImageInteraction(previewEl, row, fileInput) {
         const btnRem = popover.querySelector('.btn-pop-remove-img');
         if (btnRem) {
             btnRem.onclick = () => {
-                row.dataset.currentUrl = '';
+                row.dataset[dataUrlKey] = '';
                 fileInput.value = '';
-                previewEl.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>';
+                const emptyColor = isHover ? '#b45309' : '#64748b';
+                previewEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:${emptyColor}; font-weight:600;">${emptyBadgeText}</div>`;
                 popover.remove();
-                if (typeof showToast === 'function') showToast("Đã gỡ ảnh biến thể", "info");
+                if (typeof showToast === 'function') showToast(`Đã gỡ ${isHover ? 'Ảnh 2' : 'Ảnh 1'} của biến thể`, "info");
             };
         }
 
@@ -2724,7 +2731,7 @@ window.syncStockWithVariants = function () {
 
         if (helpNote) {
             helpNote.style.display = 'block';
-            helpNote.innerHTML = `💡 Đang có <strong>${variantRows.length}</strong> biến thể. Tồn kho tự động tính từ tổng các biến thể (<strong>${totalVariantStock}</strong> sản phẩm).`;
+            helpNote.innerHTML = `<i class="ti ti-bulb"></i> Đang có <strong>${variantRows.length}</strong> biến thể. Tồn kho tự động tính từ tổng các biến thể (<strong>${totalVariantStock}</strong> sản phẩm).`;
         }
     } else {
         stockInput.required = true;
@@ -2846,7 +2853,7 @@ function parseVariantColor(rawHex, colorName = '') {
     return { isGradient: false, hex1: singleHex, hex2: '#ec4899', css: singleHex };
 }
 
-window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '', sale = '', sold = 0, id = '', salePrice = '') => {
+window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', customHex = '', sale = '', sold = 0, id = '', salePrice = '', hoverImageUrl = '') => {
     const container = document.getElementById('variant-items-container');
     if (!container) return;
 
@@ -2869,6 +2876,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     row.className = 'variant-row';
     row.style = 'display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
     row.dataset.currentUrl = imageUrl || '';
+    row.dataset.currentHoverUrl = hoverImageUrl || '';
     row.dataset.variantId = variantId;
     row.dataset.originalName = name || '';
     row.dataset.sold = (sold !== undefined && sold !== null) ? sold : 0;
@@ -2902,7 +2910,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
             
             <!-- Mode Toggle Button: Solid or Gradient -->
             <button type="button" class="btn-toggle-gradient" style="border: 1px solid #cbd5e1; background: ${parsedColor.isGradient ? '#eff6ff' : '#f8fafc'}; color: ${parsedColor.isGradient ? '#2563eb' : '#64748b'}; border-radius: 6px; padding: 4px 6px; font-size: 0.72rem; cursor: pointer; flex-shrink: 0; font-weight: 600;" title="Bật/Tắt chế độ màu loang (Gradient)">
-                ${parsedColor.isGradient ? '🌈 Loang' : '🎨 Đơn'}
+                ${parsedColor.isGradient ? 'Loang' : 'Đơn'}
             </button>
 
             <!-- Color Picker 1 -->
@@ -2936,18 +2944,24 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
         </div>
 
         <!-- Checkbox hiển thị độc lập -->
-        <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+        <div style="display: flex; align-items: center; gap: 3px; width: 50px; justify-content: center; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
             <label style="font-size: 0.72rem; cursor: pointer; color: #475569; white-space: nowrap;">Độc lập</label>
         </div>
 
-        <!-- Ảnh biến thể -->
-        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho màu này">
-            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>'}
+        <!-- Ảnh 1: Ảnh đại diện chính -->
+        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Ảnh 1: Ảnh đại diện chính của biến thể">
+            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:#64748b; font-weight:600;">+1</div>'}
         </div>
-
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
-        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa màu này">&times;</button>
+
+        <!-- Ảnh 2: Ảnh hover phụ khi di chuột ngoài website -->
+        <div class="variant-img2-preview" style="width: 32px; height: 32px; background: #fffbeb; border-radius: 6px; overflow: hidden; border: 1px dashed #d97706; cursor: pointer; position: relative; flex-shrink: 0;" title="Ảnh 2: Ảnh hover phụ khi di chuột ngoài website (khi bật Độc lập)">
+            ${hoverImageUrl ? `<img src="${hoverImageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:#b45309; font-weight:600;">+2</div>'}
+        </div>
+        <input type="file" class="variant-file2-input" accept="image/*" style="display: none;">
+
+        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; width: 20px; text-align: center; flex-shrink: 0;" title="Xóa màu này">&times;</button>
     `;
 
     const nameInput = row.querySelector('.variant-name');
@@ -3006,7 +3020,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     const refreshColorDisplay = () => {
         if (currentIsGradient) {
             colorPicker2.style.display = 'block';
-            toggleBtn.innerHTML = '🌈 Loang';
+            toggleBtn.innerHTML = 'Loang';
             toggleBtn.style.background = '#eff6ff';
             toggleBtn.style.color = '#2563eb';
             const gradCss = `linear-gradient(135deg, ${colorPicker1.value}, ${colorPicker2.value})`;
@@ -3014,7 +3028,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
             hexInput.value = gradCss;
         } else {
             colorPicker2.style.display = 'none';
-            toggleBtn.innerHTML = '🎨 Đơn';
+            toggleBtn.innerHTML = 'Đơn';
             toggleBtn.style.background = '#f8fafc';
             toggleBtn.style.color = '#64748b';
             swatch.style.background = colorPicker1.value;
@@ -3059,14 +3073,14 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
             colorPicker1.value = toHex7(p.hex1);
             colorPicker2.value = toHex7(p.hex2);
             colorPicker2.style.display = 'block';
-            toggleBtn.innerHTML = '🌈 Loang';
+            toggleBtn.innerHTML = 'Loang';
             toggleBtn.style.background = '#eff6ff';
             toggleBtn.style.color = '#2563eb';
             swatch.style.background = p.css;
         } else {
             currentIsGradient = false;
             colorPicker2.style.display = 'none';
-            toggleBtn.innerHTML = '🎨 Đơn';
+            toggleBtn.innerHTML = 'Đơn';
             toggleBtn.style.background = '#f8fafc';
             toggleBtn.style.color = '#64748b';
             if (/^#([0-9A-Fa-f]{3}){1,2}$/i.test(p.hex1)) {
@@ -3082,14 +3096,26 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
-
-    setupVariantImageInteraction(preview, row, fileInput);
+    setupVariantImageInteraction(preview, row, fileInput, 'currentUrl', '+1');
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
             row.dataset.currentUrl = '';
             const reader = new FileReader();
             reader.onload = (re) => { preview.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const preview2 = row.querySelector('.variant-img2-preview');
+    const fileInput2 = row.querySelector('.variant-file2-input');
+    setupVariantImageInteraction(preview2, row, fileInput2, 'currentHoverUrl', '+2');
+    fileInput2.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            row.dataset.currentHoverUrl = '';
+            const reader = new FileReader();
+            reader.onload = (re) => { preview2.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
             reader.readAsDataURL(file);
         }
     };
@@ -3109,7 +3135,7 @@ window.addVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage =
     window.syncStockWithVariants();
 };
 
-window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', sale = '', sold = 0, id = '', salePrice = '') => {
+window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProductPage = false, price = '', sale = '', sold = 0, id = '', salePrice = '', hoverImageUrl = '') => {
     const container = document.getElementById('pattern-variant-items-container');
     if (!container) return;
 
@@ -3121,6 +3147,7 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
     row.className = 'pattern-variant-row';
     row.style = 'display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
     row.dataset.currentUrl = imageUrl || '';
+    row.dataset.currentHoverUrl = hoverImageUrl || '';
     row.dataset.variantId = variantId;
     row.dataset.originalName = name || '';
     row.dataset.sold = (sold !== undefined && sold !== null) ? sold : 0;
@@ -3159,17 +3186,24 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
             <input type="number" min="0" class="variant-stock" value="${stock}" placeholder="Kho" style="padding: 6px 4px; border: 1px solid #cbd5e1; width: 100%; border-radius: 6px; font-family: inherit; font-size: 0.82rem; text-align: center;">
         </div>
 
-        <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
+        <div style="display: flex; align-items: center; gap: 3px; width: 50px; justify-content: center; flex-shrink: 0;" title="Hiện độc lập trên trang Danh sách sản phẩm">
             <input type="checkbox" class="variant-show-independent" ${showOnProductPage ? 'checked' : ''} style="cursor: pointer;">
             <label style="font-size: 0.72rem; cursor: pointer; color: #475569; white-space: nowrap;">Độc lập</label>
         </div>
 
-        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Chọn ảnh cho họa tiết này">
-            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:16px; color:#94a3b8;">+</div>'}
+        <!-- Ảnh 1: Ảnh đại diện chính -->
+        <div class="variant-img-preview" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; cursor: pointer; position: relative; flex-shrink: 0;" title="Ảnh 1: Ảnh đại diện chính của biến thể">
+            ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:#64748b; font-weight:600;">+1</div>'}
         </div>
-
         <input type="file" class="variant-file-input" accept="image/*" style="display: none;">
-        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; flex-shrink: 0;" title="Xóa họa tiết này">&times;</button>
+
+        <!-- Ảnh 2: Ảnh hover phụ khi di chuột ngoài website -->
+        <div class="variant-img2-preview" style="width: 32px; height: 32px; background: #fffbeb; border-radius: 6px; overflow: hidden; border: 1px dashed #d97706; cursor: pointer; position: relative; flex-shrink: 0;" title="Ảnh 2: Ảnh hover phụ khi di chuột ngoài website (khi bật Độc lập)">
+            ${hoverImageUrl ? `<img src="${hoverImageUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:#b45309; font-weight:600;">+2</div>'}
+        </div>
+        <input type="file" class="variant-file2-input" accept="image/*" style="display: none;">
+
+        <button type="button" class="btn-delete-variant" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.3rem; line-height: 1; padding: 0 4px; width: 20px; text-align: center; flex-shrink: 0;" title="Xóa họa tiết này">&times;</button>
     `;
 
     const priceInp = row.querySelector('.variant-price');
@@ -3218,14 +3252,26 @@ window.addPatternVariantRow = (name = '', imageUrl = '', stock = 0, showOnProduc
 
     const preview = row.querySelector('.variant-img-preview');
     const fileInput = row.querySelector('.variant-file-input');
-
-    setupVariantImageInteraction(preview, row, fileInput);
+    setupVariantImageInteraction(preview, row, fileInput, 'currentUrl', '+1');
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
             row.dataset.currentUrl = '';
             const reader = new FileReader();
             reader.onload = (re) => { preview.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const preview2 = row.querySelector('.variant-img2-preview');
+    const fileInput2 = row.querySelector('.variant-file2-input');
+    setupVariantImageInteraction(preview2, row, fileInput2, 'currentHoverUrl', '+2');
+    fileInput2.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            row.dataset.currentHoverUrl = '';
+            const reader = new FileReader();
+            reader.onload = (re) => { preview2.innerHTML = `<img src="${re.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`; };
             reader.readAsDataURL(file);
         }
     };
@@ -3533,7 +3579,7 @@ async function initLookbookManagement() {
         const csLabel = document.getElementById('lookbook-status-label');
         if (csToggle) csToggle.checked = lookbookIsComingSoon;
         if (csLabel) {
-            csLabel.innerText = lookbookIsComingSoon ? '⏳ Sắp ra mắt (Coming Soon)' : '🟢 Đang công khai (Live)';
+            csLabel.innerHTML = lookbookIsComingSoon ? '<i class="ti ti-hourglass-low"></i> Sắp ra mắt (Coming Soon)' : '<i class="ti ti-circle-filled" style="color: #16a34a; font-size: 0.75em;"></i> Đang công khai (Live)';
             csLabel.style.color = lookbookIsComingSoon ? '#ea580c' : '#16a34a';
         }
     });
@@ -3769,7 +3815,7 @@ async function initLookbookManagement() {
             showToast("Lỗi: " + err.message, "error");
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = "💾 Lưu không gian Lookbook";
+            submitBtn.innerHTML = "Lưu không gian Lookbook";
         }
     };
 }
@@ -3872,7 +3918,7 @@ function renderAdminLookbookList(container) {
             <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1rem; color: #64748b;">
                 <p style="margin-bottom: 10px;">Chưa có không gian nào trong cơ sở dữ liệu.</p>
                 <button type="button" class="kiot-btn-secondary" onclick="window.seedDefaultLookbookScenes()" style="font-size: 0.82rem;">
-                    📥 Tải 6 mẫu không gian có sẵn của Tiệm vào hệ thống
+                    <i class="ti ti-download"></i> Tải 6 mẫu không gian có sẵn của Tiệm vào hệ thống
                 </button>
             </div>
         `;
@@ -3899,10 +3945,10 @@ function renderAdminLookbookList(container) {
                 </p>
                 <div style="margin-top: auto; display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
                     <button type="button" class="kiot-btn-secondary" onclick="window.editLookbookScene('${scene.id}')" style="flex: 1; justify-content: center; font-size: 0.78rem; padding: 4px;">
-                        ✏️ Sửa
+                        <i class="ti ti-pencil"></i> Sửa
                     </button>
                     <button type="button" class="kiot-btn-secondary text-danger" onclick="window.deleteLookbookScene('${scene.id}')" style="color: #ef4444; border-color: #fecaca; font-size: 0.78rem; padding: 4px 10px;">
-                        🗑️ Xóa
+                        <i class="ti ti-trash"></i> Xóa
                     </button>
                 </div>
             </div>
@@ -4813,7 +4859,7 @@ window.toggleComboSection = function () {
             }
             if (helpNote) {
                 helpNote.style.display = 'block';
-                helpNote.innerHTML = '💡 <strong>Bộ Combo:</strong> Tồn kho được tự động tính từ tồn kho của từng sản phẩm con. Nếu bất kỳ món nào hết hàng, Combo sẽ tự động hết hàng.';
+                helpNote.innerHTML = '<i class="ti ti-bulb"></i> <strong>Bộ Combo:</strong> Tồn kho được tự động tính từ tồn kho của từng sản phẩm con. Nếu bất kỳ món nào hết hàng, Combo sẽ tự động hết hàng.';
             }
             if (typeof window.renderComboVariantsTabs === 'function') {
                 window.renderComboVariantsTabs();
@@ -5120,8 +5166,8 @@ window.renderComboItems = function () {
 
         const stockBadgeColor = isItemOut ? '#ef4444' : (itemMaxSets < 5 ? '#f59e0b' : '#10b981');
         const stockBadgeText = isItemOut
-            ? '⚠️ Sản phẩm này đã hết hàng'
-            : `📦 Tồn kho con: <strong>${stockInfo.stock}</strong> (Lấy <strong>${qtyNeeded}</strong> → Tạo được <strong>${itemMaxSets}</strong> combo)`;
+            ? '<i class="ti ti-alert-triangle-filled"></i> Sản phẩm này đã hết hàng'
+            : `<i class="ti ti-package"></i> Tồn kho con: <strong>${stockInfo.stock}</strong> (Lấy <strong>${qtyNeeded}</strong> → Tạo được <strong>${itemMaxSets}</strong> combo)`;
 
         return `
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid ${isItemOut ? '#fca5a5' : '#e2e8f0'}; border-radius: 6px; margin-bottom: 6px; background: ${isItemOut ? '#fff5f5' : '#fff'};">
@@ -5424,6 +5470,18 @@ if (productForm) {
                     const vSnap = await uploadBytes(vRef, webpFile);
                     variantUrl = await getDownloadURL(vSnap.ref);
                 }
+
+                // Xử lý upload ảnh 2 (hover image) của biến thể màu sắc
+                const fileInput2 = row.querySelector('.variant-file2-input');
+                const file2 = fileInput2 ? fileInput2.files[0] : null;
+                let variantHoverUrl = row.dataset.currentHoverUrl || null;
+                if (file2) {
+                    const webpFile2 = await convertToWebP(file2, 800);
+                    const vRef2 = ref(storage, `products/${productId}/variants/${Date.now()}_hover_${webpFile2.name}`);
+                    const vSnap2 = await uploadBytes(vRef2, webpFile2);
+                    variantHoverUrl = await getDownloadURL(vSnap2.ref);
+                }
+
                 const priceInput = row.querySelector('.variant-price');
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
                 const saleInput = row.querySelector('.variant-sale');
@@ -5444,7 +5502,7 @@ if (productForm) {
                     (c.name && c.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingCV && existingCV.sold !== undefined) ? existingCV.sold : rowSold;
-                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, salePrice, hex, sold };
+                return { id: variantId, name, imageUrl: variantUrl, hoverImageUrl: variantHoverUrl, stock, showOnProductPage, price, sale, salePrice, hex, sold };
             });
             const colorVariantsResult = (await Promise.all(variantPromises)).filter(v => v.name);
             if (colorVariantsResult.length > 0) hasVariants = true;
@@ -5468,6 +5526,18 @@ if (productForm) {
                     const vSnap = await uploadBytes(vRef, webpFile);
                     variantUrl = await getDownloadURL(vSnap.ref);
                 }
+
+                // Xử lý upload ảnh 2 (hover image) của biến thể họa tiết
+                const fileInput2 = row.querySelector('.variant-file2-input');
+                const file2 = fileInput2 ? fileInput2.files[0] : null;
+                let variantHoverUrl = row.dataset.currentHoverUrl || null;
+                if (file2) {
+                    const webpFile2 = await convertToWebP(file2, 800);
+                    const vRef2 = ref(storage, `products/${productId}/patterns/${Date.now()}_hover_${webpFile2.name}`);
+                    const vSnap2 = await uploadBytes(vRef2, webpFile2);
+                    variantHoverUrl = await getDownloadURL(vSnap2.ref);
+                }
+
                 const priceInput = row.querySelector('.variant-price');
                 const price = priceInput && priceInput.value ? Number(priceInput.value) : null;
                 const saleInput = row.querySelector('.variant-sale');
@@ -5486,7 +5556,7 @@ if (productForm) {
                     (p.name && p.name.trim().toLowerCase() === name.toLowerCase())
                 );
                 const sold = (existingPV && existingPV.sold !== undefined) ? existingPV.sold : rowSold;
-                return { id: variantId, name, imageUrl: variantUrl, stock, showOnProductPage, price, sale, salePrice, sold };
+                return { id: variantId, name, imageUrl: variantUrl, hoverImageUrl: variantHoverUrl, stock, showOnProductPage, price, sale, salePrice, sold };
             });
             const patternVariantsResult = (await Promise.all(patternPromises)).filter(v => v.name);
             if (patternVariantsResult.length > 0) hasVariants = true;
@@ -5901,7 +5971,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
             <div style="flex: 1; padding: 10px; font-size: 0.83rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h4 style="margin: 0; color: #0f172a;">Thẻ kho - Lịch sử xuất nhập hàng</h4>
-                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 4px 10px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')">⚡ Điều chỉnh kho ngay</button>
+                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 4px 10px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')"><i class="ti ti-bolt-filled"></i> Điều chỉnh kho ngay</button>
                 </div>
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
@@ -5964,7 +6034,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">🎨</span>`}
+                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;"><i class="ti ti-palette"></i></span>`}
                                     <strong>${v.name}</strong>
                                     ${isOut ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
@@ -5984,7 +6054,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">✨</span>`}
+                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;"><i class="ti ti-sparkles"></i></span>`}
                                     <strong>${v.name}</strong>
                                     ${isOut ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
@@ -6009,7 +6079,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 8px 10px;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;">📦</span>`}
+                                    ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">` : `<span style="font-size: 1rem;"><i class="ti ti-package"></i></span>`}
                                     <strong>${v.name}</strong>
                                     ${isOutOfStock ? `<span style="font-size: 0.72rem; color: #dc2626; background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Hết hàng</span>` : ''}
                                 </div>
@@ -6048,7 +6118,7 @@ window.switchQuickViewTab = function (productId, tabName, btn) {
             <div style="flex: 1; padding: 10px; font-size: 0.83rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h4 style="margin: 0; color: #0f172a;">Quản lý tồn kho & Kiểm kê</h4>
-                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 5px 14px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')">⚡ Điều chỉnh tồn kho ngay</button>
+                    <button type="button" class="kiot-btn-primary" style="font-size: 0.78rem; padding: 5px 14px; cursor: pointer;" onclick="window.openQuickStockModal('${p.id}')"><i class="ti ti-bolt-filled"></i> Điều chỉnh tồn kho ngay</button>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div style="background: #f0f7ff; border: 1px solid #bfdbfe; padding: 10px 16px; border-radius: 6px; min-width: 150px;">
@@ -6194,12 +6264,12 @@ window.toggleProductQuickView = function (productId, event) {
 
                 <div class="quickview-footer">
                     <div class="left-actions">
-                        <button type="button" class="qv-btn-text red" onclick="deleteProduct('${p.id}')">🗑️ Xóa</button>
-                        <button type="button" class="qv-btn-text" onclick="window.cloneProduct('${p.id}')">📋 Sao chép</button>
+                        <button type="button" class="qv-btn-text red" onclick="deleteProduct('${p.id}')"><i class="ti ti-trash"></i> Xóa</button>
+                        <button type="button" class="qv-btn-text" onclick="window.cloneProduct('${p.id}')"><i class="ti ti-clipboard-list"></i> Sao chép</button>
                     </div>
                     <div class="right-actions">
-                        <button type="button" class="kiot-btn-primary" onclick="window.editProduct('${p.id}')">✏️ Chỉnh sửa</button>
-                        <button type="button" class="kiot-btn-outline" onclick="window.printBarcodeLabel('${p.id}')">🖨️ In tem mã</button>
+                        <button type="button" class="kiot-btn-primary" onclick="window.editProduct('${p.id}')"><i class="ti ti-pencil"></i> Chỉnh sửa</button>
+                        <button type="button" class="kiot-btn-outline" onclick="window.printBarcodeLabel('${p.id}')"><i class="ti ti-printer"></i> In tem mã</button>
                     </div>
                 </div>
             </div>
@@ -6409,7 +6479,7 @@ function renderAdminProductTable() {
                     ${p.isHidden ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Đã ẩn</span>' : ''}
                     ${p.isOnlyEvent ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #e0f2fe; color: #0284c7; border: 1px solid #7dd3fc; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sự kiện</span>' : ''}
                     ${p.isFlashSale ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #ffeaa7; color: #d63031; font-size: 0.72rem; border-radius: 4px; font-weight: 600;">Sale</span>' : ''}
-                    ${p.isNoel ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.72rem; border-radius: 4px; font-weight: 700;">🎄 Noel</span>' : ''}
+                    ${p.isNoel ? '<span style="display:inline-block; margin-left: 6px; padding: 2px 6px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.72rem; border-radius: 4px; font-weight: 700;"><i class="ti ti-christmas-tree"></i> Noel</span>' : ''}
                 </td>
                 <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
                 <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(p.cost || 0)}</td>
@@ -6421,7 +6491,7 @@ function renderAdminProductTable() {
                 ` : `
                     <div style="display: flex; align-items: center; gap: 6px; justify-content: flex-start;">
                         <span>${stockDisplay}</span>
-                        <button type="button" class="btn-quick-stock" onclick="event.stopPropagation(); window.openQuickStockModal('${p.id}')" title="Chỉnh sửa tồn kho nhanh" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 0.75rem; color: #0066cc; line-height: 1; display: inline-flex; align-items: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#0066cc'; this.style.background='#e0f2fe';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';">✏️</button>
+                        <button type="button" class="btn-quick-stock" onclick="event.stopPropagation(); window.openQuickStockModal('${p.id}')" title="Chỉnh sửa tồn kho nhanh" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 0.75rem; color: #0066cc; line-height: 1; display: inline-flex; align-items: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#0066cc'; this.style.background='#e0f2fe';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';"><i class="ti ti-pencil"></i></button>
                     </div>
                 `}</td>
                 <td data-label="Đã bán">${p.sold || 0}</td>
@@ -6437,9 +6507,9 @@ function renderAdminProductTable() {
         const icon = th.querySelector('.sort-icon');
         if (icon) {
             if (th.getAttribute('data-sort') === window.currentSortCol) {
-                icon.textContent = window.currentSortDir === 'asc' ? '↑' : '↓';
+                icon.innerHTML = window.currentSortDir === 'asc' ? '<i class="ti ti-arrow-up"></i>' : '<i class="ti ti-arrow-down"></i>';
             } else {
-                icon.textContent = '↕';
+                icon.innerHTML = '<i class="ti ti-arrows-sort"></i>';
             }
         }
     });
@@ -6822,7 +6892,8 @@ async function editProduct(id) {
                         (v.sale !== undefined && v.sale !== null) ? v.sale : '',
                         v.sold || 0,
                         v.id || '',
-                        v.salePrice || ''
+                        v.salePrice || '',
+                        v.hoverImageUrl || ''
                     ));
                 }
             }
@@ -6841,7 +6912,8 @@ async function editProduct(id) {
                         (v.sale !== undefined && v.sale !== null) ? v.sale : '',
                         v.sold || 0,
                         v.id || '',
-                        v.salePrice || ''
+                        v.salePrice || '',
+                        v.hoverImageUrl || ''
                     ));
                 } else if (p.patterns && Array.isArray(p.patterns)) {
                     // Hỗ trợ migrate dữ liệu cũ từ array string sang variant row (chưa có ảnh/stock)
@@ -6982,7 +7054,7 @@ window.openQuickStockModal = async function (productId) {
             p.colorVariants.forEach((v, idx) => {
                 variantHtml += `
                     <div class="qs-variant-row" data-type="color" data-index="${idx}" style="display: flex; gap: 10px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px;">
-                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">🎨</div>`}
+                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;"><i class="ti ti-palette"></i></div>`}
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-weight: 600; font-size: 0.85rem; color: #1e293b;">Màu: ${v.name}</div>
                             <div style="font-size: 0.75rem; color: #64748b;">Hiện tại: <strong>${v.stock || 0}</strong></div>
@@ -7000,7 +7072,7 @@ window.openQuickStockModal = async function (productId) {
             p.patternVariants.forEach((v, idx) => {
                 variantHtml += `
                     <div class="qs-variant-row" data-type="pattern" data-index="${idx}" style="display: flex; gap: 10px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px;">
-                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">✨</div>`}
+                        ${v.imageUrl ? `<img src="${v.imageUrl}" style="width: 34px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">` : `<div style="width: 34px; height: 34px; border-radius: 4px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;"><i class="ti ti-sparkles"></i></div>`}
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-weight: 600; font-size: 0.85rem; color: #1e293b;">Họa tiết: ${v.name}</div>
                             <div style="font-size: 0.75rem; color: #64748b;">Hiện tại: <strong>${v.stock || 0}</strong></div>
@@ -7163,7 +7235,7 @@ window.saveQuickStock = async function () {
             await window.syncAllComboStocks(true);
         }
 
-        showToast(`✅ Đã cập nhật tồn kho cho "${p.name || p.id}" thành công: ${newStock} sp!`, "success");
+        showToast(`<i class="ti ti-circle-check-filled"></i> Đã cập nhật tồn kho cho "${p.name || p.id}" thành công: ${newStock} sp!`, "success");
         window.closeQuickStockModal();
 
         // Cập nhật lại giao diện bảng sản phẩm
@@ -7186,7 +7258,7 @@ window.saveQuickStock = async function () {
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.innerText = "💾 Lưu tồn kho";
+            saveBtn.innerHTML = '<i class="ti ti-device-floppy"></i> Lưu tồn kho';
         }
     }
 };
@@ -7205,7 +7277,7 @@ async function deleteProduct(id) {
     const prodName = p ? p.name : id;
 
     const ok = await showModalConfirm(
-        `Bạn có chắc chắn muốn XÓA VĨNH VIỄN sản phẩm "${prodName}" (Mã SKU: ${id}) khỏi hệ thống không?\n\n⚠️ Hành động này sẽ xóa dữ liệu và không thể hoàn tác!`,
+        `Bạn có chắc chắn muốn XÓA VĨNH VIỄN sản phẩm "${prodName}" (Mã SKU: ${id}) khỏi hệ thống không?\n\nHành động này sẽ xóa dữ liệu và không thể hoàn tác!`,
         "Xác nhận xóa sản phẩm",
         { confirmText: "Xóa vĩnh viễn", cancelText: "Giữ lại", type: "danger" }
     );
@@ -7217,7 +7289,7 @@ async function deleteProduct(id) {
         // Cập nhật mảng sản phẩm local
         posProductsLocal = posProductsLocal.filter(item => item.id !== id);
 
-        showToast(`✅ Đã xóa sản phẩm "${prodName}" thành công!`, "success");
+        showToast(`<i class="ti ti-circle-check-filled"></i> Đã xóa sản phẩm "${prodName}" thành công!`, "success");
 
         // Đóng modal sản phẩm nếu đang mở
         if (typeof window.closeProductModal === 'function') {
@@ -7330,7 +7402,7 @@ window.toggleCustomDatePopover = function (event) {
 window.selectTimePreset = function (presetKey, presetName, btnElem) {
     window.selectedDatePreset = presetKey;
     const label = document.getElementById('order-time-preset-label');
-    if (label) label.innerText = '🔵 ' + presetName;
+    if (label) label.innerHTML = '<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> ' + presetName;
 
     const btnPreset = document.getElementById('btn-radio-time-preset');
     const btnCustom = document.getElementById('btn-radio-time-custom');
@@ -7368,7 +7440,7 @@ window.applyCustomDateRange = function () {
     const toInput = document.getElementById('order-filter-date-to')?.value;
 
     if (label && fromInput && toInput) {
-        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+        label.innerHTML = `<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> Tùy chỉnh (${fromInput} - ${toInput})`;
     }
 
     const btnPreset = document.getElementById('btn-radio-time-preset');
@@ -7557,7 +7629,7 @@ window.getOrderShippingMethodInfo = function (order) {
             text: 'Giao bình thường',
             shortText: 'Giao thường',
             type: 'standard',
-            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;">🚚 Giao thường</span>'
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;"><i class="ti ti-truck-delivery"></i> Giao thường</span>'
         };
     }
 
@@ -7582,7 +7654,7 @@ window.getOrderShippingMethodInfo = function (order) {
             text: 'Lấy ở shop (Tự đến lấy)',
             shortText: 'Lấy ở shop',
             type: 'pickup',
-            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#fef3c7; color:#92400e; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fde68a; font-size:0.76rem;">🏪 Lấy ở shop (Tự lấy)</span>'
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#fef3c7; color:#92400e; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fde68a; font-size:0.76rem;"><i class="ti ti-building-store"></i> Lấy ở shop (Tự lấy)</span>'
         };
     }
 
@@ -7600,7 +7672,7 @@ window.getOrderShippingMethodInfo = function (order) {
             text: 'Giao nhanh (Hỏa tốc 2H)',
             shortText: 'Giao nhanh 2H',
             type: 'express',
-            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#ffedd5; color:#c2410c; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fed7aa; font-size:0.76rem;">⚡ Giao nhanh (Hỏa tốc)</span>'
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#ffedd5; color:#c2410c; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fed7aa; font-size:0.76rem;"><i class="ti ti-bolt-filled"></i> Giao nhanh (Hỏa tốc)</span>'
         };
     }
 
@@ -7609,7 +7681,7 @@ window.getOrderShippingMethodInfo = function (order) {
         text: 'Giao bình thường (Tiêu chuẩn)',
         shortText: 'Giao thường',
         type: 'standard',
-        badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;">🚚 Giao bình thường</span>'
+        badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;"><i class="ti ti-truck-delivery"></i> Giao bình thường</span>'
     };
 };
 
@@ -8209,9 +8281,9 @@ window.renderOrdersFiltered = function renderOrdersFiltered() {
         const icon = th.querySelector('.sort-icon');
         if (icon) {
             if (th.getAttribute('data-order-sort') === window.currentOrderSortCol) {
-                icon.textContent = window.currentOrderSortDir === 'asc' ? '↑' : '↓';
+                icon.innerHTML = window.currentOrderSortDir === 'asc' ? '<i class="ti ti-arrow-up"></i>' : '<i class="ti ti-arrow-down"></i>';
             } else {
-                icon.textContent = '↕';
+                icon.innerHTML = '<i class="ti ti-arrows-sort"></i>';
             }
         }
     });
@@ -8262,7 +8334,7 @@ function renderOrderRows(ordersList, tableElement) {
         htmlContent += `
             <tr class="product-row order-row" data-order-id="${orderId}" onclick="window.toggleOrderQuickView('${orderId}', event)" style="cursor: pointer;">
                 <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="order-chk" value="${orderId}"></td>
-                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();"><i class="ti ti-star"></i></td>
                 <td style="white-space: nowrap;"><strong style="color: #0066cc; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${orderId}">${orderId}</strong></td>
                 <td style="color: #475569; font-size: 0.71rem; white-space: nowrap;">${orderDate}</td>
                 <td style="color: #64748b; font-size: 0.71rem; white-space: nowrap;"><span style="max-width: 100px; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${custCode}">${custCode}</span></td>
@@ -8486,7 +8558,7 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
                 <td style="padding: 7px 8px; text-align: right; font-weight: 700; color: #0f172a; font-size: 0.78rem;">${formatVND(om.finalTotal)} đ</td>
                 <td style="padding: 7px 8px; text-align: center; font-size: 0.73rem;">
                     <span style="padding: 2px 6px; border-radius: 4px; font-weight: 600; background: ${om.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${om.isPaid ? '#15803d' : '#dc2626'};">
-                        ${om.isPaid ? '✓ Đã trả' : (om.isCod ? '⏳ COD' : '⏳ Chưa trả')}
+                        ${om.isPaid ? '<i class="ti ti-check"></i> Đã trả' : (om.isCod ? '<i class="ti ti-hourglass-low"></i> COD' : '<i class="ti ti-hourglass-low"></i> Chưa trả')}
                     </span>
                 </td>
                 <td style="padding: 7px 8px; text-align: center; font-size: 0.74rem; font-weight: 600; color: ${stColor};">${st}</td>
@@ -8505,7 +8577,7 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
                     <div>
                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                             <strong style="font-size: 1.18rem; color: #0f172a;">${escapeHTML(custName)}</strong>
-                            <span style="background: ${tier.color || '#0066cc'}; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;">👑 ${tier.name}</span>
+                            <span style="background: ${tier.color || '#0066cc'}; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;"><i class="ti ti-crown"></i> ${tier.name}</span>
                             ${hasRealAccount ? '<span style="background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">Đã đăng ký App/Web</span>' : '<span style="background: #f1f5f9; color: #64748b; font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;">Khách vãng lai / Online</span>'}
                         </div>
                         <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
@@ -8522,11 +8594,11 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
             <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 16px; max-height: 75vh; overflow-y: auto; background: #ffffff;">
                 <!-- Contact & Personal Info Grid -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; font-size: 0.85rem; color: #334155; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div><span style="color: #64748b;">📞 Điện thoại:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custPhone)}</strong></div>
-                    <div><span style="color: #64748b;">✉️ Email:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custEmail)}</strong></div>
-                    <div><span style="color: #64748b;">🎂 Ngày sinh:</span> <strong>${escapeHTML(custBirthday)}</strong></div>
-                    <div><span style="color: #64748b;">🚻 Giới tính:</span> <strong>${escapeHTML(custGender)}</strong></div>
-                    <div style="grid-column: 1 / -1;"><span style="color: #64748b;">📍 Địa chỉ giao hàng:</span> <strong style="color: #0f172a;">${escapeHTML(custAddress)}</strong></div>
+                    <div><span style="color: #64748b;"><i class="ti ti-phone"></i> Điện thoại:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custPhone)}</strong></div>
+                    <div><span style="color: #64748b;"><i class="ti ti-mail"></i> Email:</span> <strong style="color: #0f172a; user-select: all;">${escapeHTML(custEmail)}</strong></div>
+                    <div><span style="color: #64748b;"><i class="ti ti-cake"></i> Ngày sinh:</span> <strong>${escapeHTML(custBirthday)}</strong></div>
+                    <div><span style="color: #64748b;"><i class="ti ti-users"></i> Giới tính:</span> <strong>${escapeHTML(custGender)}</strong></div>
+                    <div style="grid-column: 1 / -1;"><span style="color: #64748b;"><i class="ti ti-map-pin"></i> Địa chỉ giao hàng:</span> <strong style="color: #0f172a;">${escapeHTML(custAddress)}</strong></div>
                 </div>
 
                 <!-- Membership & Spending Stats -->
@@ -8537,11 +8609,11 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
                     </div>
                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
                         <div style="font-size: 0.73rem; color: #15803d; font-weight: 600;">Điểm tích lũy</div>
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #16a34a; margin-top: 3px;">💎 ${points} điểm</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #16a34a; margin-top: 3px;"><i class="ti ti-diamond"></i> ${points} điểm</div>
                     </div>
                     <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; text-align: center;">
                         <div style="font-size: 0.73rem; color: #b45309; font-weight: 600;">Tổng số đơn</div>
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #d97706; margin-top: 3px;">🛍️ ${customerOrders.length} đơn (${completedCount} HT)</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #d97706; margin-top: 3px;"><i class="ti ti-shopping-bag"></i> ${customerOrders.length} đơn (${completedCount} HT)</div>
                     </div>
                     <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px; text-align: center;">
                         <div style="font-size: 0.73rem; color: #1d4ed8; font-weight: 600;">Tổng chi tiêu</div>
@@ -8552,7 +8624,7 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
                 <!-- Recent Orders Table -->
                 <div>
                     <div style="font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>📋 Các đơn hàng gần đây của khách (${customerOrders.length} đơn)</span>
+                        <span><i class="ti ti-clipboard-list"></i> Các đơn hàng gần đây của khách (${customerOrders.length} đơn)</span>
                     </div>
                     <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -8578,12 +8650,12 @@ window.openOrderCustomerQuickModal = async function (orderId, event) {
                 <div>
                     ${hasRealAccount ? `
                     <button type="button" onclick="const m = document.getElementById('order-customer-quick-modal'); if (m) { m.classList.remove('active'); m.style.display='none'; } window.viewAdminUserDetail('${rawUserDoc.id}')" style="background: #ffffff; border: 1px solid #0066cc; color: #0066cc; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
-                        ✏️ Chỉnh sửa hồ sơ khách hàng
+                        <i class="ti ti-pencil"></i> Chỉnh sửa hồ sơ khách hàng
                     </button>` : ''}
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button type="button" onclick="window.filterOrdersByCustomerKeyword('${filterKey}')" style="background: #0066cc; border: none; color: #ffffff; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
-                        🔍 Lọc tất cả đơn của khách này
+                        <i class="ti ti-search"></i> Lọc tất cả đơn của khách này
                     </button>
                     <button type="button" onclick="const m = document.getElementById('order-customer-quick-modal'); if (m) { m.classList.remove('active'); m.style.display='none'; }" style="background: #e2e8f0; border: none; color: #334155; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 0.83rem; cursor: pointer;">
                         Đóng
@@ -8639,7 +8711,7 @@ window.toggleOrderQuickView = function (orderId, event) {
     const channelName = order.channel || (order.id.startsWith('POS') ? 'Bán trực tiếp (POS)' : 'Website');
     const sellerName = order.sellerName || 'Nguyễn Tân Quốc Cường';
     const status = order.status || 'Đang xử lý';
-    const shipInfo = window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order) : { text: 'Giao thường', badgeHtml: '<span style="color:#0066cc;">🚚 Giao thường</span>' };
+    const shipInfo = window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order) : { text: 'Giao thường', badgeHtml: '<span style="color:#0066cc;"><i class="ti ti-truck-delivery"></i> Giao thường</span>' };
 
     let tagClass = 'warning';
     if (status === 'Đã hoàn thành') tagClass = 'success';
@@ -8661,11 +8733,11 @@ window.toggleOrderQuickView = function (orderId, event) {
                     <!-- Order Header Info Row -->
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #0066cc; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#eff6ff'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';">👤 ${custCode} - ${custName}</strong>
-                            <span style="font-size: 0.85rem; color: #64748b;">📝 ${orderId}</span>
+                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #0066cc; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#eff6ff'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';"><i class="ti ti-user"></i> ${custCode} - ${custName}</strong>
+                            <span style="font-size: 0.85rem; color: #64748b;"><i class="ti ti-file-description"></i> ${orderId}</span>
                             <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
                             <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: ${metrics.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${metrics.isPaid ? '#15803d' : '#dc2626'}; border: 1px solid ${metrics.isPaid ? '#86efac' : '#fecaca'};">
-                                ${metrics.isPaid ? '✓ ' + metrics.paymentStatusText : '⏳ ' + metrics.paymentStatusText}
+                                ${metrics.isPaid ? '<i class="ti ti-check"></i> ' + metrics.paymentStatusText : '<i class="ti ti-hourglass-low"></i> ' + metrics.paymentStatusText}
                             </span>
                             ${shipInfo.badgeHtml}
                         </div>
@@ -8717,9 +8789,9 @@ window.toggleOrderQuickView = function (orderId, event) {
                                                 <div style="min-width: 0; flex: 1;">
                                                     <strong style="color: #0f172a; display: block; font-size: 0.84rem;">${item.name || 'Sản phẩm gốm'}</strong>
                                                     <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #475569; margin-top: 3px; flex-wrap: wrap;">
-                                                        ${item.color ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">🎨 Màu: <strong style="color: #334155;">${item.color}</strong></span>` : ''}
-                                                        ${(item.pattern || item.texture || item.patternName) ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">✨ Họa tiết: <strong style="color: #334155;">${item.pattern || item.texture || item.patternName}</strong></span>` : ''}
-                                                        ${(item.combo || item.comboName || item.isCombo) ? `<span style="background: #e0f2fe; color: #0066cc; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #bae6fd;">🎁 Combo: ${item.combo || item.comboName || 'Bộ gốm sứ'}</span>` : ''}
+                                                        ${item.color ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;"><i class="ti ti-palette"></i> Màu: <strong style="color: #334155;">${item.color}</strong></span>` : ''}
+                                                        ${(item.pattern || item.texture || item.patternName) ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;"><i class="ti ti-sparkles"></i> Họa tiết: <strong style="color: #334155;">${item.pattern || item.texture || item.patternName}</strong></span>` : ''}
+                                                        ${(item.combo || item.comboName || item.isCombo) ? `<span style="background: #e0f2fe; color: #0066cc; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #bae6fd;"><i class="ti ti-gift"></i> Combo: ${item.combo || item.comboName || 'Bộ gốm sứ'}</span>` : ''}
                                                     </div>
                                                 </div>
                                             </div>
@@ -8771,24 +8843,24 @@ window.toggleOrderQuickView = function (orderId, event) {
                                 <strong style="color: #0f172a;">Khách đã trả:</strong>
                                 <div style="display: flex; align-items: center; gap: 6px;">
                                     <span style="background: ${metrics.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${metrics.isPaid ? '#15803d' : '#dc2626'}; border: 1px solid ${metrics.isPaid ? '#86efac' : '#fecaca'}; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
-                                        ${metrics.isPaid ? '✓ ' + metrics.paymentStatusText : '⏳ ' + metrics.paymentStatusText}
+                                        ${metrics.isPaid ? '<i class="ti ti-check"></i> ' + metrics.paymentStatusText : '<i class="ti ti-hourglass-low"></i> ' + metrics.paymentStatusText}
                                     </span>
                                     <strong style="color: ${metrics.isPaid ? '#16a34a' : '#dc2626'}; font-size: 1.1rem;">${formatVND(cashPaid)}</strong>
                                 </div>
                             </div>
                             ${!metrics.isPaid && !metrics.isCancelled ? `
                             <div style="display: flex; justify-content: space-between; align-items: center; background: #fffbeb; border: 1px dashed #f59e0b; padding: 6px 10px; border-radius: 6px; margin-top: 2px;">
-                                <strong style="color: #b45309; font-size: 0.83rem;">${metrics.isCod ? '📦 Cần thu hộ (COD):' : '💳 Còn phải thu:'}</strong>
+                                <strong style="color: #b45309; font-size: 0.83rem;">${metrics.isCod ? '<i class="ti ti-package"></i> Cần thu hộ (COD):' : '<i class="ti ti-credit-card"></i> Còn phải thu:'}</strong>
                                 <strong style="color: #d97706; font-size: 1.05rem;">${formatVND(metrics.remainingAmount)}</strong>
                             </div>` : ''}
                             ${!metrics.isCancelled ? `
                             <div style="display: flex; justify-content: flex-end; margin-top: 2px;">
                                 ${metrics.isPaid ? `
                                 <button type="button" onclick="window.toggleOrderPaymentPaid('${orderId}', false, event)" style="background: #fff; border: 1px solid #cbd5e1; color: #64748b; font-size: 0.74rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
-                                    ↩ Đổi sang Chưa trả tiền
+                                    <i class="ti ti-arrow-back-up"></i> Đổi sang Chưa trả tiền
                                 </button>` : `
                                 <button type="button" onclick="window.toggleOrderPaymentPaid('${orderId}', true, event)" style="background: #16a34a; border: none; color: #ffffff; font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
-                                    ✓ Xác nhận khách đã trả đủ (${formatVND(finalTotal)})
+                                    <i class="ti ti-check"></i> Xác nhận khách đã trả đủ (${formatVND(finalTotal)})
                                 </button>`}
                             </div>` : ''}
                         </div>
@@ -8829,9 +8901,9 @@ window.toggleOrderQuickView = function (orderId, event) {
                 <!-- Footer Actions Row -->
                 <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div class="left-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" class="qv-btn-text" style="color: #0066cc; font-weight: 600;" onclick="event.stopPropagation(); window.openEditOrderModal('${orderId}')">✏️ Chỉnh sửa</button>
-                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">🗑️ Hủy đơn</button>
-                        <button type="button" class="qv-btn-text" style="color: #008060; font-weight: 600;" onclick="event.stopPropagation(); window.printPackingSlip('${orderId}')">📦 In phiếu đóng gói</button>
+                        <button type="button" class="qv-btn-text" style="color: #0066cc; font-weight: 600;" onclick="event.stopPropagation(); window.openEditOrderModal('${orderId}')"><i class="ti ti-pencil"></i> Chỉnh sửa</button>
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')"><i class="ti ti-trash"></i> Hủy đơn</button>
+                        <button type="button" class="qv-btn-text" style="color: #008060; font-weight: 600;" onclick="event.stopPropagation(); window.printPackingSlip('${orderId}')"><i class="ti ti-package"></i> In phiếu đóng gói</button>
                     </div>
                     <div class="right-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <select class="status-select" style="padding: 6px 12px; border: 1px solid #0066cc; color: #0066cc; border-radius: 6px; font-weight: 600; background: #fff; cursor: pointer;" onchange="event.stopPropagation(); window.updateOrderStatus('${orderId}', this.value, this)">
@@ -8842,8 +8914,8 @@ window.toggleOrderQuickView = function (orderId, event) {
                             <option value="Đã hoàn thành" ${status === 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
                             <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
                         </select>
-                        <button type="button" class="kiot-btn-secondary" style="padding: 7px 12px; background: #008060; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); window.printPackingSlip('${orderId}')">📦 Phiếu gửi A6</button>
-                        <button type="button" class="kiot-btn-primary" style="padding: 7px 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')">🖨️ In bill K80</button>
+                        <button type="button" class="kiot-btn-secondary" style="padding: 7px 12px; background: #008060; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); window.printPackingSlip('${orderId}')"><i class="ti ti-package"></i> Phiếu gửi A6</button>
+                        <button type="button" class="kiot-btn-primary" style="padding: 7px 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation(); window.printOrderBill('${orderId}')"><i class="ti ti-printer"></i> In bill K80</button>
                     </div>
                 </div>
             </div>
@@ -8863,7 +8935,7 @@ window.openEditOrderModal = function (orderId) {
     }
 
     const modalTitle = document.getElementById('edit-order-modal-title');
-    if (modalTitle) modalTitle.innerText = `✏️ Chỉnh sửa đơn hàng ${orderId}`;
+    if (modalTitle) modalTitle.innerHTML = `<i class="ti ti-pencil"></i> Chỉnh sửa đơn hàng ${orderId}`;
 
     const hiddenId = document.getElementById('edit-order-id-hidden');
     if (hiddenId) hiddenId.value = orderId;
@@ -8949,9 +9021,9 @@ window.renderEditOrderItemsTable = function () {
                                 <input type="text" value="${item.name || ''}" placeholder="Tên sản phẩm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600; outline: none;" onchange="window.changeEditItemField(${index}, 'name', this.value)">
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
-                                <input type="text" value="${color}" placeholder="🎨 Màu sắc..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'color', this.value)">
-                                <input type="text" value="${pattern}" placeholder="✨ Họa tiết..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'pattern', this.value)">
-                                <input type="text" value="${combo}" placeholder="🎁 Combo / Bộ..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'combo', this.value)">
+                                <input type="text" value="${color}" placeholder="Màu sắc..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'color', this.value)">
+                                <input type="text" value="${pattern}" placeholder="Họa tiết..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'pattern', this.value)">
+                                <input type="text" value="${combo}" placeholder="Combo / Bộ..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'combo', this.value)">
                             </div>
                         </div>
                     </div>
@@ -8970,7 +9042,7 @@ window.renderEditOrderItemsTable = function () {
                     ${formatVND(total)}
                 </td>
                 <td style="padding: 8px 10px; text-align: center; vertical-align: top; padding-top: 10px;">
-                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditItem(${index})">🗑️</button>
+                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditItem(${index})"><i class="ti ti-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -9748,14 +9820,14 @@ window.posSelectOnlineCustomer = function (customerId) {
     if (ordersEl) ordersEl.innerText = `${orderCount}`;
     if (avatarEl) {
         const initial = (nameVal || 'K').trim().charAt(0).toUpperCase();
-        avatarEl.innerText = initial || '👤';
+        avatarEl.innerHTML = initial || '<i class="ti ti-user"></i>';
     }
 
     // Check membership tier
     if (badgeEl) {
         const memInfo = typeof window.getPOSCustomerMembershipInfo === 'function' ? window.getPOSCustomerMembershipInfo(u.id, phoneVal) : null;
         if (memInfo && memInfo.tier && memInfo.tier.name) {
-            badgeEl.innerText = `👑 Hạng ${memInfo.tier.name}`;
+            badgeEl.innerHTML = `<i class="ti ti-crown"></i> Hạng ${memInfo.tier.name}`;
             badgeEl.style.display = 'inline-block';
         } else {
             badgeEl.style.display = 'none';
@@ -9986,7 +10058,7 @@ window.openOnlineVariantModal = function (product) {
     const bodyEl = document.getElementById('online-variant-modal-body');
     if (!modal || !bodyEl) return;
 
-    if (titleEl) titleEl.innerText = `🎨 Phân loại: ${product.name}`;
+    if (titleEl) titleEl.innerHTML = `<i class="ti ti-palette"></i> Phân loại: ${product.name}`;
 
     window.currentOnlineVariantProduct = product;
 
@@ -10001,7 +10073,7 @@ window.openOnlineVariantModal = function (product) {
             html += `
                 <div onclick="window.chooseVariantForOnlineCart('color', ${idx})" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #E8CCB2; border-radius: 8px; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#9C7156'" onmouseout="this.style.borderColor='#E8CCB2'">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '🎨'}
+                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '<i class="ti ti-palette"></i>'}
                         <span style="font-weight: 600; font-size: 0.86rem; color: #2B2928;">${escapeHTML(c.name)}</span>
                     </div>
                     <div style="text-align: right;">
@@ -10022,7 +10094,7 @@ window.openOnlineVariantModal = function (product) {
             html += `
                 <div onclick="window.chooseVariantForOnlineCart('pattern', ${idx})" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #E8CCB2; border-radius: 8px; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#9C7156'" onmouseout="this.style.borderColor='#E8CCB2'">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '✨'}
+                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '<i class="ti ti-sparkles"></i>'}
                         <span style="font-weight: 600; font-size: 0.86rem; color: #2B2928;">${escapeHTML(pat.name)}</span>
                     </div>
                     <div style="text-align: right;">
@@ -10043,7 +10115,7 @@ window.openOnlineVariantModal = function (product) {
             html += `
                 <div onclick="window.chooseVariantForOnlineCart('combo', ${idx})" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #E8CCB2; border-radius: 8px; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='#9C7156'" onmouseout="this.style.borderColor='#E8CCB2'">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '🎁'}
+                        ${vImg ? `<img src="${vImg}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">` : '<i class="ti ti-gift"></i>'}
                         <span style="font-weight: 600; font-size: 0.86rem; color: #2B2928;">${escapeHTML(cmb.name)}</span>
                     </div>
                     <div style="text-align: right;">
@@ -10148,7 +10220,7 @@ window.renderOnlineOrderCartTable = function () {
                     ${formatVND(lineTotal)} đ
                 </td>
                 <td style="padding: 8px 8px; text-align: center; vertical-align: middle;">
-                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeOnlineItem(${idx})" title="Xóa món">🗑️</button>
+                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeOnlineItem(${idx})" title="Xóa món"><i class="ti ti-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -10242,7 +10314,7 @@ window.submitCreateOnlineOrder = async function () {
     const btn = document.getElementById('btn-submit-online-order');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = "⏳ Đang tạo đơn...";
+        btn.innerHTML = "<i class='ti ti-hourglass-low'></i> Đang tạo đơn...";
     }
 
     try {
@@ -10467,7 +10539,7 @@ window.submitCreateOnlineOrder = async function () {
 
         window.closeCreateOnlineOrderModal();
         if (typeof showToast !== 'undefined') {
-            showToast(`🎉 Đã tạo đơn Online ${orderId} (${channel}) thành công! Trạng thái: ${orderStatus}`, "success");
+            showToast(`<i class="ti ti-confetti"></i> Đã tạo đơn Online ${orderId} (${channel}) thành công! Trạng thái: ${orderStatus}`, "success");
         }
 
     } catch (err) {
@@ -10476,7 +10548,7 @@ window.submitCreateOnlineOrder = async function () {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = "💾 Hoàn tất tạo đơn Online (TNG)";
+            btn.innerHTML = "<i class='ti ti-device-floppy'></i> Hoàn tất tạo đơn Online (TNG)";
         }
     }
 };
@@ -10574,7 +10646,7 @@ window.toggleRentalCustomDatePopover = function (event) {
 window.selectRentalTimePreset = function (presetKey, presetName, btnElem) {
     window.selectedRentalDatePreset = presetKey;
     const label = document.getElementById('rental-order-time-preset-label');
-    if (label) label.innerText = '🔵 ' + presetName;
+    if (label) label.innerHTML = '<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> ' + presetName;
 
     const btnPreset = document.getElementById('btn-radio-rental-time-preset');
     const btnCustom = document.getElementById('btn-radio-rental-time-custom');
@@ -10612,7 +10684,7 @@ window.applyRentalCustomDateRange = function () {
     const toInput = document.getElementById('rental-order-date-to')?.value;
 
     if (label && fromInput && toInput) {
-        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+        label.innerHTML = `<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> Tùy chỉnh (${fromInput} - ${toInput})`;
     }
 
     const btnPreset = document.getElementById('btn-radio-rental-time-preset');
@@ -10796,7 +10868,7 @@ function renderRentalOrderRows(ordersList, tableElement) {
         htmlContent += `
             <tr class="product-row rental-order-row" data-rental-id="${orderId}" onclick="window.toggleRentalQuickView('${orderId}', event)" style="cursor: pointer;">
                 <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="rental-chk" value="${orderId}"></td>
-                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();"><i class="ti ti-star"></i></td>
                 <td style="white-space: nowrap;"><strong style="color: #166534; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${orderId}">${orderId}</strong></td>
                 <td style="color: #475569; font-size: 0.71rem; white-space: nowrap;">${orderDate}</td>
                 <td style="color: #64748b; font-size: 0.71rem; white-space: nowrap;"><span style="max-width: 100px; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${custCode}">${custCode}</span></td>
@@ -10875,8 +10947,8 @@ window.toggleRentalQuickView = function (orderId, event) {
                 <div class="quickview-body order-qv-info-body" style="flex-direction: column; gap: 14px; padding: 16px 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #166534; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#f0fdf4'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';">👤 ${custCode} - ${custName}</strong>
-                            <span style="font-size: 0.85rem; color: #64748b;">🏺 ${orderId}</span>
+                            <strong onclick="window.openOrderCustomerQuickModal('${orderId}', event)" title="Bấm để xem nhanh thông tin khách hàng" style="font-size: 1.05rem; color: #166534; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s ease;" onmouseover="this.style.background='#f0fdf4'; this.style.textDecoration='underline';" onmouseout="this.style.background='transparent'; this.style.textDecoration='none';"><i class="ti ti-user"></i> ${custCode} - ${custName}</strong>
+                            <span style="font-size: 0.85rem; color: #64748b;"><i class="ti ti-teapot"></i> ${orderId}</span>
                             <span class="qv-tag ${tagClass}" style="font-weight: 600; padding: 3px 8px;">${status}</span>
                         </div>
                         <div style="font-size: 0.85rem; color: #64748b;">Sự kiện: <strong>${rInfo.eventName || 'Trang trí Sự kiện'}</strong></div>
@@ -10918,9 +10990,9 @@ window.toggleRentalQuickView = function (orderId, event) {
                                                 <div style="min-width: 0; flex: 1;">
                                                     <strong style="color: #0f172a; display: block;">${item.name}</strong>
                                                     <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #64748b; margin-top: 2px; flex-wrap: wrap;">
-                                                        ${item.color ? `<span>🎨 Màu: ${item.color}</span>` : ''}
-                                                        ${(item.pattern || item.texture) ? `<span>✨ Họa tiết: ${item.pattern || item.texture}</span>` : ''}
-                                                        ${(item.combo || item.comboName) ? `<span style="color: #0066cc;">🎁 Combo: ${item.combo || item.comboName}</span>` : ''}
+                                                        ${item.color ? `<span><i class="ti ti-palette"></i> Màu: ${item.color}</span>` : ''}
+                                                        ${(item.pattern || item.texture) ? `<span><i class="ti ti-sparkles"></i> Họa tiết: ${item.pattern || item.texture}</span>` : ''}
+                                                        ${(item.combo || item.comboName) ? `<span style="color: #0066cc;"><i class="ti ti-gift"></i> Combo: ${item.combo || item.comboName}</span>` : ''}
                                                     </div>
                                                 </div>
                                             </div>
@@ -10961,8 +11033,8 @@ window.toggleRentalQuickView = function (orderId, event) {
 
                 <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <div class="left-actions" style="display: flex; gap: 10px;">
-                        <button type="button" class="qv-btn-text" style="color: #166534; font-weight: 600;" onclick="event.stopPropagation(); window.openEditRentalOrderModal('${orderId}')">✏️ Chỉnh sửa đơn thuê</button>
-                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')">🗑️ Hủy đơn</button>
+                        <button type="button" class="qv-btn-text" style="color: #166534; font-weight: 600;" onclick="event.stopPropagation(); window.openEditRentalOrderModal('${orderId}')"><i class="ti ti-pencil"></i> Chỉnh sửa đơn thuê</button>
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteAdminOrder('${orderId}')"><i class="ti ti-trash"></i> Hủy đơn</button>
                     </div>
                     <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
                         <select class="status-select" style="padding: 6px 12px; border: 1px solid #166534; color: #166534; border-radius: 6px; font-weight: 600; background: #fff; cursor: pointer;" onchange="event.stopPropagation(); window.updateOrderStatus('${orderId}', this.value, this)">
@@ -10972,7 +11044,7 @@ window.toggleRentalQuickView = function (orderId, event) {
                             <option value="Đã thu hồi" ${status === 'Đã thu hồi' ? 'selected' : ''}>Đã thu hồi</option>
                             <option value="Đã hủy" ${status === 'Đã hủy' ? 'selected' : ''}>Đã hủy</option>
                         </select>
-                        <button type="button" class="kiot-btn-primary" style="background: #166534;" onclick="event.stopPropagation(); window.printRentalOrderBill('${orderId}')">🖨️ In hợp đồng thuê</button>
+                        <button type="button" class="kiot-btn-primary" style="background: #166534;" onclick="event.stopPropagation(); window.printRentalOrderBill('${orderId}')"><i class="ti ti-printer"></i> In hợp đồng thuê</button>
                     </div>
                 </div>
             </div>
@@ -10993,7 +11065,7 @@ window.openEditRentalOrderModal = function (orderId) {
 
     const rInfo = order.rentalInfo || {};
     const modalTitle = document.getElementById('edit-rental-modal-title');
-    if (modalTitle) modalTitle.innerText = `✏️ Chỉnh sửa đơn thuê ${orderId}`;
+    if (modalTitle) modalTitle.innerHTML = `<i class="ti ti-pencil"></i> Chỉnh sửa đơn thuê ${orderId}`;
 
     const hiddenId = document.getElementById('edit-rental-id-hidden');
     if (hiddenId) hiddenId.value = orderId;
@@ -11085,7 +11157,7 @@ window.renderEditRentalOrderItemsTable = function () {
                     ${formatVND(total)}
                 </td>
                 <td style="padding: 8px 10px; text-align: center; vertical-align: top; padding-top: 10px;">
-                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditRentalItem(${index})">🗑️</button>
+                    <button type="button" style="border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.9rem;" onclick="window.removeEditRentalItem(${index})"><i class="ti ti-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -11658,7 +11730,7 @@ window.printPackingSlip = async (orderId) => {
                     <td>
                         <div style="font-weight: 700; font-size: 11px;">${item.name || 'Sản phẩm'}</div>
                         ${item.id ? `<div style="font-size: 9px; color: #666;">Mã: ${item.id}</div>` : ''}
-                        ${variantDetails.length > 0 ? `<div style="font-size: 9.5px; color: #333; font-weight: 500;">🔹 ${variantDetails.join(' | ')}</div>` : ''}
+                        ${variantDetails.length > 0 ? `<div style="font-size: 9.5px; color: #333; font-weight: 500;"><i class="ti ti-diamond-filled" style="font-size: 0.75em;"></i> ${variantDetails.join(' | ')}</div>` : ''}
                         ${comboSubItemsHtml}
                     </td>
                     <td style="text-align: center; font-weight: 800; font-size: 12px;">${itemQty}</td>
@@ -11840,15 +11912,15 @@ window.printPackingSlip = async (orderId) => {
             </head>
             <body>
                 <div class="no-print" style="background: #2c3e50; color: #fff; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                    <div><strong>📦 PHIẾU ĐÓNG GÓI & GIAO HÀNG (Khổ A6 / Decal 100x150)</strong></div>
-                    <button onclick="window.print()" style="background: #27ae60; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;">🖨️ IN PHIẾU NGAY</button>
+                    <div><strong><i class="ti ti-package"></i> PHIẾU ĐÓNG GÓI & GIAO HÀNG (Khổ A6 / Decal 100x150)</strong></div>
+                    <button onclick="window.print()" style="background: #27ae60; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;"><i class="ti ti-printer"></i> IN PHIẾU NGAY</button>
                 </div>
 
                 <div class="slip-wrapper">
                     <!-- Header -->
                     <div class="header-section">
                         <div class="brand-info">
-                            <div class="brand-name">🏺 TIỆM NHÀ GỐM</div>
+                            <div class="brand-name"><i class="ti ti-teapot"></i> TIỆM NHÀ GỐM</div>
                             <div class="brand-meta">Hotline: <strong>0777.709.662</strong> | Web: tiemnhagom.vn</div>
                             <div class="brand-meta">Kho gửi: 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
                         </div>
@@ -11862,23 +11934,23 @@ window.printPackingSlip = async (orderId) => {
                     <!-- Người nhận & Người gửi -->
                     <div class="party-grid">
                         <div class="party-col">
-                            <div class="party-title">📦 NGƯỜI GỬI</div>
+                            <div class="party-title"><i class="ti ti-package"></i> NGƯỜI GỬI</div>
                             <div><strong>Tiệm Nhà Gốm</strong></div>
                             <div>Hotline: 0777.709.662</div>
                             <div>37 Nguyễn Duy, Gia Định, TP.HCM</div>
                         </div>
                         <div class="party-col" style="background: #fafafa; padding: 3px 5px; border: 1px solid #e0e0e0;">
-                            <div class="party-title">👤 NGƯỜI NHẬN</div>
+                            <div class="party-title"><i class="ti ti-user"></i> NGƯỜI NHẬN</div>
                             <div style="font-size: 11.5px; font-weight: 800;">${customerName}</div>
-                            <div style="font-size: 11px; font-weight: 700;">📞 ${customerPhone}</div>
-                            <div style="margin-top: 2px; font-size: 9.5px; line-height: 1.2;">📍 ${customerAddress}</div>
+                            <div style="font-size: 11px; font-weight: 700;"><i class="ti ti-phone"></i> ${customerPhone}</div>
+                            <div style="margin-top: 2px; font-size: 9.5px; line-height: 1.2;"><i class="ti ti-map-pin"></i> ${customerAddress}</div>
                             ${customerNote !== 'Không có' ? `<div style="margin-top: 2px; font-size: 9px; color: #d35400;"><strong>Ghi chú:</strong> ${customerNote}</div>` : ''}
                         </div>
                     </div>
 
                     <!-- Cảnh báo hàng dễ vỡ -->
                     <div class="fragile-banner">
-                        ⚠️ HÀNG GỐM SỨ DỄ VỠ - XIN NHẸ TAY & KHÔNG ĐÈ NẶNG ⚠️
+                        <i class="ti ti-alert-triangle-filled"></i> HÀNG GỐM SỨ DỄ VỠ - XIN NHẸ TAY & KHÔNG ĐÈ NẶNG <i class="ti ti-alert-triangle-filled"></i>
                     </div>
 
                     <!-- Danh sách đóng gói (Checklist) -->
@@ -11910,14 +11982,14 @@ window.printPackingSlip = async (orderId) => {
                             <div class="cod-title">${isPaidOnline ? 'TIỀN PHẢI THU' : 'TIỀN THU COD'}</div>
                             <div class="cod-number">${isPaidOnline ? '0 VNĐ' : codAmount.toLocaleString('vi-VN') + ' đ'}</div>
                             <div style="font-size: 8.5px; font-weight: 600; color: ${isPaidOnline ? '#27ae60' : '#d35400'};">
-                                ${isPaidOnline ? '✓ ĐÃ THANH TOÁN TRƯỚC' : 'Thu tiền khi giao hàng'}
+                                ${isPaidOnline ? '<i class="ti ti-check"></i> ĐÃ THANH TOÁN TRƯỚC' : 'Thu tiền khi giao hàng'}
                             </div>
                         </div>
                     </div>
 
                     <!-- Footer & Chính sách hỗ trợ -->
                     <div class="slip-footer">
-                        <div><strong>❤️ LƯU Ý MỞ HÀNG:</strong> Quý khách vui lòng <strong>QUAY VIDEO CLIP KHI MỞ HÀNG</strong>. Tiệm Nhà Gốm cam kết <strong>100% ĐỔI MỚI / HOÀN TIỀN</strong> nếu sản phẩm bị nứt vỡ, sứt mẻ do vận chuyển.</div>
+                        <div><strong><i class="ti ti-heart-filled"></i> LƯU Ý MỞ HÀNG:</strong> Quý khách vui lòng <strong>QUAY VIDEO CLIP KHI MỞ HÀNG</strong>. Tiệm Nhà Gốm cam kết <strong>100% ĐỔI MỚI / HOÀN TIỀN</strong> nếu sản phẩm bị nứt vỡ, sứt mẻ do vận chuyển.</div>
                         <div style="margin-top: 3px; font-weight: 700;">Cảm ơn Quý khách đã yêu thương và ủng hộ Tiệm Nhà Gốm!</div>
                     </div>
                 </div>
@@ -11993,17 +12065,17 @@ window.viewAdminOrderDetail = async (orderId) => {
             modal.innerHTML = `
                 <div class="modal-content" style="max-width: 900px; position: relative;">
                     <span class="modal-close" style="position: sticky; top: 0; float: right; margin-bottom: -40px; margin-right: -10px; background: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
-                    <h3 style="color: #0d47a1; margin-bottom: 20px;">📄 Chi tiết đơn thuê #${orderId}</h3>
+                    <h3 style="color: #0d47a1; margin-bottom: 20px;"><i class="ti ti-file-text"></i> Chi tiết đơn thuê #${orderId}</h3>
                     
                     <div style="display: flex; gap: 10px; margin: 15px 0;">
                         <button class="btn-dark" style="flex: 1; height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="window.printRentalBill('${orderId}')">
-                            🖨️ In Hợp đồng
+                            <i class="ti ti-printer"></i> In Hợp đồng
                         </button>
                         <button class="btn-dark" style="flex: 1; height: 45px; display: flex; align-items: center; justify-content: center; gap: 10px; background-color: #27ae60; border-color: #27ae60;" onclick="window.downloadRentalBillPDF('${orderId}')">
-                            ⬇️ Tải PDF
+                            <i class="ti ti-download"></i> Tải PDF
                         </button>
                         <button class="btn-minimal" style="flex: 1; height: 45px; border: 1px solid #27ae60; color: #27ae60; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff;" onclick="window.exportRentalToExcel('${orderId}')">
-                            📊 Xuất Excel
+                            <i class="ti ti-chart-bar"></i> Xuất Excel
                         </button>
                     </div>
 
@@ -12065,20 +12137,20 @@ window.viewAdminOrderDetail = async (orderId) => {
                     
                     <div style="display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap;">
                         <button class="btn-dark" style="flex: 1; min-width: 160px; height: 45px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #008060; border-color: #008060;" onclick="window.printPackingSlip('${orderId}')">
-                            📦 In phiếu đóng gói (A6)
+                            <i class="ti ti-package"></i> In phiếu đóng gói (A6)
                         </button>
                         <button class="btn-dark" style="flex: 1; min-width: 160px; height: 45px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.printOrderBill('${orderId}')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg> In bill (K80)
                         </button>
                         <button class="btn-minimal" style="flex: 1; min-width: 140px; height: 45px; border: 1px solid #1e88e5; color: #1e88e5; display: flex; align-items: center; justify-content: center; background: #fff;" onclick="window.editAdminOrder('${orderId}')">
-                            ✏️ Sửa đơn hàng
+                            <i class="ti ti-pencil"></i> Sửa đơn hàng
                         </button>
                     </div>
                     <hr style="margin: 1rem 0;">
                     <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
                     <p><strong>SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
                     <p><strong>Địa chỉ:</strong> ${order.shippingAddress?.address || 'N/A'}</p>
-                    <p style="display: flex; align-items: center; gap: 8px;"><strong>Vận chuyển:</strong> ${(window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order).badgeHtml : '🚚 Giao thường')}</p>
+                    <p style="display: flex; align-items: center; gap: 8px;"><strong>Vận chuyển:</strong> ${(window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order).badgeHtml : '<i class="ti ti-truck-delivery"></i> Giao thường')}</p>
                     <p><strong>Sản phẩm:</strong></p>
                     <ul style="list-style: none; padding: 0;">
                         ${order.items.map(i => {
@@ -12181,7 +12253,7 @@ window.toggleUserCustomDatePopover = function (event) {
 window.selectUserTimePreset = function (presetKey, presetName, btnElem) {
     window.selectedUserDatePreset = presetKey;
     const label = document.getElementById('user-order-time-preset-label');
-    if (label) label.innerText = '🔵 ' + presetName;
+    if (label) label.innerHTML = '<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> ' + presetName;
 
     const btnPreset = document.getElementById('btn-radio-user-time-preset');
     const btnCustom = document.getElementById('btn-radio-user-time-custom');
@@ -12219,7 +12291,7 @@ window.applyUserCustomDateRange = function () {
     const toInput = document.getElementById('user-date-to')?.value;
 
     if (label && fromInput && toInput) {
-        label.innerText = `🔵 Tùy chỉnh (${fromInput} - ${toInput})`;
+        label.innerHTML = `<i class="ti ti-circle-filled" style="color: #0066cc; font-size: 0.65em;"></i> Tùy chỉnh (${fromInput} - ${toInput})`;
     }
 
     const btnPreset = document.getElementById('btn-radio-user-time-preset');
@@ -12826,9 +12898,9 @@ window.renderAdminUserTable = function renderAdminUserTable() {
         const icon = th.querySelector('.sort-icon');
         if (icon) {
             if (th.getAttribute('data-user-sort') === window.currentCustomerSortCol) {
-                icon.textContent = window.currentCustomerSortDir === 'asc' ? '↑' : '↓';
+                icon.innerHTML = window.currentCustomerSortDir === 'asc' ? '<i class="ti ti-arrow-up"></i>' : '<i class="ti ti-arrow-down"></i>';
             } else {
-                icon.textContent = '↕';
+                icon.innerHTML = '<i class="ti ti-arrows-sort"></i>';
             }
         }
     });
@@ -12884,7 +12956,7 @@ function renderAdminUserRows(usersList, tableElement) {
         htmlContent += `
             <tr class="product-row user-row" data-user-id="${u.id}" onclick="window.toggleUserQuickView('${u.id}', event)" style="cursor: pointer;">
                 <td style="text-align: center; padding: 4px;" onclick="event.stopPropagation();"><input type="checkbox" class="user-chk" value="${u.id}"></td>
-                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();">☆</td>
+                <td style="color: #cbd5e1; padding: 4px;" onclick="event.stopPropagation();"><i class="ti ti-star"></i></td>
                 <td style="white-space: nowrap;"><strong style="color: #0066cc; font-size: 0.74rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;" title="${u.id}">${custCode}</strong></td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -12901,7 +12973,7 @@ function renderAdminUserRows(usersList, tableElement) {
                     ${createdTimeStr ? `<small style="color: #64748b; display: block; font-size: 0.65rem;">${createdTimeStr}</small>` : ''}
                 </td>
                 <td style="white-space: nowrap;">${tierBadge}</td>
-                <td style="text-align: center; font-weight: 700; color: #0284c7; font-size: 0.74rem; white-space: nowrap;">💎 ${points} điểm</td>
+                <td style="text-align: center; font-weight: 700; color: #0284c7; font-size: 0.74rem; white-space: nowrap;"><i class="ti ti-diamond"></i> ${points} điểm</td>
                 <td style="text-align: right; font-weight: 600; color: #dc2626; font-size: 0.74rem; white-space: nowrap;">${formatVND(debt)}</td>
                 <td style="text-align: right; font-weight: 700; color: #0066cc; font-size: 0.74rem; white-space: nowrap;">${formatVND(spent)}</td>
             </tr>
@@ -12987,20 +13059,20 @@ window.toggleUserQuickView = function (userId, event) {
                         </div>
 
                         <div style="background: #f0f7ff; padding: 10px 14px; border-radius: 6px; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <span>🏆 Hạng Membership: <strong style="color: ${tier.color}; font-size: 0.95rem;">${tier.name}</strong></span>
-                            <span>💎 Điểm tích lũy: <strong style="color: #0284c7; font-size: 0.95rem;">${points} điểm</strong></span>
-                            <span>🛍️ Đã mua: <strong style="color: #0f172a; font-size: 0.95rem;">${orderCount} đơn</strong></span>
-                            <span>💰 Tổng chi tiêu: <strong style="color: #0066cc; font-size: 1rem;">${formatVND(spent)} đ</strong></span>
+                            <span><i class="ti ti-trophy"></i> Hạng Membership: <strong style="color: ${tier.color}; font-size: 0.95rem;">${tier.name}</strong></span>
+                            <span><i class="ti ti-diamond"></i> Điểm tích lũy: <strong style="color: #0284c7; font-size: 0.95rem;">${points} điểm</strong></span>
+                            <span><i class="ti ti-shopping-bag"></i> Đã mua: <strong style="color: #0f172a; font-size: 0.95rem;">${orderCount} đơn</strong></span>
+                            <span><i class="ti ti-coin"></i> Tổng chi tiêu: <strong style="color: #0066cc; font-size: 1rem;">${formatVND(spent)} đ</strong></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="quickview-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <div class="left-actions" style="display: flex; gap: 10px;">
-                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteUser('${userId}')">🗑️ Xóa khách hàng</button>
+                        <button type="button" class="qv-btn-text red" onclick="event.stopPropagation(); window.deleteUser('${userId}')"><i class="ti ti-trash"></i> Xóa khách hàng</button>
                     </div>
                     <div class="right-actions" style="display: flex; align-items: center; gap: 10px;">
-                        <button type="button" class="kiot-btn-primary" onclick="event.stopPropagation(); window.viewAdminUserDetail('${userId}')">✏️ Chỉnh sửa hồ sơ</button>
+                        <button type="button" class="kiot-btn-primary" onclick="event.stopPropagation(); window.viewAdminUserDetail('${userId}')"><i class="ti ti-pencil"></i> Chỉnh sửa hồ sơ</button>
                     </div>
                 </div>
             </div>
@@ -13013,7 +13085,7 @@ window.toggleUserQuickView = function (userId, event) {
 window.deleteUser = async function (userId) {
     if (!userId) return;
     const ok = await showModalConfirm(
-        `Bạn có chắc chắn muốn xóa khách hàng "${userId}" không?\n\n⚠️ Hành động này sẽ xóa vĩnh viễn và không thể hoàn tác.`,
+        `Bạn có chắc chắn muốn xóa khách hàng "${userId}" không?\n\nHành động này sẽ xóa vĩnh viễn và không thể hoàn tác.`,
         "Xác nhận xóa khách hàng",
         { confirmText: "Xóa khách hàng", cancelText: "Hủy bỏ", type: "danger" }
     );
@@ -13283,7 +13355,7 @@ function renderStaffTable() {
                         <div>
                             <strong style="color: #2B2928; font-size: 0.9rem;">${item.displayName || 'Chưa đặt tên'}</strong>
                             ${isSelf ? '<span style="font-size: 0.68rem; color: #9C7156; margin-left: 4px; font-weight: 700;">(Bạn)</span>' : ''}
-                            ${item.phone ? `<br><small style="color: #888;">📞 ${item.phone}</small>` : ''}
+                            ${item.phone ? `<br><small style="color: #888;"><i class="ti ti-phone"></i> ${item.phone}</small>` : ''}
                         </div>
                     </div>
                 </td>
@@ -13306,22 +13378,22 @@ function renderStaffTable() {
                     <div style="display: inline-flex; gap: 5px; justify-content: flex-end; align-items: center;">
                         <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: #9C7156; color: #9C7156;" 
                             onclick="window.editAdminPermissions('${item.uid}', '${item.email}', '${(item.displayName || '').replace(/'/g, "\\'")}')" title="Cấu hình quyền hạn">
-                            ⚙️ Quyền
+                            <i class="ti ti-settings"></i> Quyền
                         </button>
                         ${!isSelf ? `
                             <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: ${isLocked ? '#16A34A' : '#D97706'}; color: ${isLocked ? '#16A34A' : '#D97706'};" 
                                 onclick="window.toggleAccountLock('${item.uid}', ${!isLocked})" title="${isLocked ? 'Mở khóa' : 'Khóa tài khoản'}">
-                                ${isLocked ? '🔓 Mở' : '🔒 Khóa'}
+                                ${isLocked ? '<i class="ti ti-lock-open"></i> Mở' : '<i class="ti ti-lock"></i> Khóa'}
                             </button>
                         ` : ''}
                         <button type="button" class="btn-minimal" style="font-size: 0.72rem; padding: 4px 8px; border-color: #4B5563; color: #4B5563;" 
                             onclick="window.sendStaffPasswordReset('${item.email}')" title="Gửi email đặt lại mật khẩu">
-                            🔑 Đổi MK
+                            <i class="ti ti-key"></i> Đổi MK
                         </button>
                         ${!isSelf ? `
                             <button type="button" class="btn-delete" style="font-size: 0.72rem; padding: 4px 8px;" 
                                 onclick="window.deleteStaffAccount('${item.uid}', '${item.email}')" title="Gỡ quyền quản trị">
-                                🗑️
+                                <i class="ti ti-trash"></i>
                             </button>
                         ` : ''}
                     </div>
@@ -13465,7 +13537,7 @@ window.showCreateStaffModal = () => {
         <div class="modal-content staff-perm-modal-content">
             <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                <span style="font-size: 1.4rem;">👤</span>
+                <span style="font-size: 1.4rem;"><i class="ti ti-user"></i></span>
                 <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2B2928;">Tạo tài khoản nhân viên nội bộ</h3>
             </div>
             <p style="font-size: 0.85rem; color: #6E665D; margin-bottom: 1.2rem;">
@@ -13505,7 +13577,7 @@ window.showCreateStaffModal = () => {
                 <!-- 2. Bảng chọn Phân quyền Chức năng -->
                 <div style="border-top: 1px solid #E8E1D8; padding-top: 14px; margin-top: 14px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <strong style="font-size: 0.95rem; color: #2B2928;">📋 Phân quyền các tính năng được phép truy cập:</strong>
+                        <strong style="font-size: 0.95rem; color: #2B2928;"><i class="ti ti-clipboard-list"></i> Phân quyền các tính năng được phép truy cập:</strong>
                         <div class="perm-quick-actions" style="margin: 0; padding: 4px 8px;">
                             <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#create-staff-form', true)">Chọn tất cả</button>
                             <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#create-staff-form', false)">Bỏ chọn hết</button>
@@ -13552,7 +13624,7 @@ window.showCreateStaffModal = () => {
 
         try {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span>⏳ Đang tạo tài khoản...</span>';
+            submitBtn.innerHTML = '<span><i class="ti ti-hourglass-low"></i> Đang tạo tài khoản...</span>';
 
             // Khởi tạo Firebase App phụ độc lập để không làm gián đoạn phiên Admin hiện tại
             const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js");
@@ -13649,7 +13721,7 @@ window.editAdminPermissions = async (uid, email, currentName = '') => {
             <div class="modal-content staff-perm-modal-content">
                 <span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <span style="font-size: 1.4rem;">⚙️</span>
+                    <span style="font-size: 1.4rem;"><i class="ti ti-settings"></i></span>
                     <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2B2928;">Cấu hình phân quyền nhân viên</h3>
                 </div>
                 <p style="font-size: 0.85rem; color: #6E665D; margin-bottom: 1.2rem;">
@@ -13668,7 +13740,7 @@ window.editAdminPermissions = async (uid, email, currentName = '') => {
 
                     <div style="border-top: 1px solid #E8E1D8; padding-top: 14px; margin-top: 14px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <strong style="font-size: 0.95rem; color: #2B2928;">📋 Chọn các phân hệ được phép truy cập:</strong>
+                            <strong style="font-size: 0.95rem; color: #2B2928;"><i class="ti ti-clipboard-list"></i> Chọn các phân hệ được phép truy cập:</strong>
                             <div class="perm-quick-actions" style="margin: 0; padding: 4px 8px;">
                                 <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#perms-edit-form', true, 'edit_staff_perm')">Chọn tất cả</button>
                                 <button type="button" class="perm-quick-btn" onclick="window.setAllStaffPerms('#perms-edit-form', false, 'edit_staff_perm')">Bỏ chọn hết</button>
@@ -14141,9 +14213,9 @@ function renderPOSCart() {
                     if (item.color) labelParts.push(item.color);
                     if (item.pattern) labelParts.push(item.pattern);
                     const labelText = labelParts.join(' / ');
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span>🎨 ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;">✏️ Đổi</span></div>`;
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để đổi biến thể"><span><i class="ti ti-palette"></i> ${labelText}</span><span style="font-size: 0.65rem; color: #0369a1;"><i class="ti ti-pencil"></i> Đổi</span></div>`;
                 } else if (hasVariants) {
-                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / combo / họa tiết"><span>🎨 Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
+                    variantBadge = `<div class="pos-variant-selector-badge" onclick="event.stopPropagation(); window.posOpenVariantModal(${index})" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #d97706; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px; font-weight: 600; cursor: pointer; margin-top: 2px;" title="Bấm để chọn màu sắc / combo / họa tiết"><span><i class="ti ti-palette"></i> Chọn biến thể</span><span style="font-size: 0.65rem;">▾</span></div>`;
                 }
 
                 return `
@@ -14203,10 +14275,10 @@ function renderPOSCart() {
                 if (badgeEl) {
                     if (discountPct > 0) {
                         badgeEl.style.display = 'inline-block';
-                        badgeEl.innerHTML = `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; margin-left: 4px;">👑 Hạng ${memInfo.tier.name} (-${discountPct}%)</span>`;
+                        badgeEl.innerHTML = `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; margin-left: 4px;"><i class="ti ti-crown"></i> Hạng ${memInfo.tier.name} (-${discountPct}%)</span>`;
                     } else {
                         badgeEl.style.display = 'inline-block';
-                        badgeEl.innerHTML = `<span style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; margin-left: 4px;">👑 Hạng ${memInfo.tier.name}</span>`;
+                        badgeEl.innerHTML = `<span style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; margin-left: 4px;"><i class="ti ti-crown"></i> Hạng ${memInfo.tier.name}</span>`;
                     }
                 }
             }
@@ -14438,7 +14510,7 @@ window.posShowDiscountPopover = (index, element, event) => {
                 <input type="text" id="pos-popover-final-input" class="pos-pop-input" style="font-weight: 700; color: #0066cc;" oninput="window.posOnSellingPriceChange(this.value)">
             </div>
             <div id="pos-popover-cost-warning" style="display: none; color: #dc2626; font-size: 0.78rem; margin-top: 4px; font-weight: 600; text-align: right;">
-                ⚠️ Giá bán đang nhỏ hơn giá vốn
+                <i class="ti ti-alert-triangle-filled"></i> Giá bán đang nhỏ hơn giá vốn
             </div>
         `;
         document.body.appendChild(popover);
@@ -14705,19 +14777,19 @@ function ensurePOSVariantModal() {
 
                 <!-- Section chọn Phân loại / Combo -->
                 <div id="pos-modal-combo-section" style="margin-bottom: 15px; display: none;">
-                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎁 Chọn phân loại Combo / Biến thể:</label>
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-gift"></i> Chọn phân loại Combo / Biến thể:</label>
                     <div id="pos-modal-combo-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
                 </div>
 
                 <!-- Section chọn Màu sắc -->
                 <div id="pos-modal-color-section" style="margin-bottom: 15px; display: none;">
-                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎨 Chọn màu sắc:</label>
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-palette"></i> Chọn màu sắc:</label>
                     <div id="pos-modal-color-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
                 </div>
 
                 <!-- Section chọn Họa tiết -->
                 <div id="pos-modal-pattern-section" style="margin-bottom: 15px; display: none;">
-                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">✨ Chọn họa tiết:</label>
+                    <label style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-sparkles"></i> Chọn họa tiết:</label>
                     <div id="pos-modal-pattern-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;"></div>
                 </div>
 
@@ -14877,14 +14949,14 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     <span>${vName}</span>
-                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;"><i class="ti ti-flame-filled"></i> HOT</span>` : ''}
                                 </div>
                                 <div style="font-size: 0.72rem; color: #64748b;">
                                     Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vFinalPrice) : vFinalPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;"><i class="ti ti-check"></i></div>
                     </div>`;
                 }).join('');
             } else {
@@ -14928,14 +15000,14 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                                 <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     ${vHex ? `<span style="width: 14px; height: 14px; border-radius: 50%; background: ${vHex}; border: 1px solid rgba(0,0,0,0.15); display: inline-block; flex-shrink: 0;" title="${vHex}"></span>` : ''}
                                     <span>${vName}</span>
-                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;"><i class="ti ti-flame-filled"></i> HOT</span>` : ''}
                                 </div>
                                 <div style="font-size: 0.72rem; color: #64748b;">
                                     Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vColorPrice) : vColorPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;"><i class="ti ti-check"></i></div>
                     </div>`;
                 }).join('');
             } else {
@@ -14977,14 +15049,14 @@ window.posOpenVariantModal = async (productIdOrIndex, cartIndex = -1) => {
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 600; font-size: 0.8rem; color: #0f172a; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     <span>${vName}</span>
-                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;">🔥 HOT</span>` : ''}
+                                    ${isHot ? `<span style="background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 1px 5px; border-radius: 10px; box-shadow: 0 1px 3px rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 2px;"><i class="ti ti-flame-filled"></i> HOT</span>` : ''}
                                 </div>
                                 <div style="font-size: 0.7rem; color: #64748b;">
                                     Giá: <strong style="color: #d97706;">${typeof formatVND === 'function' ? formatVND(vPatternPrice) : vPatternPrice}</strong> | Kho: ${stockVal} ${soldCount > 0 ? `<span style="color: #10b981; font-weight: 600; margin-left: 3px;">(Bán: ${soldCount})</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;">✓</div>
+                        <div class="sel-check-badge" style="display: none; color: #0284c7; font-weight: bold; font-size: 1.1rem; pointer-events: none;"><i class="ti ti-check"></i></div>
                     </div>`;
                 }).join('');
             } else {
@@ -15851,7 +15923,7 @@ const CHANNEL_REPORT_META = {
         key: 'web_app',
         label: 'Web & App (Chung)',
         shortLabel: 'Web / App',
-        icon: '💻📱',
+        icon: '<i class="ti ti-devices"></i>',
         color: '#B45309',
         bg: '#FFFBF7',
         border: '#E8CCB2',
@@ -15861,7 +15933,7 @@ const CHANNEL_REPORT_META = {
         key: 'pos',
         label: 'Bán tại quầy (POS)',
         shortLabel: 'Bán tại quầy (POS)',
-        icon: '🏪',
+        icon: '<i class="ti ti-building-store"></i>',
         color: '#7E22CE',
         bg: '#FAF7FF',
         border: '#E9D5FF',
@@ -15871,7 +15943,7 @@ const CHANNEL_REPORT_META = {
         key: 'social',
         label: 'Mạng xã hội (FB, IG, Zalo...)',
         shortLabel: 'Mạng xã hội',
-        icon: '💬',
+        icon: '<i class="ti ti-message-circle"></i>',
         color: '#BE185D',
         bg: '#FFF5F8',
         border: '#FBCFE8',
@@ -16608,7 +16680,7 @@ async function initFullReport() {
         if (peakBadge) {
             if (maxOrders > 0) {
                 const peakRev = hourlyRevenue[peakHour];
-                peakBadge.innerHTML = `🔥 Khung giờ vàng: <strong>${peakHour}:00 - ${peakHour + 1}:00</strong> (${maxOrders} đơn • ${new Intl.NumberFormat('vi-VN').format(peakRev)}đ)`;
+                peakBadge.innerHTML = `<i class="ti ti-flame-filled"></i> Khung giờ vàng: <strong>${peakHour}:00 - ${peakHour + 1}:00</strong> (${maxOrders} đơn • ${new Intl.NumberFormat('vi-VN').format(peakRev)}đ)`;
             } else {
                 peakBadge.innerText = 'Chưa có đủ dữ liệu đơn hàng';
             }
@@ -16625,22 +16697,22 @@ async function initFullReport() {
         if (summaryBox) {
             summaryBox.innerHTML = `
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; color: #888;">🌅 SÁNG (06:00 - 12:00)</div>
+                    <div style="font-size: 0.8rem; color: #888;"><i class="ti ti-sunrise"></i> SÁNG (06:00 - 12:00)</div>
                     <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${morningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((morningOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Khách văn phòng xem hàng</div>
                 </div>
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; color: #888;">☀️ TRƯA & CHIỀU (12:00 - 18:00)</div>
+                    <div style="font-size: 0.8rem; color: #888;"><i class="ti ti-sun"></i> TRƯA & CHIỀU (12:00 - 18:00)</div>
                     <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${afternoonOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((afternoonOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Đặt quà tặng & sự kiện</div>
                 </div>
                 <div style="background: #fff8f0; border: 1.5px solid #ffcc80; border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; color: #e65100; font-weight: 700;">🌙 TỐI (18:00 - 22:00) ★ VÀNG</div>
+                    <div style="font-size: 0.8rem; color: #e65100; font-weight: 700;"><i class="ti ti-moon"></i> TỐI (18:00 - 22:00) <i class="ti ti-star-filled"></i> VÀNG</div>
                     <div style="font-size: 1.1rem; font-weight: 800; color: #e65100; margin: 3px 0;">${eveningOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #e65100;">(${((eveningOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #d84315; font-weight: 600;">Thời điểm chốt đơn cao nhất!</div>
                 </div>
                 <div style="background: #fdfbf7; border: 1px solid #f0e6d6; border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; color: #888;">🌌 ĐÊM (22:00 - 06:00)</div>
+                    <div style="font-size: 0.8rem; color: #888;"><i class="ti ti-moon-stars"></i> ĐÊM (22:00 - 06:00)</div>
                     <div style="font-size: 1.1rem; font-weight: 800; color: #2c3e50; margin: 3px 0;">${nightOrders} đơn <span style="font-size: 0.8rem; font-weight: normal; color: #666;">(${((nightOrders / totalValid) * 100).toFixed(0)}%)</span></div>
                     <div style="font-size: 0.75rem; color: #777;">Mua sắm khuya online</div>
                 </div>
@@ -16736,7 +16808,7 @@ async function initFullReport() {
         const tableBody = document.getElementById('top-canceled-products-body');
         if (tableBody) {
             if (canceledList.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #27ae60; padding: 15px;">🎉 Tuyệt vời! Không có sản phẩm nào bị hủy trong kỳ này.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #27ae60; padding: 15px;"><i class="ti ti-confetti"></i> Tuyệt vời! Không có sản phẩm nào bị hủy trong kỳ này.</td></tr>`;
             } else {
                 tableBody.innerHTML = canceledList.map(([label, stat]) => `
                     <tr>
@@ -17002,7 +17074,7 @@ window.toggleProductNoelQuick = async function(productId, isChecked) {
         if (typeof window.renderHolidayNoelProductPicker === 'function') {
             window.renderHolidayNoelProductPicker();
         }
-        showToast(isChecked ? `🎄 Đã đưa "${localItem?.name || productId}" lên Kệ Gốm Noel!` : `Đã gỡ "${localItem?.name || productId}" khỏi Kệ Noel`);
+        showToast(isChecked ? `<i class="ti ti-christmas-tree"></i> Đã đưa "${localItem?.name || productId}" lên Kệ Gốm Noel!` : `Đã gỡ "${localItem?.name || productId}" khỏi Kệ Noel`);
     } catch (err) {
         showToast("Lỗi cập nhật kệ Noel: " + err.message, "error");
     }
@@ -17023,7 +17095,7 @@ window.changeProductNoelTagQuick = async function(productId, newTag) {
         if (typeof window.renderHolidayNoelProductPicker === 'function') {
             window.renderHolidayNoelProductPicker();
         }
-        showToast(`🎄 Đã cập nhật phân nhóm Noel cho "${localItem?.name || productId}"`);
+        showToast(`<i class="ti ti-christmas-tree"></i> Đã cập nhật phân nhóm Noel cho "${localItem?.name || productId}"`);
     } catch (err) {
         showToast("Lỗi lưu nhóm Noel: " + err.message, "error");
     }
@@ -17063,11 +17135,11 @@ window.renderHolidayNoelProductPicker = function() {
                     </div>
                 </label>
                 <select id="quick-noel-tag-${p.id}" onchange="window.changeProductNoelTagQuick('${p.id}', this.value)" style="padding:5px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.78rem; background:#fff; color:#334155; font-weight:600;">
-                    <option value="all" ${tag === 'all' ? 'selected' : ''}>✨ Tự động</option>
-                    <option value="cups" ${tag === 'cups' ? 'selected' : ''}>☕ Ly &amp; Tách</option>
-                    <option value="dining" ${tag === 'dining' ? 'selected' : ''}>🍽️ Bàn tiệc</option>
-                    <option value="gifts" ${tag === 'gifts' ? 'selected' : ''}>🎁 Set quà</option>
-                    <option value="decor" ${tag === 'decor' ? 'selected' : ''}>🕯️ Decor</option>
+                    <option value="all" ${tag === 'all' ? 'selected' : ''}>Tự động</option>
+                    <option value="cups" ${tag === 'cups' ? 'selected' : ''}>Ly &amp; Tách</option>
+                    <option value="dining" ${tag === 'dining' ? 'selected' : ''}>Bàn tiệc</option>
+                    <option value="gifts" ${tag === 'gifts' ? 'selected' : ''}>Set quà</option>
+                    <option value="decor" ${tag === 'decor' ? 'selected' : ''}>Decor</option>
                 </select>
             </div>
         `;
@@ -17141,7 +17213,7 @@ async function initHolidaySettings() {
                     updatedBy: auth.currentUser ? auth.currentUser.email : 'admin'
                 }
             }, { merge: true });
-            showToast("🎄 Đã lưu cài đặt giao diện & Kệ Gốm Giáng Sinh thành công!");
+            showToast("<i class='ti ti-christmas-tree'></i> Đã lưu cài đặt giao diện & Kệ Gốm Giáng Sinh thành công!");
         } catch (err) {
             showToast("Lỗi lưu cài đặt Noel: " + err.message, "error");
         }
@@ -17285,7 +17357,7 @@ async function initFlashSaleSettings() {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerText = "💾 Lưu chiến dịch";
+                btn.innerHTML = '<i class="ti ti-device-floppy"></i> Lưu chiến dịch';
             }
         }
     };
@@ -17339,9 +17411,9 @@ function renderFsSelectedItemsTable() {
                 <td data-label="Giá gốc" style="color: #64748b; font-size: 0.9rem;">${new Intl.NumberFormat('vi-VN').format(originalPrice)}đ</td>
                 <td data-label="Hình thức khuyến mãi">
                     <select class="kiot-filter-input fs-item-dealtype" onchange="window.handleFsDealTypeChange('${pid}', this.value)" style="font-weight: 600; padding: 4px 8px; border-radius: 6px;">
-                        <option value="bogo_same" ${dealType === 'bogo_same' ? 'selected' : ''}>🎁 Mua 1 Tặng 1 (Cùng loại)</option>
-                        <option value="bogo_custom" ${dealType === 'bogo_custom' ? 'selected' : ''}>🎁 Mua 1 Tặng 1 (Chọn quà)</option>
-                        <option value="sale" ${dealType === 'sale' ? 'selected' : ''}>⚡ Giảm giá sốc (Giá Sale)</option>
+                        <option value="bogo_same" ${dealType === 'bogo_same' ? 'selected' : ''}>Mua 1 Tặng 1 (Cùng loại)</option>
+                        <option value="bogo_custom" ${dealType === 'bogo_custom' ? 'selected' : ''}>Mua 1 Tặng 1 (Chọn quà)</option>
+                        <option value="sale" ${dealType === 'sale' ? 'selected' : ''}>Giảm giá sốc (Giá Sale)</option>
                     </select>
                 </td>
                 <td data-label="Giá Sale / Quà tặng">
@@ -17351,7 +17423,7 @@ function renderFsSelectedItemsTable() {
                                 oninput="window.formatCurrencyInput(this)" style="font-weight: 700; color: #9C7156; max-width: 140px;">
                         ` : (dealType === 'bogo_same' ? `
                             <div style="font-size: 0.82rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 6px 10px; border-radius: 6px; border: 1px dashed #E8CCB2;">
-                                🎁 Tặng 1 sản phẩm chính nó (0đ)
+                                <i class="ti ti-gift"></i> Tặng 1 sản phẩm chính nó (0đ)
                             </div>
                         ` : `
                             <select class="kiot-filter-input fs-item-gift" style="max-width: 160px; font-size: 0.8rem;">
@@ -17405,7 +17477,7 @@ window.handleFsDealTypeChange = (pid, dealType) => {
     } else if (dealType === 'bogo_same') {
         wrap.innerHTML = `
             <div style="font-size: 0.82rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 6px 10px; border-radius: 6px; border: 1px dashed #E8CCB2;">
-                🎁 Tặng 1 sản phẩm chính nó (0đ)
+                <i class="ti ti-gift"></i> Tặng 1 sản phẩm chính nó (0đ)
             </div>
         `;
     } else if (dealType === 'bogo_custom') {
@@ -19094,7 +19166,7 @@ window.fetchRestockAlertsAdmin = async () => {
                                 ${isNotified ? 'Đánh dấu Chưa' : 'Đã báo khách'}
                             </button>
                             <button type="button" class="btn-minimal text-danger" style="padding: 3px 6px; font-size: 0.75rem;" onclick="window.deleteRestockAlert('${docSnap.id}')" title="Xóa">
-                                🗑️
+                                <i class="ti ti-trash"></i>
                             </button>
                         </div>
                     </td>
@@ -19556,7 +19628,7 @@ function renderLocationCharts(sortedProvinces, hcmDistrictMap) {
                         callbacks: {
                             afterLabel: (ctx) => {
                                 const isOuter = ctx.label.includes('Ngoại') || ctx.label.includes('Củ Chi') || ctx.label.includes('Hóc');
-                                return isOuter ? '⚠️ Không áp dụng giao 2H' : '⚡ Đủ điều kiện Giao nhanh 2 Giờ';
+                                return isOuter ? '<i class="ti ti-alert-triangle-filled"></i> Không áp dụng giao 4H' : '<i class="ti ti-bolt-filled"></i> Đủ điều kiện Giao nhanh 2 Giờ';
                             }
                         }
                     }
@@ -19584,12 +19656,12 @@ function renderLocationTable(sortedProvinces, totalAllVisitors) {
 
     let rowsHtml = '';
     sortedProvinces.forEach(([province, data], idx) => {
-        const rankBadge = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+        const rankBadge = idx === 0 ? '<i class="ti ti-medal"></i>' : (idx === 1 ? '<i class="ti ti-medal-2"></i>' : (idx === 2 ? '<i class="ti ti-award"></i>' : `#${idx + 1}`));
         const pct = totalAllVisitors > 0 ? ((data.visitors / totalAllVisitors) * 100).toFixed(1) : '0.0';
         const isHCM = province === 'TP. Hồ Chí Minh';
         const expressTag = isHCM ?
-            '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;">⚡ Hỗ trợ 2 Giờ</span>' :
-            '<span style="color: #64748b; font-size: 0.75rem;">🚚 Tiêu chuẩn</span>';
+            '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;"><i class="ti ti-bolt-filled"></i> Hỗ trợ 4 Giờ</span>' :
+            '<span style="color: #64748b; font-size: 0.75rem;"><i class="ti ti-truck-delivery"></i> Tiêu chuẩn</span>';
         const keyArea = isHCM ? 'Nội thành TP.HCM (Q1, Q3, Bình Thạnh...)' : (province === 'Hà Nội' ? 'Hoàn Kiếm, Cầu Giấy, Đống Đa' : 'Khu vực trung tâm');
 
         rowsHtml += `
@@ -19653,7 +19725,7 @@ function renderProductViewsSection(categoryFilter = 'all') {
         kpiTopProd.title = topProd.name;
     }
     if (kpiTopProdSub && topProd) {
-        kpiTopProdSub.innerText = `🔥 ${topProd.views.toLocaleString()} lượt xem - Đã bán ${topProd.sold}`;
+        kpiTopProdSub.innerHTML = `<i class="ti ti-flame-filled"></i> ${topProd.views.toLocaleString()} lượt xem - Đã bán ${topProd.sold}`;
     }
 
     // Render Biểu đồ Top 10 Sản phẩm
@@ -19687,7 +19759,7 @@ function renderProductViewsSection(categoryFilter = 'all') {
                         callbacks: {
                             afterLabel: (ctx) => {
                                 const prod = top10Prods[ctx.dataIndex];
-                                return prod ? `🏷️ Tỷ lệ chuyển đổi: ${prod.conversionRate.toFixed(1)}%` : '';
+                                return prod ? `Tỷ lệ chuyển đổi: ${prod.conversionRate.toFixed(1)}%` : '';
                             }
                         }
                     }
@@ -19755,11 +19827,11 @@ function filterAnalyticsProductTable(query = '') {
     let rowsHtml = '';
     list.slice(0, 30).forEach(p => {
         const rate = p.conversionRate.toFixed(1);
-        let badgeHtml = '<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;">⭐ Ổn định</span>';
+        let badgeHtml = '<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;"><i class="ti ti-star-filled"></i> Ổn định</span>';
         if (p.conversionRate >= 14) {
-            badgeHtml = '<span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;">🔥 Siêu Hot</span>';
+            badgeHtml = '<span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;"><i class="ti ti-flame-filled"></i> Siêu Hot</span>';
         } else if (p.views >= 100 && p.conversionRate < 8) {
-            badgeHtml = '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600;">⚡ Cần đẩy Sale</span>';
+            badgeHtml = '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600;"><i class="ti ti-bolt-filled"></i> Cần đẩy Sale</span>';
         }
 
         rowsHtml += `

@@ -74,10 +74,10 @@ const sanitizeCartForFirestore = (items: CartItem[]) => {
     variant: item.variant?.name || (typeof item.variant === 'string' ? item.variant : ''), // Web hiển thị variant dạng chuỗi
     variantObj: item.variant
       ? {
-          type: item.variant.type || '',
-          name: item.variant.name || '',
-          imageUrl: item.variant.imageUrl || '',
-        }
+        type: item.variant.type || '',
+        name: item.variant.name || '',
+        imageUrl: item.variant.imageUrl || '',
+      }
       : null,
     maxStock: Number(item.maxStock) || 99,
     isGift: false,
@@ -166,7 +166,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   }, [selectedAddress]);
 
-  // Nếu chuyển sang địa chỉ ngoại tỉnh nhưng đang chọn Hỏa tốc 2 giờ, tự động quay về Giao tiêu chuẩn
+  // Nếu chuyển sang địa chỉ ngoại tỉnh nhưng đang chọn Hỏa tốc 4 giờ, tự động quay về Giao tiêu chuẩn
   useEffect(() => {
     if (!isHCM && shippingMethod === 'express_2h') {
       setShippingMethod('standard');
@@ -187,7 +187,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoyaltySpent(res.totalSpent);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setLoyaltySpent(0);
     }
@@ -205,7 +205,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const triggerCartBounce = () => {
     setCartBounceKey((k) => k + 1);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
   };
 
   const flyToCart = (
@@ -258,7 +258,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (guestCached) {
             try {
               guestCart = JSON.parse(guestCached) || [];
-            } catch {}
+            } catch { }
           }
 
           // C. Lắng nghe Realtime từ Firestore collection `carts/{uid}` (Đồng bộ trực tiếp 2 chiều với Web)
@@ -282,15 +282,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
               });
               guestCart = [];
-              await AsyncStorage.removeItem(STORAGE_KEY_GUEST).catch(() => {});
+              await AsyncStorage.removeItem(STORAGE_KEY_GUEST).catch(() => { });
               isSyncingRef.current = true;
-              await setDoc(cartRef, { items: sanitizeCartForFirestore(merged), updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+              await setDoc(cartRef, { items: sanitizeCartForFirestore(merged), updatedAt: new Date().toISOString() }, { merge: true }).catch(() => { });
               isSyncingRef.current = false;
               firestoreItems = merged;
             }
 
             setCart(firestoreItems);
-            await AsyncStorage.setItem(cacheKey, JSON.stringify(firestoreItems)).catch(() => {});
+            await AsyncStorage.setItem(cacheKey, JSON.stringify(firestoreItems)).catch(() => { });
           });
         } catch (e) {
           console.warn('Lỗi đọc giỏ hàng Firestore:', e);
@@ -407,10 +407,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         imageUrl: variant?.imageUrl || product.imageUrl || (product.images && product.images[0]) || '',
         variant: variant
           ? {
-              type: variant.type,
-              name: variant.name,
-              imageUrl: variant.imageUrl,
-            }
+            type: variant.type,
+            name: variant.name,
+            imageUrl: variant.imageUrl,
+          }
           : undefined,
         maxStock: effectiveStock,
       };
@@ -418,13 +418,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     saveCartState(nextCart);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
   };
 
   const removeFromCart = (itemId: string) => {
     const nextCart = cart.filter((item) => item.id !== itemId);
     saveCartState(nextCart);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -442,7 +442,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return item;
     });
     saveCartState(nextCart);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
   };
 
   const clearCart = () => {

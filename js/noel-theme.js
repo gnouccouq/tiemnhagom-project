@@ -297,7 +297,7 @@ class NoelThemeEngine {
             banner.id = 'noel-message-banner';
             banner.className = 'noel-message-banner';
             banner.innerHTML = `
-                <span class="noel-banner-icon">🎄</span>
+                <span class="noel-banner-icon"><i class="ti ti-christmas-tree"></i></span>
                 <span class="noel-banner-text"></span>
                 <button type="button" class="noel-banner-close" aria-label="Đóng thông báo" title="Đóng thông báo">&times;</button>
             `;

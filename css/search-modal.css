@@ -1,0 +1,576 @@
+/* ==========================================================================
+   COMMAND PALETTE SEARCH MODAL (TIỆM NHÀ GỐM - MONOCHROME LUXURY)
+   Thiết kế theo chuẩn Apple / Zara: Đen Trắng, Tối Giản, Đẳng Cấp, Nền Mờ Cao Cấp
+   ========================================================================== */
+
+/* 1. Backdrop làm mờ toàn màn hình */
+.tng-search-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 100000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 16px 24px 16px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease;
+    box-sizing: border-box;
+}
+
+.tng-search-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* 2. Dialog khung tìm kiếm trung tâm */
+.tng-search-dialog {
+    width: 100%;
+    max-width: 680px;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 100px);
+    transform: scale(0.96) translateY(-12px);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+.tng-search-backdrop.active .tng-search-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* 3. Thanh Header Search Input */
+.tng-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tng-search-icon {
+    flex-shrink: 0;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tng-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1.15rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: #0f172a;
+    padding: 0;
+    margin: 0;
+}
+
+.tng-search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Nút xóa từ khóa (Clear text) - Tròn 100% chuẩn hình học không bị méo bầu dục */
+.tng-search-clear {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    max-width: 22px !important;
+    max-height: 22px !important;
+    border-radius: 50% !important;
+    background: #f1f5f9;
+    border: none;
+    color: #64748b;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.15s ease;
+    padding: 0 !important;
+    margin: 0 4px !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    box-sizing: border-box !important;
+}
+
+.tng-search-clear svg {
+    display: block;
+    pointer-events: none;
+}
+
+.tng-search-clear:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.tng-search-clear.visible {
+    display: flex;
+}
+
+/* Nút đóng / Phím tắt ESC */
+.tng-search-close-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.tng-search-close-btn:hover {
+    background: #000000;
+    border-color: #000000;
+    color: #ffffff;
+}
+
+.tng-search-close-btn kbd {
+    font-family: inherit;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+}
+
+/* 4. Nội dung cuộn (Body) */
+.tng-search-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 180px;
+    max-height: 480px;
+    box-sizing: border-box;
+}
+
+/* Thanh cuộn tinh tế */
+.tng-search-body::-webkit-scrollbar {
+    width: 5px;
+}
+.tng-search-body::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 999px;
+}
+
+/* Tiêu đề phân mục */
+.tng-search-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.tng-search-clear-all-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    transition: color 0.15s ease;
+}
+
+.tng-search-clear-all-btn:hover {
+    color: #ef4444;
+    text-decoration: underline;
+}
+
+/* Chip từ khóa (Recent & Trending) */
+.tng-search-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.tng-search-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    color: #1e293b;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.tng-search-chip:hover {
+    background: #000000;
+    border-color: #000000;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.tng-search-chip svg {
+    color: #94a3b8;
+    transition: color 0.18s ease;
+}
+
+.tng-search-chip:hover svg {
+    color: #ffffff;
+}
+
+.tng-search-chip .btn-remove-term {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-left: 2px;
+    opacity: 0.6;
+    transition: all 0.15s ease;
+}
+
+.tng-search-chip .btn-remove-term:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Danh mục nhanh (Quick Category Pills) */
+.tng-search-cats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.tng-search-cat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 500;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+
+.tng-search-cat-item:hover {
+    background: #f8fafc;
+    border-color: #000000;
+    color: #000000;
+    transform: translateY(-1px);
+}
+
+.tng-search-cat-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+/* 5. Kết quả sản phẩm tìm kiếm (Live Results) */
+.tng-search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tng-search-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: all 0.16s ease;
+    cursor: pointer;
+}
+
+.tng-search-item:hover,
+.tng-search-item.highlighted {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    transform: translateX(3px);
+}
+
+.tng-search-thumb-wrap {
+    width: 58px;
+    height: 58px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f1f5f9;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+}
+
+.tng-search-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tng-search-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tng-search-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tng-search-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.tng-search-stock-tag {
+    font-weight: 600;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.tng-search-stock-tag.in-stock {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.tng-search-stock-tag.out-stock {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.tng-search-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.tng-search-current-price {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.tng-search-current-price.sale {
+    color: #dc2626;
+}
+
+.tng-search-old-price {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.tng-search-sale-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    background: #000000;
+    color: #ffffff;
+    border-radius: 4px;
+}
+
+.tng-search-arrow {
+    color: #cbd5e1;
+    transition: transform 0.16s ease, color 0.16s ease;
+    flex-shrink: 0;
+}
+
+.tng-search-item:hover .tng-search-arrow,
+.tng-search-item.highlighted .tng-search-arrow {
+    color: #000000;
+    transform: translateX(3px);
+}
+
+/* 6. Trạng thái rỗng & Đang tải */
+.tng-search-empty-state {
+    text-align: center;
+    padding: 36px 16px;
+    color: #64748b;
+}
+
+.tng-search-empty-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+.tng-search-empty-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.tng-search-empty-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.tng-search-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    gap: 12px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.tng-search-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #000000;
+    border-radius: 50%;
+    animation: tngSearchSpin 0.7s linear infinite;
+}
+
+@keyframes tngSearchSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* 7. Footer của Modal */
+.tng-search-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #fafafa;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.78rem;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.tng-search-shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tng-search-shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tng-search-shortcut-item kbd {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    font-family: inherit;
+    color: #475569;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.tng-search-view-all-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    color: #000000;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+}
+
+.tng-search-view-all-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .tng-search-backdrop {
+        padding: 16px 10px 10px 10px;
+        align-items: flex-start;
+    }
+    .tng-search-dialog {
+        border-radius: 16px;
+        max-height: calc(100vh - 32px);
+    }
+    .tng-search-bar {
+        padding: 12px 14px;
+    }
+    .tng-search-input {
+        font-size: 1rem;
+    }
+    .tng-search-body {
+        padding: 12px 14px;
+    }
+    .tng-search-shortcuts {
+        display: none;
+    }
+    .tng-search-footer {
+        padding: 10px 14px;
+        justify-content: center;
+    }
+}
+
+/* Bỏ viền focus ring mặc định trên các nút icon header */
+.nav-icon-btn:focus,
+.nav-icon-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}

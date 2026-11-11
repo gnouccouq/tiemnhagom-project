@@ -1,0 +1,710 @@
+/* ==========================================================================
+   Tiệm Nhà Gốm — Web Notification System (Monochrome Black & White Style)
+   Đồng bộ 100% tính năng & dữ liệu với Mobile App (tiemnhagom-app)
+   ========================================================================== */
+
+/* 1. Header Bell Wrapper & Badge */
+.header-notif-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-notifications {
+    background: none;
+    border: none;
+    color: var(--text-black, #000000);
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-notifications:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.btn-notifications svg,
+.btn-notifications i {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+.notif-count-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background: #111111;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1.5px solid #FFFFFF;
+    line-height: 1;
+    pointer-events: none;
+    animation: notifPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes notifPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 2. Notification Dropdown Flyout */
+.notification-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -120px;
+    width: 420px;
+    max-width: calc(100vw - 24px);
+    background: #FFFFFF;
+    border: 1px solid #EAEAEA;
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: top right;
+    animation: notifDropdownFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes notifDropdownFade {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Dropdown Header */
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px 16px;
+    border-bottom: 1px solid #F0F0F0;
+    background: #FFFFFF;
+}
+
+.notif-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notif-header-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111111;
+    margin: 0;
+    letter-spacing: -0.2px;
+}
+
+.notif-unread-pill {
+    background: #111111;
+    color: #FFFFFF;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.notif-mark-read-btn {
+    background: transparent;
+    border: none;
+    font-size: 11.5px;
+    color: #666666;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.notif-mark-read-btn:hover {
+    color: #111111;
+    background: #F5F5F5;
+}
+
+.notif-mark-read-btn i {
+    font-size: 13px;
+}
+
+/* 3. Filter Pills Bar (Tất cả, Tin tức, Khuyến mãi, Đơn hàng, Hệ thống) */
+.notif-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #FAF9F6;
+    border-bottom: 1px solid #EEEEEE;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.notif-tabs-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.notif-tab-chip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    color: #555555;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.18s ease;
+    user-select: none;
+}
+
+.notif-tab-chip:hover {
+    border-color: #111111;
+    color: #111111;
+}
+
+.notif-tab-chip.active {
+    background: #111111;
+    border-color: #111111;
+    color: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.notif-tab-badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 999px;
+    line-height: 1.2;
+}
+
+.notif-tab-chip.active .notif-tab-badge {
+    background: #FFFFFF;
+    color: #111111;
+}
+
+.notif-tab-chip:not(.active) .notif-tab-badge {
+    background: #EAEAEA;
+    color: #333333;
+}
+
+/* 4. Notification List & Items */
+.notif-list-container {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    padding: 4px 0;
+    background: #FFFFFF;
+}
+
+.notif-list-container::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notif-list-container::-webkit-scrollbar-thumb {
+    background: #E0E0E0;
+    border-radius: 4px;
+}
+
+.notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #F5F5F5;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: #F9F9F9;
+}
+
+.notif-item.unread {
+    background: #FAF8F5;
+}
+
+.notif-item.unread:hover {
+    background: #F4F1EC;
+}
+
+.notif-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #F5F5F5;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    border: 1px solid #EAEAEA;
+}
+
+.notif-item.unread .notif-icon-box {
+    background: #111111;
+    color: #FFFFFF;
+    border-color: #111111;
+}
+
+.notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.notif-item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333333;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.notif-item.unread .notif-item-title {
+    font-weight: 700;
+    color: #111111;
+}
+
+.notif-unread-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #111111;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.notif-item-message {
+    font-size: 12px;
+    color: #666666;
+    line-height: 1.45;
+    margin: 2px 0 6px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.notif-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888888;
+}
+
+.notif-item-time {
+    color: #888888;
+}
+
+.notif-btn-delete {
+    background: none;
+    border: none;
+    color: #AAAAAA;
+    padding: 2px 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-item:hover .notif-btn-delete {
+    opacity: 1;
+}
+
+.notif-btn-delete:hover {
+    color: #E53935;
+    background: #FFEBEE;
+}
+
+.notif-item-thumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid #EEEEEE;
+}
+
+/* 5. Empty State (Y chang trên App!) */
+.notif-empty-state {
+    padding: 36px 20px;
+    text-align: center;
+    color: #777777;
+}
+
+.notif-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #F5F5F5;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px auto;
+    font-size: 1.35rem;
+}
+
+.notif-empty-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #111111;
+    margin-bottom: 4px;
+}
+
+.notif-empty-desc {
+    font-size: 11.5px;
+    color: #777777;
+    max-width: 280px;
+    margin: 0 auto;
+    line-height: 1.45;
+}
+
+/* 6. Dropdown Footer */
+.notif-dropdown-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    background: #FAF9F6;
+    border-top: 1px solid #EEEEEE;
+}
+
+.notif-footer-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111111;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: gap 0.15s ease;
+}
+
+.notif-footer-link:hover {
+    gap: 8px;
+    text-decoration: underline;
+}
+
+/* 7. In-Web Floating Toast Banner (giống InAppNotificationBanner.tsx trên App) */
+.web-notif-toast {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    max-width: 360px;
+    background: #FFFFFF;
+    border: 1.5px solid #111111;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+    z-index: 100000;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes toastSlideIn {
+    0% { transform: translateX(110%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.web-notif-toast.hiding {
+    opacity: 0;
+    transform: translateX(110%);
+}
+
+.toast-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #111111;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #111111;
+    line-height: 1.3;
+    margin: 0 0 2px 0;
+}
+
+.toast-message {
+    font-size: 11.5px;
+    color: #555555;
+    line-height: 1.35;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.toast-close-btn {
+    background: none;
+    border: none;
+    color: #888888;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.toast-close-btn:hover {
+    color: #111111;
+}
+
+/* 8. Notification Detail Modal (Modal xem toàn văn thông báo) */
+.notif-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.notif-modal-card {
+    background: #FFFFFF;
+    border: 1px solid #EAEAEA;
+    border-radius: 20px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+    animation: modalCardPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalCardPop {
+    0% { transform: scale(0.94); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.notif-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.notif-modal-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #111111;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.notif-modal-close {
+    background: #F5F5F5;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: #333333;
+    transition: background 0.15s ease;
+}
+
+.notif-modal-close:hover {
+    background: #111111;
+    color: #FFFFFF;
+}
+
+.notif-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #333333;
+}
+
+.notif-modal-img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #EEEEEE;
+}
+
+.notif-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111111;
+    margin-bottom: 6px;
+    line-height: 1.35;
+}
+
+.notif-modal-time {
+    font-size: 12px;
+    color: #888888;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.notif-modal-text {
+    color: #444444;
+    white-space: pre-line;
+}
+
+.notif-modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid #F0F0F0;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    background: #FAF9F6;
+}
+
+.notif-modal-btn {
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    border: none;
+}
+
+.notif-modal-btn.primary {
+    background: #111111;
+    color: #FFFFFF;
+}
+
+.notif-modal-btn.primary:hover {
+    background: #333333;
+}
+
+.notif-modal-btn.secondary {
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    color: #333333;
+}
+
+.notif-modal-btn.secondary:hover {
+    border-color: #111111;
+    color: #111111;
+}
+
+/* 9. Extra Tabler Icons Helper */
+.ti-checks{--ti-svg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 12l5 5l10 -10'/%3E%3Cpath d='M2 12l5 5m5 -5l5 -5'/%3E%3C/svg%3E");-webkit-mask-image:var(--ti-svg);mask-image:var(--ti-svg);}
+.ti-bell-off{--ti-svg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18'/%3E%3Cpath d='M17 17h-13a4 4 0 0 0 2 -3v-3a7 7 0 0 1 1.279 -3.716m2.072 -1.964c.208 -.074 .424 -.14 .649 -.195a2 2 0 0 1 4 0a7 7 0 0 1 4 6v.5'/%3E%3Cpath d='M9 17v1a3 3 0 0 0 6 0v-1'/%3E%3C/svg%3E");-webkit-mask-image:var(--ti-svg);mask-image:var(--ti-svg);}
+
+/* 10. Mobile Responsiveness */
+@media (max-width: 576px) {
+    .notification-dropdown {
+        position: fixed;
+        top: 70px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-width: none;
+        max-height: 80vh;
+        border-radius: 16px;
+    }
+    .web-notif-toast {
+        left: 14px;
+        right: 14px;
+        max-width: none;
+        top: 76px;
+    }
+}
+

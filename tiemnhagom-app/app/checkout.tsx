@@ -91,7 +91,7 @@ export default function CheckoutScreen() {
           setSuggestedProducts(items);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isCancelled = true;
@@ -184,7 +184,7 @@ export default function CheckoutScreen() {
         if (user && user.uid && res.orderId) {
           const firstItem = cart && cart.length > 0 ? cart[0] : null;
           const firstImg = firstItem?.imageUrl || (firstItem as any)?.image || undefined;
-          createOrderPlacedNotification(user.uid, res.orderId, res.orderCode, totalAmount, firstImg, true).catch(() => {});
+          createOrderPlacedNotification(user.uid, res.orderId, res.orderCode, totalAmount, firstImg, true).catch(() => { });
         }
 
         clearCart();
@@ -238,13 +238,12 @@ export default function CheckoutScreen() {
   const recipientDisplayName = selectedAddress?.fullName || userProfile?.displayName || userProfile?.name || 'Nguyễn Cường';
   const recipientPhone = selectedAddress?.phone || userProfile?.phone || '0867291612';
   const recipientAddress = selectedAddress
-    ? `${selectedAddress.address}${
-        selectedAddress.locationName
-          ? `, ${selectedAddress.locationName}`
-          : selectedAddress.wardName && selectedAddress.provinceName
-          ? `, ${selectedAddress.wardName}, ${selectedAddress.provinceName}`
-          : ''
-      }`
+    ? `${selectedAddress.address}${selectedAddress.locationName
+      ? `, ${selectedAddress.locationName}`
+      : selectedAddress.wardName && selectedAddress.provinceName
+        ? `, ${selectedAddress.wardName}, ${selectedAddress.provinceName}`
+        : ''
+    }`
     : '474/2 Đ. Cô Giang, Cầu Kiệu, Hồ Chí Minh, Việt Nam';
 
   return (
@@ -358,7 +357,7 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* 3. KHỐI CHỌN HÌNH THỨC GIAO HÀNG (2-Hour Express, Standard, Pickup) */}
+        {/* 3. KHỐI CHỌN HÌNH THỨC GIAO HÀNG (4-Hour Express, Standard, Pickup) */}
         <View style={styles.sectionCard}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
@@ -430,7 +429,7 @@ export default function CheckoutScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.shippingPillTitle, { color: '#9C7156' }]}>
-                    {t('shippingExpress2hTitle') || 'Giao nhanh 2 Giờ (Hỏa tốc)'}
+                    {t('shippingExpress2hTitle') || 'Giao nhanh 4 Giờ (Hỏa tốc)'}
                   </Text>
                   <Text style={styles.shippingPillSub}>
                     {t('shippingExpress2hSub') || 'Áp dụng nội thành TP.HCM (Khung 10h - 19h)'}
@@ -551,7 +550,7 @@ export default function CheckoutScreen() {
             style={styles.giftHeaderTouch}
             activeOpacity={0.85}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
               setIsGiftWrap(!isGiftWrap);
             }}
           >
@@ -570,7 +569,7 @@ export default function CheckoutScreen() {
             <Switch
               value={isGiftWrap}
               onValueChange={(val) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
                 setIsGiftWrap(val);
               }}
               trackColor={{ false: isDark ? '#333333' : '#E8E1D8', true: '#9C7156' }}

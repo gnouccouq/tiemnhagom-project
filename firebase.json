@@ -74,12 +74,30 @@
         "source": "/terms-of-service.html",
         "destination": "/chinh-sach/terms-of-service.html",
         "type": 301
+      },
+      {
+        "source": "/order-detail",
+        "destination": "/tra-cuu-don-hang.html",
+        "type": 302
+      },
+      {
+        "source": "/order-detail/**",
+        "destination": "/tra-cuu-don-hang.html",
+        "type": 302
       }
     ],
     "rewrites": [
       {
         "source": "/share",
         "function": "shareRedirect"
+      },
+      {
+        "source": "/order-detail",
+        "destination": "/tra-cuu-don-hang.html"
+      },
+      {
+        "source": "/order-detail/**",
+        "destination": "/tra-cuu-don-hang.html"
       },
       {
         "source": "/sitemap-products.xml",

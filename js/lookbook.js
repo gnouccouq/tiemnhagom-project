@@ -281,16 +281,16 @@ function setupAdminPreviewBar() {
 
     toggleBtn.onclick = () => {
         currentShowingMode = currentShowingMode === 'live' ? 'coming_soon' : 'live';
-        toggleBtn.innerText = currentShowingMode === 'live' 
-            ? '👁️ Xem giao diện khách (Coming Soon)' 
-            : '✨ Xem giao diện đầy đủ (Live Lookbook)';
+        toggleBtn.innerHTML = currentShowingMode === 'live' 
+            ? '<i class="ti ti-eye"></i> Xem giao diện khách (Coming Soon)' 
+            : '<i class="ti ti-sparkles"></i> Xem giao diện đầy đủ (Live Lookbook)';
         applyDisplayMode();
         if (currentShowingMode === 'live') {
             renderScenes();
             updateFilterCounts();
         }
     };
-    toggleBtn.innerText = '👁️ Xem giao diện khách (Coming Soon)';
+    toggleBtn.innerHTML = '<i class="ti ti-eye"></i> Xem giao diện khách (Coming Soon)';
 }
 
 // Xử lý gửi form đăng ký nhận thông báo ra mắt
@@ -311,7 +311,7 @@ window.handleComingSoonNotify = async (e) => {
         console.warn("Lưu subscriber vào Firestore:", err);
     }
 
-    showToast("🎉 Đã đăng ký thành công! Tiệm sẽ gửi quà & thông báo ngay khi mở cửa!", "success");
+    showToast("<i class='ti ti-confetti'></i> Đã đăng ký thành công! Tiệm sẽ gửi quà & thông báo ngay khi mở cửa!", "success");
     input.value = "";
 };
 

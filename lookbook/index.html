@@ -48,10 +48,10 @@
     <!-- Admin Preview Top Bar (Chỉ hiển thị khi là Admin hoặc ?preview=true) -->
     <div id="lookbook-admin-preview-bar" class="lookbook-admin-bar" style="display: none;">
         <div class="admin-bar-inner">
-            <span>🔒 <strong>Chế độ Xem trước Admin:</strong> Khách hàng vãng lai hiện đang thấy màn hình <em>Sắp Ra Mắt</em>.</span>
+            <span><i class="ti ti-lock"></i> <strong>Chế độ Xem trước Admin:</strong> Khách hàng vãng lai hiện đang thấy màn hình <em>Sắp Ra Mắt</em>.</span>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" id="btn-toggle-preview-mode" class="btn-admin-pill">👁️ Đổi chế độ xem</button>
-                <a href="../DashBoard/index.html#/Lookbook" class="btn-admin-pill outline">⚙️ Về Dashboard</a>
+                <button type="button" id="btn-toggle-preview-mode" class="btn-admin-pill"><i class="ti ti-eye"></i> Đổi chế độ xem</button>
+                <a href="../DashBoard/index.html#/Lookbook" class="btn-admin-pill outline"><i class="ti ti-settings"></i> Về Dashboard</a>
             </div>
         </div>
     </div>
@@ -62,7 +62,7 @@
         <!-- 1. COMING SOON VIEW (Mặc định hiển thị khi tính năng đang Sắp Ra Mắt) -->
         <div id="lookbook-coming-soon-view" style="display: block;">
             <section class="lookbook-coming-soon-container">
-                <span class="coming-soon-badge">✨ SẮP RA MẮT • COMING SOON</span>
+                <span class="coming-soon-badge"><i class="ti ti-sparkles"></i> SẮP RA MẮT • COMING SOON</span>
                 <h1 class="coming-soon-title">Không Gian Cảm Hứng<br><em>Shoppable Lookbook</em></h1>
                 <p class="coming-soon-desc">
                     Từng món đồ gốm chỉ thực sự bừng nở vẻ đẹp khi được đặt đúng không gian của nó. Tiệm Nhà Gốm đang chuẩn bị những góc phối cảnh mộc mạc và tĩnh tại để bạn có thể vừa thưởng lãm, vừa chạm tay mua sắm trực tiếp từ hình ảnh. Hẹn gặp bạn trong những ngày gần nhất!
@@ -73,21 +73,21 @@
                     <div class="coming-soon-card">
                         <img src="../Asset/images/dining.jpg" alt="Bàn ăn men mộc" class="coming-soon-card-img" loading="lazy">
                         <div class="coming-soon-card-body">
-                            <span class="coming-soon-card-tag">🍲 Bàn ăn ấm cúng</span>
+                            <span class="coming-soon-card-tag"><i class="ti ti-soup"></i> Bàn ăn ấm cúng</span>
                             <h3 class="coming-soon-card-name">Bàn Ăn Men Mộc Gia Đình</h3>
                         </div>
                     </div>
                     <div class="coming-soon-card">
                         <img src="../Asset/images/teatime.jpg" alt="Góc thưởng trà" class="coming-soon-card-img" loading="lazy">
                         <div class="coming-soon-card-body">
-                            <span class="coming-soon-card-tag">🍵 Góc thưởng trà</span>
+                            <span class="coming-soon-card-tag"><i class="ti ti-cup"></i> Góc thưởng trà</span>
                             <h3 class="coming-soon-card-name">Trà Sớm Tĩnh Tại Bên Cửa Sổ</h3>
                         </div>
                     </div>
                     <div class="coming-soon-card">
                         <img src="../Asset/images/homedecor.jpg" alt="Decor & Bình hoa" class="coming-soon-card-img" loading="lazy">
                         <div class="coming-soon-card-body">
-                            <span class="coming-soon-card-tag">🏺 Decor nghệ thuật</span>
+                            <span class="coming-soon-card-tag"><i class="ti ti-teapot"></i> Decor nghệ thuật</span>
                             <h3 class="coming-soon-card-name">Bình Hoa Men Tro Phòng Khách</h3>
                         </div>
                     </div>
@@ -105,8 +105,8 @@
 
                 <!-- Action Links -->
                 <div class="coming-soon-actions">
-                    <a href="../index.html" class="btn-coming-soon secondary">🏪 Trở về trang chủ</a>
-                    <a href="../blog.html" class="btn-coming-soon secondary">📰 Đọc cẩm nang gốm</a>
+                    <a href="../index.html" class="btn-coming-soon secondary"><i class="ti ti-building-store"></i> Trở về trang chủ</a>
+                    <a href="../blog.html" class="btn-coming-soon secondary"><i class="ti ti-news"></i> Đọc cẩm nang gốm</a>
                     <a href="../category/index.html" class="btn-coming-soon primary">Khám phá sản phẩm có sẵn →</a>
                 </div>
             </section>
@@ -131,19 +131,19 @@
                         <span class="badge-count"></span>
                     </button>
                     <button type="button" class="lookbook-filter-btn" data-filter="dining">
-                        <span>🍲 Bàn ăn ấm cúng</span>
+                        <span><i class="ti ti-soup"></i> Bàn ăn ấm cúng</span>
                         <span class="badge-count"></span>
                     </button>
                     <button type="button" class="lookbook-filter-btn" data-filter="teatime">
-                        <span>🍵 Góc thưởng trà</span>
+                        <span><i class="ti ti-cup"></i> Góc thưởng trà</span>
                         <span class="badge-count"></span>
                     </button>
                     <button type="button" class="lookbook-filter-btn" data-filter="decor">
-                        <span>🏺 Decor & Bình hoa</span>
+                        <span><i class="ti ti-teapot"></i> Decor & Bình hoa</span>
                         <span class="badge-count"></span>
                     </button>
                     <button type="button" class="lookbook-filter-btn" data-filter="kitchen">
-                        <span>🍳 Gian bếp mộc</span>
+                        <span><i class="ti ti-tools-kitchen-2"></i> Gian bếp mộc</span>
                         <span class="badge-count"></span>
                     </button>
                 </div>

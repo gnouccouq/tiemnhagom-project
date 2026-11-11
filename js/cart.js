@@ -1,5 +1,5 @@
-import { 
-    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings, 
+import {
+    db, auth, initHeader, updateCartCount, showToast, formatPhoneNumber, fetchFlashSaleSettings,
     getProductCurrentPrice, getMembershipTier, sendEmailNotification, generateOrderId, showModalConfirm,
     isUserInHCM, fetchUserMembershipInfo
 } from "./utils.js";
@@ -46,15 +46,15 @@ export function isHCMProvince(provinceName) {
 // Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
 export function calculateShippingFee(method, provinceName) {
     if (method === 'pickup') return 0; // Nhận tại shop: 0đ
-    
+
     const isHCM = isHCMProvince(provinceName);
     if (isHCM) {
-        if (method === 'express_2h') {
-            return 30000; // Giao nhanh 2h nội thành TP.HCM: 30k
+        if (method === 'express_2h' || method === 'express_4h') {
+            return 30000; // Giao nhanh 4h nội thành TP.HCM: 30k
         }
         return 20000; // Giao thông thường nội thành TP.HCM: 20k
     }
-    
+
     // Ngoài TP. Hồ Chí Minh
     return 40000; // Phí ship ngoài TP.HCM: 40k
 }
@@ -77,7 +77,7 @@ async function fetchCommunesByProvinceId(provinceId) {
 
 async function calculateMembershipDiscount(cart, userTier) {
     if (!userTier || userTier.id === 'null') return 0;
-    
+
     let totalDiscount = 0;
     for (const item of cart) {
         let itemCategory = item.category;
@@ -88,12 +88,12 @@ async function calculateMembershipDiscount(cart, userTier) {
                     itemCategory = productSnap.data().category;
                     item.category = itemCategory;
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
-        
+
         let subtotal = item.price * item.quantity;
         let baseDisc = (subtotal * userTier.discount) / 100;
-        
+
         let catDiscPercent = 0;
         if (userTier.categoryDiscounts && itemCategory) {
             const matchingCat = Object.keys(userTier.categoryDiscounts).find(c => c.toLowerCase() === itemCategory.toLowerCase());
@@ -101,7 +101,7 @@ async function calculateMembershipDiscount(cart, userTier) {
                 catDiscPercent = userTier.categoryDiscounts[matchingCat];
             }
         }
-        
+
         totalDiscount += (baseDisc + (subtotal * catDiscPercent) / 100);
     }
     return Math.round(totalDiscount);
@@ -168,22 +168,22 @@ async function renderCart() {
         const applicableTotal = await getCartItemCategoryTotal(cart, appliedCoupon.category);
         if (appliedCoupon.type === 'percent') {
             const rawDiscount = applicableTotal * appliedCoupon.value / 100;
-            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0) 
-                ? Math.min(rawDiscount, appliedCoupon.maxDiscount) 
+            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0)
+                ? Math.min(rawDiscount, appliedCoupon.maxDiscount)
                 : rawDiscount;
         } else {
             discountAmount = Math.min(appliedCoupon.value, applicableTotal);
         }
     }
-    
+
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value || 'delivery';
     const selectedProvinceOption = document.getElementById('shipping-province')?.options[document.getElementById('shipping-province').selectedIndex];
     const selectedProvinceName = selectedProvinceOption ? selectedProvinceOption.text : '';
     let userTier = getMembershipTier(0);
     let membershipDiscountVal = 0;
-    
+
     if (auth.currentUser) {
-        const qOrders = query(collection(db, "orders"), 
+        const qOrders = query(collection(db, "orders"),
             where("userId", "==", auth.currentUser.uid));
         const orderSnaps = await getDocs(qOrders);
         let totalSpent = 0;
@@ -202,10 +202,10 @@ async function renderCart() {
     }
 
     let shippingLabel = 'Phí vận chuyển';
-    if (shippingMethod === 'express_2h') {
-        shippingLabel = '⚡ Phí giao nhanh 2 Giờ';
+    if (shippingMethod === 'express_2h' || shippingMethod === 'express_4h') {
+        shippingLabel = '<i class="ti ti-bolt-filled"></i> Phí giao nhanh 4 Giờ';
     } else if (shippingMethod === 'pickup') {
-        shippingLabel = '🏪 Nhận tại cửa hàng';
+        shippingLabel = '<i class="ti ti-building-store"></i> Nhận tại cửa hàng';
     }
 
     const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
@@ -253,7 +253,7 @@ export function updateShippingMethodOptions() {
                         ${newSelected === 'delivery' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
                     </span>
                     <div>
-                        <strong style="color: #1e293b; font-size: 0.92rem;">🚚 Giao thông thường nội thành</strong>
+                        <strong style="color: #1e293b; font-size: 0.92rem;"><i class="ti ti-truck-delivery"></i> Giao thông thường nội thành</strong>
                         <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Nhận hàng trong 1-2 ngày làm việc</div>
                     </div>
                 </div>
@@ -267,7 +267,7 @@ export function updateShippingMethodOptions() {
                         ${newSelected === 'express_2h' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
                     </span>
                     <div>
-                        <strong style="color: #c2410c; font-size: 0.92rem;">⚡ Giao nhanh 2 Giờ (Hỏa tốc)</strong>
+                        <strong style="color: #c2410c; font-size: 0.92rem;"><i class="ti ti-bolt-filled"></i> Giao nhanh 4 Giờ (Hỏa tốc)</strong>
                         <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Áp dụng nội thành TP.HCM (Khung giờ 10h - 19h)</div>
                     </div>
                 </div>
@@ -281,7 +281,7 @@ export function updateShippingMethodOptions() {
                         ${newSelected === 'pickup' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
                     </span>
                     <div>
-                        <strong style="color: #1e293b; font-size: 0.92rem;">🏪 Nhận tại cửa hàng</strong>
+                        <strong style="color: #1e293b; font-size: 0.92rem;"><i class="ti ti-building-store"></i> Nhận tại cửa hàng</strong>
                         <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
                     </div>
                 </div>
@@ -297,7 +297,7 @@ export function updateShippingMethodOptions() {
                         ${newSelected === 'delivery' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
                     </span>
                     <div>
-                        <strong style="color: #1e293b; font-size: 0.92rem;">🚚 Giao hàng tiêu chuẩn toàn quốc</strong>
+                        <strong style="color: #1e293b; font-size: 0.92rem;"><i class="ti ti-truck-delivery"></i> Giao hàng tiêu chuẩn toàn quốc</strong>
                         <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Giao hàng tận nơi toàn quốc (3-5 ngày)</div>
                     </div>
                 </div>
@@ -311,7 +311,7 @@ export function updateShippingMethodOptions() {
                         ${newSelected === 'pickup' ? '<span style="width: 6px; height: 6px; border-radius: 50%; background: #ffffff;"></span>' : ''}
                     </span>
                     <div>
-                        <strong style="color: #1e293b; font-size: 0.92rem;">🏪 Nhận tại cửa hàng</strong>
+                        <strong style="color: #1e293b; font-size: 0.92rem;"><i class="ti ti-building-store"></i> Nhận tại cửa hàng</strong>
                         <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Số 37 Nguyễn Duy, P. Gia Định, TP.HCM</div>
                     </div>
                 </div>
@@ -342,7 +342,7 @@ window.useSavedAddress = async (index) => {
     if (nameInp) nameInp.value = addr.fullName || '';
     if (phoneInp) phoneInp.value = addr.phone || '';
     if (addressInp) addressInp.value = addr.address || '';
-    
+
     if (provinceSelect) {
         if (window.tsProvince) {
             window.tsProvince.setValue(addr.provinceId, true);
@@ -358,10 +358,10 @@ window.useSavedAddress = async (index) => {
         }
 
         const communes = await fetchCommunesByProvinceId(addr.provinceId);
-        
+
         if (window.tsWard) {
-            window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
-            communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+            window.tsWard.addOption({ value: '', text: '-- Chọn Phường/Xã --' });
+            communes.forEach(c => window.tsWard.addOption({ value: c.id, text: c.name }));
             window.tsWard.setValue(addr.wardId, true);
             window.tsWard.enable();
         } else {
@@ -379,8 +379,8 @@ window.useSavedAddress = async (index) => {
 
 async function renderCheckoutForm(container) {
     // Kiểm tra xem một phần tử đặc trưng của form đã tồn tại chưa thay vì kiểm tra innerHTML
-    if (document.getElementById('shipping-name')) return; 
-    
+    if (document.getElementById('shipping-name')) return;
+
     // Lấy thông tin user hiện tại nếu có login để auto-fill
     let userData = { displayName: '', email: '', phone: '' };
     if (auth.currentUser) {
@@ -442,7 +442,7 @@ async function renderCheckoutForm(container) {
             <div class="form-group">
                 <label style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                     <span>Order Note | Ghi chú đơn hàng &amp; Thiệp quà tặng</span>
-                    ${localStorage.getItem('tng_noel_gift_note') ? `<span style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">🎄 Đã đính kèm lời chúc Thiệp Giáng Sinh</span>` : `<a href="../noel/#noel-gift-writer" style="font-size:0.75rem; color:#991B1B; font-weight:600; text-decoration:underline;">🎄 Viết thiệp Giáng Sinh miễn phí</a>`}
+                    ${localStorage.getItem('tng_noel_gift_note') ? `<span style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;"><i class="ti ti-christmas-tree"></i> Đã đính kèm lời chúc Thiệp Giáng Sinh</span>` : `<a href="../noel/#noel-gift-writer" style="font-size:0.75rem; color:#991B1B; font-weight:600; text-decoration:underline;"><i class="ti ti-christmas-tree"></i> Viết thiệp Giáng Sinh miễn phí</a>`}
                 </label>
                 <textarea id="order-note" rows="3" placeholder="Ghi chú giao hàng hoặc lời chúc viết tay lên thiệp Giáng Sinh...">${(localStorage.getItem('tng_noel_gift_note') || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
             </div>
@@ -480,7 +480,7 @@ async function renderCheckoutForm(container) {
                 </label>
             </div>
             <div id="bank-transfer-info" style="display: none; margin-top: 15px; padding: 15px; background: #fcfbf8; border: 1px dashed #ccc; border-radius: 4px; font-size: 0.85rem;">
-                <p><strong>💡 Lưu ý:</strong> Mã QR thanh toán kèm <strong>đúng số tiền</strong> và <strong>nội dung chuyển khoản</strong> sẽ hiển thị sau khi bạn nhấn nút "Đặt hàng".</p>
+                <p><strong><i class="ti ti-bulb"></i> Lưu ý:</strong> Mã QR thanh toán kèm <strong>đúng số tiền</strong> và <strong>nội dung chuyển khoản</strong> sẽ hiển thị sau khi bạn nhấn nút "Đặt hàng".</p>
             </div>
         </div>
     `;
@@ -502,7 +502,7 @@ async function renderCheckoutForm(container) {
     if (window.TomSelect) {
         if (window.tsProvince) window.tsProvince.destroy();
         if (window.tsWard) window.tsWard.destroy();
-        
+
         window.tsProvince = new TomSelect('#shipping-province', {
             create: false,
             sortField: { field: "text", direction: "asc" }
@@ -521,8 +521,8 @@ async function renderCheckoutForm(container) {
             if (provinceId) {
                 const communes = await fetchCommunesByProvinceId(provinceId);
                 if (window.tsWard) {
-                    window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
-                    communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+                    window.tsWard.addOption({ value: '', text: '-- Chọn Phường/Xã --' });
+                    communes.forEach(c => window.tsWard.addOption({ value: c.id, text: c.name }));
                     window.tsWard.enable();
                 }
             }
@@ -534,7 +534,7 @@ async function renderCheckoutForm(container) {
     // Logic xử lý chọn Tỉnh -> Hiện Phường/Xã (Fallback)
     provinceSelect?.addEventListener('change', async (e) => {
         const provinceId = e.target.value;
-        
+
         if (window.tsWard) {
             window.tsWard.clear(true);
             window.tsWard.clearOptions();
@@ -547,8 +547,8 @@ async function renderCheckoutForm(container) {
         if (provinceId) {
             const communes = await fetchCommunesByProvinceId(provinceId);
             if (window.tsWard) {
-                window.tsWard.addOption({value: '', text: '-- Chọn Phường/Xã --'});
-                communes.forEach(c => window.tsWard.addOption({value: c.id, text: c.name}));
+                window.tsWard.addOption({ value: '', text: '-- Chọn Phường/Xã --' });
+                communes.forEach(c => window.tsWard.addOption({ value: c.id, text: c.name }));
                 window.tsWard.enable();
             } else {
                 wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
@@ -640,7 +640,7 @@ async function getCartItemCategoryTotal(cart, targetCategory) {
     if (!targetCategory || targetCategory === 'all') {
         return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     }
-    
+
     let total = 0;
     for (const item of cart) {
         let itemCategory = item.category;
@@ -675,7 +675,7 @@ window.selectCoupon = (code) => {
 window.applyCoupon = async () => {
     const input = document.getElementById('coupon-input');
     const code = input.value.trim().toUpperCase();
-    
+
     if (!code) {
         appliedCoupon = null;
         renderCart();
@@ -686,7 +686,7 @@ window.applyCoupon = async () => {
         const couponSnap = await getDoc(doc(db, "coupons", code));
         if (couponSnap.exists()) {
             const data = couponSnap.data();
-            
+
             // Lấy subtotal hiện tại của giỏ hàng
             let cart = [];
             if (auth.currentUser) {
@@ -729,18 +729,18 @@ window.applyCoupon = async () => {
 
             // Kiểm tra giới hạn 1 lần sử dụng cho mỗi khách hàng (Thành viên)
             const qUsed = query(
-                    collection(db, "orders"), 
-                    where("userId", "==", auth.currentUser.uid), 
-                    where("couponCode", "==", code), 
-                    limit(1)
-                );
-                const usedSnap = await getDocs(qUsed);
-                if (!usedSnap.empty) {
-                    showToast("Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó", "error");
-                    appliedCoupon = null;
-                    renderCart();
-                    return;
-                }
+                collection(db, "orders"),
+                where("userId", "==", auth.currentUser.uid),
+                where("couponCode", "==", code),
+                limit(1)
+            );
+            const usedSnap = await getDocs(qUsed);
+            if (!usedSnap.empty) {
+                showToast("Bạn đã sử dụng mã giảm giá này cho một đơn hàng trước đó", "error");
+                appliedCoupon = null;
+                renderCart();
+                return;
+            }
 
             // Kiểm tra giới hạn số lần sử dụng
             if (data.limit > 0 && (data.usedCount || 0) >= data.limit) {
@@ -779,7 +779,7 @@ window.applyCoupon = async () => {
             }
 
             const applicableTotal = await getCartItemCategoryTotal(cart, data.category);
-            
+
             if (data.category && data.category !== 'all' && applicableTotal === 0) {
                 showToast(`Mã giảm giá này chỉ áp dụng cho sản phẩm thuộc danh mục: ${data.category}`, "error");
                 appliedCoupon = null;
@@ -881,7 +881,7 @@ window.placeOrder = async () => {
     const phone = document.getElementById('shipping-phone')?.value.trim();
     const email = document.getElementById('shipping-email')?.value.trim();
     const formattedPhone = formatPhoneNumber(phone);
-    
+
     const provinceSelect = document.getElementById('shipping-province');
     let provinceId = provinceSelect?.value;
     let provinceName = provinceSelect?.options[provinceSelect.selectedIndex]?.textContent;
@@ -904,7 +904,7 @@ window.placeOrder = async () => {
     const note = document.getElementById('order-note')?.value.trim();
     const termsAccepted = document.getElementById('terms-agreement')?.checked;
     const saveAddressChecked = document.getElementById('save-address-checkbox')?.checked;
-    
+
     const shippingMethod = document.querySelector('input[name="shipping-method"]:checked')?.value;
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
 
@@ -937,8 +937,8 @@ window.placeOrder = async () => {
         const applicableTotal = await getCartItemCategoryTotal(cart, appliedCoupon.category);
         if (appliedCoupon.type === 'percent') {
             const rawDiscount = applicableTotal * appliedCoupon.value / 100;
-            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0) 
-                ? Math.min(rawDiscount, appliedCoupon.maxDiscount) 
+            discountAmount = (appliedCoupon.maxDiscount && appliedCoupon.maxDiscount > 0)
+                ? Math.min(rawDiscount, appliedCoupon.maxDiscount)
                 : rawDiscount;
         } else {
             discountAmount = Math.min(appliedCoupon.value, applicableTotal);
@@ -948,7 +948,7 @@ window.placeOrder = async () => {
     let userTier = getMembershipTier(0);
     let membershipDiscountVal = 0;
     if (auth.currentUser) {
-        const qOrders = query(collection(db, "orders"), 
+        const qOrders = query(collection(db, "orders"),
             where("userId", "==", auth.currentUser.uid));
         const orderSnaps = await getDocs(qOrders);
         let totalSpent = 0;
@@ -1007,7 +1007,7 @@ window.placeOrder = async () => {
         if (appliedCoupon) {
             const checkField = auth.currentUser ? "userId" : "shippingAddress.phone";
             const checkVal = auth.currentUser ? auth.currentUser.uid : formattedPhone; // Sử dụng SĐT đã chuẩn hóa
-            
+
             const qReCheck = query(
                 collection(db, "orders"),
                 where(checkField, "==", checkVal),
@@ -1063,7 +1063,7 @@ window.placeOrder = async () => {
                     if (!matchedComboName && product.comboVariants.length === 1) {
                         matchedComboName = product.comboVariants[0].name;
                     }
-                    
+
                     if (matchedComboName) {
                         const cv = product.comboVariants.find(v => v.name === matchedComboName);
                         if (cv && cv.items) {
@@ -1075,7 +1075,7 @@ window.placeOrder = async () => {
                                         productDocsMap[child.id] = { ref: childRef, product: childSnap.data() };
                                     }
                                 }
-                                
+
                                 if (productDocsMap[child.id]) {
                                     const childQty = item.quantity * Math.max(1, parseInt(child.quantity, 10) || 1);
                                     const pseudoItem = {
@@ -1084,11 +1084,11 @@ window.placeOrder = async () => {
                                         color: child.selectedColor || null,
                                         pattern: child.selectedPattern || null,
                                     };
-                                    productSnapshots.push({ 
-                                        item: pseudoItem, 
-                                        productRef: productDocsMap[child.id].ref, 
-                                        product: productDocsMap[child.id].product, 
-                                        isChild: true 
+                                    productSnapshots.push({
+                                        item: pseudoItem,
+                                        productRef: productDocsMap[child.id].ref,
+                                        product: productDocsMap[child.id].product,
+                                        isChild: true
                                     });
                                 }
                             }
@@ -1335,7 +1335,7 @@ window.placeOrder = async () => {
                 const userRef = doc(db, "users", auth.currentUser.uid);
                 const userSnap = await getDoc(userRef);
                 const currentAddresses = userSnap.exists() ? (userSnap.data().addresses || []) : [];
-                
+
                 const newAddress = {
                     fullName: name,
                     phone: formattedPhone,
@@ -1387,17 +1387,17 @@ window.placeOrder = async () => {
 
             showToast("Đặt hàng thành công! Đang xử lý thanh toán...", "success");
             updateCartCount();
-            
+
             if (paymentMethod === 'vnpay') {
                 const functions = getFunctions(db.app);
                 const createVNPayUrl = httpsCallable(functions, 'createVNPayUrl');
                 try {
-                    const result = await createVNPayUrl({ 
-                        orderId: orderId, 
+                    const result = await createVNPayUrl({
+                        orderId: orderId,
                         amount: finalTotal,
                         orderInfo: `Thanh toan don hang ${orderId} tai Tiem Nha Gom`
                     });
-                    
+
                     if (result.data && result.data.success && result.data.url) {
                         window.location.href = result.data.url;
                         return; // Ngăn không chạy tiếp logic chuyển sang thank-you bình thường

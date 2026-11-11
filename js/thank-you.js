@@ -96,13 +96,13 @@ function renderOrderSummary(order) {
                 const label = order.couponCode ? `Giảm giá (Mã ${order.couponCode})` : (order.source === 'pos' ? 'Giảm giá trực tiếp tại shop (POS)' : 'Giảm giá');
                 return `
                 <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #ea580c; font-weight: 500;">
-                    <span>🏷️ ${label}:</span>
+                    <span><i class="ti ti-tag"></i> ${label}:</span>
                     <span>-${new Intl.NumberFormat('vi-VN').format(discVal)}đ</span>
                 </div>`;
             })()}
             ${(order.membershipDiscount && Number(order.membershipDiscount) > 0) ? `
             <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #d97706; font-weight: 600;">
-                <span>👑 Ưu đãi thành viên (Membership):</span>
+                <span><i class="ti ti-crown"></i> Ưu đãi thành viên (Membership):</span>
                 <span>-${new Intl.NumberFormat('vi-VN').format(order.membershipDiscount)}đ</span>
             </div>` : ''}
             <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; border-top: 2px solid #eee; padding-top: 15px; margin-top: 15px;">

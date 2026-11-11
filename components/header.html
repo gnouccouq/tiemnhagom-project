@@ -61,21 +61,27 @@
 
         <!-- 3. Cột phải: Icons -->
         <div class="header-col-right">
-            <button id="btn-open-search" class="nav-icon-btn" title="Tìm kiếm" aria-label="Mở tìm kiếm">
+            <button id="btn-open-search" class="nav-icon-btn" title="Tìm kiếm (Ctrl + K)" aria-label="Mở tìm kiếm" onclick="if(window.openSearchModal)window.openSearchModal();">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
             </button>
 
-            <div id="auth-section">
-                <a href="login/" class="header-login-btn" title="Đăng nhập">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
+            <!-- Nút Thông Báo (Chuẩn Web & Đồng bộ Mobile App) -->
+            <div class="header-notif-wrapper" id="header-notif-wrapper">
+                <button id="btn-open-notifications" class="nav-icon-btn btn-notifications" title="Thông báo" aria-label="Mở thông báo" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"></path>
+                        <path d="M9 17v1a3 3 0 0 0 6 0v-1"></path>
                     </svg>
-                    <span>Đăng nhập</span>
-                </a>
+                    <span class="badge notif-count-badge" id="notif-count-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- Dropdown Trung Tâm Thông Báo (Flyout) -->
+                <div class="notification-dropdown" id="notification-dropdown" style="display: none;">
+                    <!-- Sẽ được nạp tự động bởi js/notifications.js -->
+                </div>
             </div>
 
             <a href="profile/#favs" class="nav-icon-btn" title="Yêu thích">
@@ -95,6 +101,16 @@
                 </svg>
                 <span class="badge cart-count-badge">0</span>
             </a>
+
+            <div id="auth-section">
+                <a href="login/" class="header-login-btn" title="Đăng nhập">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Đăng nhập</span>
+                </a>
+            </div>
 
             <!-- Custom Language Dropdown (Tạm thời ẩn) -->
             <div class="dropdown lang-dropdown" style="display: none !important; margin-left: 5px; align-items: center;">
@@ -147,18 +163,45 @@
         </div>
     </nav>
 
-    <!-- Search Overlay UI -->
-    <div id="search-overlay" class="search-overlay">
-        <div class="search-overlay-content">
-            <div class="search-input-wrapper">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="header-search-input" placeholder="Bạn muốn tìm món gốm nào?" autocomplete="off">
-                <button id="btn-close-search" class="close-search-btn">&times;</button>
+    <!-- Command Palette Search Modal UI (Apple / Zara Style) -->
+    <div id="tng-search-backdrop" class="tng-search-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="tng-search-dialog">
+            <!-- Search Bar Header -->
+            <div class="tng-search-bar">
+                <div class="tng-search-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <input type="text" id="tng-search-input" class="tng-search-input" placeholder="Tìm sản phẩm, chất liệu men, bộ sưu tập... (Ctrl + K)" autocomplete="off" spellcheck="false">
+                <button type="button" id="tng-search-clear" class="tng-search-clear" title="Xóa nội dung" aria-label="Xóa nội dung">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button type="button" id="tng-search-close-btn" class="tng-search-close-btn" title="Đóng tìm kiếm">
+                    <span>Đóng</span>
+                </button>
             </div>
-            <div id="search-suggestions" class="search-suggestions"></div>
+
+            <!-- Scrollable Search Body -->
+            <div id="tng-search-body" class="tng-search-body">
+                <!-- Nội dung được nạp động bởi js/search-modal.js -->
+            </div>
+
+            <!-- Search Footer -->
+            <div class="tng-search-footer">
+                <div class="tng-search-shortcuts">
+                    <span class="tng-search-shortcut-item"><kbd>&uarr;</kbd> <kbd>&darr;</kbd> Chọn</span>
+                    <span class="tng-search-shortcut-item"><kbd>&crarr;</kbd> Mở</span>
+                    <span class="tng-search-shortcut-item"><kbd>ESC</kbd> Đóng</span>
+                </div>
+                <a href="#" id="tng-search-view-all" class="tng-search-view-all-link" style="display: none;">
+                    Xem tất cả kết quả &rarr;
+                </a>
+            </div>
         </div>
     </div>
 

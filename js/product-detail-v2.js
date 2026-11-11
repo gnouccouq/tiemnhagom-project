@@ -188,41 +188,41 @@ window.renderComboItemsHTML = (items) => {
     return `
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
             ${items.map(it => {
-                // Xác định ảnh chuẩn của biến thể sản phẩm con
-                let displayImg = it.thumbUrl || it.imageUrl || it.image || '../Asset/icons/favicon.png';
+        // Xác định ảnh chuẩn của biến thể sản phẩm con
+        let displayImg = it.thumbUrl || it.imageUrl || it.image || '../Asset/icons/favicon.png';
 
-                // 1. Kiểm tra họa tiết (Pattern variant)
-                let availablePatterns = (it.patternVariants && it.patternVariants.length > 0) ? it.patternVariants : (it.patterns || []);
-                if (it.selectedPattern && availablePatterns.length > 0) {
-                    const patternMatch = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === it.selectedPattern);
-                    if (patternMatch && typeof patternMatch === 'object') {
-                        const pImg = patternMatch.imageUrl || patternMatch.thumbUrl || patternMatch.image;
-                        if (pImg) displayImg = pImg;
-                    }
+        // 1. Kiểm tra họa tiết (Pattern variant)
+        let availablePatterns = (it.patternVariants && it.patternVariants.length > 0) ? it.patternVariants : (it.patterns || []);
+        if (it.selectedPattern && availablePatterns.length > 0) {
+            const patternMatch = availablePatterns.find(v => (typeof v === 'string' ? v : v.name) === it.selectedPattern);
+            if (patternMatch && typeof patternMatch === 'object') {
+                const pImg = patternMatch.imageUrl || patternMatch.thumbUrl || patternMatch.image;
+                if (pImg) displayImg = pImg;
+            }
+        }
+
+        // 2. Kiểm tra màu sắc (Color variant) nếu chưa có ảnh hoặc ưu tiên màu sắc được chọn
+        if (it.selectedColor && Array.isArray(it.colorVariants)) {
+            const colorMatch = it.colorVariants.find(v => (v.name || v) === it.selectedColor);
+            if (colorMatch && typeof colorMatch === 'object') {
+                const cImg = colorMatch.imageUrl || colorMatch.thumbUrl || colorMatch.image;
+                if (cImg && (!it.selectedPattern || !displayImg || displayImg.includes('favicon'))) {
+                    displayImg = cImg;
                 }
+            }
+        }
 
-                // 2. Kiểm tra màu sắc (Color variant) nếu chưa có ảnh hoặc ưu tiên màu sắc được chọn
-                if (it.selectedColor && Array.isArray(it.colorVariants)) {
-                    const colorMatch = it.colorVariants.find(v => (v.name || v) === it.selectedColor);
-                    if (colorMatch && typeof colorMatch === 'object') {
-                        const cImg = colorMatch.imageUrl || colorMatch.thumbUrl || colorMatch.image;
-                        if (cImg && (!it.selectedPattern || !displayImg || displayImg.includes('favicon'))) {
-                            displayImg = cImg;
-                        }
-                    }
-                }
+        const variantBadges = [];
+        if (it.selectedColor) {
+            variantBadges.push(`<span style="font-size: 0.73rem; background: #f5ede6; padding: 2px 7px; border-radius: 4px; color: #9C7156; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Màu: <strong>${escapeHTML(it.selectedColor)}</strong></span>`);
+        }
+        if (it.selectedPattern) {
+            variantBadges.push(`<span style="font-size: 0.73rem; background: #eef2f5; padding: 2px 7px; border-radius: 4px; color: #3b5998; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Họa tiết: <strong>${escapeHTML(it.selectedPattern)}</strong></span>`);
+        }
 
-                const variantBadges = [];
-                if (it.selectedColor) {
-                    variantBadges.push(`<span style="font-size: 0.73rem; background: #f5ede6; padding: 2px 7px; border-radius: 4px; color: #9C7156; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Màu: <strong>${escapeHTML(it.selectedColor)}</strong></span>`);
-                }
-                if (it.selectedPattern) {
-                    variantBadges.push(`<span style="font-size: 0.73rem; background: #eef2f5; padding: 2px 7px; border-radius: 4px; color: #3b5998; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;">Họa tiết: <strong>${escapeHTML(it.selectedPattern)}</strong></span>`);
-                }
+        const priceStr = it.price ? `<span style="font-size: 0.78rem; color: #9C7156; font-weight: 600;"> • ${new Intl.NumberFormat('vi-VN').format(it.price)}₫</span>` : '';
 
-                const priceStr = it.price ? `<span style="font-size: 0.78rem; color: #9C7156; font-weight: 600;"> • ${new Intl.NumberFormat('vi-VN').format(it.price)}₫</span>` : '';
-
-                return `
+        return `
                 <div style="display: flex; gap: 12px; padding: 12px; background: #FAF8F5; border-radius: 10px; border: 1px solid #E8E1D8; align-items: center; transition: transform 0.2s, box-shadow 0.2s;">
                     <a href="${it.id ? `../product/?id=${it.id}` : '#'}" target="_blank" style="flex-shrink: 0; display: block; overflow: hidden; border-radius: 8px; border: 1px solid #E8E1D8; width: 60px; height: 60px; background: #fff;">
                         <img src="${displayImg}" alt="${escapeHTML(it.name)}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.src='../Asset/icons/favicon.png'">
@@ -240,7 +240,7 @@ window.renderComboItemsHTML = (items) => {
                     </div>
                 </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 };
@@ -358,7 +358,7 @@ function updatePriceDisplay() {
                     const memPrice = Math.round(currentPrice * (1 - tier.discount / 100));
                     memberBadge.innerHTML = `
                         <div class="tier-label" style="color: ${tier.color};">
-                            ⭐ Giá dành riêng cho ${tier.name}
+                            <i class="ti ti-star-filled"></i> Giá dành riêng cho ${tier.name}
                         </div>
                         <div class="tier-price">${new Intl.NumberFormat('vi-VN').format(memPrice)}đ</div>
                     `;
@@ -380,23 +380,23 @@ function syncVariantStateToUrlAndSEO() {
     window.updateV2PriceDisplay = updatePriceDisplay;
     if (!currentProductData || !currentProductId) return;
     const p = currentProductData;
-    
+
     // 1. Đồng bộ URL trên thanh địa chỉ trình duyệt
     const url = new URL(window.location.href);
     url.searchParams.set('id', currentProductId);
-    
+
     if (selectedColor) {
         url.searchParams.set('color', selectedColor);
     } else {
         url.searchParams.delete('color');
     }
-    
+
     if (selectedPattern) {
         url.searchParams.set('pattern', selectedPattern);
     } else {
         url.searchParams.delete('pattern');
     }
-    
+
     if (selectedComboVariant) {
         url.searchParams.set('combo', selectedComboVariant);
     } else {
@@ -405,7 +405,7 @@ function syncVariantStateToUrlAndSEO() {
 
     try {
         window.history.replaceState(null, '', url.toString());
-    } catch (_) {}
+    } catch (_) { }
 
     // 2. Tìm ảnh và tiêu đề chính xác của biến thể đang chọn
     let variantImg = null;
@@ -654,7 +654,7 @@ async function fetchProductDetailV2() {
         // Save view history & track AI
         addToHistory(productId, p.category);
         trackProductView(p);
-        updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => {});
+        updateDoc(doc(db, "products", productId), { views: increment(1) }).catch(() => { });
 
         // Defaults for variants (hỗ trợ đọc từ URL params khi khách click từ card biến thể độc lập)
         const urlColor = urlParams.get('color');
@@ -785,8 +785,8 @@ async function fetchProductDetailV2() {
                         ` : ''}
                         
                         <div class="v2-badge-pills">
-                            ${isNewArrival ? '<span class="v2-pill-badge new">✨ Mới về</span>' : ''}
-                            ${isBestSeller ? '<span class="v2-pill-badge hot">🔥 Bán chạy</span>' : ''}
+                            ${isNewArrival ? '<span class="v2-pill-badge new"><i class="ti ti-sparkles"></i> Mới về</span>' : ''}
+                            ${isBestSeller ? '<span class="v2-pill-badge hot"><i class="ti ti-flame-filled"></i> Bán chạy</span>' : ''}
                             ${p.sale ? `<span class="v2-pill-badge sale">-${p.sale}%</span>` : ''}
                         </div>
 
@@ -871,7 +871,7 @@ async function fetchProductDetailV2() {
                                 </svg>
                             </div>
                             <div class="v2-guarantee-text">
-                                <strong>Giao nhanh hỏa tốc 2H</strong>
+                                <strong>Giao nhanh hỏa tốc 4H</strong>
                                 <span>Áp dụng nội thành TP. Hồ Chí Minh</span>
                             </div>
                         </div>
@@ -915,15 +915,15 @@ async function fetchProductDetailV2() {
                         </div>
                         <div class="v2-color-swatches">
                             ${p.colorVariants.map((v) => {
-                                const hex = v.hex || (COLOR_MAP[v.name] || '#ccc');
-                                const isActive = v.name === selectedColor;
-                                return `
+            const hex = v.hex || (COLOR_MAP[v.name] || '#ccc');
+            const isActive = v.name === selectedColor;
+            return `
                                     <div class="v2-color-item ${isActive ? 'active' : ''}" data-color-name="${escapeHTML(v.name)}" onclick="window.selectV2Color('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
                                         <span class="v2-color-dot" style="background-color: ${hex};"></span>
                                         <span>${escapeHTML(v.name)}</span>
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -936,13 +936,13 @@ async function fetchProductDetailV2() {
                         </div>
                         <div class="v2-pattern-chips">
                             ${p.patternVariants.map((v) => {
-                                const isActive = v.name === selectedPattern;
-                                return `
+            const isActive = v.name === selectedPattern;
+            return `
                                 <div class="v2-pattern-chip ${isActive ? 'active' : ''}" data-pattern-name="${escapeHTML(v.name)}" onclick="window.selectV2Pattern('${escapeHTML(v.name)}', '${v.imageUrl || ''}')">
                                     ${escapeHTML(v.name)}
                                 </div>
                             `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -955,16 +955,16 @@ async function fetchProductDetailV2() {
                         </div>
                         <div class="v2-combo-chips">
                             ${p.comboVariants.map((v, i) => {
-                                const cName = v.name || `Combo ${i + 1}`;
-                                const isActive = cName === selectedComboVariant;
-                                const isOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock) || (v.stock !== undefined && v.stock !== null && v.stock !== '' && Number(v.stock) <= 0);
-                                return `
+            const cName = v.name || `Combo ${i + 1}`;
+            const isActive = cName === selectedComboVariant;
+            const isOut = Boolean(v.manualOutOfStock) || Boolean(v.isOutOfStock) || (v.stock !== undefined && v.stock !== null && v.stock !== '' && Number(v.stock) <= 0);
+            return `
                                     <div class="v2-combo-chip ${isActive ? 'active' : ''} ${isOut ? 'disabled-variant' : ''}" onclick="window.selectV2Combo(${i})" title="${isOut ? 'Phân loại đã hết hàng' : ''}">
                                         ${v.imageUrl ? `<img src="${v.imageUrl}" alt="${escapeHTML(cName)}">` : ''}
                                         <span>${escapeHTML(cName)}${isOut ? ' (Hết)' : ''}</span>
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -1004,14 +1004,14 @@ async function fetchProductDetailV2() {
 
                     <!-- Restock button -->
                     <button type="button" id="v2-btn-restock" class="btn-notify-restock" onclick="window.openRestockModal()" style="display: none; width: 100%; margin-top: 4px; padding: 10px 18px; background: #fffbeb; border: 1px dashed #d97706; color: #b45309; border-radius: 999px; font-weight: 600; font-size: 0.88rem; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-                        🔔 Nhận thông báo khi có hàng lại
+                        <i class="ti ti-bell"></i> Nhận thông báo khi có hàng lại
                     </button>
                 </div>
 
                 <!-- Sleek Coupon Pill Trigger -->
                 <div class="v2-coupon-pill-trigger" onclick="document.getElementById('v2-coupons-modal').classList.add('active')">
                     <span style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #333;">
-                        🏷️ Ưu đãi & Voucher khả dụng
+                        <i class="ti ti-tag"></i> Ưu đãi & Voucher khả dụng
                     </span>
                     <span style="color: #000000; font-weight: 600;">Xem mã &rsaquo;</span>
                 </div>
@@ -1036,25 +1036,77 @@ async function fetchProductDetailV2() {
             }
         }
 
-        // Tab 2: Specs & Safety Box (Image 2 specs box + Image 1 tooltips!)
+        // Tab 2: Specs & Safety Box (Phương án 2: Metric Tiles - Thẻ Ô Vuông Trực Quan)
         const specsContentEl = document.getElementById('v2-tab-specs-content');
         if (specsContentEl) {
-            const dimParts = [];
-            if (p.dimensions?.length) dimParts.push(`Dài ${p.dimensions.length}cm`);
-            if (p.dimensions?.width) dimParts.push(`Rộng ${p.dimensions.width}cm`);
-            if (p.dimensions?.height) dimParts.push(`Cao ${p.dimensions.height}cm`);
+            const tiles = [];
+
+            // 1. Chất liệu
+            tiles.push(`
+                <div class="product-spec-tile">
+                    <div class="spec-tile-icon"><i class="ti ti-cup"></i></div>
+                    <div class="spec-tile-label">Chất liệu</div>
+                    <div class="spec-tile-value">${p.details?.material || 'Gốm men bóng'}</div>
+                </div>
+            `);
+
+            // 2. Kích thước
+            if (p.dimensions && (p.dimensions.length || p.dimensions.width || p.dimensions.height)) {
+                const dimStr = [p.dimensions.length, p.dimensions.width, p.dimensions.height].filter(Boolean).join(' &times; ');
+                tiles.push(`
+                    <div class="product-spec-tile">
+                        <div class="spec-tile-icon"><i class="ti ti-ruler"></i></div>
+                        <div class="spec-tile-label">Kích thước (cm)</div>
+                        <div class="spec-tile-value">${dimStr}</div>
+                    </div>
+                `);
+            }
+
+            // 3. Dung tích
+            if (p.specs?.capacity) {
+                tiles.push(`
+                    <div class="product-spec-tile">
+                        <div class="spec-tile-icon"><i class="ti ti-droplet"></i></div>
+                        <div class="spec-tile-label">Dung tích</div>
+                        <div class="spec-tile-value highlight">${p.specs.capacity} ml</div>
+                    </div>
+                `);
+            }
+
+            // 4. Trọng lượng
+            if (p.specs?.weight) {
+                tiles.push(`
+                    <div class="product-spec-tile">
+                        <div class="spec-tile-icon"><i class="ti ti-scale"></i></div>
+                        <div class="spec-tile-label">Trọng lượng</div>
+                        <div class="spec-tile-value">${p.specs.weight} g</div>
+                    </div>
+                `);
+            }
+
+            // 5. Xuất xứ
+            if (p.details?.origin) {
+                tiles.push(`
+                    <div class="product-spec-tile">
+                        <div class="spec-tile-icon"><i class="ti ti-map-pin"></i></div>
+                        <div class="spec-tile-label">Xuất xứ</div>
+                        <div class="spec-tile-value">${p.details.origin}</div>
+                    </div>
+                `);
+            }
 
             specsContentEl.innerHTML = `
                 <div class="product-specs-box" style="margin: 0; max-width: 650px;">
-                    <div class="product-specs-title">THÔNG SỐ SẢN PHẨM</div>
-                    <div class="product-specs-divider"></div>
+                    <div class="product-specs-header">
+                        <div class="product-specs-title">
+                            <i class="ti ti-clipboard-list" style="color: #111111; font-size: 1.05rem;"></i>
+                            <span>Thông số sản phẩm</span>
+                        </div>
+                        <span class="product-specs-subtitle">Chế tác thủ công</span>
+                    </div>
 
-                    <div class="product-specs-details">
-                        <div class="product-specs-row">Chất liệu: <span>${p.details?.material || 'Gốm'}</span></div>
-                        ${p.details?.origin ? `<div class="product-specs-row">Xuất xứ: <span>${p.details.origin}</span></div>` : ''}
-                        ${dimParts.length > 0 ? `<div class="product-specs-row">Kích thước: <span>${dimParts.join(' &times; ')}</span></div>` : ''}
-                        ${p.specs?.weight ? `<div class="product-specs-row">Trọng lượng: <span>${p.specs.weight} g</span></div>` : ''}
-                        ${p.specs?.capacity ? `<div class="product-specs-row">Dung tích: <span>${p.specs.capacity} ml</span></div>` : ''}
+                    <div class="product-specs-tiles-grid">
+                        ${tiles.join('')}
                     </div>
 
                     ${(p.usage?.isDishwasherSafe !== false || p.usage?.isMicrowaveSafe !== false || p.usage?.isFoodSafe !== false) ? `
@@ -1091,7 +1143,7 @@ async function fetchProductDetailV2() {
                     <div style="display: flex; align-items: center; gap: 24px; padding: 24px; background: #fdfaf6; border-radius: 12px; border: 1px solid #ebe8e2; margin-bottom: 24px;">
                         <div style="text-align: center; border-right: 1px solid #ddd; padding-right: 24px;">
                             <div style="font-size: 3rem; font-weight: 700; color: #000000; line-height: 1;">5.0</div>
-                            <div style="color: #f59e0b; font-size: 1.2rem; margin: 4px 0;">★★★★★</div>
+                            <div style="color: #f59e0b; font-size: 1.2rem; margin: 4px 0;"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i></div>
                             <div style="font-size: 0.8rem; color: #888;">Điểm đánh giá trung bình</div>
                         </div>
                         <div>
@@ -1321,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const adminSnap = await getDoc(doc(db, "admins", user.uid));
                 isAdmin = adminSnap.exists();
-            } catch (e) {}
+            } catch (e) { }
         }
         initTabs();
         initStickyBar();

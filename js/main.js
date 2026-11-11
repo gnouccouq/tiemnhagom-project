@@ -332,12 +332,12 @@ async function initFlashSaleSync() {
         const subtitle = saleSection.querySelector('.section-subtitle');
 
         if (isUpcoming) {
-            if (shimmer) shimmer.innerHTML = `⏰ ${settings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
+            if (shimmer) shimmer.innerHTML = `<i class="ti ti-alarm"></i> ${settings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
             if (subtitle) subtitle.innerText = `Chính thức mở bán lúc ${startTime.toLocaleString('vi-VN')} - Săn deal số lượng có hạn!`;
             initDynamicCountdown(startTime);
             fetchSaleProducts(true, settings); // Nạp danh sách xem trước (chỉ sản phẩm 9.9)
         } else {
-            if (shimmer) shimmer.innerHTML = `🔥 ${settings.title || "Flash Sale"} <img src="https://theme.hstatic.net/200000588671/1001020156/14/flashsale-hot.png?v=2949" alt="Hot" class="fire-icon">`;
+            if (shimmer) shimmer.innerHTML = `<i class="ti ti-flame-filled"></i> ${settings.title || "Flash Sale"} <img src="https://theme.hstatic.net/200000588671/1001020156/14/flashsale-hot.png?v=2949" alt="Hot" class="fire-icon">`;
             if (subtitle) subtitle.innerText = settings.subtitle || "Cơ hội sở hữu những tác phẩm tinh xảo với mức giá tốt nhất";
             initDynamicCountdown(endTime);
             fetchSaleProducts(false, settings); // Nạp danh sách sale đang chạy

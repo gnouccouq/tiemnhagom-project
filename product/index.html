@@ -8,7 +8,7 @@
   <meta name="description"
     content="Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
   <link rel="canonical" href="https://tiemnhagom.vn/product/">
-  <link rel="stylesheet" href="../css/style.css?v=19">
+  <link rel="stylesheet" href="../css/style.css?v=20">
   <link rel="stylesheet" href="../css/product-detail-v2.css?v=17">
   <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -112,13 +112,13 @@
   <section class="v2-middle-section" id="v2-middle-section">
     <div class="v2-container">
       <div class="v2-tabs-nav" id="v2-tabs-nav">
-        <button class="v2-tab-btn active" data-tab="tab-desc">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-          Mô tả & Câu chuyện
-        </button>
-        <button class="v2-tab-btn" data-tab="tab-specs">
+        <button class="v2-tab-btn active" data-tab="tab-specs">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           Thông số & An toàn
+        </button>
+        <button class="v2-tab-btn" data-tab="tab-desc">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Mô tả & Câu chuyện
         </button>
         <button class="v2-tab-btn" data-tab="tab-care">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -131,41 +131,41 @@
       </div>
 
       <div class="v2-tabs-content">
-        <!-- Tab 1: Description -->
-        <div class="v2-tab-pane active" id="tab-desc">
+        <!-- Tab 1: Specs & Safety -->
+        <div class="v2-tab-pane active" id="tab-specs">
+          <div id="v2-tab-specs-content">
+            <!-- Specs & Safety Icons rendered here -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Description -->
+        <div class="v2-tab-pane" id="tab-desc">
           <div id="v2-tab-desc-content" class="v2-rich-text">
             <p>Đang tải mô tả sản phẩm...</p>
           </div>
           <div id="v2-tab-combo-content" style="display: none; margin-top: 2rem;"></div>
         </div>
 
-        <!-- Tab 2: Specs & Safety -->
-        <div class="v2-tab-pane" id="tab-specs">
-          <div id="v2-tab-specs-content">
-            <!-- Specs & Safety Icons rendered here -->
-          </div>
-        </div>
-
         <!-- Tab 3: Care Guide -->
         <div class="v2-tab-pane" id="tab-care">
           <div class="v2-care-guide-grid">
             <div class="v2-care-card">
-              <div class="v2-care-icon">🌡️</div>
+              <div class="v2-care-icon"><i class="ti ti-temperature"></i></div>
               <h4>Nhiệt độ & Sốc nhiệt</h4>
               <p>Tránh thay đổi nhiệt độ đột ngột (ví dụ đưa sản phẩm đang đông lạnh vào lò vi sóng/lò nướng ngay). Để sản phẩm về nhiệt độ phòng trước khi làm nóng.</p>
             </div>
             <div class="v2-care-card">
-              <div class="v2-care-icon">🧼</div>
+              <div class="v2-care-icon"><i class="ti ti-sparkles"></i></div>
               <h4>Vệ sinh & Men gốm</h4>
               <p>Khuyên dùng bọt biển mềm hoặc khăn cotton ẩm với nước rửa chén dịu nhẹ. Hạn chế dùng bùi nhùi kim loại sắc nhọn chà xát mạnh lên lớp men bóng/men mờ.</p>
             </div>
             <div class="v2-care-card">
-              <div class="v2-care-icon">🍽️</div>
+              <div class="v2-care-icon"><i class="ti ti-tools-kitchen-2"></i></div>
               <h4>Máy rửa chén</h4>
               <p>Xếp các đĩa chén gốm có khoảng cách an toàn, tránh va chạm cạnh mép khi máy đang phun áp lực cao để bảo vệ độ bền của men gốm.</p>
             </div>
             <div class="v2-care-card">
-              <div class="v2-care-icon">🏺</div>
+              <div class="v2-care-icon"><i class="ti ti-teapot"></i></div>
               <h4>Lưu trữ & Bảo quản</h4>
               <p>Nếu xếp chồng nhiều bát đĩa, có thể lót thêm một lớp giấy ăn mỏng hoặc khăn vải giữa các sản phẩm để tránh ma sát trầy xước men.</p>
             </div>

@@ -377,7 +377,7 @@
         <div class="kiot-pos-topbar">
             <div class="kiot-pos-top-left">
                 <div class="kiot-pos-search-box">
-                    <input type="text" id="pos-product-search" placeholder="🔍 Tìm hàng hóa (F3)" autocomplete="off">
+                    <input type="text" id="pos-product-search" placeholder="Tìm hàng hóa (F3)" autocomplete="off">
                     <div id="pos-product-suggestions" class="search-suggestions"></div>
                 </div>
                 <button type="button" class="kiot-pos-barcode-btn" title="Mã vạch">[|||||]</button>
@@ -391,11 +391,11 @@
             </div>
 
             <div class="kiot-pos-top-right">
-                <button type="button" class="kiot-pos-icon-link" title="Bán giữ hàng">👜</button>
-                <button type="button" class="kiot-pos-icon-link" title="Trả hàng">↩</button>
-                <button type="button" class="kiot-pos-icon-link" title="Làm mới" onclick="location.reload()">🔄</button>
+                <button type="button" class="kiot-pos-icon-link" title="Bán giữ hàng"><i class="ti ti-shopping-bag"></i></button>
+                <button type="button" class="kiot-pos-icon-link" title="Trả hàng"><i class="ti ti-arrow-back-up"></i></button>
+                <button type="button" class="kiot-pos-icon-link" title="Làm mới" onclick="location.reload()"><i class="ti ti-refresh"></i></button>
                 <button type="button" class="kiot-pos-icon-link" title="In thử" id="btn-connect-bt-printer"
-                    onclick="window.printLastOrderBT()">🖨️</button>
+                    onclick="window.printLastOrderBT()"><i class="ti ti-printer"></i></button>
                 <span style="font-weight: 600; margin-left: 6px;">0867291612</span>
                 <a href="index.html" class="kiot-pos-icon-link" title="Thoát về trang Quản trị"
                     style="margin-left: 6px;">≡</a>
@@ -410,7 +410,7 @@
                     <div id="pos-cart-list"></div>
                 </div>
                 <div class="kiot-pos-note-card">
-                    <input type="text" id="pos-order-note" placeholder="✎ Ghi chú đơn hàng"
+                    <input type="text" id="pos-order-note" placeholder="Ghi chú đơn hàng"
                         oninput="window.savePOSBills()">
                 </div>
             </div>
@@ -422,7 +422,7 @@
                     style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #475569; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <strong id="pos-seller-name" style="color: #0f172a;">Nguyễn Tân Quốc... ▾</strong>
-                        <span>🚶 ▾</span>
+                        <span><i class="ti ti-walk"></i> ▾</span>
                     </div>
                     <span id="pos-live-clock" style="font-size: 0.8rem; color: #64748b;">10/08/2026 18:28</span>
                 </div>
@@ -431,7 +431,7 @@
                 <div class="pos-customer-section" style="position: relative;">
                     <div class="pos-customer-search-box"
                         style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; transition: border 0.15s ease;">
-                        <input type="text" id="pos-customer-search" placeholder="🔍 Tìm khách hàng (F4)"
+                        <input type="text" id="pos-customer-search" placeholder="Tìm khách hàng (F4)"
                             style="border: none; background: transparent; outline: none; flex: 1; font-size: 0.85rem; font-weight: 500;">
                         <button type="button"
                             style="border: none; background: transparent; color: #0066cc; font-size: 1.2rem; cursor: pointer; font-weight: bold;"
@@ -444,7 +444,7 @@
                         <span id="pos-cust-phone-display" style="font-size: 0.78rem; color: #64748b;"></span>
                         <span id="pos-cust-membership-badge" style="display: none;"></span>
                         <button type="button" onclick="window.posClearCustomer()"
-                            style="background: none; border: none; color: #ef4444; margin-left: auto; cursor: pointer;">✕</button>
+                            style="background: none; border: none; color: #ef4444; margin-left: auto; cursor: pointer;"><i class="ti ti-x"></i></button>
                     </div>
                 </div>
 
@@ -470,7 +470,7 @@
                             <input type="checkbox" id="pos-apply-member-discount" checked
                                 onchange="window.toggleMemberDiscount(this.checked)"
                                 style="accent-color: #f59e0b; cursor: pointer;">
-                            👑 Chiết khấu TV <span id="pos-membership-badge-label"
+                            <i class="ti ti-crown"></i> Chiết khấu TV <span id="pos-membership-badge-label"
                                 style="font-size: 0.76rem; font-weight: normal;"></span>
                         </label>
                         <span id="pos-membership-discount-display"
@@ -530,14 +530,14 @@
         <!-- 3. Bottom Footer Bar -->
         <div class="kiot-pos-footerbar">
             <div class="kiot-pos-footer-tabs">
-                <button type="button" class="kiot-pos-foot-tab active">⚡ Bán nhanh</button>
-                <button type="button" class="kiot-pos-foot-tab">🕒 Bán thường</button>
-                <button type="button" class="kiot-pos-foot-tab">🚚 Bán giao hàng</button>
+                <button type="button" class="kiot-pos-foot-tab active"><i class="ti ti-bolt-filled"></i> Bán nhanh</button>
+                <button type="button" class="kiot-pos-foot-tab"><i class="ti ti-clock"></i> Bán thường</button>
+                <button type="button" class="kiot-pos-foot-tab"><i class="ti ti-truck-delivery"></i> Bán giao hàng</button>
             </div>
             <div>
-                <span style="color: #0066cc; font-weight: 600;">💬 1900 6522</span>
+                <span style="color: #0066cc; font-weight: 600;"><i class="ti ti-message-circle"></i> 1900 6522</span>
                 <a href="index.html"
-                    style="color: #64748b; margin-left: 14px; text-decoration: none; font-weight: 500;">🚪 Thoát POS</a>
+                    style="color: #64748b; margin-left: 14px; text-decoration: none; font-weight: 500;"><i class="ti ti-logout"></i> Thoát POS</a>
             </div>
         </div>
     </div>
@@ -598,7 +598,7 @@
             <!-- Section chọn Phân loại / Combo -->
             <div id="pos-modal-combo-section" style="margin-bottom: 15px; display: none;">
                 <label
-                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎁
+                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-gift"></i>
                     Chọn phân loại Combo / Biến thể:</label>
                 <div id="pos-modal-combo-list"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
@@ -608,7 +608,7 @@
             <!-- Section chọn Màu sắc -->
             <div id="pos-modal-color-section" style="margin-bottom: 15px; display: none;">
                 <label
-                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">🎨
+                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-palette"></i>
                     Chọn màu sắc:</label>
                 <div id="pos-modal-color-list"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">
@@ -618,7 +618,7 @@
             <!-- Section chọn Họa tiết -->
             <div id="pos-modal-pattern-section" style="margin-bottom: 15px; display: none;">
                 <label
-                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">✨
+                    style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;"><i class="ti ti-sparkles"></i>
                     Chọn họa tiết:</label>
                 <div id="pos-modal-pattern-list"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;">

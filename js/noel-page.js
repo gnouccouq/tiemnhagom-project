@@ -115,7 +115,7 @@ async function renderNoelCatalog() {
     if (list.length === 0) {
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align:center; padding: 3rem 1rem; background:#fff; border-radius:8px; border:1px dashed #D6D3D1;">
-                <div style="font-size:2.4rem; margin-bottom:10px;">🦌</div>
+                <div style="font-size:2.4rem; margin-bottom:10px;"><i class="ti ti-deer"></i></div>
                 <h4 style="margin:0 0 6px 0; color:#4A151B;">Chưa có món gốm nào khớp bộ lọc này</h4>
                 <p style="margin:0 0 14px 0; color:#78716C; font-size:0.9rem;">Bạn thử chọn mức ngân sách hoặc danh mục khác để xem thêm nhé!</p>
                 <button type="button" class="btn-noel-primary" onclick="window.resetNoelFilters()" style="border:none; cursor:pointer; padding:10px 20px;">
@@ -203,7 +203,7 @@ function loadSavedNoelGiftNote() {
         if (msgEl && parsed.message) msgEl.value = parsed.message;
         if (statusEl && parsed.formatted) {
             statusEl.style.display = 'block';
-            statusEl.textContent = '✅ Đã lưu lời chúc Giáng Sinh! Lời chúc sẽ tự động hiển thị tại mục Ghi chú khi bạn Thanh toán.';
+            statusEl.innerHTML = '<i class="ti ti-circle-check-filled"></i> Đã lưu lời chúc Giáng Sinh! Lời chúc sẽ tự động hiển thị tại mục Ghi chú khi bạn Thanh toán.';
         }
     } catch (e) {}
 }
@@ -223,7 +223,7 @@ window.saveNoelGiftCardNote = function() {
     const headerParts = [];
     if (toVal) headerParts.push(`Gửi: ${toVal}`);
     if (fromVal) headerParts.push(`Từ: ${fromVal}`);
-    const formatted = `[🎄 THIỆP GIÁNG SINH VIẾT TAY${headerParts.length ? ' - ' + headerParts.join(' | ') : ''}]: "${msgVal}"`;
+    const formatted = `[THIỆP GIÁNG SINH VIẾT TAY${headerParts.length ? ' - ' + headerParts.join(' | ') : ''}]: "${msgVal}"`;
 
     localStorage.setItem('tng_noel_gift_note', formatted);
     localStorage.setItem('tng_noel_gift_note_data', JSON.stringify({
@@ -237,10 +237,10 @@ window.saveNoelGiftCardNote = function() {
     const statusEl = document.getElementById('noel-card-saved-status');
     if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.textContent = '✅ Đã lưu lời chúc Giáng Sinh! Khi bạn vào Giỏ hàng đặt mua, lời chúc sẽ tự động đính kèm vào đơn.';
+        statusEl.innerHTML = '<i class="ti ti-circle-check-filled"></i> Đã lưu lời chúc Giáng Sinh! Khi bạn vào Giỏ hàng đặt mua, lời chúc sẽ tự động đính kèm vào đơn.';
     }
     if (typeof showToast === 'function') {
-        showToast('🎄 Đã lưu lời chúc vào Thiệp Giáng Sinh miễn phí!');
+        showToast('<i class="ti ti-christmas-tree"></i> Đã lưu lời chúc vào Thiệp Giáng Sinh miễn phí!');
     }
 };
 
