@@ -7453,6 +7453,166 @@ window.getItemFinancials = function (item) {
     };
 };
 
+// ==========================================
+// TỰ ĐỘNG GIẢI QUYẾT ẢNH CHI TIẾT (BIẾN THỂ / CATALOG) CHO ĐƠN HÀNG
+// ==========================================
+window.resolveOrderItemImage = function (item) {
+    if (!item) return '../Asset/icons/favicon.png';
+
+    const isBadUrl = (url) => !url || typeof url !== 'string' || url.trim() === '' || url.includes('placeholder') || url.includes('placehold.co');
+
+    // 1. Kiểm tra ảnh trực tiếp từ item
+    const directImg = item.image || item.imageUrl || item.thumbUrl || item.img || item.thumbnail;
+    if (!isBadUrl(directImg)) {
+        return directImg;
+    }
+
+    // 2. Kiểm tra ảnh biến thể lưu trực tiếp trên item
+    if (item.variant && typeof item.variant === 'object') {
+        const vImg = item.variant.imageUrl || item.variant.image || item.variant.thumbUrl;
+        if (!isBadUrl(vImg)) {
+            return vImg;
+        }
+    }
+
+    // 3. Tra cứu trong kho sản phẩm posProductsLocal (theo ID hoặc Tên)
+    const catalog = (typeof posProductsLocal !== 'undefined' && Array.isArray(posProductsLocal)) ? posProductsLocal : [];
+    const prodId = String(item.productId || item.id || '').trim();
+    const cleanItemName = (item.name || '').trim().toLowerCase();
+
+    const p = catalog.find(x => {
+        if (!x) return false;
+        if (prodId && String(x.id).trim() === prodId) return true;
+        if (prodId && String(x.id).trim().startsWith(prodId)) return true;
+        if (cleanItemName && (x.name || '').trim().toLowerCase() === cleanItemName) return true;
+        return false;
+    });
+
+    if (p) {
+        // Tra cứu theo tên biến thể / họa tiết / màu sắc
+        const variantKey = (item.pattern || item.texture || item.patternName || item.color || item.variant || item.combo || item.comboName || '').trim().toLowerCase();
+
+        if (variantKey) {
+            // Họa tiết (patternVariants)
+            if (Array.isArray(p.patternVariants)) {
+                const matchPv = p.patternVariants.find(v => v && (v.name || '').trim().toLowerCase() === variantKey);
+                if (matchPv && !isBadUrl(matchPv.imageUrl || matchPv.thumbUrl || matchPv.image)) {
+                    return matchPv.imageUrl || matchPv.thumbUrl || matchPv.image;
+                }
+            }
+            // Màu sắc (colorVariants)
+            if (Array.isArray(p.colorVariants)) {
+                const matchCv = p.colorVariants.find(v => v && (v.name || '').trim().toLowerCase() === variantKey);
+                if (matchCv && !isBadUrl(matchCv.imageUrl || matchCv.thumbUrl || matchCv.image)) {
+                    return matchCv.imageUrl || matchCv.thumbUrl || matchCv.image;
+                }
+            }
+            // Combo (comboVariants)
+            if (Array.isArray(p.comboVariants)) {
+                const matchCombo = p.comboVariants.find(v => v && (v.name || '').trim().toLowerCase() === variantKey);
+                if (matchCombo && !isBadUrl(matchCombo.imageUrl || matchCombo.thumbUrl || matchCombo.image)) {
+                    return matchCombo.imageUrl || matchCombo.thumbUrl || matchCombo.image;
+                }
+            }
+        }
+
+        // Lấy ảnh đại diện sản phẩm từ catalog
+        if (!isBadUrl(p.imageUrl)) return p.imageUrl;
+        if (!isBadUrl(p.image)) return p.image;
+        if (Array.isArray(p.images) && p.images.length > 0) {
+            const validFirst = p.images.find(img => !isBadUrl(img));
+            if (validFirst) return validFirst;
+        }
+    }
+
+    return !isBadUrl(directImg) ? directImg : '../Asset/icons/favicon.png';
+};
+
+window.previewOrderImage = function (imgUrl, title = '') {
+    if (!imgUrl) return;
+    let modal = document.getElementById('order-image-preview-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'order-image-preview-modal';
+        modal.style.cssText = 'display:none; position:fixed; z-index:999999; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.8); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); align-items:center; justify-content:center; cursor:zoom-out;';
+        modal.onclick = () => { modal.style.display = 'none'; };
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div style="position:relative; max-width:90vw; max-height:90vh; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); padding:12px; cursor:default;" onclick="event.stopPropagation();">
+            <button type="button" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.85)';" onmouseout="this.style.background='rgba(0,0,0,0.6)';" onclick="document.getElementById('order-image-preview-modal').style.display='none';">&times;</button>
+            <img src="${imgUrl}" alt="${title}" style="display:block; max-width:85vw; max-height:78vh; object-fit:contain; border-radius:8px; margin:0 auto;">
+            ${title ? `<div style="padding:10px 4px 4px; font-size:0.92rem; font-weight:600; color:#0f172a; text-align:center;">${title}</div>` : ''}
+        </div>
+    `;
+    modal.style.display = 'flex';
+};
+
+// ==========================================
+// TỰ ĐỘNG NHẬN DIỆN PHƯƠNG THỨC VẬN CHUYỂN (GIAO THƯỜNG / GIAO NHANH / LẤY Ở SHOP)
+// ==========================================
+window.getOrderShippingMethodInfo = function (order) {
+    if (!order) {
+        return {
+            text: 'Giao bình thường',
+            shortText: 'Giao thường',
+            type: 'standard',
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;">🚚 Giao thường</span>'
+        };
+    }
+
+    const rawMethod = String(order.shippingMethod || order.deliveryMethod || order.shippingAddress?.shippingMethod || '').trim().toLowerCase();
+    const rawOrderMethod = String(order.orderMethod || '').trim().toLowerCase();
+    const rawChannel = String(order.channel || '').trim().toLowerCase();
+    const orderId = String(order.id || '').toUpperCase();
+
+    // 1. Lấy ở shop / Tự đến lấy / Bán tại quầy
+    if (
+        rawMethod === 'pickup' ||
+        rawOrderMethod.includes('tự đến lấy') ||
+        rawOrderMethod.includes('tại shop') ||
+        rawOrderMethod.includes('tại cửa hàng') ||
+        rawOrderMethod.includes('nhận tại') ||
+        orderId.startsWith('POS') ||
+        rawChannel.includes('tại quầy') ||
+        rawChannel === 'pos' ||
+        order.inStore === true
+    ) {
+        return {
+            text: 'Lấy ở shop (Tự đến lấy)',
+            shortText: 'Lấy ở shop',
+            type: 'pickup',
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#fef3c7; color:#92400e; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fde68a; font-size:0.76rem;">🏪 Lấy ở shop (Tự lấy)</span>'
+        };
+    }
+
+    // 2. Giao nhanh / Giao hỏa tốc 2H
+    if (
+        rawMethod === 'express_2h' ||
+        rawMethod === 'express' ||
+        rawMethod.includes('nhanh') ||
+        rawMethod.includes('hỏa tốc') ||
+        rawMethod.includes('hoa toc') ||
+        rawOrderMethod.includes('hỏa tốc') ||
+        rawOrderMethod.includes('nhanh')
+    ) {
+        return {
+            text: 'Giao nhanh (Hỏa tốc 2H)',
+            shortText: 'Giao nhanh 2H',
+            type: 'express',
+            badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#ffedd5; color:#c2410c; font-weight:700; padding:2px 8px; border-radius:4px; border:1px solid #fed7aa; font-size:0.76rem;">⚡ Giao nhanh (Hỏa tốc)</span>'
+        };
+    }
+
+    // 3. Giao bình thường (Giao tiêu chuẩn)
+    return {
+        text: 'Giao bình thường (Tiêu chuẩn)',
+        shortText: 'Giao thường',
+        type: 'standard',
+        badgeHtml: '<span style="display:inline-flex; align-items:center; gap:4px; background:#eff6ff; color:#1d4ed8; font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid #bfdbfe; font-size:0.76rem;">🚚 Giao bình thường</span>'
+    };
+};
+
 window.getOrderSalesChannelGroup = function (order) {
     if (!order) return 'web_app';
     const orderIdStr = String(order.id || order.orderId || order.orderCode || '').toUpperCase();
@@ -8088,6 +8248,7 @@ function renderOrderRows(ordersList, tableElement) {
         const orderDate = oDateObj ? oDateObj.toLocaleString('vi-VN') : 'N/A';
 
         const metrics = window.getOrderFinancialMetrics(order);
+        const shipInfo = window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order) : { shortText: 'Giao thường' };
 
         const custName = order.shippingAddress?.fullName || order.customerName || 'Khách mua tại shop';
         const custPhone = order.shippingAddress?.phone || order.customerPhone || '';
@@ -8108,6 +8269,7 @@ function renderOrderRows(ordersList, tableElement) {
                 <td>
                     <strong style="color: #0f172a; font-size: 0.74rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;" title="${custName}">${custName}</strong>
                     ${custPhone ? `<small style="color: #64748b; font-size: 0.70rem; display: block;">${custPhone}</small>` : ''}
+                    <small style="color: #0284c7; font-size: 0.66rem; display: block; font-weight: 500;">${shipInfo.shortText}</small>
                 </td>
                 <td style="text-align: right; font-weight: 600; font-size: 0.74rem; white-space: nowrap;">${formatVND(metrics.subtotal)}</td>
                 <td style="text-align: right; color: #64748b; font-size: 0.74rem; white-space: nowrap;">${metrics.totalDiscounts > 0 ? formatVND(metrics.totalDiscounts) : '0'}</td>
@@ -8477,6 +8639,7 @@ window.toggleOrderQuickView = function (orderId, event) {
     const channelName = order.channel || (order.id.startsWith('POS') ? 'Bán trực tiếp (POS)' : 'Website');
     const sellerName = order.sellerName || 'Nguyễn Tân Quốc Cường';
     const status = order.status || 'Đang xử lý';
+    const shipInfo = window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order) : { text: 'Giao thường', badgeHtml: '<span style="color:#0066cc;">🚚 Giao thường</span>' };
 
     let tagClass = 'warning';
     if (status === 'Đã hoàn thành') tagClass = 'success';
@@ -8504,6 +8667,7 @@ window.toggleOrderQuickView = function (orderId, event) {
                             <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: ${metrics.isPaid ? '#dcfce7' : '#fef2f2'}; color: ${metrics.isPaid ? '#15803d' : '#dc2626'}; border: 1px solid ${metrics.isPaid ? '#86efac' : '#fecaca'};">
                                 ${metrics.isPaid ? '✓ ' + metrics.paymentStatusText : '⏳ ' + metrics.paymentStatusText}
                             </span>
+                            ${shipInfo.badgeHtml}
                         </div>
                         <div style="font-size: 0.85rem; color: #64748b;">Chi nhánh trung tâm</div>
                     </div>
@@ -8515,10 +8679,12 @@ window.toggleOrderQuickView = function (orderId, event) {
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Ngày bán:</span> <strong>${orderDate}</strong></div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Kênh bán:</span> <span style="font-weight: 600; color: #0f172a;">${channelName}</span></div>
                         
+                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Vận chuyển:</span> ${shipInfo.badgeHtml}</div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Phí giao hàng:</span> <strong style="color: #0284c7;">${shippingFee > 0 ? formatVND(shippingFee) + ' đ' : '0 đ (Miễn phí)'}</strong></div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Mã giảm giá:</span> <strong style="color: #dc2626;">${couponCode ? `${couponCode} (-${formatVND(discountVal)} đ)` : (discountVal > 0 ? `-${formatVND(discountVal)} đ` : 'Không có')}</strong></div>
                         <div class="qv-field"><span class="qv-label" style="color: #64748b;">Giảm giá TV:</span> <strong style="color: #16a34a;">${memberDiscount > 0 ? `-${formatVND(memberDiscount)} đ` : '0 đ'}</strong></div>
-                        <div class="qv-field"><span class="qv-label" style="color: #64748b;">Giao đến:</span> <span>${custAddress} (${custPhone})</span></div>
+
+                        <div class="qv-field" style="grid-column: span 4;"><span class="qv-label" style="color: #64748b;">Giao đến:</span> <span>${custAddress} (${custPhone})</span></div>
                     </div>
 
                     <!-- Items List Table -->
@@ -8538,16 +8704,24 @@ window.toggleOrderQuickView = function (orderId, event) {
                             <tbody>
                                 ${items.map(item => {
         const f = window.getItemFinancials(item);
+        const itemImg = window.resolveOrderItemImage(item);
+        const safeName = (item.name || 'Sản phẩm gốm').replace(/"/g, '&quot;');
+        const safeJsName = (item.name || 'Sản phẩm gốm').replace(/'/g, "\\'");
 
         return `
                                     <tr style="border-bottom: 1px solid #f1f5f9;">
                                         <td style="padding: 8px 10px; color: #0066cc; font-weight: 600;">${item.id || 'SP'}</td>
                                         <td style="padding: 8px 10px; font-weight: 500;">
-                                            <strong style="color: #0f172a; display: block; font-size: 0.84rem;">${item.name || 'Sản phẩm gốm'}</strong>
-                                            <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #475569; margin-top: 3px; flex-wrap: wrap;">
-                                                ${item.color ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">🎨 Màu: <strong style="color: #334155;">${item.color}</strong></span>` : ''}
-                                                ${(item.pattern || item.texture || item.patternName) ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">✨ Họa tiết: <strong style="color: #334155;">${item.pattern || item.texture || item.patternName}</strong></span>` : ''}
-                                                ${(item.combo || item.comboName || item.isCombo) ? `<span style="background: #e0f2fe; color: #0066cc; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #bae6fd;">🎁 Combo: ${item.combo || item.comboName || 'Bộ gốm sứ'}</span>` : ''}
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <img src="${itemImg}" alt="${safeName}" style="width: 48px; height: 48px; min-width: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.previewOrderImage ? window.previewOrderImage('${itemImg}', '${safeJsName}') : window.open('${itemImg}', '_blank')" title="Bấm để xem ảnh phóng to" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png';">
+                                                <div style="min-width: 0; flex: 1;">
+                                                    <strong style="color: #0f172a; display: block; font-size: 0.84rem;">${item.name || 'Sản phẩm gốm'}</strong>
+                                                    <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #475569; margin-top: 3px; flex-wrap: wrap;">
+                                                        ${item.color ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">🎨 Màu: <strong style="color: #334155;">${item.color}</strong></span>` : ''}
+                                                        ${(item.pattern || item.texture || item.patternName) ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">✨ Họa tiết: <strong style="color: #334155;">${item.pattern || item.texture || item.patternName}</strong></span>` : ''}
+                                                        ${(item.combo || item.comboName || item.isCombo) ? `<span style="background: #e0f2fe; color: #0066cc; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid #bae6fd;">🎁 Combo: ${item.combo || item.comboName || 'Bộ gốm sứ'}</span>` : ''}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td style="padding: 8px 10px; text-align: center; font-weight: 600;">${f.quantity}</td>
@@ -8760,17 +8934,26 @@ window.renderEditOrderItemsTable = function () {
         const pattern = item.pattern || item.texture || item.patternName || '';
         const combo = item.combo || item.comboName || '';
 
+        const itemImg = window.resolveOrderItemImage ? window.resolveOrderItemImage(item) : (item.image || item.imageUrl || '../Asset/icons/favicon.png');
+        const safeName = (item.name || 'Sản phẩm gốm').replace(/"/g, '&quot;');
+        const safeJsName = (item.name || 'Sản phẩm gốm').replace(/'/g, "\\'");
+
         html += `
             <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 8px 10px;">
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
-                        <strong style="color: #0066cc; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index + 1)}</strong>
-                        <input type="text" value="${item.name || ''}" placeholder="Tên sản phẩm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600; outline: none;" onchange="window.changeEditItemField(${index}, 'name', this.value)">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
-                        <input type="text" value="${color}" placeholder="🎨 Màu sắc..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'color', this.value)">
-                        <input type="text" value="${pattern}" placeholder="✨ Họa tiết..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'pattern', this.value)">
-                        <input type="text" value="${combo}" placeholder="🎁 Combo / Bộ..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'combo', this.value)">
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <img src="${itemImg}" alt="${safeName}" style="width: 44px; height: 44px; min-width: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; margin-top: 2px; cursor: pointer;" onclick="window.previewOrderImage ? window.previewOrderImage('${itemImg}', '${safeJsName}') : window.open('${itemImg}', '_blank')" title="Bấm để xem ảnh phóng to" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png';">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                                <strong style="color: #0066cc; font-size: 0.8rem; white-space: nowrap;">${item.id || 'SP' + (index + 1)}</strong>
+                                <input type="text" value="${item.name || ''}" placeholder="Tên sản phẩm..." style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; font-weight: 600; outline: none;" onchange="window.changeEditItemField(${index}, 'name', this.value)">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
+                                <input type="text" value="${color}" placeholder="🎨 Màu sắc..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'color', this.value)">
+                                <input type="text" value="${pattern}" placeholder="✨ Họa tiết..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'pattern', this.value)">
+                                <input type="text" value="${combo}" placeholder="🎁 Combo / Bộ..." style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px; font-size: 0.76rem; outline: none;" onchange="window.changeEditItemField(${index}, 'combo', this.value)">
+                            </div>
+                        </div>
                     </div>
                 </td>
                 <td style="padding: 8px 10px; text-align: center; vertical-align: top;">
@@ -10722,16 +10905,24 @@ window.toggleRentalQuickView = function (orderId, event) {
                                 ${items.map(item => {
         const uPrice = item.rentalPrice || item.price || 0;
         const lineTotal = uPrice * (item.quantity || 1);
+        const itemImg = window.resolveOrderItemImage(item);
+        const safeName = (item.name || 'Sản phẩm gốm').replace(/"/g, '&quot;');
+        const safeJsName = (item.name || 'Sản phẩm gốm').replace(/'/g, "\\'");
 
         return `
                                     <tr style="border-bottom: 1px solid #f1f5f9;">
                                         <td style="padding: 8px 10px; color: #166534; font-weight: 600;">${item.id || 'SP'}</td>
                                         <td style="padding: 8px 10px; font-weight: 500;">
-                                            <strong style="color: #0f172a; display: block;">${item.name}</strong>
-                                            <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #64748b; margin-top: 2px;">
-                                                ${item.color ? `<span>🎨 Màu: ${item.color}</span>` : ''}
-                                                ${(item.pattern || item.texture) ? `<span>✨ Họa tiết: ${item.pattern || item.texture}</span>` : ''}
-                                                ${(item.combo || item.comboName) ? `<span style="color: #0066cc;">🎁 Combo: ${item.combo || item.comboName}</span>` : ''}
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <img src="${itemImg}" alt="${safeName}" style="width: 48px; height: 48px; min-width: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.previewOrderImage ? window.previewOrderImage('${itemImg}', '${safeJsName}') : window.open('${itemImg}', '_blank')" title="Bấm để xem ảnh phóng to" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png';">
+                                                <div style="min-width: 0; flex: 1;">
+                                                    <strong style="color: #0f172a; display: block;">${item.name}</strong>
+                                                    <div style="display: flex; gap: 6px; font-size: 0.74rem; color: #64748b; margin-top: 2px; flex-wrap: wrap;">
+                                                        ${item.color ? `<span>🎨 Màu: ${item.color}</span>` : ''}
+                                                        ${(item.pattern || item.texture) ? `<span>✨ Họa tiết: ${item.pattern || item.texture}</span>` : ''}
+                                                        ${(item.combo || item.comboName) ? `<span style="color: #0066cc;">🎁 Combo: ${item.combo || item.comboName}</span>` : ''}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td style="padding: 8px 10px; text-align: center; font-weight: 600;">${item.quantity || 1}</td>
@@ -11887,13 +12078,15 @@ window.viewAdminOrderDetail = async (orderId) => {
                     <p><strong>Khách hàng:</strong> ${order.shippingAddress?.fullName || 'Khách vãng lai'}</p>
                     <p><strong>SĐT:</strong> ${order.shippingAddress?.phone || 'N/A'}</p>
                     <p><strong>Địa chỉ:</strong> ${order.shippingAddress?.address || 'N/A'}</p>
+                    <p style="display: flex; align-items: center; gap: 8px;"><strong>Vận chuyển:</strong> ${(window.getOrderShippingMethodInfo ? window.getOrderShippingMethodInfo(order).badgeHtml : '🚚 Giao thường')}</p>
                     <p><strong>Sản phẩm:</strong></p>
                     <ul style="list-style: none; padding: 0;">
                         ${order.items.map(i => {
                             const f = window.getItemFinancials(i);
+                            const itemImg = window.resolveOrderItemImage ? window.resolveOrderItemImage(i) : (i.image || i.imageUrl || '../Asset/icons/favicon.png');
                             return `
                             <li style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid #f9f9f9; padding-bottom: 8px;">
-                                <img src="${i.image}" alt="${i.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                <img src="${itemImg}" alt="${(i.name || '').replace(/"/g, '&quot;')}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.previewOrderImage ? window.previewOrderImage('${itemImg}', '${(i.name || '').replace(/'/g, "\\'")}') : window.open('${itemImg}', '_blank')" title="Bấm xem ảnh lớn" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png';">
                                 <div>
                                     <div style="font-weight: 600;">${i.name}</div>
                                     <div style="font-size: 0.8rem; color: #555;">Mã SP: ${i.id}</div>

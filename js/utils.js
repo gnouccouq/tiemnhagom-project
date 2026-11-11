@@ -2793,10 +2793,15 @@ export async function loadSharedComponents(pathPrefix = './') {
                 initDrawerCart();
             }
 
-            // Khởi tạo Google Translate và nút đổi ngôn ngữ
-            if (!window.googleTranslateElementInit) {
+            // Khởi tạo Google Translate và nút đổi ngôn ngữ (chỉ nạp khi dropdown ngôn ngữ đang hiển thị)
+            const langWrapper = document.querySelector('.lang-dropdown');
+            const isLangVisible = langWrapper && window.getComputedStyle(langWrapper).display !== 'none';
+
+            if (isLangVisible && !window.googleTranslateElementInit) {
                 window.googleTranslateElementInit = function () {
-                    new google.translate.TranslateElement({ pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false }, 'google_translate_element');
+                    try {
+                        new google.translate.TranslateElement({ pageLanguage: 'vi', includedLanguages: 'en,vi', autoDisplay: false }, 'google_translate_element');
+                    } catch (_) {}
                 };
                 const gtScript = document.createElement('script');
                 gtScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
@@ -3076,10 +3081,10 @@ function getCleanPageTitle() {
 let pendingLocationPromise = null;
 
 async function fetchUserLocation() {
-    let cached = sessionStorage.getItem('tng_user_location');
+    let cached = localStorage.getItem('tng_user_location') || sessionStorage.getItem('tng_user_location');
     if (cached) return cached;
 
-    if (sessionStorage.getItem('tng_user_location_failed')) {
+    if (localStorage.getItem('tng_user_location_failed') || sessionStorage.getItem('tng_user_location_failed')) {
         return 'Việt Nam';
     }
 
@@ -3089,7 +3094,6 @@ async function fetchUserLocation() {
 
     pendingLocationPromise = (async () => {
         try {
-            // Sử dụng geojs.io hoàn toàn miễn phí, không giới hạn request và không bị lỗi HTTP 429
             const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(2500) });
             if (res.ok) {
                 const data = await res.json();
@@ -3099,15 +3103,21 @@ async function fetchUserLocation() {
                     sessionStorage.setItem('tng_user_lon', data.longitude.toString());
                 }
                 if (loc) {
+                    localStorage.setItem('tng_user_location', loc);
                     sessionStorage.setItem('tng_user_location', loc);
                     return loc;
                 }
+            } else {
+                localStorage.setItem('tng_user_location_failed', '1');
+                sessionStorage.setItem('tng_user_location_failed', '1');
             }
         } catch (e) {
-            // Im lặng xử lý khi mất mạng hoặc timeout
+            localStorage.setItem('tng_user_location_failed', '1');
+            sessionStorage.setItem('tng_user_location_failed', '1');
         }
 
         // Mặc định an toàn cho khách hàng tại Việt Nam và lưu cache để không lặp lại request
+        localStorage.setItem('tng_user_location', 'Việt Nam');
         sessionStorage.setItem('tng_user_location', 'Việt Nam');
         return 'Việt Nam';
     })().finally(() => {

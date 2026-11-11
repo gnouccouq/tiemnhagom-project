@@ -884,10 +884,8 @@ async function fetchOrderHistory(userId, authUser = null) {
                                  (order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleString('vi-VN') : 'Mới');
 
                 let currentStep = 1;
-                let isCancelled = false;
 
-                if (statusLower.includes('hủy') || statusLower.includes('cancel')) {
-                    isCancelled = true;
+                if (isCancelled) {
                     currentStep = 0;
                 } else if (
                     statusLower.includes('hoàn thành') || 
@@ -1093,6 +1091,8 @@ async function fetchOrderHistory(userId, authUser = null) {
             const profileSpent = Number(window.currentUserData?.totalSpent || window.currentUserData?.spentTotal || 0);
             totalSpent = Math.max(totalSpent, profileSpent);
             const currentTier = getMembershipTier(totalSpent, window.currentUserData?.membershipTier || window.currentUserData?.tier);
+            const currentTierIdx = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
+            const nextTier = (currentTierIdx >= 0 && currentTierIdx < MEMBERSHIP_TIERS.length - 1) ? MEMBERSHIP_TIERS[currentTierIdx + 1] : null;
             sessionStorage.setItem('tng_current_tier', JSON.stringify(currentTier));
             sessionStorage.setItem('tng_total_spent', String(totalSpent));
 

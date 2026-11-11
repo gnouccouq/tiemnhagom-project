@@ -295,32 +295,56 @@ body.noel-active .noel-fairy-lights {
    6. NAVBAR NOEL LINK & PRODUCT CARD NOEL BADGE
    ============================================================ */
 .nav-links .noel-nav-link {
-    color: #991B1B !important;
-    font-weight: 700 !important;
-    background: linear-gradient(135deg, rgba(153, 27, 27, 0.08), rgba(217, 119, 6, 0.14));
-    border: 1px solid rgba(180, 83, 9, 0.28);
-    padding: 4px 12px !important;
-    border-radius: 999px;
-    display: inline-flex !important;
+    color: #b91c1c !important;
+    font-weight: 500;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
-    transition: all 0.25s ease !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    transition: opacity 0.3s ease, color 0.3s ease !important;
 }
 
-.navbar.transparent .nav-links .noel-nav-link {
-    background: rgba(127, 29, 29, 0.72);
-    color: #FEF3C7 !important;
-    border-color: rgba(252, 211, 77, 0.45);
-    backdrop-filter: blur(6px);
+@media (min-width: 993px) {
+    .nav-links .noel-nav-link {
+        padding: 0 !important;
+    }
 }
 
 .nav-links .noel-nav-link:hover,
 .nav-links .noel-nav-link.active {
-    background: linear-gradient(135deg, #881337, #991B1B) !important;
-    color: #FEF3C7 !important;
-    border-color: #F59E0B !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(153, 27, 27, 0.22);
+    background: transparent !important;
+    color: #991b1b !important;
+    border: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.7;
+}
+
+.navbar.transparent .nav-links .noel-nav-link {
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    mix-blend-mode: difference;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+.navbar.transparent .nav-links .noel-nav-link:hover,
+.navbar.transparent .nav-links .noel-nav-link.active {
+    background: transparent !important;
+    color: #fff !important;
+    opacity: 0.7;
+}
+
+@media (max-width: 992px) {
+    .navbar.transparent .nav-links .noel-nav-link {
+        color: #b91c1c !important;
+        mix-blend-mode: normal !important;
+    }
 }
 
 .product-badge-circle.badge-noel {
