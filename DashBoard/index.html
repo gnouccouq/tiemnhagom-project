@@ -1136,59 +1136,133 @@
                                         BẬT</span>
                                 </div>
 
-                                <div class="form-group">
-                                    <label style="font-weight: 600;">Mật độ tuyết rơi</label>
-                                    <select id="holiday-snow-density"
-                                        style="padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%;">
-                                        <option value="low">Nhẹ nhàng (Khoảng 35 hạt - Dịu mắt, siêu mượt)</option>
-                                        <option value="medium" selected>Tiêu chuẩn (Khoảng 65 hạt - Đẹp và thơ mộng)
-                                        </option>
-                                        <option value="high">Dày đặc (Khoảng 110 hạt - Tuyết phủ rộn ràng)</option>
-                                    </select>
+                                <!-- Cụm 1: Không khí & Điểm nhấn thị giác -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 1.25rem;">
+                                    <h4 style="font-size: 0.95rem; color: #0f172a; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                        <i class="ti ti-snowflake" style="color:#0284c7;"></i> 1. Không Khí &amp; Điểm Nhấn Thị Giác Lễ Hội
+                                    </h4>
+
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-weight: 600;">Mật độ tuyết rơi</label>
+                                        <select id="holiday-snow-density"
+                                            style="padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%;">
+                                            <option value="low">Nhẹ nhàng (Khoảng 35 hạt - Dịu mắt, siêu mượt)</option>
+                                            <option value="medium" selected>Tiêu chuẩn (Khoảng 65 hạt - Đẹp và thơ mộng)</option>
+                                            <option value="high">Dày đặc (Khoảng 110 hạt - Tuyết phủ rộn ràng)</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-show-lights" checked style="width: 17px; height: 17px;">
+                                            <span>Dây đèn lấp lánh &amp; Mũ Noel logo</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-hat-wiggle" checked style="width: 17px; height: 17px;">
+                                            <span>Mũ Noel lắc lư vui mắt khi hover logo</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-snow-cap" checked style="width: 17px; height: 17px;">
+                                            <span>Phủ vệt tuyết mỏng trên thẻ sản phẩm (Snow Cap)</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-corner-ribbon" checked style="width: 17px; height: 17px;">
+                                            <span>Ruy băng góc "Quà Noel" trên thẻ sản phẩm</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-sparkle-title" checked style="width: 17px; height: 17px;">
+                                            <span>Hiệu ứng sao lấp lánh trên tiêu đề banner/kệ</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; margin: 0;">
+                                            <input type="checkbox" id="holiday-snow-toggle-btn" checked style="width: 17px; height: 17px;">
+                                            <span>Nút ❄️ nổi cho khách tự bật/tắt tuyết</span>
+                                        </label>
+                                    </div>
                                 </div>
 
-                                <div class="form-group"
-                                    style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
-                                    <input type="checkbox" id="holiday-show-lights" checked
-                                        style="width: 18px; height: 18px; cursor: pointer;">
-                                    <label for="holiday-show-lights"
-                                        style="margin-bottom: 0; cursor: pointer; font-size: 0.95rem;">Hiển thị Dây đèn
-                                        lấp lánh và Mũ Noel trên Logo</label>
+                                <!-- Cụm 2: Tăng chuyển đổi & Dịch vụ Quà tặng -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 1.25rem;">
+                                    <h4 style="font-size: 0.95rem; color: #991b1b; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                        <i class="ti ti-gift" style="color:#dc2626;"></i> 2. Tăng Chuyển Đổi &amp; Dịch Vụ Quà Tặng Noel
+                                    </h4>
+
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.92rem; font-weight:600; margin-bottom:6px;">
+                                            <input type="checkbox" id="holiday-enable-giftwrap" checked style="width: 17px; height: 17px;">
+                                            <span>Bật tùy chọn "Miễn phí gói quà Noel &amp; Viết thiệp tay" trong giỏ hàng</span>
+                                        </label>
+                                        <input type="text" id="holiday-giftwrap-text"
+                                            placeholder="🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm Nhà Gốm"
+                                            style="margin-top: 4px; font-size: 0.88rem;">
+                                    </div>
+
+                                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.92rem; font-weight:600; margin-bottom:8px;">
+                                            <input type="checkbox" id="holiday-enable-sock" checked style="width: 17px; height: 17px;">
+                                            <span>Bật "Chiếc vớ Giáng Sinh may mắn" nổi ở góc màn hình (Secret Santa Voucher)</span>
+                                        </label>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                            <div>
+                                                <label style="font-size: 0.82rem; font-weight: 600; color: #475569;">Mã Voucher Noel</label>
+                                                <input type="text" id="holiday-sock-code" placeholder="NOEL2026" style="text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                                            </div>
+                                            <div>
+                                                <label style="font-size: 0.82rem; font-weight: 600; color: #475569;">Mô tả ưu đãi trong vớ</label>
+                                                <input type="text" id="holiday-sock-discount" placeholder="Giảm 20.000đ cho đơn từ 200.000đ">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label style="font-weight: 600;">Thông điệp chúc mừng mùa lễ hội (Tùy chọn)</label>
-                                    <input type="text" id="holiday-message"
-                                        placeholder="Ví dụ: Tiệm Nhà Gốm chúc bạn mùa Giáng Sinh ấm áp & an lành!">
+                                <!-- Cụm 3: Góc Nhạc Giáng Sinh Êm Dịu -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 1.25rem;">
+                                    <h4 style="font-size: 0.95rem; color: #166534; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                        <i class="ti ti-music" style="color:#16a34a;"></i> 3. Giai Điệu Giáng Sinh Ấm Áp (Ambient Music)
+                                    </h4>
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.92rem; font-weight:600; margin-bottom:8px;">
+                                        <input type="checkbox" id="holiday-enable-music" checked style="width: 17px; height: 17px;">
+                                        <span>Bật widget nghe nhạc Noel mini ở góc màn hình (Mặc định TẮT âm thanh - Khách tự bấm để nghe)</span>
+                                    </label>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 0.82rem; font-weight: 600; color: #475569;">Link file âm thanh (MP3 / Audio URL)</label>
+                                        <input type="text" id="holiday-music-url"
+                                            placeholder="https://assets.mixkit.co/music/preview/mixkit-silent-night-holiday-acoustic-guitar-1174.mp3">
+                                        <small style="color: #64748b; font-size: 0.78rem;">Để trống để sử dụng giai điệu guitar/acoustic Giáng Sinh êm dịu mặc định của Tiệm.</small>
+                                    </div>
                                 </div>
 
-                                <div style="border-top: 1px solid #e2e8f0; margin: 1.25rem 0; padding-top: 1.25rem;">
-                                    <h4 style="font-size: 1rem; color: #7f1d1d; margin: 0 0 10px 0;"><i
-                                            class="ti ti-gift"></i> Không Gian Trưng
-                                        Bày Hàng Noel (Trang chủ &amp; Trang /noel/)</h4>
+                                <!-- Cụm 4: Banner & Kệ Gốm Giáng Sinh -->
+                                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 1.25rem;">
+                                    <h4 style="font-size: 0.95rem; color: #7f1d1d; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                        <i class="ti ti-christmas-tree" style="color:#b91c1c;"></i> 4. Banner Thông Điệp &amp; Kệ Gốm Giáng Sinh
+                                    </h4>
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-weight: 600;">Thông điệp chúc mừng mùa lễ hội (Banner nổi)</label>
+                                        <input type="text" id="holiday-message"
+                                            placeholder="Ví dụ: Tiệm Nhà Gốm chúc bạn mùa Giáng Sinh ấm áp & an lành!">
+                                    </div>
                                     <div class="form-group"
-                                        style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+                                        style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
                                         <input type="checkbox" id="holiday-show-showcase" checked
-                                            style="width: 18px; height: 18px; cursor: pointer;">
+                                            style="width: 17px; height: 17px; cursor: pointer;">
                                         <label for="holiday-show-showcase"
-                                            style="margin-bottom: 0; cursor: pointer; font-size: 0.95rem; font-weight: 600;">Hiển
+                                            style="margin-bottom: 0; cursor: pointer; font-size: 0.92rem; font-weight: 600;">Hiển
                                             thị khu vực "Góc Giáng Sinh Ấm Áp" trên Trang chủ &amp; Menu</label>
                                     </div>
-                                    <div class="form-group">
-                                        <label style="font-weight: 600;">Tiêu đề Kệ Gốm Giáng Sinh</label>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label style="font-weight: 600; font-size: 0.85rem;">Tiêu đề Kệ Gốm Giáng Sinh</label>
                                         <input type="text" id="holiday-showcase-title"
                                             placeholder="Góc Giáng Sinh Ấm Áp">
                                     </div>
-                                    <div class="form-group">
-                                        <label style="font-weight: 600;">Mô tả ngắn dưới tiêu đề</label>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-weight: 600; font-size: 0.85rem;">Mô tả ngắn dưới tiêu đề</label>
                                         <input type="text" id="holiday-showcase-subtitle"
                                             placeholder="Trao gửi hơi ấm mùa lễ hội qua những món gốm thủ công mộc mạc — Gói quà & viết thiệp tay miễn phí từ Tiệm Nhà Gốm.">
                                     </div>
                                 </div>
 
                                 <button type="submit" class="btn-dark"
-                                    style="width: 100%; border-radius: 8px; padding: 12px;">Lưu Cài Đặt Lễ Hội &amp; Kệ
-                                    Noel</button>
+                                    style="width: 100%; border-radius: 8px; padding: 13px; font-weight: 600; font-size: 0.95rem;">Lưu Toàn Bộ Cài Đặt Lễ Hội &amp; Giáng Sinh</button>
                             </form>
 
                             <!-- Chọn nhanh sản phẩm trưng bày lên Góc Giáng Sinh -->
@@ -6407,7 +6481,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=76"></script>
+    <script type="module" src="../js/DashBoard.js?v=77"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

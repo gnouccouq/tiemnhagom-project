@@ -7921,6 +7921,9 @@ window.matchAndScoreProduct = function (product, queryStr) {
     const skuRaw = String(product.sku || product.id || '').toLowerCase();
     const skuClean = window.removeVietnameseTones(skuRaw);
 
+    const parentIdRaw = String(product.parentProductId || product.parentId || '').toLowerCase();
+    const parentIdClean = window.removeVietnameseTones(parentIdRaw);
+
     const barcode = String(product.barcode || '').toLowerCase();
     const code = String(product.code || '').toLowerCase();
 
@@ -7928,34 +7931,39 @@ window.matchAndScoreProduct = function (product, queryStr) {
     const subCatClean = window.removeVietnameseTones(product.subCategory || '');
 
     let variantsText = '';
-    if (Array.isArray(product.colorVariants)) {
-        variantsText += ' ' + product.colorVariants.map(v => v.name || v.color || '').join(' ');
-    }
-    if (Array.isArray(product.patternVariants)) {
-        variantsText += ' ' + product.patternVariants.map(v => v.name || v.pattern || '').join(' ');
-    }
-    if (Array.isArray(product.patterns)) {
-        variantsText += ' ' + product.patterns.join(' ');
-    }
-    if (Array.isArray(product.comboVariants)) {
-        variantsText += ' ' + product.comboVariants.map(v => v.name || v.title || '').join(' ');
-    }
-    if (Array.isArray(product.comboItems)) {
-        variantsText += ' ' + product.comboItems.map(v => v.name || v.title || '').join(' ');
+    if (product.selectedVariant || product.isIndependentVariant) {
+        const selName = product.selectedVariant?.name || product.variantName || '';
+        variantsText = ' ' + selName;
+    } else {
+        if (Array.isArray(product.colorVariants)) {
+            variantsText += ' ' + product.colorVariants.map(v => v.name || v.color || '').join(' ');
+        }
+        if (Array.isArray(product.patternVariants)) {
+            variantsText += ' ' + product.patternVariants.map(v => v.name || v.pattern || '').join(' ');
+        }
+        if (Array.isArray(product.patterns)) {
+            variantsText += ' ' + product.patterns.join(' ');
+        }
+        if (Array.isArray(product.comboVariants)) {
+            variantsText += ' ' + product.comboVariants.map(v => v.name || v.title || '').join(' ');
+        }
+        if (Array.isArray(product.comboItems)) {
+            variantsText += ' ' + product.comboItems.map(v => v.name || v.title || '').join(' ');
+        }
     }
     const variantsClean = window.removeVietnameseTones(variantsText);
     const descClean = window.removeVietnameseTones(product.description || '');
 
     const nameWords = nameClean.split(/\s+/).filter(Boolean);
-    const allSearchable = `${nameClean} ${skuClean} ${barcode} ${code} ${catClean} ${subCatClean} ${variantsClean} ${descClean}`;
+    const allSearchable = `${nameClean} ${skuClean} ${parentIdClean} ${barcode} ${code} ${catClean} ${subCatClean} ${variantsClean} ${descClean}`;
 
     let score = 0;
 
-    // 1. Khớp chính xác Barcode / SKU / Code / ID
-    if (barcode === rawQuery || skuClean === cleanQuery || code === cleanQuery || skuRaw === rawQuery) {
+    // 1. Khớp chính xác Barcode / SKU / Code / ID / Parent ID
+    if (barcode === rawQuery || skuClean === cleanQuery || code === cleanQuery || skuRaw === rawQuery || parentIdRaw === rawQuery || parentIdClean === cleanQuery) {
         return { isMatch: true, score: 3000 };
     }
-    if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery))) {
+    if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery)) || (parentIdClean && parentIdClean.includes(cleanQuery))) {
         score += 1500;
     }
 
@@ -8012,7 +8020,7 @@ window.matchAndScoreProduct = function (product, queryStr) {
         isQualified = tokensInProduct >= Math.ceil(totalTokens * 0.7) || tokensInName >= Math.ceil(totalTokens * 0.6);
     }
 
-    if (!isQualified && score === 0) return null;
+    if (!isQualified) return null;
 
     if (tokensInName === totalTokens) {
         score += 500;
@@ -17151,6 +17159,23 @@ async function initHolidaySettings() {
     const statusText = document.getElementById('holiday-status-text');
     const densitySelect = document.getElementById('holiday-snow-density');
     const lightsToggle = document.getElementById('holiday-show-lights');
+    const hatWiggleToggle = document.getElementById('holiday-hat-wiggle');
+    const snowCapToggle = document.getElementById('holiday-snow-cap');
+    const cornerRibbonToggle = document.getElementById('holiday-corner-ribbon');
+    const sparkleTitleToggle = document.getElementById('holiday-sparkle-title');
+    const snowToggleBtn = document.getElementById('holiday-snow-toggle-btn');
+    
+    // Quà tặng & Chuyển đổi
+    const enableGiftWrapToggle = document.getElementById('holiday-enable-giftwrap');
+    const giftWrapTextInput = document.getElementById('holiday-giftwrap-text');
+    const enableSockToggle = document.getElementById('holiday-enable-sock');
+    const sockCodeInput = document.getElementById('holiday-sock-code');
+    const sockDiscountInput = document.getElementById('holiday-sock-discount');
+
+    // Âm nhạc
+    const enableMusicToggle = document.getElementById('holiday-enable-music');
+    const musicUrlInput = document.getElementById('holiday-music-url');
+
     const messageInput = document.getElementById('holiday-message');
     const showShowcaseToggle = document.getElementById('holiday-show-showcase');
     const showcaseTitleInput = document.getElementById('holiday-showcase-title');
@@ -17181,6 +17206,23 @@ async function initHolidaySettings() {
                 statusText.style.color = isActive ? '#27ae60' : '#e74c3c';
                 densitySelect.value = hs.snowDensity || 'medium';
                 lightsToggle.checked = hs.showLights !== false;
+
+                if (hatWiggleToggle) hatWiggleToggle.checked = hs.hatWiggle !== false;
+                if (snowCapToggle) snowCapToggle.checked = hs.showSnowCap !== false;
+                if (cornerRibbonToggle) cornerRibbonToggle.checked = hs.showCornerRibbon !== false;
+                if (sparkleTitleToggle) sparkleTitleToggle.checked = hs.showSparkleTitle !== false;
+                if (snowToggleBtn) snowToggleBtn.checked = hs.showSnowToggleBtn !== false;
+
+                if (enableGiftWrapToggle) enableGiftWrapToggle.checked = hs.enableFreeGiftWrap !== false;
+                if (giftWrapTextInput) giftWrapTextInput.value = hs.giftWrapText || '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm';
+
+                if (enableSockToggle) enableSockToggle.checked = hs.enableSecretSantaSock !== false;
+                if (sockCodeInput) sockCodeInput.value = hs.secretSantaCode || 'NOEL2026';
+                if (sockDiscountInput) sockDiscountInput.value = hs.secretSantaDiscount || 'Giảm 20.000đ cho đơn từ 200.000đ';
+
+                if (enableMusicToggle) enableMusicToggle.checked = hs.enableChristmasMusic !== false;
+                if (musicUrlInput) musicUrlInput.value = hs.christmasMusicUrl || '';
+
                 messageInput.value = hs.message || '';
                 if (showShowcaseToggle) showShowcaseToggle.checked = hs.showShowcase !== false;
                 if (showcaseTitleInput) showcaseTitleInput.value = hs.showcaseTitle || '';
@@ -17205,6 +17247,22 @@ async function initHolidaySettings() {
                     active: toggle.checked,
                     snowDensity: densitySelect.value,
                     showLights: lightsToggle.checked,
+                    hatWiggle: hatWiggleToggle ? hatWiggleToggle.checked : true,
+                    showSnowCap: snowCapToggle ? snowCapToggle.checked : true,
+                    showCornerRibbon: cornerRibbonToggle ? cornerRibbonToggle.checked : true,
+                    showSparkleTitle: sparkleTitleToggle ? sparkleTitleToggle.checked : true,
+                    showSnowToggleBtn: snowToggleBtn ? snowToggleBtn.checked : true,
+                    
+                    enableFreeGiftWrap: enableGiftWrapToggle ? enableGiftWrapToggle.checked : true,
+                    giftWrapText: giftWrapTextInput ? (giftWrapTextInput.value.trim() || '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm') : '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm',
+                    
+                    enableSecretSantaSock: enableSockToggle ? enableSockToggle.checked : true,
+                    secretSantaCode: sockCodeInput ? (sockCodeInput.value.trim().toUpperCase() || 'NOEL2026') : 'NOEL2026',
+                    secretSantaDiscount: sockDiscountInput ? (sockDiscountInput.value.trim() || 'Giảm 20.000đ cho đơn từ 200.000đ') : 'Giảm 20.000đ cho đơn từ 200.000đ',
+
+                    enableChristmasMusic: enableMusicToggle ? enableMusicToggle.checked : true,
+                    christmasMusicUrl: musicUrlInput ? musicUrlInput.value.trim() : '',
+
                     message: messageInput.value.trim(),
                     showShowcase: showShowcaseToggle ? showShowcaseToggle.checked : true,
                     showcaseTitle: showcaseTitleInput ? showcaseTitleInput.value.trim() : '',

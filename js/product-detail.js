@@ -2,7 +2,7 @@ import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, renderProductCardWithVariants, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, getProductFlashSaleInfo, COLOR_MAP, getColorHex,
-    isUserInHCM, updateExpressDeliveryBadges, getExpressDeliveryStatus
+    isUserInHCM, updateExpressDeliveryBadges, getExpressDeliveryStatus, toCategorySlug
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
@@ -914,7 +914,7 @@ async function fetchProductDetail() {
                         "@type": "ListItem",
                         "position": 2,
                         "name": p.category,
-                        "item": `${baseUrl}/products/?category=${encodeURIComponent(p.category)}`
+                        "item": `${baseUrl}/products/?category=${toCategorySlug(p.category)}`
                     },
                     {
                         "@type": "ListItem",
@@ -933,7 +933,7 @@ async function fetchProductDetail() {
                     <span class="separator">&rsaquo;</span>
                     <a href="${baseUrl}/products/">Sản phẩm</a>
                     <span class="separator">&rsaquo;</span>
-                    <a href="${baseUrl}/products/?category=${encodeURIComponent(p.category)}">${escapeHTML(p.category)}</a>
+                    <a href="${baseUrl}/products/?category=${toCategorySlug(p.category)}">${escapeHTML(p.category)}</a>
                     <span class="separator">&rsaquo;</span>
                     <span class="current">${escapeHTML(p.name)}</span>
                 `;

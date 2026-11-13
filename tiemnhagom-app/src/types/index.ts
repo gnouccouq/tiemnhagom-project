@@ -43,6 +43,12 @@ export interface Product {
   isOnlyEvent?: boolean;
   parentProductId?: string;
   selectedVariant?: ProductVariant;
+  isIndependentVariant?: boolean;
+  variantType?: 'color' | 'pattern' | 'combo';
+  variantName?: string;
+  sku?: string;
+  code?: string;
+  barcode?: string;
   rating?: number;
   createdAt?: any;
   updatedAt?: any;

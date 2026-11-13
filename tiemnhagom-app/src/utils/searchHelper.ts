@@ -25,35 +25,47 @@ export function matchAndScoreProduct(product: Product, queryStr: string): Produc
   const nameRaw = String(product.name || '').toLowerCase();
   const nameClean = removeVietnameseTones(nameRaw);
 
-  const skuRaw = String(product.id || '').toLowerCase();
+  const skuRaw = String(product.sku || product.id || '').toLowerCase();
   const skuClean = removeVietnameseTones(skuRaw);
+
+  const parentIdRaw = String(product.parentProductId || '').toLowerCase();
+  const parentIdClean = removeVietnameseTones(parentIdRaw);
+
+  const barcode = String(product.barcode || '').toLowerCase();
+  const code = String(product.code || '').toLowerCase();
 
   const catClean = removeVietnameseTones(product.category || '');
 
   let variantsText = '';
-  if (Array.isArray(product.colorVariants)) {
-    variantsText += ' ' + product.colorVariants.map(v => v.name || '').join(' ');
-  }
-  if (Array.isArray(product.patternVariants)) {
-    variantsText += ' ' + product.patternVariants.map(v => v.name || '').join(' ');
-  }
-  if (Array.isArray(product.comboVariants)) {
-    variantsText += ' ' + product.comboVariants.map(v => v.name || '').join(' ');
+  if (product.selectedVariant || product.isIndependentVariant) {
+    // Biến thể độc lập: Chỉ tìm theo đúng tên biến thể của chính nó, không gộp biến thể của các sản phẩm anh em
+    const selName = product.selectedVariant?.name || product.variantName || '';
+    variantsText = ' ' + selName;
+  } else {
+    if (Array.isArray(product.colorVariants)) {
+      variantsText += ' ' + product.colorVariants.map(v => v.name || '').join(' ');
+    }
+    if (Array.isArray(product.patternVariants)) {
+      variantsText += ' ' + product.patternVariants.map(v => v.name || '').join(' ');
+    }
+    if (Array.isArray(product.comboVariants)) {
+      variantsText += ' ' + product.comboVariants.map(v => v.name || '').join(' ');
+    }
   }
   const variantsClean = removeVietnameseTones(variantsText);
   const descClean = removeVietnameseTones(product.description || '');
   const collectionsClean = (product.collections || []).map(c => removeVietnameseTones(String(c))).join(' ');
 
   const nameWords = nameClean.split(/\s+/).filter(Boolean);
-  const allSearchable = `${nameClean} ${skuClean} ${catClean} ${variantsClean} ${collectionsClean} ${descClean}`;
+  const allSearchable = `${nameClean} ${skuClean} ${parentIdClean} ${barcode} ${code} ${catClean} ${variantsClean} ${collectionsClean} ${descClean}`;
 
   let score = 0;
 
-  // 1. Khớp chính xác SKU / ID
-  if (skuClean === cleanQuery || skuRaw === rawQuery) {
+  // 1. Khớp chính xác SKU / ID / Barcode / Code / Parent ID
+  if (barcode === rawQuery || code === cleanQuery || skuClean === cleanQuery || skuRaw === rawQuery || parentIdRaw === rawQuery || parentIdClean === cleanQuery) {
     return { isMatch: true, score: 3000, tokensInName: cleanTokens.length, tokensInProduct: cleanTokens.length };
   }
-  if (skuClean && skuClean.includes(cleanQuery)) {
+  if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery)) || (parentIdClean && parentIdClean.includes(cleanQuery))) {
     score += 1500;
   }
 
@@ -111,7 +123,7 @@ export function matchAndScoreProduct(product: Product, queryStr: string): Produc
     isQualified = tokensInProduct >= Math.ceil(totalTokens * 0.7) || tokensInName >= Math.ceil(totalTokens * 0.6);
   }
 
-  if (!isQualified && score === 0) return null;
+  if (!isQualified) return null;
 
   if (tokensInName === totalTokens) {
     score += 500;

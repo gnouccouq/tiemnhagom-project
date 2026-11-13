@@ -277,6 +277,11 @@ body.noel-active .noel-fairy-lights {
         font-size: 0.78rem;
         max-width: 92vw;
     }
+
+    .noel-landing-hero {
+        margin-top: -70px;
+        padding-top: 110px;
+    }
 }
 
 /* Accessibility: Respect Reduced Motion */
@@ -325,8 +330,13 @@ body.noel-active .noel-fairy-lights {
 }
 
 .navbar.transparent .nav-links .noel-nav-link {
-    color: #111111 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
     mix-blend-mode: normal !important;
+}
+.navbar.transparent .nav-links .noel-nav-link svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
 }
 
 .product-badge-circle.badge-noel {
@@ -851,5 +861,516 @@ body.noel-active .noel-fairy-lights {
     }
     .noel-gift-form-row {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   8. VISUAL & AESTHETICS ENHANCEMENTS (Gợi ý 1)
+   - Mũ Noel lắc lư nhịp nhàng khi hover
+   - Mũ tuyết phủ mép thẻ sản phẩm (Snow Cap)
+   - Ruy băng góc 'Quà Noel' trên sản phẩm lễ hội
+   - Sao lấp lánh trên tiêu đề banner/kệ
+   - Nút ❄️ nổi cho khách tự bật/tắt tuyết
+   ============================================================ */
+
+/* 8.1. Mũ Noel rung rinh (Jingle Wiggle) */
+body.noel-active.noel-hat-wiggle .logo:hover .noel-santa-hat,
+body.noel-active .logo .noel-santa-hat:hover {
+    animation: jingleWiggle 0.85s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite !important;
+}
+
+@keyframes jingleWiggle {
+    0% { transform: scale(1) rotate(-14deg); }
+    15% { transform: scale(1.18) rotate(-28deg); }
+    30% { transform: scale(1.18) rotate(4deg); }
+    45% { transform: scale(1.12) rotate(-22deg); }
+    60% { transform: scale(1.06) rotate(1deg); }
+    75% { transform: scale(1.02) rotate(-17deg); }
+    100% { transform: scale(1) rotate(-14deg); }
+}
+
+/* 8.2. Mũ tuyết phủ mép thẻ sản phẩm (Snow Cap) */
+body.noel-active.noel-snow-cap-on .product-card,
+body.noel-active.noel-snow-cap-on .noel-shelf-card,
+body.noel-active.noel-snow-cap-on .noel-card {
+    position: relative;
+    overflow: visible !important;
+}
+
+body.noel-active.noel-snow-cap-on .product-card::before,
+body.noel-active.noel-snow-cap-on .noel-shelf-card::before,
+body.noel-active.noel-snow-cap-on .noel-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 14' preserveAspectRatio='none'%3E%3Cpath d='M0,0 L120,0 L120,4 Q114,10 108,5 Q102,11 95,6 Q88,13 80,6 Q72,12 63,5 Q54,13 46,5 Q38,12 30,6 Q23,11 16,5 Q8,12 0,4 Z' fill='%23ffffff' opacity='0.98'/%3E%3Cpath d='M0,0 L120,0 L120,2 Q112,8 106,3 Q98,9 90,4 Q78,10 68,4 Q58,10 48,4 Q36,10 26,3 Q14,9 0,2 Z' fill='%23e0f2fe' opacity='0.6'/%3E%3C/svg%3E");
+    background-size: 100% 12px;
+    background-repeat: no-repeat;
+    z-index: 5;
+    pointer-events: none;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    filter: drop-shadow(0 2px 2px rgba(15, 23, 42, 0.08));
+}
+
+/* 8.3. Ruy băng góc 'Quà Noel' / Corner Ribbon */
+.noel-corner-ribbon-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 85px;
+    height: 85px;
+    overflow: hidden;
+    z-index: 8;
+    pointer-events: none;
+    border-top-left-radius: inherit;
+}
+
+.noel-corner-ribbon {
+    position: absolute;
+    top: 14px;
+    left: -28px;
+    transform: rotate(-45deg);
+    background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+    color: #fffbeb;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 28px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    border-top: 1px solid rgba(254, 243, 199, 0.5);
+    border-bottom: 1px solid rgba(254, 243, 199, 0.3);
+    text-align: center;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+}
+
+/* 8.4. Sparkle Star Twinkle trên tiêu đề */
+.noel-sparkle-star {
+    display: inline-block;
+    color: #fde047;
+    margin: 0 4px;
+    animation: sparkleTwinkle 2.2s infinite ease-in-out;
+    transform-origin: center;
+    vertical-align: middle;
+}
+.noel-sparkle-star:nth-child(2) {
+    animation-delay: 0.7s;
+}
+.noel-sparkle-star:nth-child(3) {
+    animation-delay: 1.4s;
+}
+
+@keyframes sparkleTwinkle {
+    0%, 100% {
+        opacity: 0.35;
+        transform: scale(0.8) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.3) rotate(45deg);
+        filter: drop-shadow(0 0 6px #fde047);
+    }
+}
+
+/* 8.5. Nút ❄️ nổi cho khách tự bật/tắt tuyết */
+.noel-floating-snow-btn {
+    position: fixed;
+    bottom: 24px;
+    left: 20px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(185, 28, 28, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 0 0 2px rgba(255, 255, 255, 0.8);
+    color: #0284c7;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9998;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+    outline: none;
+}
+
+.noel-floating-snow-btn:hover {
+    transform: scale(1.12);
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+    color: #0369a1;
+}
+
+.noel-floating-snow-btn.disabled {
+    color: #94a3b8;
+    border-color: #cbd5e1;
+    background: rgba(241, 245, 249, 0.92);
+}
+
+.noel-floating-snow-btn.disabled::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: #ef4444;
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+/* ============================================================
+   9. CONVERSION & E-COMMERCE ENHANCEMENTS (Gợi ý 2)
+   - Tùy chọn miễn phí gói quà & viết thiệp trong giỏ hàng
+   - Chiếc vớ Giáng Sinh may mắn (Secret Santa Sock Widget & Popup)
+   ============================================================ */
+
+/* 9.1. Checkbox Gói Quà Noel trong Drawer Cart & Giỏ Hàng */
+.noel-giftwrap-box {
+    background: #fef2f2;
+    border: 1px dashed #f87171;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    text-align: left;
+}
+
+.noel-giftwrap-box:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+}
+
+.noel-giftwrap-box input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #991b1b;
+}
+
+.noel-giftwrap-info {
+    flex: 1;
+}
+
+.noel-giftwrap-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.noel-giftwrap-desc {
+    font-size: 0.74rem;
+    color: #7f1d1d;
+    line-height: 1.35;
+    opacity: 0.9;
+}
+
+/* 9.2. Chiếc vớ Giáng Sinh may mắn (Lucky Sock Widget) */
+.noel-lucky-sock-widget {
+    position: fixed;
+    bottom: 76px;
+    left: 20px;
+    z-index: 9998;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: sockSwing 3.6s infinite ease-in-out;
+    transform-origin: top center;
+    user-select: none;
+    transition: transform 0.3s ease;
+}
+
+.noel-lucky-sock-widget:hover {
+    animation-play-state: paused;
+    transform: scale(1.1);
+}
+
+@keyframes sockSwing {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(9deg); }
+    75% { transform: rotate(-9deg); }
+}
+
+.noel-sock-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+    box-shadow: 0 6px 18px rgba(153, 27, 27, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fef08a;
+    font-size: 1.5rem;
+    border: 2px solid #fde047;
+    position: relative;
+}
+
+.noel-sock-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e11d48;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 8px;
+    border: 1px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 1.8s infinite;
+}
+
+.noel-sock-tag {
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(185, 28, 28, 0.2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #991b1b;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+/* 9.3. Popup Secret Santa Voucher Modal */
+.noel-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.noel-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.noel-sock-popup {
+    background: #fffdfa;
+    border: 2px solid #fcd34d;
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(254, 243, 199, 0.5);
+    max-width: 420px;
+    width: 100%;
+    padding: 24px 22px;
+    text-align: center;
+    position: relative;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-image: radial-gradient(circle at 10% 10%, rgba(185, 28, 28, 0.04) 0%, transparent 40%),
+                      radial-gradient(circle at 90% 90%, rgba(22, 101, 52, 0.05) 0%, transparent 40%);
+}
+
+.noel-modal-backdrop.active .noel-sock-popup {
+    transform: scale(1) translateY(0);
+}
+
+.noel-sock-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.noel-sock-popup-close:hover {
+    color: #e11d48;
+}
+
+.noel-coupon-box {
+    background: #fef2f2;
+    border: 1.5px dashed #f87171;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.noel-coupon-code {
+    font-family: monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #991b1b;
+    letter-spacing: 2px;
+}
+
+.noel-coupon-copy-btn {
+    background: #991b1b;
+    color: #fff;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.noel-coupon-copy-btn:hover {
+    background: #7f1d1d;
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   10. INTERACTIVE & AMBIENT MUSIC (Gợi ý 3)
+   - Widget nghe nhạc Giáng sinh êm dịu góc màn hình
+   ============================================================ */
+.noel-music-widget {
+    position: fixed;
+    bottom: 24px;
+    left: 70px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(22, 101, 52, 0.28);
+    border-radius: 30px;
+    padding: 0 14px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    z-index: 9998;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+    font-size: 0.8rem;
+    color: #166534;
+    font-weight: 600;
+    outline: none;
+}
+
+.noel-music-widget:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 20px rgba(22, 101, 52, 0.22);
+}
+
+.noel-music-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.noel-music-widget.playing {
+    background: #14532d;
+    color: #f0fdf4;
+    border-color: #22c55e;
+}
+
+.noel-music-widget.playing .noel-music-icon {
+    background: #22c55e;
+    color: #fff;
+    animation: spinSlow 6s linear infinite;
+}
+
+@keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.noel-audio-waves {
+    display: none;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 12px;
+}
+
+.noel-music-widget.playing .noel-audio-waves {
+    display: flex;
+}
+
+.noel-audio-waves span {
+    width: 2px;
+    height: 100%;
+    background: #4ade80;
+    border-radius: 1px;
+    animation: soundWave 1.2s infinite ease-in-out alternate;
+}
+
+.noel-audio-waves span:nth-child(2) { animation-delay: 0.25s; height: 50%; }
+.noel-audio-waves span:nth-child(3) { animation-delay: 0.5s; height: 80%; }
+.noel-audio-waves span:nth-child(4) { animation-delay: 0.15s; height: 60%; }
+
+@keyframes soundWave {
+    0% { height: 20%; }
+    100% { height: 100%; }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .noel-floating-snow-btn {
+        bottom: 16px;
+        left: 14px;
+        width: 38px;
+        height: 38px;
+        font-size: 1.05rem;
+    }
+    .noel-music-widget {
+        bottom: 16px;
+        left: 58px;
+        height: 38px;
+        padding: 0 10px 0 6px;
+        font-size: 0.74rem;
+    }
+    .noel-lucky-sock-widget {
+        bottom: 64px;
+        left: 14px;
+    }
+    .noel-sock-icon-wrap {
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
+    }
+    .noel-sock-tag {
+        font-size: 0.62rem;
+        padding: 1px 5px;
     }
 }

@@ -162,7 +162,10 @@ function renderDefaultContent() {
         </div>
         <div class="tng-search-cats-grid">
             ${QUICK_CATEGORIES.map(cat => {
-                const targetUrl = cat.link ? `${pathPrefixGlobal}${cat.link}` : `${pathPrefixGlobal}products/index.html?category=${encodeURIComponent(cat.filter)}`;
+                const slug = (typeof window !== 'undefined' && typeof window.toCategorySlug === 'function')
+                    ? window.toCategorySlug(cat.filter)
+                    : encodeURIComponent(cat.filter);
+                const targetUrl = cat.link ? `${pathPrefixGlobal}${cat.link}` : `${pathPrefixGlobal}products/?category=${slug}`;
                 return `
                     <a href="${targetUrl}" class="tng-search-cat-item">
                         <span class="tng-search-cat-icon">${cat.icon}</span>

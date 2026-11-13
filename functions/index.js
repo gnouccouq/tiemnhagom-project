@@ -767,6 +767,26 @@ exports.shareRedirect = onRequest(async (req, res) => {
     }
 });
 
+function removeVietnameseTones(str) {
+    if (!str) return '';
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+}
+
+function toCategorySlug(str) {
+    if (!str) return '';
+    return removeVietnameseTones(String(str))
+        .replace(/&/g, ' ')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+}
+
 // --- CATEGORY SEO METADATA & SCHEMA.ORG DEFINITIONS ---
 const CATEGORY_SEO_DATA = {
     // 5 Danh mục cha
@@ -1167,7 +1187,7 @@ exports.productDetail = onRequest(async (req, res) => {
                 "@type": "ListItem",
                 "position": curPos++,
                 "name": parentCat,
-                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(parentCat)}`
+                "item": `https://tiemnhagom.vn/products/?category=${toCategorySlug(parentCat)}`
             });
         }
         if (childCat) {
@@ -1175,7 +1195,7 @@ exports.productDetail = onRequest(async (req, res) => {
                 "@type": "ListItem",
                 "position": curPos++,
                 "name": childCat,
-                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(childCat)}`
+                "item": `https://tiemnhagom.vn/products/?category=${toCategorySlug(childCat)}`
             });
         }
         breadcrumbItems.push({
@@ -1274,16 +1294,19 @@ exports.productsList = onRequest(async (req, res) => {
         } catch (_) {}
     }
 
-    // Kiểm tra alias tìm kiếm (ví dụ: "bình hoa" -> "Lọ Hoa Nghệ Thuật", "chén bát" -> "Bát & Chén")
+    // Kiểm tra alias tìm kiếm (ví dụ: "bình hoa" -> "Lọ Hoa Nghệ Thuật", "chén bát" -> "Bát & Chén", "dia-an-decor" -> "Dĩa & Khay")
     const lowerCat = catQuery.toLowerCase();
+    const catSlug = toCategorySlug(catQuery);
     if (CATEGORY_SEARCH_ALIASES[lowerCat]) {
         catQuery = CATEGORY_SEARCH_ALIASES[lowerCat];
+    } else if (CATEGORY_SEARCH_ALIASES[catSlug]) {
+        catQuery = CATEGORY_SEARCH_ALIASES[catSlug];
     }
 
-    // Tìm dữ liệu SEO phù hợp
+    // Tìm dữ liệu SEO phù hợp (hỗ trợ cả slug lẫn tên tiếng Việt có dấu)
     let catData = CATEGORY_SEO_DATA[catQuery];
     if (!catData && catQuery) {
-        const matchedKey = Object.keys(CATEGORY_SEO_DATA).find(k => k.toLowerCase() === lowerCat);
+        const matchedKey = Object.keys(CATEGORY_SEO_DATA).find(k => k.toLowerCase() === lowerCat || toCategorySlug(k) === catSlug);
         if (matchedKey) catData = CATEGORY_SEO_DATA[matchedKey];
     }
 
@@ -1296,12 +1319,12 @@ exports.productsList = onRequest(async (req, res) => {
         pageTitle = catData.title;
         pageDescription = catData.description;
         h1Text = catData.h1;
-        canonicalUrl = `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catData.name)}`;
+        canonicalUrl = `https://tiemnhagom.vn/products/?category=${toCategorySlug(catData.name)}`;
     } else if (catQuery) {
         pageTitle = `${catQuery} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
         pageDescription = `Khám phá bộ sưu tập ${catQuery.toLowerCase()} tinh tế tại Tiệm Nhà Gốm. Sản phẩm gốm mộc vuốt tay thủ công chất lượng cao cho không gian sống.`;
         h1Text = catQuery.toLowerCase();
-        canonicalUrl = `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catQuery)}`;
+        canonicalUrl = `https://tiemnhagom.vn/products/?category=${toCategorySlug(catQuery)}`;
     }
 
     const escapeAttr = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1364,7 +1387,7 @@ exports.productsList = onRequest(async (req, res) => {
                 "@type": "ListItem",
                 "position": 3,
                 "name": catData.parent,
-                "item": `https://tiemnhagom.vn/products/?category=${encodeURIComponent(catData.parent)}`
+                "item": `https://tiemnhagom.vn/products/?category=${toCategorySlug(catData.parent)}`
             });
             breadcrumbItems.push({
                 "@type": "ListItem",

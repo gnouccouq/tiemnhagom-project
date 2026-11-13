@@ -1,5 +1,7 @@
 import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones, searchAndRankProducts
+    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, 
+    dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, removeVietnameseTones, searchAndRankProducts, expandProductsWithVariants,
+    toCategorySlug, resolveCategoryFromParam
 } from "./utils.js";
 import { 
     collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot, getCountFromServer
@@ -58,18 +60,17 @@ function renderCategoryGrid() {
     const urlParams = new URLSearchParams(window.location.search);
     const catParam = urlParams.get('category') || 'all';
 
-    // Tìm nhóm chính đang active
-    let activeGroup = null;
-    if (catParam !== 'all') {
-        activeGroup = dynamicCategories.find(g => g.name === catParam || (g.subs && g.subs.includes(catParam)));
-    }
+    // Dùng resolveCategoryFromParam để tìm nhóm chính & danh mục con đang active
+    const resolved = resolveCategoryFromParam(catParam, dynamicCategories);
+    let activeGroup = resolved.group;
     if (!activeGroup && activeSubCategory) {
-        activeGroup = dynamicCategories.find(g => g.subs && g.subs.includes(activeSubCategory));
+        const subResolved = resolveCategoryFromParam(activeSubCategory, dynamicCategories);
+        activeGroup = subResolved.group;
     }
 
     let mainCatHtml = `
         <div class="minimal-category-list">
-            <a href="javascript:void(0)" class="minimal-cat-item ${catParam === 'all' && !activeSubCategory ? 'active' : ''}" data-filter-category="all" id="cat-all">
+            <a href="javascript:void(0)" class="minimal-cat-item ${resolved.isAll && !activeSubCategory ? 'active' : ''}" data-filter-category="all" id="cat-all">
                 tất cả <span class="cat-count">(...)</span>
             </a>
     `;
@@ -77,7 +78,7 @@ function renderCategoryGrid() {
     dynamicCategories.forEach(group => {
         const isGroupActive = activeGroup && activeGroup.name === group.name;
         mainCatHtml += `
-            <a href="javascript:void(0)" class="minimal-cat-item ${isGroupActive ? 'active' : ''}" data-filter-category="${group.name}" id="cat-${group.name.replace(/\s+/g, '-')}">
+            <a href="javascript:void(0)" class="minimal-cat-item ${isGroupActive ? 'active' : ''}" data-filter-category="${group.name}" data-category-slug="${toCategorySlug(group.name)}" id="cat-${toCategorySlug(group.name)}">
                 ${group.name.toLowerCase()} <span class="cat-count">(...)</span>
             </a>
         `;
@@ -88,16 +89,16 @@ function renderCategoryGrid() {
     let subCatHtml = '';
     if (activeGroup && activeGroup.subs && activeGroup.subs.length > 0) {
         subCatHtml += `<div class="sub-category-list">`;
-        const isAllSubActive = !activeSubCategory;
+        const isAllSubActive = !activeSubCategory && resolved.isGroup;
         subCatHtml += `
             <a href="javascript:void(0)" class="minimal-subcat-item ${isAllSubActive ? 'active' : ''}" data-filter-subcategory="group-all" data-parent-group="${activeGroup.name}">
                 tất cả ${activeGroup.name.toLowerCase()}
             </a>
         `;
         activeGroup.subs.forEach(sub => {
-            const isSubActive = activeSubCategory === sub || catParam === sub;
+            const isSubActive = (activeSubCategory && (activeSubCategory === sub || toCategorySlug(activeSubCategory) === toCategorySlug(sub))) || (resolved.isSub && resolved.sub === sub);
             subCatHtml += `
-                <a href="javascript:void(0)" class="minimal-subcat-item ${isSubActive ? 'active' : ''}" data-filter-subcategory="${sub}" id="subcat-${sub.replace(/\s+/g, '-')}">
+                <a href="javascript:void(0)" class="minimal-subcat-item ${isSubActive ? 'active' : ''}" data-filter-subcategory="${sub}" data-subcategory-slug="${toCategorySlug(sub)}" id="subcat-${toCategorySlug(sub)}">
                     ${sub.toLowerCase()} <span class="subcat-count">(...)</span>
                 </a>
             `;
@@ -141,7 +142,7 @@ async function fetchCategoryCounts() {
         }
 
         dynamicCategories.forEach(group => {
-            const el = document.getElementById(`cat-${group.name.replace(/\s+/g, '-')}`);
+            const el = document.getElementById(`cat-${toCategorySlug(group.name)}`);
             if (el && el.querySelector('.cat-count')) {
                 let catDocs = [];
                 if (group.subs && group.subs.length > 0) {
@@ -154,7 +155,7 @@ async function fetchCategoryCounts() {
 
             if (group.subs && Array.isArray(group.subs)) {
                 group.subs.forEach(sub => {
-                    const subEl = document.getElementById(`subcat-${sub.replace(/\s+/g, '-')}`);
+                    const subEl = document.getElementById(`subcat-${toCategorySlug(sub)}`);
                     if (subEl && subEl.querySelector('.subcat-count')) {
                         const subDocs = publicDocs.filter(p => p.category === sub);
                         subEl.querySelector('.subcat-count').textContent = `(${countCards(subDocs)})`;
@@ -231,21 +232,24 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             if (collectionParam) {
                 productsQuery = query(productsQuery, where("collections", "array-contains", collectionParam));
             } else if (currentCategory !== 'all') {
-                const selectedGroup = dynamicCategories.find(g => g.name === currentCategory);
+                const resolved = resolveCategoryFromParam(currentCategory, dynamicCategories);
+                const selectedGroup = resolved.isGroup ? resolved.group : dynamicCategories.find(g => g.name === currentCategory);
                 if (selectedGroup) {
                     if (selectedGroup.subs && selectedGroup.subs.length > 0) {
                         productsQuery = query(productsQuery, where("category", "in", [selectedGroup.name, ...selectedGroup.subs]));
                     } else {
-                        productsQuery = query(productsQuery, where("category", "==", currentCategory));
+                        productsQuery = query(productsQuery, where("category", "==", selectedGroup.name));
                     }
                 } else {
-                    const subMatches = [currentCategory];
-                    if (currentCategory === 'Lọ Hoa Nghệ Thuật') subMatches.push('Bình & Lọ Hoa', 'Bình hoa', 'Lọ hoa');
-                    if (currentCategory === 'Bát & Chén') subMatches.push('Tô, Bát & Chén', 'Chén bát', 'Bát đĩa');
-                    if (currentCategory === 'Dĩa & Khay') subMatches.push('Đĩa Ăn & Decor');
-                    if (currentCategory === 'Ly & Tách') subMatches.push('Cốc, Ly & Phụ Kiện');
-                    if (currentCategory === 'Ấm Trà') subMatches.push('Ấm chén', 'Bộ ấm chén');
-                    productsQuery = query(productsQuery, where("category", "in", subMatches));
+                    const actualName = resolved.isSub ? resolved.sub : (resolved.name || currentCategory);
+                    const subMatches = [actualName];
+                    if (actualName === 'Lọ Hoa Nghệ Thuật' || currentCategory === 'Lọ Hoa Nghệ Thuật') subMatches.push('Bình & Lọ Hoa', 'Bình hoa', 'Lọ hoa');
+                    if (actualName === 'Bát & Chén' || currentCategory === 'Bát & Chén') subMatches.push('Tô, Bát & Chén', 'Chén bát', 'Bát đĩa');
+                    if (actualName === 'Dĩa & Khay' || currentCategory === 'Dĩa & Khay') subMatches.push('Đĩa Ăn & Decor');
+                    if (actualName === 'Đĩa Ăn & Decor' || currentCategory === 'Đĩa Ăn & Decor') subMatches.push('Dĩa & Khay');
+                    if (actualName === 'Ly & Tách' || currentCategory === 'Ly & Tách') subMatches.push('Cốc, Ly & Phụ Kiện');
+                    if (actualName === 'Ấm Trà' || currentCategory === 'Ấm Trà') subMatches.push('Ấm chén', 'Bộ ấm chén');
+                    productsQuery = query(productsQuery, where("category", "in", Array.from(new Set(subMatches))));
                 }
             }
 
@@ -364,9 +368,14 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Lọc thông minh client-side: Hỗ trợ đảo từ, không dấu, từ không liền nhau
         const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden && !p.isOnlyEvent);
-        let finalResults = hasSearchTerm 
-            ? searchAndRankProducts(allDocs, searchTerm, 1000)
-            : allDocs;
+        let finalResults = [];
+        if (hasSearchTerm) {
+            // Mở rộng tìm kiếm cả sản phẩm biến thể độc lập (showOnProductPage === true)
+            const expandedDocs = expandProductsWithVariants(allDocs);
+            finalResults = searchAndRankProducts(expandedDocs, searchTerm, 1000);
+        } else {
+            finalResults = allDocs;
+        }
 
         // Trích xuất timestamp chính xác hỗ trợ mọi định dạng (ISO string, Timestamp, Date, ms)
         const parseProductTime = (item) => {
@@ -407,13 +416,16 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         };
 
         // Sắp xếp client-side đảm bảo luôn chuẩn xác theo tiêu chí được chọn
+        // Nếu đang tìm kiếm và người dùng để sort mặc định ("newest"), giữ nguyên thứ tự ưu tiên độ liên quan của searchAndRankProducts
         if (currentSort === 'newest') {
-            finalResults.sort((a, b) => {
-                const timeA = parseProductTime(a);
-                const timeB = parseProductTime(b);
-                if (timeB !== timeA) return timeB - timeA;
-                return (b.id || '').localeCompare(a.id || '');
-            });
+            if (!hasSearchTerm) {
+                finalResults.sort((a, b) => {
+                    const timeA = parseProductTime(a);
+                    const timeB = parseProductTime(b);
+                    if (timeB !== timeA) return timeB - timeA;
+                    return (b.id || '').localeCompare(a.id || '');
+                });
+            }
         } else if (currentSort === 'popular') {
             finalResults.sort((a, b) => {
                 const soldDiff = (Number(b.sold) || 0) - (Number(a.sold) || 0);
@@ -439,6 +451,12 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Hiển thị toàn bộ các sản phẩm đã lọc trong đợt này (không bị cắt xén thủ công gây mất sản phẩm)
         htmlContent = finalResults.map((p) => {
+            if (hasSearchTerm) {
+                if (p.isIndependentVariant) {
+                    return renderProductCard(p.parentProduct, p.parentId, favs, '../product/index.html', p.variantOverride);
+                }
+                return renderProductCard(p, p.id, favs, '../product/index.html');
+            }
             return renderProductCardWithVariants(p, p.id, favs, '../product/index.html');
         }).join('');
 
@@ -501,7 +519,8 @@ function setupCategoryEvents() {
             if (cat === 'all') {
                 window.history.replaceState({}, '', window.location.pathname);
             } else {
-                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(cat)}`);
+                const slug = toCategorySlug(cat);
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${slug}`);
             }
             renderCategoryGrid();
             fetchProducts('init');
@@ -514,10 +533,12 @@ function setupCategoryEvents() {
             if (sub === 'group-all') {
                 const parentGroup = item.dataset.parentGroup;
                 activeSubCategory = null;
-                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(parentGroup)}`);
+                const slug = toCategorySlug(parentGroup);
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${slug}`);
             } else {
                 activeSubCategory = sub;
-                window.history.replaceState({}, '', `${window.location.pathname}?category=${encodeURIComponent(sub)}`);
+                const slug = toCategorySlug(sub);
+                window.history.replaceState({}, '', `${window.location.pathname}?category=${slug}`);
             }
             renderCategoryGrid();
             fetchProducts('init');
@@ -570,43 +591,22 @@ function handleInitialFilters() {
     const collParam = urlParams.get('collection');
     
     if (catParam && !collParam) {
-        // Map alias nếu có
-        const ALIASES = {
-            'bình hoa': 'Lọ Hoa Nghệ Thuật',
-            'binh hoa': 'Lọ Hoa Nghệ Thuật',
-            'lọ hoa': 'Lọ Hoa Nghệ Thuật',
-            'lo hoa': 'Lọ Hoa Nghệ Thuật',
-            'bình & lọ hoa': 'Lọ Hoa Nghệ Thuật',
-            'chén bát': 'Bát & Chén',
-            'chen bat': 'Bát & Chén',
-            'bát đĩa': 'Bát & Chén',
-            'bat dia': 'Bát & Chén',
-            'tô, bát & chén': 'Bát & Chén',
-            'ấm trà': 'Ấm Trà',
-            'am tra': 'Ấm Trà',
-            'ấm chén': 'Ấm Trà',
-            'am chen': 'Ấm Trà',
-            'ly tách': 'Ly & Tách',
-            'ly tach': 'Ly & Tách',
-            'cốc': 'Ly & Tách',
-            'nồi chảo': 'Nồi & Chảo',
-            'nồi đất': 'Nồi & Chảo'
-        };
-        const lowerCat = catParam.toLowerCase().trim();
-        if (ALIASES[lowerCat]) {
-            catParam = ALIASES[lowerCat];
+        const resolved = resolveCategoryFromParam(catParam, dynamicCategories);
+        if (resolved.isGroup) {
+            activeSubCategory = null;
+        } else if (resolved.isSub) {
+            activeSubCategory = resolved.sub;
+        } else if (resolved.isCustom) {
+            activeSubCategory = resolved.name;
         }
 
-        let matchedGroup = dynamicCategories.find(g => g.name.toLowerCase() === lowerCat || g.name === catParam);
-        if (matchedGroup) {
-            activeSubCategory = null;
-        } else {
-            for (const group of dynamicCategories) {
-                if (group.subs && group.subs.some(s => s.toLowerCase() === lowerCat || s === catParam)) {
-                    const matchedSub = group.subs.find(s => s.toLowerCase() === lowerCat || s === catParam);
-                    activeSubCategory = matchedSub || catParam;
-                    break;
-                }
+        // Tự động chuẩn hóa URL sang slug đẹp không chứa ký tự % hay tiếng Việt thô
+        if (resolved.canonicalSlug && resolved.canonicalSlug !== 'all') {
+            const currentCatParam = urlParams.get('category');
+            if (currentCatParam !== resolved.canonicalSlug) {
+                const newParams = new URLSearchParams(window.location.search);
+                newParams.set('category', resolved.canonicalSlug);
+                window.history.replaceState({}, '', `${window.location.pathname}?${newParams.toString()}`);
             }
         }
     }

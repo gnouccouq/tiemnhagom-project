@@ -119,6 +119,131 @@ export function removeVietnameseTones(str) {
 }
 
 /**
+ * Chuyển đổi tên danh mục / phân loại thành slug URL thân thiện (clean SEO slug, không dấu, không ký tự đặc biệt, không %)
+ * Ví dụ: "Đĩa Ăn & Decor" -> "dia-an-decor", "Tô, Bát & Chén" -> "to-bat-chen", "Dining Decor" -> "dining-decor"
+ */
+export function toCategorySlug(str) {
+    if (!str) return '';
+    return removeVietnameseTones(String(str))
+        .replace(/&/g, ' ')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+}
+
+// Bảng ánh xạ các bí danh (alias) & từ khóa cũ phổ biến về danh mục chuẩn
+export const CATEGORY_SLUG_ALIASES = {
+    'binh-hoa': 'Lọ Hoa Nghệ Thuật',
+    'bình hoa': 'Lọ Hoa Nghệ Thuật',
+    'binh hoa': 'Lọ Hoa Nghệ Thuật',
+    'lo-hoa': 'Lọ Hoa Nghệ Thuật',
+    'lọ hoa': 'Lọ Hoa Nghệ Thuật',
+    'lo hoa': 'Lọ Hoa Nghệ Thuật',
+    'binh-lo-hoa': 'Lọ Hoa Nghệ Thuật',
+    'bình & lọ hoa': 'Lọ Hoa Nghệ Thuật',
+    'chen-bat': 'Bát & Chén',
+    'chén bát': 'Bát & Chén',
+    'chen bat': 'Bát & Chén',
+    'bat-dia': 'Bát & Chén',
+    'bát đĩa': 'Bát & Chén',
+    'bat dia': 'Bát & Chén',
+    'to-bat-chen': 'Bát & Chén',
+    'tô, bát & chén': 'Bát & Chén',
+    'dia-an-decor': 'Dĩa & Khay',
+    'đĩa ăn & decor': 'Dĩa & Khay',
+    'dia-an': 'Dĩa & Khay',
+    'am-tra': 'Ấm Trà',
+    'ấm trà': 'Ấm Trà',
+    'am tra': 'Ấm Trà',
+    'am-chen': 'Ấm Trà',
+    'ấm chén': 'Ấm Trà',
+    'am chen': 'Ấm Trà',
+    'ly-tach': 'Ly & Tách',
+    'ly tách': 'Ly & Tách',
+    'ly tach': 'Ly & Tách',
+    'coc': 'Ly & Tách',
+    'cốc': 'Ly & Tách',
+    'noi-chao': 'Nồi & Chảo',
+    'nồi chảo': 'Nồi & Chảo',
+    'noi-dat': 'Nồi & Chảo',
+    'nồi đất': 'Nồi & Chảo'
+};
+
+/**
+ * Giải mã tham số danh mục từ URL (hỗ trợ cả slug mới như "dia-an-decor", "dia-khay" lẫn tên cũ "Đĩa Ăn & Decor", "Đĩa%20Ăn%20%26%20Decor")
+ * Trả về: { group, sub, name, canonicalSlug, isGroup, isSub, isAll, isCustom }
+ */
+export function resolveCategoryFromParam(catParam, categories = dynamicCategories) {
+    if (!catParam || catParam === 'all') {
+        return { group: null, sub: null, name: 'all', canonicalSlug: 'all', isAll: true };
+    }
+
+    let decoded = '';
+    try {
+        decoded = decodeURIComponent(catParam).trim();
+    } catch (_) {
+        decoded = String(catParam).trim();
+    }
+    const cleanSlug = toCategorySlug(decoded);
+    const lowerDecoded = decoded.toLowerCase();
+
+    const catList = (categories && categories.length > 0) ? categories : DEFAULT_PRODUCT_CATEGORIES;
+
+    // 1. Tìm trực tiếp trong danh sách danh mục (so khớp slug hoặc tên chính xác)
+    for (const g of catList) {
+        if (toCategorySlug(g.name) === cleanSlug || g.name.toLowerCase() === lowerDecoded) {
+            return { group: g, sub: null, name: g.name, canonicalSlug: toCategorySlug(g.name), isGroup: true };
+        }
+    }
+    for (const g of catList) {
+        if (g.subs && g.subs.length > 0) {
+            for (const s of g.subs) {
+                if (toCategorySlug(s) === cleanSlug || s.toLowerCase() === lowerDecoded) {
+                    return { group: g, sub: s, name: s, canonicalSlug: toCategorySlug(s), isSub: true };
+                }
+            }
+        }
+    }
+
+    // 2. Tra cứu alias nếu chưa tìm thấy trực tiếp
+    const aliasTarget = CATEGORY_SLUG_ALIASES[cleanSlug] || CATEGORY_SLUG_ALIASES[lowerDecoded];
+    if (aliasTarget) {
+        const aliasSlug = toCategorySlug(aliasTarget);
+        for (const g of catList) {
+            if (toCategorySlug(g.name) === aliasSlug || g.name.toLowerCase() === aliasTarget.toLowerCase()) {
+                return { group: g, sub: null, name: g.name, canonicalSlug: toCategorySlug(g.name), isGroup: true };
+            }
+        }
+        for (const g of catList) {
+            if (g.subs && g.subs.length > 0) {
+                for (const s of g.subs) {
+                    if (toCategorySlug(s) === aliasSlug || s.toLowerCase() === aliasTarget.toLowerCase()) {
+                        return { group: g, sub: s, name: s, canonicalSlug: toCategorySlug(s), isSub: true };
+                    }
+                }
+            }
+        }
+        return {
+            group: null,
+            sub: aliasTarget,
+            name: aliasTarget,
+            canonicalSlug: aliasSlug,
+            isCustom: true
+        };
+    }
+
+    // 3. Fallback danh mục tùy chỉnh
+    return {
+        group: null,
+        sub: decoded,
+        name: decoded,
+        canonicalSlug: cleanSlug,
+        isCustom: true
+    };
+}
+
+/**
  * Thuật toán tìm kiếm thông minh & chấm điểm độ liên quan (Smart Product Matching & Scoring)
  * Cho phép gõ đảo từ, không dấu, từ không liền nhau (ví dụ: "bình gốm", "gốm hoa", "hoa gốm" đều khớp "Bình hoa gốm")
  */
@@ -138,6 +263,9 @@ export function matchAndScoreProduct(product, queryStr) {
     const skuRaw = String(product.sku || product.id || '').toLowerCase();
     const skuClean = removeVietnameseTones(skuRaw);
 
+    const parentIdRaw = String(product.parentProductId || product.parentId || '').toLowerCase();
+    const parentIdClean = removeVietnameseTones(parentIdRaw);
+
     const barcode = String(product.barcode || '').toLowerCase();
     const code = String(product.code || '').toLowerCase();
 
@@ -145,34 +273,40 @@ export function matchAndScoreProduct(product, queryStr) {
     const subCatClean = removeVietnameseTones(product.subCategory || '');
 
     let variantsText = '';
-    if (Array.isArray(product.colorVariants)) {
-        variantsText += ' ' + product.colorVariants.map(v => v.name || v.color || '').join(' ');
-    }
-    if (Array.isArray(product.patternVariants)) {
-        variantsText += ' ' + product.patternVariants.map(v => v.name || v.pattern || '').join(' ');
-    }
-    if (Array.isArray(product.patterns)) {
-        variantsText += ' ' + product.patterns.join(' ');
-    }
-    if (Array.isArray(product.comboVariants)) {
-        variantsText += ' ' + product.comboVariants.map(v => v.name || v.title || '').join(' ');
-    }
-    if (Array.isArray(product.comboItems)) {
-        variantsText += ' ' + product.comboItems.map(v => v.name || v.title || '').join(' ');
+    if (product.selectedVariant || product.isIndependentVariant) {
+        // Biến thể độc lập: Chỉ tìm theo đúng tên biến thể của chính nó, không gộp biến thể của các sản phẩm anh em
+        const selName = product.selectedVariant?.name || product.variantName || '';
+        variantsText = ' ' + selName;
+    } else {
+        if (Array.isArray(product.colorVariants)) {
+            variantsText += ' ' + product.colorVariants.map(v => v.name || v.color || '').join(' ');
+        }
+        if (Array.isArray(product.patternVariants)) {
+            variantsText += ' ' + product.patternVariants.map(v => v.name || v.pattern || '').join(' ');
+        }
+        if (Array.isArray(product.patterns)) {
+            variantsText += ' ' + product.patterns.join(' ');
+        }
+        if (Array.isArray(product.comboVariants)) {
+            variantsText += ' ' + product.comboVariants.map(v => v.name || v.title || '').join(' ');
+        }
+        if (Array.isArray(product.comboItems)) {
+            variantsText += ' ' + product.comboItems.map(v => v.name || v.title || '').join(' ');
+        }
     }
     const variantsClean = removeVietnameseTones(variantsText);
     const descClean = removeVietnameseTones(product.description || '');
 
     const nameWords = nameClean.split(/\s+/).filter(Boolean);
-    const allSearchable = `${nameClean} ${skuClean} ${barcode} ${code} ${catClean} ${subCatClean} ${variantsClean} ${descClean}`;
+    const allSearchable = `${nameClean} ${skuClean} ${parentIdClean} ${barcode} ${code} ${catClean} ${subCatClean} ${variantsClean} ${descClean}`;
 
     let score = 0;
 
-    // 1. Khớp chính xác Barcode / SKU / Code / ID
-    if (barcode === rawQuery || skuClean === cleanQuery || code === cleanQuery || skuRaw === rawQuery) {
+    // 1. Khớp chính xác Barcode / SKU / Code / ID / Parent ID
+    if (barcode === rawQuery || skuClean === cleanQuery || code === cleanQuery || skuRaw === rawQuery || parentIdRaw === rawQuery || parentIdClean === cleanQuery) {
         return { isMatch: true, score: 3000 };
     }
-    if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery))) {
+    if ((barcode && barcode.includes(cleanQuery)) || (skuClean && skuClean.includes(cleanQuery)) || (code && code.includes(cleanQuery)) || (parentIdClean && parentIdClean.includes(cleanQuery))) {
         score += 1500;
     }
 
@@ -229,7 +363,7 @@ export function matchAndScoreProduct(product, queryStr) {
         isQualified = tokensInProduct >= Math.ceil(totalTokens * 0.7) || tokensInName >= Math.ceil(totalTokens * 0.6);
     }
 
-    if (!isQualified && score === 0) return null;
+    if (!isQualified) return null;
 
     if (tokensInName === totalTokens) {
         score += 500;
@@ -275,11 +409,113 @@ export function searchAndRankProducts(products, queryStr, maxResults = 50) {
     return scored.slice(0, maxResults).map(item => item.product);
 }
 
+/**
+ * Tách và mở rộng danh sách sản phẩm bao gồm cả các sản phẩm biến thể độc lập (showOnProductPage === true).
+ * Giúp tìm kiếm, hiển thị và liên kết trực tiếp tới từng biến thể độc lập chuẩn xác trên Web & App.
+ */
+export function expandProductsWithVariants(products) {
+    if (!Array.isArray(products) || products.length === 0) return [];
+
+    const expanded = [];
+
+    for (let i = 0; i < products.length; i++) {
+        const p = products[i];
+        if (!p) continue;
+
+        // Thêm sản phẩm gốc (parent)
+        expanded.push(p);
+
+        const addVariantItem = (v, type) => {
+            if (!v || !v.showOnProductPage) return;
+            const hasOwnStock = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+            const vStock = hasOwnStock ? Number(v.stock) : (Number(p.stock) || 0);
+            const isManualOut = Boolean(v.manualOutOfStock);
+            const vIsOutOfStock = isManualOut || Boolean(v.isOutOfStock) || vStock <= 0;
+            const vSold = Number(v.sold) || 0;
+            const vIsBestSeller = !vIsOutOfStock && (vSold >= 5 || Boolean(v.isBestSeller));
+
+            const vPrice = (v.price && Number(v.price) > 0) ? Number(v.price) : (Number(p.price) || 0);
+            let vSale = 0;
+            let vSalePrice = null;
+            if (v.salePrice && Number(v.salePrice) > 0 && vPrice > 0) {
+                vSalePrice = Number(v.salePrice);
+                vSale = Math.round((1 - vSalePrice / vPrice) * 100);
+            } else if (v.sale !== undefined && v.sale !== null && v.sale !== '') {
+                vSale = Number(v.sale);
+                vSalePrice = vSale > 0 ? Math.round(vPrice * (1 - vSale / 100)) : null;
+            } else {
+                vSale = p.sale || 0;
+                vSalePrice = p.salePrice || (vSale > 0 ? Math.round(vPrice * (1 - vSale / 100)) : null);
+            }
+
+            const variantOverride = {
+                type: type,
+                name: v.name,
+                imageUrl: v.imageUrl || v.thumbUrl || p.imageUrl,
+                price: vPrice,
+                sale: vSale,
+                salePrice: vSalePrice,
+                hex: v.hex || null,
+                stock: vStock,
+                sold: vSold,
+                manualOutOfStock: v.manualOutOfStock,
+                isOutOfStock: vIsOutOfStock,
+                isBestSeller: vIsBestSeller
+            };
+
+            const variantProduct = {
+                ...p,
+                id: `${p.id}_${type}_${v.name}`,
+                parentProductId: p.id,
+                parentId: p.id,
+                parentProduct: p,
+                isIndependentVariant: true,
+                variantType: type,
+                variantName: v.name,
+                name: `${p.name || ''} - ${v.name || ''}`,
+                imageUrl: v.imageUrl || v.thumbUrl || p.imageUrl,
+                thumbUrl: v.thumbUrl || v.imageUrl || p.thumbUrl,
+                price: vPrice,
+                sale: vSale,
+                salePrice: vSalePrice,
+                stock: vStock,
+                sold: vSold,
+                isOutOfStock: vIsOutOfStock,
+                isBestSeller: vIsBestSeller,
+                selectedVariant: { ...v, type },
+                variantOverride: variantOverride,
+                // Không kế thừa danh sách biến thể anh em để tránh tìm kiếm nhầm từ khóa
+                colorVariants: type === 'color' ? [v] : [],
+                patternVariants: type === 'pattern' ? [v] : [],
+                comboVariants: type === 'combo' ? [v] : [],
+                patterns: []
+            };
+
+            expanded.push(variantProduct);
+        };
+
+        if (Array.isArray(p.colorVariants)) {
+            p.colorVariants.forEach(v => addVariantItem(v, 'color'));
+        }
+        if (Array.isArray(p.patternVariants)) {
+            p.patternVariants.forEach(v => addVariantItem(v, 'pattern'));
+        }
+        if (Array.isArray(p.comboVariants)) {
+            p.comboVariants.forEach(v => addVariantItem(v, 'combo'));
+        }
+    }
+
+    return expanded;
+}
+
 // Gắn vào window để các script khác có thể dùng
 if (typeof window !== 'undefined') {
     window.matchAndScoreProduct = matchAndScoreProduct;
     window.searchAndRankProducts = searchAndRankProducts;
+    window.expandProductsWithVariants = expandProductsWithVariants;
     window.removeVietnameseTones = removeVietnameseTones;
+    window.toCategorySlug = toCategorySlug;
+    window.resolveCategoryFromParam = resolveCategoryFromParam;
 }
 
 export function addCustomColorHex(colorName, hexCode) {
@@ -1073,11 +1309,11 @@ export function setupHeaderScroll() {
     const bottomNav = document.querySelector('.mobile-bottom-nav');
     if (!nav) return;
 
-    // Kiểm tra xem trang có Hero Section (như trang chủ) không
-    const hasHero = document.querySelector('.hero-carousel') || document.querySelector('.hero') || document.querySelector('#col-hero');
+    // Kiểm tra xem trang có Hero Section (như trang chủ, trang Noel,...) không
+    const hasHero = document.querySelector('.hero-carousel, .hero, #col-hero, .noel-landing-hero, .app-hero, .lookbook-hero');
 
     const handleScroll = () => {
-        if (window.scrollY > 50) {
+        if (window.scrollY > 40) {
             nav.classList.add('scrolled');
             nav.classList.remove('transparent');
             if (hasHero && bottomNav) bottomNav.classList.add('scrolled-show');
@@ -1085,12 +1321,18 @@ export function setupHeaderScroll() {
             if (hasHero) {
                 nav.classList.add('transparent');
                 if (bottomNav) bottomNav.classList.remove('scrolled-show');
+            } else {
+                nav.classList.remove('transparent');
             }
             nav.classList.remove('scrolled');
         }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    if (window._tngHeaderScrollHandler) {
+        window.removeEventListener('scroll', window._tngHeaderScrollHandler);
+    }
+    window._tngHeaderScrollHandler = handleScroll;
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Cập nhật trạng thái ngay khi khởi tạo
 }
 
@@ -1326,9 +1568,12 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 const snap = await getDocs(q);
                 const valClean = removeVietnameseTones(val);
 
-                const candidates = snap.docs
+                const rawCandidates = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(p => !p.isHidden && !p.isOnlyEvent);
+
+                // Mở rộng tìm kiếm cả sản phẩm biến thể độc lập (showOnProductPage === true)
+                const candidates = expandProductsWithVariants(rawCandidates);
 
                 // Tìm kiếm thông minh đa năng: Hỗ trợ đảo từ, không dấu, từ không liền nhau (ví dụ: "bình gốm", "gốm hoa", "hoa gốm")
                 const results = searchAndRankProducts(candidates, val, 8);
@@ -1344,20 +1589,28 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                     const safeName = escapeHTML(p.name);
                     const isOutOfStock = (p.stock || 0) <= 0;
 
-                    let displayImg = p.imageUrl;
+                    let displayImg = p.imageUrl || p.thumbUrl;
                     if (!displayImg || displayImg.includes('placehold.co') || displayImg === 'https://placehold.co/400?text=No+Image') {
                         if (p.colorVariants && p.colorVariants[0] && p.colorVariants[0].imageUrl) displayImg = p.colorVariants[0].imageUrl;
                         else if (p.patternVariants && p.patternVariants[0] && p.patternVariants[0].imageUrl) displayImg = p.patternVariants[0].imageUrl;
                         else displayImg = 'https://placehold.co/100?text=No+Image';
                     }
 
+                    const targetId = p.parentId || p.parentProductId || p.id;
+                    let targetUrl = `${pathPrefix}product/index.html?id=${targetId}`;
+                    if (p.isIndependentVariant && p.variantType && p.variantName) {
+                        targetUrl += `&${p.variantType}=${encodeURIComponent(p.variantName)}`;
+                    }
+
+                    const displaySku = p.sku || targetId;
+
                     return `
-                        <a href="${pathPrefix}product/index.html?id=${p.id}" class="suggestion-item">
-                            <img src="${displayImg}" alt="${p.name}">
+                        <a href="${targetUrl}" class="suggestion-item">
+                            <img src="${displayImg}" alt="${safeName}">
                             <div class="suggestion-info">
                                 <h5>${safeName}</h5>
                                 <div style="display: flex; gap: 10px; font-size: 0.7rem; margin-bottom: 2px;">
-                                    <span style="color: #888;">Mã: ${p.id}</span>
+                                    <span style="color: #888;">Mã: ${displaySku}</span>
                                     <span style="color: ${isOutOfStock ? '#e74c3c' : '#27ae60'}; font-weight: 600;">${isOutOfStock ? 'Hết hàng' : 'Còn hàng'}</span>
                                 </div>
                                 <div class="suggestion-price-container">
@@ -1370,6 +1623,17 @@ export async function initAutocomplete(inputId, suggestionsId, pathPrefix = '') 
                 }).join('');
             } catch (e) { console.error(e); }
         }, 200);
+    });
+
+    // Hỗ trợ nhấn phím Enter để chuyển đến trang danh sách sản phẩm với từ khóa tìm kiếm
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const searchVal = input.value.trim();
+            if (searchVal) {
+                window.location.href = `${pathPrefix}products/index.html?search=${encodeURIComponent(searchVal)}`;
+            }
+        }
     });
 
     document.addEventListener('click', (e) => {
@@ -1923,6 +2187,13 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     const isNoelProduct = !isOutOfStock && Boolean(product.isNoel);
     const noelBadge = isNoelProduct ? `<div class="product-badge-circle badge-noel" title="Bộ sưu tập Giáng Sinh"><span style="font-size: 0.68rem; line-height: 1;"><i class="ti ti-christmas-tree"></i></span><span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; letter-spacing: 0.3px;">Noel</span></div>` : '';
 
+    const showCornerRibbon = isNoelProduct && (window.noelHolidaySettings ? window.noelHolidaySettings.showCornerRibbon !== false : true);
+    const cornerRibbonHtml = showCornerRibbon ? `
+        <div class="noel-corner-ribbon-wrap">
+            <div class="noel-corner-ribbon"><i class="ti ti-gift" style="font-size:0.6rem;"></i> Noel</div>
+        </div>
+    ` : '';
+
     const badgesCorner = (isBestSeller || isNewArrival || isNoelProduct) ? `
         <div class="product-badges-corner" style="position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none;">
             ${noelBadge}
@@ -2072,6 +2343,7 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
                      alt="${displayName} - Chi tiết" loading="lazy" width="300" height="300">
                 ` : ''}
             </a>
+            ${cornerRibbonHtml}
             ${isOutOfStock ? stockBadge : saleBadge}
             ${badgesCorner}
         </div>
@@ -2770,6 +3042,9 @@ export async function loadSharedComponents(pathPrefix = './') {
             document.getElementById('header-placeholder').innerHTML = headerHTML;
             const prefix = pathPrefix === './' ? '' : pathPrefix;
 
+            // Khởi tạo hiệu ứng Header trong suốt khi ở đầu trang ngay sau khi inject
+            setupHeaderScroll();
+
             // Khởi tạo lại các event listener cho giỏ hàng sau khi load header
             if (typeof initDrawerCart === 'function') {
                 initDrawerCart();
@@ -2935,7 +3210,7 @@ export async function loadSharedComponents(pathPrefix = './') {
                     <li><a href="${pathPrefix}flash-sale/">Flash Sale</a></li>
                 `;
                 dynamicCategories.forEach(group => { // Iterate over array
-                    footerHtml += `<li><a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}">${group.name}</a></li>`;
+                    footerHtml += `<li><a href="${pathPrefix}products/?category=${toCategorySlug(group.name)}">${group.name}</a></li>`;
                 });
                 footerList.innerHTML = footerHtml;
             }
@@ -2945,11 +3220,11 @@ export async function loadSharedComponents(pathPrefix = './') {
             if (megaMenuContainer) {
                 megaMenuContainer.innerHTML = dynamicCategories.map(group => `
                     <div class="mega-col">
-                        <a href="${pathPrefix}products/?category=${encodeURIComponent(group.name)}" class="mega-group-link">
+                        <a href="${pathPrefix}products/?category=${toCategorySlug(group.name)}" class="mega-group-link">
                             <h4>${group.name}</h4>
                         </a>
                         ${group.subs.map(sub => `
-                            <a href="${pathPrefix}products/?category=${encodeURIComponent(sub)}">${sub}</a>
+                            <a href="${pathPrefix}products/?category=${toCategorySlug(sub)}">${sub}</a>
                         `).join('')}
                     </div>
                 `).join('');
@@ -3330,6 +3605,8 @@ export async function renderDrawerCart() {
         if (cart.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding: 40px 20px; color: #888;">Giỏ hàng của bạn đang trống.</div>';
             totalEl.innerText = '0đ';
+            const giftWrapEl = document.getElementById('drawer-noel-giftwrap');
+            if (giftWrapEl) giftWrapEl.innerHTML = '';
             return;
         }
 
@@ -3369,11 +3646,41 @@ export async function renderDrawerCart() {
 
         container.innerHTML = html;
         totalEl.innerText = new Intl.NumberFormat('vi-VN').format(totalAmount) + 'đ';
+
+        // Tùy chọn Miễn phí Gói quà Noel & Kèm thiệp tay
+        const giftWrapEl = document.getElementById('drawer-noel-giftwrap');
+        if (giftWrapEl) {
+            const hs = window.noelHolidaySettings;
+            const isGiftWrapActive = hs ? (hs.active !== false && hs.enableFreeGiftWrap !== false) : true;
+            if (isGiftWrapActive && cart.length > 0) {
+                const isChecked = localStorage.getItem('tng_noel_giftwrap_opt') === '1';
+                const giftText = (hs && hs.giftWrapText) ? hs.giftWrapText : '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay';
+                giftWrapEl.innerHTML = `
+                    <label class="noel-giftwrap-box">
+                        <input type="checkbox" id="drawer-giftwrap-check" ${isChecked ? 'checked' : ''} onchange="window.toggleNoelGiftWrapOption(this.checked)">
+                        <div class="noel-giftwrap-info">
+                            <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> ${escapeHTML(giftText)}</div>
+                            <div class="noel-giftwrap-desc">Tiệm sẽ thắt nơ ruy băng chuông Noel và kèm thiệp chúc mừng theo yêu cầu.</div>
+                        </div>
+                    </label>
+                `;
+            } else {
+                giftWrapEl.innerHTML = '';
+            }
+        }
     } catch (error) {
         console.error("Lỗi render drawer cart:", error);
         container.innerHTML = '<div style="text-align:center; padding: 20px; color: red;">Đã có lỗi xảy ra.</div>';
     }
 }
+
+window.toggleNoelGiftWrapOption = function(checked) {
+    localStorage.setItem('tng_noel_giftwrap_opt', checked ? '1' : '0');
+    const cartCheck = document.getElementById('cart-giftwrap-check');
+    if (cartCheck) cartCheck.checked = checked;
+    const drawerCheck = document.getElementById('drawer-giftwrap-check');
+    if (drawerCheck) drawerCheck.checked = checked;
+};
 
 window.updateDrawerCartItem = async (id, color, pattern, change) => {
     try {

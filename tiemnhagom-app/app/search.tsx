@@ -26,6 +26,7 @@ import { Product } from '../src/types';
 import { removeVietnameseTones } from '../src/utils/format';
 import { searchAndRankProducts } from '../src/utils/searchHelper';
 import { useSettings } from '../src/context/SettingsContext';
+import { useRealtimeData } from '../src/context/RealtimeDataContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 
 const RECENT_SEARCHES_KEY = 'tng_recent_searches';
@@ -38,17 +39,26 @@ export default function SearchScreen() {
   const isDark = Colors.cardBackground !== '#FFFFFF';
   const styles = getStyles(Colors, isDark);
   const { t } = useSettings();
+  const { products: realtimeProducts } = useRealtimeData();
   const [searchText, setSearchText] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load products
-    getProducts().then((data) => {
-      setAllProducts(data);
+    // Ưu tiên nạp dữ liệu realtime có sẵn trong bộ nhớ (0ms) bao gồm cả sản phẩm biến thể độc lập
+    if (realtimeProducts && realtimeProducts.length > 0) {
+      setAllProducts(realtimeProducts);
       setLoading(false);
-    });
+    } else {
+      getProducts().then((data) => {
+        setAllProducts(data);
+        setLoading(false);
+      });
+    }
+  }, [realtimeProducts]);
+
+  useEffect(() => {
     // Load recent searches
     AsyncStorage.getItem(RECENT_SEARCHES_KEY).then((data) => {
       if (data) {

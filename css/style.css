@@ -78,7 +78,6 @@ h6 {
 
 html {
     scroll-behavior: smooth;
-    /* Cho hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t mÃƒÆ’Ã‚Â  */
     overflow-x: hidden;
     /* NgÃƒâ€žÃ†â€™n chÃƒÂ¡Ã‚ÂºÃ‚Â·n cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n ngang do hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng slide-in trÃƒÆ’Ã‚Âªn toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ trang */
 }
@@ -283,7 +282,7 @@ footer,
     left: 0;
     width: 100%;
     height: 80px;
-    background-color: rgba(247, 246, 242, 0.08);
+    background-color: rgba(247, 246, 242, 0.70);
     /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â¥c xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng 75% Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt hÃƒâ€ Ã‚Â¡n */
     backdrop-filter: blur(18px);
     /* TÃƒâ€žÃ†â€™ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ mÃƒÂ¡Ã‚Â»Ã‚Â Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ hiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng kÃƒÆ’Ã‚Â­nh mÃƒÂ¡Ã‚Â»Ã‚Â rÃƒÆ’Ã‚Âµ rÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡t hÃƒâ€ Ã‚Â¡n */
@@ -343,39 +342,85 @@ footer,
 /* --- TrÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i Header trong suÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœt (Cho trang chÃƒÂ¡Ã‚Â»Ã‚Â§) --- */
 /* Header ở đầu trang: Nền mờ kính nhẹ, chữ đen sắc nét theo style Đen Trắng */
 .navbar.transparent {
-    background-color: rgba(247, 246, 242, 0.92) !important;
+    background-color: transparent !important;
+    background: transparent !important;
     box-shadow: none !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
-.navbar.transparent .nav-links>li>a,
-.navbar.transparent .nav-icon-btn,
-.navbar.transparent .user-icon-link {
-    color: var(--text-black) !important;
-    mix-blend-mode: normal !important;
-}
-
-@media (max-width: 992px) {
-    .navbar.transparent .nav-links>li>a {
-        color: var(--text-black) !important;
-        mix-blend-mode: normal !important;
-    }
-}
-
+/* 1. Logo màu trắng khi ở đầu trang (chuyển đen khi cuộn) */
 .navbar.transparent .logo img {
-    filter: none !important;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45)) !important;
     mix-blend-mode: normal !important;
 }
 
-.navbar.transparent .menu-toggle span {
-    background-color: var(--text-black) !important;
+/* 2. Menu Links chữ trắng khi ở đầu trang */
+.navbar.transparent .nav-links>li>a,
+.navbar.transparent .nav-item {
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
     mix-blend-mode: normal !important;
-    box-shadow: none !important;
+}
+
+.navbar.transparent .nav-links>li>a svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
 }
 
 .navbar.transparent .nav-links>li>a::after {
+    background-color: #ffffff !important;
+}
+
+/* Link Flash Sale & Noel màu trắng trên navbar trong suốt */
+.navbar.transparent .flash-sale-link {
+    background: none !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.navbar.transparent .nav-links .noel-nav-link,
+.navbar.transparent .nav-links .noel-nav-link svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Khi mở menu drawer trên mobile thì chữ trong drawer quay về màu đen trên nền trắng */
+@media (max-width: 992px) {
+    .navbar.transparent .nav-links.active>li>a,
+    .navbar.transparent .nav-links.active a {
+        color: var(--text-black) !important;
+        text-shadow: none !important;
+    }
+}
+
+/* 3. Icons (Tìm kiếm, Thông báo, Yêu thích, Giỏ hàng, User) màu trắng khi ở đầu trang */
+.navbar.transparent .nav-icon-btn,
+.navbar.transparent .nav-icon-btn svg,
+.navbar.transparent .user-icon-link,
+.navbar.transparent .user-icon-link svg {
+    color: #ffffff !important;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45)) !important;
+}
+
+.navbar.transparent .header-user-avatar {
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 4. Nút Hamburger menu màu trắng trên mobile */
+.navbar.transparent .menu-toggle span {
+    background-color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45) !important;
+    mix-blend-mode: normal !important;
+}
+
+/* Khi hamburger mở menu drawer thành dấu X thì đổi màu đen */
+.navbar.transparent .menu-toggle.active span {
     background-color: var(--text-black) !important;
+    box-shadow: none !important;
 }
 
 /* HiÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¡u ÃƒÂ¡Ã‚Â»Ã‚Â©ng chÃƒÂ¡Ã‚Â»Ã‚Â¯ chÃƒÂ¡Ã‚ÂºÃ‚Â¡y mÃƒÆ’Ã‚Â u cho tiÃƒÆ’Ã‚Âªu Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â */
@@ -472,8 +517,38 @@ footer,
 
 /* --- TrÃƒÂ¡Ã‚ÂºÃ‚Â¡ng thÃƒÆ’Ã‚Â¡i Header khi Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n trang (Scrolled) --- */
 .navbar.scrolled {
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-    /* ChÃƒÂ¡Ã‚Â»Ã¢â‚¬Â° tÃƒâ€žÃ†â€™ng cÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Âng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¢ bÃƒÆ’Ã‚Â³ng khi cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n */
+    background-color: rgba(247, 246, 242, 0.70) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.navbar.scrolled .logo img {
+    filter: none !important;
+}
+
+.navbar.scrolled .nav-links>li>a,
+.navbar.scrolled .nav-item {
+    color: var(--text-black) !important;
+    text-shadow: none !important;
+}
+
+.navbar.scrolled .nav-links>li>a svg {
+    color: var(--text-black) !important;
+    stroke: var(--text-black) !important;
+}
+
+.navbar.scrolled .nav-icon-btn,
+.navbar.scrolled .nav-icon-btn svg,
+.navbar.scrolled .user-icon-link,
+.navbar.scrolled .user-icon-link svg {
+    color: var(--text-black) !important;
+    filter: none !important;
+}
+
+.navbar.scrolled .menu-toggle span {
+    background-color: var(--text-black) !important;
+    box-shadow: none !important;
 }
 
 .nav-links {
@@ -611,7 +686,11 @@ footer,
     /* SÃƒÂ¡Ã‚Â»Ã‚Â­ dÃƒÂ¡Ã‚Â»Ã‚Â¥ng flexbox Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ cÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung */
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
+    transition: color 0.35s ease, filter 0.35s ease, transform 0.2s ease;
+}
+
+.nav-icon-btn svg {
+    transition: color 0.35s ease, stroke 0.35s ease;
 }
 
 .nav-icon-btn:hover {
@@ -691,7 +770,6 @@ footer,
     animation: suggestionSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 450px;
     overflow-y: auto;
-    /* Cho phÃƒÆ’Ã‚Â©p cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u danh sÃƒÆ’Ã‚Â¡ch dÃƒÆ’Ã‚Â i */
 }
 
 /* CSS cho tÃƒÂ¡Ã‚Â»Ã‚Â«ng item trong danh sÃƒÆ’Ã‚Â¡ch tÃƒÆ’Ã‚Â¬m kiÃƒÂ¡Ã‚ÂºÃ‚Â¿m */
@@ -850,7 +928,6 @@ footer,
     gap: 80px;
     /* TÃƒâ€žÃ†â€™ng khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t (tÃƒÂ¡Ã‚Â»Ã‚Â« 60px lÃƒÆ’Ã‚Âªn 80px) */
     flex-wrap: wrap;
-    /* Cho phÃƒÆ’Ã‚Â©p rÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºt dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u quÃƒÆ’Ã‚Â¡ nhiÃƒÂ¡Ã‚Â»Ã‚Âu danh mÃƒÂ¡Ã‚Â»Ã‚Â¥c */
     transform: translateY(10px) !important;
     justify-content: space-between;
     /* GiÃƒÆ’Ã‚Â£n Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Âu cÃƒÆ’Ã‚Â¡c cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t ra hÃƒÂ¡Ã‚ÂºÃ‚Â¿t chiÃƒÂ¡Ã‚Â»Ã‚Âu ngang container */
@@ -1105,8 +1182,7 @@ footer,
         gap: 0.5rem;
         /* GiÃƒÂ¡Ã‚ÂºÃ‚Â£m khoÃƒÂ¡Ã‚ÂºÃ‚Â£ng cÃƒÆ’Ã‚Â¡ch giÃƒÂ¡Ã‚Â»Ã‚Â¯a cÃƒÆ’Ã‚Â¡c mÃƒÂ¡Ã‚Â»Ã‚Â¥c menu chÃƒÆ’Ã‚Â­nh */
         overflow-y: auto;
-        /* Cho phÃƒÆ’Ã‚Â©p cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n nÃƒÂ¡Ã‚ÂºÃ‚Â¿u danh mÃƒÂ¡Ã‚Â»Ã‚Â¥c quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i */
-        -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch;
         /* GiÃƒÆ’Ã‚Âºp cuÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢n mÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã‚Â£t hÃƒâ€ Ã‚Â¡n trÃƒÆ’Ã‚Âªn iPhone */
     }
 
@@ -1251,7 +1327,6 @@ footer,
 
 .hero p {
     animation: fadeIn 1.5s ease-out forwards;
-    /* ChÃƒÂ¡Ã‚ÂºÃ‚Â­m hÃƒâ€ Ã‚Â¡n h1 */
 }
 
 /* Home Search Bar - NÃƒÂ¡Ã‚ÂºÃ‚Â±m trong Hero */
@@ -2869,7 +2944,6 @@ footer {
 .collection-banner {
     position: relative;
     aspect-ratio: 16 / 9;
-    /* Chiá»u cao tháº¥p láº¡i má»™t chÃºt so vá»›i 4/3 */
     height: auto;
     border-radius: 0;
     overflow: hidden;
@@ -2941,8 +3015,7 @@ footer {
 
     .collection-grid {
         grid-template-columns: repeat(2, 1fr);
-        /* ChuyÃƒÂ¡Ã‚Â»Ã†â€™n vÃƒÂ¡Ã‚Â»Ã‚Â 1 cÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢t trÃƒÆ’Ã‚Âªn mobile */
-        gap: 15px;
+            gap: 15px;
     }
 
     .collection-banner {
@@ -5155,8 +5228,7 @@ body.admin-dashboard-layout {
         max-width: 100%;
         padding: 15px;
         padding-bottom: 80px;
-        /* ChÃƒÂ¡Ã‚Â»Ã‚Â«a chÃƒÂ¡Ã‚Â»Ã¢â‚¬â€ cho bottom nav */
-    }
+        }
 
     .overview-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -6326,11 +6398,9 @@ body.admin-dashboard-layout {
     box-shadow: none;
     display: flex;
     flex-direction: row;
-    /* ChuyÃƒÂ¡Ã‚Â»Ã†â€™n box thÃƒÆ’Ã‚Â nh hÃƒÆ’Ã‚Â ng ngang */
     align-items: center;
     gap: 2rem;
     flex-wrap: wrap;
-    /* Cho phÃƒÆ’Ã‚Â©p xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u khÃƒÆ’Ã‚Â´ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã‚Â§ chÃƒÂ¡Ã‚Â»Ã¢â‚¬â€, trÃƒÆ’Ã‚Â¡nh kÃƒÆ’Ã‚Â©o ngang */
 }
 
 .quantity-box {
@@ -6347,10 +6417,8 @@ body.admin-dashboard-layout {
     display: flex;
     gap: 10px;
     flex: 1;
-    /* ChiÃƒÂ¡Ã‚ÂºÃ‚Â¿m hÃƒÂ¡Ã‚ÂºÃ‚Â¿t phÃƒÂ¡Ã‚ÂºÃ‚Â§n cÃƒÆ’Ã‚Â²n lÃƒÂ¡Ã‚ÂºÃ‚Â¡i cÃƒÂ¡Ã‚Â»Ã‚Â§a box */
     align-items: center;
     min-width: 0;
-    /* Cho phÃƒÆ’Ã‚Â©p co giÃƒÆ’Ã‚Â£n */
 }
 
 .action-group .btn-dark {
@@ -6491,8 +6559,7 @@ body.admin-dashboard-layout {
         flex: none;
         height: 50px;
         white-space: normal;
-        /* Cho phÃƒÆ’Ã‚Â©p xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒÆ’Ã‚Â²ng nÃƒÂ¡Ã‚ÂºÃ‚Â¿u chÃƒÂ¡Ã‚Â»Ã‚Â¯ quÃƒÆ’Ã‚Â¡ dÃƒÆ’Ã‚Â i trÃƒÆ’Ã‚Âªn mÃƒÆ’Ã‚Â¡y nhÃƒÂ¡Ã‚Â»Ã‚Â */
-    }
+        }
 
     .quantity-controls {
         width: 100%;
@@ -7257,7 +7324,6 @@ body.admin-dashboard-layout {
 
 #no-products-found {
     grid-column: 1 / -1;
-    /* ChiÃƒÂ¡Ã‚ÂºÃ‚Â¿m toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ chiÃƒÂ¡Ã‚Â»Ã‚Âu rÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ng grid */
 }
 
 /* Search Input in Sidebar */
@@ -8059,7 +8125,7 @@ body.admin-dashboard-layout {
     color: var(--text-black);
     display: flex;
     align-items: center;
-    transition: opacity 0.3s ease;
+    transition: color 0.35s ease, filter 0.35s ease, opacity 0.3s ease;
     position: relative;
     padding: 0;
     /* LoÃƒÂ¡Ã‚ÂºÃ‚Â¡i bÃƒÂ¡Ã‚Â»Ã‚Â padding mÃƒÂ¡Ã‚ÂºÃ‚Â·c Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
@@ -8069,6 +8135,10 @@ body.admin-dashboard-layout {
     /* KÃƒÆ’Ã‚Â­ch thÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºc cÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœ Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹nh */
     justify-content: center;
     /* CÃƒâ€žÃ†â€™n giÃƒÂ¡Ã‚Â»Ã‚Â¯a nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung theo chiÃƒÂ¡Ã‚Â»Ã‚Âu ngang */
+}
+
+.user-icon-link svg {
+    transition: color 0.35s ease, stroke 0.35s ease;
 }
 
 .user-icon-link:hover {
@@ -8297,25 +8367,29 @@ body.admin-dashboard-layout {
 
 /* Tương phản cao trên navbar trong suốt hoặc nền banner/Noel */
 .navbar.transparent .header-login-btn {
-    background-color: rgba(255, 255, 255, 0.95);
-    color: #111111 !important;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 .navbar.transparent .header-login-btn svg {
-    color: #111111;
+    color: #ffffff !important;
 }
 
 .navbar.transparent .header-login-btn:hover {
-    background-color: #ffffff;
+    background-color: #ffffff !important;
     color: #000000 !important;
-    border-color: #ffffff;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    border-color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+    text-shadow: none !important;
 }
 
 .navbar.transparent .header-login-btn:hover svg {
-    color: #000000;
+    color: #000000 !important;
 }
 
 /* Auth Page Styles */
@@ -9200,7 +9274,6 @@ body.admin-dashboard-layout {
     /* ÃƒÂ¡Ã‚ÂºÃ‚Â¨n khu vÃƒÂ¡Ã‚Â»Ã‚Â±c auth (icon user) trÃƒÆ’Ã‚Âªn header do Ãƒâ€žÃ¢â‚¬ËœÃƒÆ’Ã‚Â£ chuyÃƒÂ¡Ã‚Â»Ã†â€™n xuÃƒÂ¡Ã‚Â»Ã¢â‚¬Ëœng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi */
 
 
-    /* ChÃƒÂ¡Ã‚Â»Ã‚Â«a khÃƒÆ’Ã‚Â´ng gian dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng Ãƒâ€žÃ¢â‚¬ËœÃƒÂ¡Ã‚Â»Ã†â€™ nÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢i dung khÃƒÆ’Ã‚Â´ng bÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ che */
     body {}
 
     /* Style cho thanh Ãƒâ€žÃ¢â‚¬ËœiÃƒÂ¡Ã‚Â»Ã‚Âu hÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºng dÃƒâ€ Ã‚Â°ÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºi cÃƒÆ’Ã‚Â¹ng */
@@ -12540,7 +12613,6 @@ body.admin-dashboard-layout {
     height: 100% !important;
     max-height: 100% !important;
     overflow-y: auto !important;
-    /* Chỉ cuộn nội dung bên trong mỗi tab / section */
     padding: 16px 20px !important;
     box-sizing: border-box !important;
 }

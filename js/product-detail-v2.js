@@ -2,7 +2,7 @@ import {
     db, auth, storage, initHeader, showToast, updateCartCount, updateFavoriteCount,
     renderProductCard, renderProductCardWithVariants, addToCart, addToHistory, initAutocomplete, updateSEO, escapeHTML,
     fetchFlashSaleSettings, getProductCurrentPrice, getProductEffectiveSale, getProductFlashSaleInfo, COLOR_MAP, getColorHex,
-    isUserInHCM, updateExpressDeliveryBadges, getExpressDeliveryStatus
+    isUserInHCM, updateExpressDeliveryBadges, getExpressDeliveryStatus, toCategorySlug
 } from "./utils.js";
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, updateDoc, serverTimestamp, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { trackProductView, renderDecorMatchRecommendations } from "./ai-recommendations.js";
@@ -660,17 +660,21 @@ async function fetchProductDetailV2() {
         const urlColor = urlParams.get('color');
         const urlPattern = urlParams.get('pattern');
         const urlCombo = urlParams.get('combo');
+        const urlVariant = urlParams.get('variant');
 
         if (p.colorVariants?.length > 0) {
-            const matchedColor = urlColor ? (p.colorVariants.find(c => c.name === urlColor) || p.colorVariants[0]) : p.colorVariants[0];
+            const targetColor = urlColor || urlVariant;
+            const matchedColor = targetColor ? (p.colorVariants.find(c => c.name === targetColor || c.name?.toLowerCase() === targetColor.toLowerCase()) || p.colorVariants[0]) : p.colorVariants[0];
             selectedColor = matchedColor.name;
         }
         if (p.patternVariants?.length > 0) {
-            const matchedPattern = urlPattern ? (p.patternVariants.find(pat => pat.name === urlPattern) || p.patternVariants[0]) : p.patternVariants[0];
+            const targetPattern = urlPattern || urlVariant;
+            const matchedPattern = targetPattern ? (p.patternVariants.find(pat => pat.name === targetPattern || pat.name?.toLowerCase() === targetPattern.toLowerCase()) || p.patternVariants[0]) : p.patternVariants[0];
             selectedPattern = matchedPattern.name;
         }
         if (p.comboVariants?.length > 0) {
-            const matchedCombo = urlCombo ? (p.comboVariants.find(cv => cv.name === urlCombo) || p.comboVariants[0]) : p.comboVariants[0];
+            const targetCombo = urlCombo || urlVariant;
+            const matchedCombo = targetCombo ? (p.comboVariants.find(cv => cv.name === targetCombo || cv.name?.toLowerCase() === targetCombo.toLowerCase()) || p.comboVariants[0]) : p.comboVariants[0];
             selectedComboVariant = matchedCombo.name;
         }
 
@@ -743,7 +747,7 @@ async function fetchProductDetailV2() {
         const breadcrumb = document.getElementById('breadcrumb-container');
         if (breadcrumb) {
             const categoryHtml = p.category ? `
-                <a href="../products/?category=${encodeURIComponent(p.category)}">${escapeHTML(p.category)}</a>
+                <a href="../products/?category=${toCategorySlug(p.category)}">${escapeHTML(p.category)}</a>
                 <span class="separator">&rsaquo;</span>
             ` : '';
             breadcrumb.innerHTML = `

@@ -51,7 +51,7 @@ class NoelThemeEngine {
             const link = document.createElement('link');
             link.id = 'noel-theme-styles';
             link.rel = 'stylesheet';
-            link.href = `${this.pathPrefix}css/noel.css?v=5`;
+            link.href = `${this.pathPrefix}css/noel.css?v=9`;
             document.head.appendChild(link);
         }
     }
@@ -211,6 +211,10 @@ class NoelThemeEngine {
      * Bắt đầu vẽ tuyết rơi
      */
     startSnow() {
+        if (localStorage.getItem('tng_snow_disabled') === '1') {
+            this.stopSnow();
+            return;
+        }
         if (this.animationId) cancelAnimationFrame(this.animationId);
         this.renderSnow();
     }
@@ -247,6 +251,241 @@ class NoelThemeEngine {
             this.startSnow();
         } else {
             this.stopSnow();
+        }
+    }
+
+    /**
+     * Tiêm nút ❄️ nổi cho khách tự bật/tắt tuyết
+     */
+    injectSnowToggle(show = true) {
+        let btn = document.getElementById('noel-snow-toggle-btn');
+        if (!show || !this.isActive) {
+            if (btn) btn.remove();
+            return;
+        }
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'noel-snow-toggle-btn';
+            btn.className = 'noel-floating-snow-btn';
+            btn.setAttribute('type', 'button');
+            btn.setAttribute('aria-label', 'Bật / Tắt hiệu ứng tuyết rơi');
+            btn.innerHTML = '❄';
+            document.body.appendChild(btn);
+
+            const isSnowDisabled = localStorage.getItem('tng_snow_disabled') === '1';
+            if (isSnowDisabled) {
+                btn.classList.add('disabled');
+                btn.title = 'Bấm để BẬT tuyết rơi';
+            } else {
+                btn.title = 'Bấm để TẮT tuyết rơi';
+            }
+
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const nowDisabled = localStorage.getItem('tng_snow_disabled') === '1';
+                if (nowDisabled) {
+                    localStorage.removeItem('tng_snow_disabled');
+                    btn.classList.remove('disabled');
+                    btn.title = 'Bấm để TẮT tuyết rơi';
+                    this.startSnow();
+                } else {
+                    localStorage.setItem('tng_snow_disabled', '1');
+                    btn.classList.add('disabled');
+                    btn.title = 'Bấm để BẬT tuyết rơi';
+                    this.stopSnow();
+                }
+            });
+        }
+    }
+
+    /**
+     * Bật/Tắt vệt tuyết mỏng phủ trên mép thẻ sản phẩm (Snow Cap)
+     */
+    applySnowCaps(enabled = true) {
+        document.body.classList.toggle('noel-snow-cap-on', enabled && this.isActive);
+    }
+
+    /**
+     * Bật/Tắt hiệu ứng sao lấp lánh trên tiêu đề
+     */
+    applySparkleTitles(enabled = true) {
+        const titles = document.querySelectorAll('.noel-showcase-title, .noel-banner-left h2, .noel-hero-title');
+        titles.forEach(t => {
+            if (enabled && this.isActive) {
+                if (!t.querySelector('.noel-sparkle-star')) {
+                    const s1 = document.createElement('span');
+                    s1.className = 'noel-sparkle-star';
+                    s1.textContent = '✦';
+                    const s2 = document.createElement('span');
+                    s2.className = 'noel-sparkle-star';
+                    s2.textContent = '❄';
+                    t.prepend(s1);
+                    t.appendChild(s2);
+                }
+            } else {
+                t.querySelectorAll('.noel-sparkle-star').forEach(s => s.remove());
+            }
+        });
+    }
+
+    /**
+     * Tiêm widget Chiếc vớ Giáng Sinh may mắn (Secret Santa Voucher Popup)
+     */
+    injectSecretSantaWidget(show = true, voucherCode = 'NOEL2026', discountText = 'Giảm 20.000đ cho đơn từ 200.000đ') {
+        let widget = document.getElementById('noel-lucky-sock-widget');
+        let modal = document.getElementById('noel-sock-modal');
+
+        if (!show || !this.isActive) {
+            if (widget) widget.remove();
+            if (modal) modal.remove();
+            return;
+        }
+
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'noel-lucky-sock-widget';
+            widget.className = 'noel-lucky-sock-widget';
+            widget.title = 'Mở quà Giáng Sinh may mắn từ Tiệm Nhà Gốm!';
+            widget.innerHTML = `
+                <div class="noel-sock-icon-wrap">
+                    <span class="noel-sock-badge">Quà!</span>
+                    <span style="display:inline-block; transform: scaleX(-1);">🧦</span>
+                </div>
+                <span class="noel-sock-tag">Vớ Noel</span>
+            `;
+            document.body.appendChild(widget);
+
+            modal = document.createElement('div');
+            modal.id = 'noel-sock-modal';
+            modal.className = 'noel-modal-backdrop';
+            modal.innerHTML = `
+                <div class="noel-sock-popup" role="dialog" aria-modal="true">
+                    <button type="button" class="noel-sock-popup-close" id="btn-close-noel-sock">&times;</button>
+                    <div style="font-size:2.2rem; margin-bottom:4px;">🧦 🎄 ✨</div>
+                    <h3 style="font-family:var(--font-serif, 'Playfair Display', serif); font-size:1.35rem; color:#991b1b; margin:0 0 6px 0;">Món Quà Giáng Sinh May Mắn</h3>
+                    <p style="font-size:0.85rem; color:#57534e; margin:0 0 12px 0; line-height:1.45;">
+                        Tiệm Nhà Gốm gửi tặng bạn chiếc vớ may mắn cùng mã ưu đãi ấm áp mùa lễ hội:
+                    </p>
+                    <div class="noel-coupon-box">
+                        <div style="text-align:left;">
+                            <div style="font-size:0.7rem; color:#78716c; font-weight:600; text-transform:uppercase;">Mã Voucher Noel</div>
+                            <div class="noel-coupon-code" id="noel-modal-code">${voucherCode}</div>
+                        </div>
+                        <button type="button" class="noel-coupon-copy-btn" id="btn-copy-noel-code">
+                            <i class="ti ti-copy"></i> <span id="copy-text-label">Sao chép</span>
+                        </button>
+                    </div>
+                    <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:8px; padding:8px 12px; margin-bottom:14px; font-size:0.82rem; color:#92400e; font-weight:600;" id="noel-modal-desc">
+                        <i class="ti ti-tag"></i> ${discountText}
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <a href="${this.pathPrefix}noel/" class="btn-primary" style="flex:1; padding:9px 12px; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:700; text-align:center; background:#991b1b; color:#fff; display:block;">
+                            Khám Phá Gốm Noel
+                        </a>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            widget.addEventListener('click', () => {
+                modal.classList.add('active');
+            });
+
+            const closeBtn = modal.querySelector('#btn-close-noel-sock');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+            }
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+
+            const copyBtn = modal.querySelector('#btn-copy-noel-code');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    const code = modal.querySelector('#noel-modal-code')?.textContent?.trim() || voucherCode;
+                    try {
+                        await navigator.clipboard.writeText(code);
+                        const label = modal.querySelector('#copy-text-label');
+                        if (label) label.textContent = 'Đã chép!';
+                        setTimeout(() => {
+                            if (label) label.textContent = 'Sao chép';
+                        }, 2500);
+                    } catch (err) {
+                        console.log('Clipboard error:', err);
+                    }
+                });
+            }
+        } else {
+            const codeEl = modal?.querySelector('#noel-modal-code');
+            if (codeEl) codeEl.textContent = voucherCode;
+            const descEl = modal?.querySelector('#noel-modal-desc');
+            if (descEl) descEl.innerHTML = `<i class="ti ti-tag"></i> ${discountText}`;
+        }
+    }
+
+    /**
+     * Tiêm widget Nghe nhạc Giáng Sinh thư giãn (Ambient Music Player)
+     */
+    injectMusicPlayer(show = true, musicUrl = '') {
+        let widget = document.getElementById('noel-music-widget');
+        let audio = document.getElementById('noel-ambient-audio');
+
+        if (!show || !this.isActive) {
+            if (widget) widget.remove();
+            if (audio) {
+                audio.pause();
+                audio.remove();
+            }
+            return;
+        }
+
+        const defaultMusicUrl = 'https://assets.mixkit.co/music/preview/mixkit-silent-night-holiday-acoustic-guitar-1174.mp3';
+        const finalUrl = (musicUrl && musicUrl.trim()) ? musicUrl.trim() : defaultMusicUrl;
+
+        if (!audio) {
+            audio = document.createElement('audio');
+            audio.id = 'noel-ambient-audio';
+            audio.loop = true;
+            audio.preload = 'none';
+            audio.src = finalUrl;
+            document.body.appendChild(audio);
+        } else if (audio.src !== finalUrl) {
+            audio.src = finalUrl;
+        }
+
+        if (!widget) {
+            widget = document.createElement('div');
+            widget.id = 'noel-music-widget';
+            widget.className = 'noel-music-widget';
+            widget.title = 'Bấm để nghe giai điệu Giáng Sinh êm dịu';
+            widget.innerHTML = `
+                <span class="noel-music-icon"><i class="ti ti-music"></i></span>
+                <span class="noel-music-label">Nhạc Noel</span>
+                <div class="noel-audio-waves" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            `;
+            document.body.appendChild(widget);
+
+            widget.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const label = widget.querySelector('.noel-music-label');
+                if (audio.paused) {
+                    try {
+                        await audio.play();
+                        widget.classList.add('playing');
+                        if (label) label.textContent = 'Đang phát ♫';
+                        widget.title = 'Bấm để dừng nhạc';
+                    } catch (err) {
+                        console.log('Audio playback prevented or error:', err);
+                    }
+                } else {
+                    audio.pause();
+                    widget.classList.remove('playing');
+                    if (label) label.textContent = 'Nhạc Noel';
+                    widget.title = 'Bấm để nghe giai điệu Giáng Sinh êm dịu';
+                }
+            });
         }
     }
 
@@ -346,6 +585,8 @@ class NoelThemeEngine {
     applySystemSettings(settings = {}) {
         if (settings.holidaySeason) {
             const hs = settings.holidaySeason;
+            window.noelHolidaySettings = hs;
+
             if (hs.active !== undefined) {
                 this.applyState(hs.active);
             }
@@ -365,11 +606,40 @@ class NoelThemeEngine {
                 const hat = document.querySelector('.noel-santa-hat');
                 if (hat) hat.style.display = '';
             }
+
+            // 1. Hiệu ứng mũ rung rinh khi hover
+            document.body.classList.toggle('noel-hat-wiggle', hs.active !== false && hs.hatWiggle !== false);
+
+            // 2. Phủ vệt tuyết mép thẻ sản phẩm (Snow Cap)
+            this.applySnowCaps(hs.active !== false && hs.showSnowCap !== false);
+
+            // 3. Hiệu ứng sao lấp lánh trên tiêu đề
+            this.applySparkleTitles(hs.active !== false && hs.showSparkleTitle !== false);
+
+            // 4. Nút ❄️ nổi cho khách tự bật/tắt tuyết
+            this.injectSnowToggle(hs.active !== false && hs.showSnowToggleBtn !== false);
+
+            // 5. Chiếc vớ Giáng Sinh may mắn (Secret Santa Voucher)
+            this.injectSecretSantaWidget(
+                hs.active !== false && hs.enableSecretSantaSock !== false,
+                hs.secretSantaCode || 'NOEL2026',
+                hs.secretSantaDiscount || 'Giảm 20.000đ cho đơn từ 200.000đ'
+            );
+
+            // 6. Widget nghe nhạc Giáng Sinh êm dịu (Mặc định tắt, khách tự click)
+            this.injectMusicPlayer(
+                hs.active !== false && hs.enableChristmasMusic !== false,
+                hs.christmasMusicUrl || ''
+            );
+
+            // 7. Banner thông điệp mùa lễ hội
             if (hs.active !== false && hs.message && hs.message.trim()) {
                 this.renderHolidayBanner(hs.message);
             } else {
                 this.removeHolidayBanner();
             }
+
+            // 8. Khu vực Trưng bày Kệ Gốm Giáng Sinh
             const showcaseSec = document.getElementById('noel-showcase-section');
             if (showcaseSec) {
                 const showShowcase = hs.active !== false && hs.showShowcase !== false;
@@ -383,6 +653,9 @@ class NoelThemeEngine {
                     if (subEl) subEl.textContent = hs.showcaseSubtitle;
                 }
             }
+
+            // Phát sự kiện để Cart / Drawer Cart cập nhật checkbox gói quà nếu đang mở
+            document.dispatchEvent(new CustomEvent('noel-settings-updated', { detail: hs }));
         }
     }
 }

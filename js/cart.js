@@ -439,6 +439,17 @@ async function renderCheckoutForm(container) {
                 </div>
             </div>
             <div class="form-group"><label>Shipping Address | Địa chỉ nhận hàng *</label><input type="text" id="shipping-address" required></div>
+            
+            <div id="cart-noel-giftwrap-box" style="margin-bottom: 12px;">
+                <label class="noel-giftwrap-box" style="margin: 0;">
+                    <input type="checkbox" id="cart-giftwrap-check" ${localStorage.getItem('tng_noel_giftwrap_opt') === '1' ? 'checked' : ''} onchange="window.toggleNoelGiftWrapOption ? window.toggleNoelGiftWrapOption(this.checked) : localStorage.setItem('tng_noel_giftwrap_opt', this.checked ? '1' : '0')">
+                    <div class="noel-giftwrap-info">
+                        <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> ${(window.noelHolidaySettings && window.noelHolidaySettings.giftWrapText) ? window.noelHolidaySettings.giftWrapText : '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm'}</div>
+                        <div class="noel-giftwrap-desc">Tiệm gói giấy quà mộc mạc, thắt nơ chuông Noel và kèm thiệp viết tay theo yêu cầu.</div>
+                    </div>
+                </label>
+            </div>
+
             <div class="form-group">
                 <label style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                     <span>Order Note | Ghi chú đơn hàng &amp; Thiệp quà tặng</span>
@@ -968,6 +979,12 @@ window.placeOrder = async () => {
 
     const finalTotal = Math.max(0, total + shippingFee - discountAmount - membershipDiscountVal);
 
+    const isGiftWrapped = document.getElementById('cart-giftwrap-check')?.checked || localStorage.getItem('tng_noel_giftwrap_opt') === '1';
+    let finalNote = note || "";
+    if (isGiftWrapped && !finalNote.includes('GÓI QUÀ NOEL')) {
+        finalNote = `[🎁 YÊU CẦU: GÓI QUÀ NOEL & KÈM THIỆP TAY MIỄN PHÍ] ${finalNote}`.trim();
+    }
+
     const orderData = {
         userId: auth.currentUser ? (sessionStorage.getItem('tng_effective_uid') || auth.currentUser.uid) : 'guest',
         productNames: cart.map(item => item.name),
@@ -991,7 +1008,8 @@ window.placeOrder = async () => {
         },
         shippingMethod: shippingMethod,
         paymentMethod: paymentMethod || "COD",
-        note: note || ""
+        isNoelGiftWrapped: !!isGiftWrapped,
+        note: finalNote
     };
 
     if (paymentMethod === 'vnpay') {
