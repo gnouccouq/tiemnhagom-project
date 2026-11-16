@@ -966,20 +966,65 @@ export function generateOrderId() {
     return `TNG${dateStr}${timeStr}-${randomSuffix}`;
 }
 
-// 2. Logic UI: Thông báo Toast
-export function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
+// 2. Logic UI: Thông báo Toast Cao cấp (Boutique Ceramic Style)
+export function showToast(message, type = 'success', duration = 3500) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerText = message;
+
+    // Chọn biểu tượng theo nội dung hoặc phân loại
+    let iconSvg = '';
+    const msgStr = String(message || '').toLowerCase();
+    const isFav = msgStr.includes('yêu thích');
+    const isCart = msgStr.includes('giỏ hàng');
+
+    if (isFav) {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    } else if (isCart) {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`;
+    } else if (type === 'error' || type === 'danger') {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    } else if (type === 'info') {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+    } else if (type === 'warning') {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    } else {
+        iconSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+
+    toast.innerHTML = `
+        <div class="toast-icon-badge">${iconSvg}</div>
+        <div class="toast-content">${message}</div>
+        <button type="button" class="toast-close-btn" aria-label="Đóng">&times;</button>
+        <div class="toast-progress-bar" style="animation-duration: ${duration}ms;"></div>
+    `;
+
+    const closeBtn = toast.querySelector('.toast-close-btn');
+    if (closeBtn) {
+        closeBtn.onclick = () => dismissToast(toast);
+    }
+
     container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(20px)';
-        setTimeout(() => toast.remove(), 400);
-    }, 4000);
+
+    const timer = setTimeout(() => dismissToast(toast), duration);
+
+    function dismissToast(el) {
+        clearTimeout(timer);
+        if (!el || el.classList.contains('toast-exit')) return;
+        el.classList.add('toast-exit');
+        setTimeout(() => {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 300);
+    }
 }
+window.showToast = showToast;
 
 // ==========================================================================
 // 2.1 HỆ THỐNG POPUP THÔNG BÁO / HỘP THOẠI CAO CẤP (PREMIUM DIALOGS)
@@ -2369,8 +2414,99 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     `;
 }
 
+// Hiệu ứng bay vào giỏ hàng (Fly-to-Cart) với quỹ đạo Parabol & Cart Bounce
+export function flyToCart(sourceEl, imageUrl, options = {}) {
+    return new Promise((resolve) => {
+        try {
+            const targetEl = document.getElementById('btn-open-cart') ||
+                             document.querySelector('.nav-icon-btn[title="Giỏ hàng"]') ||
+                             document.querySelector('.cart-icon-wrapper');
+
+            if (!targetEl) {
+                resolve();
+                return;
+            }
+
+            const targetRect = targetEl.getBoundingClientRect();
+            if (!targetRect || targetRect.width === 0) {
+                resolve();
+                return;
+            }
+
+            let startRect = null;
+            if (sourceEl && typeof sourceEl.getBoundingClientRect === 'function') {
+                startRect = sourceEl.getBoundingClientRect();
+            }
+
+            if (!startRect || startRect.width === 0 || startRect.height === 0) {
+                const mainImg = document.getElementById('v2-main-img') || document.getElementById('main-product-image');
+                if (mainImg) {
+                    startRect = mainImg.getBoundingClientRect();
+                } else {
+                    startRect = {
+                        left: window.innerWidth / 2 - 32,
+                        top: window.innerHeight / 2 - 32,
+                        width: 64,
+                        height: 64
+                    };
+                }
+            }
+
+            const imgUrl = imageUrl || (sourceEl && sourceEl.tagName === 'IMG' ? sourceEl.src : '') || '../Asset/icons/favicon.png';
+
+            const flyer = document.createElement('img');
+            flyer.src = imgUrl;
+            flyer.className = 'flying-cart-item';
+            
+            const startSize = 64;
+            const startX = startRect.left + (startRect.width / 2) - (startSize / 2);
+            const startY = startRect.top + (startRect.height / 2) - (startSize / 2);
+
+            flyer.style.left = startX + 'px';
+            flyer.style.top = startY + 'px';
+            flyer.style.transform = 'scale(1) rotate(0deg)';
+            flyer.style.opacity = '1';
+
+            document.body.appendChild(flyer);
+
+            const targetX = targetRect.left + (targetRect.width / 2) - (startSize / 2);
+            const targetY = targetRect.top + (targetRect.height / 2) - (startSize / 2);
+            const deltaX = targetX - startX;
+            const deltaY = targetY - startY;
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    flyer.style.transform = 'translate(' + deltaX + 'px, ' + deltaY + 'px) scale(0.25) rotate(380deg)';
+                    flyer.style.opacity = '0.3';
+                    flyer.style.filter = 'blur(0.5px)';
+                });
+            });
+
+            setTimeout(() => {
+                if (flyer && flyer.parentNode) {
+                    flyer.parentNode.removeChild(flyer);
+                }
+
+                targetEl.classList.remove('cart-bounce');
+                void targetEl.offsetWidth;
+                targetEl.classList.add('cart-bounce');
+
+                setTimeout(() => {
+                    targetEl.classList.remove('cart-bounce');
+                }, 700);
+
+                resolve();
+            }, 650);
+        } catch (err) {
+            console.error('Lỗi hiệu ứng flyToCart:', err);
+            resolve();
+        }
+    });
+}
+window.flyToCart = flyToCart;
+
 // 9. Logic Giỏ hàng: Thêm sản phẩm
-export async function addToCart(productData) {
+export async function addToCart(productData, options = {}) {
     window.addToCart = addToCart;
     let cart = [];
     const user = auth.currentUser;
@@ -2447,14 +2583,28 @@ export async function addToCart(productData) {
     else localStorage.setItem('cart', JSON.stringify(cart));
 
     await updateCartCount();
-    if (typeof openDrawerCart === 'function') {
-        openDrawerCart();
-    } else if (window.openDrawerCart) {
-        window.openDrawerCart();
-    } else {
-        const giftNotice = bogoGiftItem ? ' (Kèm 1 quà tặng 0đ)' : '';
-        showToast(`Đã thêm ${productData.quantity} ${productData.name}${giftNotice} vào giỏ hàng!`);
+
+    // Kích hoạt Micro-animation Fly-to-Cart
+    const sourceEl = options.sourceEl || document.getElementById('v2-main-img') || document.getElementById('main-product-image');
+    if (sourceEl && productData.image) {
+        flyToCart(sourceEl, productData.image);
     }
+
+    if (options.skipDrawer) {
+        return;
+    }
+
+    // Mở Drawer giỏ hàng sau khi sản phẩm bay tới đích để tạo cảm giác mượt mà
+    setTimeout(() => {
+        if (typeof openDrawerCart === 'function') {
+            openDrawerCart();
+        } else if (window.openDrawerCart) {
+            window.openDrawerCart();
+        } else {
+            const giftNotice = bogoGiftItem ? ' (Kèm 1 quà tặng 0đ)' : '';
+            showToast(`Đã thêm ${productData.quantity} ${productData.name}${giftNotice} vào giỏ hàng!`);
+        }
+    }, 450);
 }
 
 // 8. Logic Tổng hợp: Khởi tạo Header & Auth cho mọi trang
@@ -3125,11 +3275,26 @@ export async function loadSharedComponents(pathPrefix = './') {
             const navLinks = document.getElementById('nav-links');
 
             if (navLinks) {
+                const navbar = document.querySelector('.navbar');
                 const toggleMenu = () => {
                     const isActive = navLinks.classList.toggle('active');
                     if (menuToggle) menuToggle.classList.toggle('active', isActive);
-
                     document.body.classList.toggle('menu-open', isActive);
+
+                    if (navbar) {
+                        navbar.classList.toggle('menu-active', isActive);
+                        if (isActive) {
+                            if (navbar.classList.contains('transparent')) {
+                                navbar.dataset.wasTransparent = 'true';
+                                navbar.classList.remove('transparent');
+                            }
+                        } else {
+                            if (navbar.dataset.wasTransparent === 'true' && window.scrollY <= 40) {
+                                navbar.classList.add('transparent');
+                                delete navbar.dataset.wasTransparent;
+                            }
+                        }
+                    }
                 };
 
                 if (menuToggle) menuToggle.onclick = toggleMenu;
@@ -3144,6 +3309,13 @@ export async function loadSharedComponents(pathPrefix = './') {
                         if (menuToggle) menuToggle.classList.remove('active');
                         if (bottomMenuToggle) bottomMenuToggle.classList.remove('active');
                         document.body.classList.remove('menu-open');
+                        if (navbar) {
+                            navbar.classList.remove('menu-active');
+                            if (navbar.dataset.wasTransparent === 'true' && window.scrollY <= 40) {
+                                navbar.classList.add('transparent');
+                                delete navbar.dataset.wasTransparent;
+                            }
+                        }
                     }
                 });
 

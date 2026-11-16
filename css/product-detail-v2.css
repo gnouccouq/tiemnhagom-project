@@ -510,11 +510,11 @@ body.detail-v2-body {
 .v2-info-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   background: #ffffff;
   border: 1px solid var(--v2-border);
   border-radius: var(--v2-radius-md);
-  padding: 28px 30px;
+  padding: 22px 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   min-width: 0;
   width: 100%;
@@ -524,7 +524,9 @@ body.detail-v2-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 0;
+  flex-wrap: wrap;
 }
 
 .v2-category-tag {
@@ -532,11 +534,13 @@ body.detail-v2-body {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   color: #ffffff;
   background: var(--v2-text-black);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 2px;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .v2-sku-text {
@@ -544,26 +548,28 @@ body.detail-v2-body {
   font-size: 0.75rem;
   font-weight: 400;
   color: #aaaaaa;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .v2-product-title {
   font-family: var(--v2-font-serif);
-  font-size: 2.2rem;
+  font-size: 1.65rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--v2-text-black);
-  margin: 0 0 1.5rem 0;
+  margin: 0;
 }
 
 .v2-sold-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #888888;
-  margin: 0 0 0.8rem 0;
+  margin: 0;
+  line-height: 1.2;
   font-weight: 400;
 }
 
@@ -613,33 +619,33 @@ body.detail-v2-body {
   background: currentColor;
 }
 
-/* Price Box - Exact Match with .product-price-row in style.css */
+/* Price Box - Compact & Balanced */
 .v2-price-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   padding: 0;
   background: transparent;
   border: none;
   box-shadow: none;
-  margin: 0 0 1.5rem 0;
+  margin: 2px 0 4px 0;
 }
 
 .v2-price-main-row {
   display: flex;
   align-items: baseline;
-  gap: 12px 16px;
+  gap: 10px 14px;
   flex-wrap: wrap;
-  margin-bottom: 0.8rem;
+  margin-bottom: 2px;
 }
 
 .v2-main-price {
-  font-size: 2.2rem;
+  font-size: 1.85rem;
   font-weight: 700;
   white-space: nowrap;
   color: var(--v2-text-black, #1a1a1a);
   font-family: var(--v2-font-serif);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .v2-price-sub-wrap {
@@ -717,17 +723,18 @@ body.detail-v2-body {
 .v2-variants-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  margin: 2px 0;
 }
 
 .v2-variant-title {
   font-family: var(--v2-font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   color: #444444;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
 }
@@ -741,29 +748,29 @@ body.detail-v2-body {
 
 .v2-color-swatches {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .v2-color-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 5px 12px;
   border: 1px solid #ddd;
   border-radius: 20px;
   cursor: pointer;
   background: #ffffff;
   font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: #333333;
   transition: all 0.2s ease;
 }
 
 .v2-color-dot {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
@@ -788,12 +795,12 @@ body.detail-v2-body {
 }
 
 .v2-pattern-chip {
-  padding: 8px 16px;
+  padding: 6px 14px;
   border: 1px solid #ddd;
   border-radius: 999px;
   background: #ffffff;
   font-family: var(--v2-font-sans);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #333333;
   font-weight: 500;
   cursor: pointer;
@@ -860,7 +867,16 @@ body.detail-v2-body {
   flex-shrink: 0;
 }
 
-/* Stock status */
+/* Stock status & Utility Row */
+.v2-meta-utility-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 0 2px 0;
+  padding: 4px 0;
+}
+
 .v2-stock-status {
   display: flex;
   align-items: center;
@@ -868,6 +884,7 @@ body.detail-v2-body {
   font-family: var(--v2-font-sans);
   font-size: 0.82rem;
   color: #27ae60;
+  white-space: nowrap;
 }
 
 .v2-stock-status.out {

@@ -60,6 +60,16 @@ window.closeV2Lightbox = () => {
     if (modal) modal.classList.remove('active');
 };
 
+window.openV2SizeGuide = () => {
+    const modal = document.getElementById('v2-size-guide-modal');
+    if (modal) modal.classList.add('active');
+};
+
+window.closeV2SizeGuide = () => {
+    const modal = document.getElementById('v2-size-guide-modal');
+    if (modal) modal.classList.remove('active');
+};
+
 // Auto slide
 function startAutoSlide() {
     if (autoSlideInterval) clearInterval(autoSlideInterval);
@@ -760,6 +770,116 @@ async function fetchProductDetailV2() {
             `;
         }
 
+        // SEO Structured Data (JSON-LD) cho Google Rich Snippets & Shopping
+        try {
+            const { currentPrice: initialPrice } = getEffectiveVariantPrice();
+            const productUrl = window.location.href;
+            const displayRating = (p.rating || 5.0).toFixed(1);
+            const seoDesc = (p.description || p.name || 'Gốm sứ thủ công nghệ thuật Tiệm Nhà Gốm').replace(/<[^>]*>/g, '').slice(0, 250);
+
+            const productSchema = {
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": p.name,
+                "image": allImages,
+                "description": seoDesc,
+                "url": productUrl,
+                "sku": productId,
+                "brand": {
+                    "@type": "Brand",
+                    "name": "Tiệm Nhà Gốm"
+                },
+                "offers": {
+                    "@type": "Offer",
+                    "url": productUrl,
+                    "priceCurrency": "VND",
+                    "price": initialPrice || p.price || 0,
+                    "availability": (p.stock > 0 || !p.isOutOfStock) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                    "itemCondition": "https://schema.org/NewCondition",
+                    "hasMerchantReturnPolicy": {
+                        "@type": "MerchantReturnPolicy",
+                        "applicableCountry": "VN",
+                        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                        "merchantReturnDays": 2,
+                        "returnMethod": "https://schema.org/ReturnByMail",
+                        "returnFees": "https://schema.org/FreeReturn",
+                        "customerRemorseReturnFees": "https://schema.org/ReturnFeesCustomerResponsibility"
+                    },
+                    "shippingDetails": {
+                        "@type": "OfferShippingDetails",
+                        "shippingRate": {
+                            "@type": "MonetaryAmount",
+                            "value": "30000",
+                            "currency": "VND"
+                        },
+                        "shippingDestination": {
+                            "@type": "DefinedRegion",
+                            "addressCountry": "VN"
+                        },
+                        "deliveryTime": {
+                            "@type": "ShippingDeliveryTime",
+                            "handlingTime": {
+                                "@type": "QuantitativeValue",
+                                "minValue": 0,
+                                "maxValue": 1,
+                                "unitCode": "d"
+                            },
+                            "transitTime": {
+                                "@type": "QuantitativeValue",
+                                "minValue": 1,
+                                "maxValue": 3,
+                                "unitCode": "d"
+                            }
+                        }
+                    }
+                },
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": displayRating,
+                    "bestRating": "5",
+                    "worstRating": "1",
+                    "ratingCount": p.reviewCount ? p.reviewCount.toString() : "1"
+                }
+            };
+
+            const baseUrl = window.location.origin;
+            const breadcrumbSchema = {
+                "@context": "https://schema.org/",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Trang chủ",
+                        "item": baseUrl + "/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": p.category || "Sản phẩm",
+                        "item": `${baseUrl}/products/?category=${toCategorySlug(p.category || '')}`
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": p.name,
+                        "item": productUrl
+                    }
+                ]
+            };
+
+            let scriptTag = document.getElementById('product-schema');
+            if (!scriptTag) {
+                scriptTag = document.createElement('script');
+                scriptTag.id = 'product-schema';
+                scriptTag.type = 'application/ld+json';
+                document.head.appendChild(scriptTag);
+            }
+            scriptTag.textContent = JSON.stringify([productSchema, breadcrumbSchema]);
+        } catch (schemaErr) {
+            console.warn("Lỗi khởi tạo JSON-LD Schema:", schemaErr);
+        }
+
         // Check if favorite
         let isFav = false;
         if (auth.currentUser) {
@@ -973,10 +1093,16 @@ async function fetchProductDetailV2() {
                     </div>
                 ` : ''}
 
-                <!-- Stock Status -->
-                <div id="v2-stock-status" class="v2-stock-status">
-                    <span class="v2-stock-dot"></span>
-                    <span>Đang kiểm tra kho...</span>
+                <!-- Stock Status & Size Guide -->
+                <div class="v2-meta-utility-row">
+                    <div id="v2-stock-status" class="v2-stock-status">
+                        <span class="v2-stock-dot"></span>
+                        <span>Đang kiểm tra kho...</span>
+                    </div>
+                    <button type="button" class="v2-size-guide-btn" onclick="window.openV2SizeGuide()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 8.7 21.3c-1 1-2.5 1-3.4 0l-2.6-2.6c-1-1-1-2.5 0-3.4L15.3 2.7c1-1 2.5-1 3.4 0l2.6 2.6c1 1 1 2.5 0 3.4Z"/><path d="m14.5 3.5 2 2"/><path d="m11.5 6.5 2 2"/><path d="m8.5 9.5 2 2"/><path d="m5.5 12.5 2 2"/></svg>
+                        <span>Thước đo kích thước</span>
+                    </button>
                 </div>
 
                 <!-- Quantity Stepper & Buttons Grid -->
@@ -1218,6 +1344,9 @@ async function fetchProductDetailV2() {
                 comboVariant: selectedComboVariant || null,
                 variant: [selectedComboVariant, selectedColor, selectedPattern].filter(Boolean).join(' / ') || null,
                 category: p.category
+            }, {
+                sourceEl: mainImg || document.getElementById('v2-btn-add-cart'),
+                skipDrawer: redirect
             });
 
             if (redirect) {

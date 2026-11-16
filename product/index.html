@@ -8,8 +8,8 @@
   <meta name="description"
     content="Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
   <link rel="canonical" href="https://tiemnhagom.vn/product/">
-  <link rel="stylesheet" href="../css/style.css?v=20">
-  <link rel="stylesheet" href="../css/product-detail-v2.css?v=17">
+  <link rel="stylesheet" href="../css/style.css?v=22">
+  <link rel="stylesheet" href="../css/product-detail-v2.css?v=18">
   <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -240,13 +240,109 @@
     </div>
   </div>
 
+  <!-- Size & Scale Guide Modal -->
+  <div id="v2-size-guide-modal" class="size-guide-modal" onclick="if(event.target === this) window.closeV2SizeGuide()">
+    <div class="size-guide-dialog">
+      <div class="size-guide-header">
+        <h4 class="size-guide-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 8.7 21.3c-1 1-2.5 1-3.4 0l-2.6-2.6c-1-1-1-2.5 0-3.4L15.3 2.7c1-1 2.5-1 3.4 0l2.6 2.6c1 1 1 2.5 0 3.4Z"/><path d="m14.5 3.5 2 2"/><path d="m11.5 6.5 2 2"/><path d="m8.5 9.5 2 2"/><path d="m5.5 12.5 2 2"/></svg>
+          Thước đo kích thước & dung tích thực tế
+        </h4>
+        <button type="button" class="size-guide-close" onclick="window.closeV2SizeGuide()" title="Đóng">&times;</button>
+      </div>
+      <div class="size-guide-body">
+        <div style="font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #8C827A; margin-bottom: 10px;">
+          So sánh với vật dụng quen thuộc
+        </div>
+        <div class="size-guide-compare-grid">
+          <div class="size-compare-card">
+            <div class="size-compare-icon">📱</div>
+            <h5>Điện thoại thông minh</h5>
+            <p>Cao ~14.7 - 16cm. Dễ dàng ước lượng đĩa nhỏ, chén súp hoặc bình hoa mini để bàn.</p>
+          </div>
+          <div class="size-compare-card">
+            <div class="size-compare-icon">✋</div>
+            <h5>Lòng bàn tay người lớn</h5>
+            <p>Gang tay ~18 - 20cm. Tương đương kích cỡ một chiếc đĩa ăn tráng miệng tiêu chuẩn.</p>
+          </div>
+          <div class="size-compare-card">
+            <div class="size-compare-icon">🥫</div>
+            <h5>Lon nước ngọt (330ml)</h5>
+            <p>Dung tích 330ml, cao ~12cm. Chuẩn so sánh cho các loại cốc trà, mug cà phê lớn.</p>
+          </div>
+        </div>
+
+        <div style="font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #8C827A; margin-bottom: 10px;">
+          Bảng chuẩn kích thước đồ gốm sứ
+        </div>
+        <div class="size-guide-table-wrap">
+          <table class="size-guide-table">
+            <thead>
+              <tr>
+                <th>Loại sản phẩm</th>
+                <th>Kích thước / Dung tích</th>
+                <th>Công năng phù hợp nhất</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Ly / Tách nhỏ</strong></td>
+                <td>90ml - 150ml</td>
+                <td>Espresso đậm đặc, tách trà đạo, nếm rượu mơ</td>
+              </tr>
+              <tr>
+                <td><strong>Ly / Cốc vừa</strong></td>
+                <td>200ml - 280ml</td>
+                <td>Cappuccino, Latte, sữa hạt, nước lọc văn phòng</td>
+              </tr>
+              <tr>
+                <td><strong>Mug lớn / Cốc quai</strong></td>
+                <td>320ml - 420ml</td>
+                <td>Trà thảo mộc, sinh tố, ngũ cốc yến mạch</td>
+              </tr>
+              <tr>
+                <td><strong>Chén cơm / Bát súp</strong></td>
+                <td>11cm - 12.5cm (~300ml)</td>
+                <td>Bát ăn cơm gia đình, chén súp khai vị</td>
+              </tr>
+              <tr>
+                <td><strong>Tô canh / Tô mì</strong></td>
+                <td>16cm - 20cm (~800 - 1200ml)</td>
+                <td>Tô phở, hủ tiếu, canh gia đình 3-4 người</td>
+              </tr>
+              <tr>
+                <td><strong>Đĩa bánh / Tráng miệng</strong></td>
+                <td>15cm - 18cm</td>
+                <td>Bánh ngọt, hoa quả gọt sẵn, đĩa lót tách</td>
+              </tr>
+              <tr>
+                <td><strong>Đĩa ăn chính (Dinner plate)</strong></td>
+                <td>20cm - 26cm</td>
+                <td>Món xào, bít tết, món nướng, trang trí tiệc</td>
+              </tr>
+              <tr>
+                <td><strong>Bình hoa để bàn</strong></td>
+                <td>Cao 14cm - 25cm</td>
+                <td>Bàn trà, bàn làm việc, cắm 3-7 cành hoa mùa</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="size-guide-tip">
+          <strong><i class="ti ti-info-circle"></i> Lưu ý chế tác thủ công:</strong> Vì mỗi sản phẩm tại Tiệm Nhà Gốm đều được vuốt nặn, nhúng men và nung ở nhiệt độ cao 1280°C, kích thước thực tế có thể có dung sai nhỏ từ ±0.5cm đến 1cm. Đây chính là nét độc bản duy mỹ của nghệ thuật làm gốm.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- AI Decor Match Recommendations -->
   <div id="ai-decor-match-container" style="padding: 0 5%; max-width: 1320px; margin: 0 auto; display: none;"></div>
 
   <div id="footer-placeholder"></div>
 
   <!-- Module JS -->
-  <script type="module" src="../js/product-detail-v2.js?v=16"></script>
+  <script type="module" src="../js/product-detail-v2.js?v=17"></script>
 </body>
 
 </html>

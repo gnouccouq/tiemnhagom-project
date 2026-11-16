@@ -36,7 +36,7 @@
         gtag('config', 'G-4FNKRZ13JC');
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=23">
+    <link rel="stylesheet" href="css/style.css?v=24">
     <link rel="stylesheet" href="css/home-blog.css?v=2">
     <link rel="icon" type="image/png" href="Asset/icons/favicon.png">
     <link rel="apple-touch-icon" href="Asset/icons/favicon.png">
@@ -77,31 +77,57 @@
         content="Khám phá bộ sưu tập ly chén, bình hoa gốm thủ công tinh xảo tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.">
     <meta property="twitter:image" content="https://tiemnhagom.vn/Asset/images/hero-bg.jpg">
 
-    <!-- Dữ liệu có cấu trúc: Giúp Google hiểu về Sitelinks và Searchbox -->
+    <!-- Dữ liệu có cấu trúc: Giúp Google hiểu về Sitelinks, Searchbox & Cửa hàng -->
     <script type="application/ld+json">
     [
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Tiệm Nhà Gốm",
-        "url": "https://tiemnhagom.vn/"
+        "alternateName": ["Tiem Nha Gom", "Tiệm Nhà Gốm - Ceramics & Decor"],
+        "url": "https://tiemnhagom.vn/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://tiemnhagom.vn/products/?search={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
       },
       {
         "@context": "https://schema.org",
-        "@type": "Store",
+        "@type": ["Store", "LocalBusiness"],
         "name": "Tiệm Nhà Gốm",
         "image": "https://tiemnhagom.vn/Asset/images/hero-bg.jpg",
+        "logo": "https://tiemnhagom.vn/Asset/icons/favicon.png",
         "@id": "https://tiemnhagom.vn/#store",
         "url": "https://tiemnhagom.vn/",
         "telephone": "0777709662",
+        "email": "tiemnhagom.contact@gmail.com",
         "priceRange": "$$",
+        "paymentAccepted": "Cash, Credit Card, Bank Transfer, QR Code",
+        "currenciesAccepted": "VND",
+        "sameAs": [
+          "https://www.facebook.com/tiemnhagom.vn",
+          "https://www.instagram.com/tiemnhagom.vn",
+          "https://www.tiktok.com/@tiemnhagom.vn"
+        ],
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "37 Nguyễn Duy, Phường Gia Định",
           "addressLocality": "TP Hồ Chí Minh",
           "addressRegion": "Hồ Chí Minh",
           "addressCountry": "VN"
-        }
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            "opens": "09:00",
+            "closes": "21:30"
+          }
+        ]
       }
     ]
     </script>

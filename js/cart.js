@@ -490,8 +490,33 @@ async function renderCheckoutForm(container) {
                     <span class="radio-checkmark"></span>
                 </label>
             </div>
-            <div id="bank-transfer-info" style="display: none; margin-top: 15px; padding: 15px; background: #fcfbf8; border: 1px dashed #ccc; border-radius: 4px; font-size: 0.85rem;">
-                <p><strong><i class="ti ti-bulb"></i> Lưu ý:</strong> Mã QR thanh toán kèm <strong>đúng số tiền</strong> và <strong>nội dung chuyển khoản</strong> sẽ hiển thị sau khi bạn nhấn nút "Đặt hàng".</p>
+            <div id="bank-transfer-info" class="bank-transfer-card" style="display: none;">
+                <div class="bank-card-header">
+                    <span class="bank-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        Vietcombank (VCB)
+                    </span>
+                    <span style="font-size: 0.78rem; color: #888; font-weight: 500;">Chuyển nhanh Napas 24/7</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-row-label">Số tài khoản:</span>
+                    <span class="bank-row-val">
+                        <strong style="font-family: monospace; font-size: 1.05rem; letter-spacing: 0.5px; color: #000;">1059447798</strong>
+                        <button type="button" class="bank-copy-btn" onclick="window.copyBankAcc('1059447798', this)">Sao chép</button>
+                    </span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-row-label">Chủ tài khoản:</span>
+                    <span class="bank-row-val" style="font-size: 0.82rem;">HO KINH DOANH TIEM NHA GOM</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-row-label">Chi nhánh:</span>
+                    <span class="bank-row-val" style="font-size: 0.8rem; color: #666;">VCB Tân Bình - PGD ETOWN</span>
+                </div>
+                <div class="bank-transfer-hint">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top: 1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Mã VietQR tự động điền <strong>chính xác số tiền</strong> và <strong>mã đơn hàng</strong> sẽ hiển thị ngay khi bạn nhấn nút "Đặt hàng" bên dưới để quét thanh toán tiện lợi trong 3 giây.</span>
+                </div>
             </div>
         </div>
     `;
@@ -585,6 +610,28 @@ async function renderCheckoutForm(container) {
         });
     });
 }
+
+window.copyBankAcc = (acc, btn) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(acc).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = 'Đã chép ✓';
+            btn.style.background = '#28a745';
+            btn.style.color = '#fff';
+            btn.style.borderColor = '#28a745';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }, 1800);
+        }).catch(() => {
+            prompt('Số tài khoản Vietcombank:', acc);
+        });
+    } else {
+        prompt('Số tài khoản Vietcombank:', acc);
+    }
+};
 
 async function fetchAvailableCoupons() {
     const listContainer = document.getElementById('coupons-list-render');

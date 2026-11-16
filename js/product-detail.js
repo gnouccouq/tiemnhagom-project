@@ -887,7 +887,43 @@ async function fetchProductDetail() {
                     "priceCurrency": "VND",
                     "price": currentPrice,
                     "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                    "itemCondition": "https://schema.org/NewCondition"
+                    "itemCondition": "https://schema.org/NewCondition",
+                    "hasMerchantReturnPolicy": {
+                        "@type": "MerchantReturnPolicy",
+                        "applicableCountry": "VN",
+                        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                        "merchantReturnDays": 2,
+                        "returnMethod": "https://schema.org/ReturnByMail",
+                        "returnFees": "https://schema.org/FreeReturn",
+                        "customerRemorseReturnFees": "https://schema.org/ReturnFeesCustomerResponsibility"
+                    },
+                    "shippingDetails": {
+                        "@type": "OfferShippingDetails",
+                        "shippingRate": {
+                            "@type": "MonetaryAmount",
+                            "value": "30000",
+                            "currency": "VND"
+                        },
+                        "shippingDestination": {
+                            "@type": "DefinedRegion",
+                            "addressCountry": "VN"
+                        },
+                        "deliveryTime": {
+                            "@type": "ShippingDeliveryTime",
+                            "handlingTime": {
+                                "@type": "QuantitativeValue",
+                                "minValue": 0,
+                                "maxValue": 1,
+                                "unitCode": "d"
+                            },
+                            "transitTime": {
+                                "@type": "QuantitativeValue",
+                                "minValue": 1,
+                                "maxValue": 3,
+                                "unitCode": "d"
+                            }
+                        }
+                    }
                 },
                 "aggregateRating": {
                     "@type": "AggregateRating",

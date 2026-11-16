@@ -20,12 +20,14 @@ const MAX_RECENT_SEARCHES = 8;
 
 // Các từ khóa thịnh hành được đề xuất
 const TRENDING_SEARCHES = [
-    'Ly sứ giáng sinh',
+    'Ly gốm Giáng Sinh',
     'Bình hoa men hỏa biến',
-    'Bộ ấm chén trà',
-    'Chén dĩa decor bàn ăn',
-    'Lọ hoa để bàn',
-    'Quà tặng gốm sứ'
+    'Bàn tiệc Noel',
+    'Gác đũa gốm thủ công',
+    'Bộ ấm chén trà đạo',
+    'Khay mây khảm trai',
+    'Set quà tặng gốm sứ',
+    'Nến thơm & Tinh dầu'
 ];
 
 // Danh mục nhanh

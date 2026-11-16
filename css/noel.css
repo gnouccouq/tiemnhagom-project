@@ -509,80 +509,117 @@ body.noel-active .noel-fairy-lights {
     font-weight: 600;
 }
 
-/* Noel Category Tabs */
+/* Noel Category Tabs - Thống nhất giao diện trên mọi kích thước màn hình */
 .noel-tabs-bar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     margin-bottom: 24px;
+    width: 100%;
+}
+
+@media (min-width: 1200px) {
+    .noel-tabs-bar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
 }
 
 .noel-tabs-scroll,
 .noel-tabs-list {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-    flex-wrap: wrap;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 4px 2px 8px 2px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .noel-tabs-scroll::-webkit-scrollbar,
 .noel-tabs-list::-webkit-scrollbar {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .noel-tab-btn {
-    border: 1px solid #DFC8B4;
-    background: #FFFFFF;
-    color: #4A3525;
-    padding: 9px 18px;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.22s ease;
-    font-family: inherit;
+    border: 1.5px solid #E5D5C5 !important;
+    background: #FFFFFF !important;
+    color: #4A3525 !important;
+    padding: 9px 18px !important;
+    border-radius: 999px !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex-shrink: 0 !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-family: inherit !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    user-select: none !important;
+}
+
+.noel-tab-btn i {
+    font-size: 1rem !important;
+    line-height: 1 !important;
 }
 
 .noel-tab-btn:hover {
-    border-color: #991B1B;
-    color: #991B1B;
-    transform: translateY(-1px);
+    border-color: #991B1B !important;
+    color: #991B1B !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(153, 27, 27, 0.12) !important;
 }
 
 .noel-tab-btn.active {
-    background: linear-gradient(135deg, #7F1D1D, #991B1B);
-    color: #FEF3C7;
-    border-color: #7F1D1D;
-    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.22);
+    background: linear-gradient(135deg, #7F1D1D, #991B1B) !important;
+    color: #FEF3C7 !important;
+    border-color: #7F1D1D !important;
+    box-shadow: 0 4px 14px rgba(127, 29, 29, 0.28) !important;
 }
 
 .noel-gift-perk-pill,
 .noel-perk-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.82rem;
-    color: #7C2D12;
-    background: #FEF3C7;
-    border: 1px solid #FDE68A;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    font-size: 0.82rem !important;
+    color: #7C2D12 !important;
+    background: #FEF3C7 !important;
+    border: 1px solid #FDE68A !important;
+    padding: 8px 16px !important;
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+    box-shadow: 0 1px 4px rgba(217, 119, 6, 0.08) !important;
 }
 
 .noel-perk-pill:hover {
-    background: #FDE68A;
-    color: #4A151B;
+    background: #FDE68A !important;
+    color: #4A151B !important;
+    transform: translateY(-1px) !important;
+}
+
+@media (min-width: 1200px) {
+    .noel-perk-pill {
+        align-self: center !important;
+    }
 }
 
 .noel-showcase-footer {
