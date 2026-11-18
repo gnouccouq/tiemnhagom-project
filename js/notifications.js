@@ -629,8 +629,18 @@ function renderNotificationList() {
     }).join('');
 }
 
+// Biến hỗ trợ cuộn và vuốt danh mục thông báo trên PC & Mobile
+let isDraggingTabs = false;
+let tabsDragStartX = 0;
+let tabsStartScrollLeft = 0;
+let tabsHasDraggedDistance = 0;
+
 // Chuyển đổi tab lọc
 window.switchNotifTab = function (tabId) {
+    if (tabsHasDraggedDistance > 6) {
+        // Người dùng đang kéo vuốt thanh tab, bỏ qua kích hoạt chuyển tab
+        return;
+    }
     currentFilter = tabId;
 
     // Cập nhật class active cho nút tab
@@ -638,6 +648,9 @@ window.switchNotifTab = function (tabId) {
     tabChips.forEach(chip => {
         if (chip.getAttribute('data-tab') === tabId) {
             chip.classList.add('active');
+            try {
+                chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } catch (_) { }
         } else {
             chip.classList.remove('active');
         }
@@ -649,6 +662,118 @@ window.switchNotifTab = function (tabId) {
 window.handleMarkAllNotifsRead = function () {
     markAllAsRead();
 };
+
+// Căn chỉnh vị trí dropdown thông báo an toàn trên Desktop, chống tràn mép màn hình
+export function repositionDropdownSafely(dropdown) {
+    if (!dropdown) return;
+    if (window.innerWidth <= 576) {
+        dropdown.style.right = '';
+        return;
+    }
+    dropdown.style.right = '-20px';
+    const rect = dropdown.getBoundingClientRect();
+    const margin = 16;
+    if (rect.right > window.innerWidth - margin) {
+        const excess = rect.right - (window.innerWidth - margin);
+        dropdown.style.right = `${-20 + excess}px`;
+    } else if (rect.left < margin) {
+        const excess = margin - rect.left;
+        dropdown.style.right = `${-20 - excess}px`;
+    }
+}
+
+// Khởi tạo các tương tác cuộn mượt cho thanh danh mục trên PC
+export function setupTabsInteractions(dropdownEl) {
+    if (!dropdownEl) return;
+    const tabsBar = dropdownEl.querySelector('#notif-tabs-bar');
+    const prevBtn = dropdownEl.querySelector('#notif-tab-arrow-prev');
+    const nextBtn = dropdownEl.querySelector('#notif-tab-arrow-next');
+    if (!tabsBar || tabsBar.dataset.interactionsBound) return;
+    tabsBar.dataset.interactionsBound = 'true';
+
+    function updateArrowVisibility() {
+        if (!prevBtn || !nextBtn) return;
+        const maxScroll = tabsBar.scrollWidth - tabsBar.clientWidth;
+        if (maxScroll <= 4) {
+            prevBtn.classList.remove('visible');
+            nextBtn.classList.remove('visible');
+            return;
+        }
+        if (tabsBar.scrollLeft > 6) {
+            prevBtn.classList.add('visible');
+        } else {
+            prevBtn.classList.remove('visible');
+        }
+        if (tabsBar.scrollLeft < maxScroll - 6) {
+            nextBtn.classList.add('visible');
+        } else {
+            nextBtn.classList.remove('visible');
+        }
+    }
+
+    tabsBar.addEventListener('scroll', updateArrowVisibility, { passive: true });
+
+    // Click nút mũi tên trái / phải
+    if (prevBtn) {
+        prevBtn.onclick = (e) => {
+            e.stopPropagation();
+            tabsBar.scrollBy({ left: -140, behavior: 'smooth' });
+            setTimeout(updateArrowVisibility, 250);
+        };
+    }
+    if (nextBtn) {
+        nextBtn.onclick = (e) => {
+            e.stopPropagation();
+            tabsBar.scrollBy({ left: 140, behavior: 'smooth' });
+            setTimeout(updateArrowVisibility, 250);
+        };
+    }
+
+    // Cuộn ngang bằng con lăn chuột (Mouse Wheel to Horizontal Scroll) trên PC
+    tabsBar.addEventListener('wheel', (e) => {
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        if (tabsBar.scrollWidth > tabsBar.clientWidth && delta !== 0) {
+            e.preventDefault();
+            tabsBar.scrollLeft += delta * 0.85;
+            updateArrowVisibility();
+        }
+    }, { passive: false });
+
+    // Kéo thả chuột để cuộn (Mouse Drag to Pan)
+    tabsBar.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        isDraggingTabs = true;
+        tabsHasDraggedDistance = 0;
+        tabsDragStartX = e.pageX;
+        tabsStartScrollLeft = tabsBar.scrollLeft;
+        tabsBar.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDraggingTabs) return;
+        const moveDist = e.pageX - tabsDragStartX;
+        tabsHasDraggedDistance = Math.abs(moveDist);
+        tabsBar.scrollLeft = tabsStartScrollLeft - moveDist;
+        updateArrowVisibility();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingTabs) {
+            isDraggingTabs = false;
+            tabsBar.classList.remove('is-dragging');
+            setTimeout(() => { tabsHasDraggedDistance = 0; }, 60);
+        }
+    });
+
+    if (window.ResizeObserver) {
+        const ro = new ResizeObserver(() => {
+            updateArrowVisibility();
+        });
+        ro.observe(tabsBar);
+    }
+
+    setTimeout(updateArrowVisibility, 60);
+}
 
 // Khởi tạo giao diện dropdown trung tâm thông báo
 function buildNotificationDropdownUI(dropdownEl) {
@@ -666,26 +791,38 @@ function buildNotificationDropdownUI(dropdownEl) {
             </button>
         </div>
 
-        <div class="notif-tabs-bar">
-            <button type="button" class="notif-tab-chip active" data-tab="all" onclick="window.switchNotifTab('all')">
-                <span>Tất cả</span>
-                <span class="notif-tab-badge" id="notif-tab-badge-all" style="display: none;">0</span>
+        <div class="notif-tabs-wrapper">
+            <button type="button" class="notif-tab-arrow prev" id="notif-tab-arrow-prev" title="Cuộn sang trái" aria-label="Cuộn sang trái">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
             </button>
-            <button type="button" class="notif-tab-chip" data-tab="news" onclick="window.switchNotifTab('news')">
-                <span>Tin tức &amp; Gốm</span>
-                <span class="notif-tab-badge" id="notif-tab-badge-news" style="display: none;">0</span>
-            </button>
-            <button type="button" class="notif-tab-chip" data-tab="promo" onclick="window.switchNotifTab('promo')">
-                <span>Khuyến mãi</span>
-                <span class="notif-tab-badge" id="notif-tab-badge-promo" style="display: none;">0</span>
-            </button>
-            <button type="button" class="notif-tab-chip" data-tab="order" onclick="window.switchNotifTab('order')">
-                <span>Đơn hàng</span>
-                <span class="notif-tab-badge" id="notif-tab-badge-order" style="display: none;">0</span>
-            </button>
-            <button type="button" class="notif-tab-chip" data-tab="system" onclick="window.switchNotifTab('system')">
-                <span>Hệ thống</span>
-                <span class="notif-tab-badge" id="notif-tab-badge-system" style="display: none;">0</span>
+            <div class="notif-tabs-bar" id="notif-tabs-bar">
+                <button type="button" class="notif-tab-chip active" data-tab="all" onclick="window.switchNotifTab('all')">
+                    <span>Tất cả</span>
+                    <span class="notif-tab-badge" id="notif-tab-badge-all" style="display: none;">0</span>
+                </button>
+                <button type="button" class="notif-tab-chip" data-tab="news" title="Tin tức &amp; Gốm sứ" onclick="window.switchNotifTab('news')">
+                    <span>Tin tức</span>
+                    <span class="notif-tab-badge" id="notif-tab-badge-news" style="display: none;">0</span>
+                </button>
+                <button type="button" class="notif-tab-chip" data-tab="promo" onclick="window.switchNotifTab('promo')">
+                    <span>Khuyến mãi</span>
+                    <span class="notif-tab-badge" id="notif-tab-badge-promo" style="display: none;">0</span>
+                </button>
+                <button type="button" class="notif-tab-chip" data-tab="order" onclick="window.switchNotifTab('order')">
+                    <span>Đơn hàng</span>
+                    <span class="notif-tab-badge" id="notif-tab-badge-order" style="display: none;">0</span>
+                </button>
+                <button type="button" class="notif-tab-chip" data-tab="system" onclick="window.switchNotifTab('system')">
+                    <span>Hệ thống</span>
+                    <span class="notif-tab-badge" id="notif-tab-badge-system" style="display: none;">0</span>
+                </button>
+            </div>
+            <button type="button" class="notif-tab-arrow next" id="notif-tab-arrow-next" title="Cuộn sang phải" aria-label="Cuộn sang phải">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
             </button>
         </div>
 
@@ -703,6 +840,8 @@ function buildNotificationDropdownUI(dropdownEl) {
             </a>
         </div>
     `;
+
+    setupTabsInteractions(dropdownEl);
 }
 
 // Bật / Tắt Dropdown thông báo
@@ -715,8 +854,14 @@ export function toggleNotificationDropdown() {
     if (isDropdownOpen) {
         dropdown.style.display = 'flex';
         btn.setAttribute('aria-expanded', 'true');
+        repositionDropdownSafely(dropdown);
         renderNotificationList();
         updateBadgeCount();
+        const tabsBar = dropdown.querySelector('#notif-tabs-bar');
+        if (tabsBar) {
+            setupTabsInteractions(dropdown);
+            tabsBar.dispatchEvent(new Event('scroll'));
+        }
     } else {
         dropdown.style.display = 'none';
         btn.setAttribute('aria-expanded', 'false');
@@ -743,6 +888,13 @@ function setupClickOutsideListeners() {
             const dropdown = document.getElementById('notification-dropdown');
             if (dropdown) dropdown.style.display = 'none';
             isDropdownOpen = false;
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (isDropdownOpen) {
+            const dropdown = document.getElementById('notification-dropdown');
+            repositionDropdownSafely(dropdown);
         }
     });
 }
