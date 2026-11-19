@@ -36,8 +36,8 @@
         gtag('config', 'G-4FNKRZ13JC');
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=25">
-    <link rel="stylesheet" href="css/home-blog.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=57">
+    <link rel="stylesheet" href="css/home-blog.css?v=3">
     <link rel="icon" type="image/png" href="Asset/icons/favicon.png">
     <link rel="apple-touch-icon" href="Asset/icons/favicon.png">
     <link rel="manifest" href="manifest.json">
@@ -187,17 +187,42 @@
         </section>
 
 
+        <section class="home-categories-section reveal-on-scroll" id="home-categories-section">
+            <div class="section-header tng-home-sec-header">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-tag">DANH MỤC</span>
+                    <h2 class="tng-sec-title">Danh mục sản phẩm</h2>
+                    <p class="section-subtitle">Chọn dòng sản phẩm gốm sứ thủ công bạn đang tìm kiếm</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="products/" class="tng-sec-cta">
+                        <span>Tất cả danh mục</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            <div id="home-category-grid" class="tng-home-cat-grid">
+                <!-- Danh mục sản phẩm được render tự động từ JS -->
+            </div>
+        </section>
+
         <section class="collections-section reveal-on-scroll">
-            <div class="section-header">
-                <h2>Bộ sưu tập tâm đắc</h2>
-                <p class="section-subtitle">Khám phá các dòng gốm được Tiệm tuyển chọn theo chủ đề</p>
+            <div class="section-header tng-home-sec-header">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-tag">BỘ SƯU TẬP</span>
+                    <h2 class="tng-sec-title">Bộ sưu tập tâm đắc</h2>
+                    <p class="section-subtitle">Khám phá các dòng gốm được Tiệm tuyển chọn theo chủ đề</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="collections/" class="tng-sec-cta">
+                        <span>Tất cả bộ sưu tập</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
             <div id="collection-grid" class="collection-grid">
                 <!-- Dữ liệu được nạp tự động bởi fetchCollections() trong main.js -->
                 <div style="text-align:center; padding: 2rem; grid-column: 1/-1;"><span class="spinner"></span></div>
-            </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="collections/" class="btn-outline">Khám phá tất cả bộ sưu tập</a>
             </div>
         </section>
 
@@ -263,83 +288,117 @@
         </section>
 
         <section id="sale-section" class="special-offers">
-            <div class="section-header">
-                <h2 class="shimmer-title">Flash Sale
-                    <img src="https://theme.hstatic.net/200000588671/1001020156/14/flashsale-hot.png?v=2949" alt="Hot"
-                        class="fire-icon">
-                </h2>
-                <p class="section-subtitle">Cơ hội sở hữu những tác phẩm tinh xảo với mức giá tốt nhất</p>
+            <div class="section-header tng-home-sec-header theme-warm">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-tag">HOT DEAL</span>
+                    <h2 class="shimmer-title tng-sec-title">Flash Sale
+                        <img src="https://theme.hstatic.net/200000588671/1001020156/14/flashsale-hot.png?v=2949" alt="Hot"
+                            class="fire-icon">
+                    </h2>
+                    <p class="section-subtitle">Cơ hội sở hữu những tác phẩm tinh xảo với mức giá tốt nhất</p>
+                </div>
 
-                <div id="flash-sale-countdown" class="countdown-container">
-                    <div class="countdown-item"><span class="countdown-num" id="days">00</span><span
-                            class="countdown-label">Ngày</span></div>
-                    <div class="countdown-item"><span class="countdown-num" id="hours">00</span><span
-                            class="countdown-label">Giờ</span></div>
-                    <div class="countdown-item"><span class="countdown-num" id="minutes">00</span><span
-                            class="countdown-label">Phút</span></div>
-                    <div class="countdown-item"><span class="countdown-num" id="seconds">00</span><span
-                            class="countdown-label">Giây</span></div>
+                <div class="tng-sec-head-right">
+                    <div id="flash-sale-countdown" class="countdown-container" style="margin: 0;">
+                        <div class="countdown-item"><span class="countdown-num" id="days">00</span><span
+                                class="countdown-label">Ngày</span></div>
+                        <div class="countdown-item"><span class="countdown-num" id="hours">00</span><span
+                                class="countdown-label">Giờ</span></div>
+                        <div class="countdown-item"><span class="countdown-num" id="minutes">00</span><span
+                                class="countdown-label">Phút</span></div>
+                        <div class="countdown-item"><span class="countdown-num" id="seconds">00</span><span
+                                class="countdown-label">Giây</span></div>
+                    </div>
+                    <a href="flash-sale/" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
                 </div>
             </div>
             <div id="sale-product-grid" class="grid">
                 <!-- Render sản phẩm sale -->
             </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="flash-sale/" class="btn-dark">Xem tất cả ưu đãi</a>
-            </div>
         </section>
 
         <section id="recommendation-section" style="display: none; background-color: #fff;">
-            <div class="section-header">
-                <h2>Dành riêng cho bạn</h2>
-                <p class="section-subtitle">Dựa trên những món gốm bạn đã quan tâm gần đây</p>
+            <div class="section-header tng-home-sec-header">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-tag">FOR YOU</span>
+                    <h2 class="tng-sec-title">Dành riêng cho bạn</h2>
+                    <p class="section-subtitle">Dựa trên những món gốm bạn đã quan tâm gần đây</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="products/?filter=recommended" class="tng-sec-cta" id="recommendation-see-all-link">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
             <div id="recommendation-grid" class="grid">
                 <!-- Gợi ý dựa trên lịch sử xem -->
             </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="products/" class="btn-outline">Khám phá thêm cho bạn</a>
-            </div>
         </section>
 
-        <section class="combo-products" style="background: #fbf7f4; padding-top: 40px; padding-bottom: 40px;">
-            <div class="section-header">
-                <h2>Bộ sản phẩm (Combo)</h2>
-                <p class="section-subtitle">Tiết kiệm hơn khi mua theo bộ, phối ghép hoàn hảo cho không gian của bạn</p>
-            </div>
-            <div id="combo-grid" class="grid">
-                <!-- Sản phẩm combo sẽ được render từ Firebase ở đây -->
-                <div class="product-card skeleton">Đang tải...</div>
-            </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="products/" class="btn-outline">Xem tất cả Combo</a>
-            </div>
-        </section>
         <section class="best-selling-products">
-            <div class="section-header">
-                <h2>Sản phẩm bán chạy</h2>
-                <p class="section-subtitle">Những thiết kế được yêu thích và lựa chọn nhiều nhất</p>
+            <div class="section-header tng-home-sec-header theme-warm">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-watermark" aria-hidden="true">01</span>
+                    <span class="tng-sec-tag">TOP 10</span>
+                    <h2 class="tng-sec-title">Bán chạy nhất</h2>
+                    <p class="section-subtitle">Top sản phẩm được khách hàng yêu thích và tin dùng nhiều nhất</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="products/?sort=popular" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
             <div id="best-selling-grid" class="grid">
                 <!-- Sản phẩm bán chạy sẽ được render từ Firebase ở đây -->
                 <div class="product-card skeleton">Đang tải...</div>
             </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="products/?sort=popular" class="btn-outline">Xem tất cả sản phẩm bán chạy</a>
-            </div>
         </section>
 
         <section class="featured-products">
-            <div class="section-header">
-                <h2>Sản phẩm nổi bật</h2>
-                <p class="section-subtitle">Những mẫu thiết kế tâm đắc và được yêu thích nhất tại Tiệm</p>
+            <div class="section-header tng-home-sec-header theme-warm">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-watermark" aria-hidden="true">02</span>
+                    <span class="tng-sec-tag">NEW DROP</span>
+                    <h2 class="tng-sec-title">Mới lên kệ</h2>
+                    <p class="section-subtitle">Sản phẩm và mẫu thiết kế mới nhất tại Tiệm Nhà Gốm</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="products/?sort=newest" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
             <div id="product-grid" class="grid">
                 <!-- Sản phẩm sẽ được render từ Firebase ở đây -->
                 <div class="product-card skeleton">Đang tải...</div>
             </div>
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="products/" class="btn-outline">Xem toàn bộ cửa hàng</a>
+        </section>
+
+        <section class="combo-products" style="background: #fbf7f4; padding-top: 40px; padding-bottom: 40px;">
+            <div class="section-header tng-home-sec-header">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-watermark" aria-hidden="true">03</span>
+                    <span class="tng-sec-tag">COMBO SET</span>
+                    <h2 class="tng-sec-title">Bộ sản phẩm (Combo)</h2>
+                    <p class="section-subtitle">Tiết kiệm hơn khi mua theo bộ, phối ghép hoàn hảo cho không gian của bạn</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="products/?category=combo" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            <div id="combo-grid" class="grid">
+                <!-- Sản phẩm combo sẽ được render từ Firebase ở đây -->
+                <div class="product-card skeleton">Đang tải...</div>
             </div>
         </section>
 
@@ -380,13 +439,22 @@
         </section>
 
         <section class="lookbook-intro-section reveal-on-scroll" style="background: #fbf7f4; padding: 60px 5%; margin: 2rem 0;">
-            <div class="section-header" style="text-align: center; margin-bottom: 2.5rem;">
-                <span style="font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: #a0522d; font-weight: 600;">Cảm Hứng Không Gian</span>
-                <h2 style="font-family: var(--font-serif); font-size: 2.2rem; margin-top: 0.3rem;">Lookbook - Góc Gốm Của Bạn</h2>
-                <p class="section-subtitle">Khám phá các góc bày biện gốm thực tế và chọn mua sản phẩm trực tiếp từ hình ảnh</p>
+            <div class="section-header tng-home-sec-header theme-warm">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-watermark" aria-hidden="true">04</span>
+                    <span class="tng-sec-tag">CẢM HỨNG KHÔNG GIAN</span>
+                    <h2 class="tng-sec-title">Lookbook - Góc Gốm Của Bạn</h2>
+                    <p class="section-subtitle">Khám phá các góc bày biện gốm thực tế và chọn mua sản phẩm trực tiếp từ hình ảnh</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="lookbook/" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
-            <div class="lookbook-intro-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.8rem; max-width: 1400px; margin: 0 auto;">
-                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
+            <div class="lookbook-intro-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; width: 100%; padding: 0.5rem 5% 0 5%; box-sizing: border-box; margin: 0 auto;">
+                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
                     <img src="Asset/images/dining.jpg" alt="Bàn ăn ấm cúng" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" loading="lazy">
                     <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; color: #fff;">
                         <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Không Gian Bàn Ăn</span>
@@ -394,7 +462,7 @@
                         <span style="font-size: 0.82rem; color: #e8d8c8; display: inline-flex; align-items: center; gap: 4px;">Khám phá các món gốm &rsaquo;</span>
                     </div>
                 </a>
-                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
+                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
                     <img src="Asset/images/teatime.jpg" alt="Góc thưởng trà" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" loading="lazy">
                     <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; color: #fff;">
                         <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Góc Trà Tĩnh Tại</span>
@@ -402,7 +470,7 @@
                         <span style="font-size: 0.82rem; color: #e8d8c8; display: inline-flex; align-items: center; gap: 4px;">Khám phá các món gốm &rsaquo;</span>
                     </div>
                 </a>
-                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
+                <a href="lookbook/" class="lookbook-preview-card" style="position: relative; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); display: block; aspect-ratio: 16/10; text-decoration: none;">
                     <img src="Asset/images/homedecor.jpg" alt="Decor và bình hoa" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" loading="lazy">
                     <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; color: #fff;">
                         <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Decor & Bình Hoa</span>
@@ -410,9 +478,6 @@
                         <span style="font-size: 0.82rem; color: #e8d8c8; display: inline-flex; align-items: center; gap: 4px;">Khám phá các món gốm &rsaquo;</span>
                     </div>
                 </a>
-            </div>
-            <div style="text-align: center; margin-top: 2.5rem;">
-                <a href="lookbook/" class="btn-dark" style="padding: 0.8rem 2rem; border-radius: 30px;">Xem toàn bộ Lookbook</a>
             </div>
         </section>
 
@@ -474,19 +539,33 @@
         </section>-->
         <!-- Blog Section -->
         <section class="home-blog-section reveal-on-scroll">
-            <div class="home-blog-header-container">
-                <h2>Bài viết mới nhất</h2>
+            <div class="home-blog-header-container tng-home-sec-header">
+                <div class="tng-sec-head-left">
+                    <span class="tng-sec-tag">GÓC CHIA SẺ</span>
+                    <h2 class="tng-sec-title">Bài viết mới nhất</h2>
+                    <p class="section-subtitle">Câu chuyện nghề gốm, nghệ thuật cắm hoa và cảm hứng bài trí không gian sống</p>
+                </div>
+                <div class="tng-sec-head-right">
+                    <a href="blog/index.html" class="tng-sec-cta">
+                        <span>Xem tất cả</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    </a>
+                </div>
             </div>
             <div class="home-blog-carousel-wrapper">
+                <button type="button" class="home-blog-nav-btn home-blog-prev" id="home-blog-prev" aria-label="Bài viết trước" hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
                 <div class="home-blog-carousel" id="home-blog-carousel">
                     <!-- Dynamic blog cards will be inserted here -->
                 </div>
+                <button type="button" class="home-blog-nav-btn home-blog-next" id="home-blog-next" aria-label="Bài viết tiếp theo" hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
                 <div class="home-blog-bottom">
-                    <a href="blog/index.html" class="home-blog-see-all">Xem tất cả</a>
                     <div class="home-blog-dots-container">
                         <div class="home-blog-dots" id="home-blog-dots"></div>
                     </div>
-                    <div class="home-blog-spacer"></div>
                 </div>
             </div>
         </section>
@@ -496,7 +575,7 @@
     <div id="footer-placeholder"></div>
 
     <!-- Firebase SDKs -->
-    <script type="module" src="js/main.js?v=9"></script>
+    <script type="module" src="js/main.js?v=15"></script>
 </body>
 
 </html>

@@ -680,6 +680,9 @@ exports.shareRedirect = onRequest(async (req, res) => {
         let title = data.name || data.title || 'Tiệm Nhà Gốm';
         let imageUrl = data.imageUrl || data.image || data.thumbUrl || '';
         let description = data.excerpt || 'Khám phá tại Tiệm Nhà Gốm';
+        let canonicalUrl = redirectUrl;
+        let isNoIndex = false;
+        const ogType = type === 'product' ? 'product' : (type === 'news' ? 'article' : 'website');
         
         if (type === 'product') {
             const color = req.query.color;
@@ -710,16 +713,47 @@ exports.shareRedirect = onRequest(async (req, res) => {
                     variantTitleParts.push(`Họa tiết: ${pat.name}`);
                 }
             }
-            title = `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`;
+            const hasVariantQuery = Boolean(combo || color || pattern);
+            const customSeoTitle = data.seoTitle && String(data.seoTitle).trim();
+            title = (!hasVariantQuery && customSeoTitle)
+                ? customSeoTitle
+                : (hasVariantQuery && customSeoTitle
+                    ? `${customSeoTitle.replace(/\s*\|\s*Tiệm Nhà Gốm\s*$/i, '')} - ${variantTitleParts.slice(1).join(' - ')} | Tiệm Nhà Gốm`
+                    : `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`);
 
             let price = data.salePrice || data.price || 0;
             if (color && Array.isArray(data.colorVariants)) {
                 const c = data.colorVariants.find(v => (v.name || v) === color);
                 if (c && (c.salePrice || c.price)) price = c.salePrice || c.price;
             }
-            if (price > 0) {
+            const customSeoDesc = data.seoDescription && String(data.seoDescription).trim();
+            if (!hasVariantQuery && customSeoDesc) {
+                description = customSeoDesc;
+            } else if (price > 0) {
                 description = `Giá: ${new Intl.NumberFormat('vi-VN').format(price)}₫ • ` + description;
             }
+            if (!hasVariantQuery && data.seoCanonical && String(data.seoCanonical).trim()) {
+                canonicalUrl = String(data.seoCanonical).trim();
+            }
+            isNoIndex = Boolean(data.seoNoIndex || data.isHidden || data.isOnlyEvent);
+        } else if (type === 'news') {
+            const newsSlug = (data.slug && String(data.slug).trim()) || id;
+            redirectUrl = `https://tiemnhagom.vn/blog/${encodeURIComponent(newsSlug)}`;
+            const customSeoTitle = data.seoTitle && String(data.seoTitle).trim();
+            title = customSeoTitle || (data.title ? `${data.title} | Tiệm Nhà Gốm` : 'Tiệm Nhà Gốm');
+
+            const customSeoDesc = data.seoDescription && String(data.seoDescription).trim();
+            const plainContent = data.content
+                ? String(data.content).replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()
+                : '';
+            description = customSeoDesc
+                || (data.excerpt && String(data.excerpt).trim())
+                || (plainContent ? plainContent.substring(0, 155) + (plainContent.length > 155 ? '...' : '') : 'Khám phá tại Tiệm Nhà Gốm');
+
+            canonicalUrl = (data.seoCanonical && String(data.seoCanonical).trim())
+                ? String(data.seoCanonical).trim()
+                : redirectUrl;
+            isNoIndex = Boolean(data.seoNoIndex);
         } else if (data.content && !data.excerpt) {
             description = data.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...';
         }
@@ -733,10 +767,12 @@ exports.shareRedirect = onRequest(async (req, res) => {
     <meta charset="UTF-8">
     <title>${escapeAttr(title)}</title>
     <meta name="description" content="${escapeAttr(description)}">
+    ${isNoIndex ? '<meta name="robots" content="noindex, nofollow">' : ''}
+    <link rel="canonical" href="${escapeAttr(canonicalUrl)}">
     
-    <meta property="og:type" content="${type === 'product' ? 'product' : 'website'}">
+    <meta property="og:type" content="${ogType}">
     <meta property="og:site_name" content="Tiệm Nhà Gốm">
-    <meta property="og:url" content="${escapeAttr(redirectUrl)}">
+    <meta property="og:url" content="${escapeAttr(canonicalUrl)}">
     <meta property="og:title" content="${escapeAttr(title)}">
     <meta property="og:description" content="${escapeAttr(description)}">
     <meta property="og:image" content="${escapeAttr(imageUrl)}">
@@ -1042,12 +1078,19 @@ exports.productDetail = onRequest(async (req, res) => {
     }
 
     try {
-        const docSnap = await db.collection('products').doc(productId).get();
+        let docSnap = await db.collection('products').doc(productId).get();
+        if (!docSnap.exists) {
+            const slugSnap = await db.collection('products').where('slug', '==', productId).limit(1).get();
+            if (!slugSnap.empty) {
+                docSnap = slugSnap.docs[0];
+            }
+        }
         if (!docSnap.exists) {
             res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             return res.status(200).send(templateHtml);
         }
 
+        const resolvedProductId = docSnap.id;
         const p = docSnap.data();
         let displayImg = null;
         let titleParts = [p.name || 'Sản phẩm gốm'];
@@ -1103,39 +1146,61 @@ exports.productDetail = onRequest(async (req, res) => {
         const baseDesc = (p.description || 'Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm. Nơi mang hơi thở của đất và lửa vào không gian sống của bạn.').replace(/<[^>]*>?/gm, '').substring(0, 140);
         if (baseDesc) descParts.push(baseDesc);
 
-        const pageTitle = `${titleParts.join(' - ')} | Tiệm Nhà Gốm`;
-        const pageDescription = descParts.join(' • ');
-        const canonicalUrl = `https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(productId)}${color ? `&color=${encodeURIComponent(color)}` : ''}${pattern ? `&pattern=${encodeURIComponent(pattern)}` : ''}${combo ? `&combo=${encodeURIComponent(combo)}` : ''}`;
+        const hasVariantQuery = Boolean(combo || color || pattern);
+        const customSeoTitle = p.seoTitle && String(p.seoTitle).trim();
+        const pageTitle = (!hasVariantQuery && customSeoTitle)
+            ? customSeoTitle
+            : (hasVariantQuery && customSeoTitle
+                ? `${customSeoTitle.replace(/\s*\|\s*Tiệm Nhà Gốm\s*$/i, '')} - ${titleParts.slice(1).join(' - ')} | Tiệm Nhà Gốm`
+                : `${titleParts.join(' - ')} | Tiệm Nhà Gốm`);
+
+        const customSeoDesc = p.seoDescription && String(p.seoDescription).trim();
+        const pageDescription = (!hasVariantQuery && customSeoDesc)
+            ? customSeoDesc
+            : descParts.join(' • ');
+
+        const defaultCanonicalUrl = `https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(resolvedProductId)}${color ? `&color=${encodeURIComponent(color)}` : ''}${pattern ? `&pattern=${encodeURIComponent(pattern)}` : ''}${combo ? `&combo=${encodeURIComponent(combo)}` : ''}`;
+        const canonicalUrl = (!hasVariantQuery && p.seoCanonical && String(p.seoCanonical).trim())
+            ? String(p.seoCanonical).trim()
+            : defaultCanonicalUrl;
+
+        const ogAltText = (p.imageAlt && String(p.imageAlt).trim()) || pageTitle;
+        const combinedKeywords = [p.seoFocusKeyword, p.seoKeywords].map(v => (v || '').trim()).filter(Boolean).join(', ');
+        const robotsValue = (p.seoNoIndex || p.isHidden || p.isOnlyEvent) ? 'noindex, nofollow' : 'index, follow';
 
         const escapeAttr = (str) => String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         let html = templateHtml;
 
         // Cập nhật title
-        html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeAttr(pageTitle)}</title>`);
+        html = html.replace(/<title>.*?<\/title>/i, () => `<title>${escapeAttr(pageTitle)}</title>`);
         
         // Cập nhật canonical link
-        html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`);
+        html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, () => `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`);
 
         // Cập nhật / Thay thế meta tags
         const updateOrInsertMeta = (nameOrProperty, key, content) => {
             const regex = new RegExp(`<meta\\s+${nameOrProperty}=["']${key}["'][^>]*>`, 'gi');
             const newTag = `<meta ${nameOrProperty}="${key}" content="${escapeAttr(content)}">`;
             if (regex.test(html)) {
-                html = html.replace(regex, newTag);
+                html = html.replace(regex, () => newTag);
             } else {
-                html = html.replace('</head>', `  ${newTag}\n</head>`);
+                html = html.replace('</head>', () => `  ${newTag}\n</head>`);
             }
         };
 
         updateOrInsertMeta('name', 'description', pageDescription);
+        if (combinedKeywords) {
+            updateOrInsertMeta('name', 'keywords', combinedKeywords);
+        }
+        updateOrInsertMeta('name', 'robots', robotsValue);
         updateOrInsertMeta('property', 'og:type', 'product');
         updateOrInsertMeta('property', 'og:site_name', 'Tiệm Nhà Gốm');
         updateOrInsertMeta('property', 'og:title', pageTitle);
         updateOrInsertMeta('property', 'og:description', pageDescription);
         updateOrInsertMeta('property', 'og:image', displayImg);
         updateOrInsertMeta('property', 'og:image:secure_url', displayImg);
-        updateOrInsertMeta('property', 'og:image:alt', pageTitle);
+        updateOrInsertMeta('property', 'og:image:alt', ogAltText);
         updateOrInsertMeta('property', 'og:url', canonicalUrl);
         updateOrInsertMeta('property', 'og:locale', 'vi_VN');
 
@@ -1217,9 +1282,9 @@ exports.productDetail = onRequest(async (req, res) => {
             "@id": canonicalUrl + "#product",
             "name": pageTitle.replace(/ \| Tiệm Nhà Gốm$/, ''),
             "image": allImages,
-            "description": baseDesc,
-            "sku": productId,
-            "mpn": productId,
+            "description": pageDescription || baseDesc,
+            "sku": resolvedProductId,
+            "mpn": resolvedProductId,
             "brand": {
                 "@type": "Brand",
                 "name": "Tiệm Nhà Gốm"
@@ -1244,6 +1309,9 @@ exports.productDetail = onRequest(async (req, res) => {
                 "reviewCount": "18"
             }
         };
+        if (combinedKeywords) {
+            productSchema.keywords = combinedKeywords;
+        }
 
         const schemaGraph = [
             productSchema,
@@ -1438,16 +1506,28 @@ exports.productsList = onRequest(async (req, res) => {
  * Tự động cập nhật tức thời khi có sản phẩm mới hoặc thay đổi
  */
 exports.sitemapProducts = onRequest(async (req, res) => {
+    const escapeXml = (str) => String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
     try {
         const snap = await db.collection('products').get();
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
 
         snap.docs.forEach(doc => {
             const data = doc.data();
-            if (data.isHidden || data.isOnlyEvent) return;
+            if (data.isHidden || data.isOnlyEvent || data.seoNoIndex) return;
 
             const productId = doc.id;
+            const customCanonical = (data.seoCanonical && String(data.seoCanonical).trim()) || '';
+            const locUrl = customCanonical.startsWith('https://tiemnhagom.vn/')
+                ? customCanonical
+                : `https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(productId)}`;
+
             let dateStr = '2026-10-27';
             if (data.updatedAt) {
                 try {
@@ -1457,10 +1537,19 @@ exports.sitemapProducts = onRequest(async (req, res) => {
             }
 
             xml += '  <url>\n';
-            xml += `    <loc>https://tiemnhagom.vn/product/index.html?id=${encodeURIComponent(productId)}</loc>\n`;
+            xml += `    <loc>${escapeXml(locUrl)}</loc>\n`;
             xml += `    <lastmod>${dateStr}</lastmod>\n`;
             xml += '    <changefreq>weekly</changefreq>\n';
             xml += '    <priority>0.8</priority>\n';
+
+            const img = data.imageUrl ? String(data.imageUrl).trim() : '';
+            if (img.startsWith('https://')) {
+                const imgTitle = (data.imageAlt && String(data.imageAlt).trim()) || data.name || 'Tiệm Nhà Gốm';
+                xml += '    <image:image>\n';
+                xml += `      <image:loc>${escapeXml(img)}</image:loc>\n`;
+                xml += `      <image:title>${escapeXml(imgTitle)}</image:title>\n`;
+                xml += '    </image:image>\n';
+            }
             xml += '  </url>\n';
         });
 
@@ -1472,6 +1561,360 @@ exports.sitemapProducts = onRequest(async (req, res) => {
     } catch (e) {
         console.error('Lỗi xuất sitemap products:', e);
         res.status(500).send('Lỗi máy chủ');
+    }
+});
+
+/**
+ * Cloud Function phục vụ SSR SEO cho trang chi tiết bài viết Blog (/blog/<slug> hoặc /blog/article.html?id=...)
+ */
+exports.articleDetail = onRequest(async (req, res) => {
+    let templateHtml = '';
+    try {
+        templateHtml = fs.readFileSync(path.join(__dirname, 'templates/article.html'), 'utf8');
+    } catch (e) {
+        try {
+            templateHtml = fs.readFileSync(path.join(__dirname, '../blog/article.html'), 'utf8');
+        } catch (_) {
+            templateHtml = '';
+        }
+    }
+
+    if (!templateHtml) {
+        return res.status(500).send('Lỗi máy chủ');
+    }
+
+    let rawKey = req.query.id ? String(req.query.id).trim() : '';
+    const reqPathClean = String(req.path || req.originalUrl || '').split('?')[0];
+    if (!rawKey) {
+        const match = reqPathClean.match(/\/blog\/(.+)$/i);
+        if (match && match[1]) {
+            const candidate = match[1].replace(/^\/+|\/+$/g, '').trim();
+            if (candidate && candidate !== 'article.html' && candidate !== 'index.html') {
+                try { rawKey = decodeURIComponent(candidate); } catch (_) { rawKey = candidate; }
+            }
+        }
+    }
+
+    if (!rawKey) {
+        return res.redirect(301, '/blog/');
+    }
+
+    const escapeAttr = (str) => String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const toDateObj = (val) => {
+        if (!val) return null;
+        try {
+            if (typeof val.toDate === 'function') {
+                const d = val.toDate();
+                return d && !isNaN(d.getTime()) ? d : null;
+            }
+            if (typeof val.seconds === 'number') {
+                const d = new Date(val.seconds * 1000);
+                return !isNaN(d.getTime()) ? d : null;
+            }
+            if (typeof val._seconds === 'number') {
+                const d = new Date(val._seconds * 1000);
+                return !isNaN(d.getTime()) ? d : null;
+            }
+            const d = new Date(val);
+            return !isNaN(d.getTime()) ? d : null;
+        } catch (_) {
+            return null;
+        }
+    };
+
+    try {
+        let docSnap = await db.collection('news').doc(rawKey).get();
+        if (!docSnap.exists) {
+            const slugSnap = await db.collection('news').where('slug', '==', rawKey).limit(1).get();
+            if (!slugSnap.empty) {
+                docSnap = slugSnap.docs[0];
+            }
+        }
+
+        if (!docSnap.exists || docSnap.data().status !== 'published') {
+            let notFoundHtml = templateHtml;
+            notFoundHtml = notFoundHtml.replace(/<title>.*?<\/title>/i, () => '<title>Không tìm thấy bài viết | Tiệm Nhà Gốm</title>');
+            notFoundHtml = notFoundHtml.replace('</head>', () => '  <meta name="robots" content="noindex, nofollow">\n</head>');
+            notFoundHtml = notFoundHtml.replace(
+                /<div class="article-main-content" id="article-main">[\s\S]*?<\/div>\s*(?=<aside class="article-sidebar">)/i,
+                () => `<div class="article-main-content" id="article-main" data-ssr-hydrated="1">\n                <div style="text-align:center; padding: 60px 20px;">\n                    <h1 style="font-family: var(--font-serif); margin-bottom: 12px;">Bài viết không tồn tại hoặc chưa được xuất bản</h1>\n                    <p style="color: #666; margin-bottom: 24px;">Nội dung bạn tìm kiếm hiện không khả dụng.</p>\n                    <a href="/blog/" class="article-back-btn">&larr; QUAY TRỞ LẠI "Blog"</a>\n                </div>\n            </div>\n            `
+            );
+            res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+            return res.status(404).send(notFoundHtml);
+        }
+
+        const n = docSnap.data();
+        const articleId = docSnap.id;
+        const articleSlug = (n.slug && String(n.slug).trim()) ? String(n.slug).trim() : articleId;
+
+        if (reqPathClean.endsWith('/article.html') && req.query.id && /^[a-z0-9-]+$/i.test(articleSlug)) {
+            return res.redirect(301, `/blog/${encodeURIComponent(articleSlug)}`);
+        }
+
+        const createdDate = toDateObj(n.createdAt);
+        const updatedDate = toDateObj(n.updatedAt) || createdDate;
+        const dateDisplay = createdDate ? createdDate.toLocaleDateString('vi-VN') : '';
+        const dateIso = createdDate ? createdDate.toISOString() : '';
+        const updatedIso = updatedDate ? updatedDate.toISOString() : dateIso;
+        const author = String(n.author || n.authorName || n.createdByName || '').trim() || 'Tiệm Nhà Gốm';
+        const initialViews = Math.max(0, Number(n.views) || 0);
+
+        const seoTitle = (n.seoTitle && String(n.seoTitle).trim())
+            ? String(n.seoTitle).trim()
+            : `${n.title || 'Bài viết'} | Tiệm Nhà Gốm`;
+        const plainBody = n.content
+            ? String(n.content).replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()
+            : '';
+        const wordCount = plainBody ? plainBody.split(/\s+/).filter(Boolean).length : 0;
+        const readingMinutes = Math.max(1, Math.ceil(wordCount / 220));
+        const helpfulYes = Math.max(0, Number(n.helpfulYes) || 0);
+        const helpfulNo = Math.max(0, Number(n.helpfulNo) || 0);
+        const rawTagCandidates = [n.seoFocusKeyword, n.seoKeywords]
+            .map(v => String(v || ''))
+            .join(',')
+            .split(',')
+            .map(t => t.trim())
+            .filter(Boolean);
+        const seenTagSet = new Set();
+        const articleTags = [];
+        for (const t of rawTagCandidates) {
+            const k = t.toLowerCase();
+            if (!seenTagSet.has(k)) {
+                seenTagSet.add(k);
+                articleTags.push(t);
+                if (articleTags.length >= 10) break;
+            }
+        }
+        const tagsHtml = articleTags.length > 0
+            ? `<div id="article-tags-container" class="article-tags-section"><span class="article-tags-label">Chủ đề:</span><div class="article-tags-list">${articleTags.map(t => `<a href="/blog/?q=${encodeURIComponent(t)}" class="article-tag-chip">#${escapeAttr(t)}</a>`).join('')}</div></div>`
+            : `<div id="article-tags-container" class="article-tags-section" hidden></div>`;
+        const seoDesc = (n.seoDescription && String(n.seoDescription).trim())
+            || (n.excerpt && String(n.excerpt).trim())
+            || (plainBody ? plainBody.substring(0, 155) + (plainBody.length > 155 ? '...' : '') : 'Khám phá câu chuyện gốm thủ công tại Tiệm Nhà Gốm.');
+        const canonicalUrl = (n.seoCanonical && String(n.seoCanonical).trim())
+            ? String(n.seoCanonical).trim()
+            : `https://tiemnhagom.vn/blog/${encodeURIComponent(articleSlug)}`;
+        const imageUrl = (n.imageUrl && String(n.imageUrl).trim()) || 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg';
+        const coverAlt = (n.coverAlt && String(n.coverAlt).trim()) || (n.title || 'Bài viết Tiệm Nhà Gốm');
+        const combinedKeywords = [n.seoFocusKeyword, n.seoKeywords]
+            .map(v => (v || '').trim())
+            .filter(Boolean)
+            .join(', ');
+        const robotsValue = n.seoNoIndex ? 'noindex, nofollow' : 'index, follow';
+
+        const urlStr = encodeURIComponent(canonicalUrl);
+        const encodedTitle = encodeURIComponent(seoTitle);
+
+        let html = templateHtml;
+        html = html.replace(/<title>.*?<\/title>/i, () => `<title>${escapeAttr(seoTitle)}</title>`);
+        html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, () => `<meta name="description" content="${escapeAttr(seoDesc)}">`);
+        html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, () => `<link rel="canonical" href="${escapeAttr(canonicalUrl)}">`);
+
+        const blogSchema = {
+            "@type": "BlogPosting",
+            "@id": canonicalUrl + "#article",
+            "headline": n.title || seoTitle,
+            "description": seoDesc,
+            "image": imageUrl ? [imageUrl] : undefined,
+            "author": {
+                "@type": "Person",
+                "name": author
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Tiệm Nhà Gốm",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://tiemnhagom.vn/Asset/images/logo.webp"
+                }
+            },
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": canonicalUrl
+            }
+        };
+        if (dateIso) blogSchema.datePublished = dateIso;
+        if (updatedIso) blogSchema.dateModified = updatedIso;
+        if (combinedKeywords) blogSchema.keywords = combinedKeywords;
+
+        const breadcrumbSchema = {
+            "@type": "BreadcrumbList",
+            "@id": canonicalUrl + "#breadcrumb",
+            "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": "https://tiemnhagom.vn/" },
+                { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://tiemnhagom.vn/blog/" },
+                { "@type": "ListItem", "position": 3, "name": n.title || seoTitle, "item": canonicalUrl }
+            ]
+        };
+
+        const headTags = [
+            combinedKeywords ? `<meta name="keywords" content="${escapeAttr(combinedKeywords)}">` : '',
+            `<meta name="robots" content="${robotsValue}">`,
+            `<meta property="og:type" content="article">`,
+            `<meta property="og:site_name" content="Tiệm Nhà Gốm">`,
+            `<meta property="og:url" content="${escapeAttr(canonicalUrl)}">`,
+            `<meta property="og:title" content="${escapeAttr(seoTitle)}">`,
+            `<meta property="og:description" content="${escapeAttr(seoDesc)}">`,
+            `<meta property="og:image" content="${escapeAttr(imageUrl)}">`,
+            `<meta property="og:locale" content="vi_VN">`,
+            dateIso ? `<meta property="article:published_time" content="${escapeAttr(dateIso)}">` : '',
+            updatedIso ? `<meta property="article:modified_time" content="${escapeAttr(updatedIso)}">` : '',
+            `<meta property="article:author" content="${escapeAttr(author)}">`,
+            `<meta name="twitter:card" content="summary_large_image">`,
+            `<meta name="twitter:title" content="${escapeAttr(seoTitle)}">`,
+            `<meta name="twitter:description" content="${escapeAttr(seoDesc)}">`,
+            `<meta name="twitter:image" content="${escapeAttr(imageUrl)}">`,
+            `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [blogSchema, breadcrumbSchema] }).replace(/</g, '\\u003c')}</script>`,
+            `<script>window.__TNG_SSR_ARTICLE_ID__ = ${JSON.stringify(articleId).replace(/</g, '\\u003c')};</script>`
+        ].filter(Boolean).join('\n    ');
+
+        html = html.replace('</head>', () => `    ${headTags}\n</head>`);
+
+        const breadcrumbHtml = `
+            <div id="breadcrumb-container" data-ssr-hydrated="1">
+                <div class="article-breadcrumb">
+                    <a href="/">Trang chủ</a> <span class="separator">›</span>
+                    <a href="/blog/">Blog</a> <span class="separator">›</span>
+                    <span class="current">${escapeAttr(n.title || '')}</span>
+                </div>
+            </div>`;
+        html = html.replace(/<div id="breadcrumb-container"><\/div>/i, () => breadcrumbHtml.trim());
+
+        const ssrMainHtml = `
+            <div class="article-main-content" id="article-main" data-ssr-hydrated="1">
+                <article>
+                    <div class="article-header">
+                        <h1 class="article-title">${escapeAttr(n.title || '')}</h1>
+                        <div class="article-meta-row">
+                            <div class="article-meta-info">${dateDisplay ? `${escapeAttr(dateDisplay)} | ` : ''}Tác giả: <strong>${escapeAttr(author)}</strong> <span class="article-meta-sep" aria-hidden="true">·</span> <span class="article-read-time">~${readingMinutes} phút đọc</span> <span class="article-meta-sep" aria-hidden="true">·</span> <span class="article-views-badge" id="article-views-badge" title="Lượt xem bài viết (cập nhật realtime)"><svg class="article-views-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span id="article-views-count">${initialViews.toLocaleString('vi-VN')}</span> lượt xem</span></div>
+                            <div class="article-share">
+                                <span>Chia sẻ</span>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u=${urlStr}" target="_blank" rel="noopener" title="Chia sẻ qua Facebook">
+                                    <svg width="16" height="16" viewBox="0 0 320 512"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"/></svg>
+                                </a>
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url=${urlStr}" target="_blank" rel="noopener" title="Chia sẻ qua LinkedIn">
+                                    <svg width="16" height="16" viewBox="0 0 448 512"><path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z"/></svg>
+                                </a>
+                                <a href="https://twitter.com/intent/tweet?url=${urlStr}&text=${encodedTitle}" target="_blank" rel="noopener" title="Chia sẻ qua Twitter">
+                                    <svg width="16" height="16" viewBox="0 0 512 512"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg>
+                                </a>
+                                <button type="button" onclick="window.copyArticleLink && window.copyArticleLink()" title="Sao chép liên kết">
+                                    <svg width="16" height="16" viewBox="0 0 640 512"><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114l-114 114c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5l114-114c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(coverAlt)}" class="article-cover">
+                    <div id="article-toc-mobile" class="article-toc-mobile" hidden></div>
+                    <div class="ql-snow">
+                        <div class="ql-editor" style="padding: 0;">
+                            ${n.content || ''}
+                        </div>
+                    </div>
+                    ${tagsHtml}
+                    <div class="article-feedback-container">
+                        <div class="feedback-question">Bạn có hài lòng với bài viết này không ?</div>
+                        <button type="button" class="feedback-btn" data-feedback="yes" onclick="window.submitFeedback && window.submitFeedback(true, this)"><i class="ti ti-mood-heart"></i> Hài lòng <span class="feedback-count" id="feedback-yes-count">${helpfulYes}</span></button>
+                        <button type="button" class="feedback-btn" data-feedback="no" onclick="window.submitFeedback && window.submitFeedback(false, this)"><i class="ti ti-mood-sad"></i> Không hài lòng <span class="feedback-count" id="feedback-no-count">${helpfulNo}</span></button>
+                    </div>
+                    <div id="article-prev-next" class="article-prev-next" hidden></div>
+                    <a href="/blog/" class="article-back-btn">&larr; QUAY TRỞ LẠI "Blog"</a>
+                </article>
+            </div>`;
+
+        html = html.replace(
+            /<div class="article-main-content" id="article-main">[\s\S]*?<\/div>\s*(?=<aside class="article-sidebar">)/i,
+            () => `${ssrMainHtml.trim()}\n            `
+        );
+
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+        return res.status(200).send(html);
+    } catch (error) {
+        console.error('Lỗi SSR bài viết:', error);
+        res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+        return res.status(200).send(templateHtml);
+    }
+});
+
+/**
+ * Cloud Function cung cấp Dynamic XML Sitemap cho toàn bộ bài viết Blog đã xuất bản
+ */
+exports.sitemapArticles = onRequest(async (req, res) => {
+    const escapeXml = (str) => String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
+    const extractMs = (val) => {
+        if (!val) return 0;
+        try {
+            if (typeof val.toDate === 'function') return val.toDate().getTime() || 0;
+            if (typeof val.seconds === 'number') return val.seconds * 1000;
+            if (typeof val._seconds === 'number') return val._seconds * 1000;
+            const ms = new Date(val).getTime();
+            return isNaN(ms) ? 0 : ms;
+        } catch (_) {
+            return 0;
+        }
+    };
+
+    try {
+        const snap = await db.collection('news').where('status', '==', 'published').get();
+        const publishedDocs = snap.docs
+            .map(docSnap => ({ id: docSnap.id, data: docSnap.data() }))
+            .filter(item => !item.data.seoNoIndex)
+            .sort((a, b) => {
+                const ta = extractMs(a.data.updatedAt) || extractMs(a.data.createdAt);
+                const tb = extractMs(b.data.updatedAt) || extractMs(b.data.createdAt);
+                return tb - ta;
+            });
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
+
+        publishedDocs.forEach(({ id, data }) => {
+            const slug = (data.slug && String(data.slug).trim()) ? String(data.slug).trim() : id;
+            const customCanonical = (data.seoCanonical && String(data.seoCanonical).trim()) || '';
+            const locUrl = (customCanonical.startsWith('https://tiemnhagom.vn/'))
+                ? customCanonical
+                : `https://tiemnhagom.vn/blog/${encodeURIComponent(slug)}`;
+
+            const modMs = extractMs(data.updatedAt) || extractMs(data.createdAt);
+            const dateStr = modMs > 0 ? new Date(modMs).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+            xml += '  <url>\n';
+            xml += `    <loc>${escapeXml(locUrl)}</loc>\n`;
+            xml += `    <lastmod>${dateStr}</lastmod>\n`;
+            xml += '    <changefreq>weekly</changefreq>\n';
+            xml += '    <priority>0.85</priority>\n';
+
+            const img = data.imageUrl ? String(data.imageUrl).trim() : '';
+            if (img.startsWith('https://')) {
+                const imgTitle = (data.coverAlt && String(data.coverAlt).trim()) || data.title || 'Tiệm Nhà Gốm';
+                xml += '    <image:image>\n';
+                xml += `      <image:loc>${escapeXml(img)}</image:loc>\n`;
+                xml += `      <image:title>${escapeXml(imgTitle)}</image:title>\n`;
+                xml += '    </image:image>\n';
+            }
+            xml += '  </url>\n';
+        });
+
+        xml += '</urlset>';
+
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=1800, s-maxage=7200');
+        return res.status(200).send(xml);
+    } catch (e) {
+        console.error('Lỗi xuất sitemap articles:', e);
+        return res.status(500).send('Lỗi máy chủ');
     }
 });
 

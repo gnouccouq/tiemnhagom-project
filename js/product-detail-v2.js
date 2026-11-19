@@ -88,11 +88,12 @@ window.changeV2MainImage = (src, index, isUserAction = true) => {
     if (isUserAction) startAutoSlide();
     currentIndex = index;
 
-    mainImg.style.opacity = '0';
-    setTimeout(() => {
+    mainImg.classList.add('v2-img-switching');
+    clearTimeout(mainImg._tngSwitchTimer);
+    mainImg._tngSwitchTimer = setTimeout(() => {
         mainImg.src = src;
-        mainImg.style.opacity = '1';
-    }, 200);
+        requestAnimationFrame(() => mainImg.classList.remove('v2-img-switching'));
+    }, 150);
 
     // Update counter
     const counter = document.getElementById('v2-img-counter');
@@ -134,6 +135,7 @@ window.toggleV2Favorite = async () => {
     if (btn) {
         btn.classList.add('heartbeat-anim');
         setTimeout(() => btn.classList.remove('heartbeat-anim'), 400);
+        window.tngHeartRipple?.(btn);
     }
 
     let favs = [];
@@ -330,7 +332,15 @@ function updatePriceDisplay() {
     const formattedCurrent = new Intl.NumberFormat('vi-VN').format(currentPrice) + ' VND';
     const formattedBase = new Intl.NumberFormat('vi-VN').format(basePrice) + ' VND';
 
-    if (mainPriceEl) mainPriceEl.innerText = formattedCurrent;
+    if (mainPriceEl) {
+        const hadPrev = mainPriceEl.dataset.tngPriceInit === '1';
+        const prevText = mainPriceEl.innerText;
+        mainPriceEl.innerText = formattedCurrent;
+        mainPriceEl.dataset.tngPriceInit = '1';
+        if (hadPrev && prevText !== formattedCurrent) {
+            window.tngPulsePrice?.(mainPriceEl);
+        }
+    }
     if (stickyPriceEl) stickyPriceEl.innerText = formattedCurrent;
 
     if (salePercent > 0) {
@@ -451,10 +461,17 @@ function syncVariantStateToUrlAndSEO() {
         }
     }
 
+    const hasVariantSelection = Boolean(selectedComboVariant || selectedColor || selectedPattern);
+    const customSeoTitle = p.seoTitle && String(p.seoTitle).trim();
     const finalImg = variantImg || p.imageUrl || (p.additionalImages && p.additionalImages[0]) || 'https://tiemnhagom.vn/Asset/images/hero-bg.jpg';
-    const finalTitle = `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`;
+    const finalTitle = (!hasVariantSelection && customSeoTitle)
+        ? customSeoTitle
+        : (hasVariantSelection && customSeoTitle
+            ? `${customSeoTitle.replace(/\s*\|\s*Tiệm Nhà Gốm\s*$/i, '')} - ${variantTitleParts.slice(1).join(' - ')} | Tiệm Nhà Gốm`
+            : `${variantTitleParts.join(' - ')} | Tiệm Nhà Gốm`);
 
-    const currentPrice = getEffectiveVariantPrice();
+    const priceResult = getEffectiveVariantPrice();
+    const currentPrice = typeof priceResult === 'object' ? (priceResult.currentPrice || 0) : (Number(priceResult) || 0);
     if (currentPrice > 0) {
         variantDescParts.push(`Giá: ${new Intl.NumberFormat('vi-VN').format(currentPrice)}₫`);
     }
@@ -462,10 +479,36 @@ function syncVariantStateToUrlAndSEO() {
     const baseDesc = (p.description || 'Chi tiết sản phẩm gốm sứ thủ công nghệ thuật tại Tiệm Nhà Gốm.').replace(/<[^>]*>?/gm, '').substring(0, 140);
     if (baseDesc) variantDescParts.push(baseDesc);
 
-    const finalDesc = variantDescParts.join(' • ');
+    const customSeoDesc = p.seoDescription && String(p.seoDescription).trim();
+    const finalDesc = (!hasVariantSelection && customSeoDesc)
+        ? customSeoDesc
+        : variantDescParts.join(' • ');
+
+    const canonicalTarget = (!hasVariantSelection && p.seoCanonical && String(p.seoCanonical).trim())
+        ? String(p.seoCanonical).trim()
+        : url.toString();
 
     // 3. Cập nhật title trình duyệt và thẻ OG trong DOM
-    updateSEO(finalTitle, finalDesc, finalImg, url.toString());
+    updateSEO(finalTitle, finalDesc, finalImg, canonicalTarget);
+
+    const robotsMeta = document.querySelector('meta[name="robots"]') || (() => {
+        const m = document.createElement('meta');
+        m.setAttribute('name', 'robots');
+        document.head.appendChild(m);
+        return m;
+    })();
+    robotsMeta.setAttribute('content', (p.seoNoIndex || p.isHidden || p.isOnlyEvent) ? 'noindex, nofollow' : 'index, follow');
+
+    const combinedKeywords = [p.seoFocusKeyword, p.seoKeywords].map(v => (v || '').trim()).filter(Boolean).join(', ');
+    if (combinedKeywords) {
+        let kwMeta = document.querySelector('meta[name="keywords"]');
+        if (!kwMeta) {
+            kwMeta = document.createElement('meta');
+            kwMeta.setAttribute('name', 'keywords');
+            document.head.appendChild(kwMeta);
+        }
+        kwMeta.setAttribute('content', combinedKeywords);
+    }
 }
 
 // Select Variant functions
@@ -914,7 +957,7 @@ async function fetchProductDetailV2() {
                             ${p.sale ? `<span class="v2-pill-badge sale">-${p.sale}%</span>` : ''}
                         </div>
 
-                        <img id="v2-main-img" class="v2-main-img" src="${allImages[currentIndex] || p.imageUrl}" alt="${escapeHTML(p.name)}" onclick="window.openV2Lightbox(this.src)" title="Nhấn để phóng to ảnh">
+                        <img id="v2-main-img" class="v2-main-img" src="${allImages[currentIndex] || p.imageUrl}" alt="${escapeHTML((p.imageAlt && p.imageAlt.trim()) || p.name)}" onclick="window.openV2Lightbox(this.src)" title="Nhấn để phóng to ảnh">
                         
                         ${allImages.length > 1 ? `
                             <div id="v2-img-counter" class="v2-img-counter">${currentIndex + 1} / ${allImages.length}</div>

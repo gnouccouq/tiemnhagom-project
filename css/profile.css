@@ -1,0 +1,892 @@
+/* ==========================================================================
+   TIỆM NHÀ GỐM — PROFILE PAGE CLUSTERED CARDS (WIDE 2-COLUMN LAYOUT)
+   ========================================================================== */
+
+.profile-layout-container {
+    max-width: 1440px !important;
+    width: 95% !important;
+    margin: 2rem auto 4rem !important;
+    padding: 0 1.25rem !important;
+    gap: 2.25rem;
+    align-items: flex-start;
+    box-sizing: border-box;
+    font-family: var(--font-serif);
+}
+
+/* ==========================================================================
+   CỘT TRÁI: 3 CỤM CARD ĐỘC LẬP (Rộng 340px, Sticky khi cuộn trang)
+   ========================================================================== */
+.profile-layout-container .profile-sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: flex-start;
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    font-family: var(--font-serif);
+}
+
+/* Cụm 1: User Identity & Stats Card (Giống cụm mẫu) */
+.profile-user-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+}
+
+.profile-user-banner {
+    height: 88px;
+    background: linear-gradient(135deg, #2d2422 0%, #4a3b32 55%, #9C7156 100%);
+    position: relative;
+}
+
+.profile-user-banner::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    bottom: -25px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(232, 204, 178, 0.28) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.profile-avatar-row {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 20px;
+    margin-top: -38px;
+    position: relative;
+    z-index: 2;
+}
+
+.profile-layout-container .profile-sidebar .profile-avatar-container {
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 3px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-layout-container .profile-sidebar .profile-avatar-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    object-fit: cover;
+    border: 1px solid #f1f5f9;
+    display: block;
+}
+
+.profile-avatar-hover-overlay {
+    position: absolute;
+    inset: 3px;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    line-height: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.profile-avatar-hover-overlay svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    transform: scale(0.92);
+    transition: transform 0.2s ease;
+}
+
+.profile-layout-container .profile-sidebar .profile-avatar-container:hover .profile-avatar-hover-overlay,
+.profile-layout-container .profile-sidebar .profile-avatar-container:focus-visible .profile-avatar-hover-overlay {
+    opacity: 1;
+}
+
+.profile-layout-container .profile-sidebar .profile-avatar-container:hover .profile-avatar-hover-overlay svg {
+    transform: scale(1);
+}
+
+.profile-user-body {
+    padding: 14px 20px 16px;
+    font-family: var(--font-serif);
+}
+
+.profile-user-body h3 {
+    margin: 0 0 4px;
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+}
+
+.profile-user-email {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    line-height: 1.4;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+.profile-user-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 14px 0 12px;
+}
+
+.profile-user-since {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-serif);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.profile-user-since i.ti {
+    color: #9C7156;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* Hàng thống kê 2 cột dưới đáy User Card */
+.profile-user-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #f1f5f9;
+    background: #fcfcfd;
+    font-family: var(--font-serif);
+}
+
+.profile-stat-box {
+    padding: 14px 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.profile-stat-box + .profile-stat-box {
+    border-left: 1px solid #f1f5f9;
+}
+
+.profile-stat-box strong {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.profile-stat-box span {
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Cụm 2 & Cụm 3: Menu điều hướng & Đăng xuất */
+.profile-sidebar-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav li {
+    margin-bottom: 0;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    border-radius: 10px !important;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #475569;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-btn i.ti {
+    font-size: 1.05rem;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-btn:hover,
+.profile-layout-container .profile-sidebar .profile-nav-btn.active {
+    background: #fff7ed;
+    color: #c2410c;
+    transform: translateX(3px);
+    font-weight: 600;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-btn:hover i.ti,
+.profile-layout-container .profile-sidebar .profile-nav-btn.active i.ti {
+    opacity: 1;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-badge {
+    margin-left: auto;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-badge.is-delivering {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #fdba74;
+}
+
+.profile-layout-container .profile-sidebar .profile-nav-btn:hover .profile-nav-badge,
+.profile-layout-container .profile-sidebar .profile-nav-btn.active .profile-nav-badge {
+    background: #ffedd5;
+    color: #c2410c;
+    border-color: #fdba74;
+}
+
+.profile-layout-container .profile-sidebar #btn-logout-sidebar {
+    color: #2d2422;
+    font-weight: 600;
+}
+
+.profile-layout-container .profile-sidebar #btn-logout-sidebar:hover {
+    background: #fff7ed;
+    color: #c2410c;
+    transform: none;
+}
+
+/* ==========================================================================
+   CỘT PHẢI: CHIA TỪNG CỤM CARD RỘNG RÃI (Giữ nguyên thiết kế form/tiêu đề cũ)
+   ========================================================================== */
+.profile-layout-container > section.profile-main-content {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+.profile-section.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-cluster-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 2.25rem 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+}
+
+.profile-cluster-card .profile-horizontal-form {
+    margin-bottom: 0;
+}
+
+/* UI Dọc & Input Tone Đen Trắng (Monochrome) đồng bộ với Web */
+.profile-cluster-card .profile-vertical-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.profile-cluster-card .profile-vertical-form .form-group {
+    margin-bottom: 0 !important;
+    width: 100%;
+}
+
+.profile-layout-container .profile-section .form-group label {
+    color: #111111 !important;
+    font-weight: 700 !important;
+}
+
+.profile-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.profile-input-wrap > i.ti {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #71717a;
+    font-size: 1.05rem;
+    pointer-events: none;
+    z-index: 2;
+    margin: 0;
+    transition: color 0.2s ease;
+}
+
+.profile-input-wrap:focus-within > i.ti {
+    color: #000000;
+}
+
+.profile-layout-container .profile-section .form-group .profile-input-wrap input,
+.profile-layout-container .profile-section .form-group .profile-input-wrap select {
+    padding: 0 20px 0 48px !important;
+    background-color: #f4f4f5 !important;
+    border: 1px solid #e4e4e7 !important;
+    color: #111111 !important;
+    transition: all 0.2s ease !important;
+}
+
+.profile-layout-container .profile-section .form-group .profile-input-wrap input:hover:not(:disabled):not([readonly]),
+.profile-layout-container .profile-section .form-group .profile-input-wrap select:hover:not(:disabled) {
+    background-color: #fafafa !important;
+    border-color: #d4d4d8 !important;
+}
+
+.profile-layout-container .profile-section .form-group .profile-input-wrap input:focus:not(:disabled):not([readonly]),
+.profile-layout-container .profile-section .form-group .profile-input-wrap select:focus:not(:disabled) {
+    background-color: #ffffff !important;
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.profile-layout-container .profile-section .form-group .profile-input-wrap input:disabled,
+.profile-layout-container .profile-section .form-group .profile-input-wrap input[readonly] {
+    background-color: #f4f4f5 !important;
+    border-color: #e4e4e7 !important;
+    color: #71717a !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+.profile-field-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #71717a;
+}
+
+/* Đăng nhập liên kết gọn trong Cụm Thông tin khách hàng */
+.profile-linked-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.profile-google-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #111111;
+}
+
+.profile-linked-status-text {
+    font-size: 0.84rem;
+    color: #71717a;
+}
+
+/* Cụm Bảo mật & Đổi mật khẩu */
+.profile-security-provider-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 1rem 1.25rem;
+    background: #f8f9fa;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+}
+
+.profile-security-provider-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.profile-security-provider-info strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111111;
+    margin-bottom: 2px;
+}
+
+.profile-security-provider-info p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #71717a;
+    line-height: 1.4;
+}
+
+.profile-security-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+/* Nút hiện/ẩn mật khẩu & Checklist quy tắc mật khẩu */
+.profile-layout-container .profile-section .form-group .profile-input-wrap.has-pw-toggle input {
+    padding: 0 46px 0 48px !important;
+}
+
+.pw-toggle-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #71717a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.pw-toggle-btn:hover {
+    color: #111111;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.password-rules-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 4px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 6px 14px;
+}
+
+.password-rules-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #71717a;
+    margin: 0;
+    transition: color 0.2s ease;
+}
+
+.password-rules-list li i.ti {
+    font-size: 0.92rem;
+    color: #a1a1aa;
+    transition: color 0.2s ease;
+}
+
+.password-rules-list li.is-valid {
+    color: #111111;
+    font-weight: 700;
+}
+
+.password-rules-list li.is-valid i.ti {
+    color: #111111;
+}
+
+/* Cụm Địa chỉ giao hàng & Nút Xóa địa chỉ bo tròn đồng bộ */
+#address-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-address-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 1.15rem 1.35rem;
+    background: #f8f9fa;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.profile-address-card:hover {
+    background: #ffffff;
+    border-color: #d4d4d8;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.profile-address-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-address-title {
+    margin: 0 0 4px;
+    font-size: 0.98rem;
+    color: #111111;
+    line-height: 1.35;
+}
+
+.profile-address-sep {
+    color: #cbd5e1;
+    margin: 0 4px;
+}
+
+.profile-address-detail {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #71717a;
+    line-height: 1.45;
+}
+
+.btn-remove-address,
+#address-list .btn-remove-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 14px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 999px !important;
+    color: #52525b;
+    font-family: var(--font-serif);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none !important;
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+.btn-remove-address:hover,
+#address-list .btn-remove-small:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+}
+
+/* Kích thước chuẩn đồng nhất cho nút Lưu & các nút hành động tương tự trong Profile */
+.profile-save-btn,
+.profile-cluster-card .btn-dark,
+.profile-cluster-card .btn-outline,
+#btn-add-address,
+#btn-login-profile,
+#btn-save-address {
+    margin-top: 0.25rem !important;
+    width: auto;
+    min-width: 160px;
+    padding: 12px 26px !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+    border-radius: 999px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease !important;
+}
+
+.profile-save-btn,
+.profile-cluster-card .btn-dark,
+#btn-add-address,
+#btn-login-profile,
+#btn-save-address {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #000000 !important;
+}
+
+.profile-save-btn:hover:not(:disabled),
+.profile-cluster-card .btn-dark:hover:not(:disabled),
+#btn-add-address:hover:not(:disabled) {
+    background: #222222 !important;
+    border-color: #222222 !important;
+    opacity: 1 !important;
+}
+
+.profile-save-btn:disabled,
+#edit-profile-form button[type="submit"]:disabled {
+    background: #e4e4e7 !important;
+    color: #71717a !important;
+    border-color: #e4e4e7 !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+}
+
+/* Tiêu đề từng cụm (Đồng bộ với trang chính sách & thiết kế cũ) */
+.profile-layout-container .profile-main-content h2.section-title {
+    font-family: var(--font-serif);
+    color: #0f172a;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin: 0 0 1.35rem !important;
+    padding-bottom: 0.65rem;
+    border-bottom: 2px solid #fed7aa;
+    width: 100%;
+}
+
+.profile-layout-container .profile-main-content h2.section-title::after {
+    display: none !important;
+}
+
+/* Voucher List Grid */
+#voucher-list,
+.voucher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)) !important;
+    gap: 16px !important;
+    padding: 0.25rem 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.voucher-ticket {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.voucher-ticket-right > div {
+    min-width: 0;
+}
+
+/* Favorites Product Grid */
+#favorites-list.grid {
+    padding: 0.25rem 0 !important;
+    gap: 16px !important;
+}
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE (<= 900px)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .profile-layout-container {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 12px !important;
+        margin: 1rem auto 2.5rem !important;
+        padding: 0 12px !important;
+    }
+
+    .profile-layout-container .profile-sidebar {
+        position: static;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .profile-sidebar-card {
+        padding: 8px;
+        border-radius: 14px;
+    }
+
+    /* Lưới 2 cột cho menu điều hướng trên mobile */
+    .profile-layout-container .profile-sidebar .profile-nav {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        overflow: visible !important;
+        white-space: normal !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        border-bottom: none !important;
+    }
+
+    .profile-layout-container .profile-sidebar .profile-nav li {
+        margin: 0 !important;
+        min-width: 0;
+    }
+
+    .profile-layout-container .profile-sidebar .profile-nav-btn {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        padding: 9px 11px !important;
+        border-radius: 8px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #334155 !important;
+        font-size: 0.82rem !important;
+        line-height: 1.25 !important;
+        transform: none !important;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .profile-layout-container .profile-sidebar .profile-nav-btn:hover,
+    .profile-layout-container .profile-sidebar .profile-nav-btn.active {
+        background: #fff7ed !important;
+        color: #c2410c !important;
+        border-color: #fdba74 !important;
+        font-weight: 600 !important;
+    }
+
+    .profile-layout-container .profile-sidebar #btn-logout-sidebar {
+        justify-content: center !important;
+        text-align: center !important;
+        background: #ffffff !important;
+        color: #2d2422 !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .profile-section.active {
+        gap: 12px;
+    }
+
+    .profile-cluster-card {
+        padding: 1.25rem 1rem;
+        border-radius: 14px;
+    }
+
+    .profile-layout-container .profile-main-content h2.section-title {
+        font-size: 1.15rem;
+        margin-bottom: 1rem !important;
+        padding-bottom: 0.5rem;
+    }
+}
+
+/* ==========================================================================
+   SMALL MOBILE REFINEMENTS (<= 600px)
+   ========================================================================== */
+@media (max-width: 600px) {
+    #voucher-list,
+    .voucher-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .voucher-ticket {
+        min-height: 132px;
+    }
+
+    .voucher-ticket-left {
+        flex: 0 0 84px;
+        padding: 0.6rem 0.35rem;
+    }
+
+    .voucher-ticket-left h3 {
+        font-size: 1.2rem;
+    }
+
+    .voucher-ticket-right {
+        padding: 0.7rem 0.85rem;
+    }
+
+    #favorites-list.grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .profile-horizontal-form .form-row-3 {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    #edit-profile-form button[type="submit"],
+    #btn-add-address {
+        width: 100% !important;
+    }
+
+    .profile-order-card {
+        padding: 14px !important;
+        margin-bottom: 14px !important;
+    }
+
+    #membership-card-container .membership-card {
+        padding: 18px 16px;
+        aspect-ratio: auto;
+        min-height: 185px;
+    }
+
+    #membership-card-container .membership-card .tier-name {
+        font-size: 1.25rem;
+    }
+}

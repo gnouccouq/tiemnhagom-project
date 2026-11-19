@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản trị - Tiệm Nhà Gốm</title>
-    <link rel="stylesheet" href="../css/style.css?v=51">
+    <link rel="stylesheet" href="../css/style.css?v=57">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <!-- Google Fonts -->
@@ -1442,54 +1442,73 @@
             <!-- Section Quản lý Tin tức (KiotViet 2-Column Layout) -->
             <div id="news-section" class="admin-section">
                 <div class="kiot-product-layout">
-                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
-                    <div class="kiot-filter-sidebar" style="width: 380px; flex: 0 0 380px;">
+                    <!-- 1. Bộ Lọc & Thống Kê Bên Trái (Left Filter Sidebar) -->
+                    <div class="kiot-filter-sidebar">
                         <div class="filter-header">
                             <h3 class="filter-title">Bài viết & Tin tức</h3>
+                            <button type="button" class="filter-reset-link" onclick="window.resetNewsFilters()">Đặt lại</button>
                         </div>
 
-                        <form id="news-form">
-                            <input type="hidden" id="news-id">
-                            <div class="filter-group">
-                                <label class="filter-label">Tiêu đề bài viết</label>
-                                <input type="text" id="news-title" class="kiot-filter-input" required
-                                    placeholder="VD: Cách bảo quản gốm sứ...">
+                        <!-- Thống kê nhanh -->
+                        <div class="news-sidebar-stats">
+                            <div class="news-stat-box">
+                                <span class="news-stat-num" id="news-stat-total">0</span>
+                                <span class="news-stat-label">Tổng bài</span>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Ảnh bìa bài viết</label>
-                                <input type="file" id="news-image" class="kiot-filter-input" accept="image/*"
-                                    style="padding: 4px;">
-                                <div id="news-image-preview" style="margin-top: 6px;"></div>
+                            <div class="news-stat-box is-published">
+                                <span class="news-stat-num" id="news-stat-published">0</span>
+                                <span class="news-stat-label">Đã đăng</span>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Mô tả ngắn (Excerpt)</label>
-                                <textarea id="news-excerpt" class="kiot-filter-input" rows="2"
-                                    placeholder="Tóm tắt bài viết..."></textarea>
+                            <div class="news-stat-box is-draft">
+                                <span class="news-stat-num" id="news-stat-draft">0</span>
+                                <span class="news-stat-label">Bản nháp</span>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Nội dung bài viết</label>
-                                <div id="quill-editor"
-                                    style="height: 220px; background: white; margin-bottom: 10px; border-radius: 6px;">
-                                </div>
-                                <textarea id="news-content" style="display: none;"></textarea>
+                            <div class="news-stat-box is-views">
+                                <span class="news-stat-label"><i class="ti ti-eye"></i> Tổng lượt xem</span>
+                                <span class="news-stat-num" id="news-stat-views">0</span>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Tác giả</label>
-                                <input type="text" id="news-author" class="kiot-filter-input"
-                                    placeholder="Tiệm Nhà Gốm">
+                        </div>
+
+                        <!-- Bộ lọc Trạng thái -->
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái bài viết</label>
+                            <div class="filter-radio-group" id="news-status-filter-group">
+                                <button type="button" class="filter-radio-btn active" data-news-status="all"
+                                    onclick="window.setNewsStatusFilter('all')">
+                                    <span>Tất cả bài viết</span>
+                                    <span class="news-filter-count" id="news-count-all">0</span>
+                                </button>
+                                <button type="button" class="filter-radio-btn" data-news-status="published"
+                                    onclick="window.setNewsStatusFilter('published')">
+                                    <span>Đã xuất bản</span>
+                                    <span class="news-filter-count" id="news-count-published">0</span>
+                                </button>
+                                <button type="button" class="filter-radio-btn" data-news-status="draft"
+                                    onclick="window.setNewsStatusFilter('draft')">
+                                    <span>Bản nháp</span>
+                                    <span class="news-filter-count" id="news-count-draft">0</span>
+                                </button>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Trạng thái</label>
-                                <select id="news-status" class="kiot-filter-select">
-                                    <option value="published">Xuất bản ngay</option>
-                                    <option value="draft">Bản nháp</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="kiot-btn-primary"
-                                style="width: 100%; margin-top: 10px; justify-content: center;">
-                                <i class="ti ti-device-floppy"></i> Lưu bài viết
-                            </button>
-                        </form>
+                        </div>
+
+                        <!-- Bộ lọc Tác giả -->
+                        <div class="filter-group">
+                            <label class="filter-label" for="news-filter-author">Tác giả</label>
+                            <select id="news-filter-author" class="kiot-filter-select">
+                                <option value="all">Tất cả tác giả</option>
+                            </select>
+                        </div>
+
+                        <!-- Sắp xếp -->
+                        <div class="filter-group">
+                            <label class="filter-label" for="news-filter-sort">Sắp xếp theo</label>
+                            <select id="news-filter-sort" class="kiot-filter-select">
+                                <option value="newest">Mới nhất trước</option>
+                                <option value="oldest">Cũ nhất trước</option>
+                                <option value="views-desc">Lượt xem nhiều nhất</option>
+                                <option value="title-asc">Tiêu đề A → Z</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- 2. Danh Sách Bài Viết Bên Phải (Right Main Area) -->
@@ -1497,21 +1516,32 @@
                         <!-- Top Toolbar -->
                         <div class="kiot-table-toolbar">
                             <div class="search-box-wrapper">
-                                <span class="search-icon"><i class="ti ti-news"></i></span>
-                                <input type="text" placeholder="Tìm kiếm bài viết..."
-                                    onkeyup="if(typeof window.searchNewsAdmin==='function') window.searchNewsAdmin(this.value)">
+                                <span class="search-icon"><i class="ti ti-search"></i></span>
+                                <input type="text" id="admin-news-search"
+                                    placeholder="Tìm theo tiêu đề, mô tả ngắn, tác giả..."
+                                    oninput="if(typeof window.searchNewsAdmin==='function') window.searchNewsAdmin(this.value)">
+                            </div>
+                            <div class="toolbar-actions">
+                                <span id="news-result-count" class="news-result-count">0 bài viết</span>
+                                <button type="button" id="btn-open-news-modal" class="kiot-btn-primary"
+                                    onclick="window.openNewsModal()">
+                                    <i class="ti ti-plus"></i> Viết bài mới
+                                </button>
                             </div>
                         </div>
 
                         <!-- Table Scroll Container -->
                         <div class="kiot-table-scroll-container">
-                            <table class="kiot-product-table">
+                            <table class="kiot-product-table news-admin-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 80px;">Ảnh</th>
-                                        <th style="width: 250px;">Tiêu đề</th>
-                                        <th style="width: 120px;">Ngày đăng</th>
-                                        <th style="width: 100px; text-align: center;">Thao tác</th>
+                                        <th style="width: 96px;">Ảnh bìa</th>
+                                        <th style="min-width: 280px;">Bài viết</th>
+                                        <th style="width: 145px;">Tác giả</th>
+                                        <th style="width: 125px;">Trạng thái</th>
+                                        <th style="width: 115px;">Ngày đăng</th>
+                                        <th style="width: 105px; text-align: right;">Lượt xem</th>
+                                        <th style="width: 175px; text-align: center;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-news-list">
@@ -4394,10 +4424,14 @@
                     title="Đóng modal">&times;</button>
             </div>
 
-            <!-- Modal Tab Navigation Bar (Chỉ 2 Tab: Thông tin & Mô tả) -->
+            <!-- Modal Tab Navigation Bar (Thông tin, Mô tả & SEO Google) -->
             <div class="product-modal-tabs">
                 <button type="button" class="product-tab-btn active" data-tab="tab-product-basic">Thông tin</button>
                 <button type="button" class="product-tab-btn" data-tab="tab-product-media">Mô tả</button>
+                <button type="button" class="product-tab-btn" data-tab="tab-product-seo" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="ti ti-world"></i> SEO &amp; Google
+                    <span id="product-seo-score-tab-badge" class="news-seo-tab-badge">0/100</span>
+                </button>
             </div>
 
             <!-- Form bao ngoài toàn bộ Body và Footer -->
@@ -5092,23 +5126,164 @@
 
                         <div class="kiot-card">
                             <div class="kiot-card-header">
-                                <span>Cấu hình SEO & Thân thiện URL</span>
+                                <span>Tối ưu tìm kiếm &amp; URL sản phẩm</span>
+                                <button type="button" class="news-action-btn"
+                                    onclick="document.querySelector('.product-tab-btn[data-tab=\'tab-product-seo\']')?.click()">
+                                    Mở cấu hình SEO chi tiết &rarr;
+                                </button>
                             </div>
                             <div class="kiot-card-body">
-                                <div class="form-group">
-                                    <label>SEO Title (Tiêu đề tìm kiếm)</label>
-                                    <input type="text" id="seoTitle" placeholder="Tiêu đề hiển thị trên Google...">
+                                <p class="news-side-hint" style="margin: 0;">
+                                    Đường dẫn dự kiến: <code>/product/<span id="product-slug-preview">san-pham</span></code> &bull; Chuyển sang tab <strong>SEO &amp; Google</strong> để chỉnh sửa từ khóa, mô tả tìm kiếm, xem trước Google SERP / Facebook và kiểm tra điểm SEO (0–100).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: SEO & GOOGLE (Cấu hình & Chấm điểm SEO chi tiết như Bài viết) -->
+                    <div id="tab-product-seo" class="product-tab-pane">
+                        <div class="news-seo-grid">
+                            <!-- Cột Trái: Form cấu hình SEO -->
+                            <div class="news-seo-form-col">
+                                <!-- Card 1: Cấu hình SEO Google & Đường dẫn -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-world"></i> Cấu hình SEO Google &amp; Đường dẫn</span>
+                                        <button type="button" id="btn-auto-fill-product-seo" class="news-action-btn">
+                                            <i class="ti ti-sparkles"></i> Tự động điền
+                                        </button>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="product-seo-focus-keyword">Từ khóa chính (Focus Keyword)</label>
+                                        <input type="text" id="product-seo-focus-keyword" class="news-side-input"
+                                            placeholder="VD: bình hoa gốm thủ công, ly sứ tráng men">
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <div class="news-seo-label-row">
+                                            <label for="seoTitle" style="margin-bottom: 0;">SEO Title (Tiêu đề Google)</label>
+                                            <span id="product-seo-title-count" class="news-char-counter">0/60</span>
+                                        </div>
+                                        <input type="text" id="seoTitle" class="news-side-input"
+                                            placeholder="Để trống sẽ tự động dùng: Tên sản phẩm | Tiệm Nhà Gốm">
+                                        <div class="news-seo-meter">
+                                            <div id="product-seo-title-meter" class="news-seo-meter-fill"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <div class="news-seo-label-row">
+                                            <label for="seoDescription" style="margin-bottom: 0;">SEO Description (Mô tả tìm kiếm)</label>
+                                            <span id="product-seo-desc-count" class="news-char-counter">0/160</span>
+                                        </div>
+                                        <textarea id="seoDescription" class="news-side-textarea" rows="3"
+                                            placeholder="Đoạn mô tả ngắn hiển thị dưới tiêu đề Google (khuyến nghị 110–165 ký tự)..."></textarea>
+                                        <div class="news-seo-meter">
+                                            <div id="product-seo-desc-meter" class="news-seo-meter-fill"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="slug">Đường dẫn thân thiện (URL Slug)</label>
+                                        <div class="news-slug-input-group">
+                                            <span class="news-slug-prefix">/product/</span>
+                                            <input type="text" id="slug" class="news-side-input"
+                                                placeholder="vd: binh-hoa-gom-xanh-thu-cong">
+                                        </div>
+                                        <p id="product-slug-hint" class="news-side-hint">Tự động tạo từ tên sản phẩm khi tạo mới. Chỉ dùng chữ thường không dấu và dấu gạch ngang.</p>
+                                    </div>
+
+                                    <div class="news-side-field" style="margin-bottom: 0;">
+                                        <label for="product-seo-keywords">Từ khóa phụ / Meta Keywords</label>
+                                        <input type="text" id="product-seo-keywords" class="news-side-input"
+                                            placeholder="VD: gốm bát tràng, đồ decor phòng khách, quà tặng gốm (ngăn cách bằng dấu phẩy)">
+                                    </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>SEO Description (Mô tả tìm kiếm)</label>
-                                    <textarea id="seoDescription" rows="3"
-                                        placeholder="Đoạn mô tả ngắn hiển thị dưới tiêu đề Google..."></textarea>
+                                <!-- Card 2: Hình ảnh & Lập chỉ mục nâng cao -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-settings"></i> Hình ảnh &amp; Lập chỉ mục (Robots / Canonical)</span>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="product-image-alt">Văn bản thay thế ảnh chính (Image Alt Text)</label>
+                                        <input type="text" id="product-image-alt" class="news-side-input"
+                                            placeholder="Mô tả chi tiết ảnh sản phẩm cho Google Images (mặc định dùng Tên sản phẩm)">
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="product-seo-canonical">Canonical URL (Tùy chọn)</label>
+                                        <input type="url" id="product-seo-canonical" class="news-side-input"
+                                            placeholder="Mặc định: https://tiemnhagom.vn/product/index.html?id=...">
+                                    </div>
+
+                                    <label class="news-seo-checkbox-row" for="product-seo-noindex">
+                                        <input type="checkbox" id="product-seo-noindex">
+                                        <span>Chặn công cụ tìm kiếm lập chỉ mục sản phẩm này (<code>noindex, nofollow</code>)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Cột Phải: Google SERP, Open Graph & Checklist SEO -->
+                            <div class="news-seo-preview-col">
+                                <!-- Card 1: Xem trước trên Google (SERP Preview) -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Xem trước tìm kiếm Google</span>
+                                        <div class="news-serp-toggle-group">
+                                            <button type="button" id="btn-prod-serp-desktop" class="news-serp-toggle-btn active"
+                                                title="Xem trước trên máy tính">
+                                                <i class="ti ti-device-laptop"></i>
+                                            </button>
+                                            <button type="button" id="btn-prod-serp-mobile" class="news-serp-toggle-btn"
+                                                title="Xem trước trên điện thoại">
+                                                <i class="ti ti-device-mobile"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="product-serp-preview" class="news-serp-card">
+                                        <div class="news-serp-site-row">
+                                            <span class="news-serp-favicon">G</span>
+                                            <div class="news-serp-site-meta">
+                                                <div class="news-serp-site-name">Tiệm Nhà Gốm</div>
+                                                <div id="product-serp-url" class="news-serp-url">https://tiemnhagom.vn &rsaquo; product &rsaquo; san-pham</div>
+                                            </div>
+                                        </div>
+                                        <div id="product-serp-title" class="news-serp-title">Tên sản phẩm | Tiệm Nhà Gốm</div>
+                                        <div id="product-serp-rich-meta" class="news-serp-rich-meta" style="display: none;"></div>
+                                        <div id="product-serp-desc" class="news-serp-desc">Mô tả tìm kiếm sản phẩm sẽ hiển thị tại đây...</div>
+                                    </div>
+                                    <div id="product-serp-noindex-warn" class="news-serp-noindex-warn" style="display: none;">
+                                        <i class="ti ti-alert-circle"></i> Sản phẩm đang bật ẩn / <code>noindex</code> — Google sẽ không lập chỉ mục trang này.
+                                    </div>
                                 </div>
 
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label>Đường dẫn thân thiện (URL Slug)</label>
-                                    <input type="text" id="slug" placeholder="vd: binh-hoa-gom-xanh-thu-cong">
+                                <!-- Card 2: Xem trước chia sẻ Facebook / Zalo (Open Graph) -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Xem trước chia sẻ Facebook / Zalo (Open Graph)</span>
+                                    </div>
+                                    <div id="product-og-preview" class="news-og-card">
+                                        <div id="product-og-image-wrap" class="news-og-image-wrap">
+                                            <span class="news-og-image-empty"><i class="ti ti-photo"></i> Chưa chọn ảnh sản phẩm</span>
+                                        </div>
+                                        <div class="news-og-meta">
+                                            <div class="news-og-domain">TIEMNHAGOM.VN</div>
+                                            <div id="product-og-title" class="news-og-title">Tên sản phẩm | Tiệm Nhà Gốm</div>
+                                            <div id="product-og-desc" class="news-og-desc">Mô tả chia sẻ mạng xã hội sẽ hiển thị tại đây...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3: Đánh giá chuẩn SEO tự động -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Kiểm tra chuẩn SEO</span>
+                                        <span id="product-seo-score-badge" class="news-seo-score-badge is-warn">0/100</span>
+                                    </div>
+                                    <ul id="product-seo-checklist" class="news-seo-checklist"></ul>
                                 </div>
                             </div>
                         </div>
@@ -5153,6 +5328,311 @@
     <!-- Kết thúc Modal -->
     <!-- Kết thúc Modal -->
     <!-- Kết thúc Modal -->
+
+    <!-- Modal Soạn thảo & Chỉnh sửa Bài viết (CMS Editor rộng rãi chuẩn KiotViet) -->
+    <div id="news-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="news-modal-title">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="news-modal-header">
+                <div class="news-modal-header-left">
+                    <span class="news-modal-icon"><i class="ti ti-writing"></i></span>
+                    <h3 id="news-modal-title">Viết bài viết mới</h3>
+                    <span id="news-modal-status-pill" class="news-status-badge is-published">Xuất bản ngay</span>
+                </div>
+                <button type="button" class="modal-close" id="btn-close-news-modal" title="Đóng trình soạn thảo">&times;</button>
+            </div>
+
+            <!-- Modal Tabs -->
+            <div class="news-modal-tabs">
+                <button type="button" class="news-tab-btn active" data-news-tab="tab-news-editor">
+                    <i class="ti ti-pencil"></i> Soạn thảo nội dung
+                </button>
+                <button type="button" class="news-tab-btn" data-news-tab="tab-news-seo">
+                    <i class="ti ti-world"></i> Tối ưu SEO
+                    <span id="news-seo-score-tab-badge" class="news-seo-tab-badge">0/100</span>
+                </button>
+                <button type="button" class="news-tab-btn" data-news-tab="tab-news-preview">
+                    <i class="ti ti-eye"></i> Xem trước bài viết
+                </button>
+            </div>
+
+            <!-- Form bao ngoài Body & Sticky Footer -->
+            <form id="news-form" class="news-modal-form">
+                <input type="hidden" id="news-id">
+
+                <!-- Scrollable Body -->
+                <div class="news-modal-body">
+                    <!-- TAB 1: SOẠN THẢO 2 CỘT RỘNG RÃI -->
+                    <div id="tab-news-editor" class="news-tab-pane active">
+                        <div class="news-editor-grid">
+                            <!-- Cột Trái: Tiêu đề + Quill Rich Text Editor -->
+                            <div class="news-editor-main">
+                                <div class="news-title-block">
+                                    <label for="news-title">Tiêu đề bài viết <span class="news-required">*</span></label>
+                                    <input type="text" id="news-title" class="news-title-input" required
+                                        placeholder="VD: Cách bảo quản gốm sứ thủ công luôn bền đẹp...">
+                                    <div class="news-slug-bar">
+                                        <i class="ti ti-link"></i>
+                                        <span>tiemnhagom.vn/blog/article.html?id=<strong id="news-slug-preview">bai-viet-moi</strong></span>
+                                        <button type="button" class="news-slug-seo-link"
+                                            onclick="window.switchNewsModalTab('tab-news-seo')">Tùy chỉnh SEO &rarr;</button>
+                                    </div>
+                                </div>
+
+                                <div class="news-content-card">
+                                    <div class="news-content-card-head">
+                                        <span><i class="ti ti-file-text"></i> Nội dung bài viết</span>
+                                        <span class="news-editor-hint">Hỗ trợ tiêu đề, danh sách, trích dẫn &amp; chèn ảnh trực tiếp</span>
+                                    </div>
+                                    <div id="quill-editor"></div>
+                                    <textarea id="news-content" style="display: none;"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Cột Phải: Ảnh bìa, Mô tả ngắn & Cài đặt xuất bản -->
+                            <div class="news-editor-sidebar">
+                                <!-- Card 1: Ảnh bìa -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-photo"></i> Ảnh bìa bài viết <span class="news-required">*</span></span>
+                                    </div>
+                                    <div id="news-cover-dropzone" class="news-cover-dropzone" role="button" tabindex="0"
+                                        aria-label="Chọn hoặc kéo thả ảnh bìa bài viết">
+                                        <input type="file" id="news-image" accept="image/*" style="display: none;">
+                                        <div id="news-cover-placeholder" class="news-cover-placeholder">
+                                            <span class="news-cover-upload-icon"><i class="ti ti-upload"></i></span>
+                                            <span class="news-cover-upload-title">Kéo thả hoặc bấm chọn ảnh bìa</span>
+                                            <span class="news-cover-upload-sub">Khuyến nghị 1200×630px · Tự động tối ưu WebP</span>
+                                        </div>
+                                        <div id="news-image-preview" class="news-image-preview" style="display: none;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Mô tả ngắn (Excerpt) -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-file-description"></i> Mô tả ngắn (Excerpt)</span>
+                                        <span id="news-excerpt-count" class="news-char-counter">0/160</span>
+                                    </div>
+                                    <textarea id="news-excerpt" class="news-side-textarea" rows="4"
+                                        placeholder="Đoạn tóm tắt hiển thị trên thẻ bài viết Blog và khi chia sẻ mạng xã hội..."></textarea>
+                                    <p class="news-side-hint">Khuyến nghị 120–160 ký tự để hiển thị đẹp trên Blog và Google.</p>
+                                </div>
+
+                                <!-- Card 3: Cài đặt xuất bản -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-settings"></i> Cài đặt xuất bản</span>
+                                    </div>
+                                    <div class="news-side-field">
+                                        <label for="news-status">Trạng thái</label>
+                                        <select id="news-status" class="news-side-input">
+                                            <option value="published">Xuất bản ngay</option>
+                                            <option value="draft">Bản nháp</option>
+                                        </select>
+                                    </div>
+                                    <div class="news-side-field" style="margin-bottom: 0;">
+                                        <label for="news-author">Tác giả</label>
+                                        <input type="text" id="news-author" class="news-side-input"
+                                            placeholder="Tiệm Nhà Gốm" value="Tiệm Nhà Gốm">
+                                    </div>
+                                </div>
+
+                                <!-- Card 4: Sản phẩm gợi ý trong bài -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-shopping-bag"></i> Sản phẩm gợi ý trong bài</span>
+                                        <span id="news-related-count" class="news-char-counter">0/4</span>
+                                    </div>
+                                    <div class="news-side-field" style="margin-bottom: 8px;">
+                                        <input type="text" id="news-related-product-search" class="news-side-input"
+                                            placeholder="Tìm sản phẩm theo tên hoặc mã SP...">
+                                    </div>
+                                    <div id="news-related-selected" class="news-related-selected"></div>
+                                    <div id="news-related-results" class="news-related-results"></div>
+                                    <p class="news-side-hint">Chọn tối đa 4 sản phẩm liên quan. Để trống sẽ tự gợi ý sản phẩm mới nhất đang mở bán.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: TỐI ƯU SEO & XEM TRƯỚC GOOGLE / SOCIAL -->
+                    <div id="tab-news-seo" class="news-tab-pane">
+                        <div class="news-seo-grid">
+                            <!-- Cột Trái: Form cấu hình SEO -->
+                            <div class="news-seo-form-col">
+                                <!-- Card 1: Cấu hình SEO Google & Đường dẫn -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-world"></i> Cấu hình SEO Google &amp; Đường dẫn</span>
+                                        <button type="button" id="btn-auto-fill-seo" class="news-action-btn">
+                                            <i class="ti ti-sparkles"></i> Tự động điền
+                                        </button>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="news-seo-focus-keyword">Từ khóa chính (Focus Keyword)</label>
+                                        <input type="text" id="news-seo-focus-keyword" class="news-side-input"
+                                            placeholder="VD: cách bảo quản gốm sứ thủ công">
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <div class="news-seo-label-row">
+                                            <label for="news-seo-title" style="margin-bottom: 0;">SEO Title (Tiêu đề Google)</label>
+                                            <span id="news-seo-title-count" class="news-char-counter">0/60</span>
+                                        </div>
+                                        <input type="text" id="news-seo-title" class="news-side-input"
+                                            placeholder="Để trống sẽ tự động dùng: Tiêu đề bài viết | Tiệm Nhà Gốm">
+                                        <div class="news-seo-meter">
+                                            <div id="news-seo-title-meter" class="news-seo-meter-fill"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <div class="news-seo-label-row">
+                                            <label for="news-seo-description" style="margin-bottom: 0;">SEO Description (Mô tả tìm kiếm)</label>
+                                            <span id="news-seo-desc-count" class="news-char-counter">0/160</span>
+                                        </div>
+                                        <textarea id="news-seo-description" class="news-side-textarea" rows="3"
+                                            placeholder="Để trống sẽ tự động dùng Mô tả ngắn (Excerpt) hoặc 155 ký tự đầu nội dung..."></textarea>
+                                        <div class="news-seo-meter">
+                                            <div id="news-seo-desc-meter" class="news-seo-meter-fill"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="news-slug">Đường dẫn thân thiện (URL Slug)</label>
+                                        <div class="news-slug-input-group">
+                                            <span class="news-slug-prefix">?id=</span>
+                                            <input type="text" id="news-slug" class="news-side-input"
+                                                placeholder="vd: cach-bao-quan-gom-su">
+                                        </div>
+                                        <p id="news-slug-hint" class="news-side-hint">Tự động tạo từ tiêu đề khi đăng mới. Chỉ dùng chữ thường không dấu và dấu gạch ngang.</p>
+                                    </div>
+
+                                    <div class="news-side-field" style="margin-bottom: 0;">
+                                        <label for="news-seo-keywords">Từ khóa phụ / Meta Keywords</label>
+                                        <input type="text" id="news-seo-keywords" class="news-side-input"
+                                            placeholder="VD: gốm sứ thủ công, bảo quản gốm, tiệm nhà gốm (ngăn cách bằng dấu phẩy)">
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Hình ảnh & Lập chỉ mục nâng cao -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span><i class="ti ti-settings"></i> Hình ảnh &amp; Lập chỉ mục (Robots / Canonical)</span>
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="news-cover-alt">Văn bản thay thế ảnh bìa (Cover Alt Text)</label>
+                                        <input type="text" id="news-cover-alt" class="news-side-input"
+                                            placeholder="Mô tả nội dung ảnh bìa cho Google Images (mặc định dùng Tiêu đề bài viết)">
+                                    </div>
+
+                                    <div class="news-side-field">
+                                        <label for="news-seo-canonical">Canonical URL (Tùy chọn)</label>
+                                        <input type="url" id="news-seo-canonical" class="news-side-input"
+                                            placeholder="Mặc định: https://tiemnhagom.vn/blog/article.html?id=...">
+                                    </div>
+
+                                    <label class="news-seo-checkbox-row" for="news-seo-noindex">
+                                        <input type="checkbox" id="news-seo-noindex">
+                                        <span>Chặn công cụ tìm kiếm lập chỉ mục bài viết này (<code>noindex, nofollow</code>)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Cột Phải: Google SERP, Open Graph & Checklist SEO -->
+                            <div class="news-seo-preview-col">
+                                <!-- Card 1: Xem trước trên Google (SERP Preview) -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Xem trước tìm kiếm Google</span>
+                                        <div class="news-serp-toggle-group">
+                                            <button type="button" id="btn-serp-desktop" class="news-serp-toggle-btn active"
+                                                title="Xem trước trên máy tính">
+                                                <i class="ti ti-device-laptop"></i>
+                                            </button>
+                                            <button type="button" id="btn-serp-mobile" class="news-serp-toggle-btn"
+                                                title="Xem trước trên điện thoại">
+                                                <i class="ti ti-device-mobile"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="news-serp-preview" class="news-serp-card">
+                                        <div class="news-serp-site-row">
+                                            <span class="news-serp-favicon">G</span>
+                                            <div class="news-serp-site-meta">
+                                                <div class="news-serp-site-name">Tiệm Nhà Gốm</div>
+                                                <div id="news-serp-url" class="news-serp-url">https://tiemnhagom.vn &rsaquo; blog &rsaquo; bai-viet-moi</div>
+                                            </div>
+                                        </div>
+                                        <div id="news-serp-title" class="news-serp-title">Tiêu đề bài viết | Tiệm Nhà Gốm</div>
+                                        <div id="news-serp-desc" class="news-serp-desc">Mô tả tìm kiếm sẽ hiển thị tại đây...</div>
+                                    </div>
+                                    <div id="news-serp-noindex-warn" class="news-serp-noindex-warn" style="display: none;">
+                                        <i class="ti ti-alert-circle"></i> Bài viết đang bật <code>noindex</code> — Google sẽ không lập chỉ mục trang này.
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Xem trước chia sẻ Facebook / Zalo (Open Graph) -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Xem trước chia sẻ Facebook / Zalo (Open Graph)</span>
+                                    </div>
+                                    <div id="news-og-preview" class="news-og-card">
+                                        <div id="news-og-image-wrap" class="news-og-image-wrap">
+                                            <span class="news-og-image-empty"><i class="ti ti-photo"></i> Chưa chọn ảnh bìa</span>
+                                        </div>
+                                        <div class="news-og-meta">
+                                            <div class="news-og-domain">TIEMNHAGOM.VN</div>
+                                            <div id="news-og-title" class="news-og-title">Tiêu đề bài viết | Tiệm Nhà Gốm</div>
+                                            <div id="news-og-desc" class="news-og-desc">Mô tả chia sẻ mạng xã hội sẽ hiển thị tại đây...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3: Đánh giá chuẩn SEO tự động -->
+                                <div class="news-side-card">
+                                    <div class="news-side-card-head">
+                                        <span>Kiểm tra chuẩn SEO</span>
+                                        <span id="news-seo-score-badge" class="news-seo-score-badge is-warn">0/100</span>
+                                    </div>
+                                    <ul id="news-seo-checklist" class="news-seo-checklist"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: XEM TRƯỚC BÀI VIẾT -->
+                    <div id="tab-news-preview" class="news-tab-pane">
+                        <div id="news-preview-container" class="news-preview-sheet"></div>
+                    </div>
+                </div>
+
+                <!-- Sticky Footer -->
+                <div class="news-modal-footer">
+                    <div class="news-modal-footer-left">
+                        <button type="button" id="btn-delete-news-modal" class="news-btn-danger" style="display: none;">
+                            <i class="ti ti-trash"></i> Xóa bài viết
+                        </button>
+                        <span id="news-editor-metrics" class="news-editor-metrics">
+                            <i class="ti ti-file-text"></i> 0 từ · ~1 phút đọc
+                        </span>
+                    </div>
+                    <div class="footer-btn-group">
+                        <button type="button" class="kiot-btn-secondary" id="btn-close-news-modal-footer">Bỏ qua</button>
+                        <button type="button" class="kiot-btn-outline" id="btn-save-news-draft">
+                            <i class="ti ti-file-text"></i> Lưu nháp
+                        </button>
+                        <button type="submit" class="kiot-btn-primary" id="btn-submit-news">
+                            <i class="ti ti-device-floppy"></i> Đăng bài viết
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Style tối ưu căn giữa & chống tràn cho Modal Chỉnh sửa đơn hàng Tiệm Nhà Gốm -->
     <style>
@@ -6481,7 +6961,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=77"></script>
+    <script type="module" src="../js/DashBoard.js?v=83"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

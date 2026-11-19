@@ -3,19 +3,1283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra cứu đơn hàng - Tiệm Nhà Gốm</title>
-    <script>
-        // Tự động chuyển hướng sang trang tra cứu đơn hàng trên web kèm mã đơn hàng
-        const query = window.location.search || '';
-        window.location.replace('./tra-cuu-don-hang.html' + query);
-    </script>
+    <title>Chi tiết đơn hàng - Tiệm Nhà Gốm</title>
+    <meta name="description" content="Xem chi tiết tiến trình xử lý, vận chuyển và thông tin thanh toán đơn hàng của bạn tại Tiệm Nhà Gốm.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <link rel="canonical" href="https://tiemnhagom.vn/order-detail.html">
+    <link rel="stylesheet" href="./css/style.css?v=22">
+    <link rel="icon" type="image/png" href="./Asset/icons/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .od-page-wrap {
+            max-width: 1260px;
+            width: 94%;
+            margin: 0 auto;
+            padding: 2.2rem 0 5rem 0;
+            font-family: var(--font-serif);
+            color: #18181b;
+            min-height: 70vh;
+            box-sizing: border-box;
+        }
+
+        .od-page-wrap,
+        .od-page-wrap *:not(i.ti):not(code) {
+            font-family: var(--font-serif) !important;
+        }
+
+        /* Breadcrumb */
+        .od-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.92rem;
+            color: #71717a;
+            margin-bottom: 1.5rem;
+        }
+
+        .od-breadcrumb a {
+            color: #71717a;
+            text-decoration: none;
+            transition: color 0.18s ease;
+        }
+
+        .od-breadcrumb a:hover {
+            color: #18181b;
+        }
+
+        .od-breadcrumb-sep {
+            color: #a1a1aa;
+            font-size: 0.85rem;
+        }
+
+        .od-breadcrumb-current {
+            color: #18181b;
+            font-weight: 700;
+        }
+
+        /* 2-Column Layout */
+        .od-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .od-main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 0;
+        }
+
+        .od-side-col {
+            position: sticky;
+            top: 96px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Base Card */
+        .od-card {
+            background: #ffffff;
+            border: 1px solid #e4e4e7;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            box-sizing: border-box;
+        }
+
+        /* 1. Status Banner Card */
+        .od-status-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 20px 24px;
+            border-radius: 16px;
+            background: #faf7f2;
+            border: 1px solid #e6dfd5;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+        }
+
+        .od-status-banner.is-cancelled {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .od-status-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .od-status-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1.5px solid #d6cbbd;
+            color: #18181b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.25rem;
+        }
+
+        .od-status-banner.is-cancelled .od-status-icon {
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
+        .od-status-text h2 {
+            margin: 0 0 4px 0 !important;
+            font-size: 1.22rem;
+            font-weight: 700;
+            color: #18181b;
+            line-height: 1.3;
+            text-align: left !important;
+        }
+
+        .od-status-text h2::after {
+            display: none !important;
+            content: none !important;
+        }
+
+        .od-status-banner.is-cancelled .od-status-text h2 {
+            color: #991b1b;
+        }
+
+        .od-status-text p {
+            margin: 0;
+            font-size: 0.92rem;
+            color: #52525b;
+            line-height: 1.5;
+        }
+
+        .od-status-text p strong {
+            color: #18181b;
+            font-weight: 700;
+        }
+
+        /* 2. Progress Timeline Card */
+        .od-section-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #71717a;
+            margin: 0 0 22px 0;
+        }
+
+        .od-stepper {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            padding: 4px 0 6px 0;
+        }
+
+        .od-stepper-track {
+            position: absolute;
+            top: 22px;
+            left: 12.5%;
+            right: 12.5%;
+            height: 2.5px;
+            background: #e4e4e7;
+            z-index: 1;
+        }
+
+        .od-stepper-fill {
+            position: absolute;
+            top: 22px;
+            left: 12.5%;
+            height: 2.5px;
+            background: #18181b;
+            z-index: 2;
+            transition: width 0.4s ease;
+        }
+
+        .od-step {
+            position: relative;
+            z-index: 3;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0 6px;
+        }
+
+        .od-step-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #d4d4d8;
+            color: #a1a1aa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            transition: all 0.25s ease;
+        }
+
+        .od-step.is-done .od-step-circle,
+        .od-step.is-active .od-step-circle {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff;
+        }
+
+        .od-step.is-active .od-step-circle {
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .od-step-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #71717a;
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+
+        .od-step.is-done .od-step-title,
+        .od-step.is-active .od-step-title {
+            color: #18181b;
+        }
+
+        .od-step-sub {
+            font-size: 0.8rem;
+            color: #71717a;
+            line-height: 1.35;
+        }
+
+        /* 3. Products Card */
+        .od-card-header {
+            padding-bottom: 16px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .od-card-title {
+            font-size: 1.12rem;
+            font-weight: 700;
+            color: #18181b;
+            margin: 0;
+        }
+
+        .od-product-block {
+            padding-bottom: 22px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid #f4f4f5;
+        }
+
+        .od-product-block:last-of-type {
+            padding-bottom: 0;
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .od-product-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .od-product-left {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .od-product-thumb {
+            width: 68px;
+            height: 68px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #e4e4e7;
+            flex-shrink: 0;
+            background: #fafafa;
+        }
+
+        .od-product-meta {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .od-product-name {
+            font-size: 1.04rem;
+            font-weight: 700;
+            color: #18181b;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 4px;
+            line-height: 1.35;
+            transition: color 0.18s ease;
+        }
+
+        .od-product-name:hover {
+            color: #9C7156;
+        }
+
+        .od-product-sub {
+            font-size: 0.85rem;
+            color: #71717a;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .od-product-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            background: #f4f4f5;
+            color: #18181b;
+            border: 1px solid #e4e4e7;
+        }
+
+        .od-product-badge.is-cancelled {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .od-product-price {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #18181b;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Inner Product Commitment & Detail Box (Like Screenshot 1) */
+        .od-item-info-box {
+            margin-top: 16px;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .od-item-info-head {
+            padding: 9px 14px;
+            background: #fafafa;
+            border-bottom: 1px solid #e4e4e7;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #71717a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .od-item-info-body {
+            padding: 14px 16px;
+            background: #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .od-item-info-text {
+            font-size: 0.88rem;
+            color: #3f3f46;
+            line-height: 1.5;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* Product Bottom Action Pills */
+        .od-item-actions-row {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .od-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1.5px solid #e4e4e7;
+            background: #ffffff;
+            color: #18181b;
+        }
+
+        .od-pill-btn:hover {
+            background: #f4f4f5;
+            border-color: #18181b;
+        }
+
+        .od-pill-btn.is-solid {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff !important;
+        }
+
+        .od-pill-btn.is-solid:hover {
+            background: #27272a;
+            border-color: #27272a;
+            transform: translateY(-1px);
+        }
+
+        .od-pill-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #52525b;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1.5px solid #e4e4e7;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+
+        .od-pill-link:hover {
+            color: #18181b;
+            background: #f4f4f5;
+            border-color: #18181b;
+        }
+
+        /* Footer Links under Left Column */
+        .od-footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 4px;
+        }
+
+        .od-back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 22px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1.5px solid #e4e4e7;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #18181b;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .od-back-link:hover {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        .od-back-link.is-solid {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+        }
+
+        .od-back-link.is-solid:hover {
+            background: #27272a;
+            border-color: #27272a;
+        }
+
+        /* Right Column: Order Summary Card */
+        .od-summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .od-summary-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .od-summary-label {
+            font-size: 0.8rem;
+            color: #71717a;
+            font-weight: 500;
+        }
+
+        .od-summary-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #18181b;
+            word-break: break-word;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .od-copy-btn {
+            border: 1px solid #e4e4e7;
+            background: #f4f4f5;
+            color: #52525b;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 0.73rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.18s ease;
+        }
+
+        .od-copy-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+        }
+
+        .od-pay-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 3px;
+        }
+
+        .od-pay-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            color: #18181b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .od-summary-divider {
+            height: 1px;
+            background: #e4e4e7;
+            margin: 18px 0;
+        }
+
+        .od-price-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .od-price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 0.92rem;
+            color: #52525b;
+        }
+
+        .od-price-row strong {
+            color: #18181b;
+            font-weight: 700;
+        }
+
+        .od-price-row.is-discount strong {
+            color: #9C7156;
+        }
+
+        .od-price-total {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed #d4d4d8;
+        }
+
+        .od-price-total span:first-child {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .od-price-total span:last-child {
+            font-size: 1.32rem;
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .od-summary-actions {
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .od-summary-actions .od-pill-btn {
+            width: 100%;
+            padding: 11px 20px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .od-pill-btn.is-danger {
+            color: #dc2626;
+            border-color: #fecaca;
+            background: #fff;
+        }
+
+        .od-pill-btn.is-danger:hover {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+
+        @media (max-width: 960px) {
+            .od-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .od-side-col {
+                position: static;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .od-card {
+                padding: 18px 16px;
+            }
+
+            .od-status-banner {
+                padding: 16px;
+            }
+
+            .od-stepper-track,
+            .od-stepper-fill {
+                left: 10%;
+                right: 10%;
+            }
+
+            .od-step-title {
+                font-size: 0.8rem;
+            }
+
+            .od-step-sub {
+                font-size: 0.72rem;
+            }
+
+            .od-product-top {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .od-product-price {
+                align-self: flex-end;
+            }
+        }
+    </style>
 </head>
-<body style="display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #faf9f6; color: #333;">
-    <div style="text-align: center; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); max-width: 400px;">
-        <div style="font-size: 2rem; margin-bottom: 12px;">📦</div>
-        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">Đang mở thông tin đơn hàng...</h3>
-        <p style="margin: 0; font-size: 0.88rem; color: #64748b;">Hệ thống đang chuyển hướng bạn đến trang chi tiết.</p>
-    </div>
+<body>
+    <div id="header-placeholder"></div>
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="od-page-wrap">
+        <!-- Breadcrumb -->
+        <nav class="od-breadcrumb" aria-label="Breadcrumb">
+            <a href="./index.html">Trang chủ</a>
+            <span class="od-breadcrumb-sep">&rsaquo;</span>
+            <a href="./profile/#orders">Đơn hàng</a>
+            <span class="od-breadcrumb-sep">&rsaquo;</span>
+            <span class="od-breadcrumb-current" id="od-breadcrumb-id">Đang tải...</span>
+        </nav>
+
+        <!-- Loading State -->
+        <div id="od-loading" class="od-card" style="text-align: center; padding: 4rem 1.5rem;">
+            <div class="spinner" style="margin: 0 auto 14px auto;"></div>
+            <p style="margin: 0; color: #71717a;">Đang tải chi tiết đơn hàng của bạn...</p>
+        </div>
+
+        <!-- Not Found State -->
+        <div id="od-not-found" class="od-card" style="display: none; text-align: center; padding: 4rem 1.5rem; max-width: 560px; margin: 1rem auto;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: #f4f4f5; border: 1px solid #e4e4e7; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto; font-size: 1.8rem; color: #52525b;">
+                <i class="ti ti-package"></i>
+            </div>
+            <h2 style="margin: 0 0 8px 0; font-size: 1.5rem;">Không tìm thấy đơn hàng</h2>
+            <p style="margin: 0 auto 24px auto; color: #71717a; max-width: 400px; line-height: 1.6;">
+                Mã đơn hàng không tồn tại hoặc đường dẫn chưa chính xác. Bạn có thể kiểm tra lại trong danh sách đơn hàng hoặc tra cứu theo số điện thoại.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="./profile/#orders" class="od-pill-btn is-solid" style="padding: 12px 24px;">Quay lại đơn hàng của bạn</a>
+                <a href="./tra-cuu-don-hang.html" class="od-pill-btn" style="padding: 12px 24px;">Tra cứu bằng SĐT</a>
+            </div>
+        </div>
+
+        <!-- Main Order Detail Content -->
+        <div id="od-content" class="od-layout" style="display: none;">
+            <!-- Left Column -->
+            <div class="od-main-col" id="od-main-col"></div>
+
+            <!-- Right Column: Order Summary -->
+            <aside class="od-side-col" id="od-side-col"></aside>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import {
+            db, auth, initHeader, showToast, escapeHTML, showModalConfirm, showModalAlert, updateCartCount, openDrawerCart
+        } from "./js/utils.js";
+        import {
+            doc, getDoc, setDoc, collection, query, where, getDocs, limit
+        } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
+
+        initHeader('./');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const rawOrderId = (
+            urlParams.get('id') ||
+            urlParams.get('orderId') ||
+            urlParams.get('orderCode') ||
+            urlParams.get('code') ||
+            urlParams.get('q') ||
+            ''
+        ).trim();
+
+        const loadingEl = document.getElementById('od-loading');
+        const notFoundEl = document.getElementById('od-not-found');
+        const contentEl = document.getElementById('od-content');
+        const mainColEl = document.getElementById('od-main-col');
+        const sideColEl = document.getElementById('od-side-col');
+        const breadcrumbIdEl = document.getElementById('od-breadcrumb-id');
+
+        function formatMoney(n) {
+            return new Intl.NumberFormat('vi-VN').format(Number(n) || 0) + ' đ';
+        }
+
+        function formatOrderDate(order) {
+            const ts = order.orderDate || order.createdAt;
+            if (!ts) return 'Mới đặt';
+            const dt = ts.toDate ? ts.toDate() : new Date(ts);
+            if (isNaN(dt.getTime())) return 'Mới đặt';
+            const pad = (v) => String(v).padStart(2, '0');
+            return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+        }
+
+        function getPaymentMethodInfo(method = '', source = '') {
+            const m = String(method || '').toLowerCase();
+            if (source === 'pos') {
+                return { label: 'Thanh toán tại cửa hàng (POS)', icon: 'ti-building-store' };
+            }
+            if (m.includes('bank') || m.includes('transfer') || m.includes('vietqr') || m.includes('chuyển khoản')) {
+                return { label: 'Chuyển khoản ngân hàng', icon: 'ti-building-bank' };
+            }
+            if (m.includes('vnpay')) {
+                return { label: 'Thanh toán trực tuyến VNPay', icon: 'ti-credit-card' };
+            }
+            return { label: 'Thanh toán khi nhận hàng (COD)', icon: 'ti-cash' };
+        }
+
+        function getShippingMethodLabel(method = '', source = '') {
+            if (source === 'pos' || method === 'pickup') return 'Nhận trực tiếp tại Tiệm';
+            if (method === 'express_2h' || method === 'express_4h') return 'Giao hỏa tốc 4 Giờ';
+            return 'Giao hàng tiêu chuẩn';
+        }
+
+        window.copyOrderId = (code) => {
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Đã sao chép mã đơn hàng: ' + code);
+            }).catch(() => {
+                showToast('Không thể sao chép mã đơn', 'error');
+            });
+        };
+
+        window.showCeramicCareGuide = () => {
+            showModalAlert(
+                "1. Rửa nhẹ bằng mút mềm và nước ấm, hạn chế dùng búi sắt chà xát lên bề mặt men thủ công.\n" +
+                "2. Với dòng gốm có viền vàng kim hoặc vẽ tay nổi, không nên cho vào lò vi sóng.\n" +
+                "3. Chính sách Bảo hiểm bể vỡ 100%: Nếu sản phẩm có bất kỳ vết nứt vỡ nào khi mở hộp, bạn chỉ cần chụp ảnh/quay video gửi Zalo 0777 709 662, Tiệm sẽ gửi bù sản phẩm mới 100% hoàn toàn miễn phí.",
+                "Hướng dẫn bảo quản & Cam kết Bảo hành",
+                "info",
+                "Đã hiểu"
+            );
+        };
+
+        window.reorderItems = async (itemsJson) => {
+            try {
+                const items = JSON.parse(decodeURIComponent(itemsJson));
+                if (!Array.isArray(items) || items.length === 0) return;
+
+                let cart = [];
+                const user = auth.currentUser;
+                if (user) {
+                    const cartRef = doc(db, "carts", user.uid);
+                    const snap = await getDoc(cartRef);
+                    if (snap.exists()) cart = snap.data().items || [];
+                } else {
+                    cart = JSON.parse(localStorage.getItem('cart')) || [];
+                }
+
+                items.forEach(it => {
+                    if (it.isGift) return;
+                    const id = it.id || it.productId;
+                    if (!id) return;
+                    const existing = cart.find(c => c.id === id && (c.color || '') === (it.color || '') && (c.pattern || '') === (it.pattern || '') && (c.variant || '') === (it.variant || ''));
+                    if (existing) {
+                        existing.quantity += (Number(it.quantity) || 1);
+                    } else {
+                        cart.push({
+                            id: id,
+                            name: it.name || 'Sản phẩm Tiệm Nhà Gốm',
+                            price: Number(it.price) || 0,
+                            image: it.image || it.imageUrl || 'https://placehold.co/100',
+                            quantity: Number(it.quantity) || 1,
+                            color: it.color || '',
+                            pattern: it.pattern || '',
+                            variant: it.variant || ''
+                        });
+                    }
+                });
+
+                if (user) {
+                    await setDoc(doc(db, "carts", user.uid), { items: cart });
+                } else {
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                }
+
+                await updateCartCount();
+                showToast('Đã thêm sản phẩm vào giỏ hàng!');
+                openDrawerCart();
+            } catch (e) {
+                console.error(e);
+                showToast('Không thể thêm lại vào giỏ hàng', 'error');
+            }
+        };
+
+        window.cancelOrderFromDetail = async (orderId) => {
+            const ok = await showModalConfirm(
+                "Bạn có chắc chắn muốn hủy đơn hàng này không?\n\nHành động này sẽ hủy yêu cầu đặt hàng và không thể hoàn tác.",
+                "Xác nhận hủy đơn hàng",
+                { confirmText: "Hủy đơn hàng", cancelText: "Giữ lại đơn", type: "danger" }
+            );
+            if (!ok) return;
+
+            if (!auth.currentUser) {
+                showToast("Vui lòng đăng nhập tài khoản đã đặt đơn để hủy đơn hàng.", "error");
+                return;
+            }
+
+            try {
+                const functions = getFunctions(db.app);
+                const cancelOrderSecure = httpsCallable(functions, 'cancelOrderSecure');
+                await cancelOrderSecure({ orderId });
+                showToast("Đơn hàng đã được hủy thành công!");
+                loadOrderDetail();
+            } catch (err) {
+                showToast("Lỗi khi hủy đơn hàng: " + (err.message || "Vui lòng thử lại"), "error");
+            }
+        };
+
+        async function loadOrderDetail() {
+            if (!rawOrderId) {
+                loadingEl.style.display = 'none';
+                notFoundEl.style.display = 'block';
+                if (breadcrumbIdEl) breadcrumbIdEl.innerText = 'Không tìm thấy';
+                return;
+            }
+
+            if (breadcrumbIdEl) breadcrumbIdEl.innerText = rawOrderId;
+
+            try {
+                let docSnap = await getDoc(doc(db, "orders", rawOrderId));
+                let orderId = rawOrderId;
+
+                if (!docSnap.exists()) {
+                    const qCode = query(collection(db, "orders"), where("orderCode", "==", rawOrderId), limit(1));
+                    const sCode = await getDocs(qCode);
+                    if (!sCode.empty) {
+                        docSnap = sCode.docs[0];
+                        orderId = docSnap.id;
+                    }
+                }
+
+                if (!docSnap.exists()) {
+                    loadingEl.style.display = 'none';
+                    notFoundEl.style.display = 'block';
+                    return;
+                }
+
+                const order = docSnap.data();
+                document.title = `Đơn hàng ${orderId} - Tiệm Nhà Gốm`;
+                if (breadcrumbIdEl) breadcrumbIdEl.innerText = orderId;
+
+                const rawStatus = (order.status || 'Đang xử lý').trim();
+                const statusLower = rawStatus.toLowerCase();
+                const isCancelled = statusLower.includes('hủy') || statusLower.includes('cancel') || statusLower.includes('không giao được');
+
+                let currentStep = 1;
+                if (isCancelled) {
+                    currentStep = 0;
+                } else if (
+                    statusLower.includes('hoàn thành') ||
+                    statusLower.includes('đã nhận') ||
+                    statusLower.includes('đã giao') ||
+                    statusLower.includes('thành công') ||
+                    statusLower.includes('completed') ||
+                    statusLower.includes('success')
+                ) {
+                    currentStep = 4;
+                } else if (
+                    statusLower.includes('đang giao') ||
+                    statusLower.includes('vận chuyển') ||
+                    statusLower.includes('shipping') ||
+                    statusLower.includes('delivering')
+                ) {
+                    currentStep = 3;
+                } else if (
+                    statusLower.includes('xác nhận') ||
+                    statusLower.includes('đóng gói') ||
+                    statusLower.includes('đã thanh toán') ||
+                    statusLower.includes('processing')
+                ) {
+                    currentStep = 2;
+                } else {
+                    currentStep = 1;
+                }
+
+                const shipping = order.shippingAddress || {};
+                const customerEmail = shipping.email || order.customerEmail || order.email || auth.currentUser?.email || '';
+                const customerName = shipping.fullName || order.customerName || 'Quý khách';
+                const customerPhone = shipping.phone || order.customerPhone || order.phone || '';
+                const customerAddr = shipping.address || (order.source === 'pos' ? 'Mua trực tiếp tại cửa hàng Tiệm Nhà Gốm' : 'Tại cửa hàng');
+                const payInfo = getPaymentMethodInfo(order.paymentMethod, order.source);
+                const shipLabel = getShippingMethodLabel(order.shippingMethod, order.source);
+
+                // Status Banner Content
+                let bannerTitle = 'Đã tiếp nhận đơn hàng';
+                let bannerDesc = `Đơn hàng của <strong>${escapeHTML(customerName)}</strong> đã được hệ thống ghi nhận và đang chờ xác nhận.`;
+                let bannerIcon = 'ti-receipt';
+
+                if (isCancelled) {
+                    bannerTitle = 'Đơn hàng đã được hủy';
+                    bannerDesc = 'Đơn hàng này đã bị hủy. Nếu bạn cần đặt lại hoặc hỗ trợ, vui lòng bấm "Mua lại đơn này" bên dưới.';
+                    bannerIcon = 'ti-alert-triangle';
+                } else if (currentStep === 4) {
+                    bannerTitle = 'Đơn hàng đã hoàn tất';
+                    bannerDesc = customerEmail
+                        ? `Đơn hàng đã hoàn tất và giao thành công. Thông tin xác nhận đã được gửi tới <strong>${escapeHTML(customerEmail)}</strong>.`
+                        : `Đơn hàng đã hoàn tất và bàn giao thành công tới <strong>${escapeHTML(customerName)}</strong>.`;
+                    bannerIcon = 'ti-check';
+                } else if (currentStep === 3) {
+                    bannerTitle = 'Đơn hàng đang được giao đến bạn';
+                    bannerDesc = `Kiện hàng gốm sứ đang trên đường vận chuyển tới <strong>${escapeHTML(customerAddr)}</strong>.`;
+                    bannerIcon = 'ti-truck-delivery';
+                } else if (currentStep === 2) {
+                    bannerTitle = 'Đang đóng gói chuẩn 5 lớp chống sốc';
+                    bannerDesc = `Tiệm đã xác nhận đơn hàng và đang bọc chống sốc 5 lớp kỹ lưỡng trước khi bàn giao cho đơn vị vận chuyển.`;
+                    bannerIcon = 'ti-package';
+                }
+
+                const trackingUrl = order.trackingLink || order.trackingUrl || '';
+                const trackingBtnHtml = trackingUrl ? `
+                    <a href="${escapeHTML(trackingUrl)}" target="_blank" rel="noopener" class="od-pill-btn is-solid">
+                        <i class="ti ti-map-pin"></i> Xem lộ trình trực tiếp
+                    </a>
+                ` : '';
+
+                // Stepper Fill Width
+                let fillWidth = '0%';
+                if (currentStep === 2) fillWidth = '25%';
+                else if (currentStep === 3) fillWidth = '50%';
+                else if (currentStep >= 4) fillWidth = '75%';
+
+                const checkSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                const stepClass = (n) => {
+                    if (isCancelled) return '';
+                    if (currentStep > n || currentStep === 4) return 'is-done';
+                    if (currentStep === n) return 'is-active';
+                    return '';
+                };
+                const stepCircleContent = (n) => {
+                    if (!isCancelled && (currentStep >= n)) return checkSvg;
+                    return String(n);
+                };
+
+                const items = Array.isArray(order.items) ? order.items : [];
+                const subtotalVal = Number(order.subtotal) || items.reduce((s, it) => s + ((Number(it.price) || 0) * (Number(it.quantity) || 1)), 0);
+                const shippingFeeVal = Number(order.shippingFee) || 0;
+                const couponDiscountVal = Number(order.discountAmount || order.discountVal || order.discount || 0);
+                const vipDiscountVal = Number(order.membershipDiscount || 0);
+                const totalVal = Number(order.totalAmount) || Math.max(0, subtotalVal + shippingFeeVal - couponDiscountVal - vipDiscountVal);
+
+                const encodedItems = encodeURIComponent(JSON.stringify(items));
+
+                const productsHtml = items.map((item) => {
+                    const qty = Number(item.quantity) || 1;
+                    const lineTotal = (Number(item.price) || 0) * qty;
+                    const variantStr = [item.comboVariant, item.color, item.pattern, item.variant].filter(Boolean).join(' / ') || 'Tiêu chuẩn';
+                    const prodId = item.id || item.productId || '';
+                    const prodLink = prodId ? `./product/index.html?id=${encodeURIComponent(prodId)}` : './products/';
+                    const itemStatusBadge = isCancelled
+                        ? `<span class="od-product-badge is-cancelled">Đã hủy</span>`
+                        : (currentStep === 4
+                            ? `<span class="od-product-badge"><i class="ti ti-circle-check-filled"></i> Đã giao ${qty}/${qty}</span>`
+                            : `<span class="od-product-badge">${escapeHTML(rawStatus)} (${qty}/${qty})</span>`);
+
+                    const giftWrapNote = (order.isNoelGiftWrapped || (order.note && order.note.includes('GÓI QUÀ')))
+                        ? `<div style="margin-top: 4px; color: #9C7156; font-weight: 600;"><i class="ti ti-gift"></i> Miễn phí Gói hộp quà chỉn chu & Kèm thiệp viết tay từ Tiệm</div>`
+                        : '';
+
+                    return `
+                        <div class="od-product-block">
+                            <div class="od-product-top">
+                                <div class="od-product-left">
+                                    <a href="${prodLink}">
+                                        <img src="${escapeHTML(item.image || item.imageUrl || 'https://placehold.co/80')}" alt="${escapeHTML(item.name || 'Sản phẩm')}" class="od-product-thumb">
+                                    </a>
+                                    <div class="od-product-meta">
+                                        <a href="${prodLink}" class="od-product-name">${escapeHTML(item.name || 'Sản phẩm Tiệm Nhà Gốm')}</a>
+                                        <div class="od-product-sub">Phân loại: ${escapeHTML(variantStr)} &middot; SL: ${qty}</div>
+                                        ${itemStatusBadge}
+                                    </div>
+                                </div>
+                                <div class="od-product-price">${item.isGift ? '0 đ (Tặng kèm)' : formatMoney(lineTotal)}</div>
+                            </div>
+
+                            <div class="od-item-actions-row">
+                                <button type="button" class="od-pill-btn" onclick="window.showCeramicCareGuide()">
+                                    <i class="ti ti-book"></i> Hướng dẫn sử dụng &amp; bảo quản gốm
+                                </button>
+                                <button type="button" class="od-pill-btn is-solid" onclick="window.reorderItems('${encodedItems}')">
+                                    <i class="ti ti-shopping-bag"></i> Mua lại sản phẩm
+                                </button>
+                                <a href="./chinh-sach/return-refund-policy.html" class="od-pill-link">
+                                    <i class="ti ti-alert-circle"></i> Báo lỗi / Đổi trả bể vỡ
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                mainColEl.innerHTML = `
+                    <!-- 1. Status Banner -->
+                    <div class="od-status-banner ${isCancelled ? 'is-cancelled' : ''}">
+                        <div class="od-status-banner-left">
+                            <div class="od-status-icon">
+                                <i class="ti ${bannerIcon}"></i>
+                            </div>
+                            <div class="od-status-text">
+                                <h2>${bannerTitle}</h2>
+                                <p>${bannerDesc}</p>
+                            </div>
+                        </div>
+                        ${trackingBtnHtml}
+                    </div>
+
+                    <!-- 2. Tiến trình đơn hàng -->
+                    ${!isCancelled ? `
+                        <div class="od-card">
+                            <h3 class="od-section-label">TIẾN TRÌNH ĐƠN HÀNG</h3>
+                            <div class="od-stepper">
+                                <div class="od-stepper-track"></div>
+                                <div class="od-stepper-fill" style="width: ${fillWidth};"></div>
+
+                                <div class="od-step ${stepClass(1)}">
+                                    <div class="od-step-circle">${stepCircleContent(1)}</div>
+                                    <div class="od-step-title">Đặt hàng</div>
+                                    <div class="od-step-sub">Đã tạo đơn</div>
+                                </div>
+
+                                <div class="od-step ${stepClass(2)}">
+                                    <div class="od-step-circle">${stepCircleContent(2)}</div>
+                                    <div class="od-step-title">Xác nhận &amp; Đóng gói</div>
+                                    <div class="od-step-sub">${escapeHTML(payInfo.label)}</div>
+                                </div>
+
+                                <div class="od-step ${stepClass(3)}">
+                                    <div class="od-step-circle">${stepCircleContent(3)}</div>
+                                    <div class="od-step-title">Đang vận chuyển</div>
+                                    <div class="od-step-sub">${escapeHTML(shipLabel)}</div>
+                                </div>
+
+                                <div class="od-step ${stepClass(4)}">
+                                    <div class="od-step-circle">${stepCircleContent(4)}</div>
+                                    <div class="od-step-title">Nhận hàng</div>
+                                    <div class="od-step-sub">${currentStep === 4 ? 'Đã giao' : 'Chờ giao'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- 3. Danh sách sản phẩm -->
+                    <div class="od-card">
+                        <div class="od-card-header">
+                            <h3 class="od-card-title">Sản phẩm (${items.length})</h3>
+                        </div>
+                        ${productsHtml || '<p style="color: #71717a; margin: 0;">Không có thông tin sản phẩm.</p>'}
+                    </div>
+
+                    <!-- 4. Bottom Navigation -->
+                    <div class="od-footer-links">
+                        <a href="./profile/#orders" class="od-back-link">
+                            <i class="ti ti-arrow-left"></i> Quay lại danh sách đơn hàng
+                        </a>
+                        <a href="./products/" class="od-back-link">
+                            <i class="ti ti-shopping-bag"></i> Tiếp tục mua sắm
+                        </a>
+                    </div>
+                `;
+
+                const canCancel = !isCancelled && (rawStatus === 'Đang xử lý' || rawStatus === 'Chờ thanh toán');
+
+                sideColEl.innerHTML = `
+                    <div class="od-card od-summary-card">
+                        <div class="od-card-header">
+                            <h3 class="od-card-title">Tóm tắt đơn hàng</h3>
+                        </div>
+
+                        <div class="od-summary-list">
+                            <div class="od-summary-field">
+                                <span class="od-summary-label">Mã đơn</span>
+                                <div class="od-summary-val">
+                                    <span>${escapeHTML(orderId)}</span>
+                                    <button type="button" class="od-copy-btn" onclick="window.copyOrderId('${escapeHTML(orderId)}')" title="Sao chép mã đơn">
+                                        <i class="ti ti-copy"></i> Chép
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="od-summary-field">
+                                <span class="od-summary-label">Ngày đặt</span>
+                                <div class="od-summary-val">${escapeHTML(formatOrderDate(order))}</div>
+                            </div>
+
+                            <div class="od-summary-field">
+                                <span class="od-summary-label">Người nhận</span>
+                                <div class="od-summary-val">${escapeHTML(customerName)}${customerPhone ? ` &middot; ${escapeHTML(customerPhone)}` : ''}</div>
+                            </div>
+
+                            ${customerEmail ? `
+                                <div class="od-summary-field">
+                                    <span class="od-summary-label">Email</span>
+                                    <div class="od-summary-val">${escapeHTML(customerEmail)}</div>
+                                </div>
+                            ` : ''}
+
+                            <div class="od-summary-field">
+                                <span class="od-summary-label">Địa chỉ nhận hàng</span>
+                                <div class="od-summary-val" style="font-weight: 600; color: #3f3f46;">${escapeHTML(customerAddr)}</div>
+                            </div>
+
+                            <div class="od-summary-field">
+                                <span class="od-summary-label">Hình thức thanh toán</span>
+                                <div class="od-summary-val od-pay-chip">
+                                    <span class="od-pay-icon"><i class="ti ${payInfo.icon}"></i></span>
+                                    <span>${escapeHTML(payInfo.label)}</span>
+                                </div>
+                            </div>
+
+                            ${order.note ? `
+                                <div class="od-summary-field">
+                                    <span class="od-summary-label">Ghi chú đơn hàng</span>
+                                    <div class="od-summary-val" style="font-weight: 500; font-size: 0.88rem; color: #52525b;">${escapeHTML(order.note)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="od-summary-divider"></div>
+
+                        <div class="od-price-rows">
+                            <div class="od-price-row">
+                                <span>Tạm tính</span>
+                                <strong>${formatMoney(subtotalVal)}</strong>
+                            </div>
+                            <div class="od-price-row">
+                                <span>Phí vận chuyển</span>
+                                <strong>${shippingFeeVal > 0 ? formatMoney(shippingFeeVal) : '0 đ (Miễn phí)'}</strong>
+                            </div>
+                            ${couponDiscountVal > 0 ? `
+                                <div class="od-price-row is-discount">
+                                    <span>Mã giảm giá ${order.couponCode ? `(${escapeHTML(order.couponCode)})` : ''}</span>
+                                    <strong>-${formatMoney(couponDiscountVal)}</strong>
+                                </div>
+                            ` : ''}
+                            ${vipDiscountVal > 0 ? `
+                                <div class="od-price-row is-discount">
+                                    <span>Ưu đãi Gốm Membership</span>
+                                    <strong>-${formatMoney(vipDiscountVal)}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="od-price-total">
+                            <span>Tổng tiền</span>
+                            <span>${formatMoney(totalVal)}</span>
+                        </div>
+
+                        <div class="od-summary-actions">
+                            ${canCancel ? `
+                                <button type="button" class="od-pill-btn is-danger" onclick="window.cancelOrderFromDetail('${escapeHTML(orderId)}')">
+                                    <i class="ti ti-trash"></i> Hủy đơn hàng
+                                </button>
+                            ` : ''}
+                            <a href="https://zalo.me/0777709662" target="_blank" rel="noopener" class="od-pill-btn">
+                                <i class="ti ti-message-circle"></i> Nhắn Zalo Tiệm hỗ trợ
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+                loadingEl.style.display = 'none';
+                notFoundEl.style.display = 'none';
+                contentEl.style.display = 'grid';
+            } catch (err) {
+                console.error("Lỗi tải chi tiết đơn hàng:", err);
+                loadingEl.style.display = 'none';
+                notFoundEl.style.display = 'block';
+            }
+        }
+
+        loadOrderDetail();
+    </script>
 </body>
 </html>
-

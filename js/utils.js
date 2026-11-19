@@ -20,6 +20,8 @@ import { initWebNotifications } from "./notifications.js";
 export { initWebNotifications };
 import { initSearchModal, openSearchModal, closeSearchModal } from "./search-modal.js";
 export { initSearchModal, openSearchModal, closeSearchModal };
+import { initTngMotion, prefersReducedMotion, triggerOtpShake, animateCartBadgePop, pulsePriceHighlight } from "./motion.js";
+export { initTngMotion, triggerOtpShake, animateCartBadgePop, pulsePriceHighlight };
 
 // Default/initial category structure (used if Firestore document doesn't exist)
 export const DEFAULT_PRODUCT_CATEGORIES = [
@@ -27,7 +29,8 @@ export const DEFAULT_PRODUCT_CATEGORIES = [
     { name: "Teatime & Drinks", order: 2, subs: ["Ấm Trà", "Ly & Tách", "Lót Ly & Đế Lót"] },
     { name: "Home Decor", order: 3, subs: ["Lọ Hoa Nghệ Thuật", "Đèn & Tượng Decor", "Khay Bánh Mứt"] },
     { name: "Kitchenware", order: 4, subs: ["Nồi & Chảo", "Dao & Kéo", "Thớt", "Dụng Cụ Sơ Chế"] },
-    { name: "Lifestyle", order: 5, subs: ["Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"] }
+    { name: "Lifestyle", order: 5, subs: ["Phụ Kiện Phòng Tắm", "Tạp Vật Tinh Tế", "Vật Phẩm Cá Nhân"] },
+    { name: "Value Packs", order: 6, subs: ["Combo Bàn Ăn", "Set Matcha & Trà Đạo"] }
 ];
 
 // Biến toàn cục để lưu trữ danh mục động, được cập nhật từ Firestore
@@ -452,6 +455,7 @@ export function expandProductsWithVariants(products) {
                 type: type,
                 name: v.name,
                 imageUrl: v.imageUrl || v.thumbUrl || p.imageUrl,
+                hoverImageUrl: v.hoverImageUrl || null,
                 price: vPrice,
                 sale: vSale,
                 salePrice: vSalePrice,
@@ -1087,7 +1091,9 @@ export function showModalAlert(message, title = 'Thông báo', type = 'info', ok
         const btnClass = safeType === 'danger' ? 'tng-dialog-btn-danger' : (safeType === 'success' ? 'tng-dialog-btn-success' : 'tng-dialog-btn-primary');
         actionsEl.innerHTML = `<button type="button" class="tng-dialog-btn ${btnClass}" id="tng-dialog-btn-ok">${okText}</button>`;
 
-        overlay.classList.add('active');
+        requestAnimationFrame(() => {
+            overlay.classList.add('active');
+        });
 
         const btnOk = document.getElementById('tng-dialog-btn-ok');
         const close = () => {
@@ -1096,7 +1102,6 @@ export function showModalAlert(message, title = 'Thông báo', type = 'info', ok
         };
 
         if (btnOk) {
-            btnOk.focus();
             btnOk.onclick = close;
         }
 
@@ -1147,7 +1152,9 @@ export function showModalConfirm(message, title = 'Xác nhận', options = {}) {
             <button type="button" class="tng-dialog-btn ${btnConfirmClass}" id="tng-dialog-btn-confirm">${confirmText}</button>
         `;
 
-        overlay.classList.add('active');
+        requestAnimationFrame(() => {
+            overlay.classList.add('active');
+        });
 
         const btnConfirm = document.getElementById('tng-dialog-btn-confirm');
         const btnCancel = document.getElementById('tng-dialog-btn-cancel');
@@ -1159,8 +1166,6 @@ export function showModalConfirm(message, title = 'Xác nhận', options = {}) {
 
         if (btnConfirm) btnConfirm.onclick = () => finish(true);
         if (btnCancel) btnCancel.onclick = () => finish(false);
-
-        if (btnConfirm) btnConfirm.focus();
 
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -1513,6 +1518,7 @@ export async function logout() {
 }
 
 // 5. Logic Giỏ hàng: Cập nhật số lượng
+let lastCartBadgeTotal = null;
 export async function updateCartCount(user = auth.currentUser) {
     let cart = [];
     if (user) {
@@ -1527,6 +1533,10 @@ export async function updateCartCount(user = auth.currentUser) {
         el.innerText = total;
         el.style.display = total > 0 ? 'flex' : 'none';
     });
+    if (lastCartBadgeTotal !== null && total !== lastCartBadgeTotal && total > 0) {
+        animateCartBadgePop();
+    }
+    lastCartBadgeTotal = total;
 }
 
 // 6. Logic Yêu thích: Cập nhật số lượng
@@ -2427,6 +2437,12 @@ export function flyToCart(sourceEl, imageUrl, options = {}) {
                 return;
             }
 
+            if (prefersReducedMotion()) {
+                animateCartBadgePop();
+                resolve();
+                return;
+            }
+
             const targetRect = targetEl.getBoundingClientRect();
             if (!targetRect || targetRect.width === 0) {
                 resolve();
@@ -2457,14 +2473,14 @@ export function flyToCart(sourceEl, imageUrl, options = {}) {
             const flyer = document.createElement('img');
             flyer.src = imgUrl;
             flyer.className = 'flying-cart-item';
-            
+
             const startSize = 64;
             const startX = startRect.left + (startRect.width / 2) - (startSize / 2);
             const startY = startRect.top + (startRect.height / 2) - (startSize / 2);
 
-            flyer.style.left = startX + 'px';
-            flyer.style.top = startY + 'px';
-            flyer.style.transform = 'scale(1) rotate(0deg)';
+            flyer.style.left = `${startX}px`;
+            flyer.style.top = `${startY}px`;
+            flyer.style.transform = 'translate3d(0, 0, 0) scale(1)';
             flyer.style.opacity = '1';
 
             document.body.appendChild(flyer);
@@ -2473,30 +2489,51 @@ export function flyToCart(sourceEl, imageUrl, options = {}) {
             const targetY = targetRect.top + (targetRect.height / 2) - (startSize / 2);
             const deltaX = targetX - startX;
             const deltaY = targetY - startY;
+            const dist = Math.hypot(deltaX, deltaY);
+            const arcLift = Math.min(130, Math.max(48, dist * 0.22));
+            const midX = deltaX * 0.45;
+            const midY = Math.min(0, deltaY) * 0.45 - arcLift;
 
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    flyer.style.transform = 'translate(' + deltaX + 'px, ' + deltaY + 'px) scale(0.25) rotate(380deg)';
-                    flyer.style.opacity = '0.3';
-                    flyer.style.filter = 'blur(0.5px)';
-                });
-            });
-
-            setTimeout(() => {
+            let finished = false;
+            const finalizeFlight = () => {
+                if (finished) return;
+                finished = true;
                 if (flyer && flyer.parentNode) {
                     flyer.parentNode.removeChild(flyer);
                 }
-
+                animateCartBadgePop();
                 targetEl.classList.remove('cart-bounce');
                 void targetEl.offsetWidth;
                 targetEl.classList.add('cart-bounce');
 
                 setTimeout(() => {
                     targetEl.classList.remove('cart-bounce');
-                }, 700);
+                }, 680);
 
                 resolve();
-            }, 650);
+            };
+
+            if (typeof flyer.animate === 'function') {
+                const anim = flyer.animate([
+                    { transform: 'translate3d(0px, 0px, 0) scale(1) rotate(0deg)', opacity: 1, offset: 0 },
+                    { transform: `translate3d(${midX.toFixed(1)}px, ${midY.toFixed(1)}px, 0) scale(0.72) rotate(160deg)`, opacity: 0.94, offset: 0.48 },
+                    { transform: `translate3d(${deltaX.toFixed(1)}px, ${deltaY.toFixed(1)}px, 0) scale(0.24) rotate(320deg)`, opacity: 0.25, offset: 1 }
+                ], {
+                    duration: 620,
+                    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                    fill: 'forwards'
+                });
+                anim.onfinish = finalizeFlight;
+                anim.oncancel = finalizeFlight;
+                setTimeout(finalizeFlight, 680);
+            } else {
+                requestAnimationFrame(() => {
+                    flyer.style.transition = 'transform 0.58s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.58s ease';
+                    flyer.style.transform = `translate3d(${deltaX.toFixed(1)}px, ${deltaY.toFixed(1)}px, 0) scale(0.24)`;
+                    flyer.style.opacity = '0.25';
+                });
+                setTimeout(finalizeFlight, 620);
+            }
         } catch (err) {
             console.error('Lỗi hiệu ứng flyToCart:', err);
             resolve();
@@ -2658,6 +2695,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
         // Kích hoạt quan sát cho các phần tử có sẵn trong DOM ngay khi khởi tạo Header
         document.querySelectorAll('.reveal-on-scroll').forEach(r => window.revealObserver?.observe(r));
+        initTngMotion();
 
         // LUÔN chạy callback sớm nhất có thể để trang web load dữ liệu chính (Sản phẩm,...)
         // Không để các tác vụ Admin/Sync bên dưới làm chậm việc hiển thị dữ liệu
@@ -2862,6 +2900,9 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     const authCreationIso = (user.metadata && user.metadata.creationTime && !isNaN(new Date(user.metadata.creationTime).getTime()))
                         ? new Date(user.metadata.creationTime).toISOString()
                         : null;
+                    const googleProviderInfo = user.providerData?.find(p => p && p.providerId === 'google.com') || null;
+                    const hasGoogleProvider = Boolean(googleProviderInfo);
+                    const googleProviderEmail = googleProviderInfo?.email || (hasGoogleProvider ? (user.email || null) : null);
 
                     if (!userSnap.exists()) {
                         const rawPhone = user.phoneNumber || '';
@@ -2929,6 +2970,8 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                                 email: user.email,
                                 phone: p0,
                                 identifiers: identifiers,
+                                googleLinked: hasGoogleProvider,
+                                ...(googleProviderEmail ? { googleEmail: googleProviderEmail } : {}),
                                 isGhost: false,
                                 createdAt: firstRegIso,
                                 registeredAt: firstRegIso,
@@ -2940,11 +2983,29 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
                     } else {
                         const userData = userSnap.data();
                         const loginUpdatePayload = { lastLogin: new Date().toISOString() };
+                        if (targetUid === user.uid) {
+                            if (user.email && !userData.email) {
+                                loginUpdatePayload.email = user.email;
+                            }
+                            loginUpdatePayload.googleLinked = hasGoogleProvider;
+                            if (hasGoogleProvider && googleProviderEmail) {
+                                loginUpdatePayload.googleEmail = googleProviderEmail;
+                            }
+                        }
                         if (authCreationIso && targetUid === user.uid) {
                             if (!userData.registeredAt) {
                                 loginUpdatePayload.registeredAt = authCreationIso;
                             }
-                            const existingCreatedMs = userData.createdAt ? new Date(userData.createdAt).getTime() : NaN;
+                            const rawCreated = userData.createdAt;
+                            const existingCreatedMs = rawCreated
+                                ? (typeof rawCreated.toDate === 'function'
+                                    ? rawCreated.toDate().getTime()
+                                    : (typeof rawCreated.seconds === 'number'
+                                        ? rawCreated.seconds * 1000
+                                        : (typeof rawCreated._seconds === 'number'
+                                            ? rawCreated._seconds * 1000
+                                            : new Date(rawCreated).getTime())))
+                                : NaN;
                             const authCreatedMs = new Date(authCreationIso).getTime();
                             if (!userData.createdAt || isNaN(existingCreatedMs) || authCreatedMs < existingCreatedMs) {
                                 loginUpdatePayload.createdAt = authCreationIso;
@@ -3445,14 +3506,28 @@ export function startOtpCountdown(btn, key, duration = 60) {
 }
 
 // 13. Logic: Giao diện OTP 6 ô vuông
+function triggerOtpDigitPop(input) {
+    if (!input || prefersReducedMotion()) return;
+    input.classList.remove('tng-otp-pop');
+    void input.offsetWidth;
+    input.classList.add('tng-otp-pop');
+    clearTimeout(input._tngOtpPopTimer);
+    input._tngOtpPopTimer = setTimeout(() => input.classList.remove('tng-otp-pop'), 240);
+}
+
 export function setupOtpInputs(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const inputs = container.querySelectorAll('.otp-digit');
     inputs.forEach((input, index) => {
+        if (input.dataset.tngOtpBound === '1') return;
+        input.dataset.tngOtpBound = '1';
         input.addEventListener('input', (e) => {
             if (!/^\d*$/.test(e.target.value)) { e.target.value = ''; return; }
-            if (e.target.value && index < inputs.length - 1) { inputs[index + 1].focus(); }
+            if (e.target.value) {
+                triggerOtpDigitPop(e.target);
+                if (index < inputs.length - 1) inputs[index + 1].focus();
+            }
         });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && !e.target.value && index > 0) { inputs[index - 1].focus(); }
@@ -3461,7 +3536,10 @@ export function setupOtpInputs(containerId) {
             const data = e.clipboardData.getData('text').trim().slice(0, 6);
             if (/^\d+$/.test(data)) {
                 data.split('').forEach((char, i) => {
-                    if (inputs[i]) inputs[i].value = char;
+                    if (inputs[i]) {
+                        inputs[i].value = char;
+                        triggerOtpDigitPop(inputs[i]);
+                    }
                 });
                 const nextFocus = Math.min(data.length, inputs.length - 1);
                 inputs[nextFocus].focus();
@@ -3774,13 +3852,40 @@ export async function renderDrawerCart() {
             cart = JSON.parse(localStorage.getItem('cart')) || [];
         }
 
+        const footerEl = document.querySelector('#drawer-cart .drawer-cart-footer');
+        const cartLinkAttr = document.querySelector('#drawer-cart .drawer-cart-footer a')?.getAttribute('href') || 'cart/';
+        const pathPrefix = cartLinkAttr.replace(/cart\/?.*$/, '');
+        const shopUrl = `${pathPrefix}products/`;
+
         if (cart.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding: 40px 20px; color: #888;">Giỏ hàng của bạn đang trống.</div>';
+            container.innerHTML = `
+                <div class="tng-empty-cart tng-empty-cart--drawer">
+                    <div class="tng-empty-cart-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="21" r="1.5"></circle>
+                            <circle cx="20" cy="21" r="1.5"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                    <h4 class="tng-empty-cart-title">Giỏ hàng trống</h4>
+                    <p class="tng-empty-cart-desc">Hãy thêm sản phẩm để bắt đầu mua sắm. Hàng trăm tác phẩm gốm sứ thủ công và hoa tươi nghệ thuật đang chờ bạn!</p>
+                    <a href="${shopUrl}" class="tng-empty-cart-btn">
+                        <span>Khám phá cửa hàng</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </div>
+            `;
             totalEl.innerText = '0đ';
+            if (footerEl) footerEl.style.display = 'none';
             const giftWrapEl = document.getElementById('drawer-noel-giftwrap');
             if (giftWrapEl) giftWrapEl.innerHTML = '';
             return;
         }
+
+        if (footerEl) footerEl.style.display = 'block';
 
         let html = '';
         let totalAmount = 0;
@@ -3805,12 +3910,14 @@ export async function renderDrawerCart() {
                     <div class="drawer-cart-item-info">
                         <a href="${baseUrl}/product/index.html?id=${item.id}" class="drawer-cart-item-title">${escapeHTML(pData.name)}${variantText}</a>
                         <div class="drawer-cart-item-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</div>
-                        <div class="drawer-cart-qty">
-                            <button onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', -1)">-</button>
-                            <input type="number" value="${item.quantity}" readonly>
-                            <button onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', 1)">+</button>
+                        <div class="drawer-cart-actions">
+                            <div class="drawer-cart-qty">
+                                <button type="button" aria-label="Giảm số lượng" onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', -1)">-</button>
+                                <input type="number" value="${item.quantity}" readonly>
+                                <button type="button" aria-label="Tăng số lượng" onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', 1)">+</button>
+                            </div>
+                            <button type="button" class="btn-remove-item" onclick="window.removeDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', this)"><i class="ti ti-trash"></i> Xóa</button>
                         </div>
-                        <button class="btn-remove-item" onclick="window.removeDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}')">Xóa</button>
                     </div>
                 </div>
             `;
@@ -3819,20 +3926,23 @@ export async function renderDrawerCart() {
         container.innerHTML = html;
         totalEl.innerText = new Intl.NumberFormat('vi-VN').format(totalAmount) + 'đ';
 
-        // Tùy chọn Miễn phí Gói quà Noel & Kèm thiệp tay
+        // Tùy chọn Miễn phí Gói quà & Kèm thiệp viết tay (Áp dụng quanh năm cho mọi đơn hàng)
         const giftWrapEl = document.getElementById('drawer-noel-giftwrap');
         if (giftWrapEl) {
             const hs = window.noelHolidaySettings;
-            const isGiftWrapActive = hs ? (hs.active !== false && hs.enableFreeGiftWrap !== false) : true;
+            const isGiftWrapActive = hs ? (hs.enableFreeGiftWrap !== false) : true;
             if (isGiftWrapActive && cart.length > 0) {
                 const isChecked = localStorage.getItem('tng_noel_giftwrap_opt') === '1';
-                const giftText = (hs && hs.giftWrapText) ? hs.giftWrapText : '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay';
+                const rawGiftText = (hs && hs.giftWrapText && !/noel|giáng sinh/i.test(hs.giftWrapText))
+                    ? hs.giftWrapText
+                    : 'Miễn phí Gói quà & Kèm thiệp viết tay từ Tiệm';
+                const cleanGiftText = rawGiftText.replace(/^🎁\s*/, '');
                 giftWrapEl.innerHTML = `
                     <label class="noel-giftwrap-box">
                         <input type="checkbox" id="drawer-giftwrap-check" ${isChecked ? 'checked' : ''} onchange="window.toggleNoelGiftWrapOption(this.checked)">
                         <div class="noel-giftwrap-info">
-                            <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> ${escapeHTML(giftText)}</div>
-                            <div class="noel-giftwrap-desc">Tiệm sẽ thắt nơ ruy băng chuông Noel và kèm thiệp chúc mừng theo yêu cầu.</div>
+                            <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> <span>${escapeHTML(cleanGiftText)}</span></div>
+                            <div class="noel-giftwrap-desc">Tiệm hỗ trợ gói hộp quà chỉn chu, thắt nơ tinh tế và kèm thiệp viết tay miễn phí theo yêu cầu.</div>
                         </div>
                     </label>
                 `;
@@ -3879,12 +3989,22 @@ window.updateDrawerCartItem = async (id, color, pattern, change) => {
             }
         }
         await updateCartCount();
-        renderDrawerCart();
+        await renderDrawerCart();
+        pulsePriceHighlight(document.getElementById('drawer-cart-total-amount'));
     } catch (e) { console.error(e); }
 };
 
-window.removeDrawerCartItem = async (id, color, pattern) => {
+window.removeDrawerCartItem = async (id, color, pattern, triggerBtn = null) => {
     try {
+        const drawerItemEl = triggerBtn?.closest?.('.drawer-cart-item') ||
+            Array.from(document.querySelectorAll('#drawer-cart-items .drawer-cart-item .btn-remove-item'))
+                .find(b => (b.getAttribute('onclick') || '').includes(`'${id}'`))
+                ?.closest('.drawer-cart-item');
+        if (drawerItemEl && !prefersReducedMotion()) {
+            drawerItemEl.classList.add('tng-cart-removing');
+            await new Promise(r => setTimeout(r, 220));
+        }
+
         let cart = [];
         const user = auth.currentUser;
         if (user) {
@@ -3899,7 +4019,8 @@ window.removeDrawerCartItem = async (id, color, pattern) => {
             localStorage.setItem('cart', JSON.stringify(cart));
         }
         await updateCartCount();
-        renderDrawerCart();
+        await renderDrawerCart();
+        pulsePriceHighlight(document.getElementById('drawer-cart-total-amount'));
     } catch (e) { console.error(e); }
 };
 

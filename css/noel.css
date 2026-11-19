@@ -1070,53 +1070,61 @@ body.noel-active.noel-snow-cap-on .noel-card::before {
    - Chiếc vớ Giáng Sinh may mắn (Secret Santa Sock Widget & Popup)
    ============================================================ */
 
-/* 9.1. Checkbox Gói Quà Noel trong Drawer Cart & Giỏ Hàng */
+/* 9.1. Checkbox Gói Quà Miễn Phí trong Drawer Cart & Giỏ Hàng (Tone Gốm Mộc Quanh Năm) */
 .noel-giftwrap-box {
-    background: #fef2f2;
-    border: 1px dashed #f87171;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin: 10px 0;
+    background: #FAF8F5;
+    border: 1px solid #E8E1D8;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 10px 0 14px;
     display: flex;
     align-items: flex-start;
     gap: 10px;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
     text-align: left;
 }
 
 .noel-giftwrap-box:hover {
-    background: #fee2e2;
-    border-color: #ef4444;
+    background: #F5F1EA;
+    border-color: #9C7156;
 }
 
 .noel-giftwrap-box input[type="checkbox"] {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
     margin-top: 2px;
     cursor: pointer;
-    accent-color: #991b1b;
+    accent-color: #2B2928;
+    flex-shrink: 0;
 }
 
 .noel-giftwrap-info {
     flex: 1;
+    min-width: 0;
 }
 
 .noel-giftwrap-title {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 700;
-    color: #991b1b;
-    margin-bottom: 2px;
+    color: #2B2928;
+    margin-bottom: 3px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    line-height: 1.35;
+}
+
+.noel-giftwrap-title i.ti {
+    color: #9C7156;
+    font-size: 1.05rem;
 }
 
 .noel-giftwrap-desc {
-    font-size: 0.74rem;
-    color: #7f1d1d;
-    line-height: 1.35;
-    opacity: 0.9;
+    font-size: 0.76rem;
+    color: #6E665D;
+    line-height: 1.4;
+    opacity: 1;
 }
 
 /* 9.2. Chiếc vớ Giáng Sinh may mắn (Lucky Sock Widget) */

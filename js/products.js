@@ -14,6 +14,42 @@ let lastVisible = null; // Document cuối cùng của trang hiện tại
 let currentTotalCount = 0; // Tổng số sản phẩm của query hiện tại
 let currentLoadedCount = 0; // Số sản phẩm đã tải
 let activeSubCategory = null; // Lưu trữ danh mục con từ URL
+let filterSaleOnly = false;
+let filterComboOnly = false;
+let filterInStockOnly = false;
+let filterMinPrice = 0;
+let filterMaxPrice = 0;
+
+function syncSortPillsUI(sortVal) {
+    const sortBy = document.getElementById('sort-by');
+    if (sortBy && sortVal) sortBy.value = sortVal;
+    const current = sortVal || (sortBy ? sortBy.value : 'newest') || 'newest';
+    document.querySelectorAll('#app-sort-pills .app-sort-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === current);
+    });
+    window.tngRefreshSlidingPills?.();
+}
+
+function updateActiveFilterBadge() {
+    let count = 0;
+    if (filterMinPrice > 0 || filterMaxPrice > 0) count++;
+    if (filterSaleOnly) count++;
+    if (filterComboOnly) count++;
+    if (filterInStockOnly) count++;
+
+    const openBtn = document.getElementById('app-open-filter-btn');
+    const badge = document.getElementById('app-active-filter-badge');
+    const clearBtn = document.getElementById('app-clear-filters-btn');
+    if (openBtn) openBtn.classList.toggle('has-active', count > 0);
+    if (badge) {
+        badge.textContent = String(count);
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    if (clearBtn) {
+        const hasSearch = Boolean((document.getElementById('search-name')?.value || '').trim());
+        clearBtn.style.display = (count > 0 || hasSearch) ? 'inline-flex' : 'none';
+    }
+}
 let searchTimeout; // Biến để xử lý debounce cho tìm kiếm (no change)
 // dynamicCategories is now imported directly from utils.js
 
@@ -58,32 +94,51 @@ function renderCategoryGrid() {
 
     // Lấy danh mục từ URL
     const urlParams = new URLSearchParams(window.location.search);
-    const catParam = urlParams.get('category') || 'all';
+    const filterParam = urlParams.get('filter') || '';
+    const catParam = (filterParam === 'combo') ? 'combo' : (urlParams.get('category') || 'all');
+    const isComboFilter = (catParam === 'combo' || activeSubCategory === 'combo');
 
     // Dùng resolveCategoryFromParam để tìm nhóm chính & danh mục con đang active
-    const resolved = resolveCategoryFromParam(catParam, dynamicCategories);
+    const resolved = isComboFilter ? { isAll: false, group: null } : resolveCategoryFromParam(catParam, dynamicCategories);
     let activeGroup = resolved.group;
-    if (!activeGroup && activeSubCategory) {
+    if (!activeGroup && activeSubCategory && !isComboFilter) {
         const subResolved = resolveCategoryFromParam(activeSubCategory, dynamicCategories);
         activeGroup = subResolved.group;
     }
 
+    const getCatIcon = (name) => {
+        const lower = (name || '').toLowerCase();
+        if (lower.includes('dining') || lower.includes('bàn ăn') || lower.includes('chén') || lower.includes('đĩa')) return 'ti-tools-kitchen-2';
+        if (lower.includes('tea') || lower.includes('drink') || lower.includes('trà') || lower.includes('ly') || lower.includes('cốc')) return 'ti-coffee';
+        if (lower.includes('home') || lower.includes('decor') || lower.includes('hoa') || lower.includes('trang trí')) return 'ti-flower';
+        if (lower.includes('kitchen') || lower.includes('bếp')) return 'ti-flame';
+        if (lower.includes('lifestyle') || lower.includes('túi') || lower.includes('phụ kiện')) return 'ti-shopping-bag';
+        if (lower.includes('value') || lower.includes('combo') || lower.includes('bộ')) return 'ti-gift';
+        return 'ti-tag';
+    };
+
     let mainCatHtml = `
         <div class="minimal-category-list">
-            <a href="javascript:void(0)" class="minimal-cat-item ${resolved.isAll && !activeSubCategory ? 'active' : ''}" data-filter-category="all" id="cat-all">
-                tất cả <span class="cat-count">(...)</span>
+            <a href="javascript:void(0)" class="minimal-cat-item ${resolved.isAll && !activeSubCategory && !isComboFilter ? 'active' : ''}" data-filter-category="all" id="cat-all">
+                <i class="ti ti-tag"></i><span>tất cả</span> <span class="cat-count">(...)</span>
             </a>
     `;
 
     dynamicCategories.forEach(group => {
-        const isGroupActive = activeGroup && activeGroup.name === group.name;
+        const isGroupActive = !isComboFilter && activeGroup && activeGroup.name === group.name;
+        const iconClass = getCatIcon(group.name);
         mainCatHtml += `
             <a href="javascript:void(0)" class="minimal-cat-item ${isGroupActive ? 'active' : ''}" data-filter-category="${group.name}" data-category-slug="${toCategorySlug(group.name)}" id="cat-${toCategorySlug(group.name)}">
-                ${group.name.toLowerCase()} <span class="cat-count">(...)</span>
+                <i class="ti ${iconClass}"></i><span>${group.name.toLowerCase()}</span> <span class="cat-count">(...)</span>
             </a>
         `;
     });
-    mainCatHtml += `</div>`;
+
+    mainCatHtml += `
+        <a href="javascript:void(0)" class="minimal-cat-item ${isComboFilter ? 'active' : ''}" data-filter-category="combo" data-category-slug="combo" id="cat-combo">
+            <i class="ti ti-gift"></i><span>bộ sản phẩm (combo)</span> <span class="cat-count">(...)</span>
+        </a>
+    </div>`;
 
     // Render danh mục con nếu nhóm đang được chọn
     let subCatHtml = '';
@@ -141,6 +196,12 @@ async function fetchCategoryCounts() {
             elAll.querySelector('.cat-count').textContent = `(${countCards(publicDocs)})`;
         }
 
+        const elCombo = document.getElementById('cat-combo');
+        if (elCombo && elCombo.querySelector('.cat-count')) {
+            const comboDocs = publicDocs.filter(p => Boolean(p.isCombo));
+            elCombo.querySelector('.cat-count').textContent = `(${countCards(comboDocs)})`;
+        }
+
         dynamicCategories.forEach(group => {
             const el = document.getElementById(`cat-${toCategorySlug(group.name)}`);
             if (el && el.querySelector('.cat-count')) {
@@ -195,22 +256,42 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         // Chỉ ghi đè activeSubCategory nếu categoryOverride được truyền vào cụ thể (không phải null)
         if (navigation === 'init' && categoryOverride !== null) activeSubCategory = categoryOverride;
         
+        const urlParamsNow = new URLSearchParams(window.location.search);
+        const filterParam = urlParamsNow.get('filter') || '';
+        const sortParam = urlParamsNow.get('sort') || '';
+
         let currentCategory = activeSubCategory || document.querySelector('.minimal-cat-item.active')?.dataset.filterCategory || 'all';
-        let currentSort = document.getElementById('sort-by')?.value || 'newest';
-        let filterSale = document.querySelector('.filter-list a[data-filter-sale].active')?.dataset.filterSale;
+        if (filterParam === 'combo' || urlParamsNow.get('category') === 'combo') {
+            currentCategory = 'combo';
+        }
+        let currentSort = document.getElementById('sort-by')?.value || sortParam || 'newest';
         let searchTerm = document.getElementById('search-name')?.value.trim() || '';
         let hasSearchTerm = !!searchTerm;
-        let minPrice = Number(document.getElementById('price-min')?.value) || 0;
-        let maxPrice = Number(document.getElementById('price-max')?.value) || 0;
-        let collectionParam = new URLSearchParams(window.location.search).get('collection');
+        let minPrice = filterMinPrice > 0 ? filterMinPrice : (Number(document.getElementById('price-min')?.value) || 0);
+        let maxPrice = filterMaxPrice > 0 ? filterMaxPrice : (Number(document.getElementById('price-max')?.value) || 0);
+        const hasAdvancedFilter = minPrice > 0 || maxPrice > 0 || filterSaleOnly || filterComboOnly || filterInStockOnly;
+        let collectionParam = urlParamsNow.get('collection');
 
         // Reset khi đổi bộ lọc hoặc khởi tạo
         if (navigation === 'init') {
             lastVisible = null;
         }
 
-        // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục đang xem
-        const categoryDisplay = collectionParam ? `Bộ sưu tập: ${collectionParam}` : (currentCategory !== 'all' ? currentCategory : 'Tất cả sản phẩm');
+        // Tối ưu SEO: Cập nhật Title và Meta Description theo danh mục / bộ lọc đang xem
+        let categoryDisplay = 'Tất cả sản phẩm';
+        if (collectionParam) {
+            categoryDisplay = `Bộ sưu tập: ${collectionParam}`;
+        } else if (currentCategory === 'combo') {
+            categoryDisplay = 'Bộ sản phẩm (Combo)';
+        } else if (filterParam === 'recommended') {
+            categoryDisplay = 'Dành riêng cho bạn';
+        } else if (currentCategory !== 'all') {
+            categoryDisplay = currentCategory;
+        } else if (currentSort === 'popular') {
+            categoryDisplay = 'Sản phẩm bán chạy';
+        } else if (sortParam === 'newest') {
+            categoryDisplay = 'Mới lên kệ';
+        }
         const seoTitle = `${categoryDisplay} | Tiệm Nhà Gốm - Gốm Sứ & Decor Thủ Công`;
 
         const bannerTitleH1 = document.getElementById('hero-banner-title');
@@ -227,10 +308,18 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         updateMetaTag('property', 'og:description', seoDesc);
 
         // Apply filters
-        // Nếu KHÔNG có từ khóa tìm kiếm, mới áp dụng lọc Danh mục / BST / Sale / Giá
+        // Nếu KHÔNG có từ khóa tìm kiếm, áp dụng lọc Danh mục / BST trên Firestore; các bộ lọc nâng cao lọc client-side để tránh thiếu composite index
         if (!hasSearchTerm) {
             if (collectionParam) {
                 productsQuery = query(productsQuery, where("collections", "array-contains", collectionParam));
+            } else if (currentCategory === 'combo') {
+                productsQuery = query(productsQuery, where("isCombo", "==", true));
+            } else if (filterParam === 'recommended') {
+                const history = JSON.parse(localStorage.getItem('viewed_products')) || [];
+                const viewedCats = [...new Set(history.map(h => typeof h === 'object' ? h.category : null).filter(Boolean))].slice(0, 10);
+                if (viewedCats.length > 0) {
+                    productsQuery = query(productsQuery, where("category", "in", viewedCats));
+                }
             } else if (currentCategory !== 'all') {
                 const resolved = resolveCategoryFromParam(currentCategory, dynamicCategories);
                 const selectedGroup = resolved.isGroup ? resolved.group : dynamicCategories.find(g => g.name === currentCategory);
@@ -252,26 +341,13 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                     productsQuery = query(productsQuery, where("category", "in", Array.from(new Set(subMatches))));
                 }
             }
-
-            if (filterSale === 'true') {
-                productsQuery = query(productsQuery, where("sale", ">", 0));
-            } else if (filterSale === 'false') {
-                productsQuery = query(productsQuery, where("sale", "==", 0));
-            }
-
-            if (minPrice > 0) productsQuery = query(productsQuery, where("price", ">=", minPrice));
-            if (maxPrice > 0) productsQuery = query(productsQuery, where("price", "<=", maxPrice));
         }
 
         // Apply sorting logic
-        // Firestore yêu cầu orderBy phải khớp với where clause đầu tiên nếu có
-        // Hoặc nếu có range filter (price), orderBy phải là price
-        if (hasSearchTerm) {
-            productsQuery = query(productsQuery, limit(500)); 
-        } else if (minPrice > 0 || maxPrice > 0) { // Nếu có lọc giá
-            const priceDirection = (currentSort === 'price-desc') ? 'desc' : 'asc';
-            productsQuery = query(productsQuery, orderBy("price", priceDirection)); // Bắt buộc phải order by price
-        } else { // Không có search term và không có lọc giá, có thể sắp xếp tự do
+        // Khi có search hoặc bộ lọc nâng cao (giá/sale/combo/còn hàng), bỏ orderBy Firestore để lấy batch 500 rồi lọc & sắp xếp client-side
+        if (hasSearchTerm || hasAdvancedFilter) {
+            productsQuery = query(productsQuery, limit(500));
+        } else {
             switch (currentSort) {
                 case 'name-asc': productsQuery = query(productsQuery, orderBy("name", "asc")); break;
                 case 'name-desc': productsQuery = query(productsQuery, orderBy("name", "desc")); break;
@@ -279,10 +355,10 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
                 case 'price-asc': productsQuery = query(productsQuery, orderBy("price", "asc")); break;
                 case 'price-desc': productsQuery = query(productsQuery, orderBy("price", "desc")); break;
                 default:
-                    // Với bộ lọc "mới nhất", chỉ order ở query khi không có filter phức tạp để tránh lỗi missing index
-                    if (currentCategory === 'all' && !collectionParam && !filterSale) {
+                    // Với bộ lọc "mới nhất", sắp xếp theo createdAt giảm dần (sản phẩm mới tạo lên đầu)
+                    if (currentCategory === 'all' && !collectionParam) {
                         try {
-                            productsQuery = query(productsQuery, orderBy("updatedAt", "desc"));
+                            productsQuery = query(productsQuery, orderBy("createdAt", "desc"));
                         } catch (_) {}
                     }
                     break;
@@ -321,7 +397,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             lastVisible = null;
         }
 
-        if (hasSearchTerm) {
+        if (hasSearchTerm || hasAdvancedFilter) {
             finalQuery = query(productsQuery, limit(500));
         } else if (navigation === 'load-more' && lastVisible) {
             finalQuery = query(productsQuery, startAfter(lastVisible), limit(FETCH_LIMIT));
@@ -337,7 +413,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
             console.warn("Lỗi Firestore query (có thể thiếu index), thử truy vấn dự phòng:", queryErr);
             // Fallback: truy vấn cơ bản theo limit
             try {
-                const fallbackLimit = hasSearchTerm ? 500 : FETCH_LIMIT;
+                const fallbackLimit = (hasSearchTerm || hasAdvancedFilter) ? 500 : FETCH_LIMIT;
                 const fallbackQuery = query(collection(db, "products"), limit(fallbackLimit));
                 querySnapshot = await getDocs(fallbackQuery);
             } catch (fallbackErr) {
@@ -368,13 +444,56 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Lọc thông minh client-side: Hỗ trợ đảo từ, không dấu, từ không liền nhau
         const allDocs = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), _ref: d })).filter(p => !p.isHidden && !p.isOnlyEvent);
+        const shouldExpandVariants = hasSearchTerm || hasAdvancedFilter || ['popular', 'newest', 'price-asc', 'price-desc'].includes(currentSort);
         let finalResults = [];
         if (hasSearchTerm) {
             // Mở rộng tìm kiếm cả sản phẩm biến thể độc lập (showOnProductPage === true)
             const expandedDocs = expandProductsWithVariants(allDocs);
             finalResults = searchAndRankProducts(expandedDocs, searchTerm, 1000);
+        } else if (shouldExpandVariants) {
+            // Tách sản phẩm chính và từng biến thể độc lập để xếp & lọc chuẩn xác
+            finalResults = expandProductsWithVariants(allDocs);
         } else {
             finalResults = allDocs;
+        }
+
+        if (hasAdvancedFilter) {
+            finalResults = finalResults.filter(p => {
+                const rawPrice = Number(p.price) || 0;
+                const salePct = Number(p.sale) || 0;
+                const effectivePrice = (p.salePrice && Number(p.salePrice) > 0)
+                    ? Number(p.salePrice)
+                    : Math.round(rawPrice * (1 - salePct / 100));
+
+                if (minPrice > 0 && effectivePrice < minPrice) return false;
+                if (maxPrice > 0 && effectivePrice > maxPrice) return false;
+
+                if (filterSaleOnly) {
+                    const isOnSale = salePct > 0 || (Number(p.salePrice) > 0 && Number(p.salePrice) < rawPrice);
+                    if (!isOnSale) return false;
+                }
+
+                if (filterComboOnly) {
+                    const isComboItem = Boolean(p.isCombo) || (Array.isArray(p.comboVariants) && p.comboVariants.length > 0);
+                    if (!isComboItem) return false;
+                }
+
+                if (filterInStockOnly) {
+                    let isAvailable = !Boolean(p.manualOutOfStock) && !Boolean(p.isOutOfStock) && (Number(p.stock) || 0) > 0;
+                    if (p.isIndependentVariant) {
+                        isAvailable = !Boolean(p.variantOverride?.manualOutOfStock) && !Boolean(p.isOutOfStock) && (Number(p.stock) || 0) > 0;
+                    } else if (p.isCombo && Array.isArray(p.comboVariants) && p.comboVariants.length > 0) {
+                        isAvailable = p.comboVariants.some(v => {
+                            const hasOwn = (v.stock !== undefined && v.stock !== null && v.stock !== '');
+                            const vStock = hasOwn ? Number(v.stock) : (Number(p.stock) || 0);
+                            return !Boolean(v.manualOutOfStock) && !Boolean(v.isOutOfStock) && vStock > 0;
+                        });
+                    }
+                    if (!isAvailable) return false;
+                }
+
+                return true;
+            });
         }
 
         // Trích xuất timestamp chính xác hỗ trợ mọi định dạng (ISO string, Timestamp, Date, ms)
@@ -451,7 +570,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
 
         // Hiển thị toàn bộ các sản phẩm đã lọc trong đợt này (không bị cắt xén thủ công gây mất sản phẩm)
         htmlContent = finalResults.map((p) => {
-            if (hasSearchTerm) {
+            if (shouldExpandVariants || p.isIndependentVariant) {
                 if (p.isIndependentVariant) {
                     return renderProductCard(p.parentProduct, p.parentId, favs, '../product/index.html', p.variantOverride);
                 }
@@ -488,7 +607,7 @@ async function fetchProducts(navigation = 'init', categoryOverride = null) {
         
         // Kiểm tra xem có sản phẩm tiếp theo không để hiện/ẩn nút Xem thêm
         if (loadMoreBtn) {
-            if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm) {
+            if (querySnapshot.docs.length === FETCH_LIMIT && !hasSearchTerm && !hasAdvancedFilter) {
                 loadMoreBtn.style.display = 'block';
                 loadMoreBtn.innerHTML = `Xem thêm sản phẩm`;
                 loadMoreBtn.onclick = () => {
@@ -515,9 +634,11 @@ function setupCategoryEvents() {
     document.querySelectorAll('.minimal-cat-item').forEach(item => {
         item.onclick = () => {
             const cat = item.dataset.filterCategory;
-            activeSubCategory = null;
+            activeSubCategory = cat === 'combo' ? 'combo' : null;
             if (cat === 'all') {
                 window.history.replaceState({}, '', window.location.pathname);
+            } else if (cat === 'combo') {
+                window.history.replaceState({}, '', `${window.location.pathname}?category=combo`);
             } else {
                 const slug = toCategorySlug(cat);
                 window.history.replaceState({}, '', `${window.location.pathname}?category=${slug}`);
@@ -546,51 +667,203 @@ function setupCategoryEvents() {
     });
 }
 
-// Logic xử lý Popup Bộ lọc Mobile
-function initMobileFilter() {
-    const modal = document.getElementById('mobile-filter-modal');
-    const openBtn = document.getElementById('mobile-filter-btn');
-    const closeBtn = document.querySelector('.close-filter-modal');
+// Logic xử lý Bộ lọc nâng cao, Pill sắp xếp & Nút xóa tìm kiếm chuẩn App
+function initAppFilters() {
+    const modal = document.getElementById('app-filter-modal');
+    const openBtn = document.getElementById('app-open-filter-btn');
+    const closeBtn = document.getElementById('app-close-filter-modal');
     const applyBtn = document.getElementById('apply-filter-btn');
     const resetBtn = document.getElementById('reset-filter-btn');
+    const clearAllBtn = document.getElementById('app-clear-filters-btn');
+    const minInput = document.getElementById('price-min');
+    const maxInput = document.getElementById('price-max');
+    const salePill = document.getElementById('filter-pill-sale');
+    const comboPill = document.getElementById('filter-pill-combo');
+    const clearSearchBtn = document.getElementById('btn-clear-search-name');
+    const searchInput = document.getElementById('search-name');
 
-    if (!modal || !openBtn) return;
+    let draftSaleOnly = filterSaleOnly;
+    let draftComboOnly = filterComboOnly;
+    let draftInStockOnly = filterInStockOnly;
 
-    openBtn.onclick = () => modal.classList.add('active');
-    closeBtn.onclick = () => modal.classList.remove('active');
-    
-    // Đóng khi click ra ngoài vùng content
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.classList.remove('active');
+    const syncPricePresetPills = (minVal, maxVal) => {
+        document.querySelectorAll('#app-price-preset-pills .app-modal-pill').forEach(btn => {
+            const pMin = Number(btn.dataset.min) || 0;
+            const pMax = Number(btn.dataset.max) || 0;
+            btn.classList.toggle('active', pMin === minVal && pMax === maxVal);
+        });
     };
 
-    applyBtn.onclick = () => {
-        fetchProducts('init');
+    const syncModalUI = () => {
+        if (minInput) minInput.value = filterMinPrice > 0 ? String(filterMinPrice) : '';
+        if (maxInput) maxInput.value = filterMaxPrice > 0 ? String(filterMaxPrice) : '';
+        syncPricePresetPills(filterMinPrice, filterMaxPrice);
+        if (salePill) salePill.classList.toggle('active', draftSaleOnly);
+        if (comboPill) comboPill.classList.toggle('active', draftComboOnly);
+        document.querySelectorAll('#app-stock-pills .app-modal-pill').forEach(btn => {
+            const wantInStock = btn.dataset.stock === 'instock';
+            btn.classList.toggle('active', wantInStock === draftInStockOnly);
+        });
+    };
+
+    const closeModal = () => {
+        if (!modal) return;
         modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
     };
 
-    resetBtn.onclick = () => {
-        const minInput = document.getElementById('price-min');
-        const maxInput = document.getElementById('price-max');
+    const openModal = () => {
+        if (!modal) return;
+        draftSaleOnly = filterSaleOnly;
+        draftComboOnly = filterComboOnly;
+        draftInStockOnly = filterInStockOnly;
+        syncModalUI();
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+    };
+
+    const resetAllFilters = (includeSearch = false) => {
+        filterMinPrice = 0;
+        filterMaxPrice = 0;
+        filterSaleOnly = false;
+        filterComboOnly = false;
+        filterInStockOnly = false;
+        draftSaleOnly = false;
+        draftComboOnly = false;
+        draftInStockOnly = false;
+
         if (minInput) minInput.value = '';
         if (maxInput) maxInput.value = '';
-        
-        document.querySelectorAll('#mobile-filter-modal .filter-list a[data-filter-sale]').forEach(l => {
-            l.classList.toggle('active', l.dataset.filterSale === 'all');
-        });
-
-        fetchProducts('init');
-        modal.classList.remove('active');
+        if (includeSearch && searchInput) searchInput.value = '';
+        if (clearSearchBtn && searchInput) {
+            clearSearchBtn.style.display = searchInput.value.trim() ? 'inline-flex' : 'none';
+        }
+        syncModalUI();
+        updateActiveFilterBadge();
     };
+
+    if (openBtn && modal) {
+        openBtn.onclick = openModal;
+        if (closeBtn) closeBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+        });
+    }
+
+    document.querySelectorAll('#app-price-preset-pills .app-modal-pill').forEach(btn => {
+        btn.onclick = () => {
+            const pMin = Number(btn.dataset.min) || 0;
+            const pMax = Number(btn.dataset.max) || 0;
+            if (minInput) minInput.value = pMin > 0 ? String(pMin) : '';
+            if (maxInput) maxInput.value = pMax > 0 ? String(pMax) : '';
+            syncPricePresetPills(pMin, pMax);
+        };
+    });
+
+    const onCustomPriceInput = () => {
+        const curMin = Number(minInput?.value) || 0;
+        const curMax = Number(maxInput?.value) || 0;
+        syncPricePresetPills(curMin, curMax);
+    };
+    if (minInput) minInput.addEventListener('input', onCustomPriceInput);
+    if (maxInput) maxInput.addEventListener('input', onCustomPriceInput);
+
+    if (salePill) {
+        salePill.onclick = () => {
+            draftSaleOnly = !draftSaleOnly;
+            salePill.classList.toggle('active', draftSaleOnly);
+        };
+    }
+
+    if (comboPill) {
+        comboPill.onclick = () => {
+            draftComboOnly = !draftComboOnly;
+            comboPill.classList.toggle('active', draftComboOnly);
+        };
+    }
+
+    document.querySelectorAll('#app-stock-pills .app-modal-pill').forEach(btn => {
+        btn.onclick = () => {
+            draftInStockOnly = btn.dataset.stock === 'instock';
+            document.querySelectorAll('#app-stock-pills .app-modal-pill').forEach(item => {
+                item.classList.toggle('active', item === btn);
+            });
+        };
+    });
+
+    if (applyBtn) {
+        applyBtn.onclick = () => {
+            filterMinPrice = Math.max(0, Number(minInput?.value) || 0);
+            filterMaxPrice = Math.max(0, Number(maxInput?.value) || 0);
+            filterSaleOnly = draftSaleOnly;
+            filterComboOnly = draftComboOnly;
+            filterInStockOnly = draftInStockOnly;
+            updateActiveFilterBadge();
+            closeModal();
+            fetchProducts('init');
+        };
+    }
+
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            resetAllFilters(false);
+            closeModal();
+            fetchProducts('init');
+        };
+    }
+
+    if (clearAllBtn) {
+        clearAllBtn.onclick = () => {
+            resetAllFilters(true);
+            fetchProducts('init');
+        };
+    }
+
+    // Pill sắp xếp ngang chuẩn App
+    document.querySelectorAll('#app-sort-pills .app-sort-chip').forEach(chip => {
+        chip.onclick = () => {
+            const sortVal = chip.dataset.sort || 'newest';
+            syncSortPillsUI(sortVal);
+            const params = new URLSearchParams(window.location.search);
+            params.set('sort', sortVal);
+            window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+            fetchProducts('init');
+        };
+    });
+
+    // Nút X xóa nhanh từ khóa tìm kiếm
+    if (clearSearchBtn && searchInput) {
+        clearSearchBtn.onclick = () => {
+            searchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            updateActiveFilterBadge();
+            searchInput.focus();
+            fetchProducts('init');
+        };
+    }
 }
 
 // Hàm xử lý tham số URL và trạng thái ban đầu sau khi đã có danh mục
 function handleInitialFilters() {
     const urlParams = new URLSearchParams(window.location.search);
-    let catParam = urlParams.get('category');
+    const filterParam = urlParams.get('filter') || '';
+    let catParam = (filterParam === 'combo') ? 'combo' : urlParams.get('category');
     const collParam = urlParams.get('collection');
+    const sortParam = urlParams.get('sort');
+
+    if (sortParam) {
+        const sortSelect = document.getElementById('sort-by');
+        if (sortSelect && Array.from(sortSelect.options).some(opt => opt.value === sortParam)) {
+            sortSelect.value = sortParam;
+        }
+    }
     
-    if (catParam && !collParam) {
+    if (catParam === 'combo') {
+        activeSubCategory = 'combo';
+    } else if (catParam && !collParam) {
         const resolved = resolveCategoryFromParam(catParam, dynamicCategories);
         if (resolved.isGroup) {
             activeSubCategory = null;
@@ -612,10 +885,18 @@ function handleInitialFilters() {
     }
 
     const searchParam = urlParams.get('search') || urlParams.get('q');
+    const clearSearchBtn = document.getElementById('btn-clear-search-name');
     if (searchParam) {
         const sidebarSearch = document.getElementById('search-name');
         if (sidebarSearch) sidebarSearch.value = searchParam;
+        if (clearSearchBtn) clearSearchBtn.style.display = 'inline-flex';
+    } else if (clearSearchBtn) {
+        clearSearchBtn.style.display = 'none';
     }
+
+    const currentSortVal = document.getElementById('sort-by')?.value || 'newest';
+    syncSortPillsUI(currentSortVal);
+    updateActiveFilterBadge();
 
     renderCategoryGrid();
     fetchProducts('init');
@@ -644,18 +925,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    initMobileFilter();
+    initAppFilters();
 
     // Thêm listener cho bộ lọc sắp xếp
     const sortBy = document.getElementById('sort-by');
     if (sortBy) {
-        sortBy.addEventListener('change', () => fetchProducts('init'));
+        sortBy.addEventListener('change', () => {
+            syncSortPillsUI(sortBy.value);
+            const params = new URLSearchParams(window.location.search);
+            params.set('sort', sortBy.value);
+            window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+            fetchProducts('init');
+        });
     }
 
     // Thêm listener cho ô tìm kiếm
     const searchInput = document.getElementById('search-name');
+    const clearSearchBtn = document.getElementById('btn-clear-search-name');
     if (searchInput) {
         searchInput.addEventListener('input', () => {
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchInput.value.trim() ? 'inline-flex' : 'none';
+            }
+            updateActiveFilterBadge();
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => fetchProducts('init'), 500);
         });

@@ -7,160 +7,312 @@
     <meta name="description" content="Quản lý thông tin tài khoản, sản phẩm yêu thích và lịch sử đơn hàng của bạn tại Tiệm Nhà Gốm. Đăng nhập để trải nghiệm mua sắm cá nhân hóa và nhiều ưu đãi hấp dẫn.">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="canonical" href="https://tiemnhagom.vn/profile/">
-    <link rel="stylesheet" href="../css/style.css?v=19">
+    <link rel="stylesheet" href="../css/style.css?v=57">
+    <link rel="stylesheet" href="../css/profile.css?v=14">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="header-placeholder"></div>
     <div id="toast-container" class="toast-container"></div>
 
     <main class="profile-layout-container" style="display: none;" id="profile-main-layout">
+        <!-- CỘT TRÁI: Chia thành 3 cụm Card (Sticky khi cuộn) -->
         <aside class="profile-sidebar">
-            <div class="profile-sidebar-header">
-                <div class="profile-avatar-container">
-                    <img id="sidebar-avatar" src="../Asset/images/default-avatar.png" alt="Avatar">
-                    <input type="file" id="avatar-input" accept="image/*" style="display:none">
+            <!-- Cụm 1: Thẻ định danh & Thống kê (Theo mẫu) -->
+            <div class="profile-user-card">
+                <div class="profile-user-banner"></div>
+                <div class="profile-avatar-row">
+                    <div class="profile-avatar-container" id="btn-edit-avatar" title="Nhấn để đổi ảnh đại diện">
+                        <img id="sidebar-avatar" src="../Asset/images/default-avatar.png" alt="Avatar">
+                        <span class="profile-avatar-hover-overlay" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2"></path>
+                                <circle cx="12" cy="13" r="3"></circle>
+                            </svg>
+                        </span>
+                        <input type="file" id="avatar-input" accept="image/*" style="display:none">
+                    </div>
                 </div>
-                <div class="profile-sidebar-info">
+                <div class="profile-user-body">
                     <h3 id="sidebar-name">Đang tải...</h3>
-                    <button class="btn-minimal" id="btn-edit-avatar">Sửa ảnh đại diện</button>
+                    <p id="sidebar-email" class="profile-user-email"></p>
+                    <div class="profile-user-divider"></div>
+                    <div class="profile-user-since">
+                        <i class="ti ti-shield-check"></i>
+                        <span id="sidebar-member-since">Thành viên Tiệm Nhà Gốm</span>
+                    </div>
+                </div>
+                <div class="profile-user-stats">
+                    <div class="profile-stat-box">
+                        <strong id="sidebar-stat-orders">0</strong>
+                        <span>Đơn hàng</span>
+                    </div>
+                    <div class="profile-stat-box">
+                        <strong id="sidebar-stat-spent">0đ</strong>
+                        <span>Đã chi</span>
+                    </div>
                 </div>
             </div>
-            <ul class="profile-nav">
-                <li><button class="profile-nav-btn active" data-target="info-section">Thông tin khách hàng</button></li>
-                <li><button class="profile-nav-btn" data-target="order-section">Đơn hàng của bạn</button></li>
-                <li><button class="profile-nav-btn" data-target="fav-section">Sản phẩm yêu thích</button></li>
-                <li><button class="profile-nav-btn" data-target="voucher-section">Mã ưu đãi</button></li>
-                <li><button class="profile-nav-btn" data-target="membership-section">Gốm Membership</button></li>
-                <li><button class="profile-nav-btn" id="btn-change-password">Đổi mật khẩu</button></li>
-                <li><button class="profile-nav-btn" id="btn-logout-sidebar">Đăng xuất</button></li>
-            </ul>
+
+            <!-- Cụm 2: Menu điều hướng -->
+            <div class="profile-sidebar-card">
+                <ul class="profile-nav">
+                    <li>
+                        <button class="profile-nav-btn active" data-target="info-section">
+                            <i class="ti ti-user"></i>
+                            <span class="profile-nav-label">Thông tin khách hàng</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="profile-nav-btn" data-target="order-section">
+                            <i class="ti ti-package"></i>
+                            <span class="profile-nav-label">Đơn hàng của bạn</span>
+                            <span class="profile-nav-badge is-delivering" id="nav-badge-orders" style="display: none;" title="Đơn hàng đang giao">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="profile-nav-btn" data-target="fav-section">
+                            <i class="ti ti-heart-filled"></i>
+                            <span class="profile-nav-label">Sản phẩm yêu thích</span>
+                            <span class="profile-nav-badge" id="nav-badge-favs">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="profile-nav-btn" data-target="voucher-section">
+                            <i class="ti ti-ticket"></i>
+                            <span class="profile-nav-label">Mã ưu đãi</span>
+                            <span class="profile-nav-badge" id="nav-badge-vouchers">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="profile-nav-btn" data-target="membership-section">
+                            <i class="ti ti-crown"></i>
+                            <span class="profile-nav-label">Gốm Membership</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Cụm 3: Đăng xuất -->
+            <div class="profile-sidebar-card">
+                <button class="profile-nav-btn" id="btn-logout-sidebar"><i class="ti ti-logout"></i> Đăng xuất</button>
+            </div>
         </aside>
 
+        <!-- CỘT PHẢI: Giữ nguyên kiểu thiết kế cũ, chia từng phần thành các cụm Card riêng -->
         <section class="profile-main-content">
-            <!-- Thông tin khách hàng -->
+            <!-- Thông tin khách hàng (Chia thành 3 cụm Card) -->
             <div id="info-section" class="profile-section active">
-                <h2 class="section-title">THÔNG TIN KHÁCH HÀNG</h2>
-                <form id="edit-profile-form" class="profile-horizontal-form">
-                    <div class="form-row-3">
+                <!-- Cụm 1: Thông tin khách hàng (UI dọc) -->
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">THÔNG TIN KHÁCH HÀNG</h2>
+                    <form id="edit-profile-form" class="profile-horizontal-form profile-vertical-form">
                         <div class="form-group">
-                            <label>Họ và tên của bạn</label>
-                            <input type="text" id="edit-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Số điện thoại</label>
-                            <input type="tel" id="edit-phone" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="edit-email" disabled>
-                        </div>
-                    </div>
-                    <div class="form-row-3">
-                        <div class="form-group">
-                            <label>Ngày sinh</label>
-                            <input type="date" id="edit-dob">
-                        </div>
-                        <div class="form-group">
-                            <label>Giới tính</label>
-                            <select id="edit-gender">
-                                <option value="">Chọn giới tính</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                                <option value="Khác">Khác</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Ngày tham gia</label>
-                            <input type="text" id="edit-join-date" disabled>
-                        </div>
-                    </div>
-                    <div class="form-group" id="otp-group-profile" style="display: none;">
-                        <label>Mã xác thực OTP (Gửi tới SĐT mới)</label>
-                        <div class="otp-input-container" id="otp-inputs-profile">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
-                        </div>
-                        <button type="button" id="btn-resend-otp-profile" class="btn-minimal" style="font-size:0.7rem; margin-top:5px; border:none; text-decoration:underline; width:auto; padding:0;">Gửi lại mã</button>
-                    </div>
-                    <button type="submit" class="btn-dark" style="margin-top: 1rem; width: auto; min-width: 150px;">Lưu thông tin</button>
-                </form>
-
-                <h2 class="section-title" style="margin-top: 3rem;">TÀI KHOẢN LIÊN KẾT</h2>
-                <div style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem;">
-                    <p style="font-size: 0.85rem; color: #6E665D; margin-bottom: 1rem;">
-                        Liên kết tài khoản Google để dễ dàng đăng nhập nhanh chóng bằng 1 chạm.
-                    </p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #F0ECE6;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 36px; height: 36px; border-radius: 18px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid #E8E1D8;">
-                                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.8l3.7-2.9c-.2-.6-.4-1.4-.4-2.1z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17C3.7 20.7 7.5 23.5 12 23.5z"/></svg>
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.92rem; color: #2B2928;">Google</div>
-                                <div id="linked-google-status" style="font-size: 0.8rem; color: #6E665D;">Đang kiểm tra...</div>
+                            <label for="edit-name">Họ và tên của bạn</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-user"></i>
+                                <input type="text" id="edit-name" required>
                             </div>
                         </div>
-                        <div id="linked-google-action">
-                            <!-- Nút liên kết hoặc badge đã liên kết -->
+
+                        <div class="form-group">
+                            <label for="edit-phone">Số điện thoại</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-phone"></i>
+                                <input type="tel" id="edit-phone" required>
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="form-group">
+                            <label for="edit-email">Email</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-mail"></i>
+                                <input type="email" id="edit-email" disabled>
+                            </div>
+                            <small class="profile-field-hint">Email không thể thay đổi</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-dob">Ngày sinh</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-calendar"></i>
+                                <input type="date" id="edit-dob">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-gender">Giới tính</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-users"></i>
+                                <select id="edit-gender">
+                                    <option value="">Chọn giới tính</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-join-date">Ngày tham gia</label>
+                            <div class="profile-input-wrap">
+                                <i class="ti ti-clock"></i>
+                                <input type="text" id="edit-join-date" disabled>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="otp-group-profile" style="display: none;">
+                            <label>Mã xác thực OTP (Gửi tới SĐT mới)</label>
+                            <div class="otp-input-container" id="otp-inputs-profile">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric">
+                            </div>
+                            <button type="button" id="btn-resend-otp-profile" class="btn-minimal" style="font-size:0.7rem; margin-top:5px; border:none; text-decoration:underline; width:auto; padding:0;">Gửi lại mã</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Đăng nhập liên kết</label>
+                            <div class="profile-linked-inline">
+                                <div class="profile-google-chip">
+                                    <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.8l3.7-2.9c-.2-.6-.4-1.4-.4-2.1z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17C3.7 20.7 7.5 23.5 12 23.5z"/></svg>
+                                    <span>Google</span>
+                                </div>
+                                <span id="linked-google-status" class="profile-linked-status-text">Đang kiểm tra...</span>
+                                <div id="linked-google-action"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit" id="btn-save-profile" class="btn-dark profile-save-btn" disabled>Lưu thông tin</button>
+                        </div>
+                    </form>
                 </div>
 
-                <h2 class="section-title" style="margin-top: 3rem;">ĐỊA CHỈ GIAO HÀNG</h2>
-                <div id="address-list" style="margin-bottom: 1rem;">
-                    <!-- Địa chỉ render tại đây -->
+                <!-- Cụm 2: Bảo mật & Đổi mật khẩu -->
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">BẢO MẬT</h2>
+                    <div id="security-google-banner" class="profile-security-provider-box">
+                        <div class="profile-security-provider-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.8l3.7-2.9c-.2-.6-.4-1.4-.4-2.1z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17C3.7 20.7 7.5 23.5 12 23.5z"/></svg>
+                        </div>
+                        <div class="profile-security-provider-info">
+                            <strong id="security-provider-title">Đăng nhập qua Google</strong>
+                            <p id="security-provider-desc">Tài khoản này sử dụng Google để đăng nhập. Bạn có thể đổi hoặc đặt mật khẩu đăng nhập bên dưới.</p>
+                        </div>
+                    </div>
+
+                    <form id="change-password-form" class="profile-horizontal-form profile-vertical-form" style="margin-top: 1.25rem;">
+                        <div class="form-group" id="current-password-group">
+                            <label for="current-password">Mật khẩu hiện tại</label>
+                            <div class="profile-input-wrap has-pw-toggle">
+                                <i class="ti ti-lock"></i>
+                                <input type="password" id="current-password" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password">
+                                <button type="button" class="pw-toggle-btn" data-target="current-password" aria-label="Hiện/ẩn mật khẩu">
+                                    <i class="ti ti-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="new-password">Mật khẩu mới</label>
+                            <div class="profile-input-wrap has-pw-toggle">
+                                <i class="ti ti-key"></i>
+                                <input type="password" id="new-password" placeholder="Nhập mật khẩu mới" autocomplete="new-password">
+                                <button type="button" class="pw-toggle-btn" data-target="new-password" aria-label="Hiện/ẩn mật khẩu">
+                                    <i class="ti ti-eye"></i>
+                                </button>
+                            </div>
+                            <ul class="password-rules-list" id="password-rules-list">
+                                <li id="pw-rule-length"><i class="ti ti-circle"></i> Tối thiểu 6 ký tự</li>
+                                <li id="pw-rule-upper"><i class="ti ti-circle"></i> Có ít nhất 1 chữ cái in hoa (A-Z)</li>
+                                <li id="pw-rule-number"><i class="ti ti-circle"></i> Có ít nhất 1 chữ số (0-9)</li>
+                                <li id="pw-rule-special"><i class="ti ti-circle"></i> Có ít nhất 1 ký tự đặc biệt (!@#$%^&amp;*...)</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm-new-password">Xác nhận mật khẩu mới</label>
+                            <div class="profile-input-wrap has-pw-toggle">
+                                <i class="ti ti-shield-check"></i>
+                                <input type="password" id="confirm-new-password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+                                <button type="button" class="pw-toggle-btn" data-target="confirm-new-password" aria-label="Hiện/ẩn mật khẩu">
+                                    <i class="ti ti-eye"></i>
+                                </button>
+                            </div>
+                            <small id="pw-match-hint" class="profile-field-hint" style="display: none;"></small>
+                        </div>
+
+                        <div class="profile-security-actions">
+                            <button type="submit" id="btn-submit-password" class="btn-dark profile-save-btn" disabled>Đổi mật khẩu</button>
+                            <button type="button" id="btn-change-password" class="btn-outline">Gửi link đặt lại qua Email</button>
+                        </div>
+                    </form>
                 </div>
-                <div id="no-addresses-msg" style="display: none; margin-bottom: 1rem; color: #666;">Bạn chưa có địa chỉ nào.</div>
-                <button id="btn-add-address" class="btn-dark" style="width: auto; min-width: 150px;">THÊM ĐỊA CHỈ MỚI</button>
-                <div id="admin-action-container" style="display: none; border-top: 1px dashed #eee; margin-top: 1.5rem; padding-top: 1.5rem;"></div>
+
+                <!-- Cụm 3: Địa chỉ giao hàng -->
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">ĐỊA CHỈ GIAO HÀNG</h2>
+                    <div id="address-list" style="margin-bottom: 1rem;">
+                        <!-- Địa chỉ render tại đây -->
+                    </div>
+                    <div id="no-addresses-msg" style="display: none; margin-bottom: 1rem; color: #666;">Bạn chưa có địa chỉ nào.</div>
+                    <button id="btn-add-address" class="btn-dark" style="margin-top: 0; width: auto; min-width: 160px;">Thêm địa chỉ mới</button>
+                    <div id="admin-action-container" style="display: none; border-top: 1px dashed #eee; margin-top: 1.5rem; padding-top: 1.5rem;"></div>
+                </div>
             </div>
 
             <!-- Sản phẩm yêu thích -->
             <div id="fav-section" class="profile-section">
-                <h2 class="section-title">SẢN PHẨM YÊU THÍCH</h2>
-                <div id="favorites-list" class="grid" style="padding: 1rem 0;">
-                    <p style="text-align: center;">Đang tải danh sách yêu thích...</p>
-                </div>
-                <div id="no-favorites-msg" style="display: none; text-align: center; padding: 2rem;">
-                    <p>Bạn chưa có sản phẩm yêu thích nào.</p>
-                    <a href="../" class="btn-dark" style="margin-top: 1rem;">Khám phá sản phẩm</a>
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">SẢN PHẨM YÊU THÍCH</h2>
+                    <div id="favorites-list" class="grid" style="padding: 0.5rem 0;">
+                        <p style="text-align: center;">Đang tải danh sách yêu thích...</p>
+                    </div>
+                    <div id="no-favorites-msg" style="display: none; text-align: center; padding: 2rem;">
+                        <p>Bạn chưa có sản phẩm yêu thích nào.</p>
+                        <a href="../" class="btn-dark" style="margin-top: 1rem;">Khám phá sản phẩm</a>
+                    </div>
                 </div>
             </div>
 
             <!-- Lịch sử đơn hàng -->
             <div id="order-section" class="profile-section">
-                <h2 class="section-title">LỊCH SỬ ĐƠN HÀNG</h2>
-                <div id="order-history-list" class="order-list">
-                    <p style="text-align: center;">Đang tải lịch sử đơn hàng...</p>
-                </div>
-                <div id="no-orders-msg" style="display: none; text-align: center; padding: 2rem;">
-                    <p>Bạn chưa có đơn hàng nào.</p>
-                    <a href="../" class="btn-dark" style="margin-top: 1rem;">Bắt đầu mua sắm</a>
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">LỊCH SỬ ĐƠN HÀNG</h2>
+                    <div id="order-history-list" class="order-list">
+                        <p style="text-align: center;">Đang tải lịch sử đơn hàng...</p>
+                    </div>
+                    <div id="no-orders-msg" style="display: none; text-align: center; padding: 2rem;">
+                        <p>Bạn chưa có đơn hàng nào.</p>
+                        <a href="../" class="btn-dark" style="margin-top: 1rem;">Bắt đầu mua sắm</a>
+                    </div>
                 </div>
             </div>
 
             <!-- Mã ưu đãi -->
             <div id="voucher-section" class="profile-section">
-                <h2 class="section-title">MÃ ƯU ĐÃI CỦA BẠN</h2>
-                <div id="voucher-list" class="grid" style="padding: 1rem 0;">
-                    <p style="text-align: center;">Đang tải danh sách mã ưu đãi...</p>
-                </div>
-                <div id="no-vouchers-msg" style="display: none; text-align: center; padding: 2rem;">
-                    <p>Hiện tại chưa có mã ưu đãi nào khả dụng.</p>
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">MÃ ƯU ĐÃI CỦA BẠN</h2>
+                    <div id="voucher-list" class="voucher-grid" style="padding: 0.5rem 0;">
+                        <p style="text-align: center;">Đang tải danh sách mã ưu đãi...</p>
+                    </div>
+                    <div id="no-vouchers-msg" style="display: none; text-align: center; padding: 2rem;">
+                        <p>Hiện tại chưa có mã ưu đãi nào khả dụng.</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Gốm Membership -->
             <div id="membership-section" class="profile-section">
-                <h2 class="section-title">GỐM MEMBERSHIP</h2>
-                <div id="membership-card-container">
-                    <p style="text-align: center;">Đang tải hạng thành viên...</p>
+                <div class="profile-cluster-card">
+                    <h2 class="section-title">GỐM MEMBERSHIP</h2>
+                    <div id="membership-card-container">
+                        <p style="text-align: center;">Đang tải hạng thành viên...</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -206,7 +358,6 @@
         </div>
     </div>
 
-    <script type="module" src="../js/profile.js?v=2.4"></script>
+    <script type="module" src="../js/profile.js?v=3.8"></script>
 </body>
 </html>
-

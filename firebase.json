@@ -20,7 +20,8 @@
       "*.log",
       "*.md",
       "product/index.html",
-      "products/index.html"
+      "products/index.html",
+      "blog/article.html"
     ],
 
 
@@ -118,6 +119,18 @@
       {
         "source": "/products/**",
         "function": "productsList"
+      },
+      {
+        "source": "/sitemap-articles.xml",
+        "function": "sitemapArticles"
+      },
+      {
+        "source": "/blog/article.html",
+        "function": "articleDetail"
+      },
+      {
+        "source": "/blog/**",
+        "function": "articleDetail"
       }
     ]
   },

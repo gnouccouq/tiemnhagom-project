@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bài viết | Tiệm Nhà Gốm</title>
+    <meta name="description" content="Tin tức, câu chuyện gốm thủ công và cẩm nang không gian sống tại Tiệm Nhà Gốm.">
+    <link rel="canonical" href="https://tiemnhagom.vn/blog/">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="stylesheet" href="../css/style.css?v=57">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
@@ -15,16 +17,26 @@
     
     <style>
         .article-page-layout {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1560px;
             margin: 0 auto;
-            padding: 40px 20px 60px 20px; /* Reduced top padding for breadcrumb */
+            padding: 36px 4% 64px 4%;
+            box-sizing: border-box;
             display: grid;
-            grid-template-columns: 2.5fr 1fr;
-            gap: 50px;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 56px;
+        }
+        @media (max-width: 1100px) {
+            .article-page-layout {
+                grid-template-columns: minmax(0, 1fr) 300px;
+                gap: 36px;
+            }
         }
         @media (max-width: 992px) {
             .article-page-layout {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
+                padding: 20px 16px 48px 16px;
+                gap: 28px;
             }
         }
         .article-header {
@@ -40,16 +52,16 @@
         }
         .article-title {
             font-family: var(--font-serif);
-            font-size: 2.5rem;
+            font-size: clamp(1.8rem, 2.8vw, 2.6rem);
             margin-bottom: 20px;
             line-height: 1.3;
         }
         .article-cover {
             width: 100%;
             height: auto;
-            max-height: 500px;
+            max-height: 620px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 40px;
         }
         
@@ -69,6 +81,7 @@
         }
         .ql-editor img {
             max-width: 100%;
+            height: auto;
             border-radius: 8px;
             margin: 20px auto;
             display: block;
@@ -107,6 +120,7 @@
             height: 80px;
             object-fit: cover;
             border-radius: 4px;
+            flex-shrink: 0;
         }
         .sidebar-article h4 {
             font-size: 0.95rem;
@@ -129,9 +143,11 @@
 
         /* Suggested Products CSS */
         .article-suggested-products {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1560px;
             margin: 0 auto 80px auto;
-            padding: 0 20px;
+            padding: 0 4%;
+            box-sizing: border-box;
         }
         .article-suggested-products > h3 {
             font-family: var(--font-serif);
@@ -141,33 +157,45 @@
         }
         .article-product-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 30px;
         }
         @media (max-width: 992px) {
+            .article-suggested-products {
+                padding: 0 16px;
+            }
             .article-product-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
         @media (max-width: 576px) {
             .article-product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
             }
         }
         
         /* Breadcrumb & Meta Row */
         .article-breadcrumb {
             margin-top: 100px; /* offset for fixed header */
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1560px;
             margin-left: auto;
             margin-right: auto;
-            padding: 20px 20px 0 20px;
+            padding: 20px 4% 0 4%;
+            box-sizing: border-box;
             font-size: 0.95rem;
             color: #666;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
+        }
+        @media (max-width: 992px) {
+            .article-breadcrumb {
+                margin-top: 14px;
+                padding: 12px 16px 0 16px;
+            }
         }
         .article-breadcrumb a {
             color: #888;
@@ -195,11 +223,42 @@
         }
         .article-meta-info {
             font-size: 0.95rem;
-            color: #888;
+            color: #71717a;
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .article-meta-info strong {
-            color: #000;
+            color: #18181b;
             font-weight: 600;
+        }
+        .article-meta-sep {
+            color: #d4d4d8;
+        }
+        .article-views-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            color: #18181b;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+        }
+        .article-views-icon {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+        .article-views-badge.is-updated {
+            transform: scale(1.06);
+            background: #e4e4e7;
+            border-color: #18181b;
         }
         .article-share {
             display: flex;
@@ -310,6 +369,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="../css/article.css?v=3">
 </head>
 <body class="home-page">
     <div id="header-placeholder"></div>
@@ -323,10 +383,27 @@
             </div>
             
             <aside class="article-sidebar">
+                <div class="sidebar-widget article-toc-widget" id="article-toc-widget" hidden>
+                    <h3>Mục lục bài viết</h3>
+                    <nav aria-label="Mục lục bài viết">
+                        <ul class="article-toc-list" id="article-toc-list"></ul>
+                    </nav>
+                </div>
+
                 <div class="sidebar-widget">
                     <h3>Bài viết mới nhất</h3>
                     <div id="recent-articles-list">
                         <div style="text-align: center;"><span class="spinner-small"></span></div>
+                    </div>
+                </div>
+
+                <div class="sidebar-widget article-cta-widget">
+                    <span class="article-cta-tag">TƯ VẤN TRỰC TIẾP</span>
+                    <h3>Cần tư vấn gốm &amp; decor không gian?</h3>
+                    <p>Tiệm Nhà Gốm hỗ trợ chọn sản phẩm, phối bộ bàn ăn, quà tặng doanh nghiệp và trang trí sự kiện theo yêu cầu.</p>
+                    <div class="article-cta-actions">
+                        <a href="https://zalo.me/0777709662" target="_blank" rel="noopener" class="article-cta-btn is-primary">Nhắn Zalo tư vấn</a>
+                        <a href="tel:0777709662" class="article-cta-btn is-outline">Hotline: 0777 709 662</a>
                     </div>
                 </div>
             </aside>
@@ -338,9 +415,26 @@
                 <div style="text-align: center; grid-column: 1/-1;"><span class="spinner"></span></div>
             </div>
         </div>
+
+        <div id="article-lightbox" class="article-lightbox" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Xem ảnh phóng to">
+            <button type="button" class="article-lightbox-close" id="article-lightbox-close" aria-label="Đóng">&times;</button>
+            <button type="button" class="article-lightbox-nav is-prev" id="article-lightbox-prev" aria-label="Ảnh trước">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <figure class="article-lightbox-stage">
+                <img id="article-lightbox-img" src="" alt="">
+                <figcaption class="article-lightbox-caption">
+                    <span id="article-lightbox-text"></span>
+                    <span id="article-lightbox-counter"></span>
+                </figcaption>
+            </figure>
+            <button type="button" class="article-lightbox-nav is-next" id="article-lightbox-next" aria-label="Ảnh tiếp theo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
     </main>
 
     <div id="footer-placeholder"></div>
-    <script type="module" src="../js/article.js"></script>
+    <script type="module" src="../js/article.js?v=8"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
     <meta name="description" content="Đăng nhập vào tài khoản của bạn tại Tiệm Nhà Gốm để quản lý đơn hàng, sản phẩm yêu thích và trải nghiệm mua sắm cá nhân hóa. Hãy đăng nhập ngay để khám phá những ưu đãi hấp dẫn và dịch vụ chăm sóc khách hàng tận tâm của chúng tôi.">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="canonical" href="https://tiemnhagom.vn/login/">
-    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="stylesheet" href="../css/style.css?v=57">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -27,34 +27,72 @@
                 <button class="auth-tab" data-target="phone-section">Số điện thoại</button>
             </div>
 
-            <!-- Email Login -->
+            <!-- Email Login & Register -->
             <div id="email-section" class="auth-form active">
-                <form id="login-form">
+                <form id="login-form" novalidate>
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="login-email" required placeholder="example@gmail.com">
+                        <label for="login-email">Email</label>
+                        <div class="auth-input-wrap">
+                            <i class="ti ti-mail auth-input-icon"></i>
+                            <input type="email" id="login-email" required placeholder="example@gmail.com" autocomplete="email">
+                        </div>
+                        <p id="login-email-hint" class="auth-field-hint" style="display: none;"></p>
                     </div>
                     <div class="form-group">
-                        <label>Mật khẩu</label>
-                        <input type="password" id="login-password" required placeholder="******">
+                        <label for="login-password">Mật khẩu</label>
+                        <div class="auth-input-wrap has-pw-toggle">
+                            <i class="ti ti-lock auth-input-icon"></i>
+                            <input type="password" id="login-password" required placeholder="Nhập mật khẩu của bạn" autocomplete="current-password">
+                            <button type="button" class="auth-pw-toggle-btn" data-target="login-password" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn-dark" style="width: 100%;">Đăng nhập</button>
+                    <button type="submit" id="btn-submit-login" class="btn-dark" style="width: 100%;">Đăng nhập</button>
                     <div style="margin-top: 1rem; text-align: center; font-size: 0.85rem;">
                         <a href="javascript:void(0)" id="btn-forgot-pw" style="color: #666;">Quên mật khẩu?</a>
                     </div>
                     <button type="button" id="toggle-register" class="btn-minimal" style="width: 100%; margin-top: 1rem; border: none;">Chưa có tài khoản? Đăng ký ngay</button>
                 </form>
 
-                <form id="register-form" style="display: none;">
+                <form id="register-form" style="display: none;" novalidate>
                     <div class="form-group">
-                        <label>Email mới</label>
-                        <input type="email" id="reg-email" required placeholder="example@gmail.com">
+                        <label for="reg-email">Email đăng ký <span style="font-weight: 400; color: #71717a; font-size: 0.82rem;">(bắt buộc có @)</span></label>
+                        <div class="auth-input-wrap">
+                            <i class="ti ti-mail auth-input-icon"></i>
+                            <input type="email" id="reg-email" required placeholder="example@gmail.com" autocomplete="email">
+                        </div>
+                        <p id="reg-email-hint" class="auth-field-hint" style="display: none;"></p>
                     </div>
                     <div class="form-group">
-                        <label>Mật khẩu</label>
-                        <input type="password" id="reg-password" required minlength="6" placeholder="Tối thiểu 6 ký tự">
+                        <label for="reg-password">Mật khẩu</label>
+                        <div class="auth-input-wrap has-pw-toggle">
+                            <i class="ti ti-key auth-input-icon"></i>
+                            <input type="password" id="reg-password" required minlength="6" placeholder="Nhập mật khẩu mới" autocomplete="new-password">
+                            <button type="button" class="auth-pw-toggle-btn" data-target="reg-password" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
+                        <ul class="auth-rules-list" id="reg-password-rules-list">
+                            <li id="reg-rule-email"><i class="ti ti-circle"></i> Email hợp lệ (bắt buộc có ký tự @)</li>
+                            <li id="reg-rule-length"><i class="ti ti-circle"></i> Tối thiểu 6 ký tự</li>
+                            <li id="reg-rule-upper"><i class="ti ti-circle"></i> Có ít nhất 1 chữ cái in hoa (A-Z)</li>
+                            <li id="reg-rule-number"><i class="ti ti-circle"></i> Có ít nhất 1 chữ số (0-9)</li>
+                            <li id="reg-rule-special"><i class="ti ti-circle"></i> Có ít nhất 1 ký tự đặc biệt (!@#$%^&*...)</li>
+                        </ul>
                     </div>
-                    <button type="submit" class="btn-dark" style="width: 100%;">Tạo tài khoản</button>
+                    <div class="form-group">
+                        <label for="reg-confirm-password">Xác nhận mật khẩu</label>
+                        <div class="auth-input-wrap has-pw-toggle">
+                            <i class="ti ti-shield-check auth-input-icon"></i>
+                            <input type="password" id="reg-confirm-password" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+                            <button type="button" class="auth-pw-toggle-btn" data-target="reg-confirm-password" aria-label="Hiện/ẩn mật khẩu">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
+                        <p id="reg-pw-match-hint" class="auth-field-hint" style="display: none;"></p>
+                    </div>
+                    <button type="submit" id="btn-submit-register" class="btn-dark" style="width: 100%;" disabled>Tạo tài khoản</button>
                     <button type="button" id="toggle-login" class="btn-minimal" style="width: 100%; margin-top: 1rem; border: none;">Đã có tài khoản? Đăng nhập</button>
                 </form>
             </div>
@@ -95,6 +133,6 @@
     </main>
 
     <div id="footer-placeholder"></div>
-    <script type="module" src="../js/login.js"></script>
+    <script type="module" src="../js/login.js?v=3"></script>
 </body>
 </html>

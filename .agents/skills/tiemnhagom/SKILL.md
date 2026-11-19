@@ -314,3 +314,23 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
   * Trong giao diện Quản trị (`body.admin-dashboard-layout`), toàn bộ khung lọc bên trái (`.kiot-filter-sidebar`), khung nội dung chính bên phải (`.kiot-product-main`), các ô nhập liệu (`input`, `select`) và các nút thao tác (`.kiot-btn-primary`, `.kiot-btn-outline`, `.btn-dark`, `.btn-outline`, `.btn-minimal`) **giữ nguyên bo góc vuông thanh lịch `6px`**, tuyệt đối không dùng `999px`.
 * **Nghiêm cấm Tìm & Thay thế hàng loạt (Blind Find-and-Replace) thuộc tính `border-radius`:**
   * Tuyệt đối không chạy lệnh thay thế hàng loạt kiểu `border-radius: 6px` -> `border-radius: 999px` trên toàn bộ file `css/style.css`, vì `css/style.css` dùng chung cho cả Storefront và Admin Dashboard. Mọi chỉnh sửa `border-radius` phải chỉ định rõ selector cụ thể.
+
+---
+
+## 18. Quy chuẩn UI/UX Cụm Card, Form Dọc Monochrome & Nút Lưu Dirty-State trên Web Storefront
+* **Bố cục Chia Từng Cụm Card Độc Lập (Clustered Card Layout — Trang Profile & Trang Chính Sách):**
+  * Khung bố cục 2 cột rộng thoáng (`max-width: 1400px - 1440px`, `width: 94% - 95%`), toàn bộ typography sử dụng font `Elle Gabor Std` (`var(--font-serif)`).
+  * **Cột trái (`position: sticky; top: 90px; width: 340px`):** Chia thành các cụm Card trắng độc lập (`border: 1px solid #e2e8f0; border-radius: 14px - 16px`), trong đó cụm Thẻ định danh có banner đầu thẻ, avatar bo góc squircle (`border-radius: 18px`) hiện lớp phủ mờ kèm icon camera chính giữa khi di chuột vào (`.profile-avatar-hover-overlay`), hiển thị đầy đủ Họ tên, địa chỉ Email (không cắt cụt bằng `...`), thời gian tham gia và hàng thống kê 2 cột **Đơn hàng | Đã chi** dưới đáy thẻ.
+  * **Cột phải (`.profile-main-content`):** Mỗi nhóm chức năng (Thông tin khách hàng, Tài khoản liên kết, Địa chỉ giao hàng, Lịch sử đơn hàng, Sản phẩm yêu thích, Mã ưu đãi, Gốm Membership) được tách thành từng cụm Card trắng riêng biệt (`.profile-cluster-card`).
+* **Quy chuẩn Form Dọc (Vertical Form) & Ô Nhập Liệu Tone Đen Trắng (Monochrome Inputs) trên Web:**
+  * Các trường biểu mẫu thông tin cá nhân xếp dọc 1 cột (`.profile-vertical-form`, `flex-direction: column; gap: 1.15rem`).
+  * Ô `input` / `select` dạng viên thuốc (`height: 52px; border-radius: 999px`) có icon dẫn đầu bên trái (`padding: 0 20px 0 48px !important` để chữ không đè lên icon) và sử dụng **tone màu Đen - Trắng / Xám trung tính (Monochrome)** đồng bộ Web:
+    * Trạng thái mặc định: nền `#f4f4f5`, viền `1px solid #e4e4e7`, chữ `#111111`, icon `#71717a`.
+    * Trạng thái Focus: nền `#ffffff`, viền đen `#000000`, `box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06)`, icon chuyển sang `#000000`.
+    * Trạng thái Disabled / Readonly: nền `#f4f4f5`, viền `#e4e4e7`, chữ `#71717a`, `cursor: not-allowed`.
+* **Quy chuẩn Nút Lưu theo Trạng Thái Thay Đổi Dữ Liệu (Dirty-State Save Button) & Kích thước Nút Hành Động Chuẩn Web:**
+  * Kích thước chuẩn đồng nhất cho nút Lưu và các nút hành động tương tự (`.btn-dark`, `.btn-outline`, `.profile-save-btn`, `#btn-add-address`, `#btn-login-profile`, `#btn-save-address`...): `padding: 12px 26px`, `min-width: 160px`, `font-size: 0.92rem`, `font-weight: 700`, `line-height: 1.4`, `border-radius: 999px`.
+  * Khi dữ liệu trong form chưa thay đổi so với giá trị gốc ban đầu (hoặc ngay sau khi vừa lưu thành công): nút Lưu ở trạng thái `disabled = true`, hiển thị nền xám mờ `#e4e4e7`, chữ `#71717a`, `cursor: not-allowed`.
+  * Khi người dùng chỉnh sửa bất kỳ trường nào khác với dữ liệu gốc: nút Lưu tự động kích hoạt (`disabled = false`) và chuyển sang nền Đen chữ Trắng (`#000000` / `#ffffff`) cho phép bấm lưu.
+* **Quy chuẩn Gói Quà Miễn Phí Quanh Năm trong Giỏ Hàng (Always-On Free Gift Wrap):**
+  * Tiệm Nhà Gốm hỗ trợ gói hộp quà và kèm thiệp viết tay miễn phí quanh năm cho mọi đơn hàng (không phụ thuộc dịp lễ), hộp chọn gói quà sử dụng bảng màu gốm mộc ấm áp (`#FAF8F5` / `#E8E1D8` / `#2B2928` / `#9C7156`), và toàn bộ nút thao tác trong Drawer Giỏ hàng (tăng/giảm số lượng, nút Xóa, nút đóng) đều bo tròn dạng viên thuốc (`border-radius: 999px`).

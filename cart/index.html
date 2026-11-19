@@ -7,7 +7,7 @@
     <meta name="description" content="Xem giỏ hàng của bạn tại Tiệm Nhà Gốm. Quản lý sản phẩm đã chọn, áp dụng mã ưu đãi và tiến hành thanh toán nhanh chóng để sở hữu những món đồ gốm thủ công tinh xảo và hoa tươi nghệ thuật.">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="canonical" href="https://tiemnhagom.vn/cart/">
-    <link rel="stylesheet" href="../css/style.css?v=20">
+    <link rel="stylesheet" href="../css/style.css?v=57">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     
@@ -113,14 +113,30 @@
             </div>
         </div>
         
-        <div id="empty-cart-msg" style="display: none; text-align: center; padding: 5rem;">
-            <p style="margin-bottom: 2rem;">Giỏ hàng của bạn đang trống.</p>
-            <a href="../" class="btn-dark">Quay lại mua sắm</a>
+        <div id="empty-cart-msg" style="display: none;">
+            <div class="tng-empty-cart tng-empty-cart--page">
+                <div class="tng-empty-cart-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1.5"></circle>
+                        <circle cx="20" cy="21" r="1.5"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                </div>
+                <h2 class="tng-empty-cart-title">Giỏ hàng trống</h2>
+                <p class="tng-empty-cart-desc">Hãy thêm sản phẩm để bắt đầu mua sắm. Hàng trăm tác phẩm gốm sứ thủ công và hoa tươi nghệ thuật đang chờ bạn!</p>
+                <a href="../products/" class="tng-empty-cart-btn">
+                    <span>Khám phá cửa hàng</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
-    <script type="module" src="../js/cart.js?v=5"></script>
+    <script type="module" src="../js/cart.js?v=7"></script>
 </body>
 </html>

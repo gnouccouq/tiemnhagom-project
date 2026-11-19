@@ -10,6 +10,8 @@ import {
 // Các khóa lưu trữ cục bộ (Khớp 100% với Mobile App)
 const READ_IDS_KEY = 'tiemnhagom_read_notification_ids';
 const DELETED_NOTIFS_KEY = 'tiemnhagom_deleted_notifications';
+const SESSION_BELL_RUNG_KEY = 'tng_notif_bell_rung';
+const SESSION_NUDGE_SHOWN_KEY = 'tng_notif_nudge_shown';
 
 // Trạng thái nội bộ
 let feedItems = [];
@@ -17,6 +19,140 @@ let currentFilter = 'all'; // 'all' | 'news' | 'promo' | 'order' | 'system'
 let pathPrefixGlobal = '';
 let isDropdownOpen = false;
 let hasInitialized = false;
+let hasCompletedInitialFeedLoad = false;
+let lastLoadedUid = '__uninitialized__';
+let realtimeUnsubs = [];
+let knownItemIds = new Set();
+let sourceBuckets = { news: [], global: [], user: [], orders: [] };
+let toastHideTimer = null;
+let nudgeHideTimer = null;
+let baseDocumentTitle = '';
+let hasRealtimeAlertPrefix = false;
+
+function escapeNotifHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+export function formatTabTitle(currentTitle, unreadCount, shouldPrefix) {
+    const cleanTitle = String(currentTitle || '').replace(/^\(\d+\+?\)\s*/, '');
+    if (!shouldPrefix || unreadCount <= 0) return cleanTitle;
+    const badgeText = unreadCount > 99 ? '99+' : String(unreadCount);
+    return `(${badgeText}) ${cleanTitle}`;
+}
+
+function syncTabTitle(unreadCount, forcePrefix = false) {
+    if (typeof document === 'undefined') return;
+    const cleaned = String(document.title || '').replace(/^\(\d+\+?\)\s*/, '');
+    if (cleaned) baseDocumentTitle = cleaned;
+
+    if (forcePrefix && unreadCount > 0) {
+        hasRealtimeAlertPrefix = true;
+    } else if (unreadCount <= 0 || (!document.hidden && isDropdownOpen)) {
+        hasRealtimeAlertPrefix = false;
+    }
+
+    const shouldPrefix = unreadCount > 0 && (document.hidden === true || hasRealtimeAlertPrefix);
+    const nextTitle = formatTabTitle(baseDocumentTitle || document.title, unreadCount, shouldPrefix);
+    if (nextTitle && document.title !== nextTitle) {
+        document.title = nextTitle;
+    }
+}
+
+function prefersReducedMotionSetting() {
+    return typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function triggerBellRing() {
+    if (prefersReducedMotionSetting()) return;
+    const btn = document.getElementById('btn-open-notifications');
+    if (!btn) return;
+    btn.classList.remove('is-ringing');
+    void btn.offsetWidth;
+    btn.classList.add('is-ringing');
+    setTimeout(() => btn.classList.remove('is-ringing'), 950);
+}
+
+function hideBellNudgeBubble() {
+    if (nudgeHideTimer) {
+        clearTimeout(nudgeHideTimer);
+        nudgeHideTimer = null;
+    }
+    const bubble = document.getElementById('notif-nudge-bubble');
+    if (bubble) {
+        bubble.classList.add('hiding');
+        setTimeout(() => {
+            if (bubble && bubble.classList.contains('hiding')) {
+                bubble.remove();
+            }
+        }, 250);
+    }
+}
+
+function showBellNudgeBubble(totalUnread) {
+    if (totalUnread <= 0 || isDropdownOpen) return;
+    const wrapper = document.getElementById('header-notif-wrapper');
+    if (!wrapper) return;
+
+    let bubble = document.getElementById('notif-nudge-bubble');
+    if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.id = 'notif-nudge-bubble';
+        wrapper.appendChild(bubble);
+    }
+
+    const countText = totalUnread > 99 ? '99+' : String(totalUnread);
+    bubble.className = 'notif-nudge-bubble';
+    bubble.setAttribute('role', 'status');
+    bubble.innerHTML = `
+        <span class="notif-nudge-dot" aria-hidden="true"></span>
+        <span class="notif-nudge-text">Bạn có <strong>${countText}</strong> thông báo mới</span>
+        <button type="button" class="notif-nudge-close" aria-label="Đóng nhắc thông báo">&times;</button>
+    `;
+
+    const closeBtn = bubble.querySelector('.notif-nudge-close');
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            hideBellNudgeBubble();
+        };
+    }
+
+    bubble.onclick = (e) => {
+        if (e.target && e.target.closest('.notif-nudge-close')) return;
+        e.stopPropagation();
+        hideBellNudgeBubble();
+        if (!isDropdownOpen) toggleNotificationDropdown();
+    };
+
+    const scheduleAutoHide = (delayMs) => {
+        if (nudgeHideTimer) clearTimeout(nudgeHideTimer);
+        nudgeHideTimer = setTimeout(hideBellNudgeBubble, delayMs);
+    };
+    bubble.onmouseenter = () => {
+        if (nudgeHideTimer) clearTimeout(nudgeHideTimer);
+    };
+    bubble.onmouseleave = () => scheduleAutoHide(2500);
+
+    scheduleAutoHide(6000);
+}
+
+function cleanupRealtimeListeners() {
+    realtimeUnsubs.forEach(unsub => {
+        try { if (typeof unsub === 'function') unsub(); } catch (_) {}
+    });
+    realtimeUnsubs = [];
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', cleanupRealtimeListeners);
+}
 
 // Nội dung trạng thái rỗng (Khớp 100% với getEmptyStateContent() trên App)
 // Chuẩn hóa link điều hướng trên Web (Chuyển đổi route mobile app như /order-detail?orderId=... sang tra-cuu-don-hang.html?orderId=...)
@@ -265,6 +401,196 @@ function generateOrderNotifications(orders, readIds, deletedIds, pathPrefix) {
     return items;
 }
 
+function mapNewsDocs(docs, pathPrefix, readIds, deletedIds) {
+    const items = [];
+    const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+    docs.forEach((docSnap) => {
+        if (deletedIds.has(docSnap.id)) return;
+        const data = docSnap.data() || {};
+        if (data.status && data.status !== 'published') return;
+        const { timeStr, ms } = formatFriendlyTime(data.createdAt);
+        const plainText = (data.excerpt || data.content || '').replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+        const excerpt = plainText.length > 110 ? plainText.substring(0, 110) + '...' : plainText;
+        const articleKey = encodeURIComponent(data.slug || docSnap.id);
+        const link = isLocalHost
+            ? `${pathPrefix}blog/article.html?id=${articleKey}`
+            : `/blog/${articleKey}`;
+
+        items.push({
+            id: docSnap.id,
+            kind: 'article',
+            type: 'news',
+            title: data.title || 'Bài viết từ Tiệm Nhà Gốm',
+            message: excerpt,
+            time: timeStr,
+            createdAtMs: ms,
+            isRead: readIds.has(docSnap.id),
+            serverRead: false,
+            imageUrl: data.imageUrl || 'Asset/images/hero-bg.jpg',
+            link,
+            icon: 'ti-news'
+        });
+    });
+    return items;
+}
+
+function mapGlobalDocs(docs, pathPrefix, readIds, deletedIds) {
+    const items = [];
+    docs.forEach((docSnap) => {
+        if (deletedIds.has(docSnap.id)) return;
+        const data = docSnap.data() || {};
+        const { timeStr, ms } = formatFriendlyTime(data.createdAt);
+        const notifType = data.type || 'promo';
+
+        let icon = 'ti-tag';
+        if (notifType === 'order') icon = 'ti-package';
+        else if (notifType === 'system') icon = 'ti-shield-check';
+
+        let link = normalizeWebLink(data.link, pathPrefix);
+        if (!link && notifType === 'promo') link = `${pathPrefix}flash-sale/`;
+
+        items.push({
+            id: docSnap.id,
+            kind: 'notification',
+            type: notifType,
+            title: data.title || 'Thông báo từ Tiệm Nhà Gốm',
+            message: data.body || data.message || '',
+            time: timeStr,
+            createdAtMs: ms,
+            isRead: readIds.has(docSnap.id),
+            serverRead: false,
+            imageUrl: data.imageUrl,
+            link,
+            icon
+        });
+    });
+    return items;
+}
+
+function mapUserDocs(docs, pathPrefix, readIds, deletedIds) {
+    const items = [];
+    docs.forEach((docSnap) => {
+        if (deletedIds.has(docSnap.id)) return;
+        const data = docSnap.data() || {};
+        const { timeStr, ms } = formatFriendlyTime(data.createdAt);
+        const notifType = data.type || 'system';
+
+        let icon = 'ti-bell';
+        if (notifType === 'order') icon = 'ti-package';
+        else if (notifType === 'promo') icon = 'ti-tag';
+        else if (notifType === 'gift' || data.isGift) icon = 'ti-gift';
+
+        items.push({
+            id: docSnap.id,
+            kind: 'notification',
+            type: notifType,
+            title: data.title || 'Thông báo riêng cho bạn',
+            message: data.body || data.message || '',
+            time: timeStr,
+            createdAtMs: ms,
+            isRead: readIds.has(docSnap.id) || Boolean(data.isRead),
+            serverRead: Boolean(data.isRead),
+            imageUrl: data.imageUrl,
+            link: normalizeWebLink(data.link, pathPrefix),
+            icon
+        });
+    });
+    return items;
+}
+
+function rebuildFeedFromBuckets(triggerRealtimeEffects = false) {
+    const readIds = getStoredReadIds();
+    const deletedIds = getStoredDeletedIds();
+    const merged = [];
+    const seenIds = new Set();
+
+    const combined = [
+        ...sourceBuckets.news,
+        ...sourceBuckets.global,
+        ...sourceBuckets.user,
+        ...sourceBuckets.orders
+    ];
+
+    for (const raw of combined) {
+        if (!raw || !raw.id || deletedIds.has(raw.id) || seenIds.has(raw.id)) continue;
+        seenIds.add(raw.id);
+        merged.push({
+            ...raw,
+            isRead: readIds.has(raw.id) || Boolean(raw.serverRead)
+        });
+    }
+
+    merged.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    feedItems = merged;
+
+    if (triggerRealtimeEffects && hasCompletedInitialFeedLoad) {
+        const newlyArrived = feedItems.filter(it => !knownItemIds.has(it.id) && !it.isRead);
+        feedItems.forEach(it => knownItemIds.add(it.id));
+
+        if (newlyArrived.length > 0) {
+            const totalUnread = feedItems.filter(it => !it.isRead).length;
+            triggerBellRing();
+            showWebNotificationToast(newlyArrived[0]);
+            syncTabTitle(totalUnread, true);
+        }
+    }
+
+    updateBadgeCount();
+    renderNotificationList();
+}
+
+function setupRealtimeListeners(pathPrefix = '') {
+    cleanupRealtimeListeners();
+    if (!db) return;
+
+    const handleBucketUpdate = (bucketKey, docsMapper) => (snapshot) => {
+        const readIds = getStoredReadIds();
+        const deletedIds = getStoredDeletedIds();
+        sourceBuckets[bucketKey] = docsMapper(snapshot.docs, pathPrefix, readIds, deletedIds);
+        rebuildFeedFromBuckets(true);
+    };
+
+    try {
+        realtimeUnsubs.push(onSnapshot(
+            query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(25)),
+            handleBucketUpdate('news', mapNewsDocs),
+            (err) => console.warn('Realtime news notifications:', err?.code || err)
+        ));
+
+        realtimeUnsubs.push(onSnapshot(
+            query(collection(db, 'global_notifications'), orderBy('createdAt', 'desc'), limit(25)),
+            handleBucketUpdate('global', mapGlobalDocs),
+            (err) => console.warn('Realtime global notifications:', err?.code || err)
+        ));
+
+        const currentUser = auth ? auth.currentUser : null;
+        if (currentUser && currentUser.uid) {
+            realtimeUnsubs.push(onSnapshot(
+                query(collection(db, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'), limit(50)),
+                handleBucketUpdate('user', mapUserDocs),
+                (err) => console.warn('Realtime user notifications:', err?.code || err)
+            ));
+
+            realtimeUnsubs.push(onSnapshot(
+                query(collection(db, 'orders'), where('userId', '==', currentUser.uid), limit(25)),
+                (snapshot) => {
+                    const readIds = getStoredReadIds();
+                    const deletedIds = getStoredDeletedIds();
+                    const rawOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    sourceBuckets.orders = generateOrderNotifications(rawOrders, readIds, deletedIds, pathPrefix);
+                    rebuildFeedFromBuckets(true);
+                },
+                (err) => console.warn('Realtime order notifications:', err?.code || err)
+            ));
+        } else {
+            sourceBuckets.user = [];
+            sourceBuckets.orders = [];
+        }
+    } catch (e) {
+        console.warn('Lỗi khởi tạo realtime notifications:', e);
+    }
+}
+
 // Tải danh sách thông báo từ Firestore
 export async function loadNotificationFeed(pathPrefix = '') {
     if (!db) return [];
@@ -272,17 +598,16 @@ export async function loadNotificationFeed(pathPrefix = '') {
     const readIds = getStoredReadIds();
     const deletedIds = getStoredDeletedIds();
     const currentUser = auth ? auth.currentUser : null;
-    const allItems = [];
+    lastLoadedUid = currentUser && currentUser.uid ? currentUser.uid : null;
+
+    sourceBuckets = { news: [], global: [], user: [], orders: [] };
 
     try {
         const queries = [
-            // 1. Tin tức / Bài viết
             getDocs(query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(25))),
-            // 2. Thông báo chung toàn hệ thống
             getDocs(query(collection(db, 'global_notifications'), orderBy('createdAt', 'desc'), limit(25)))
         ];
 
-        // 3. Nếu user đã đăng nhập: Thông báo riêng & Đơn hàng của user
         if (currentUser && currentUser.uid) {
             queries.push(getDocs(query(collection(db, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'), limit(50))));
             queries.push(getDocs(query(collection(db, 'orders'), where('userId', '==', currentUser.uid), limit(25))));
@@ -290,101 +615,24 @@ export async function loadNotificationFeed(pathPrefix = '') {
 
         const results = await Promise.allSettled(queries);
 
-        // A. Xử lý bài viết tin tức
         if (results[0].status === 'fulfilled' && results[0].value) {
-            results[0].value.docs.forEach((docSnap) => {
-                if (deletedIds.has(docSnap.id)) return;
-                const data = docSnap.data();
-                const { timeStr, ms } = formatFriendlyTime(data.createdAt);
-                const plainText = (data.content || '').replace(/<[^>]*>?/gm, '').trim();
-                const excerpt = plainText.length > 110 ? plainText.substring(0, 110) + '...' : plainText;
-
-                allItems.push({
-                    id: docSnap.id,
-                    kind: 'article',
-                    type: 'news',
-                    title: data.title || 'Bài viết từ Tiệm Nhà Gốm',
-                    message: excerpt,
-                    time: timeStr,
-                    createdAtMs: ms,
-                    isRead: readIds.has(docSnap.id),
-                    imageUrl: data.imageUrl || 'Asset/images/hero-bg.jpg',
-                    link: `${pathPrefix}blog/article.html?id=${encodeURIComponent(docSnap.id)}`,
-                    icon: 'ti-news'
-                });
-            });
+            sourceBuckets.news = mapNewsDocs(results[0].value.docs, pathPrefix, readIds, deletedIds);
         }
-
-        // B. Xử lý thông báo chung
         if (results[1].status === 'fulfilled' && results[1].value) {
-            results[1].value.docs.forEach((docSnap) => {
-                if (deletedIds.has(docSnap.id)) return;
-                const data = docSnap.data();
-                const { timeStr, ms } = formatFriendlyTime(data.createdAt);
-                const notifType = data.type || 'promo';
-
-                let icon = 'ti-tag';
-                if (notifType === 'order') icon = 'ti-package';
-                else if (notifType === 'system') icon = 'ti-shield-check';
-
-                let link = normalizeWebLink(data.link, pathPrefix);
-                if (!link && notifType === 'promo') link = `${pathPrefix}flash-sale/`;
-
-                allItems.push({
-                    id: docSnap.id,
-                    kind: 'notification',
-                    type: notifType,
-                    title: data.title || 'Thông báo từ Tiệm Nhà Gốm',
-                    message: data.body || data.message || '',
-                    time: timeStr,
-                    createdAtMs: ms,
-                    isRead: readIds.has(docSnap.id),
-                    imageUrl: data.imageUrl,
-                    link,
-                    icon
-                });
-            });
+            sourceBuckets.global = mapGlobalDocs(results[1].value.docs, pathPrefix, readIds, deletedIds);
         }
-
-        // C. Xử lý thông báo riêng của User
         if (results[2] && results[2].status === 'fulfilled' && results[2].value) {
-            results[2].value.docs.forEach((docSnap) => {
-                if (deletedIds.has(docSnap.id)) return;
-                const data = docSnap.data();
-                const { timeStr, ms } = formatFriendlyTime(data.createdAt);
-                const notifType = data.type || 'system';
-
-                let icon = 'ti-bell';
-                if (notifType === 'order') icon = 'ti-package';
-                else if (notifType === 'promo') icon = 'ti-tag';
-                else if (notifType === 'gift' || data.isGift) icon = 'ti-gift';
-
-                allItems.push({
-                    id: docSnap.id,
-                    kind: 'notification',
-                    type: notifType,
-                    title: data.title || 'Thông báo riêng cho bạn',
-                    message: data.body || data.message || '',
-                    time: timeStr,
-                    createdAtMs: ms,
-                    isRead: readIds.has(docSnap.id) || Boolean(data.isRead),
-                    imageUrl: data.imageUrl,
-                    link: normalizeWebLink(data.link, pathPrefix),
-                    icon
-                });
-            });
+            sourceBuckets.user = mapUserDocs(results[2].value.docs, pathPrefix, readIds, deletedIds);
         }
-
-        // D. Xử lý thông báo từ đơn hàng
         if (results[3] && results[3].status === 'fulfilled' && results[3].value) {
             const rawOrders = results[3].value.docs.map(d => ({ id: d.id, ...d.data() }));
-            const orderNotifs = generateOrderNotifications(rawOrders, readIds, deletedIds, pathPrefix);
-            allItems.push(...orderNotifs);
+            sourceBuckets.orders = generateOrderNotifications(rawOrders, readIds, deletedIds, pathPrefix);
         }
 
-        // Sắp xếp theo thời gian mới nhất lên đầu
-        allItems.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-        feedItems = allItems;
+        rebuildFeedFromBuckets(false);
+        knownItemIds = new Set(feedItems.map(it => it.id));
+        hasCompletedInitialFeedLoad = true;
+        setupRealtimeListeners(pathPrefix);
     } catch (e) {
         console.warn('Lỗi tải danh sách thông báo Web:', e);
     }
@@ -395,9 +643,14 @@ export async function loadNotificationFeed(pathPrefix = '') {
 // Cập nhật số lượng huy hiệu thông báo chưa đọc
 function updateBadgeCount() {
     const badgeEl = document.getElementById('notif-count-badge');
+    const bellBtn = document.getElementById('btn-open-notifications');
     const pillEl = document.getElementById('notif-unread-pill-count');
 
     const totalUnread = feedItems.filter(it => !it.isRead).length;
+
+    if (bellBtn) {
+        bellBtn.classList.toggle('has-unread', totalUnread > 0);
+    }
 
     if (badgeEl) {
         if (totalUnread > 0) {
@@ -405,6 +658,7 @@ function updateBadgeCount() {
             badgeEl.style.display = 'flex';
         } else {
             badgeEl.style.display = 'none';
+            hideBellNudgeBubble();
         }
     }
 
@@ -430,6 +684,8 @@ function updateBadgeCount() {
             }
         }
     });
+
+    syncTabTitle(totalUnread, false);
 }
 
 // Đánh dấu 1 thông báo đã đọc
@@ -499,17 +755,17 @@ export function showNotificationDetailModal(item) {
     modalBackdrop.innerHTML = `
         <div class="notif-modal-card">
             <div class="notif-modal-header">
-                <span class="notif-modal-tag"><i class="ti ${item.icon || 'ti-bell'}"></i> ${typeLabel}</span>
+                <span class="notif-modal-tag"><i class="ti ${escapeNotifHtml(item.icon || 'ti-bell')}"></i> ${escapeNotifHtml(typeLabel)}</span>
                 <button type="button" class="notif-modal-close" onclick="window.closeNotifModal()">&times;</button>
             </div>
             <div class="notif-modal-body">
-                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.title}" class="notif-modal-img">` : ''}
-                <h3 class="notif-modal-title">${item.title}</h3>
-                <span class="notif-modal-time">${item.time}</span>
-                <div class="notif-modal-text">${item.message}</div>
+                ${item.imageUrl ? `<img src="${escapeNotifHtml(item.imageUrl)}" alt="${escapeNotifHtml(item.title)}" class="notif-modal-img">` : ''}
+                <h3 class="notif-modal-title">${escapeNotifHtml(item.title)}</h3>
+                <span class="notif-modal-time">${escapeNotifHtml(item.time)}</span>
+                <div class="notif-modal-text">${escapeNotifHtml(item.message)}</div>
             </div>
             <div class="notif-modal-footer">
-                ${item.link ? `<a href="${normalizeWebLink(item.link, pathPrefixGlobal)}" class="notif-modal-btn primary">Xem chi tiết &rarr;</a>` : ''}
+                ${item.link ? `<a href="${escapeNotifHtml(normalizeWebLink(item.link, pathPrefixGlobal))}" class="notif-modal-btn primary">Xem chi tiết &rarr;</a>` : ''}
                 <button type="button" class="notif-modal-btn secondary" onclick="window.closeNotifModal()">Đóng</button>
             </div>
         </div>
@@ -528,6 +784,7 @@ window.closeNotifModal = function () {
 
 // Hiển thị Toast thông báo nổi trên góc phải màn hình
 export function showWebNotificationToast(item) {
+    if (!item) return;
     let toast = document.getElementById('web-notif-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -536,19 +793,55 @@ export function showWebNotificationToast(item) {
         document.body.appendChild(toast);
     }
 
+    const hideToast = () => {
+        if (toastHideTimer) {
+            clearTimeout(toastHideTimer);
+            toastHideTimer = null;
+        }
+        toast.classList.add('hiding');
+    };
+
+    const scheduleToastHide = (delayMs = 6000) => {
+        if (toastHideTimer) clearTimeout(toastHideTimer);
+        toastHideTimer = setTimeout(hideToast, delayMs);
+    };
+
     toast.className = 'web-notif-toast';
     toast.innerHTML = `
-        <div class="toast-icon-wrap"><i class="ti ${item.icon || 'ti-bell'}"></i></div>
-        <div class="toast-body" style="cursor: pointer;" onclick="window.handleNotifItemClick('${item.id}')">
-            <h4 class="toast-title">${item.title}</h4>
-            <p class="toast-message">${item.message}</p>
+        <div class="toast-icon-wrap"><i class="ti ${escapeNotifHtml(item.icon || 'ti-bell')}"></i></div>
+        <div class="toast-body">
+            <div class="toast-eyebrow"><span class="toast-eyebrow-dot" aria-hidden="true"></span> Thông báo mới</div>
+            <h4 class="toast-title">${escapeNotifHtml(item.title)}</h4>
+            ${item.message ? `<p class="toast-message">${escapeNotifHtml(item.message)}</p>` : ''}
+            <span class="toast-cta">Xem ngay &rarr;</span>
         </div>
-        <button type="button" class="toast-close-btn" onclick="document.getElementById('web-notif-toast').classList.add('hiding')">&times;</button>
+        <button type="button" class="toast-close-btn" aria-label="Đóng thông báo">&times;</button>
     `;
 
-    setTimeout(() => {
-        if (toast) toast.classList.add('hiding');
-    }, 5000);
+    const bodyEl = toast.querySelector('.toast-body');
+    const closeEl = toast.querySelector('.toast-close-btn');
+    if (bodyEl) {
+        bodyEl.onclick = () => {
+            hideToast();
+            window.handleNotifItemClick(item.id);
+        };
+    }
+    if (closeEl) {
+        closeEl.onclick = (e) => {
+            e.stopPropagation();
+            hideToast();
+        };
+    }
+
+    toast.onmouseenter = () => {
+        if (toastHideTimer) {
+            clearTimeout(toastHideTimer);
+            toastHideTimer = null;
+        }
+    };
+    toast.onmouseleave = () => scheduleToastHide(2500);
+
+    scheduleToastHide(6000);
 }
 
 // Xử lý khi bấm vào 1 mục thông báo
@@ -603,26 +896,27 @@ function renderNotificationList() {
 
     listEl.innerHTML = filtered.map(item => {
         const isUnread = !item.isRead;
+        const safeId = escapeNotifHtml(item.id);
         return `
-            <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="window.handleNotifItemClick('${item.id}')">
+            <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="window.handleNotifItemClick('${safeId}')">
                 <div class="notif-icon-box">
-                    <i class="ti ${item.icon || 'ti-bell'}"></i>
+                    <i class="ti ${escapeNotifHtml(item.icon || 'ti-bell')}"></i>
                 </div>
                 <div class="notif-item-body">
                     <div class="notif-item-header">
-                        <h4 class="notif-item-title">${item.title}</h4>
+                        <h4 class="notif-item-title">${escapeNotifHtml(item.title)}</h4>
                         ${isUnread ? '<span class="notif-unread-dot"></span>' : ''}
                     </div>
-                    <p class="notif-item-message">${item.message}</p>
+                    <p class="notif-item-message">${escapeNotifHtml(item.message)}</p>
                     <div class="notif-item-footer">
-                        <span class="notif-item-time">${item.time}</span>
-                        <button type="button" class="notif-btn-delete" title="Xóa thông báo" onclick="window.handleDeleteNotif('${item.id}', event)">
+                        <span class="notif-item-time">${escapeNotifHtml(item.time)}</span>
+                        <button type="button" class="notif-btn-delete" title="Xóa thông báo" onclick="window.handleDeleteNotif('${safeId}', event)">
                             <i class="ti ti-trash"></i>
                         </button>
                     </div>
                 </div>
                 ${item.imageUrl && item.kind === 'article' ? `
-                    <img src="${item.imageUrl}" alt="${item.title}" class="notif-item-thumb">
+                    <img src="${escapeNotifHtml(item.imageUrl)}" alt="${escapeNotifHtml(item.title)}" class="notif-item-thumb">
                 ` : ''}
             </div>
         `;
@@ -852,6 +1146,7 @@ export function toggleNotificationDropdown() {
 
     isDropdownOpen = !isDropdownOpen;
     if (isDropdownOpen) {
+        hideBellNudgeBubble();
         dropdown.style.display = 'flex';
         btn.setAttribute('aria-expanded', 'true');
         repositionDropdownSafely(dropdown);
@@ -921,21 +1216,44 @@ export async function initWebNotifications(pathPrefix = '') {
 
     if (!hasInitialized) {
         setupClickOutsideListeners();
+        document.addEventListener('visibilitychange', () => {
+            const unread = feedItems.filter(it => !it.isRead).length;
+            if (!document.hidden) hasRealtimeAlertPrefix = false;
+            syncTabTitle(unread, false);
+        });
         hasInitialized = true;
     }
 
-    // Tải dữ liệu ban đầu
+    // Tải dữ liệu ban đầu + bật lắng nghe realtime
     await loadNotificationFeed(pathPrefix);
-    updateBadgeCount();
-    renderNotificationList();
 
-    // Lắng nghe đăng nhập / đăng xuất để làm mới feed
+    const initialUnread = feedItems.filter(it => !it.isRead).length;
+    if (initialUnread > 0) {
+        try {
+            if (!window.sessionStorage || !window.sessionStorage.getItem(SESSION_BELL_RUNG_KEY)) {
+                triggerBellRing();
+                if (window.sessionStorage) window.sessionStorage.setItem(SESSION_BELL_RUNG_KEY, '1');
+            }
+            if (!window.sessionStorage || !window.sessionStorage.getItem(SESSION_NUDGE_SHOWN_KEY)) {
+                showBellNudgeBubble(initialUnread);
+                if (window.sessionStorage) window.sessionStorage.setItem(SESSION_NUDGE_SHOWN_KEY, '1');
+            }
+        } catch (_) {
+            triggerBellRing();
+            showBellNudgeBubble(initialUnread);
+        }
+    }
+
+    // Lắng nghe đăng nhập / đăng xuất để làm mới feed & listener realtime
     if (auth && !window.__notifAuthBound) {
         window.__notifAuthBound = true;
         auth.onAuthStateChanged(async (user) => {
+            const nextUid = user && user.uid ? user.uid : null;
+            if (nextUid === lastLoadedUid) return;
+            hasCompletedInitialFeedLoad = false;
+            knownItemIds.clear();
+            cleanupRealtimeListeners();
             await loadNotificationFeed(pathPrefixGlobal);
-            updateBadgeCount();
-            renderNotificationList();
         });
     }
 }

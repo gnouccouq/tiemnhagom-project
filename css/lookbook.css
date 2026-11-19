@@ -250,31 +250,32 @@
     right: -6px;
     bottom: -6px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.85);
-    animation: hotspotRipple 2.2s infinite ease-out;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    animation: hotspotRipple 2.4s infinite cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
+    will-change: transform, opacity;
 }
 
 @keyframes hotspotRipple {
     0% {
-        transform: scale(0.6);
-        opacity: 0.9;
+        transform: scale(0.72);
+        opacity: 0.78;
     }
-    70% {
-        transform: scale(1.6);
-        opacity: 0;
+    55% {
+        transform: scale(1.48);
+        opacity: 0.22;
     }
     100% {
-        transform: scale(1.6);
+        transform: scale(1.68);
         opacity: 0;
     }
 }
 
 .lookbook-hotspot:hover .hotspot-dot,
 .lookbook-hotspot.active .hotspot-dot {
-    transform: scale(1.25);
-    background: #2c3e50;
-    box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(0,0,0,0.4);
+    transform: scale(1.22);
+    background: #18181b;
+    box-shadow: 0 0 0 2px #ffffff, 0 3px 10px rgba(0,0,0,0.38);
 }
 
 /* 6. Hotspot Popover Tooltip */
@@ -282,19 +283,20 @@
     position: absolute;
     bottom: calc(100% + 12px);
     left: 50%;
-    transform: translateX(-50%) translateY(6px);
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
+    transform: translate3d(-50%, 8px, 0) scale(0.94);
+    transform-origin: center bottom;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
     padding: 10px;
     width: 250px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                visibility 0.24s ease;
     z-index: 100;
     display: flex;
     gap: 10px;
@@ -317,7 +319,8 @@
 .lookbook-hotspot.flip-down .hotspot-popover {
     bottom: auto;
     top: calc(100% + 12px);
-    transform: translateX(-50%) translateY(-6px);
+    transform: translate3d(-50%, -8px, 0) scale(0.94);
+    transform-origin: center top;
 }
 .lookbook-hotspot.flip-down .hotspot-popover::after {
     top: auto;
@@ -331,7 +334,7 @@
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
+    transform: translate3d(-50%, 0, 0) scale(1);
 }
 
 .hotspot-product-thumb {

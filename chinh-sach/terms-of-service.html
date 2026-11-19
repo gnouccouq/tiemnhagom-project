@@ -9,6 +9,7 @@
         content="Điều khoản dịch vụ và quy chế mua bán tại Tiệm Nhà Gốm. Chi tiết về đặc thù gốm thủ công, chính sách giao nhanh 4 giờ, cam kết bảo hiểm bể vỡ 100% và quyền lợi hội viên.">
     <link rel="canonical" href="https://tiemnhagom.vn/chinh-sach/terms-of-service.html">
     <link rel="stylesheet" href="../css/style.css?v=18">
+    <link rel="stylesheet" href="../css/policy.css?v=1">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
@@ -48,255 +49,21 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <style>
-        .legal-page-wrapper {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 2rem 1rem 4rem;
-        }
-
-        .legal-header-box {
-            background: linear-gradient(135deg, #2d2422 0%, #4a3b32 100%);
-            color: #fff;
-            padding: 3rem 2rem;
-            border-radius: 16px;
-            margin-bottom: 2.5rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .legal-header-box::after {
-            content: '';
-            position: absolute;
-            right: -30px;
-            bottom: -30px;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(194, 65, 12, 0.25) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .legal-header-box h1 {
-            font-family: var(--font-serif);
-            font-size: 2rem;
-            margin: 0 0 0.8rem;
-            color: #fff;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .legal-meta {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-            flex-wrap: wrap;
-        }
-
-        .legal-meta-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legal-layout {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 2.5rem;
-            align-items: start;
-        }
-
-        .legal-toc {
-            position: sticky;
-            top: 90px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.25rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        }
-
-        .legal-toc-title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 0.6rem;
-        }
-
-        .legal-toc ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .legal-toc a {
-            display: block;
-            color: #475569;
-            text-decoration: none;
-            font-size: 0.85rem;
-            padding: 6px 10px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            line-height: 1.35;
-        }
-
-        .legal-toc a:hover {
-            background: #fff7ed;
-            color: #c2410c;
-            transform: translateX(3px);
-            font-weight: 600;
-        }
-
-        .legal-content {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 2.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-            line-height: 1.75;
-            color: #334155;
-            font-size: 0.95rem;
-        }
-
-        .legal-content h2 {
-            font-family: var(--font-serif);
-            color: #0f172a;
-            font-size: 1.35rem;
-            margin: 2rem 0 0.85rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #fed7aa;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            scroll-margin-top: 100px;
-        }
-
-        .legal-content h2:first-of-type {
-            margin-top: 0;
-        }
-
-        .legal-content h3 {
-            color: #1e293b;
-            font-size: 1.05rem;
-            margin: 1.25rem 0 0.5rem;
-            font-weight: 600;
-        }
-
-        .legal-content p {
-            margin-bottom: 1rem;
-        }
-
-        .legal-content ul,
-        .legal-content ol {
-            padding-left: 1.5rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .legal-content li {
-            margin-bottom: 0.5rem;
-        }
-
-        .legal-alert {
-            background: #f8fafc;
-            border-left: 4px solid #c2410c;
-            padding: 1.2rem 1.4rem;
-            border-radius: 0 10px 10px 0;
-            margin: 1.5rem 0;
-            font-size: 0.92rem;
-            color: #334155;
-        }
-
-        .legal-alert.warning {
-            background: #fff7ed;
-            border-left-color: #ea580c;
-            border: 1px solid #ffedd5;
-            border-left-width: 4px;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.25rem 0 1.75rem;
-        }
-
-        .feature-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 1.1rem;
-            border-radius: 10px;
-            transition: all 0.2s;
-        }
-
-        .feature-card:hover {
-            border-color: #fdba74;
-            background: #fffaf5;
-        }
-
-        .feature-card-title {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 0.9rem;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .feature-card-desc {
-            font-size: 0.83rem;
-            color: #64748b;
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        .contact-box {
-            background: #fefce8;
-            border: 1px solid #fef08a;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .legal-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .legal-toc {
-                display: none;
-            }
-
-            .legal-content {
-                padding: 1.5rem;
-            }
-
-            .legal-header-box {
-                padding: 2rem 1.25rem;
-            }
-
-            .legal-header-box h1 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
 </head>
 
-<body class="home-page">
+<body>
     <div id="header-placeholder"></div>
 
     <main>
         <div class="legal-page-wrapper">
+            <nav class="legal-breadcrumb" aria-label="Đường dẫn">
+                <a href="../">Trang chủ</a>
+                <span class="crumb-sep">/</span>
+                <a href="./">Trung tâm Chính sách</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">Điều khoản dịch vụ</span>
+            </nav>
+
             <!-- Header Box -->
             <div class="legal-header-box">
                 <h1>Điều khoản dịch vụ & Quy chế mua hàng</h1>
@@ -338,18 +105,41 @@
                         </svg>
                         Nội dung điều khoản
                     </div>
-                    <ul>
-                        <li><a href="#tos-1">1. Quy định chung & Tài khoản</a></li>
-                        <li><a href="#tos-2">2. Đặc thù Gốm sứ thủ công</a></li>
-                        <li><a href="#tos-3">3. Giá bán, Flash Sale & Hội viên</a></li>
-                        <li><a href="#tos-4">4. Dịch vụ Giao nhanh 4 Giờ</a></li>
-                        <li><a href="#tos-5">5. Đóng gói 5 lớp & Bảo hiểm 100%</a></li>
-                        <li><a href="#tos-6">6. Đồng kiểm & Video mở hộp</a></li>
-                        <li><a href="#tos-7">7. Phương thức thanh toán</a></li>
-                        <li><a href="#tos-8">8. Đổi trả & Hoàn tiền</a></li>
-                        <li><a href="#tos-9">9. Quyền sở hữu trí tuệ</a></li>
-                        <li><a href="#tos-10">10. Giải quyết khiếu nại</a></li>
-                    </ul>
+                    <button type="button" class="legal-toc-toggle" aria-expanded="false">
+                        <span class="legal-toc-toggle-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            Nội dung điều khoản
+                        </span>
+                        <svg class="toc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="legal-toc-body">
+                        <ul>
+                            <li><a href="#tos-1">1. Quy định chung &amp; Tài khoản</a></li>
+                            <li><a href="#tos-2">2. Đặc thù Gốm sứ thủ công</a></li>
+                            <li><a href="#tos-3">3. Giá bán, Flash Sale &amp; Hội viên</a></li>
+                            <li><a href="#tos-4">4. Dịch vụ Giao nhanh 4 Giờ</a></li>
+                            <li><a href="#tos-5">5. Đóng gói 5 lớp &amp; Bảo hiểm 100%</a></li>
+                            <li><a href="#tos-6">6. Đồng kiểm &amp; Video mở hộp</a></li>
+                            <li><a href="#tos-7">7. Phương thức thanh toán</a></li>
+                            <li><a href="#tos-8">8. Đổi trả &amp; Hoàn tiền</a></li>
+                            <li><a href="#tos-9">9. Quyền sở hữu trí tuệ</a></li>
+                            <li><a href="#tos-10">10. Giải quyết khiếu nại</a></li>
+                        </ul>
+                        <div class="legal-toc-footer">
+                            <a href="./">&larr; Tất cả chính sách &amp; pháp lý</a>
+                        </div>
+                    </div>
                 </aside>
 
                 <!-- Nội dung chi tiết -->
@@ -404,9 +194,15 @@
                             <li><strong>Chương trình Flash Sale:</strong> Ưu đãi Flash Sale có giới hạn số lượng và thời
                                 gian đếm ngược thực tế. Giá khuyến mãi chỉ áp dụng khi bạn hoàn tất đặt hàng trong thời
                                 gian diễn ra chiến dịch.</li>
-                            <li><strong>Hội viên Tiệm Nhà Gốm:</strong> Khách hàng tích lũy chi tiêu tự động thăng hạng
-                                (Đồng 3%, Bạc 5%, Vàng 8%, Kim Cương 10%). Quyền lợi chiết khấu và voucher độc quyền
-                                được tự động áp dụng khi đăng nhập tài khoản.</li>
+                            <li><strong>Hội viên Tiệm Nhà Gốm (Gốm-Membership):</strong> Khách hàng tích lũy chi tiêu tự
+                                động thăng hạng qua 4 cấp bậc: <strong>Gốm Mộc</strong> (hạng khởi đầu khi đăng ký),
+                                <strong>Gốm Nung</strong> (từ 1 triệu — giảm 1%, voucher lên hạng 50K &amp; sinh nhật
+                                50K), <strong>Gốm Men</strong> (từ 5 triệu — giảm 3%, miễn phí giao hàng toàn quốc,
+                                voucher lên hạng 100K, sinh nhật 200K &amp; đặc quyền tặng voucher người thân), và
+                                <strong>Gốm Độc Bản</strong> (từ 10 triệu — giảm 5%, miễn phí giao hàng toàn quốc,
+                                voucher lên hạng 300K, sinh nhật 500K &amp; đặc quyền tặng voucher người thân). Quyền
+                                lợi chiết khấu và voucher độc quyền được tự động áp dụng khi đăng nhập tài khoản (xem
+                                chi tiết tại <a href="../membership/">Gốm-Membership</a>).</li>
                         </ul>
                     </section>
 
@@ -514,19 +310,32 @@
                                     href="mailto:tiemnhagom.contact@gmail.com"
                                     style="color: #c2410c; font-weight: 600;">tiemnhagom.contact@gmail.com</a></p>
                         </div>
+                    </section>
                 </article>
             </div>
-        </div>
+
+            <nav class="policy-quick-nav" aria-label="Khám phá các chính sách khác">
+                <h2 class="policy-quick-nav-title">Khám phá các chính sách khác</h2>
+                <div class="policy-quick-links">
+                    <a href="./">Tất cả chính sách</a>
+                    <a href="chinh-sach-gia.html">Chính sách giá</a>
+                    <a href="buying-guide.html">Hướng dẫn mua hàng</a>
+                    <a href="shipping-policy.html">Chính sách vận chuyển</a>
+                    <a href="giai-quyet-khieu-nai.html">Giải quyết khiếu nại</a>
+                    <a href="payment-policy.html">Chính sách thanh toán</a>
+                    <a href="return-refund-policy.html">Chính sách đổi trả</a>
+                    <a href="privacy-policy.html">Chính sách bảo mật</a>
+                    <a href="terms-of-service.html" class="current" aria-current="page">Điều khoản dịch vụ</a>
+                </div>
+            </nav>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader } from "../js/utils.js";
-        document.addEventListener('DOMContentLoaded', () => {
-            initHeader('../');
-        });
+        import { initPolicyPage } from "../js/policy.js";
+        initPolicyPage('../');
     </script>
 </body>
 

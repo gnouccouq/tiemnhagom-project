@@ -9,6 +9,7 @@
         content="Chính sách bảo mật thông tin cá nhân tại Tiệm Nhà Gốm, tuân thủ Nghị định 13/2023/NĐ-CP. Cam kết bảo vệ quyền riêng tư và an toàn dữ liệu khách hàng tuyệt đối.">
     <link rel="canonical" href="https://tiemnhagom.vn/chinh-sach/privacy-policy.html">
     <link rel="stylesheet" href="../css/style.css?v=18">
+    <link rel="stylesheet" href="../css/policy.css?v=1">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
@@ -47,255 +48,21 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <style>
-        .legal-page-wrapper {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 2rem 1rem 4rem;
-        }
-
-        .legal-header-box {
-            background: linear-gradient(135deg, #2d2422 0%, #4a3b32 100%);
-            color: #fff;
-            padding: 3rem 2rem;
-            border-radius: 16px;
-            margin-bottom: 2.5rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .legal-header-box::after {
-            content: '';
-            position: absolute;
-            right: -30px;
-            bottom: -30px;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(194, 65, 12, 0.25) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .legal-header-box h1 {
-            font-family: var(--font-serif);
-            font-size: 2rem;
-            margin: 0 0 0.8rem;
-            color: #fff;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .legal-meta {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-            flex-wrap: wrap;
-        }
-
-        .legal-meta-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legal-layout {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 2.5rem;
-            align-items: start;
-        }
-
-        .legal-toc {
-            position: sticky;
-            top: 90px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.25rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        }
-
-        .legal-toc-title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 0.6rem;
-        }
-
-        .legal-toc ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .legal-toc a {
-            display: block;
-            color: #475569;
-            text-decoration: none;
-            font-size: 0.85rem;
-            padding: 6px 10px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            line-height: 1.35;
-        }
-
-        .legal-toc a:hover {
-            background: #fff7ed;
-            color: #c2410c;
-            transform: translateX(3px);
-            font-weight: 600;
-        }
-
-        .legal-content {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 2.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-            line-height: 1.75;
-            color: #334155;
-            font-size: 0.95rem;
-        }
-
-        .legal-content h2 {
-            font-family: var(--font-serif);
-            color: #0f172a;
-            font-size: 1.35rem;
-            margin: 2rem 0 0.85rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #fed7aa;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            scroll-margin-top: 100px;
-        }
-
-        .legal-content h2:first-of-type {
-            margin-top: 0;
-        }
-
-        .legal-content h3 {
-            color: #1e293b;
-            font-size: 1.05rem;
-            margin: 1.25rem 0 0.5rem;
-            font-weight: 600;
-        }
-
-        .legal-content p {
-            margin-bottom: 1rem;
-        }
-
-        .legal-content ul,
-        .legal-content ol {
-            padding-left: 1.5rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .legal-content li {
-            margin-bottom: 0.5rem;
-        }
-
-        .legal-alert {
-            background: #f8fafc;
-            border-left: 4px solid #c2410c;
-            padding: 1.2rem 1.4rem;
-            border-radius: 0 10px 10px 0;
-            margin: 1.5rem 0;
-            font-size: 0.92rem;
-            color: #334155;
-        }
-
-        .legal-alert.pdpd {
-            background: #f0fdf4;
-            border-left-color: #16a34a;
-            border: 1px solid #bbf7d0;
-            border-left-width: 4px;
-        }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.25rem 0 1.75rem;
-        }
-
-        .data-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 1.1rem;
-            border-radius: 10px;
-            transition: border-color 0.2s;
-        }
-
-        .data-card:hover {
-            border-color: #fdba74;
-            background: #fffaf5;
-        }
-
-        .data-card-title {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 0.9rem;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .data-card-desc {
-            font-size: 0.83rem;
-            color: #64748b;
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        .contact-box {
-            background: #fefce8;
-            border: 1px solid #fef08a;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .legal-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .legal-toc {
-                display: none;
-            }
-
-            .legal-content {
-                padding: 1.5rem;
-            }
-
-            .legal-header-box {
-                padding: 2rem 1.25rem;
-            }
-
-            .legal-header-box h1 {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
 </head>
 
-<body class="home-page">
+<body>
     <div id="header-placeholder"></div>
 
     <main>
         <div class="legal-page-wrapper">
+            <nav class="legal-breadcrumb" aria-label="Đường dẫn">
+                <a href="../">Trang chủ</a>
+                <span class="crumb-sep">/</span>
+                <a href="./">Trung tâm Chính sách</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">Chính sách bảo mật</span>
+            </nav>
+
             <!-- Header Box -->
             <div class="legal-header-box">
                 <h1>Chính sách bảo mật thông tin</h1>
@@ -335,17 +102,40 @@
                         </svg>
                         Nội dung chính
                     </div>
-                    <ul>
-                        <li><a href="#sec-1">1. Cam kết & Căn cứ pháp lý</a></li>
-                        <li><a href="#sec-2">2. Dữ liệu chúng tôi thu thập</a></li>
-                        <li><a href="#sec-3">3. Dữ liệu Vị trí & Giao 4 Giờ</a></li>
-                        <li><a href="#sec-4">4. Mục đích xử lý dữ liệu</a></li>
-                        <li><a href="#sec-5">5. Cookie & Lưu trữ trình duyệt</a></li>
-                        <li><a href="#sec-6">6. Chia sẻ với bên thứ ba</a></li>
-                        <li><a href="#sec-7">7. An toàn & Bảo mật kỹ thuật</a></li>
-                        <li><a href="#sec-8">8. Quyền lợi của khách hàng</a></li>
-                        <li><a href="#sec-9">9. Liên hệ Bộ phận Bảo vệ dữ liệu</a></li>
-                    </ul>
+                    <button type="button" class="legal-toc-toggle" aria-expanded="false">
+                        <span class="legal-toc-toggle-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            Nội dung chính
+                        </span>
+                        <svg class="toc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="legal-toc-body">
+                        <ul>
+                            <li><a href="#sec-1">1. Cam kết &amp; Căn cứ pháp lý</a></li>
+                            <li><a href="#sec-2">2. Dữ liệu chúng tôi thu thập</a></li>
+                            <li><a href="#sec-3">3. Dữ liệu Vị trí &amp; Giao 4 Giờ</a></li>
+                            <li><a href="#sec-4">4. Mục đích xử lý dữ liệu</a></li>
+                            <li><a href="#sec-5">5. Cookie &amp; Lưu trữ trình duyệt</a></li>
+                            <li><a href="#sec-6">6. Chia sẻ với bên thứ ba</a></li>
+                            <li><a href="#sec-7">7. An toàn &amp; Bảo mật kỹ thuật</a></li>
+                            <li><a href="#sec-8">8. Quyền lợi của khách hàng</a></li>
+                            <li><a href="#sec-9">9. Liên hệ Bộ phận Bảo vệ dữ liệu</a></li>
+                        </ul>
+                        <div class="legal-toc-footer">
+                            <a href="./">&larr; Tất cả chính sách &amp; pháp lý</a>
+                        </div>
+                    </div>
                 </aside>
 
                 <!-- Nội dung chi tiết -->
@@ -381,8 +171,8 @@
                             </div>
                             <div class="data-card">
                                 <div class="data-card-title"><i class="ti ti-award"></i> Dữ liệu Thành viên</div>
-                                <p class="data-card-desc">Lịch sử tích lũy điểm chi tiêu, hạng hội viên (Đồng, Bạc,
-                                    Vàng, Kim Cương), mã voucher độc quyền.</p>
+                                <p class="data-card-desc">Lịch sử tích lũy điểm chi tiêu, hạng hội viên (Gốm Mộc, Gốm Nung,
+                                    Gốm Men, Gốm Độc Bản), mã voucher độc quyền.</p>
                             </div>
                             <div class="data-card">
                                 <div class="data-card-title"><i class="ti ti-robot"></i> Trải nghiệm AI & Xem hàng</div>
@@ -502,19 +292,32 @@
                                     href="mailto:tiemnhagom.contact@gmail.com"
                                     style="color: #c2410c; font-weight: 600;">tiemnhagom.contact@gmail.com</a></p>
                         </div>
+                    </section>
                 </article>
             </div>
-        </div>
+
+            <nav class="policy-quick-nav" aria-label="Khám phá các chính sách khác">
+                <h2 class="policy-quick-nav-title">Khám phá các chính sách khác</h2>
+                <div class="policy-quick-links">
+                    <a href="./">Tất cả chính sách</a>
+                    <a href="chinh-sach-gia.html">Chính sách giá</a>
+                    <a href="buying-guide.html">Hướng dẫn mua hàng</a>
+                    <a href="shipping-policy.html">Chính sách vận chuyển</a>
+                    <a href="giai-quyet-khieu-nai.html">Giải quyết khiếu nại</a>
+                    <a href="payment-policy.html">Chính sách thanh toán</a>
+                    <a href="return-refund-policy.html">Chính sách đổi trả</a>
+                    <a href="privacy-policy.html" class="current" aria-current="page">Chính sách bảo mật</a>
+                    <a href="terms-of-service.html">Điều khoản dịch vụ</a>
+                </div>
+            </nav>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { initHeader } from "../js/utils.js";
-        document.addEventListener('DOMContentLoaded', () => {
-            initHeader('../');
-        });
+        import { initPolicyPage } from "../js/policy.js";
+        initPolicyPage('../');
     </script>
 </body>
 

@@ -188,7 +188,32 @@ service cloud.firestore {
     // 9. Tin tức (news)
     match /news/{articleId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        (!('status' in resource.data) || resource.data.status == 'published') && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+            request.resource.data.views is number && (
+              ((!('views' in resource.data) || resource.data.views == null) && request.resource.data.views == 1) ||
+              (resource.data.views is number && resource.data.views >= 0 && request.resource.data.views == resource.data.views + 1)
+            )
+          ) ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulYes']) &&
+            request.resource.data.helpfulYes is number && (
+              ((!('helpfulYes' in resource.data) || resource.data.helpfulYes == null) && request.resource.data.helpfulYes == 1) ||
+              (resource.data.helpfulYes is number && resource.data.helpfulYes >= 0 && request.resource.data.helpfulYes == resource.data.helpfulYes + 1)
+            )
+          ) ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulNo']) &&
+            request.resource.data.helpfulNo is number && (
+              ((!('helpfulNo' in resource.data) || resource.data.helpfulNo == null) && request.resource.data.helpfulNo == 1) ||
+              (resource.data.helpfulNo is number && resource.data.helpfulNo >= 0 && request.resource.data.helpfulNo == resource.data.helpfulNo + 1)
+            )
+          )
+        )
+      );
     }
 
     // 10. Nhật ký kho (inventory_logs)

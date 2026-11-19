@@ -1,4 +1,4 @@
-import { db, initHeader } from "./utils.js";
+import { db, initHeader, escapeHTML } from "./utils.js";
 import { collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 let allNewsData = [];
@@ -23,16 +23,23 @@ function renderNews() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedItems = currentFilteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+    const isLocalHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+
     container.innerHTML = paginatedItems.map(n => {
         const date = n.createdAt ? new Date(n.createdAt.toDate()).toLocaleDateString('vi-VN') : 'Mới đây';
+        const author = String(n.author || n.authorName || n.createdByName || '').trim() || 'Tiệm Nhà Gốm';
+        const views = Math.max(0, Number(n.views) || 0);
+        const coverAlt = (n.coverAlt && n.coverAlt.trim()) ? n.coverAlt.trim() : (n.title || '');
+        const articleKey = encodeURIComponent(n.slug || n.id);
+        const articleHref = isLocalHost ? `article.html?id=${articleKey}` : `/blog/${articleKey}`;
         return `
             <article class="blog-card">
-                <img src="${n.imageUrl}" alt="${n.title}" class="blog-img">
+                <img src="${escapeHTML(n.imageUrl)}" alt="${escapeHTML(coverAlt)}" class="blog-img">
                 <div class="blog-info">
-                    <span class="blog-date">${date}</span>
-                    <h3>${n.title}</h3>
-                    <p>${n.excerpt || ''}</p>
-                    <a href="article.html?id=${n.id}" class="btn-outline" style="padding: 0.5rem 1.2rem; font-size: 0.8rem;">Đọc tiếp</a>
+                    <span class="blog-date">${date} | ${escapeHTML(author)} · ${views.toLocaleString('vi-VN')} lượt xem</span>
+                    <h3>${escapeHTML(n.title)}</h3>
+                    <p>${escapeHTML(n.excerpt || '')}</p>
+                    <a href="${articleHref}" class="btn-outline" style="padding: 0.5rem 1.2rem; font-size: 0.8rem;">Đọc tiếp</a>
                 </div>
             </article>`;
     }).join('');
@@ -99,7 +106,15 @@ async function fetchNews() {
 
         allNewsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         currentFilteredData = [...allNewsData];
-        renderNews();
+
+        const urlQ = new URLSearchParams(window.location.search).get('q');
+        const searchInput = document.getElementById('blog-search-input');
+        if (urlQ && urlQ.trim()) {
+            if (searchInput) searchInput.value = urlQ.trim();
+            handleSearch();
+        } else {
+            renderNews();
+        }
     } catch (e) { console.error(e); }
 }
 
@@ -119,14 +134,16 @@ function handleSearch() {
     currentFilteredData = allNewsData.filter(n => {
         const titleMatch = n.title && n.title.toLowerCase().includes(searchTerm);
         const excerptMatch = n.excerpt && n.excerpt.toLowerCase().includes(searchTerm);
+        const keywordMatch = (n.seoKeywords && n.seoKeywords.toLowerCase().includes(searchTerm))
+            || (n.seoFocusKeyword && n.seoFocusKeyword.toLowerCase().includes(searchTerm));
         let contentMatch = false;
-        if (n.content && !excerptMatch) {
+        if (n.content && !excerptMatch && !keywordMatch) {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = n.content;
             const textContent = tempDiv.textContent || tempDiv.innerText || '';
             contentMatch = textContent.toLowerCase().includes(searchTerm);
         }
-        return titleMatch || excerptMatch || contentMatch;
+        return titleMatch || excerptMatch || keywordMatch || contentMatch;
     });
     
     renderNews();

@@ -3,7 +3,7 @@ import {
     showToast, initHeader, renderProductCard, renderProductCardWithVariants, getMembershipTier, MEMBERSHIP_TIERS, generateAutomaticVouchers, autoLinkOrdersByPhone, getOtpCooldown, saveOtpTimestamp, startOtpCountdown, setupOtpInputs, getOtpValue, sendEmailNotification, escapeHTML,
     showModalConfirm, showModalAlert
 } from "./utils.js";
-import { updateProfile, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, GoogleAuthProvider, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail, GoogleAuthProvider, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     doc, getDoc, collection, query, where, getDocs, orderBy, setDoc, updateDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -39,10 +39,14 @@ function setupTabs() {
             btns.forEach(b => b.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
             btn.classList.add('active');
+            window.tngRefreshSlidingPills?.();
             const targetSection = document.getElementById(btn.dataset.target);
             if (targetSection) targetSection.classList.add('active');
             if (btn.dataset.target === 'voucher-section' && auth.currentUser) {
                 fetchUserVouchers(window.currentEffectiveUid || auth.currentUser.uid);
+            }
+            if (window.scrollY > 120) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     });
@@ -99,10 +103,12 @@ window.toggleFavorite = async (event, productId) => {
 async function fetchFavorites(userId) {
     const container = document.getElementById('favorites-list');
     const noFavsMsg = document.getElementById('no-favorites-msg');
+    const navBadgeFavs = document.getElementById('nav-badge-favs');
     
     try {
         const favSnap = await getDoc(doc(db, "favorites", userId));
         if (!favSnap.exists() || favSnap.data().productIds.length === 0) {
+            if (navBadgeFavs) navBadgeFavs.innerText = '0';
             container.style.display = 'none';
             noFavsMsg.style.display = 'block';
             return;
@@ -110,16 +116,19 @@ async function fetchFavorites(userId) {
 
         const productIds = favSnap.data().productIds;
         let htmlContent = '';
+        let validCount = 0;
         
         for (const pid of productIds) {
             const pSnap = await getDoc(doc(db, "products", pid));
             if (pSnap.exists()) {
+                validCount++;
                 // Lấy danh sách yêu thích để render đúng trạng thái nút
                 const favs = favSnap.data().productIds;
                 htmlContent += renderProductCardWithVariants(pSnap.data(), pid, favs, '../product/index.html');
             }
         }
 
+        if (navBadgeFavs) navBadgeFavs.innerText = String(validCount);
         container.innerHTML = htmlContent;
         container.style.display = 'grid';
         noFavsMsg.style.display = 'none';
@@ -155,8 +164,13 @@ window.cancelOrder = async (orderId) => {
     }
 };
 
-// Hàm xem chi tiết đơn hàng
-window.viewOrderDetails = async (orderId) => {
+// Hàm xem chi tiết đơn hàng (Chuyển sang trang chi tiết đơn hàng riêng biệt)
+window.viewOrderDetails = (orderId) => {
+    if (!orderId) return;
+    window.location.href = `../order-detail.html?id=${encodeURIComponent(orderId)}`;
+};
+
+window._legacyViewOrderDetailsModal = async (orderId) => {
     try {
         const docSnap = await getDoc(doc(db, "orders", orderId));
         if (!docSnap.exists()) return;
@@ -382,12 +396,14 @@ async function fetchAddresses(userId) {
         }
 
         container.innerHTML = addresses.map((addr, idx) => `
-            <div class="order-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; margin-bottom: 1rem;">
-                <div>
-                    <p><strong>${addr.fullName}</strong> | ${addr.phone}</p>
-                    <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">${addr.address}, ${addr.wardName}, ${addr.provinceName}</p>
+            <div class="profile-address-card">
+                <div class="profile-address-info">
+                    <p class="profile-address-title"><strong>${escapeHTML(addr.fullName || '')}</strong> <span class="profile-address-sep">|</span> <span>${escapeHTML(addr.phone || '')}</span></p>
+                    <p class="profile-address-detail">${escapeHTML([addr.address, addr.wardName, addr.provinceName].filter(Boolean).join(', '))}</p>
                 </div>
-                <button class="btn-remove-small" onclick="window.deleteAddress(${idx})">Xóa</button>
+                <button type="button" class="btn-remove-address" onclick="window.deleteAddress(${idx})">
+                    <i class="ti ti-trash"></i> Xóa
+                </button>
             </div>
         `).join('');
 
@@ -418,6 +434,88 @@ window.deleteAddress = async (index) => {
     } catch (e) { showToast("Lỗi xóa địa chỉ", "error"); }
 };
 
+// Hàm định dạng số tiền rút gọn cho thống kê Sidebar (VD: 413,1 N / 1,25 Tr)
+function formatCompactSpent(amount = 0) {
+    const num = Number(amount) || 0;
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' Tr';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' N';
+    }
+    return new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+}
+
+// Parse ngày linh hoạt (hỗ trợ Date, Firestore Timestamp, { seconds }, epoch ms/s, chuỗi DD/MM/YYYY và ISO)
+function parseFlexibleDate(raw) {
+    if (raw === undefined || raw === null || raw === '') return null;
+    const MIN_VALID_MS = 946684800000; // > 2000-01-01
+    let dt = null;
+
+    if (raw instanceof Date) {
+        dt = raw;
+    } else if (typeof raw?.toDate === 'function') {
+        try { dt = raw.toDate(); } catch (_) { return null; }
+    } else if (typeof raw === 'object') {
+        const secs = typeof raw.seconds === 'number' ? raw.seconds : (typeof raw._seconds === 'number' ? raw._seconds : null);
+        if (secs !== null) {
+            const nanos = raw.nanoseconds ?? raw._nanoseconds ?? 0;
+            dt = new Date(secs * 1000 + Math.round(nanos / 1e6));
+        }
+    } else if (typeof raw === 'number') {
+        dt = new Date(raw < 1e11 ? raw * 1000 : raw);
+    } else if (typeof raw === 'string') {
+        const s = raw.trim();
+        if (!s) return null;
+        if (/^\d+$/.test(s)) {
+            const num = Number(s);
+            dt = new Date(num < 1e11 ? num * 1000 : num);
+        } else {
+            const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+            if (dmy) {
+                dt = new Date(
+                    Number(dmy[3]),
+                    Number(dmy[2]) - 1,
+                    Number(dmy[1]),
+                    Number(dmy[4] || 0),
+                    Number(dmy[5] || 0),
+                    Number(dmy[6] || 0)
+                );
+            } else {
+                dt = new Date(s);
+            }
+        }
+    }
+
+    if (!dt || isNaN(dt.getTime()) || dt.getTime() <= MIN_VALID_MS) return null;
+    return dt;
+}
+
+// Xác định ngày tham gia chuẩn xác từ tài khoản chính (đã liên kết/gộp) hoặc fallback Auth hiện tại
+function resolveMemberJoinDate(userData, authUser, effectiveUid) {
+    const candidates = [
+        userData?.registeredAt,
+        userData?.createdAt,
+        userData?.creationTime,
+        userData?.metadata?.creationTime,
+        userData?.joinDate,
+        userData?.createdDate,
+        userData?.createdAtMs
+    ];
+    if (effectiveUid && authUser?.uid && effectiveUid === authUser.uid) {
+        candidates.push(authUser?.metadata?.creationTime);
+    }
+
+    let earliest = null;
+    for (const raw of candidates) {
+        const d = parseFlexibleDate(raw);
+        if (d && (!earliest || d.getTime() < earliest.getTime())) {
+            earliest = d;
+        }
+    }
+    return earliest || parseFlexibleDate(authUser?.metadata?.creationTime);
+}
+
 // Hàm thiết lập listener cho trạng thái đăng nhập và hiển thị thông tin người dùng
 async function handleProfileAuth(user) {
     const profileLayout = document.getElementById('profile-main-layout');
@@ -441,10 +539,70 @@ async function handleProfileAuth(user) {
                 userData = primarySnap.data();
             }
         }
+
+        // Fallback: Nếu login SĐT mà mergedTo chưa kịp ghi xong hoặc chưa đọc được, tra cứu theo SĐT -> tài khoản Email chính
+        if (effectiveUid === user.uid && !userData.email && user.phoneNumber) {
+            try {
+                const p0 = formatPhoneNumber(user.phoneNumber);
+                const p84 = p0.startsWith('0') ? '+84' + p0.substring(1) : p0;
+                const phoneVariants = [p0, p84].filter(Boolean);
+                let foundPrimary = null;
+
+                for (const p of phoneVariants) {
+                    const sP = await getDocs(query(collection(db, "users"), where("phone", "==", p)));
+                    const match = sP.docs.find(d => d.id !== user.uid && d.data().email);
+                    if (match) { foundPrimary = match; break; }
+                }
+                if (!foundPrimary) {
+                    for (const p of phoneVariants) {
+                        const sP = await getDocs(query(collection(db, "users"), where("identifiers", "array-contains", p)));
+                        const match = sP.docs.find(d => d.id !== user.uid && d.data().email);
+                        if (match) { foundPrimary = match; break; }
+                    }
+                }
+                if (foundPrimary) {
+                    const primaryTargetUid = foundPrimary.data().mergedTo || foundPrimary.id;
+                    if (primaryTargetUid === foundPrimary.id) {
+                        effectiveUid = foundPrimary.id;
+                        userRef = doc(db, "users", effectiveUid);
+                        userSnap = foundPrimary;
+                        userData = foundPrimary.data();
+                    } else {
+                        const targetSnap = await getDoc(doc(db, "users", primaryTargetUid));
+                        if (targetSnap.exists()) {
+                            effectiveUid = primaryTargetUid;
+                            userRef = doc(db, "users", effectiveUid);
+                            userSnap = targetSnap;
+                            userData = targetSnap.data();
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+
+        const resolvedEmail = userData.email || user.email || user.providerData?.find(p => p && p.email)?.email || '';
+        const joinDt = resolveMemberJoinDate(userData, user, effectiveUid);
         
         // Cập nhật thông tin trên Sidebar
         window.currentEffectiveUid = effectiveUid; window.currentUserData = userData; sessionStorage.setItem('tng_effective_uid', effectiveUid);
         document.getElementById('sidebar-name').innerText = userData.displayName || user.displayName || 'Khách hàng';
+        const sidebarEmailEl = document.getElementById('sidebar-email');
+        if (sidebarEmailEl) sidebarEmailEl.innerText = resolvedEmail;
+
+        const sidebarSinceEl = document.getElementById('sidebar-member-since');
+        if (sidebarSinceEl) {
+            if (joinDt) {
+                sidebarSinceEl.innerText = `Thành viên từ tháng ${joinDt.getMonth() + 1} năm ${joinDt.getFullYear()}`;
+            } else {
+                sidebarSinceEl.innerText = 'Thành viên Tiệm Nhà Gốm';
+            }
+        }
+
+        const sidebarSpentEl = document.getElementById('sidebar-stat-spent');
+        if (sidebarSpentEl) {
+            sidebarSpentEl.innerText = formatCompactSpent(userData.totalSpent || userData.spentTotal || 0);
+        }
+
         const userAvatarUrl = userData.avatar || user.photoURL;
         const avatarImg = document.getElementById('sidebar-avatar');
         avatarImg.src = userAvatarUrl || '../Asset/images/default-avatar.png';
@@ -488,29 +646,30 @@ async function handleProfileAuth(user) {
             }
         }
 
-        if (editName) editName.value = user.displayName || '';
+        if (editName) editName.value = userData.displayName || user.displayName || '';
         if (editPhone) {
             editPhone.value = userMainPhone;
             if (userMainPhone) {
                 editPhone.readOnly = true;
                 editPhone.disabled = true;
-                editPhone.style.backgroundColor = '#f1f5f9';
+                editPhone.style.backgroundColor = '#f4f4f5';
                 editPhone.style.cursor = 'not-allowed';
-                editPhone.title = 'Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.';
+                editPhone.title = 'Để bảo vệ tài khoản và điểm tích lũy, bạn vui lòng liên hệ Tiệm Nhà Gốm nếu cần thay đổi số điện thoại nhé.';
 
                 let phoneLockHint = document.getElementById('phone-locked-hint');
-                if (!phoneLockHint && editPhone.parentElement) {
+                const phoneGroupContainer = editPhone.closest('.form-group') || editPhone.parentElement;
+                if (!phoneLockHint && phoneGroupContainer) {
                     phoneLockHint = document.createElement('small');
                     phoneLockHint.id = 'phone-locked-hint';
                     phoneLockHint.className = 'phone-locked-hint';
-                    phoneLockHint.style.cssText = 'color: #64748b; font-size: 0.78rem; margin-top: 5px; display: flex; align-items: center; gap: 4px;';
-                    phoneLockHint.innerHTML = '<i class="ti ti-lock"></i> Số điện thoại đã liên kết cố định. Muốn đổi vui lòng liên hệ Admin.';
-                    editPhone.parentElement.appendChild(phoneLockHint);
+                    phoneLockHint.style.cssText = 'color: #64748b; font-size: 0.78rem; margin-top: 6px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.45;';
+                    phoneLockHint.innerHTML = '<i class="ti ti-lock" style="margin-top: 2px;"></i> <span>Số điện thoại đã được bảo vệ. Nếu cần thay đổi, bạn nhắn Tiệm hỗ trợ nhé!</span>';
+                    phoneGroupContainer.appendChild(phoneLockHint);
                 }
 
                 editPhone.parentElement.onclick = () => {
                     if (editPhone.disabled || editPhone.readOnly) {
-                        showToast('Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.', 'info');
+                        showToast('Để bảo vệ tài khoản và điểm tích lũy, số điện thoại chưa thể tự thay đổi. Bạn nhắn Tiệm hoặc gọi 0777 709 662 để được hỗ trợ nhanh nhé!', 'info');
                     }
                 };
             } else {
@@ -522,26 +681,28 @@ async function handleProfileAuth(user) {
                 if (phoneLockHint) phoneLockHint.remove();
             }
         }
-        if (editEmail) editEmail.value = user.email || '';
+        if (editEmail) editEmail.value = resolvedEmail;
         if (editDob) editDob.value = userData.dob || userData.birthday || '';
         if (editGender) editGender.value = userData.gender || '';
         if (editJoinDate) {
-            const joinDateStr = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('vi-VN') : 'Không rõ';
-            editJoinDate.value = joinDateStr;
+            editJoinDate.value = joinDt ? joinDt.toLocaleDateString('vi-VN') : 'Không rõ';
         }
 
         // Xử lý đổi ảnh đại diện
         const btnEditAvatar = document.getElementById('btn-edit-avatar');
         const avatarInput = document.getElementById('avatar-input');
         if (btnEditAvatar && avatarInput) {
-            btnEditAvatar.onclick = () => avatarInput.click();
+            btnEditAvatar.onclick = (e) => {
+                if (e.target !== avatarInput) avatarInput.click();
+            };
             avatarInput.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
                 
                 // Hiển thị trạng thái đang tải
-                btnEditAvatar.disabled = true;
-                btnEditAvatar.innerText = 'Đang tải lên...';
+                btnEditAvatar.style.opacity = '0.6';
+                btnEditAvatar.style.pointerEvents = 'none';
+                showToast('Đang tải ảnh đại diện lên...', 'info');
                 
                 try {
                     const storageRef = ref(getStorage(), `avatars/${user.uid}/${Date.now()}_${file.name}`);
@@ -582,8 +743,8 @@ async function handleProfileAuth(user) {
                 } catch (error) {
                     showToast('Lỗi khi tải ảnh lên: ' + error.message, 'error');
                 } finally {
-                    btnEditAvatar.disabled = false;
-                    btnEditAvatar.innerText = 'Sửa ảnh đại diện';
+                    btnEditAvatar.style.opacity = '';
+                    btnEditAvatar.style.pointerEvents = '';
                 }
             };
         }
@@ -592,22 +753,41 @@ async function handleProfileAuth(user) {
         const linkedGoogleStatus = document.getElementById('linked-google-status');
         const linkedGoogleAction = document.getElementById('linked-google-action');
         if (linkedGoogleStatus && linkedGoogleAction) {
-            const isGoogleLinked = user.providerData?.some(p => p.providerId === 'google.com') || (userData.email && userData.email.endsWith('@gmail.com'));
-            const googleEmail = user.providerData?.find(p => p.providerId === 'google.com')?.email || (isGoogleLinked ? userData.email : null);
+            const googleProviderInfo = user.providerData?.find(p => p && p.providerId === 'google.com') || null;
+            const hasGoogleOnCurrentAuth = Boolean(googleProviderInfo);
+            const isDirectPrimarySession = (effectiveUid === user.uid);
+            const isGoogleLinked = isDirectPrimarySession
+                ? hasGoogleOnCurrentAuth
+                : (hasGoogleOnCurrentAuth || userData.googleLinked === true);
+            const googleEmail = googleProviderInfo?.email
+                || (isGoogleLinked ? (userData.googleEmail || resolvedEmail || null) : null);
+
+            if (isDirectPrimarySession) {
+                const syncFields = {};
+                if (userData.googleLinked !== hasGoogleOnCurrentAuth) {
+                    syncFields.googleLinked = hasGoogleOnCurrentAuth;
+                }
+                if (hasGoogleOnCurrentAuth && googleEmail && userData.googleEmail !== googleEmail) {
+                    syncFields.googleEmail = googleEmail;
+                }
+                if (Object.keys(syncFields).length > 0) {
+                    setDoc(userRef, { ...syncFields, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+                }
+            }
 
             if (isGoogleLinked) {
                 linkedGoogleStatus.innerText = googleEmail || 'Đã liên kết thành công';
-                linkedGoogleStatus.style.color = '#9C7156';
+                linkedGoogleStatus.style.color = '#111111';
                 linkedGoogleAction.innerHTML = `
-                    <span style="display: inline-flex; align-items: center; gap: 4px; background: #F6F4EC; color: #9C7156; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; border: 1px solid #E8CCB2;">
-                        <i class="ti ti-check"></i> Đã nối
+                    <span style="display: inline-flex; align-items: center; gap: 4px; background: #f4f4f5; color: #111111; padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; border: 1px solid #d4d4d8;">
+                        <i class="ti ti-check"></i> Đã liên kết
                     </span>
                 `;
             } else {
                 linkedGoogleStatus.innerText = 'Chưa liên kết tài khoản';
-                linkedGoogleStatus.style.color = '#6E665D';
+                linkedGoogleStatus.style.color = '#71717a';
                 linkedGoogleAction.innerHTML = `
-                    <button type="button" id="btn-link-google-account" class="btn-dark" style="font-size: 0.8rem; padding: 6px 14px; border-radius: 16px; width: auto; margin: 0; min-width: auto; background: #9C7156;">
+                    <button type="button" id="btn-link-google-account" class="btn-dark" style="font-size: 0.8rem; padding: 6px 14px; border-radius: 999px; width: auto; margin: 0; min-width: auto; background: #000000; color: #ffffff;">
                         Liên kết ngay
                     </button>
                 `;
@@ -618,13 +798,25 @@ async function handleProfileAuth(user) {
                             btnLinkGoogle.disabled = true;
                             btnLinkGoogle.innerText = 'Đang xử lý...';
                             const provider = new GoogleAuthProvider();
-                            await linkWithPopup(auth.currentUser, provider);
+                            const linkResult = await linkWithPopup(auth.currentUser, provider);
+                            const linkedGoogleInfo = linkResult?.user?.providerData?.find(p => p && p.providerId === 'google.com');
+                            const linkedGoogleEmail = linkedGoogleInfo?.email || linkResult?.user?.email || null;
+                            await setDoc(userRef, {
+                                googleLinked: true,
+                                ...(linkedGoogleEmail ? { googleEmail: linkedGoogleEmail } : {}),
+                                ...(linkedGoogleEmail && !userData.email ? { email: linkedGoogleEmail } : {}),
+                                updatedAt: new Date().toISOString()
+                            }, { merge: true });
                             showToast('Liên kết tài khoản Google thành công!');
                             handleProfileAuth(auth.currentUser);
                         } catch (linkErr) {
                             console.error('Lỗi link Google:', linkErr);
                             if (linkErr.code === 'auth/credential-already-in-use') {
-                                showToast('Tài khoản Google này đã được liên kết với một tài khoản khác!', 'error');
+                                if (!isDirectPrimarySession && userData.email) {
+                                    showToast(`Vui lòng đăng nhập bằng tài khoản ${userData.email} để liên kết Google cho tài khoản chính.`, 'error');
+                                } else {
+                                    showToast('Tài khoản Google này đã được liên kết với một tài khoản khác!', 'error');
+                                }
                             } else if (linkErr.code === 'auth/popup-closed-by-user') {
                                 // Người dùng đóng popup
                             } else {
@@ -647,8 +839,8 @@ async function handleProfileAuth(user) {
             const adminContainer = document.getElementById('admin-action-container');
             if (adminContainer) {
                 adminContainer.innerHTML = `
-                    <p style="color: #27ae60; font-weight: 600; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
-                    <a href="../DashBoard/" class="btn-dark" style="display: block; text-align: center; margin-top: 0; min-width: 150px; width: auto;">Vào bảng điều khiển Admin</a>
+                    <p style="color: #111111; font-weight: 700; font-size: 0.8rem; margin-bottom: 0.5rem;">QUYỀN QUẢN TRỊ VIÊN</p>
+                    <a href="../DashBoard/" class="btn-dark" style="margin-top: 0;">Vào bảng điều khiển Admin</a>
                 `;
                 adminContainer.style.display = 'block';
             }
@@ -656,6 +848,41 @@ async function handleProfileAuth(user) {
 
         const editForm = document.getElementById('edit-profile-form');
         const submitBtn = editForm ? editForm.querySelector('button[type="submit"]') : null;
+        const initialProfileState = {
+            name: (editName ? editName.value : '').trim(),
+            phone: formatPhoneNumber(editPhone ? editPhone.value : ''),
+            dob: editDob ? editDob.value : '',
+            gender: editGender ? editGender.value : ''
+        };
+
+        const checkProfileFormDirty = () => {
+            if (!submitBtn) return;
+            if (confirmationResult) {
+                submitBtn.disabled = false;
+                return;
+            }
+            const curName = (editName ? editName.value : '').trim();
+            const curPhone = formatPhoneNumber(editPhone ? editPhone.value : '');
+            const curDob = editDob ? editDob.value : '';
+            const curGender = editGender ? editGender.value : '';
+            const isDirty = (
+                curName !== initialProfileState.name ||
+                curPhone !== initialProfileState.phone ||
+                curDob !== initialProfileState.dob ||
+                curGender !== initialProfileState.gender
+            );
+            submitBtn.disabled = !isDirty;
+        };
+
+        if (submitBtn) {
+            submitBtn.innerText = "Lưu thông tin";
+            submitBtn.disabled = true;
+        }
+        [editName, editPhone, editDob, editGender].forEach(el => {
+            if (!el) return;
+            el.oninput = checkProfileFormDirty;
+            el.onchange = checkProfileFormDirty;
+        });
         const resendBtn = document.getElementById('btn-resend-otp-profile');
 
         if (resendBtn) startOtpCountdown(resendBtn, 'otp_ts_profile', 60);
@@ -709,7 +936,7 @@ async function handleProfileAuth(user) {
                 try {
                     const existingPhone = formatPhoneNumber(userData.phone || user.phoneNumber || '');
                     if (existingPhone && newPhone && existingPhone !== newPhone) {
-                        showToast("Số điện thoại đã gắn với tài khoản không thể tự thay đổi. Vui lòng liên hệ Admin để được hỗ trợ.", "error");
+                        showToast("Để bảo vệ tài khoản và điểm tích lũy, số điện thoại chưa thể tự thay đổi. Bạn nhắn Tiệm hoặc gọi 0777 709 662 để được hỗ trợ nhanh nhé!", "error");
                         if (editPhone) editPhone.value = existingPhone;
                         return;
                     }
@@ -737,7 +964,7 @@ async function handleProfileAuth(user) {
 
                     if (confirmationResult) {
                         const code = getOtpValue('otp-inputs-profile');
-                        if (code.length < 6) { showToast("Vui lòng nhập đủ 6 số OTP", "error"); return; }
+                        if (code.length < 6) { window.tngShakeOtp?.('otp-inputs-profile'); showToast("Vui lòng nhập đủ 6 số OTP", "error"); return; }
                         
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<span class="spinner-small"></span> Đang xác thực...';
@@ -746,6 +973,7 @@ async function handleProfileAuth(user) {
                             confirmationResult = null;
                             otpGroup.style.display = 'none';
                         } catch (err) {
+                            window.tngShakeOtp?.('otp-inputs-profile');
                             showToast("Mã OTP không chính xác hoặc đã hết hạn", "error");
                             submitBtn.disabled = false;
                             submitBtn.innerText = "Xác nhận & Lưu";
@@ -765,6 +993,7 @@ async function handleProfileAuth(user) {
                     if (user.email) identifiers.push(user.email);
 
                     await setDoc(userRef, {
+                        displayName: newName,
                         phone: newPhone,
                         dob: newDob,
                         birthday: newDob,
@@ -788,11 +1017,18 @@ async function handleProfileAuth(user) {
                         });
                     }
 
-                    handleProfileAuth(auth.currentUser); 
+                    if (submitBtn) {
+                        submitBtn.innerText = "Lưu thông tin";
+                        submitBtn.disabled = true;
+                    }
+
+                    await handleProfileAuth(auth.currentUser); 
                 } catch (error) {
                     showToast("Lỗi khi cập nhật: " + error.message, "error");
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Lưu thông tin";
+                    if (submitBtn) {
+                        submitBtn.innerText = "Lưu thông tin";
+                        checkProfileFormDirty();
+                    }
                 }
             };
         }
@@ -800,14 +1036,170 @@ async function handleProfileAuth(user) {
         const btnLogoutSidebar = document.getElementById('btn-logout-sidebar');
         if (btnLogoutSidebar) btnLogoutSidebar.onclick = logout;
 
+        // Cập nhật trạng thái hộp Bảo mật & Form Đổi mật khẩu (Đổi thật trên Firebase Auth)
+        const securityGoogleBanner = document.getElementById('security-google-banner');
+        const hasPasswordProvider = Boolean(user.providerData?.some(p => p.providerId === 'password'));
+        const isGoogleUser = Boolean(user.providerData?.some(p => p.providerId === 'google.com'));
+        if (securityGoogleBanner) {
+            securityGoogleBanner.style.display = isGoogleUser ? 'flex' : 'none';
+        }
+
+        const curPwGroup = document.getElementById('current-password-group');
+        if (curPwGroup) {
+            curPwGroup.style.display = hasPasswordProvider ? 'block' : 'none';
+        }
+
+        const changePwForm = document.getElementById('change-password-form');
+        const curPwInput = document.getElementById('current-password');
+        const newPwInput = document.getElementById('new-password');
+        const confirmPwInput = document.getElementById('confirm-new-password');
+        const btnSubmitPw = document.getElementById('btn-submit-password');
+        const pwMatchHint = document.getElementById('pw-match-hint');
+
+        // Nút ẩn/hiện mật khẩu
+        document.querySelectorAll('.pw-toggle-btn').forEach(btn => {
+            btn.onclick = () => {
+                const targetInput = document.getElementById(btn.dataset.target);
+                if (!targetInput) return;
+                const isPw = targetInput.type === 'password';
+                targetInput.type = isPw ? 'text' : 'password';
+                btn.innerHTML = `<i class="ti ${isPw ? 'ti-eye-off' : 'ti-eye'}"></i>`;
+            };
+        });
+
+        const validatePasswordRules = (pw = '') => ({
+            length: pw.length >= 6,
+            upper: /[A-Z]/.test(pw),
+            number: /[0-9]/.test(pw),
+            special: /[^A-Za-z0-9\s]/.test(pw)
+        });
+
+        const setRuleItemState = (id, valid) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('is-valid', valid);
+            const icon = el.querySelector('i.ti');
+            if (icon) {
+                icon.className = `ti ${valid ? 'ti-circle-check-filled' : 'ti-circle'}`;
+            }
+        };
+
+        const checkPasswordFormDirty = () => {
+            if (!btnSubmitPw) return;
+            const curVal = curPwInput ? curPwInput.value : '';
+            const newVal = newPwInput ? newPwInput.value : '';
+            const confirmVal = confirmPwInput ? confirmPwInput.value : '';
+
+            const rules = validatePasswordRules(newVal);
+            setRuleItemState('pw-rule-length', rules.length);
+            setRuleItemState('pw-rule-upper', rules.upper);
+            setRuleItemState('pw-rule-number', rules.number);
+            setRuleItemState('pw-rule-special', rules.special);
+
+            const allRulesMet = rules.length && rules.upper && rules.number && rules.special;
+            const isMatching = newVal.length > 0 && confirmVal.length > 0 && newVal === confirmVal;
+
+            if (pwMatchHint) {
+                if (confirmVal.length > 0 && !isMatching) {
+                    pwMatchHint.style.display = 'block';
+                    pwMatchHint.style.color = '#dc2626';
+                    pwMatchHint.innerText = 'Mật khẩu xác nhận chưa khớp.';
+                } else if (isMatching) {
+                    pwMatchHint.style.display = 'block';
+                    pwMatchHint.style.color = '#111111';
+                    pwMatchHint.innerText = '✓ Mật khẩu xác nhận đã khớp.';
+                } else {
+                    pwMatchHint.style.display = 'none';
+                }
+            }
+
+            const hasRequiredCurrent = !hasPasswordProvider || curVal.trim().length > 0;
+            btnSubmitPw.disabled = !(hasRequiredCurrent && allRulesMet && isMatching);
+        };
+
+        [curPwInput, newPwInput, confirmPwInput].forEach(el => {
+            if (!el) return;
+            el.value = '';
+            el.oninput = checkPasswordFormDirty;
+            el.onchange = checkPasswordFormDirty;
+        });
+        checkPasswordFormDirty();
+        if (btnSubmitPw) {
+            btnSubmitPw.innerText = 'Đổi mật khẩu';
+        }
+
+        if (changePwForm) {
+            changePwForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const curPw = curPwInput ? curPwInput.value : '';
+                const newPw = newPwInput ? newPwInput.value : '';
+                const confirmPw = confirmPwInput ? confirmPwInput.value : '';
+
+                const rules = validatePasswordRules(newPw);
+                if (!rules.length || !rules.upper || !rules.number || !rules.special) {
+                    showToast('Mật khẩu mới phải có tối thiểu 6 ký tự, gồm ít nhất 1 chữ in hoa, 1 chữ số và 1 ký tự đặc biệt.', 'error');
+                    return;
+                }
+                if (newPw !== confirmPw) {
+                    showToast('Mật khẩu xác nhận không khớp.', 'error');
+                    return;
+                }
+                if (hasPasswordProvider && !curPw) {
+                    showToast('Vui lòng nhập mật khẩu hiện tại.', 'error');
+                    return;
+                }
+
+                try {
+                    if (btnSubmitPw) {
+                        btnSubmitPw.disabled = true;
+                        btnSubmitPw.innerHTML = '<span class="spinner-small"></span> Đang cập nhật...';
+                    }
+
+                    if (hasPasswordProvider && curPw && user.email) {
+                        const cred = EmailAuthProvider.credential(user.email, curPw);
+                        await reauthenticateWithCredential(user, cred);
+                    }
+
+                    try {
+                        await updatePassword(user, newPw);
+                    } catch (updateErr) {
+                        if (updateErr.code === 'auth/requires-recent-login' && isGoogleUser) {
+                            await reauthenticateWithPopup(user, new GoogleAuthProvider());
+                            await updatePassword(user, newPw);
+                        } else {
+                            throw updateErr;
+                        }
+                    }
+
+                    if (curPwInput) curPwInput.value = '';
+                    if (newPwInput) newPwInput.value = '';
+                    if (confirmPwInput) confirmPwInput.value = '';
+                    checkPasswordFormDirty();
+                    showToast('Đổi mật khẩu thành công!');
+                } catch (err) {
+                    if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                        showToast('Mật khẩu hiện tại không chính xác.', 'error');
+                    } else if (err.code === 'auth/requires-recent-login') {
+                        showToast('Phiên đăng nhập đã cũ. Vui lòng nhập mật khẩu hiện tại hoặc dùng nút "Gửi link đặt lại qua Email".', 'error');
+                    } else {
+                        showToast('Không thể đổi mật khẩu: ' + (err.message || 'Vui lòng thử lại'), 'error');
+                    }
+                } finally {
+                    if (btnSubmitPw) {
+                        btnSubmitPw.innerText = 'Đổi mật khẩu';
+                        checkPasswordFormDirty();
+                    }
+                }
+            };
+        }
+
         const btnChangePassword = document.getElementById('btn-change-password');
         if (btnChangePassword) {
             btnChangePassword.onclick = async () => {
                 if (user.email) {
                     try {
-                        // Using sendPasswordResetEmail from firebase-auth
                         await sendPasswordResetEmail(auth, user.email);
-                        showToast("Đã gửi email đổi mật khẩu. Vui lòng kiểm tra hộp thư của bạn.");
+                        showToast("Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư của bạn.");
                     } catch (error) {
                         showToast("Lỗi: " + error.message, "error");
                     }
@@ -846,7 +1238,9 @@ async function fetchOrderHistory(userId, authUser = null) {
 
         let htmlContent = '';
         let totalSpent = 0;
+        let allActiveOrdersSpent = 0;
         let redeemedPoints = 0;
+        let deliveringOrdersCount = 0;
 
         if (querySnapshot.empty) {
             orderListContainer.style.display = 'none';
@@ -859,6 +1253,10 @@ async function fetchOrderHistory(userId, authUser = null) {
                 const rawStatus = (order.status || 'Đang xử lý').trim();
                 const statusLower = rawStatus.toLowerCase();
                 const isCancelled = statusLower.includes('hủy') || statusLower.includes('cancel');
+
+                if (!isCancelled) {
+                    allActiveOrdersSpent += Number(order.totalAmount || 0);
+                }
 
                 // Tích lũy chi tiêu hợp lệ cho đơn hàng thành công, đã giao, đang giao, đã thanh toán
                 const isEligible = !isCancelled && (
@@ -903,6 +1301,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                     statusLower.includes('delivering')
                 ) {
                     currentStep = 3;
+                    deliveringOrdersCount++;
                 } else if (
                     statusLower.includes('xác nhận') || 
                     statusLower.includes('đóng gói') || 
@@ -947,7 +1346,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                     repayBtn = `<button class="btn-dark" style="margin: 0; padding: 6px 14px; font-size: 0.85rem;" id="repay-btn-${docId}" onclick="window.repayVNPay('${docId}', ${order.totalAmount})">Thanh toán lại</button>`;
                 }
 
-                const detailBtn = `<button class="btn-outline" style="margin: 0; padding: 6px 14px; font-size: 0.85rem;" onclick="window.viewOrderDetails('${docId}')">Xem chi tiết</button>`;
+                const detailBtn = `<a href="../order-detail.html?id=${encodeURIComponent(docId)}" class="btn-outline" style="margin: 0; padding: 8px 18px; font-size: 0.85rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">Xem chi tiết <i class="ti ti-arrow-right"></i></a>`;
                 const couponDiscountVal = order.discountAmount || 0;
                 const vipDiscountVal = order.membershipDiscount || 0;
                 const items = order.items || [];
@@ -960,7 +1359,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
                             <div>
                                 <span style="font-size: 0.78rem; color: #64748b;">MÃ ĐƠN HÀNG</span>
-                                <div style="font-weight: 700; font-size: 1.05rem; color: #2c3e50; font-family: monospace;">${docId}</div>
+                                <div><a href="../order-detail.html?id=${encodeURIComponent(docId)}" style="font-weight: 700; font-size: 1.05rem; color: #18181b; font-family: monospace; text-decoration: none;">${docId}</a></div>
                                 <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Ngày đặt: ${orderDate}</div>
                             </div>
                             <div style="text-align: right;">
@@ -1085,11 +1484,42 @@ async function fetchOrderHistory(userId, authUser = null) {
             orderListContainer.innerHTML = htmlContent;
         }
         
+        const navBadgeOrders = document.getElementById('nav-badge-orders');
+        if (navBadgeOrders) {
+            if (deliveringOrdersCount > 0) {
+                navBadgeOrders.innerText = String(deliveringOrdersCount);
+                navBadgeOrders.style.display = 'inline-flex';
+                navBadgeOrders.title = `${deliveringOrdersCount} đơn hàng đang giao`;
+            } else {
+                navBadgeOrders.innerText = '0';
+                navBadgeOrders.style.display = 'none';
+            }
+        }
+
         // 1.5 Hiển thị Thẻ thành viên & Tiến trình
         const cardContainer = document.getElementById('membership-card-container');
         if (cardContainer) {
             const profileSpent = Number(window.currentUserData?.totalSpent || window.currentUserData?.spentTotal || 0);
             totalSpent = Math.max(totalSpent, profileSpent);
+
+            const sidebarOrdersEl = document.getElementById('sidebar-stat-orders');
+            const totalOrderCount = Number(querySnapshot.size || 0);
+            if (sidebarOrdersEl) {
+                if (typeof window.tngAnimateCountUp === 'function') {
+                    window.tngAnimateCountUp(sidebarOrdersEl, totalOrderCount, (v) => String(Math.round(v)));
+                } else {
+                    sidebarOrdersEl.innerText = String(totalOrderCount);
+                }
+            }
+            const sidebarSpentEl = document.getElementById('sidebar-stat-spent');
+            const finalSidebarSpent = Math.max(totalSpent, allActiveOrdersSpent);
+            if (sidebarSpentEl) {
+                if (typeof window.tngAnimateCountUp === 'function') {
+                    window.tngAnimateCountUp(sidebarSpentEl, finalSidebarSpent, (v) => formatCompactSpent(Math.round(v)));
+                } else {
+                    sidebarSpentEl.innerText = formatCompactSpent(finalSidebarSpent);
+                }
+            }
             const currentTier = getMembershipTier(totalSpent, window.currentUserData?.membershipTier || window.currentUserData?.tier);
             const currentTierIdx = MEMBERSHIP_TIERS.findIndex(t => t.id === currentTier.id);
             const nextTier = (currentTierIdx >= 0 && currentTierIdx < MEMBERSHIP_TIERS.length - 1) ? MEMBERSHIP_TIERS[currentTierIdx + 1] : null;
@@ -1118,7 +1548,7 @@ async function fetchOrderHistory(userId, authUser = null) {
             };
             if (authCreationTimeIso && currentUserForSync?.uid === userId) {
                 profileSyncPayload.registeredAt = authCreationTimeIso;
-                if (!window.currentUserData?.createdAt) {
+                if (!parseFlexibleDate(window.currentUserData?.createdAt)) {
                     profileSyncPayload.createdAt = authCreationTimeIso;
                 }
             }
@@ -1153,18 +1583,15 @@ async function fetchOrderHistory(userId, authUser = null) {
             }
 
             const currentUser = authUser || auth.currentUser;
-            let creationTime = currentUser?.metadata?.creationTime;
-            if (!creationTime && userId) {
+            let uDataForCard = window.currentUserData;
+            if (!uDataForCard && userId) {
                 try {
                     const uSnap = await getDoc(doc(db, "users", userId));
-                    if (uSnap.exists()) {
-                        const uData = uSnap.data();
-                        creationTime = uData.createdAt || uData.metadata?.creationTime;
-                    }
+                    if (uSnap.exists()) uDataForCard = uSnap.data();
                 } catch (_) {}
             }
-            const joinDateWeb = creationTime ? new Date(creationTime) : null;
-            const memberSinceWeb = joinDateWeb && !isNaN(joinDateWeb.getTime()) ? `${joinDateWeb.getMonth() + 1}/${joinDateWeb.getFullYear()}` : '';
+            const joinDateWeb = resolveMemberJoinDate(uDataForCard, currentUser, userId);
+            const memberSinceWeb = joinDateWeb ? `${joinDateWeb.getMonth() + 1}/${joinDateWeb.getFullYear()}` : '';
 
             cardContainer.innerHTML = `
                 <div class="membership-card tier-${currentTier.id}" style="position: relative;">
@@ -1179,6 +1606,7 @@ async function fetchOrderHistory(userId, authUser = null) {
                 </div>
                 ${progressHtml}
                 <a href="../membership/" style="font-size:0.8rem; color:var(--text-black); text-decoration:underline; display:block; text-align:center; margin-top:10px;">Xem chi tiết quyền lợi các hạng thẻ</a>`;
+            window.tngInitMembershipTilt?.();
             
             // Sinh voucher tự động (Thăng hạng, sinh nhật, người thân)
             await generateAutomaticVouchers(userId, currentTier, Math.max(totalSpent, currentTier.min || 0));
@@ -1241,6 +1669,11 @@ async function fetchUserVouchers(userId) {
             validCoupons.push(couponObj);
             window.loadedCoupons[id] = couponObj;
         });
+
+        const navBadgeVouchers = document.getElementById('nav-badge-vouchers');
+        if (navBadgeVouchers) {
+            navBadgeVouchers.innerText = String(validCoupons.length);
+        }
 
         if (validCoupons.length === 0) {
             listContainer.style.display = 'none';
@@ -1322,20 +1755,20 @@ async function fetchUserVouchers(userId) {
                             </h4>
                         </div>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
                             <span style="color: #666; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; font-weight: 500;">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #e74c3c;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #e74c3c; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                 HSD: ${c.expiryDate ? new Date(c.expiryDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}
                             </span>
-                            <span style="font-size: 0.7rem; color: #2c3e50; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #e0e0e0; padding: 3px 8px; border-radius: 20px; background: #fafafa; transition: all 0.2s;" onmouseover="this.style.background='#f0f2f5'; this.style.borderColor='#ccc'; this.style.color='#111';" onmouseout="this.style.background='#fafafa'; this.style.borderColor='#e0e0e0'; this.style.color='#2c3e50';" onclick="window.showCouponConditions('${c.id}')">
+                            <span style="font-size: 0.7rem; color: #2c3e50; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #e0e0e0; padding: 3px 8px; border-radius: 20px; background: #fafafa; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='#f0f2f5'; this.style.borderColor='#ccc'; this.style.color='#111';" onmouseout="this.style.background='#fafafa'; this.style.borderColor='#e0e0e0'; this.style.color='#2c3e50';" onclick="window.showCouponConditions('${c.id}')">
                                 Xem thể lệ
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #666;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                             </span>
                         </div>
                         
-                        <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border: 1px dashed #ced4da; margin-bottom: 8px;">
-                            <code style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #2c3e50;">${c.id}</code>
-                            <button style="background: var(--primary-color, #2c3e50); color: white; border: none; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;" onclick="window.copyVoucherCode('${c.id}')">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border: 1px dashed #ced4da; margin-bottom: 8px;">
+                            <code style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.id}</code>
+                            <button style="background: var(--primary-color, #2c3e50); color: white; border: none; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap;" onclick="window.copyVoucherCode('${c.id}')">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 Sao chép
                             </button>

@@ -444,8 +444,8 @@ async function renderCheckoutForm(container) {
                 <label class="noel-giftwrap-box" style="margin: 0;">
                     <input type="checkbox" id="cart-giftwrap-check" ${localStorage.getItem('tng_noel_giftwrap_opt') === '1' ? 'checked' : ''} onchange="window.toggleNoelGiftWrapOption ? window.toggleNoelGiftWrapOption(this.checked) : localStorage.setItem('tng_noel_giftwrap_opt', this.checked ? '1' : '0')">
                     <div class="noel-giftwrap-info">
-                        <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> ${(window.noelHolidaySettings && window.noelHolidaySettings.giftWrapText) ? window.noelHolidaySettings.giftWrapText : '🎁 Miễn phí Gói quà Noel & Kèm thiệp viết tay từ Tiệm'}</div>
-                        <div class="noel-giftwrap-desc">Tiệm gói giấy quà mộc mạc, thắt nơ chuông Noel và kèm thiệp viết tay theo yêu cầu.</div>
+                        <div class="noel-giftwrap-title"><i class="ti ti-gift"></i> <span>${((window.noelHolidaySettings && window.noelHolidaySettings.giftWrapText && !/noel|giáng sinh/i.test(window.noelHolidaySettings.giftWrapText)) ? window.noelHolidaySettings.giftWrapText : 'Miễn phí Gói quà & Kèm thiệp viết tay từ Tiệm').replace(/^🎁\s*/, '')}</span></div>
+                        <div class="noel-giftwrap-desc">Tiệm hỗ trợ gói hộp quà chỉn chu, thắt nơ tinh tế và kèm thiệp viết tay miễn phí theo yêu cầu.</div>
                     </div>
                 </label>
             </div>
@@ -453,9 +453,9 @@ async function renderCheckoutForm(container) {
             <div class="form-group">
                 <label style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                     <span>Order Note | Ghi chú đơn hàng &amp; Thiệp quà tặng</span>
-                    ${localStorage.getItem('tng_noel_gift_note') ? `<span style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;"><i class="ti ti-christmas-tree"></i> Đã đính kèm lời chúc Thiệp Giáng Sinh</span>` : `<a href="../noel/#noel-gift-writer" style="font-size:0.75rem; color:#991B1B; font-weight:600; text-decoration:underline;"><i class="ti ti-christmas-tree"></i> Viết thiệp Giáng Sinh miễn phí</a>`}
+                    ${localStorage.getItem('tng_noel_gift_note') ? `<span style="background:#FAF8F5; color:#2B2928; border:1px solid #E8CCB2; padding:2px 10px; border-radius:999px; font-size:0.75rem; font-weight:700;"><i class="ti ti-gift"></i> Đã đính kèm lời chúc thiệp quà tặng</span>` : ''}
                 </label>
-                <textarea id="order-note" rows="3" placeholder="Ghi chú giao hàng hoặc lời chúc viết tay lên thiệp Giáng Sinh...">${(localStorage.getItem('tng_noel_gift_note') || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                <textarea id="order-note" rows="3" placeholder="Ghi chú giao hàng hoặc nhắn nội dung lời chúc để Tiệm viết tay lên thiệp quà tặng...">${(localStorage.getItem('tng_noel_gift_note') || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
             </div>
             
             <div class="form-group">
@@ -896,8 +896,10 @@ window.changeQty = async (index, delta) => {
     } else {
         localStorage.setItem('cart', JSON.stringify(cart));
     }
-    renderCart();
+    await renderCart();
     updateCartCount();
+    const totalValueEl = document.querySelector('#price-breakdown .price-row.total span:last-child');
+    window.tngPulsePrice?.(totalValueEl);
 };
 
 window.removeItem = async (index) => {
@@ -907,6 +909,13 @@ window.removeItem = async (index) => {
         { confirmText: "Xóa khỏi giỏ", cancelText: "Giữ lại", type: "warning" }
     );
     if (ok) {
+        const rows = document.querySelectorAll('#cart-items-summary .summary-item');
+        const targetRow = rows[index];
+        if (targetRow) {
+            targetRow.classList.add('tng-cart-removing');
+            await new Promise(r => setTimeout(r, 220));
+        }
+
         let cart = [];
         if (auth.currentUser) {
             const snap = await getDoc(doc(db, "carts", auth.currentUser.uid));
@@ -928,8 +937,10 @@ window.removeItem = async (index) => {
         if (auth.currentUser) await setDoc(doc(db, "carts", auth.currentUser.uid), { items: cart });
         else localStorage.setItem('cart', JSON.stringify(cart));
 
-        renderCart();
+        await renderCart();
         updateCartCount();
+        const totalValueEl = document.querySelector('#price-breakdown .price-row.total span:last-child');
+        window.tngPulsePrice?.(totalValueEl);
         showToast("Đã xóa sản phẩm khỏi giỏ hàng");
     }
 };
@@ -1028,8 +1039,8 @@ window.placeOrder = async () => {
 
     const isGiftWrapped = document.getElementById('cart-giftwrap-check')?.checked || localStorage.getItem('tng_noel_giftwrap_opt') === '1';
     let finalNote = note || "";
-    if (isGiftWrapped && !finalNote.includes('GÓI QUÀ NOEL')) {
-        finalNote = `[🎁 YÊU CẦU: GÓI QUÀ NOEL & KÈM THIỆP TAY MIỄN PHÍ] ${finalNote}`.trim();
+    if (isGiftWrapped && !finalNote.includes('GÓI QUÀ')) {
+        finalNote = `[🎁 YÊU CẦU: GÓI QUÀ & KÈM THIỆP VIẾT TAY MIỄN PHÍ] ${finalNote}`.trim();
     }
 
     const orderData = {
