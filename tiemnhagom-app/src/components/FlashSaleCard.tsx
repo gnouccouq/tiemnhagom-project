@@ -274,7 +274,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 2,
     },
     bogoBadgeText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 10.5,
       fontWeight: '700',
@@ -292,7 +291,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 2,
     },
     saleBadgeText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 11,
       fontWeight: '700',
@@ -315,7 +313,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       overflow: 'hidden',
     },
     outOfStockText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 12,
       fontWeight: '700',
@@ -326,7 +323,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
     },
     name: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -363,7 +359,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       zIndex: 2,
     },
     progressLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 9.5,
       fontWeight: '700',
       color: isDark ? '#F5F5F5' : '#2B2928',
@@ -382,14 +377,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 6,
     },
     effectivePrice: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: '#9C7156',
       lineHeight: 18,
     },
     originalPrice: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: isDark ? '#8A8A8A' : '#9E968D',
       textDecorationLine: 'line-through',

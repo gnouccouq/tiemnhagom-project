@@ -1,4 +1,4 @@
-﻿# Tiệm Nhà Gốm — Workspace Design Rules & UI/UX Standards
+# Tiệm Nhà Gốm — Workspace Design Rules & UI/UX Standards
 
 Tài liệu này là **Bộ quy chuẩn thiết kế UI/UX và Kiến trúc vận hành bắt buộc** cho toàn bộ dự án Tiệm Nhà Gốm (bao gồm `tiemnhagom-app`, `tiemnhagom-retail-app` và hệ thống Web Dashboard / POS).
 Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị nào **phải luôn tuân thủ 100% các quy tắc dưới đây**.
@@ -40,7 +40,7 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * Chiều cao chuẩn: `height: 52px`.
   * Bo góc tròn tuyệt đối: `borderRadius: 26px`.
   * Padding: `paddingHorizontal: 18px` đến `20px`.
-  * Phông chữ: `fontFamily: 'ElleGaborStd'`, cỡ chữ `14px - 15px`.
+  * Phông chữ: Font mặc định của hệ thống (KHÔNG dùng `ElleGaborStd`), cỡ chữ `14px - 15px`.
   * Màu nền: `#FAF8F5` hoặc `Colors.surface`, viền `1px` màu men gốm `#E8E1D8`.
   * Ô nhập nhiều dòng (Text Area / Địa chỉ chi tiết): `minHeight: 84px`, bo góc mềm `borderRadius: 20px`.
 * **Trường chọn (Selectors / Dropdowns / Khu vực giao hàng):**
@@ -53,7 +53,7 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * **Quy chuẩn đồng bộ kiểu dáng Nút Hành Động giữa App và Web:** Toàn bộ các nút hành động trên Web (`.v2-btn-buy-now`, `.v2-btn-add-cart`, `.btn-dark`, `.btn-outline`, `.btn-minimal`, `.v2-sticky-btn-buy`, `.v2-sticky-btn-cart`, nút lưu thông tin, đặt hàng...) bắt buộc bo tròn viên thuốc đồng nhất (`border-radius: 999px` / `26px`) y hệt `tiemnhagom-app`, nhưng **tuyệt đối giữ nguyên tone màu Đen - Trắng (Monochrome) của Web**, không đổi sang màu nâu đất nung của App.
   * Dạng viên thuốc: `height: 52px, borderRadius: 26px`.
   * Nổi khối cao cấp: `shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 4`.
-  * Chữ: `fontFamily: 'ElleGaborStd'`, `fontSize: 15px - 16px`, `fontWeight: '700'`.
+  * Chữ: Font mặc định của hệ thống (KHÔNG dùng `ElleGaborStd`), `fontSize: 15px - 16px`, `fontWeight: '700'`.
   * Icon đi kèm: Đặt sát chữ (mũi tên `arrow-forward`, checkmark, icon download...) để định hướng hành động.
 * **Hiển thị tràn viền toàn màn hình & Thanh hành động đáy nổi bọc Liquid Glass (Full-Bleed Screen & Floating Liquid Glass Bottom Action Bar):**
   * **Hiển thị Full-Bleed 100% tràn viền màn hình (Không có dải đen / khoảng cắt đáy):**
@@ -84,14 +84,14 @@ Mọi Agent/AI khi làm việc trên bất kỳ máy tính hoặc thiết bị n
   * Nền Card: `#FFFFFF` (hoặc `Colors.cardBackground`), viền nhẹ `borderColor: '#E8E1D8'`, bóng mờ êm dịu (`shadowOpacity: 0.04, shadowRadius: 6, elevation: 2`).
   * Khoảng cách hai bên lề: `paddingHorizontal: 16px`. Khoảng cách giữa các khối Card: `14px - 16px`.
 * **Tiêu đề phân khu (Section Header):**
-  * Chữ `fontFamily: 'ElleGaborStd'`, `fontSize: 16px - 17px`, `fontWeight: '700'`, màu gốm trầm `#231B15`.
+  * Chữ dùng font mặc định của hệ thống (KHÔNG dùng `ElleGaborStd`), `fontSize: 16px - 17px`, `fontWeight: '700'`, màu gốm trầm `#231B15`.
 * **Danh sách hàng trong Card (List rows):**
   * Icon đặt trong vòng tròn màu pastel nhẹ `width: 38px - 44px`.
   * Phân cách giữa các hàng bằng divider mờ nhẹ `#F0ECE6` hoặc hairlineWidth.
 * **Lưới Danh mục Không Gian Tuyển Chọn (Category Grid 3 Cột Chuẩn Mực):**
   * Chia đều 3 cột đối xứng (`width: '33.333%'`), `justifyContent: 'flex-start'`, `rowGap: 18px` để luôn giữ các hàng thẳng hàng, cân xứng, không bị dồn lệch hay để lại ô trống thừa thãi.
   * Icon tròn minh hoạ gốm (`width: 66px, height: 66px, borderRadius: 33px`): Đặt trên nền men kem mộc `#FAF7F2` / `#F6F4EC` viền nhẹ `#E8E1D8` (Light) hoặc `#1A1816` viền men be mảnh `rgba(232, 204, 178, 0.22)` (Dark).
-  * Tên danh mục (`curatedItemName`): `fontFamily: 'ElleGaborStd'`, cỡ chữ `12.5px`, `fontWeight: '600'`, màu `#2B2928` (Light) / `#F5F5F5` (Dark), `lineHeight: 16px`, căn giữa, không bị cắt cụt hay gãy từ.
+  * Tên danh mục (`curatedItemName`): Font mặc định của hệ thống (KHÔNG dùng `ElleGaborStd`), cỡ chữ `12.5px`, `fontWeight: '600'`, màu `#2B2928` (Light) / `#F5F5F5` (Dark), `lineHeight: 16px`, căn giữa, không bị cắt cụt hay gãy từ.
   * Hỗ trợ đầy đủ thuộc tính kích thước (`width`, `height`, `minWidth`...) trong `ScalePressable` để tránh hiện tượng thẻ bấm co cụm làm chữ bị tràn vỡ layout.
 
 ---
@@ -202,13 +202,17 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 
 ---
 
-## 10. Quy chuẩn Hiển thị Số, Giá Tiền & Typography Dữ Liệu (Numbers & Data Typography)
+## 10. Quy chuẩn Typography Toàn Ứng Dụng & Hiển thị Số Liệu (App System Default Font vs Web Elle Gabor Std)
+* **BẮT BUỘC — Mobile App dùng Font Mặc Định Hệ Thống (KHÔNG dùng `ElleGaborStd` giống Web):**
+  * Font `Elle Gabor Std` (`ElleGaborStd` / `var(--font-serif)`) **chỉ dành riêng cho Website Storefront**, **TUYỆT ĐỐI KHÔNG dùng cho giao diện Mobile App** (`tiemnhagom-app`, `tiemnhagom-retail-app`).
+  * Toàn bộ giao diện App — bao gồm **Bottom Bar (`NativeTabs` `labelStyle`)**, **Stack `headerTitleStyle`**, tiêu đề màn hình, nội dung, input, nút bấm CTA, card và số liệu — **bắt buộc dùng font mặc định của hệ điều hành** (San Francisco / SF Pro trên iOS, Roboto / system sans-serif trên Android) bằng cách **không khai báo `fontFamily: 'ElleGaborStd'`**.
+  * Lưu ý kỹ thuật: `src/utils/textScaler.ts` tự động loại bỏ `ElleGaborStd` trên các thẻ `<Text>` / `<TextInput>` của React Native, nhưng **KHÔNG can thiệp được vào thanh điều hướng native** (`NativeTabs` `labelStyle` ở `app/(tabs)/_layout.tsx` và `Stack` `headerTitleStyle` ở `app/_layout.tsx`), do đó nghiêm cấm đặt `fontFamily: 'ElleGaborStd'` ở mọi stylesheet hoặc cấu hình navigator mới.
 * **Tuyệt đối không dùng font máy đánh chữ / monospace (`SpaceMono`) cho số liệu:**
   * Không dùng `fontFamily: 'SpaceMono'` cho giá tiền, mã đơn hàng, số lượng tồn kho, chỉ số KPI doanh thu, điểm tích lũy hay bàn phím nhập PIN. Monospace làm con số bị kéo giãn thô ráp, lệch hàng và khó quan sát nhanh trong môi trường bán hàng.
 * **Quy chuẩn Font Hệ Thống Hiện Đại (System Sans-Serif):**
   * Sử dụng typography chuẩn của hệ điều hành (San Francisco / SF Pro trên iOS, Roboto trên Android):
     * Trên iOS: Không đặt `fontFamily` (hoặc để `undefined`), React Native sẽ tự động áp dụng San Francisco chuẩn mực của Apple với đường nét tròn trịa, hiện đại và thanh thoát.
-    * Trên Android: Dùng `fontFamily: 'sans-serif'`.
+    * Trên Android: Không đặt `fontFamily` (hoặc dùng `'sans-serif'` mặc định hệ thống khi cần).
 * **Độ đậm & Khoảng cách ký tự chuẩn:**
   * **Giá tiền & Tổng thanh toán (`productPrice`, `totalValue`):** Cỡ chữ `14px - 19px`, `fontWeight: '700'`, màu gốm mộc `#9C7156`.
   * **Chỉ số KPI & Thống kê doanh thu:** Cỡ chữ `20px - 26px`, `fontWeight: '700'`, màu `#2B2928` (hoặc `#F5F5F5` ở Dark Mode).

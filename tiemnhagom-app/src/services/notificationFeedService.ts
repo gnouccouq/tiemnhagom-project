@@ -183,12 +183,17 @@ export async function preloadNotificationFeed(userId?: string | null): Promise<U
       let newsItems: UnifiedFeedItem[] = [];
       if (snapNewsRes.status === 'fulfilled' && snapNewsRes.value) {
         newsItems = snapNewsRes.value.docs
-          .filter((d) => !deletedIds.has(d.id))
+          .filter((d) => {
+            if (deletedIds.has(d.id)) return false;
+            const st = d.data()?.status;
+            return st === undefined || st === null || st === '' || st === 'published';
+          })
           .map((docSnap) => {
             const data = docSnap.data();
             const { timeStr, ms } = formatTimeFriendly(data.createdAt);
             const plainText = (data.content || '').replace(/<[^>]*>?/gm, '').trim();
-            const excerpt = plainText.length > 110 ? plainText.substring(0, 110) + '...' : plainText;
+            const srcText = typeof data.excerpt === 'string' && data.excerpt.trim() ? data.excerpt.trim() : plainText;
+            const excerpt = srcText.length > 110 ? srcText.substring(0, 110) + '...' : srcText;
 
             return {
               id: docSnap.id,

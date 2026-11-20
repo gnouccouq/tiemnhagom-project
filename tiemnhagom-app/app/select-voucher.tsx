@@ -711,7 +711,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: Colors.background,
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -730,7 +729,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexShrink: 0,
     },
     pointsText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#9C7156',
@@ -755,7 +753,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     singleUseNoticeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: '#9C7156',
       fontWeight: '600',
@@ -790,7 +787,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     pillInput: {
       flex: 1,
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -811,7 +807,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 2,
     },
     applyBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#9C7156',
@@ -836,7 +831,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
     },
     tabText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: Colors.textSecondary,
@@ -891,7 +885,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 3,
     },
     voucherTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -923,19 +916,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#333333' : '#E0DCD5',
     },
     singleBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '600',
       color: '#9C7156',
     },
     voucherMinSpend: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: '#9C7156',
       fontWeight: '600',
     },
     voucherExpiry: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted || '#71717A',
       marginTop: 2,
@@ -966,7 +956,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 8,
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
     },
@@ -985,7 +974,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -993,7 +981,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     emptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
       textAlign: 'center',
@@ -1029,7 +1016,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     removeBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.error || '#DC2626',
@@ -1052,7 +1038,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       opacity: 0.85,
     },
     confirmBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',

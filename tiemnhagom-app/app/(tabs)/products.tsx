@@ -231,7 +231,6 @@ const bubbleStyles = StyleSheet.create({
     fontSize: 26,
   },
   label: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     textAlign: 'center',
     marginTop: 6,
@@ -385,6 +384,15 @@ export default function ProductsScreen() {
   useEffect(() => {
     if (params.category) setSelectedCategory(params.category);
   }, [params.category]);
+
+  // Cập nhật sắp xếp từ route params (sortBy: newest | popular | price-asc | price-desc)
+  useEffect(() => {
+    const s = (params as any).sortBy as string | undefined;
+    if (s === 'newest' || s === 'popular' || s === 'price-asc' || s === 'price-desc') {
+      setSortBy(s);
+      setTempSortBy(s);
+    }
+  }, [(params as any).sortBy]);
 
   // ─── Filter Modal Handlers & Logic ───
   const activeFilterCount = useMemo(() => {
@@ -1294,7 +1302,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 4,
     },
     headerTitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1391,7 +1398,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 3,
     },
     subChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: isDark ? '#E8CCB2' : '#6E665D',
@@ -1411,13 +1417,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingBottom: 8,
     },
     sectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     countText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       fontWeight: '500',
@@ -1448,7 +1452,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     filterTriggerText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1486,7 +1489,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 8,
     },
     clearFilterText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: '#9C7156',
@@ -1523,7 +1525,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 6,
     },
     sortText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#B0B0B0' : '#6E665D',
       fontWeight: '500',
@@ -1554,7 +1555,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 10,
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textMuted,
     },
@@ -1566,13 +1566,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     emptyDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textMuted,
       textAlign: 'center',
@@ -1616,7 +1614,6 @@ const getModalStyles = (Colors: any, isDark: boolean) =>
       borderBottomColor: isDark ? '#2A2A2A' : '#E8E1D8',
     },
     title: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1677,7 +1674,6 @@ const getModalStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 26,
     },
     label: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: isDark ? '#B0B0B0' : '#6E665D',
       textAlign: 'center',
@@ -1722,7 +1718,6 @@ const getFilterModalStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     title: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1737,7 +1732,6 @@ const getFilterModalStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 8,
     },
     resetBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: '#9C7156',
@@ -1768,7 +1762,6 @@ const getFilterModalStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     sectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1802,7 +1795,6 @@ const getFilterModalStyles = (Colors: any, isDark: boolean) =>
       marginRight: 6,
     },
     filterPillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textPrimary,
     },
@@ -1831,7 +1823,6 @@ const getFilterModalStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     applyBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',

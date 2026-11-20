@@ -25,12 +25,7 @@ export function getGlobalFontScale(): number {
 export function scaleStyle(style: any, scale: number): any {
   if (!style) {
     if (scale !== 1.0) {
-      const fallback: any = { fontSize: Math.round(14 * scale) };
-      if (forceSansSerif && SYSTEM_SANS_SERIF) fallback.fontFamily = SYSTEM_SANS_SERIF;
-      return fallback;
-    }
-    if (forceSansSerif && SYSTEM_SANS_SERIF) {
-      return { fontFamily: SYSTEM_SANS_SERIF };
+      return { fontSize: Math.round(14 * scale) };
     }
     return style;
   }
@@ -45,7 +40,7 @@ export function scaleStyle(style: any, scale: number): any {
     // Không can thiệp nếu là icon font (Ionicons, MaterialIcons, Feather, v.v.)
     if (
       res.fontFamily &&
-      res.fontFamily !== 'ElleGaborStd' &&
+      res.fontFamily !== undefined &&
       res.fontFamily !== 'ElleGaborStd-Light' &&
       res.fontFamily !== 'serif' &&
       res.fontFamily !== 'System' &&
@@ -54,10 +49,9 @@ export function scaleStyle(style: any, scale: number): any {
       return style;
     }
 
-    // 1. Chuyển đổi font có chân (ElleGaborStd) sang font Sans-Serif hệ thống (SF Pro / Roboto)
+    // 1. Chuyển đổi font có chân sang font Sans-Serif hệ thống (SF Pro / Roboto)
     if (forceSansSerif) {
       if (
-        res.fontFamily === 'ElleGaborStd' ||
         res.fontFamily === 'ElleGaborStd-Light' ||
         res.fontFamily === 'serif'
       ) {

@@ -333,14 +333,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: Spacing.md,
     },
     title: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xxl,
       fontWeight: '800',
       color: Colors.textPrimary,
       textAlign: 'center',
     },
     subtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: Colors.textSecondary,
       textAlign: 'center',
@@ -370,7 +368,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     label: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: Colors.textSecondary,
       flex: 1,
@@ -390,7 +387,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexShrink: 0,
     },
     value: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xs,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -412,13 +408,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     bankingTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.base,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     bankingSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xs,
       color: Colors.textMuted,
       textAlign: 'center',
@@ -464,13 +458,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     qrActionBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xs,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
     },
     qrActionBtnTextPrimary: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xs,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -499,13 +491,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     inlineCopyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '700',
       color: '#9C7156',
     },
     bankInfoText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.xs,
       color: Colors.textPrimary,
       flexShrink: 1,
@@ -532,7 +522,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     noticeText: {
-      fontFamily: 'ElleGaborStd',
       flex: 1,
       fontSize: Typography.fontSize.xs,
       color: Colors.textSecondary,
@@ -566,7 +555,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     secondaryBtnText: {
-      fontFamily: 'ElleGaborStd',
       color: isDark ? '#E8CCB2' : '#6E665D',
       fontWeight: '700',
       fontSize: 14.5,
@@ -588,7 +576,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 5,
     },
     primaryBtnText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontWeight: '700',
       fontSize: 15,

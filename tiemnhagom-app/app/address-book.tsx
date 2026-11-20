@@ -498,14 +498,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 14,
     },
     headerBannerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 16,
       color: Colors.textPrimary,
       marginBottom: 2,
     },
     headerBannerDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
       lineHeight: 18,
@@ -534,7 +532,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
     },
     userName: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 15,
       color: Colors.textPrimary,
@@ -547,7 +544,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginHorizontal: 8,
     },
     userPhone: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '500',
       fontSize: 14,
       color: isDark ? '#9E968D' : '#6E665D',
@@ -563,7 +559,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     defaultBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 11,
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -575,14 +570,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 12,
     },
     streetText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 14,
       color: Colors.textPrimary,
       lineHeight: 20,
     },
     areaText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
       marginTop: 2,
@@ -604,7 +597,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingVertical: 4,
     },
     actionSetDefaultText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '500',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
@@ -620,7 +612,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 6,
     },
     iconActionText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '500',
       fontSize: 13,
       color: Colors.textPrimary,
@@ -650,7 +641,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 16,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 16,
       color: Colors.textPrimary,
@@ -658,7 +648,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     emptyDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
       textAlign: 'center',
@@ -680,7 +669,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 3,
     },
     emptyBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 14,
       color: '#FFFFFF',
@@ -711,7 +699,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     primaryCtaText: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 15,
       color: '#FFFFFF',
@@ -725,7 +712,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
     },
     modalTitle: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 17,
       color: Colors.textPrimary,
@@ -745,7 +731,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     formLabel: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '500',
       fontSize: 13,
       color: Colors.textPrimary,
@@ -758,7 +743,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? 'transparent' : '#E8E1D8',
       paddingHorizontal: 18,
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textPrimary,
     },
@@ -782,7 +766,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
     },
     selectorText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textPrimary,
       flex: 1,
@@ -804,14 +787,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     switchTitle: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       fontSize: 14,
       color: Colors.textPrimary,
       marginBottom: 2,
     },
     switchDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#9E968D' : '#6E665D',
     },

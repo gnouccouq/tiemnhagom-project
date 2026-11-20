@@ -232,25 +232,27 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           {product.name}
         </Text>
 
-        {/* Biến thể màu sắc thu nhỏ (nếu có) */}
-        {product.colorVariants && product.colorVariants.length > 0 ? (
-          <View style={styles.variantsRow}>
-            {product.colorVariants.slice(0, 3).map((v, idx) => (
-              <View
-                key={idx}
-                style={[
-                  styles.colorDot,
-                  { backgroundColor: v.hex || '#D4D4D8' },
-                ]}
-              />
-            ))}
-            {product.colorVariants.length > 3 ? (
-              <Text style={styles.moreVariantsText}>
-                +{product.colorVariants.length - 3}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
+        {/* Biến thể màu sắc thu nhỏ (chiều cao cố định để các card luôn bằng nhau tuyệt đối) */}
+        <View style={styles.variantsRow}>
+          {product.colorVariants && product.colorVariants.length > 0 ? (
+            <>
+              {product.colorVariants.slice(0, 3).map((v, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.colorDot,
+                    { backgroundColor: v.hex || '#D4D4D8' },
+                  ]}
+                />
+              ))}
+              {product.colorVariants.length > 3 ? (
+                <Text style={styles.moreVariantsText}>
+                  +{product.colorVariants.length - 3}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+        </View>
 
         {/* Hàng Giá & Nút Thêm Giỏ Hàng có animation nảy */}
         <View style={styles.priceRow}>
@@ -366,7 +368,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     transform: [{ rotate: '-8deg' }],
   },
   circleBadgeSaleSmall: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 7.5,
     fontWeight: '800',
     color: Colors.textInverse,
@@ -376,7 +377,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     textTransform: 'uppercase',
   },
   circleBadgeSaleText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
     color: Colors.textInverse,
@@ -399,7 +399,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     transform: [{ rotate: '10deg' }],
   },
   circleBadgeHotSmall: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 7.5,
     fontWeight: '700',
     color: Colors.badgeSale,
@@ -409,7 +408,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     textTransform: 'uppercase',
   },
   circleBadgeHotText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
     color: Colors.badgeSale,
@@ -433,7 +431,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     transform: [{ rotate: '15deg' }],
   },
   circleBadgeNewSmall: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 7.5,
     fontWeight: '700',
     color: '#1E4B2D',
@@ -443,7 +440,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     textTransform: 'uppercase',
   },
   circleBadgeNewText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '800',
     color: '#1E4B2D',
@@ -486,7 +482,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 4,
   },
   category: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     color: '#9C7156',
     fontWeight: '700',
@@ -495,14 +490,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   soldText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     color: Colors.textMuted,
     fontWeight: '500',
     marginLeft: 4,
   },
   name: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -514,6 +507,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    height: 14,
     marginBottom: 6,
   },
   colorDot: {
@@ -538,13 +532,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   effectivePrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '800',
     color: Colors.textPrimary,
   },
   originalPrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     color: Colors.textMuted,
     textDecorationLine: 'line-through',
@@ -562,13 +554,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   memberTierPriceLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     color: '#9C7156',
     fontWeight: '600',
   },
   memberTierPriceValue: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '800',
     color: '#9C7156',

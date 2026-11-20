@@ -789,7 +789,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 7,
     },
     brandSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       letterSpacing: 1.5,
@@ -822,7 +821,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#9C7156' : '#E8CCB2',
     },
     highlightBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: '#9C7156',
@@ -837,7 +835,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8E1D8',
     },
     minSpendChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#B0B0B0' : '#6E665D',
       fontWeight: '500',
@@ -867,14 +864,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
     },
     friendNoticeTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: '#9C7156',
       marginBottom: 3,
     },
     friendNoticeDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       lineHeight: 18,
       color: isDark ? '#D0C8C0' : '#6E665D',
@@ -919,7 +914,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
     },
     ticketTopLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       letterSpacing: 1.2,
@@ -927,7 +921,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     ticketTopSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#9E968D' : '#6E665D',
     },
@@ -980,7 +973,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     codeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '700',
       letterSpacing: 3,
@@ -1003,7 +995,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     copyActionBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '600',
       color: '#9C7156',
@@ -1054,13 +1045,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
     },
     infoLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#9E968D' : '#6E665D',
       marginBottom: 2,
     },
     infoValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary,
       fontWeight: '500',
@@ -1081,7 +1070,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     urgentBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '600',
       color: '#9C7156',
@@ -1111,7 +1099,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 10,
     },
     termsActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -1144,7 +1131,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     applyBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1223,7 +1209,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 3,
     },
     termsBannerCode: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#B0B0B0' : '#6E665D',
     },
@@ -1246,14 +1231,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 2,
     },
     termBulletText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '700',
       color: '#9C7156',
     },
     termText: {
       flex: 1,
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       lineHeight: 19.5,
       color: isDark ? '#CCCCCC' : '#4A423B',
@@ -1280,7 +1263,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 3,
     },
     termsModalOkBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',

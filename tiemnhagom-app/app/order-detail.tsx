@@ -1140,14 +1140,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
       letterSpacing: 0.3,
     },
     headerTitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1178,14 +1176,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     heroTierSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       color: '#FFFFFF',
       fontWeight: '600',
       opacity: 0.9,
     },
     heroTierTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 28,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -1225,14 +1221,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     statusCardCodeLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
       marginBottom: 2,
     },
     statusCardDateSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#9E968D' : BRAND.mutedText,
     },
@@ -1247,14 +1241,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     },
     statusCardCodeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: Colors.textPrimary,
       maxWidth: 130,
     },
     statusStateTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: Colors.textPrimary,
@@ -1313,7 +1305,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     reviewPillBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1329,7 +1320,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     reorderPillBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : BRAND.primary,
@@ -1346,13 +1336,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     sectionHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     sectionHeaderTitleNoIcon: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1373,7 +1361,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 2,
     },
     storeBranchNameTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1385,14 +1372,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     storeAddressText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : BRAND.mutedText,
       lineHeight: 18,
       flex: 1,
     },
     expectedTimeTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1403,7 +1388,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     expectedTimeVal: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textPrimary,
     },
@@ -1425,7 +1409,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 1,
     },
     timePillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -1462,7 +1445,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     itemCardName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1470,19 +1452,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     itemCardVariant: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#9E968D' : BRAND.mutedText,
       marginBottom: 4,
     },
     itemCardQuantity: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: Colors.textPrimary,
     },
     itemCardPrice: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1506,7 +1485,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 1,
     },
     voucherCodeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1534,7 +1512,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 10,
     },
     paymentMethodText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1551,12 +1528,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 12,
     },
     billLineLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       color: isDark ? '#9E968D' : BRAND.mutedText,
     },
     billLineVal: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -1573,19 +1548,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     totalPaymentLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
       marginBottom: 2,
     },
     vatSubtext: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#9E968D' : BRAND.mutedText,
     },
     totalPaymentAmount: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: Colors.textPrimary,
@@ -1604,7 +1576,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 18,
     },
     rewardPointsText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textPrimary,
     },
@@ -1618,7 +1589,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingVertical: 6,
     },
     supportLinkText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : BRAND.primary,
@@ -1645,13 +1615,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
     },
     modalHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     ratingSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: isDark ? '#9E968D' : BRAND.mutedText,
       marginTop: 6,
@@ -1683,7 +1651,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: BRAND.primary,
     },
     tagText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#9E968D' : BRAND.mutedText,
     },
@@ -1699,7 +1666,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : BRAND.borderSoft,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary,
       textAlignVertical: 'top',
@@ -1718,7 +1684,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 3,
     },
     submitReviewBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1753,7 +1718,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 12,
     },
     bottomReviewBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : BRAND.primary,
@@ -1775,7 +1739,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     bottomReorderBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1790,7 +1753,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 8,
     },
     reviewBonusText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: BRAND.primary,
       fontWeight: '600',
@@ -1838,7 +1800,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     addPhotoBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: BRAND.primary,

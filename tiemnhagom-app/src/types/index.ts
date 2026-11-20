@@ -146,6 +146,10 @@ export interface UserProfile {
   metadata?: any;
   identifiers?: string[];
   expoPushToken?: string;
+  googleLinked?: boolean;
+  googleEmail?: string | null;
+  appleLinked?: boolean;
+  appleEmail?: string | null;
 }
 
 export interface Coupon {

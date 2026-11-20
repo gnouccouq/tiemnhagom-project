@@ -377,7 +377,6 @@ const getStyles = (Colors: any) => {
       marginBottom: 16,
     },
     titleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17.5,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -386,7 +385,6 @@ const getStyles = (Colors: any) => {
       lineHeight: 24,
     },
     messageText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       lineHeight: 20,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
@@ -407,7 +405,6 @@ const getStyles = (Colors: any) => {
       paddingHorizontal: 14,
     },
     actionBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '600',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -421,7 +418,6 @@ const getStyles = (Colors: any) => {
       elevation: isDark ? 0 : 3,
     },
     primaryBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -435,7 +431,6 @@ const getStyles = (Colors: any) => {
       elevation: isDark ? 0 : 3,
     },
     destructiveBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -446,7 +441,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'transparent' : '#E8E1D8',
     },
     cancelBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: isDark ? '#E0E0E0' : (Colors.textSecondary || '#6E665D'),

@@ -672,7 +672,7 @@ export default function ProductDetailScreen() {
         <Animated.View entering={FadeInDown.duration(500).delay(200)} style={styles.detailContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <Text style={styles.categoryBadge}>{product.category || 'Gốm sứ thủ công'}</Text>
-            <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 13, color: '#7A827E', fontWeight: '600' }}>
+            <Text style={{ fontSize: 13, color: '#7A827E', fontWeight: '600' }}>
               {t('productCodeLabel')} {product.parentProductId || product.id}
             </Text>
           </View>
@@ -1473,10 +1473,8 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginTop: Spacing.md,
     color: Colors.textSecondary,
     fontSize: 14,
-    fontFamily: 'ElleGaborStd',
-  },
+    },
   errorTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.lg,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1490,7 +1488,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   backHomeText: {
     color: '#FFFFFF',
-    fontFamily: 'ElleGaborStd',
     fontWeight: '700',
   },
   /* Header chuẩn GEMINI.md: Không vạch kẻ đáy (borderBottomWidth: 0), nút tròn 40px */
@@ -1535,8 +1532,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
-    fontFamily: 'ElleGaborStd',
-  },
+    },
   scrollContent: {
     paddingBottom: 110,
   },
@@ -1571,7 +1567,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
   },
   counterText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1604,7 +1599,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     padding: 16,
   },
   categoryBadge: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: '#9C7156',
     fontWeight: '700',
@@ -1612,7 +1606,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     letterSpacing: 0.8,
   },
   productTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 20,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1629,12 +1622,10 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 12,
   },
   soldText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: Colors.textSecondary,
   },
   stockStatusText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: Colors.textSecondary,
     fontWeight: '500',
@@ -1646,13 +1637,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
   },
   mainPrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 24,
     fontWeight: '800',
     color: '#9C7156',
   },
   strikePrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     color: Colors.textMuted,
     textDecorationLine: 'line-through',
@@ -1664,7 +1653,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
   },
   saleTagText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
@@ -1678,7 +1666,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 10,
   },
   memberPerkBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10.5,
     fontWeight: '700',
     color: '#9C7156',
@@ -1710,7 +1697,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   variantCompactLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: Colors.textSecondary,
     fontWeight: '600',
@@ -1734,7 +1720,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 4,
   },
   variantCompactValue: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1748,7 +1733,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginLeft: 6,
   },
   compactOutOfStockText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '700',
     color: '#DC2626',
@@ -1759,7 +1743,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 4,
   },
   variantCompactCount: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: '#9C7156',
     fontWeight: '700',
@@ -1786,13 +1769,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 10,
   },
   voucherSectionTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   voucherSeeAll: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: '#9C7156',
     fontWeight: '700',
@@ -1815,19 +1796,16 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     minWidth: 110,
   },
   voucherCode: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '800',
     color: '#9C7156',
   },
   voucherDesc: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   voucherCondition: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     color: Colors.textMuted,
   },
@@ -1843,7 +1821,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: '#9C7156',
   },
   voucherApplyText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1867,7 +1844,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 2,
   },
   safetyBoxTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     fontWeight: '800',
     color: '#9C7156',
@@ -1900,14 +1876,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     height: 26,
   },
   safetyItemTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
     color: Colors.textPrimary,
     textAlign: 'center',
   },
   safetyItemSub: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     color: Colors.textMuted,
     textAlign: 'center',
@@ -1926,7 +1900,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   sectionHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1948,7 +1921,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
   },
   qtyNumber: {
-    fontFamily: 'ElleGaborStd',
     minWidth: 40,
     textAlign: 'center',
     fontSize: 15,
@@ -1969,14 +1941,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 2,
   },
   descTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textPrimary,
     marginBottom: 10,
   },
   descText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: Colors.textPrimary,
     lineHeight: 22,
@@ -1992,14 +1962,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: isDark ? '#2A2A2A' : '#F0ECE6',
   },
   specLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: Colors.textSecondary,
     width: 100,
   },
   specValue: {
     flex: 1,
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: Colors.textPrimary,
     fontWeight: '600',
@@ -2024,14 +1992,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6,
   },
   careTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: '#9C7156',
     marginBottom: 4,
   },
   careText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: Colors.textSecondary,
     textAlign: 'center',
@@ -2052,7 +2018,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: Spacing.sm,
   },
   guaranteeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textPrimary,
     flex: 1,
@@ -2069,13 +2034,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   sectionHeading: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   sectionSeeAll: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: '#9C7156',
@@ -2115,7 +2078,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#2C2C2C' : '#FAF8F5',
   },
   recentName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -2123,7 +2085,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     textAlign: 'center',
   },
   recentPrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
     color: '#9C7156',
@@ -2162,7 +2123,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: 4,
   },
   addToCartText: {
-    fontFamily: 'ElleGaborStd',
     color: isDark ? '#E8CCB2' : '#9C7156',
     fontWeight: '700',
     fontSize: 14,
@@ -2183,7 +2143,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: 4,
   },
   buyNowText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 15,
@@ -2224,24 +2183,20 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   modalPriceText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 19,
     fontWeight: '800',
     color: '#9C7156',
   },
   modalSelectedVariantText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   modalStockText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: Colors.textSecondary,
   },
   modalSoldText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: Colors.textMuted,
   },
@@ -2257,7 +2212,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginTop: 14,
   },
   modalSectionTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -2302,7 +2256,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.1)',
   },
   modalVariantName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textPrimary,
     fontWeight: '600',
@@ -2321,8 +2274,7 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '700',
     color: '#DC2626',
-    fontFamily: 'ElleGaborStd',
-  },
+    },
   modalQuantityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2346,7 +2298,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   modalConfirmBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -2376,13 +2327,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   bundleTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   bundleSubtitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textSecondary,
     marginTop: 2,
@@ -2424,7 +2373,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginRight: 10,
   },
   bundleItemName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -2452,7 +2400,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: 3,
   },
   bundleAddBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -2464,7 +2411,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   shareModalTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -2499,7 +2445,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
   },
   shareBrandBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -2510,7 +2455,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   shareCardCategory: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#9C7156',
@@ -2519,7 +2463,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 2,
   },
   shareCardProductName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '800',
     color: '#2B2928',
@@ -2533,7 +2476,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 4,
   },
   shareCardQrHint: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     color: '#6E665D',
   },
@@ -2569,7 +2511,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   copyLinkBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: isDark ? '#E8CCB2' : '#9C7156',
@@ -2591,7 +2532,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: 4,
   },
   shareNowBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '700',
     color: '#FFFFFF',

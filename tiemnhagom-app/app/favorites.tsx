@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    fontFamily: 'ElleGaborStd',
     marginTop: Spacing.sm,
     color: Colors.textMuted,
     fontSize: Typography.fontSize.sm,

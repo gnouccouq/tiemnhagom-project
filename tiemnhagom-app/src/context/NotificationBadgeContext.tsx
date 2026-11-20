@@ -216,7 +216,12 @@ export function NotificationBadgeProvider({ children }: { children: React.ReactN
         unsubscribeNews = onSnapshot(
           newsQuery,
           (snapshot) => {
-            const newsIds = snapshot.docs.map((d) => d.id);
+            const newsIds = snapshot.docs
+              .filter((d) => {
+                const st = d.data()?.status;
+                return st === undefined || st === null || st === '' || st === 'published';
+              })
+              .map((d) => d.id);
             latestNewsIdsRef.current = newsIds;
             recomputeCounts(readIdsRef.current);
           },

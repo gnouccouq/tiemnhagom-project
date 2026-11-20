@@ -821,14 +821,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: '#FFFFFF',
       letterSpacing: 0.3,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -881,7 +879,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     tierPrefixText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '500',
       color: 'rgba(255, 255, 255, 0.88)',
@@ -893,13 +890,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 8,
     },
     userTierBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10,
       fontWeight: '700',
       color: '#FFFFFF',
     },
     tierNameText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 27,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -916,7 +911,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     spendPillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: 'rgba(255, 255, 255, 0.95)',
@@ -1005,7 +999,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     benefitTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#1F2937'),
@@ -1036,7 +1029,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '700',
     },
     bulletText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#4B5563'),
       lineHeight: 20,
@@ -1051,7 +1043,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 20,
     },
     footerNoteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted || (isDark ? '#888888' : '#6B7280'),
       textAlign: 'center',
@@ -1061,7 +1052,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 3,
     },
     policyLinkText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '600',
       color: isDark ? (Colors.accentGold || '#EFC050') : '#8A5A2B',

@@ -133,7 +133,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 24,
     fontWeight: '700',
     color: '#2D3B34',
@@ -179,7 +178,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   settingOptionName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '600',
     color: '#333333',
@@ -269,7 +267,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   nextButtonText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',

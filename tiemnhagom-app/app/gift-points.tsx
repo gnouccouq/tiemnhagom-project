@@ -403,7 +403,6 @@ const styles = StyleSheet.create({
     borderColor: '#E8CCB2',
   },
   headerTierText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
     color: '#2B2928',
@@ -460,7 +459,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   tapToChangePointsHint: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '600',
     color: '#6E665D',
@@ -490,7 +488,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   phoneTextInput: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '600',
     color: '#2B2928',
@@ -518,7 +515,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   messageTextInput: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: '#2B2928',
     textAlignVertical: 'top',
@@ -584,7 +580,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   selectCardBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     fontWeight: '700',
     color: '#9C7156',
@@ -611,7 +606,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   quickTagPillText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '600',
     color: '#9C7156',
@@ -631,7 +625,6 @@ const styles = StyleSheet.create({
   },
   refundRuleNoteText: {
     flex: 1,
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: '#8A5A2B',
     lineHeight: 16,
@@ -657,7 +650,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   confirmButtonText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',

@@ -33,6 +33,8 @@ import { openWebLink } from '../../src/utils/openWebLink';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
 import { getFullAppVersionString } from '../../src/utils/appVersion';
+import { resolveMemberJoinDate } from '../../src/utils/joinDate';
+import { useRealtimeData } from '../../src/context/RealtimeDataContext';
 import { BlurButton } from '../../src/components/BlurButton';
 import { LiquidGlassContainerView } from '../../src/components/LiquidGlass';
 import { GlazeFluidCard } from '../../src/components/GlazeFluidCard';
@@ -235,23 +237,16 @@ export default function ProfileScreen() {
   const displayName = userProfile?.displayName || userProfile?.name || user?.displayName || 'Nguyễn Cường';
 
   // Định dạng ngày tham gia (Member Since)
-  const createdTimestamp =
-    user?.metadata?.creationTime ||
-    userProfile?.createdAt ||
-    userProfile?.metadata?.creationTime;
-  let memberSince = '';
-  let fullJoinDate = '';
-  if (createdTimestamp) {
-    try {
-      const pDate = new Date(createdTimestamp);
-      if (!isNaN(pDate.getTime())) {
-        memberSince = `${pDate.getMonth() + 1}/${pDate.getFullYear()}`;
-        fullJoinDate = pDate.toLocaleDateString('vi-VN');
-      }
-    } catch {
-      // ignore
-    }
-  }
+  const joinedAt = resolveMemberJoinDate(userProfile, user);
+  const memberSince = joinedAt ? `${joinedAt.getMonth() + 1}/${joinedAt.getFullYear()}` : '';
+  const fullJoinDate = joinedAt ? joinedAt.toLocaleDateString('vi-VN') : '';
+
+  // Số đơn đang giao (badge trên "Lịch sử mua hàng")
+  const { orders: realtimeOrders } = useRealtimeData() as any;
+  const shippingCount = (Array.isArray(realtimeOrders) ? realtimeOrders : []).filter((o: any) => {
+    const s = String(o?.status || '').toLowerCase();
+    return s === 'shipping' || s.includes('đang giao') || s.includes('vận chuyển');
+  }).length;
 
   const openHotline = () => {
     Linking.openURL('tel:0777709662').catch(() => {
@@ -601,6 +596,14 @@ export default function ProfileScreen() {
             >
               <View style={styles.gridIconWrap}>
                 <Ionicons name="receipt-outline" size={24} color="#8A5A2B" />
+                {shippingCount > 0 && (
+                  <View
+                    pointerEvents="none"
+                    style={{ position: 'absolute', top: -4, right: -6, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#C2410C', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{shippingCount > 99 ? '99+' : shippingCount}</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.gridLabel} numberOfLines={2}>
                 {t('purchaseHistoryUtility')}
@@ -773,7 +776,7 @@ export default function ProfileScreen() {
               <Text style={styles.supportItemTitle}>{t('appVersionTitle') || 'Phiên bản'}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 13, color: '#9E968D' }}>
+              <Text style={{ fontSize: 13, color: '#9E968D' }}>
                 v{getFullAppVersionString()}
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#9E968D" />
@@ -1050,13 +1053,11 @@ const getStyles = (Colors: any) => {
       flex: 1,
     },
     userNameText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     userTierSubText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#9E968D',
       marginTop: 2,
@@ -1134,7 +1135,6 @@ const getStyles = (Colors: any) => {
       height: '100%',
     },
     tierNameUnderEmblem: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.8,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1143,7 +1143,6 @@ const getStyles = (Colors: any) => {
       letterSpacing: 0.2,
     },
     memberSinceText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10,
       color: 'rgba(255, 255, 255, 0.75)',
       textAlign: 'center',
@@ -1165,7 +1164,6 @@ const getStyles = (Colors: any) => {
       alignItems: 'center',
     },
     pointsNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 22,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -1193,13 +1191,11 @@ const getStyles = (Colors: any) => {
       marginBottom: 8,
     },
     spendText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       color: 'rgba(255, 255, 255, 0.9)',
       fontWeight: '600',
     },
     nextTierName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       color: '#FFFFFF',
       fontWeight: '700',
@@ -1213,7 +1209,6 @@ const getStyles = (Colors: any) => {
       borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     calloutText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10,
       color: 'rgba(255, 255, 255, 0.92)',
       lineHeight: 14,
@@ -1252,7 +1247,6 @@ const getStyles = (Colors: any) => {
       marginBottom: 4,
     },
     secondaryCardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#231B15',
@@ -1268,13 +1262,11 @@ const getStyles = (Colors: any) => {
       borderRadius: 12,
     },
     pointsBadgePillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
     },
     giftSubtitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       marginBottom: 12,
@@ -1301,7 +1293,6 @@ const getStyles = (Colors: any) => {
       elevation: 2,
     },
     pillActionTextPrimary: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -1323,7 +1314,6 @@ const getStyles = (Colors: any) => {
       elevation: 1,
     },
     pillActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: '#231B15',
@@ -1334,7 +1324,6 @@ const getStyles = (Colors: any) => {
       gap: 3,
     },
     manageCardText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: '#8A5A2B',
@@ -1407,7 +1396,6 @@ const getStyles = (Colors: any) => {
       fontWeight: '800',
     },
     gridLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       textAlign: 'center',
@@ -1421,7 +1409,6 @@ const getStyles = (Colors: any) => {
       paddingHorizontal: 4,
     },
     sectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -1447,7 +1434,6 @@ const getStyles = (Colors: any) => {
       paddingVertical: 14,
     },
     supportItemTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '500',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -1464,7 +1450,6 @@ const getStyles = (Colors: any) => {
       gap: 6,
     },
     currentLangText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#E8CCB2' : '#8A5A2B',
       fontWeight: '600',
@@ -1475,7 +1460,6 @@ const getStyles = (Colors: any) => {
       gap: 10,
     },
     hotlineNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#8A5A2B',
@@ -1498,7 +1482,6 @@ const getStyles = (Colors: any) => {
       marginTop: 4,
     },
     logoutBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: '#EF5350',
@@ -1516,7 +1499,6 @@ const getStyles = (Colors: any) => {
       opacity: isDark ? 0.7 : 0.85,
     },
     footerVersion: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10,
       color: Colors.textMuted || '#888888',
       marginTop: 2,
@@ -1553,7 +1535,6 @@ const getStyles = (Colors: any) => {
       gap: 8,
     },
     modalTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -1595,14 +1576,12 @@ const getStyles = (Colors: any) => {
       marginBottom: 12,
     },
     qrCodeLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '800',
       color: Colors.textPrimary || '#231B15',
       letterSpacing: 1.5,
     },
     qrTierName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textMuted || '#9E968D',
       marginTop: 4,
@@ -1610,7 +1589,6 @@ const getStyles = (Colors: any) => {
       textAlign: 'center',
     },
     qrJoinDateSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: '#8A5A2B',
       marginBottom: 12,
@@ -1635,7 +1613,6 @@ const getStyles = (Colors: any) => {
       backgroundColor: '#2D3B34',
     },
     qrHelpText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textMuted || '#9E968D',
       textAlign: 'center',
@@ -1656,7 +1633,6 @@ const getStyles = (Colors: any) => {
       gap: 12,
     },
     tierIntroText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || '#6E665D',
       lineHeight: 18,
@@ -1691,7 +1667,6 @@ const getStyles = (Colors: any) => {
       borderRadius: 5,
     },
     tierCardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
@@ -1708,19 +1683,16 @@ const getStyles = (Colors: any) => {
       fontWeight: '700',
     },
     tierDiscountTag: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '800',
       color: '#B91C1C',
     },
     tierMinSpend: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#9E968D',
       marginBottom: 4,
     },
     tierPerkText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textPrimary || '#231B15',
       fontWeight: '500',
@@ -1740,20 +1712,17 @@ const getStyles = (Colors: any) => {
       marginBottom: 20,
     },
     pointsBigNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 44,
       fontWeight: '800',
       color: '#8A5A2B',
     },
     pointsUnitLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
       marginTop: 2,
     },
     pointsEquivText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: '#9C7156',
       fontWeight: '600',
@@ -1768,7 +1737,6 @@ const getStyles = (Colors: any) => {
       gap: 10,
     },
     ruleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || '#6E665D',
       flex: 1,
@@ -1780,7 +1748,6 @@ const getStyles = (Colors: any) => {
       padding: 20,
     },
     langModalSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || '#6E665D',
       marginBottom: 16,
@@ -1812,7 +1779,6 @@ const getStyles = (Colors: any) => {
       fontSize: 24,
     },
     langOptionName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textPrimary || '#231B15',
@@ -1822,7 +1788,6 @@ const getStyles = (Colors: any) => {
       fontWeight: '700',
     },
     langOptionNativeName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textMuted || '#9E968D',
       marginTop: 2,
@@ -1875,12 +1840,10 @@ const getStyles = (Colors: any) => {
       gap: 2,
     },
     giftBalanceLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
     },
     giftBalanceNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1889,7 +1852,6 @@ const getStyles = (Colors: any) => {
       gap: 8,
     },
     sectionSubLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -1912,7 +1874,6 @@ const getStyles = (Colors: any) => {
       borderColor: '#9C7156',
     },
     quickPointText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '600',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -1928,7 +1889,6 @@ const getStyles = (Colors: any) => {
       borderWidth: 1,
       borderColor: isDark ? '#333333' : '#E8E1D8',
       backgroundColor: isDark ? '#141414' : '#FAF8F5',
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
@@ -1962,7 +1922,6 @@ const getStyles = (Colors: any) => {
       backgroundColor: isDark ? 'rgba(156, 113, 86, 0.25)' : 'rgba(156, 113, 86, 0.12)',
     },
     themeTitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '600',
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
@@ -1979,7 +1938,6 @@ const getStyles = (Colors: any) => {
       borderWidth: 1,
       borderColor: isDark ? '#333333' : '#E8E1D8',
       backgroundColor: isDark ? '#141414' : '#FAF8F5',
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
       textAlignVertical: 'top',
@@ -1991,7 +1949,6 @@ const getStyles = (Colors: any) => {
       borderWidth: 1,
       borderColor: isDark ? '#333333' : '#E8E1D8',
       backgroundColor: isDark ? '#141414' : '#FAF8F5',
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
@@ -2010,7 +1967,6 @@ const getStyles = (Colors: any) => {
       marginTop: 6,
     },
     primaryCtaButtonText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -2030,13 +1986,11 @@ const getStyles = (Colors: any) => {
       marginBottom: 4,
     },
     giftSuccessTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
     },
     giftSuccessHint: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       textAlign: 'center',
@@ -2057,7 +2011,6 @@ const getStyles = (Colors: any) => {
       marginVertical: 4,
     },
     giftCodeHeaderLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: isDark ? '#E8CCB2' : '#8A5A2B',
       marginBottom: 2,
@@ -2078,7 +2031,6 @@ const getStyles = (Colors: any) => {
       borderRadius: 14,
     },
     copyCodeBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -2088,7 +2040,6 @@ const getStyles = (Colors: any) => {
       alignItems: 'center',
     },
     secondaryDoneBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
@@ -2107,7 +2058,6 @@ const getStyles = (Colors: any) => {
       gap: 12,
     },
     claimSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary || (isDark ? '#B0B0B0' : '#6E665D'),
       lineHeight: 18,
@@ -2140,7 +2090,6 @@ const getStyles = (Colors: any) => {
       backgroundColor: isDark ? 'rgba(232, 204, 178, 0.15)' : 'rgba(156, 113, 86, 0.10)',
     },
     pasteButtonText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',

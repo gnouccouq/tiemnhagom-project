@@ -829,7 +829,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     primaryBtnText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 15,
       fontWeight: '700',
@@ -847,7 +846,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     secondaryBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
     },

@@ -71,13 +71,11 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginRight: 6,
   },
   text: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: '#6E665D',
     fontWeight: '600',
   },
   selectedText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontWeight: '700',
   },

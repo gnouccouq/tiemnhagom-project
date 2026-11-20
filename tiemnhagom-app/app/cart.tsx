@@ -17,6 +17,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EmptyState } from '../src/components/EmptyState';
 import { BlurButton } from '../src/components/BlurButton';
+import { HeaderBackButton } from '../src/components/HeaderBackButton';
 import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
 import { LiquidGlass, LiquidGlassContainerView } from '../src/components/LiquidGlass';
 import { useThemeColor } from '../src/constants/theme';
@@ -590,7 +591,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -610,7 +610,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     freeShipNoticeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: '#9C7156',
       fontWeight: '600',
@@ -651,14 +650,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     cardHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
       flexShrink: 1,
     },
     removeVoucherText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: Colors.error || '#DC2626',
@@ -689,7 +686,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     voucherActionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -701,13 +697,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 2,
     },
     voucherActionHint: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#71717A',
       marginTop: 2,
     },
     editActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#9C7156',
@@ -734,7 +728,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 10,
     },
     itemName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -742,7 +735,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     itemVariantText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       marginBottom: 8,
@@ -787,7 +779,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingVertical: 4,
     },
     itemDeleteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       fontWeight: '600',
@@ -796,7 +787,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginVertical: 4,
     },
     crossSellSectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -826,7 +816,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 8,
     },
     crossSellName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -874,7 +863,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     summaryLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
       flex: 1,
@@ -887,7 +875,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexShrink: 0,
     },
     vatNoteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       textAlign: 'right',
@@ -916,7 +903,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flexShrink: 0,
     },
     bottomSubtotalLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textSecondary,
       marginBottom: 2,
@@ -941,7 +927,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     proceedBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',

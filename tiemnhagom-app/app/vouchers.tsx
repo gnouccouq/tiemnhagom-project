@@ -567,7 +567,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 0,
   },
   tabText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
   },
   tabTextActive: {
@@ -585,7 +584,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
   },
   loadingText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: Colors.textSecondary,
   },
@@ -673,19 +671,16 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? '#333333' : '#E0DCD5',
   },
   singleBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '600',
     color: '#9C7156',
   },
   voucherMinSpend: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: '#9C7156',
     fontWeight: '600',
   },
   voucherExpiry: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     lineHeight: 18,
   },
@@ -717,13 +712,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : '#E8CCB2',
   },
   emptyTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptyDesc: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -746,7 +739,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 2,
   },
   emptyActionBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 13.5,
     fontWeight: '700',
@@ -828,14 +820,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 18,
   },
   modalCodeLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '600',
     color: isDark ? '#E8CCB2' : '#9C7156',
     letterSpacing: 0.5,
   },
   modalCodeVal: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '800',
     color: Colors.textPrimary || '#2B2928',
@@ -854,7 +844,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? '#121212' : '#2B2928',
   },
   modalCopyBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
@@ -870,7 +859,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   modalDetailText: {
-    fontFamily: 'ElleGaborStd',
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
@@ -891,7 +879,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   modalPrimaryBtnText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',

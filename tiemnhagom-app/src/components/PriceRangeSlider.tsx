@@ -364,7 +364,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   readoutText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -413,7 +412,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   limitText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '500',
   },
@@ -444,7 +442,6 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   presetChipText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
   },
   presetChipTextActive: {

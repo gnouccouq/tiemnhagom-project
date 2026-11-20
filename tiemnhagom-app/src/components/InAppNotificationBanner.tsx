@@ -375,7 +375,6 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   brandName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -389,7 +388,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   timeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '500',
   },
@@ -424,14 +422,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 2,
     letterSpacing: 0.2,
   },
   message: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     lineHeight: 17,
   },

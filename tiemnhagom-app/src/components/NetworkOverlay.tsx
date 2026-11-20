@@ -49,7 +49,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 22,
     fontWeight: '700',
     color: '#333333',

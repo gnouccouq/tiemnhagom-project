@@ -398,7 +398,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       height: 65,
     },
     appName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: Colors.textPrimary,
@@ -406,7 +405,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     appTagline: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary,
       marginBottom: 10,
@@ -418,7 +416,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 14,
     },
     versionBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#2B2928',
@@ -438,7 +435,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     cardHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -451,12 +447,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingVertical: 8,
     },
     infoLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
     },
     infoValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -468,7 +462,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     otaBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#2B2928',
@@ -506,7 +499,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     checkUpdateBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -529,7 +521,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     sectionHeaderText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -551,7 +542,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     versionNumberText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -569,7 +559,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#9C7156' : '#9C7156',
     },
     otaChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textSecondary,
       fontWeight: '600',
@@ -585,19 +574,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 10,
     },
     currentBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       fontWeight: '700',
       color: '#FFFFFF',
     },
     releaseDateText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textSecondary,
       marginBottom: 4,
     },
     releaseSummaryTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: '#9C7156',
@@ -632,7 +618,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
     },
     changelogText: {
       flex: 1,
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textPrimary,
       lineHeight: 18,
@@ -655,13 +640,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       flex: 1,
     },
     bctTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     bctDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       color: Colors.textSecondary,
       marginTop: 2,
@@ -671,13 +654,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 3,
     },
     copyrightText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     businessText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textSecondary,
     },

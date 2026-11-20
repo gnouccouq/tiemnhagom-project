@@ -858,14 +858,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
       letterSpacing: 0.3,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -913,19 +911,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     cardHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     editActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#9C7156',
     },
     recipientNameText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -938,7 +933,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     addressBodyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
       lineHeight: 18,
@@ -951,7 +945,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 12,
     },
     phoneBodyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
     },
@@ -967,7 +960,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     noteInput: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textPrimary,
       flex: 1,
@@ -978,7 +970,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderTopColor: isDark ? '#242424' : '#F0ECE6',
     },
     estimateTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -990,7 +981,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     estimateTimeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
       fontWeight: '600',
@@ -1012,13 +1002,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     distanceBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: '#9C7156',
     },
     sectionSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1062,19 +1050,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     shippingPillTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
       marginBottom: 2,
     },
     shippingPillSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textMuted,
     },
     shippingPillPrice: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1119,7 +1104,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 10,
     },
     itemName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1127,7 +1111,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 3,
     },
     itemVariantText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       marginBottom: 6,
@@ -1148,7 +1131,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     stepQtyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1160,7 +1142,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 8,
     },
     itemPriceText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1173,7 +1154,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#333333' : '#E8E1D8',
     },
     itemEditBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: Colors.textSecondary,
@@ -1201,13 +1181,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 10,
     },
     giftFreeBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '700',
       color: '#9C7156',
     },
     giftSubtitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary,
       lineHeight: 17,
@@ -1226,7 +1204,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 8,
     },
     giftCardLabelText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1245,7 +1222,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#2E2E2E' : '#E8E1D8',
       paddingHorizontal: 16,
       paddingVertical: 12,
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textPrimary,
       textAlignVertical: 'top',
@@ -1254,7 +1230,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginVertical: 4,
     },
     crossSellSectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1284,7 +1259,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 8,
     },
     crossSellName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1298,7 +1272,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'space-between',
     },
     crossSellPrice: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '700',
       color: '#9C7156',
@@ -1334,13 +1307,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 4,
     },
     actionRowTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     actionRowSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: '#9C7156',
       fontWeight: '700',
@@ -1360,7 +1331,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 10,
     },
     summaryTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1371,12 +1341,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     summaryLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
     },
     summaryValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textPrimary,
@@ -1393,19 +1361,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingTop: 2,
     },
     totalLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     totalValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: Colors.textPrimary,
     },
     vatSubtext: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
       textAlign: 'right',
@@ -1428,7 +1393,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 4,
     },
     pointsNoticeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: '#9C7156',
       fontWeight: '600',
@@ -1460,7 +1424,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 5,
     },
     checkoutBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',

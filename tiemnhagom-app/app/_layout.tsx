@@ -102,31 +102,35 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
           } catch {}
         }
 
-        // Tải sẵn đồng thời ngay trong SplashScreen:
-        // 1. Kiểm tra bản cập nhật OTA
-        // 2. Tải sẵn thông báo Firestore (Tin tức, Thông báo chung, Thông báo riêng, Đơn hàng, Quà tặng gốm)
-        // 3. Tải sẵn tài khoản Firestore (Profile, Chi tiêu, Điểm gốm, Hạng hội viên, Đơn hàng, Voucher)
-        await Promise.allSettled([
+        // Tải sẵn đồng thời ngay trong SplashScreen với timeout tối đa 2.5s để tuyệt đối không bị treo trên iOS
+        const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 2500));
+        const tasksPromise = Promise.allSettled([
           (async () => {
             if (!__DEV__ && Updates.isEnabled) {
-              const update = await Updates.checkForUpdateAsync();
-              if (update.isAvailable) {
-                if (isMounted) setDownloadingOta(true);
-                await Updates.fetchUpdateAsync();
-                await Updates.reloadAsync();
+              try {
+                const update = await Updates.checkForUpdateAsync();
+                if (update.isAvailable) {
+                  if (isMounted) setDownloadingOta(true);
+                  await Updates.fetchUpdateAsync();
+                  await Updates.reloadAsync();
+                }
+              } catch (otaErr) {
+                console.log('Lỗi kiểm tra OTA:', otaErr);
               }
             }
           })(),
-          preloadNotificationFeed(targetUid),
-          targetUid ? preloadAccountData(targetUid) : Promise.resolve(null),
+          preloadNotificationFeed(targetUid).catch(() => []),
+          targetUid ? preloadAccountData(targetUid).catch(() => null) : Promise.resolve(null),
         ]);
+
+        await Promise.race([tasksPromise, timeoutPromise]);
       } catch (e) {
         console.log('Lỗi preload trong SplashScreen:', e);
       }
 
-      // Đảm bảo thời gian hiển thị logo tối thiểu 600ms để hoạt ảnh mượt mà, tối đa không quá 1200ms
+      // Đảm bảo thời gian hiển thị logo tối thiểu 400ms để hoạt ảnh mượt mà
       const elapsed = Date.now() - startTime;
-      const remainingTime = Math.max(0, 600 - elapsed);
+      const remainingTime = Math.max(0, 400 - elapsed);
       setTimeout(() => {
         if (isMounted) startExitTransition();
       }, remainingTime);
@@ -134,8 +138,16 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
 
     runSplashPreloader();
 
+    // Fallback bảo vệ an toàn: Tự động thoát SplashScreen sau tối đa 3.5s nếu animation hoặc tác vụ bất kỳ bị nghẽn
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        onFinish();
+      }
+    }, 3500);
+
     return () => {
       isMounted = false;
+      clearTimeout(fallbackTimer);
     };
   }, []);
 
@@ -262,7 +274,6 @@ function NavigationRoot() {
           headerShadowVisible: false,
           headerTintColor: themeColors.textPrimary,
           headerTitleStyle: {
-            fontFamily: 'ElleGaborStd',
             fontSize: 17,
             fontWeight: '700',
             color: themeColors.textPrimary,
@@ -356,6 +367,14 @@ function NavigationRoot() {
           }}
         />
 
+        {/* Trang đổi mật khẩu */}
+        <Stack.Screen
+          name="change-password"
+          options={{
+            animation: stackAnimation,
+          }}
+        />
+
         {/* Trang Flash Sale mới */}
         <Stack.Screen
           name="flash-sale"
@@ -369,84 +388,8 @@ function NavigationRoot() {
 }
 
 function AppLockGuard({ children }: { children: React.ReactNode }) {
-  const { isAppLockEnabled, language, t } = useSettings();
-  const [isLocked, setIsLocked] = useState(false);
-  const appState = useRef(AppState.currentState);
-  const isAuthenticating = useRef(false);
-
-  const authenticate = async () => {
-    if (isAuthenticating.current) return;
-    
-    isAuthenticating.current = true;
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-
-    if (hasHardware && isEnrolled) {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: t('authToContinue'),
-        disableDeviceFallback: false,
-      });
-      if (result.success) {
-        setIsLocked(false);
-      }
-    } else {
-      // Nếu không có phần cứng thì bỏ qua
-      setIsLocked(false);
-    }
-    
-    // Đợi 1 giây trước khi reset cờ để AppState có thời gian chuyển về 'active'
-    // tránh tình trạng nhận diện nhầm AppState thay đổi và loop gọi lại authenticate
-    setTimeout(() => {
-      isAuthenticating.current = false;
-    }, 1000);
-  };
-
-  useEffect(() => {
-    // Khi khởi động, nếu bật lock thì khóa ngay
-    if (isAppLockEnabled) {
-      setIsLocked(true);
-      authenticate();
-    }
-  }, [isAppLockEnabled]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (
-        appState.current?.match(/inactive|background/) &&
-        nextAppState === 'active'
-      ) {
-        // App goes to foreground
-        if (isAppLockEnabled && !isAuthenticating.current) {
-          setIsLocked(true);
-          authenticate();
-        }
-      } else if (nextAppState.match(/inactive|background/)) {
-        // App goes to background
-        if (isAppLockEnabled && !isAuthenticating.current) {
-          setIsLocked(true);
-        }
-      }
-      appState.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [isAppLockEnabled]);
-
-  if (isLocked) {
-    return (
-      <View style={styles.lockContainer}>
-        <Ionicons name="lock-closed" size={60} color="#2D3B34" style={{ marginBottom: 20 }} />
-        <Text style={styles.lockTitle}>{t('appLocked')}</Text>
-        <Text style={styles.lockSub}>{t('authToContinue')}</Text>
-        <TouchableOpacity style={styles.unlockBtn} onPress={authenticate}>
-          <Text style={styles.unlockBtnText}>{t('unlock')}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
+  // Biometric Quick Login (Sign Key): Không can thiệp chặn màn hình bằng lock container,
+  // chỉ dùng sinh trắc học để xác thực và đăng nhập nhanh ở trang Login
   return <>{children}</>;
 }
 
@@ -475,7 +418,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.warn('Lỗi tải fonts:', error);
+      SplashScreen.hideAsync().catch(() => {});
+    }
   }, [error]);
 
   useEffect(() => {
@@ -483,6 +429,15 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
+
+  // Fallback an toàn trên iOS: nếu fonts mất quá nhiều thời gian hoặc Expo native splash chưa tắt,
+  // tự động tắt native splash sau 2.5s để không bị treo màn hình trắng/logo gốc
+  useEffect(() => {
+    const safetyHideTimer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 2500);
+    return () => clearTimeout(safetyHideTimer);
+  }, []);
 
   useEffect(() => {
     const cleanup = initMemoryManager();
@@ -550,7 +505,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   otaProgressText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.9)',
     letterSpacing: 0.3,
@@ -563,14 +517,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   lockTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 24,
     fontWeight: '700',
     color: '#2D3B34',
     marginBottom: 8,
   },
   lockSub: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: '#7A827E',
     marginBottom: 40,

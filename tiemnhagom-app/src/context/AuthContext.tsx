@@ -15,7 +15,7 @@ import {
   linkWithCredential,
   unlink
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -26,6 +26,20 @@ import { registerForPushNotificationsAsync, savePushTokenToFirestore } from '../
 import { autoLinkUserOrders } from '../services/orderService';
 import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 import { formatPhoneNumber, getPhoneVariants } from '../utils/format';
+import * as LocalAuthentication from 'expo-local-authentication';
+
+export interface BiometricAccount {
+  uid: string;
+  displayName: string;
+  email: string | null;
+  phone?: string | null;
+  avatar?: string | null;
+  photoURL?: string | null;
+  tier?: string;
+  profile: any;
+  session: { uid: string; email: string | null };
+  updatedAt: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -49,12 +63,19 @@ interface AuthContextType {
   linkGoogleAccount: (idToken: string) => Promise<void>;
   linkAppleAccount: (idToken: string, rawNonce: string) => Promise<void>;
   unlinkProvider: (providerId: string) => Promise<void>;
+  signInWithBiometrics: () => Promise<BiometricAccount[] | null>;
+  selectBiometricAccount: (account: BiometricAccount) => Promise<void>;
+  saveCurrentToBiometrics: () => Promise<void>;
+  removeAccountFromBiometrics: (uid: string) => Promise<void>;
+  hasBiometricSignKey: () => Promise<boolean>;
+  clearBiometricSignKey: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 const STORAGE_KEY_PROFILE = 'tng_user_profile';
 const STORAGE_KEY_SESSION = 'tng_user_session';
+const STORAGE_KEY_BIOMETRIC_SIGNKEY = '@tiemnhagom_biometric_signkey';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -152,6 +173,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setDoc(userDocRef, { registeredAt: rawData.registeredAt, createdAt: rawData.createdAt }, { merge: true }).catch(() => {});
         }
 
+        const isDirectPrimarySession = Boolean(auth.currentUser && auth.currentUser.uid === uid);
+        let resolvedGoogleLinked = rawData.googleLinked === true;
+        let resolvedGoogleEmail: string | null = resolvedGoogleLinked ? (rawData.googleEmail || null) : null;
+        let resolvedAppleLinked = rawData.appleLinked === true;
+        let resolvedAppleEmail: string | null = resolvedAppleLinked ? (rawData.appleEmail || null) : null;
+
+        if (isDirectPrimarySession && auth.currentUser) {
+          const providers = auth.currentUser.providerData || [];
+          const googleProviderInfo = providers.find((p) => p?.providerId === 'google.com') || null;
+          const appleProviderInfo = providers.find((p) => p?.providerId === 'apple.com') || null;
+          const hasGoogleProvider = Boolean(googleProviderInfo);
+          const hasAppleProvider = Boolean(appleProviderInfo);
+
+          resolvedGoogleLinked = hasGoogleProvider;
+          resolvedGoogleEmail = hasGoogleProvider
+            ? (googleProviderInfo?.email || rawData.googleEmail || auth.currentUser.email || rawData.email || null)
+            : null;
+          resolvedAppleLinked = hasAppleProvider;
+          resolvedAppleEmail = hasAppleProvider
+            ? (appleProviderInfo?.email || rawData.appleEmail || null)
+            : null;
+
+          const providerSyncFields: Record<string, any> = {};
+          if (rawData.googleLinked !== hasGoogleProvider) {
+            providerSyncFields.googleLinked = hasGoogleProvider;
+          }
+          if (hasGoogleProvider && resolvedGoogleEmail && rawData.googleEmail !== resolvedGoogleEmail) {
+            providerSyncFields.googleEmail = resolvedGoogleEmail;
+          } else if (!hasGoogleProvider && rawData.googleEmail) {
+            providerSyncFields.googleEmail = null;
+          }
+          if (rawData.appleLinked !== hasAppleProvider) {
+            providerSyncFields.appleLinked = hasAppleProvider;
+          }
+          if (hasAppleProvider && resolvedAppleEmail && rawData.appleEmail !== resolvedAppleEmail) {
+            providerSyncFields.appleEmail = resolvedAppleEmail;
+          } else if (!hasAppleProvider && rawData.appleEmail) {
+            providerSyncFields.appleEmail = null;
+          }
+          if (Object.keys(providerSyncFields).length > 0) {
+            setDoc(userDocRef, { ...providerSyncFields, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+          }
+        }
+
         // Đồng bộ 2 chiều giữa avatar (Web) và photoURL (App & Firebase Auth)
         const effectiveAvatar = rawData.photoURL || rawData.avatar || auth.currentUser?.photoURL || null;
         const effectiveDob = rawData.dob || rawData.birthday || '';
@@ -163,6 +228,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           points: sanitizedPoints,
           photoURL: effectiveAvatar,
           avatar: effectiveAvatar,
+          googleLinked: resolvedGoogleLinked,
+          googleEmail: resolvedGoogleEmail,
+          appleLinked: resolvedAppleLinked,
+          appleEmail: resolvedAppleEmail,
         };
         // Tự động liên kết các đơn hàng cũ theo SĐT và Email, đồng thời đồng bộ điểm gốm & loyalty ngay lập tức
         const uPhone = rawData.phone || rawData.phoneNumber || (Array.isArray(rawData.addresses) && rawData.addresses.find((a: any) => a?.phone)?.phone);
@@ -186,12 +255,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(data);
         await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
       } else {
+        const isCurrentAuthUser = auth.currentUser?.uid === uid;
+        const providers = isCurrentAuthUser ? (auth.currentUser?.providerData || []) : [];
+        const googleProviderInfo = providers.find((p) => p?.providerId === 'google.com') || null;
+        const appleProviderInfo = providers.find((p) => p?.providerId === 'apple.com') || null;
+        const hasGoogleProvider = Boolean(googleProviderInfo);
+        const hasAppleProvider = Boolean(appleProviderInfo);
         const initialProfile: UserProfile = {
           uid,
           email: auth.currentUser?.email || '',
           displayName: auth.currentUser?.displayName || 'Khách hàng',
           points: 0,
           tier: 'standard',
+          googleLinked: hasGoogleProvider,
+          googleEmail: hasGoogleProvider ? (googleProviderInfo?.email || auth.currentUser?.email || null) : null,
+          appleLinked: hasAppleProvider,
+          appleEmail: hasAppleProvider ? (appleProviderInfo?.email || null) : null,
         };
         await setDoc(userDocRef, { ...initialProfile, createdAt: serverTimestamp() }, { merge: true });
         setUserProfile(initialProfile);
@@ -230,7 +309,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           STORAGE_KEY_SESSION,
           JSON.stringify({ uid: currentUser.uid, email: currentUser.email })
         );
-        await fetchUserProfile(currentUser.uid);
+        fetchUserProfile(currentUser.uid).catch((err) => {
+          console.warn('Lỗi fetchUserProfile onAuthStateChanged:', err);
+        });
         
         // Đăng ký nhận thông báo đẩy và lưu token
         setTimeout(async () => {
@@ -249,7 +330,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Timeout bảo vệ chống treo loading Auth trên iOS khi mạng lag / offline
+    const authTimeoutTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(authTimeoutTimer);
+    };
   }, []);
 
   const signIn = async (email: string, pass: string) => {
@@ -270,6 +359,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone: phone || '',
         points: 0,
         tier: 'standard',
+        googleLinked: false,
+        googleEmail: null,
+        appleLinked: false,
+        appleEmail: null,
       };
       await setDoc(userDocRef, {
         ...newProfile,
@@ -309,6 +402,138 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const credential = GoogleAuthProvider.credential(idToken);
     const cred = await signInWithCredential(auth, credential);
     await fetchUserProfile(cred.user.uid);
+  };
+
+  const hasBiometricSignKey = async (): Promise<boolean> => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_BIOMETRIC_SIGNKEY);
+      if (!stored) return false;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed.length > 0;
+      return Boolean(parsed?.uid);
+    } catch {
+      return false;
+    }
+  };
+
+  const clearBiometricSignKey = async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY_BIOMETRIC_SIGNKEY);
+    } catch (e) {
+      console.warn('Lỗi xóa biometric signKey:', e);
+    }
+  };
+
+  const getStoredBiometricAccounts = async (): Promise<BiometricAccount[]> => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_BIOMETRIC_SIGNKEY);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed?.uid) {
+        // Chuyển đổi định dạng đơn trước đây sang dạng mảng đa tài khoản
+        return [
+          {
+            uid: parsed.uid,
+            displayName: parsed.profile?.displayName || parsed.session?.email || 'Khách hàng',
+            email: parsed.session?.email || parsed.profile?.email || null,
+            phone: parsed.profile?.phone || null,
+            avatar: parsed.profile?.avatar || parsed.profile?.photoURL || null,
+            photoURL: parsed.profile?.photoURL || null,
+            tier: parsed.profile?.tier || 'standard',
+            profile: parsed.profile,
+            session: parsed.session,
+            updatedAt: parsed.enabledAt || new Date().toISOString(),
+          },
+        ];
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveCurrentToBiometrics = async (): Promise<void> => {
+    const effectiveUid = user?.uid || userProfile?.uid || auth.currentUser?.uid;
+    if (!effectiveUid) return;
+
+    const accounts = await getStoredBiometricAccounts();
+    const existingIndex = accounts.findIndex((a) => a.uid === effectiveUid);
+    const newAccount: BiometricAccount = {
+      uid: effectiveUid,
+      displayName: userProfile?.displayName || user?.displayName || userProfile?.name || 'Khách hàng',
+      email: user?.email || userProfile?.email || null,
+      phone: userProfile?.phone || null,
+      avatar: userProfile?.photoURL || userProfile?.avatar || user?.photoURL || null,
+      photoURL: userProfile?.photoURL || user?.photoURL || null,
+      tier: userProfile?.tier || 'standard',
+      profile: userProfile,
+      session: { uid: effectiveUid, email: user?.email || userProfile?.email || null },
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existingIndex >= 0) {
+      accounts[existingIndex] = newAccount;
+    } else {
+      accounts.push(newAccount);
+    }
+
+    await AsyncStorage.setItem(STORAGE_KEY_BIOMETRIC_SIGNKEY, JSON.stringify(accounts));
+  };
+
+  const removeAccountFromBiometrics = async (uidToRemove: string): Promise<void> => {
+    try {
+      const accounts = await getStoredBiometricAccounts();
+      const filtered = accounts.filter((a) => a.uid !== uidToRemove);
+      if (filtered.length > 0) {
+        await AsyncStorage.setItem(STORAGE_KEY_BIOMETRIC_SIGNKEY, JSON.stringify(filtered));
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEY_BIOMETRIC_SIGNKEY);
+      }
+    } catch (e) {
+      console.warn('Lỗi gỡ tài khoản khỏi biometrics:', e);
+    }
+  };
+
+  const selectBiometricAccount = async (account: BiometricAccount): Promise<void> => {
+    if (account.profile) {
+      setUserProfile(account.profile);
+      await AsyncStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(account.profile));
+    }
+    if (account.session) {
+      await AsyncStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(account.session));
+    }
+    await fetchUserProfile(account.uid);
+  };
+
+  const signInWithBiometrics = async (): Promise<BiometricAccount[] | null> => {
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) {
+        return null;
+      }
+
+      const accounts = await getStoredBiometricAccounts();
+      if (accounts.length === 0) return null;
+
+      const authRes = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Xác thực Face ID / Vân tay để đăng nhập Tiệm Nhà Gốm',
+        disableDeviceFallback: false,
+      });
+
+      if (!authRes.success) {
+        return null;
+      }
+
+      // Trả về danh sách tài khoản hợp lệ để màn hình Login xử lý:
+      // - Nếu chỉ có 1 tài khoản: Đăng nhập thẳng
+      // - Nếu có >= 2 tài khoản: Mở modal chọn tài khoản
+      return accounts;
+    } catch (err) {
+      console.warn('Lỗi đăng nhập sinh trắc học:', err);
+      return null;
+    }
   };
 
   const signInWithAppleCredential = async (idToken: string, rawNonce: string) => {
@@ -506,8 +731,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatePromises: Promise<any>[] = [];
       orderDocsToUpdate.forEach((ref) => {
         updatePromises.push(
-          setDoc(ref, { userId: userId }, { merge: true }).catch((err) => {
-            console.warn('Lỗi liên kết đơn hàng đơn lẻ:', err);
+          updateDoc(ref, {
+            userId: userId,
+            customerId: userId,
+            updatedAt: new Date().toISOString(),
+          }).catch((err: any) => {
+            if (err?.code !== 'permission-denied') {
+              console.warn('Lỗi liên kết đơn hàng đơn lẻ:', err);
+            }
           })
         );
       });
@@ -992,9 +1223,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const linkGoogleAccount = async (idToken: string) => {
     if (!auth.currentUser) throw new Error('Vui lòng đăng nhập trước khi liên kết tài khoản');
+    const effectiveUid = userProfile?.uid || auth.currentUser.uid;
+    if (effectiveUid !== auth.currentUser.uid) {
+      const blockedErr: any = new Error(
+        userProfile?.email
+          ? `Bạn đang đăng nhập bằng SĐT gắn với tài khoản ${userProfile.email}. Vui lòng đăng nhập trực tiếp bằng ${userProfile.email} để liên kết Google cho tài khoản chính.`
+          : 'Vui lòng đăng nhập trực tiếp vào tài khoản chính để liên kết Google.'
+      );
+      blockedErr.code = 'auth/merged-session-link-blocked';
+      throw blockedErr;
+    }
+
     const credential = GoogleAuthProvider.credential(idToken);
     try {
-      await linkWithCredential(auth.currentUser, credential);
+      const linkResult = await linkWithCredential(auth.currentUser, credential);
+      const linkedGoogleInfo = linkResult?.user?.providerData?.find((p) => p?.providerId === 'google.com');
+      const linkedGoogleEmail = linkedGoogleInfo?.email || linkResult?.user?.email || null;
+
+      await setDoc(
+        doc(db, 'users', auth.currentUser.uid),
+        {
+          googleLinked: true,
+          ...(linkedGoogleEmail ? { googleEmail: linkedGoogleEmail } : {}),
+          ...(linkedGoogleEmail && !userProfile?.email ? { email: linkedGoogleEmail } : {}),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
       await fetchUserProfile(auth.currentUser.uid);
     } catch (err: any) {
       if (err.code === 'auth/credential-already-in-use') {
@@ -1006,13 +1261,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const linkAppleAccount = async (idToken: string, rawNonce: string) => {
     if (!auth.currentUser) throw new Error('Vui lòng đăng nhập trước khi liên kết tài khoản');
+    const effectiveUid = userProfile?.uid || auth.currentUser.uid;
+    if (effectiveUid !== auth.currentUser.uid) {
+      const blockedErr: any = new Error(
+        userProfile?.email
+          ? `Bạn đang đăng nhập bằng SĐT gắn với tài khoản ${userProfile.email}. Vui lòng đăng nhập trực tiếp bằng ${userProfile.email} để liên kết Apple cho tài khoản chính.`
+          : 'Vui lòng đăng nhập trực tiếp vào tài khoản chính để liên kết Apple.'
+      );
+      blockedErr.code = 'auth/merged-session-link-blocked';
+      throw blockedErr;
+    }
+
     const provider = new OAuthProvider('apple.com');
     const credential = provider.credential({
       idToken,
       rawNonce,
     });
     try {
-      await linkWithCredential(auth.currentUser, credential);
+      const linkResult = await linkWithCredential(auth.currentUser, credential);
+      const linkedAppleInfo = linkResult?.user?.providerData?.find((p) => p?.providerId === 'apple.com');
+      const linkedAppleEmail = linkedAppleInfo?.email || null;
+
+      await setDoc(
+        doc(db, 'users', auth.currentUser.uid),
+        {
+          appleLinked: true,
+          ...(linkedAppleEmail ? { appleEmail: linkedAppleEmail } : {}),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
       await fetchUserProfile(auth.currentUser.uid);
     } catch (err: any) {
       if (err.code === 'auth/credential-already-in-use') {
@@ -1026,6 +1304,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!auth.currentUser) throw new Error('Vui lòng đăng nhập');
     try {
       await unlink(auth.currentUser, providerId);
+      const syncClear: Record<string, any> = {
+        updatedAt: new Date().toISOString(),
+      };
+      if (providerId === 'google.com') {
+        syncClear.googleLinked = false;
+        syncClear.googleEmail = null;
+      } else if (providerId === 'apple.com') {
+        syncClear.appleLinked = false;
+        syncClear.appleEmail = null;
+      }
+      await setDoc(doc(db, 'users', auth.currentUser.uid), syncClear, { merge: true });
       await fetchUserProfile(auth.currentUser.uid);
     } catch (err: any) {
       throw err;
@@ -1056,6 +1345,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         linkGoogleAccount,
         linkAppleAccount,
         unlinkProvider,
+        signInWithBiometrics,
+        selectBiometricAccount,
+        saveCurrentToBiometrics,
+        removeAccountFromBiometrics,
+        hasBiometricSignKey,
+        clearBiometricSignKey,
       }}
     >
       {children}

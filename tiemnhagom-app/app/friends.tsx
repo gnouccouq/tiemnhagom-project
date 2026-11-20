@@ -196,7 +196,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingBottom: 12,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 22,
       fontWeight: '800',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -264,7 +263,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     actionCardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -277,14 +275,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     footerNoteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textSecondary || (isDark ? '#888' : '#777'),
       textAlign: 'center',
       lineHeight: 18,
     },
     footerNoteLink: {
-      fontFamily: 'ElleGaborStd',
       color: isDark ? '#E8CCB2' : '#9C7156',
       fontWeight: '700',
     },

@@ -21,10 +21,11 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
+import * as LocalAuthentication from 'expo-local-authentication';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { auth } from '../../src/config/firebase';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth, BiometricAccount } from '../../src/context/AuthContext';
 import { formatPhoneNumber } from '../../src/utils/format';
 import { useSettings } from '../../src/context/SettingsContext';
 import { useDialog } from '../../src/context/DialogContext';
@@ -34,6 +35,7 @@ import {
   FirebasePhoneAuthWebView,
   FirebasePhoneAuthWebViewHandle,
 } from '../../src/components/FirebasePhoneAuthWebView';
+import { BiometricIcon } from '../../src/components/BiometricIcon';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -57,6 +59,18 @@ try {
 
 const GOOGLE_CLIENT_ID = '571834989973-nd7opseai7t3etcfnrpvth24pm9f9msb.apps.googleusercontent.com';
 
+const isValidEmailFormat = (val: string): boolean => {
+  const s = String(val || '').trim();
+  return s.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+};
+
+const validatePasswordRules = (pw: string = '') => ({
+  length: pw.length >= 6,
+  upper: /[A-Z]/.test(pw),
+  number: /[0-9]/.test(pw),
+  special: /[^A-Za-z0-9\s]/.test(pw),
+});
+
 export default function LoginScreen() {
   const router = useRouter();
   const {
@@ -66,6 +80,9 @@ export default function LoginScreen() {
     signInWithGoogleCredential,
     signInWithAppleCredential,
     signInWithPhoneResult,
+    signInWithBiometrics,
+    selectBiometricAccount,
+    hasBiometricSignKey,
   } = useAuth();
 
   const { t } = useSettings();
@@ -85,10 +102,12 @@ export default function LoginScreen() {
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
 
-  // Email form fields (Đăng ký chỉ cần email và mật khẩu giống web)
+  // Email form fields (đồng bộ quy tắc Email, độ mạnh mật khẩu & xác nhận mật khẩu như bản Web)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Modal Quên mật khẩu
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
@@ -99,6 +118,38 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [biometricType, setBiometricType] = useState<'faceid' | 'touchid' | 'fingerprint'>('faceid');
+  const [biometricAccounts, setBiometricAccounts] = useState<BiometricAccount[]>([]);
+  const [accountPickerVisible, setAccountPickerVisible] = useState(false);
+
+  // Điều hướng an toàn: nếu có thể back thì back, nếu không có lịch sử điều hướng thì chuyển về (tabs)
+  const handleNavAfterAuth = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
+  const trimmedEmail = email.trim();
+  const emailValid = isValidEmailFormat(trimmedEmail);
+  const passwordRules = validatePasswordRules(password);
+  const allPasswordRulesPassed =
+    passwordRules.length && passwordRules.upper && passwordRules.number && passwordRules.special;
+  const isPasswordMatched =
+    password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  const canSubmitSignUp = emailValid && allPasswordRulesPassed && isPasswordMatched;
+  const trimmedForgotEmail = forgotEmail.trim();
+  const forgotEmailValid = isValidEmailFormat(trimmedForgotEmail);
+
+  const switchAuthMode = (nextSignUp: boolean) => {
+    setIsSignUpMode(nextSignUp);
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
 
   // Countdown timer cho OTP
   useEffect(() => {
@@ -124,6 +175,87 @@ export default function LoginScreen() {
     }
   }, [isOtpMode]);
 
+  // Kiểm tra Sign Key sinh trắc học Face ID / Vân tay khi mở màn hình login
+  useEffect(() => {
+    let mounted = true;
+    const checkBiometrics = async () => {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        const hasKey = await hasBiometricSignKey();
+
+        // Nhận diện chuẩn xác loại sinh trắc học: Face ID (FACIAL_RECOGNITION = 2) hay Touch ID / Vân tay (FINGERPRINT = 1)
+        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+        const hasFace = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
+        const resolvedType = hasFace
+          ? 'faceid'
+          : Platform.OS === 'ios'
+            ? 'touchid'
+            : 'fingerprint';
+        
+        if (mounted) {
+          setBiometricType(resolvedType);
+        }
+
+        if (mounted && hasHardware && isEnrolled && hasKey) {
+          setBiometricAvailable(true);
+          // Tự động nhắc xác thực Face ID / Vân tay sau 500ms mở trang
+          setTimeout(() => {
+            if (mounted && !isSignUpMode) {
+              handleBiometricLogin();
+            }
+          }, 500);
+        }
+      } catch (err) {
+        console.warn('Lỗi kiểm tra sinh trắc học:', err);
+      }
+    };
+    checkBiometrics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    if (biometricLoading || isSignUpMode) return;
+    setBiometricLoading(true);
+    try {
+      const accounts = await signInWithBiometrics();
+      if (!accounts || accounts.length === 0) {
+        return;
+      }
+
+      if (accounts.length === 1) {
+        // Chỉ có 1 tài khoản: Đăng nhập thẳng vào app
+        await selectBiometricAccount(accounts[0]);
+        dialog.alert(t('success') || 'Thành công', 'Đăng nhập Face ID / Vân tay thành công!');
+        handleNavAfterAuth();
+      } else {
+        // Có từ 2 tài khoản trở lên: Mở modal chọn tài khoản muốn đăng nhập
+        setBiometricAccounts(accounts);
+        setAccountPickerVisible(true);
+      }
+    } catch (e: any) {
+      console.warn('Lỗi đăng nhập Face ID:', e);
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const handleSelectAccount = async (account: BiometricAccount) => {
+    setAccountPickerVisible(false);
+    setLoading(true);
+    try {
+      await selectBiometricAccount(account);
+      dialog.alert(t('success') || 'Thành công', `Chào mừng ${account.displayName || 'bạn'} trở lại!`);
+      handleNavAfterAuth();
+    } catch (e: any) {
+      dialog.alert(t('error') || 'Lỗi', e?.message || 'Không thể đăng nhập vào tài khoản này.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Google OAuth Hook
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
@@ -141,7 +273,7 @@ export default function LoginScreen() {
         signInWithGoogleCredential(idToken)
           .then(() => {
             dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
-            router.back();
+            handleNavAfterAuth();
           })
           .catch((err: any) => {
             dialog.alert(t('error') || 'Lỗi', err.message || 'Không thể xác thực tài khoản Google.');
@@ -241,7 +373,7 @@ export default function LoginScreen() {
           {
             text: t('start') || 'Bắt đầu',
             style: 'primary',
-            onPress: () => router.back(),
+            onPress: () => handleNavAfterAuth(),
           },
         ],
       });
@@ -257,33 +389,51 @@ export default function LoginScreen() {
 
   // Submit form (Đăng nhập Email hoặc Đăng ký tài khoản mới)
   const handleSubmit = async () => {
-    if (!email.trim() || !password.trim()) {
-      dialog.alert(t('notification') || 'Thông báo', t('emailPasswordRequired'));
+    if (!trimmedEmail) {
+      dialog.alert(
+        t('notification'),
+        isSignUpMode ? t('authEmailInvalidAlert') : t('emailPasswordRequired')
+      );
       return;
+    }
+
+    if (!emailValid) {
+      dialog.alert(t('notification'), t('authEmailInvalidAlert'));
+      return;
+    }
+
+    if (!password) {
+      dialog.alert(t('notification'), t('passwordEmptyError'));
+      return;
+    }
+
+    if (isSignUpMode) {
+      if (!allPasswordRulesPassed) {
+        dialog.alert(t('notification'), t('authPasswordStrongError'));
+        return;
+      }
+      if (password !== confirmPassword) {
+        dialog.alert(t('notification'), t('authPasswordMismatch'));
+        return;
+      }
     }
 
     setLoading(true);
     try {
       if (isSignUpMode) {
-        // Đăng ký giống bản web: chỉ cần email và mật khẩu, điều kiện mật khẩu tối thiểu 6 ký tự
-        if (password.length < 6) {
-          dialog.alert(t('notification') || 'Thông báo', t('passwordLengthError'));
-          setLoading(false);
-          return;
-        }
-        const name = email.split('@')[0];
-        await signUp(email.trim(), password, name);
+        const name = trimmedEmail.split('@')[0];
+        await signUp(trimmedEmail, password, name);
         dialog.showDialog({
-          title: t('success') || 'Thành công',
-          message: t('registerSuccess') || 'Đăng ký tài khoản thành công!',
+          title: t('success'),
+          message: t('registerSuccess'),
           type: 'success',
           buttons: [
-            { text: t('start') || 'Bắt đầu', style: 'primary', onPress: () => router.back() },
+            { text: t('start_2'), style: 'primary', onPress: () => handleNavAfterAuth() },
           ],
         });
       } else {
-        await signIn(email.trim(), password);
-        router.back();
+        await signIn(trimmedEmail, password);
+        handleNavAfterAuth();
       }
     } catch (err: any) {
       let message = t('genericError');
@@ -296,11 +446,11 @@ export default function LoginScreen() {
       } else if (err.code === 'auth/email-already-in-use') {
         message = t('emailAlreadyInUse');
       } else if (err.code === 'auth/invalid-email') {
-        message = t('invalidEmail');
+        message = t('authEmailInvalidAlert');
       } else if (err.code === 'auth/weak-password') {
-        message = t('passwordLengthError');
+        message = t('authWeakPasswordError');
       }
-      dialog.alert(t('error') || 'Lỗi', message);
+      dialog.alert(t('error'), message);
     } finally {
       setLoading(false);
     }
@@ -308,21 +458,23 @@ export default function LoginScreen() {
 
   // Quên mật khẩu
   const handleSendResetPassword = async () => {
-    if (!forgotEmail.trim()) {
-      dialog.alert(t('notification') || 'Thông báo', t('emailRequiredError') || 'Vui lòng nhập email');
+    if (!trimmedForgotEmail) {
+      dialog.alert(t('notification'), t('emailRequiredError'));
+      return;
+    }
+
+    if (!forgotEmailValid) {
+      dialog.alert(t('notification'), t('authForgotEmailInvalid'));
       return;
     }
 
     setForgotLoading(true);
     try {
-      await resetPassword(forgotEmail.trim());
+      await resetPassword(trimmedForgotEmail);
       setForgotModalVisible(false);
-      dialog.alert(
-        t('success') || 'Thành công',
-        t('resetPasswordSentNotice') || 'Link đặt lại mật khẩu đã được gửi vào Email của bạn. Vui lòng kiểm tra hộp thư đến (và mục Spam).'
-      );
+      dialog.alert(t('success'), t('resetPasswordSentNotice'));
     } catch (e: any) {
-      dialog.alert(t('error') || 'Lỗi', e.message || 'Không tìm thấy tài khoản');
+      dialog.alert(t('error'), e.message || t('genericError'));
     } finally {
       setForgotLoading(false);
     }
@@ -341,7 +493,7 @@ export default function LoginScreen() {
           if (idToken) {
             await signInWithGoogleCredential(idToken);
             dialog.alert(t('success') || 'Thành công', 'Đăng nhập Google thành công!');
-            router.back();
+            handleNavAfterAuth();
             return;
           }
         } catch (nativeErr: any) {
@@ -403,7 +555,7 @@ export default function LoginScreen() {
       if (identityToken) {
         await signInWithAppleCredential(identityToken, nonce);
         dialog.alert(t('success') || 'Thành công', 'Đăng nhập Apple thành công!');
-        router.back();
+        handleNavAfterAuth();
       } else {
         throw new Error('Không nhận được identityToken từ Apple.');
       }
@@ -472,29 +624,54 @@ export default function LoginScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.duration(500).delay(250)}>
-              {/* CHẾ ĐỘ 1: ĐĂNG KÝ (GIỐNG BẢN WEB - CHỈ CẦN EMAIL VÀ MẬT KHẨU TỐI THIỂU 6 KÝ TỰ) */}
+              {/* CHẾ ĐỘ 1: ĐĂNG KÝ (ĐỒNG BỘ QUY TẮC EMAIL, ĐỘ MẠNH MẬT KHẨU & XÁC NHẬN MẬT KHẨU NHƯ WEB) */}
               {isSignUpMode ? (
                 <>
                   <View style={styles.authInputGroup}>
                     <TextInput
-                      style={styles.authInput}
-                      placeholder={t('newEmailPlaceholder') || 'example@gmail.com'}
+                      style={[
+                        styles.authInput,
+                        trimmedEmail.length > 0 && !emailValid && styles.authInputError,
+                      ]}
+                      placeholder={t('newEmailPlaceholder')}
                       placeholderTextColor="#A0A0A0"
                       value={email}
                       onChangeText={setEmail}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="emailAddress"
+                      autoComplete="email"
                     />
                   </View>
+                  {trimmedEmail.length > 0 && (
+                    <View style={styles.authHintRow}>
+                      <Ionicons
+                        name={emailValid ? 'checkmark-circle' : 'alert-circle-outline'}
+                        size={14}
+                        color={emailValid ? '#E8CCB2' : '#F2A28C'}
+                        style={{ marginTop: 1 }}
+                      />
+                      <Text style={emailValid ? styles.authHintTextValid : styles.authHintTextError}>
+                        {emailValid
+                          ? t('authEmailValid')
+                          : !trimmedEmail.includes('@')
+                            ? t('authEmailMissingAt')
+                            : t('authEmailInvalidDomain')}
+                      </Text>
+                    </View>
+                  )}
 
                   <View style={styles.authInputGroup}>
                     <TextInput
                       style={[styles.authInput, { paddingRight: 48 }]}
-                      placeholder={t('passwordMinLengthNotice') || 'Tối thiểu 6 ký tự'}
+                      placeholder={t('newPasswordPlaceholder')}
                       placeholderTextColor="#A0A0A0"
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
+                      textContentType="newPassword"
+                      autoComplete="password-new"
                     />
                     <TouchableOpacity
                       style={styles.authPasswordToggle}
@@ -509,11 +686,74 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                   </View>
 
+                  <View style={styles.authRulesCard}>
+                    {[
+                      { key: 'email', valid: emailValid, label: t('authRuleEmail') },
+                      { key: 'length', valid: passwordRules.length, label: t('authRuleLength') },
+                      { key: 'upper', valid: passwordRules.upper, label: t('authRuleUpper') },
+                      { key: 'number', valid: passwordRules.number, label: t('authRuleNumber') },
+                      { key: 'special', valid: passwordRules.special, label: t('authRuleSpecial') },
+                    ].map((rule) => (
+                      <View key={rule.key} style={styles.authRuleRow}>
+                        <Ionicons
+                          name={rule.valid ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={15}
+                          color={rule.valid ? '#E8CCB2' : 'rgba(255, 255, 255, 0.45)'}
+                          style={{ marginTop: 1 }}
+                        />
+                        <Text style={[styles.authRuleText, rule.valid && styles.authRuleTextValid]}>
+                          {rule.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.authInputGroup}>
+                    <TextInput
+                      style={[
+                        styles.authInput,
+                        { paddingRight: 48 },
+                        confirmPassword.length > 0 && !isPasswordMatched && styles.authInputError,
+                      ]}
+                      placeholder={t('confirmPasswordPlaceholder')}
+                      placeholderTextColor="#A0A0A0"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      secureTextEntry={!showConfirmPassword}
+                      textContentType="newPassword"
+                      autoComplete="password-new"
+                    />
+                    <TouchableOpacity
+                      style={styles.authPasswordToggle}
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={19}
+                        color="#FFF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {confirmPassword.length > 0 && (
+                    <View style={styles.authHintRow}>
+                      <Ionicons
+                        name={isPasswordMatched ? 'checkmark-circle' : 'alert-circle-outline'}
+                        size={14}
+                        color={isPasswordMatched ? '#E8CCB2' : '#F2A28C'}
+                        style={{ marginTop: 1 }}
+                      />
+                      <Text style={isPasswordMatched ? styles.authHintTextValid : styles.authHintTextError}>
+                        {isPasswordMatched ? t('authPasswordMatched') : t('authPasswordMismatch')}
+                      </Text>
+                    </View>
+                  )}
+
                   {/* NÚT TẠO TÀI KHOẢN */}
                   <TouchableOpacity
-                    style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                    style={[styles.btnAuthSubmit, styles.btnAuthSubmitFull, (loading || !canSubmitSignUp) && styles.btnDisabled]}
                     onPress={handleSubmit}
-                    disabled={loading}
+                    disabled={loading || !canSubmitSignUp}
                     activeOpacity={0.85}
                   >
                     {loading ? (
@@ -529,7 +769,7 @@ export default function LoginScreen() {
                   {/* CHUYỂN VỀ ĐĂNG NHẬP */}
                   <View style={styles.switchModeRow}>
                     <TouchableOpacity
-                      onPress={() => setIsSignUpMode(false)}
+                      onPress={() => switchAuthMode(false)}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.switchModeText}>{t('alreadyHaveAccount')}</Text>
@@ -554,7 +794,7 @@ export default function LoginScreen() {
 
                       {/* NÚT GỬI MÃ XÁC THỰC */}
                       <TouchableOpacity
-                        style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
+                        style={[styles.btnAuthSubmit, styles.btnAuthSubmitFull, loading && styles.btnDisabled]}
                         onPress={handleSendOtp}
                         disabled={loading}
                         activeOpacity={0.85}
@@ -625,21 +865,44 @@ export default function LoginScreen() {
                       </TouchableOpacity>
 
                       {/* NÚT XÁC NHẬN ĐĂNG NHẬP */}
-                      <TouchableOpacity
-                        style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
-                        onPress={handleVerifyOtp}
-                        disabled={loading}
-                        activeOpacity={0.85}
-                      >
-                        {loading ? (
-                          <ActivityIndicator color="#111" size="small" />
-                        ) : (
-                          <>
-                            <Text style={styles.btnAuthSubmitText}>{t('verifyOtp')}</Text>
-                            <Ionicons name="checkmark-circle-outline" size={19} color="#111" style={{ marginLeft: 6 }} />
-                          </>
+                      <View style={styles.actionRowWithBiometric}>
+                        <TouchableOpacity
+                          style={[
+                            styles.btnAuthSubmit,
+                            !isSignUpMode && biometricAvailable ? styles.btnAuthSubmitFlex : styles.btnAuthSubmitFull,
+                            loading && styles.btnDisabled,
+                          ]}
+                          onPress={handleVerifyOtp}
+                          disabled={loading}
+                          activeOpacity={0.85}
+                        >
+                          {loading ? (
+                            <ActivityIndicator color="#111" size="small" />
+                          ) : (
+                            <>
+                              <Text style={styles.btnAuthSubmitText}>{t('verifyOtp')}</Text>
+                              <Ionicons name="checkmark-circle-outline" size={19} color="#111" style={{ marginLeft: 6 }} />
+                            </>
+                          )}
+                        </TouchableOpacity>
+
+                        {/* NÚT FACE ID / TOUCH ID SIGN KEY NẰM BÊN PHẢI NÚT ĐĂNG NHẬP */}
+                        {!isSignUpMode && biometricAvailable && (
+                          <TouchableOpacity
+                            style={styles.btnBiometricInline}
+                            onPress={handleBiometricLogin}
+                            disabled={biometricLoading}
+                            activeOpacity={0.82}
+                            accessibilityLabel="Quick Login with Biometrics"
+                          >
+                            {biometricLoading ? (
+                              <ActivityIndicator color="#111111" size="small" />
+                            ) : (
+                              <BiometricIcon type={biometricType} size={26} color="#111111" />
+                            )}
+                          </TouchableOpacity>
                         )}
-                      </TouchableOpacity>
+                      </View>
 
                       {/* HÀNG HÀNH ĐỘNG OTP: GỬI LẠI MÃ & ĐỔI SỐ ĐIỆN THOẠI */}
                       <View style={styles.otpActionsRow}>
@@ -669,7 +932,7 @@ export default function LoginScreen() {
                   {/* CHUYỂN SANG ĐĂNG KÝ */}
                   <View style={styles.switchModeRow}>
                     <TouchableOpacity
-                      onPress={() => setIsSignUpMode(true)}
+                      onPress={() => switchAuthMode(true)}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.switchModeText}>{t('dontHaveAccount')}</Text>
@@ -681,15 +944,36 @@ export default function LoginScreen() {
                 <>
                   <View style={styles.authInputGroup}>
                     <TextInput
-                      style={styles.authInput}
+                      style={[
+                        styles.authInput,
+                        trimmedEmail.length > 0 && !emailValid && styles.authInputError,
+                      ]}
                       placeholder={t('emailPlaceholder') || 'example@gmail.com'}
                       placeholderTextColor="#A0A0A0"
                       value={email}
                       onChangeText={setEmail}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      autoCorrect={false}
+                      textContentType="emailAddress"
+                      autoComplete="email"
                     />
                   </View>
+                  {trimmedEmail.length > 0 && !emailValid && (
+                    <View style={styles.authHintRow}>
+                      <Ionicons
+                        name="alert-circle-outline"
+                        size={14}
+                        color="#F2A28C"
+                        style={{ marginTop: 1 }}
+                      />
+                      <Text style={styles.authHintTextError}>
+                        {!trimmedEmail.includes('@')
+                          ? t('authEmailMissingAt')
+                          : t('authEmailInvalidDomain')}
+                      </Text>
+                    </View>
+                  )}
 
                   <View style={styles.authInputGroup}>
                     <TextInput
@@ -699,6 +983,8 @@ export default function LoginScreen() {
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
+                      textContentType="password"
+                      autoComplete="password"
                     />
                     <TouchableOpacity
                       style={styles.authPasswordToggle}
@@ -714,21 +1000,44 @@ export default function LoginScreen() {
                   </View>
 
                   {/* NÚT ĐĂNG NHẬP EMAIL */}
-                  <TouchableOpacity
-                    style={[styles.btnAuthSubmit, loading && styles.btnDisabled]}
-                    onPress={handleSubmit}
-                    disabled={loading}
-                    activeOpacity={0.85}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#111" size="small" />
-                    ) : (
-                      <>
-                        <Text style={styles.btnAuthSubmitText}>{t('login')}</Text>
-                        <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
-                      </>
+                  <View style={styles.actionRowWithBiometric}>
+                    <TouchableOpacity
+                      style={[
+                        styles.btnAuthSubmit,
+                        !isSignUpMode && biometricAvailable ? styles.btnAuthSubmitFlex : styles.btnAuthSubmitFull,
+                        loading && styles.btnDisabled,
+                      ]}
+                      onPress={handleSubmit}
+                      disabled={loading}
+                      activeOpacity={0.85}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#111" size="small" />
+                      ) : (
+                        <>
+                          <Text style={styles.btnAuthSubmitText}>{t('login')}</Text>
+                          <Ionicons name="arrow-forward" size={18} color="#111" style={{ marginLeft: 6 }} />
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    {/* NÚT FACE ID / TOUCH ID SIGN KEY NẰM BÊN PHẢI NÚT ĐĂNG NHẬP */}
+                    {!isSignUpMode && biometricAvailable && (
+                      <TouchableOpacity
+                        style={styles.btnBiometricInline}
+                        onPress={handleBiometricLogin}
+                        disabled={biometricLoading}
+                        activeOpacity={0.82}
+                        accessibilityLabel="Quick Login with Biometrics"
+                      >
+                        {biometricLoading ? (
+                          <ActivityIndicator color="#111111" size="small" />
+                        ) : (
+                          <BiometricIcon type={biometricType} size={26} color="#111111" />
+                        )}
+                      </TouchableOpacity>
                     )}
-                  </TouchableOpacity>
+                  </View>
 
                   {/* QUÊN MẬT KHẨU & CHƯA CÓ TÀI KHOẢN */}
                   <View style={styles.authFooterLinks}>
@@ -745,7 +1054,7 @@ export default function LoginScreen() {
 
                   <View style={styles.switchModeRow}>
                     <TouchableOpacity
-                      onPress={() => setIsSignUpMode(true)}
+                      onPress={() => switchAuthMode(true)}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.switchModeText}>{t('dontHaveAccount')}</Text>
@@ -843,15 +1152,36 @@ export default function LoginScreen() {
 
         <View style={[styles.authInputGroup, { marginBottom: 18 }]}>
           <TextInput
-            style={styles.modalInput}
+            style={[
+              styles.modalInput,
+              trimmedForgotEmail.length > 0 && !forgotEmailValid && styles.modalInputError,
+            ]}
             placeholder={t('emailPlaceholder') || 'example@gmail.com'}
             placeholderTextColor="#8C8278"
             value={forgotEmail}
             onChangeText={setForgotEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            autoComplete="email"
           />
         </View>
+        {trimmedForgotEmail.length > 0 && !forgotEmailValid && (
+          <View style={styles.modalHintRow}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={14}
+              color="#B94A3E"
+              style={{ marginTop: 1 }}
+            />
+            <Text style={styles.modalHintTextError}>
+              {!trimmedForgotEmail.includes('@')
+                ? t('authEmailMissingAt')
+                : t('authEmailInvalidDomain')}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.modalActions}>
           <ScalePressable
@@ -883,6 +1213,67 @@ export default function LoginScreen() {
 
       {/* FIREBASE PHONE AUTH WEBVIEW (DÙNG CHO RECAPTCHA & SIGNINWITHPHONENUMBER CHUẨN FIREBASE) */}
       <FirebasePhoneAuthWebView ref={phoneAuthRef} />
+
+      {/* MODAL CHỌN ĐA TÀI KHOẢN KHI ĐĂNG NHẬP SINH TRẮC HỌC (FACE ID / TOUCH ID) */}
+      <AnimatedCenterModal
+        visible={accountPickerVisible}
+        onClose={() => setAccountPickerVisible(false)}
+        contentStyle={styles.accountPickerCard}
+        avoidKeyboard={false}
+      >
+        <View style={styles.accountPickerHeader}>
+          <View style={styles.accountPickerIconWrap}>
+            <BiometricIcon type={biometricType} size={28} color="#9C7156" />
+          </View>
+          <Text style={styles.accountPickerTitle}>Chọn tài khoản đăng nhập</Text>
+          <Text style={styles.accountPickerSubtitle}>
+            Xác thực Face ID / Vân tay thành công. Chạm vào tài khoản bạn muốn truy cập:
+          </Text>
+        </View>
+
+        <ScrollView style={{ maxHeight: 280, marginVertical: 8 }} showsVerticalScrollIndicator={false}>
+          {biometricAccounts.map((acc, index) => {
+            const initialLetter = (acc.displayName || acc.email || 'K').charAt(0).toUpperCase();
+            return (
+              <ScalePressable
+                key={acc.uid || index}
+                style={styles.accountItemRow}
+                onPress={() => handleSelectAccount(acc)}
+                activeScale={0.97}
+              >
+                <View style={styles.accountAvatarWrap}>
+                  {acc.avatar ? (
+                    <Image source={{ uri: acc.avatar }} style={styles.accountAvatarImg} contentFit="cover" />
+                  ) : (
+                    <View style={styles.accountAvatarFallback}>
+                      <Text style={styles.accountAvatarLetter}>{initialLetter}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.accountInfoCol}>
+                  <Text style={styles.accountNameText} numberOfLines={1}>
+                    {acc.displayName || 'Khách hàng'}
+                  </Text>
+                  <Text style={styles.accountSubText} numberOfLines={1}>
+                    {acc.email || acc.phone || 'Thành viên Tiệm Nhà Gốm'}
+                  </Text>
+                </View>
+
+                <Ionicons name="chevron-forward" size={18} color="#9C7156" />
+              </ScalePressable>
+            );
+          })}
+        </ScrollView>
+
+        <ScalePressable
+          style={styles.accountPickerCancelBtn}
+          onPress={() => setAccountPickerVisible(false)}
+          activeScale={0.96}
+        >
+          <Text style={styles.accountPickerCancelText}>{t('cancel') || 'Hủy'}</Text>
+        </ScalePressable>
+      </AnimatedCenterModal>
     </View>
   );
 }
@@ -936,14 +1327,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mainTitleText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 32,
     fontWeight: '700',
     color: '#FFFFFF',
     lineHeight: 38,
   },
   subTitleText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     color: '#DDDDDD',
     marginTop: 6,
@@ -973,7 +1362,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   authInput: {
-    fontFamily: 'ElleGaborStd',
     width: '100%',
     height: 52,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -1020,7 +1408,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(156, 113, 86, 0.22)',
   },
   otpDigitText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1047,16 +1434,47 @@ const styles = StyleSheet.create({
     right: 16,
     padding: 6,
   },
-  btnAuthSubmit: {
+  actionRowWithBiometric: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 6,
     width: '100%',
+  },
+  btnAuthSubmit: {
     height: 52,
     backgroundColor: '#FFFFFF',
     borderRadius: 26,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  btnAuthSubmitFull: {
+    width: '100%',
+  },
+  btnAuthSubmitFlex: {
+    flex: 1,
+    width: 0,
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  btnBiometricInline: {
+    width: 52,
+    height: 52,
+    minWidth: 52,
+    maxWidth: 52,
+    flexShrink: 0,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
@@ -1081,7 +1499,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(156, 113, 86, 0.45)',
   },
   otpInfoText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: '#F6F4EC',
     textAlign: 'center',
@@ -1095,12 +1512,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   otpCountdownText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
   },
   otpActionLink: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: '#E8CCB2',
     fontWeight: '600',
@@ -1112,7 +1527,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   switchModeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: '#E8CCB2',
     fontWeight: '600',
@@ -1170,7 +1584,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnForgotPassword: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: '#B0B0B0',
     textDecorationLine: 'underline',
@@ -1191,7 +1604,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   modalTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
     color: '#2B2928',
@@ -1199,7 +1611,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalSubtitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: '#6E665D',
     marginBottom: 18,
@@ -1207,7 +1618,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   modalInput: {
-    fontFamily: 'ElleGaborStd',
     width: '100%',
     height: 52,
     backgroundColor: '#FFFFFF',
@@ -1234,7 +1644,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: '#6E665D',
     fontWeight: '600',
@@ -1255,9 +1664,174 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   modalSubmitBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  authInputError: {
+    borderColor: 'rgba(242, 162, 140, 0.78)',
+  },
+  authHintRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: -8,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+  },
+  authHintTextError: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: '#F2A28C',
+  },
+  authHintTextValid: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: '#E8CCB2',
+  },
+  authRulesCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.22)',
+    borderRadius: 18,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    marginTop: -4,
+    marginBottom: 14,
+    gap: 7,
+  },
+  authRuleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  authRuleText: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: 'rgba(255, 255, 255, 0.62)',
+  },
+  authRuleTextValid: {
+    color: '#E8CCB2',
+    fontWeight: '600',
+  },
+  modalInputError: {
+    borderColor: '#B94A3E',
+  },
+  modalHintRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: -12,
+    marginBottom: 14,
+    paddingHorizontal: 8,
+  },
+  modalHintTextError: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: '#B94A3E',
+  },
+  accountPickerCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E8CCB2',
+  },
+  accountPickerHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  accountPickerIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(156, 113, 86, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  accountPickerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#2B2928',
+    textAlign: 'center',
+  },
+  accountPickerSubtitle: {
+    fontSize: 13,
+    color: '#7A6E65',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  accountItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EFEAE4',
+    marginBottom: 8,
+  },
+  accountAvatarWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  accountAvatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  accountAvatarFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#9C7156',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountAvatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  accountInfoCol: {
+    flex: 1,
+    marginRight: 8,
+  },
+  accountNameText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2B2928',
+  },
+  accountSubText: {
+    fontSize: 12.5,
+    color: '#8C8278',
+    marginTop: 2,
+  },
+  accountPickerCancelBtn: {
+    marginTop: 10,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountPickerCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
   },
 });

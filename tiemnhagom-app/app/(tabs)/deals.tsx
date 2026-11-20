@@ -451,7 +451,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 2,
     },
     tierNameLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: 'rgba(255, 255, 255, 0.92)',
       fontWeight: '600',
@@ -463,7 +462,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     pointsNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -504,7 +502,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       width: '100%',
     },
     giftVaultTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: 'rgba(255, 255, 255, 0.92)',
@@ -516,7 +513,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     giftVaultCount: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -561,13 +557,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     membershipBannerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     membershipBannerSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: isDark ? '#9E968D' : '#6E665D',
       marginTop: 2,
@@ -580,7 +574,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 12,
     },
     sectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -615,7 +608,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 16,
     },
     comingSoonMainTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -624,7 +616,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     comingSoonSubDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
       textAlign: 'center',
@@ -645,12 +636,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 24,
     },
     userPointsBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#9E968D' : '#6E665D',
     },
     userPointsBold: {
-      fontFamily: 'ElleGaborStd',
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#2B2928',
     },
@@ -674,7 +663,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 24,
     },
     explorePrivilegesText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -698,7 +686,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
     },
     modalTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -747,7 +734,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     qrTierName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#9E968D' : '#6E665D',
       marginBottom: 16,
@@ -775,7 +761,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 1,
     },
     qrModalHint: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: isDark ? '#9E968D' : '#6E665D',
       textAlign: 'center',
@@ -795,7 +780,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       width: '100%',
     },
     qrCloseActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#FFFFFF',

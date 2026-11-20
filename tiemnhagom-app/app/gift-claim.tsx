@@ -539,7 +539,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 8,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
@@ -562,7 +561,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 2,
     },
     pointsBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: '#9C7156',
@@ -582,7 +580,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 14,
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textMuted || '#8C7A70',
       fontWeight: '600',
@@ -595,13 +592,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     emptyDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textMuted,
       textAlign: 'center',
@@ -617,7 +612,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     backHomeBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -675,7 +669,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     ceramicEmblemText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 9.5,
       fontWeight: '800',
       color: '#2B2928',
@@ -685,13 +678,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 4,
     },
     greetingCardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 27,
       fontWeight: '800',
       lineHeight: 32,
     },
     greetingCardTagline: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       opacity: 0.9,
@@ -734,20 +725,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#333333' : '#E8CCB2',
     },
     senderSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#8C7A70',
       fontWeight: '500',
     },
     senderNameTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
       marginTop: 1,
     },
     senderPhoneText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: '#9C7156',
       fontWeight: '600',
@@ -770,7 +758,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     pointsDisplaySub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: '#9C7156',
       fontWeight: '700',
@@ -784,7 +771,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 4,
     },
     pointsLargeNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 38,
       fontWeight: '800',
       color: '#9C7156',
@@ -795,7 +781,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 5,
     },
     pointsLabelPrimary: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
@@ -805,7 +790,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       height: 23,
     },
     pointsValueHint: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: isDark ? '#A0988F' : '#6E665D',
       marginTop: 6,
@@ -823,7 +807,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     messageSectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: '#9C7156',
@@ -838,7 +821,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       padding: 14,
     },
     messageQuoteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       lineHeight: 22,
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
@@ -859,7 +841,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     pendingBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: isDark ? '#FBBF24' : '#B45309',
       fontWeight: '600',
@@ -875,7 +856,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     claimedBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#4ADE80' : '#15803D',
       fontWeight: '700',
@@ -890,7 +870,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     canceledBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#F87171' : '#B91C1C',
       fontWeight: '600',
@@ -905,7 +884,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 12,
     },
     expiredBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: isDark ? '#F87171' : '#B91C1C',
       fontWeight: '600',
@@ -940,7 +918,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     declineButtonText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#6E665D',
@@ -960,7 +937,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 5,
     },
     acceptButtonText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -981,7 +957,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 5,
     },
     bottomDoneBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: '#FFFFFF',

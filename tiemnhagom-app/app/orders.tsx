@@ -1381,7 +1381,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 0, // Tuyệt đối không có vạch kẻ đáy
   },
   navHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1427,7 +1426,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderWidth: isDark ? 0 : 0,
   },
   tabText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
   },
   tabTextActive: {
@@ -1456,7 +1454,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     opacity: 1,
   },
   filterDropdownText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -1478,7 +1475,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
   },
   loadingText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: Colors.textMuted,
   },
@@ -1521,7 +1517,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     left: 20,
   },
   emptyMainText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1529,7 +1524,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6,
   },
   emptySubText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: Colors.textMuted,
     textAlign: 'center',
@@ -1551,7 +1545,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   emptyExploreBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1587,13 +1580,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginRight: 10,
   },
   orderMethodDateText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textMuted,
     marginBottom: 2,
   },
   orderCodeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     fontWeight: '700',
     color: isDark ? '#E8CCB2' : '#5C544D',
@@ -1605,14 +1596,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderWidth: isDark ? 0 : 1,
   },
   statusBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
   },
 
   // Tiêu đề cửa hàng
   storeNameTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1647,7 +1636,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   extraCountText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1661,14 +1649,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 14,
   },
   summaryItemsText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: Colors.textMuted,
     flex: 1,
     marginRight: 12,
   },
   totalPriceBoldText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1691,7 +1677,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   reviewBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -1707,7 +1692,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   reorderBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: isDark ? '#E8CCB2' : BRAND.primary,
@@ -1727,7 +1711,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 2,
   },
   trackOrderBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1756,7 +1739,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   sheetTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1775,7 +1757,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#FCFAF7',
   },
   sheetOptionText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     color: Colors.textPrimary,
   },
@@ -1813,13 +1794,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   modalHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   lookupIntroText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 10,
@@ -1839,7 +1818,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   lookupInput: {
     flex: 1,
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: Colors.textPrimary,
   },
@@ -1856,19 +1834,16 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   lookupSubmitBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   noLookupText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: isDark ? '#9E968D' : BRAND.mutedText,
     textAlign: 'center',
   },
   foundLookupText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: BRAND.primary,
     fontWeight: '700',
@@ -1885,7 +1860,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: 36,
   },
   ratingSubtitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 6,
@@ -1917,7 +1891,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: BRAND.primary,
   },
   tagText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: isDark ? '#9E968D' : BRAND.mutedText,
   },
@@ -1933,7 +1906,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : BRAND.borderSoft,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     color: Colors.textPrimary,
     textAlignVertical: 'top',
@@ -1952,7 +1924,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   submitReviewBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1968,7 +1939,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: 32,
   },
   detailCodeSub: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: BRAND.primary,
@@ -1989,18 +1959,15 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   detailMetaLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   detailMetaVal: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   detailSectionTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
     color: isDark ? '#9E968D' : '#8A847C',
@@ -2027,25 +1994,21 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   detailItemName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
     color: Colors.textPrimary,
   },
   detailItemVariantBadge: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: BRAND.primary,
     marginTop: 2,
   },
   detailItemQty: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: isDark ? '#9E968D' : BRAND.mutedText,
     marginTop: 2,
   },
   detailItemPrice: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -2059,18 +2022,15 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 3,
   },
   detailCustomerName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   detailCustomerPhone: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   detailCustomerAddress: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textPrimary,
     lineHeight: 17,
@@ -2090,12 +2050,10 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   summaryLineLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: isDark ? '#9E968D' : BRAND.mutedText,
   },
   summaryLineVal: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -2107,13 +2065,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginTop: 4,
   },
   totalLineLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   totalLineVal: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '800',
     color: BRAND.primary,
@@ -2131,7 +2087,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   detailReorderBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',

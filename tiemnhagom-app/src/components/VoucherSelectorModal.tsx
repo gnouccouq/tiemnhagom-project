@@ -327,7 +327,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8E1D8',
     },
     modalTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -344,7 +343,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     pointsText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#9C7156',
@@ -373,7 +371,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
     },
     tabText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textSecondary,
@@ -399,7 +396,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     pillInput: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textPrimary,
     },
@@ -411,7 +407,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     applyBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#9C7156',
@@ -461,7 +456,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 10,
     },
     voucherTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -469,12 +463,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     voucherExpiry: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
     },
     voucherMinSpend: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: '#9C7156',
       marginTop: 2,
@@ -502,7 +494,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     emptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
     },
@@ -522,7 +513,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     confirmBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',

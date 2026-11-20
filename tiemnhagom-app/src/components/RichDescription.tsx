@@ -382,7 +382,6 @@ function renderBlockNode(
     };
     const size = headingSizes[node.name] || 16;
     const headingStyle: TextStyle = {
-      fontFamily: 'ElleGaborStd',
       fontSize: size,
       fontWeight: '700',
       color: textColor,
@@ -406,7 +405,6 @@ function renderBlockNode(
         {items.map((li, liIndex) => {
           const itemKey = `${key}-li-${liIndex}`;
           const baseStyle: TextStyle = {
-            fontFamily: 'ElleGaborStd',
             fontSize: 14,
             lineHeight: 22,
             color: textColor,
@@ -429,7 +427,6 @@ function renderBlockNode(
   // Trích dẫn Blockquote
   if (node.name === 'blockquote') {
     const bqStyle: TextStyle = {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       lineHeight: 22,
       fontStyle: 'italic',
@@ -455,7 +452,6 @@ function renderBlockNode(
 
   // Đoạn văn chuẩn <p> / <div>
   const paragraphStyle: TextStyle = {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     lineHeight: 22,
     color: textColor,
@@ -613,7 +609,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   listBullet: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     lineHeight: 22,
     marginRight: 6,
@@ -653,7 +648,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   toggleText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
   },

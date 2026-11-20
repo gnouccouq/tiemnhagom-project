@@ -329,12 +329,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
     },
     notFoundTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -348,7 +346,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 20,
     },
     backBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -388,7 +385,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 8,
     },
     heroBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: '#E8CCB2',
@@ -396,7 +392,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textTransform: 'uppercase',
     },
     heroTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 26,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -406,7 +401,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textShadowRadius: 6,
     },
     heroSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: '#E8CCB2',
       marginTop: 4,
@@ -453,14 +447,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 7,
     },
     brandSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       letterSpacing: 1.2,
       color: '#9C7156',
     },
     sheetTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 22,
       fontWeight: '800',
       lineHeight: 28,
@@ -497,13 +489,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     storySectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#9C7156',
     },
     storyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       lineHeight: 23,
       color: isDark ? '#CFC8C0' : '#4A4642',
@@ -527,7 +517,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: '#9C7156',
     },
     sectionHeading: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -539,7 +528,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'baseline',
     },
     sectionSubHeading: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: '#9C7156',
       fontWeight: '600',
@@ -583,7 +571,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8E1D8',
     },
     emptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textSecondary,
       textAlign: 'center',

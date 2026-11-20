@@ -206,14 +206,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
       letterSpacing: 0.3,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -228,7 +226,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 14,
     },
     emptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
       textAlign: 'center',
@@ -276,7 +273,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 2,
     },
     recipientName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -290,19 +286,16 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     defaultBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10,
       fontWeight: '700',
       color: '#9C7156',
     },
     phoneText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
       marginBottom: 4,
     },
     addressText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: Colors.textSecondary,
       lineHeight: 18,
@@ -337,7 +330,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 8,
     },
     addNewBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: '#9C7156',
@@ -367,7 +359,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     confirmBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',

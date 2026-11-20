@@ -651,14 +651,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: '#6E665D',
     },
     statusBadgeText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 11.5,
       fontWeight: '700',
       letterSpacing: 0.3,
     },
     heroTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 22,
       fontWeight: '700',
       color: isDark ? '#F5F5F5' : '#2B2928',
@@ -666,7 +664,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 6,
     },
     heroSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#B0B0B0' : '#6E665D',
       textAlign: 'center',
@@ -679,7 +676,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       width: '100%',
     },
     countdownPrompt: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '600',
       color: '#9C7156',
@@ -708,21 +704,18 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 2,
     },
     timerNum: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '800',
       color: '#9C7156',
       lineHeight: 22,
     },
     timerUnit: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 9.5,
       fontWeight: '600',
       color: isDark ? '#A0988F' : '#6E665D',
       marginTop: 1,
     },
     timerColon: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '800',
       color: '#9C7156',
@@ -751,7 +744,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#2A2622' : '#E8E1D8',
     },
     categoryChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       marginRight: 6,
@@ -774,7 +766,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? '#2B2724' : '#F0ECE6',
     },
     countBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       fontWeight: '700',
     },
@@ -806,7 +797,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#26221E' : '#E8E1D8',
     },
     priceChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
     },
@@ -825,7 +815,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 14,
     },
     totalCountText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#B0B0B0' : '#6E665D',
       fontWeight: '600',
@@ -851,7 +840,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     sortChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '600',
       color: isDark ? '#B0B0B0' : '#6E665D',
@@ -878,7 +866,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 8,
     },
     sectionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: isDark ? '#F5F5F5' : '#2B2928',
@@ -892,7 +879,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     sectionBadgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: '#9C7156',
       fontWeight: '700',
@@ -913,7 +899,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 18,
     },
     upcomingNoticeTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15.5,
       fontWeight: '700',
       color: '#9C7156',
@@ -921,7 +906,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     upcomingNoticeDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#B0B0B0' : '#6E665D',
       textAlign: 'center',
@@ -933,7 +917,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       justifyContent: 'center',
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: '#9C7156',
       marginTop: 12,
@@ -956,7 +939,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#E8CCB2',
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: isDark ? '#F5F5F5' : '#2B2928',
@@ -964,7 +946,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     emptySubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#A0988F' : '#6E665D',
       textAlign: 'center',
@@ -986,7 +967,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 3,
     },
     exploreButtonText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 14,
       fontWeight: '700',

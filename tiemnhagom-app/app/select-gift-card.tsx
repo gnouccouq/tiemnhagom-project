@@ -359,7 +359,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -387,7 +386,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderWidth: 1.5,
     },
     categoryPillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: isDark ? '#B0B0B0' : '#6E665D',
@@ -407,7 +405,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     sectionHeading: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
@@ -450,7 +447,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: '#FFFFFF',
     },
     cardTitleBig: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 26,
       fontWeight: '900',
       lineHeight: 30,

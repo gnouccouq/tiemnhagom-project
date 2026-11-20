@@ -740,13 +740,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 2,
     },
     unreadPillText: {
-      fontFamily: 'ElleGaborStd',
       color: '#FFFFFF',
       fontSize: 12,
       fontWeight: '700',
     },
     allReadText: {
-      fontFamily: 'ElleGaborStd',
       color: isDark ? '#9E968D' : '#6E665D',
       fontSize: 13,
       fontWeight: '600',
@@ -768,7 +766,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 1,
     },
     markAllText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -805,7 +802,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: '#9C7156',
     },
     filterChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: isDark ? '#9E968D' : '#6E665D',
@@ -878,7 +874,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 5,
     },
     cardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '600',
       color: isDark ? '#B0B0B0' : '#4A4643',
@@ -897,7 +892,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginLeft: 4,
     },
     cardMessage: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#9E968D' : '#6E665D',
       lineHeight: 18,
@@ -932,7 +926,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#2E2B28' : '#E8E1D8',
     },
     giftExpiryText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '600',
     },
@@ -965,7 +958,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 3,
     },
     cardActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -988,8 +980,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       color: '#FFFFFF',
       fontSize: 11,
       fontWeight: '700',
-      fontFamily: 'ElleGaborStd',
-    },
+      },
 
     // Article Specific Styling
     articleCard: {
@@ -1023,8 +1014,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       color: '#FFFFFF',
       fontSize: 9.5,
       fontWeight: '700',
-      fontFamily: 'ElleGaborStd',
-    },
+      },
     articleBody: {
       flex: 1,
       justifyContent: 'center',
@@ -1044,13 +1034,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     articleTagText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 10.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
     },
     articleTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '600',
       color: isDark ? '#E0E0E0' : '#2B2928',
@@ -1058,7 +1046,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 4,
     },
     articleExcerpt: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: isDark ? '#9E968D' : '#6E665D',
       lineHeight: 16,
@@ -1089,7 +1076,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: isDark ? 0 : 2,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -1097,7 +1083,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     emptyDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? '#9E968D' : '#6E665D',
       textAlign: 'center',

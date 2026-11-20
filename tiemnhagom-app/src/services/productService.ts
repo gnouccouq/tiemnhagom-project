@@ -197,6 +197,82 @@ export interface NewsArticle {
   excerpt?: string;
   createdAt?: any;
   dateStr?: string;
+  slug?: string;
+  author?: string;
+  views?: number;
+  helpfulYes?: number;
+  helpfulNo?: number;
+  relatedProductIds?: string[];
+  seoFocusKeyword?: string;
+  seoKeywords?: string;
+  status?: string;
+  createdAtMs?: number;
+}
+
+const DEFAULT_NEWS_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d';
+
+function toMsValue(v: any): number {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return isFinite(v) ? (v < 1e12 ? v * 1000 : v) : 0;
+  if (v instanceof Date) return isNaN(v.getTime()) ? 0 : v.getTime();
+  if (typeof v === 'string') {
+    const n = Number(v);
+    if (!isNaN(n) && v.trim() !== '') return n < 1e12 ? n * 1000 : n;
+    const t = Date.parse(v);
+    return isNaN(t) ? 0 : t;
+  }
+  if (typeof v === 'object') {
+    try {
+      if (typeof v.toMillis === 'function') return v.toMillis() || 0;
+      if (typeof v.toDate === 'function') return v.toDate().getTime() || 0;
+    } catch {}
+    const s = v.seconds ?? v._seconds;
+    if (typeof s === 'number') return s * 1000 + Math.floor((v.nanoseconds ?? v._nanoseconds ?? 0) / 1e6);
+  }
+  return 0;
+}
+
+/** Parse thời gian tạo (ms) từ createdAt/createdDate/date/timestamp/updatedAt */
+export function parseCreatedTimeMs(item: any): number {
+  if (!item) return 0;
+  for (const key of ['createdAt', 'createdDate', 'date', 'timestamp', 'updatedAt']) {
+    const ms = toMsValue(item[key]);
+    if (ms > 0) return ms;
+  }
+  return 0;
+}
+
+/** Bài viết hiển thị công khai: không có status hoặc status === 'published' */
+export function isNewsPublished(data: any): boolean {
+  return !data || data.status === undefined || data.status === null || data.status === '' || data.status === 'published';
+}
+
+/** Chuẩn hoá dữ liệu bài viết Firestore -> NewsArticle (đồng bộ Web) */
+export function mapNewsArticle(id: string, data: any, fallbackImage: string = DEFAULT_NEWS_IMAGE, excerptLen = 90): NewsArticle {
+  const createdAtMs = parseCreatedTimeMs(data);
+  const dateStr = createdAtMs ? new Date(createdAtMs).toLocaleDateString('vi-VN') : '';
+  const plainText = (data.content || '').replace(/<[^>]*>?/gm, '').trim();
+  const rawExcerpt = typeof data.excerpt === 'string' && data.excerpt.trim() ? data.excerpt.trim() : plainText;
+  const excerpt = rawExcerpt.length > excerptLen ? rawExcerpt.substring(0, excerptLen) + '...' : rawExcerpt;
+  return {
+    id,
+    title: data.title || 'Bài viết từ Tiệm',
+    imageUrl: data.imageUrl || fallbackImage,
+    content: data.content || '',
+    excerpt,
+    createdAt: data.createdAt,
+    dateStr,
+    slug: data.slug || '',
+    author: data.author || data.authorName || data.createdByName || 'Tiệm Nhà Gốm',
+    views: Number(data.views) || 0,
+    helpfulYes: Number(data.helpfulYes) || 0,
+    helpfulNo: Number(data.helpfulNo) || 0,
+    relatedProductIds: Array.isArray(data.relatedProductIds) ? data.relatedProductIds.map(String) : [],
+    seoFocusKeyword: data.seoFocusKeyword || '',
+    seoKeywords: Array.isArray(data.seoKeywords) ? data.seoKeywords.join(', ') : (data.seoKeywords || ''),
+    status: data.status || 'published',
+    createdAtMs,
+  };
 }
 
 /**
@@ -273,30 +349,12 @@ export async function getBestSellingProducts(maxItems = 10): Promise<Product[]> 
  */
 export async function getNewsArticles(maxItems = 6): Promise<NewsArticle[]> {
   try {
-    const q = query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(maxItems));
+    const q = query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(maxItems * 2 + 5));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => {
-      const data = d.data();
-      let dateStr = '';
-      if (data.createdAt) {
-        try {
-          dateStr = typeof data.createdAt.toDate === 'function'
-            ? data.createdAt.toDate().toLocaleDateString('vi-VN')
-            : new Date(data.createdAt).toLocaleDateString('vi-VN');
-        } catch {}
-      }
-      const plainText = (data.content || '').replace(/<[^>]*>?/gm, '');
-      const excerpt = plainText.length > 90 ? plainText.substring(0, 90) + '...' : plainText;
-
-      return {
-        id: d.id,
-        title: data.title || 'Bài viết từ Tiệm',
-        imageUrl: data.imageUrl || 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
-        content: data.content || '',
-        excerpt,
-        dateStr,
-      };
-    });
+    return snap.docs
+      .filter((d) => isNewsPublished(d.data()))
+      .slice(0, maxItems)
+      .map((d) => mapNewsArticle(d.id, d.data()));
   } catch (e) {
     console.warn('Lỗi lấy tin tức:', e);
     return [];
@@ -311,25 +369,8 @@ export async function getArticleById(id: string): Promise<NewsArticle | null> {
     const snap = await getDoc(doc(db, 'news', id));
     if (!snap.exists()) return null;
     const data = snap.data();
-    let dateStr = '';
-    if (data.createdAt) {
-      try {
-        dateStr = typeof data.createdAt.toDate === 'function'
-          ? data.createdAt.toDate().toLocaleDateString('vi-VN')
-          : new Date(data.createdAt).toLocaleDateString('vi-VN');
-      } catch {}
-    }
-    const plainText = (data.content || '').replace(/<[^>]*>?/gm, '');
-    const excerpt = plainText.length > 90 ? plainText.substring(0, 90) + '...' : plainText;
-
-    return {
-      id: snap.id,
-      title: data.title || 'Bài viết từ Tiệm',
-      imageUrl: data.imageUrl || '',
-      content: data.content || '',
-      excerpt,
-      dateStr,
-    };
+    if (!isNewsPublished(data)) return null;
+    return mapNewsArticle(snap.id, data, '');
   } catch (e) {
     console.warn('Lỗi lấy bài viết:', e);
     return null;

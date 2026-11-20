@@ -428,12 +428,19 @@ export async function autoLinkUserOrders(userId: string, phone?: string | null, 
       });
     }
 
-    // Cập nhật userId cho tất cả các đơn hàng tìm được
+    // Cập nhật userId cho tất cả các đơn hàng tìm được (đồng bộ updateDoc với customerId & updatedAt theo Firestore Rules)
     const updatePromises: Promise<any>[] = [];
     orderDocsToUpdate.forEach((ref) => {
       updatePromises.push(
-        setDoc(ref, { userId }, { merge: true }).catch((err) => {
-          console.warn('Lỗi liên kết đơn hàng:', err);
+        updateDoc(ref, {
+          userId,
+          customerId: userId,
+          updatedAt: new Date().toISOString(),
+        }).catch((err) => {
+          // Bỏ qua lỗi quyền thầm lặng nếu tài khoản chưa đủ điều kiện sửa document
+          if (err?.code !== 'permission-denied') {
+            console.warn('Lỗi liên kết đơn hàng:', err);
+          }
         })
       );
     });
@@ -549,7 +556,11 @@ export async function getUserOrders(
     // Cập nhật liên kết ngầm trong background (fire-and-forget, không đợi để UI load ngay)
     if (unlinkedOrderIds.length > 0) {
       unlinkedOrderIds.forEach((orderId) => {
-        setDoc(doc(db, 'orders', orderId), { userId }, { merge: true }).catch(() => {});
+        updateDoc(doc(db, 'orders', orderId), {
+          userId,
+          customerId: userId,
+          updatedAt: new Date().toISOString(),
+        }).catch(() => {});
       });
     }
 

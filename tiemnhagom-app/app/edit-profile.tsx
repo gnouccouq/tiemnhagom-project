@@ -28,6 +28,7 @@ import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetM
 import { useThemeColor, Typography, Spacing } from '../src/constants/theme';
 import { Header } from '../src/components/Header';
 import { FadingBottomBackdrop } from '../src/components/FadingBottomBackdrop';
+import { resolveMemberJoinDate } from '../src/utils/joinDate';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -76,24 +77,8 @@ export default function EditProfileScreen() {
     setUserEmail(user?.email || userProfile?.email || '');
 
     // Ngày tham gia tính từ metadata creationTime hoặc createdAt của userProfile
-    const createdTimestamp =
-      user?.metadata?.creationTime ||
-      userProfile?.createdAt ||
-      userProfile?.metadata?.creationTime;
-    if (createdTimestamp) {
-      try {
-        const parsedDate = new Date(createdTimestamp);
-        if (!isNaN(parsedDate.getTime())) {
-          setJoinDate(parsedDate.toLocaleDateString('vi-VN'));
-        } else {
-          setJoinDate(t('memberRole') || 'Thành viên');
-        }
-      } catch {
-        setJoinDate(t('memberRole') || 'Thành viên');
-      }
-    } else {
-      setJoinDate(t('memberRole') || 'Thành viên');
-    }
+    const joined = resolveMemberJoinDate(userProfile, user);
+    setJoinDate(joined ? joined.toLocaleDateString('vi-VN') : (t('memberRole') || 'Thành viên'));
 
     setEditGender(userProfile?.gender || 'Nam');
     const existingDob = userProfile?.dob || userProfile?.birthday || '';
@@ -124,7 +109,28 @@ export default function EditProfileScreen() {
     setWardCode(userProfile?.wardCode);
     setLocationName(userProfile?.locationName || '');
     setEditAvatar(userProfile?.photoURL || userProfile?.avatar || user?.photoURL || null);
+    setBaseline(JSON.stringify({
+      n: (userProfile?.displayName || userProfile?.name || user?.displayName || '').trim(),
+      g: userProfile?.gender || 'Nam',
+      d: (existingDob || '').trim(),
+      s: (userProfile?.streetAddress || userProfile?.address || userProfile?.fullAddress || '').trim(),
+      p: userProfile?.provinceCode || '',
+      w: userProfile?.wardCode || '',
+      a: userProfile?.photoURL || userProfile?.avatar || user?.photoURL || null,
+    }));
   }, [userProfile, user]);
+
+  const [baseline, setBaseline] = useState('');
+  const currentSnapshot = JSON.stringify({
+    n: editName.trim(),
+    g: editGender,
+    d: editDob.trim(),
+    s: editStreet.trim(),
+    p: provinceCode || '',
+    w: wardCode || '',
+    a: editAvatar,
+  });
+  const isDirty = baseline !== '' && currentSnapshot !== baseline;
 
   const dialog = useDialog();
 
@@ -183,6 +189,8 @@ export default function EditProfileScreen() {
         photoURL: editAvatar,
       });
 
+      setBaseline(currentSnapshot);
+      setSavingProfile(false);
       dialog.showDialog({
         title: t('success') || 'Thành công',
         message: t('profileUpdateSuccess'),
@@ -587,9 +595,9 @@ export default function EditProfileScreen() {
           pointerEvents="box-none"
         >
           <TouchableOpacity
-            style={[styles.saveBtn, savingProfile && styles.saveBtnDisabled]}
+            style={[styles.saveBtn, (savingProfile || !isDirty) && styles.saveBtnDisabled, !isDirty && !savingProfile && { opacity: 0.45 }]}
             onPress={handleSaveProfile}
-            disabled={savingProfile}
+            disabled={savingProfile || !isDirty}
             activeOpacity={0.88}
           >
             <Text style={styles.saveBtnText}>
@@ -640,7 +648,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
   },
   sectionCardTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -696,7 +703,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     shadowRadius: 3,
   },
   changeAvatarText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '600',
     color: isDark ? '#E8CCB2' : '#111111',
@@ -708,7 +714,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   inputLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textSecondary || '#6E665D',
     fontWeight: '700',
@@ -770,7 +775,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   pillInput: {
     flex: 1,
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     color: Colors.textPrimary,
     height: '100%',
@@ -791,7 +795,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   locationText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'ElleGaborStd',
     color: Colors.textPrimary,
   },
   locationPlaceholder: {
@@ -806,7 +809,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     fontSize: 14,
-    fontFamily: 'ElleGaborStd',
     color: Colors.textPrimary,
     textAlignVertical: 'top',
   },
@@ -832,7 +834,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : '#2B2928',
   },
   genderText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     color: Colors.textSecondary || '#6E665D',
     fontWeight: '600',
@@ -867,7 +868,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     opacity: 0.65,
   },
   saveBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -891,7 +891,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#F0ECE6',
   },
   calendarTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 16,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -926,7 +925,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : '#E8E1D8',
   },
   calNavLabel: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -940,7 +938,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   weekDayText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     fontWeight: '700',
     color: Colors.textSecondary || '#6E665D',
@@ -964,7 +961,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: '#9C7156',
   },
   dayCellText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     color: Colors.textPrimary,
     fontWeight: '600',
@@ -986,7 +982,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   btnConfirmDateText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',

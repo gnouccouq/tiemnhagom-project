@@ -285,7 +285,6 @@ const getStyles = (Colors: any) => {
       elevation: isDark ? 0 : 2,
     },
     heroGreeting: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: '#9C7156',
@@ -293,20 +292,17 @@ const getStyles = (Colors: any) => {
       marginBottom: 4,
     },
     heroTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 21,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
       marginBottom: 8,
     },
     heroDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       lineHeight: 20,
       color: Colors.textSecondary || '#6E665D',
     },
     sectionHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textSecondary || '#6E665D',
@@ -348,7 +344,6 @@ const getStyles = (Colors: any) => {
       borderRadius: 16,
     },
     badgePillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -357,7 +352,6 @@ const getStyles = (Colors: any) => {
       padding: 18,
     },
     storeName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
@@ -383,13 +377,11 @@ const getStyles = (Colors: any) => {
       flex: 1,
     },
     infoLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#9E968D',
       marginBottom: 2,
     },
     infoValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary || '#231B15',
       lineHeight: 18,
@@ -407,7 +399,6 @@ const getStyles = (Colors: any) => {
       padding: 12,
     },
     featuresTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
@@ -421,7 +412,6 @@ const getStyles = (Colors: any) => {
       alignItems: 'center',
     },
     featureLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textSecondary || '#6E665D',
       flex: 1,
@@ -447,7 +437,6 @@ const getStyles = (Colors: any) => {
       elevation: isDark ? 0 : 3,
     },
     primaryPillBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: '#FFFFFF',
@@ -479,14 +468,12 @@ const getStyles = (Colors: any) => {
       marginBottom: 20,
     },
     supportNoteTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: Colors.textPrimary || '#231B15',
       marginBottom: 4,
     },
     supportNoteText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       lineHeight: 18,
       textAlign: 'center',

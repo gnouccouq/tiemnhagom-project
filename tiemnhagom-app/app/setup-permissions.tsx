@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   title: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 24,
     fontWeight: '700',
     color: '#2D3B34',
@@ -160,7 +159,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   permName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 15,
     fontWeight: '700',
     color: '#2B2928',
@@ -213,7 +211,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   nextButtonText: {
-    fontFamily: 'ElleGaborStd',
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',

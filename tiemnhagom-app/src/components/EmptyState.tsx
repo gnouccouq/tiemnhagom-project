@@ -57,7 +57,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   title: {
-    fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.lg,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -65,7 +64,6 @@ const getStyles = (Colors: any) => StyleSheet.create({
     textAlign: 'center',
   },
   message: {
-    fontFamily: 'ElleGaborStd',
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',

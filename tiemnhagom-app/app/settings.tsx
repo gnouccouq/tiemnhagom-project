@@ -21,6 +21,7 @@ import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { Header } from '../src/components/Header';
+import { auth } from '../src/config/firebase';
 import { useAuth } from '../src/context/AuthContext';
 import { useThemeColor } from '../src/constants/theme';
 import { useSettings } from '../src/context/SettingsContext';
@@ -28,6 +29,7 @@ import { useDialog } from '../src/context/DialogContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { getFullAppVersionString } from '../src/utils/appVersion';
+import { resolveMemberJoinDate } from '../src/utils/joinDate';
 import { triggerHaptic, Haptics } from '../src/utils/haptics';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -57,8 +59,33 @@ export default function SettingsScreen() {
   const styles = getStyles(Colors);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, userProfile, signOut, linkGoogleAccount } = useAuth();
+  const {
+    user,
+    userProfile,
+    signOut,
+    linkGoogleAccount,
+    saveCurrentToBiometrics,
+    removeAccountFromBiometrics,
+  } = useAuth();
   const [linkingGoogle, setLinkingGoogle] = useState(false);
+
+  const {
+    themeMode,
+    setThemeMode,
+    language,
+    fontSize,
+    setLanguage,
+    setFontSize,
+    isAppLockEnabled,
+    setAppLockEnabled,
+    isPushNotificationEnabled,
+    setPushNotificationEnabled,
+    isHapticEnabled,
+    setHapticEnabled,
+    t,
+  } = useSettings();
+
+  const dialog = useDialog();
 
   // Google OAuth Hook
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
@@ -76,10 +103,10 @@ export default function SettingsScreen() {
         setLinkingGoogle(true);
         linkGoogleAccount(idToken)
           .then(() => {
-            dialog.alert('Thành công', 'Đã liên kết tài khoản Google thành công!');
+            dialog.alert(t('success'), t('linkGoogleSuccess'));
           })
           .catch((err: any) => {
-            dialog.alert('Lỗi', err.message || 'Không thể liên kết tài khoản Google.');
+            dialog.alert(t('linkGoogleErrorTitle'), err.message || t('linkGoogleErrorMsg'));
           })
           .finally(() => {
             setLinkingGoogle(false);
@@ -87,47 +114,35 @@ export default function SettingsScreen() {
       }
     }
   }, [googleResponse]);
-  
-  const {
-    themeMode,
-    setThemeMode,
-    language, 
-    fontSize, 
-    setLanguage, 
-    setFontSize, 
-    isAppLockEnabled, 
-    setAppLockEnabled,
-    isPushNotificationEnabled,
-    setPushNotificationEnabled,
-    isHapticEnabled,
-    setHapticEnabled,
-    t
-  } = useSettings();
-  
-  const dialog = useDialog();
 
   const handleToggleAppLock = async (value: boolean) => {
     if (value) {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      
+
       if (!hasHardware || !isEnrolled) {
-        dialog.alert(
-          t('notAvailable'),
-          t('deviceNotSupportLock')
-        );
+        dialog.alert(t('notAvailable'), t('deviceNotSupportLock'));
         return;
       }
-      
-      const auth = await LocalAuthentication.authenticateAsync({
+
+      const authRes = await LocalAuthentication.authenticateAsync({
         promptMessage: t('authToEnableLock'),
+        disableDeviceFallback: false,
       });
-      
-      if (auth.success) {
-        setAppLockEnabled(true);
+
+      if (authRes.success) {
+        // Lưu tài khoản hiện tại vào danh sách đa tài khoản sinh trắc học
+        await saveCurrentToBiometrics();
+        await setAppLockEnabled(true);
+        dialog.alert(t('success'), t('biometricLoginEnabledAlert'));
       }
     } else {
-      setAppLockEnabled(false);
+      const effectiveUid = user?.uid || userProfile?.uid || auth.currentUser?.uid;
+      if (effectiveUid) {
+        await removeAccountFromBiometrics(effectiveUid);
+      }
+      await setAppLockEnabled(false);
+      dialog.alert(t('notification'), t('biometricLoginDisabledAlert'));
     }
   };
   
@@ -362,7 +377,7 @@ export default function SettingsScreen() {
           </Text>
           <View style={styles.cacheActionBtn}>
             <View style={styles.cacheLeft}>
-              <Ionicons name="lock-closed-outline" size={18} color={Colors.textPrimary} />
+              <Ionicons name="scan-outline" size={18} color={Colors.primary} />
               <Text style={styles.cacheBtnText}>
                 {t('appLockFeature')}
               </Text>
@@ -374,6 +389,19 @@ export default function SettingsScreen() {
               thumbColor={Colors.textInverse}
             />
           </View>
+          {(user || userProfile) && (
+            <TouchableOpacity
+              style={[styles.cacheActionBtn, { marginTop: 10 }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/change-password' as any)}
+            >
+              <View style={styles.cacheLeft}>
+                <Ionicons name="key-outline" size={18} color={Colors.textPrimary} />
+                <Text style={styles.cacheBtnText}>{t('pwdChangeTitle')}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* 2. THÔNG BÁO */}
@@ -569,147 +597,152 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {(user || userProfile) && (
+        {(user || userProfile) && (() => {
+          const effectiveUid = userProfile?.uid || user?.uid || null;
+          const isDirectPrimarySession = Boolean(user?.uid && effectiveUid && effectiveUid === user.uid);
+          const currentProviders = auth.currentUser?.providerData || user?.providerData || [];
+
+          const googleProviderInfo = currentProviders.find((p) => p?.providerId === 'google.com') || null;
+          const hasGoogleOnCurrentAuth = Boolean(googleProviderInfo);
+          const isGoogleLinked = isDirectPrimarySession
+            ? hasGoogleOnCurrentAuth
+            : userProfile?.googleLinked === true;
+          const googleEmail = isGoogleLinked
+            ? (googleProviderInfo?.email || userProfile?.googleEmail || (isDirectPrimarySession ? user?.email : null) || userProfile?.email || null)
+            : null;
+
+          const appleProviderInfo = currentProviders.find((p) => p?.providerId === 'apple.com') || null;
+          const hasAppleOnCurrentAuth = Boolean(appleProviderInfo);
+          const isAppleLinked = isDirectPrimarySession
+            ? hasAppleOnCurrentAuth
+            : userProfile?.appleLinked === true;
+          const appleEmail = isAppleLinked
+            ? (appleProviderInfo?.email || userProfile?.appleEmail || null)
+            : null;
+
+          return (
           <View style={[styles.settingsGroup, { marginTop: 10 }]}>
-            <Text style={styles.settingsGroupTitle}>Tài khoản liên kết</Text>
+            <Text style={styles.settingsGroupTitle}>{t('linkedAccountsTitle')}</Text>
             <Text style={styles.settingsGroupSubtitle}>
-              Liên kết để đăng nhập nhanh bằng Google hoặc Apple ID
+              {t('linkedAccountsSubtitle')}
             </Text>
 
             <View style={styles.linkedAccountsCard}>
               {/* GOOGLE LINK */}
-              {(() => {
-                const isGoogleLinked = user?.providerData?.some(p => p.providerId === 'google.com') || (userProfile?.email && userProfile.email.endsWith('@gmail.com'));
-                const googleEmail = user?.providerData?.find(p => p.providerId === 'google.com')?.email || (isGoogleLinked ? userProfile?.email : null);
-
-                return (
-                  <View style={styles.linkedRow}>
-                    <View style={styles.linkedRowLeft}>
-                      <View style={[styles.linkedIconWrap, { backgroundColor: '#F2F2F2' }]}>
-                        <Ionicons name="logo-google" size={20} color="#EA4335" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.linkedProviderName}>Google</Text>
-                        <Text style={styles.linkedProviderStatus} numberOfLines={1}>
-                          {isGoogleLinked ? (googleEmail || 'Đã liên kết') : 'Chưa liên kết'}
-                        </Text>
-                      </View>
-                    </View>
-                    {isGoogleLinked ? (
-                      <View style={styles.linkedActiveBadge}>
-                        <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
-                        <Text style={styles.linkedActiveText}>Đã nối</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={[styles.btnLinkAction, linkingGoogle && { opacity: 0.6 }]}
-                        activeOpacity={0.8}
-                        disabled={linkingGoogle}
-                        onPress={async () => {
-                          setLinkingGoogle(true);
-                          try {
-                            // 1. Thử qua Native Google SDK nếu khả dụng
-                            if (NativeGoogleSignin) {
-                              try {
-                                await NativeGoogleSignin.hasPlayServices();
-                                const response = await NativeGoogleSignin.signIn();
-                                const idToken = response.data?.idToken;
-                                if (idToken) {
-                                  await linkGoogleAccount(idToken);
-                                  dialog.alert('Thành công', 'Đã liên kết tài khoản Google thành công!');
-                                  return;
-                                }
-                              } catch (nativeErr: any) {
-                                if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
-                                  return;
-                                }
-                                console.log('Native GoogleSignin link attempt error, fallback to browser:', nativeErr);
-                              }
-                            }
-
-                            // 2. Dự phòng bằng Expo AuthSession
-                            if (googleRequest) {
-                              await promptGoogleAsync();
-                            } else {
-                              const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent('https://auth.expo.io/@gnouccouq/tiemnhagom')}&nonce=${Math.random().toString(36).substring(7)}`;
-                              await WebBrowser.openAuthSessionAsync(authUrl);
-                            }
-                          } catch (err: any) {
-                            console.log('Error linking Google account:', err);
-                            dialog.alert('Lỗi liên kết', err.message || 'Không thể liên kết tài khoản Google.');
-                          } finally {
-                            setLinkingGoogle(false);
-                          }
-                        }}
-                      >
-                        {linkingGoogle ? (
-                          <ActivityIndicator size="small" color="#9C7156" />
-                        ) : (
-                          <Text style={styles.btnLinkActionText}>Liên kết</Text>
-                        )}
-                      </TouchableOpacity>
-                    )}
+              <View style={styles.linkedRow}>
+                <View style={styles.linkedRowLeft}>
+                  <View style={[styles.linkedIconWrap, { backgroundColor: '#F2F2F2' }]}>
+                    <Ionicons name="logo-google" size={20} color="#EA4335" />
                   </View>
-                );
-              })()}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.linkedProviderName}>Google</Text>
+                    <Text style={styles.linkedProviderStatus} numberOfLines={1}>
+                      {isGoogleLinked ? (googleEmail || t('linkedStatusConnected')) : t('linkedStatusNotConnected')}
+                    </Text>
+                  </View>
+                </View>
+                {isGoogleLinked ? (
+                  <View style={styles.linkedActiveBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                    <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.btnLinkAction, linkingGoogle && { opacity: 0.6 }]}
+                    activeOpacity={0.8}
+                    disabled={linkingGoogle}
+                    onPress={async () => {
+                      if (!isDirectPrimarySession) {
+                        dialog.alert(
+                          t('notification'),
+                          userProfile?.email
+                            ? t('linkGoogleUsePrimaryEmail').replace('{email}', userProfile.email)
+                            : t('linkGoogleUsePrimaryAccount')
+                        );
+                        return;
+                      }
+                      setLinkingGoogle(true);
+                      try {
+                        // 1. Thử qua Native Google SDK nếu khả dụng
+                        if (NativeGoogleSignin) {
+                          try {
+                            await NativeGoogleSignin.hasPlayServices();
+                            const response = await NativeGoogleSignin.signIn();
+                            const idToken = response.data?.idToken;
+                            if (idToken) {
+                              await linkGoogleAccount(idToken);
+                              dialog.alert(t('success'), t('linkGoogleSuccess'));
+                              return;
+                            }
+                          } catch (nativeErr: any) {
+                            if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
+                              return;
+                            }
+                            console.log('Native GoogleSignin link attempt error, fallback to browser:', nativeErr);
+                          }
+                        }
+
+                        // 2. Dự phòng bằng Expo AuthSession
+                        if (googleRequest) {
+                          await promptGoogleAsync();
+                        } else {
+                          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent('https://auth.expo.io/@gnouccouq/tiemnhagom')}&nonce=${Math.random().toString(36).substring(7)}`;
+                          await WebBrowser.openAuthSessionAsync(authUrl);
+                        }
+                      } catch (err: any) {
+                        console.log('Error linking Google account:', err);
+                        dialog.alert(t('linkGoogleErrorTitle'), err.message || t('linkGoogleErrorMsg'));
+                      } finally {
+                        setLinkingGoogle(false);
+                      }
+                    }}
+                  >
+                    {linkingGoogle ? (
+                      <ActivityIndicator size="small" color="#9C7156" />
+                    ) : (
+                      <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
 
               <View style={styles.linkedDivider} />
 
               {/* APPLE LINK */}
-              {(() => {
-                const isAppleLinked = user?.providerData?.some(p => p.providerId === 'apple.com');
-                const appleEmail = user?.providerData?.find(p => p.providerId === 'apple.com')?.email;
-
-                return (
-                  <View style={styles.linkedRow}>
-                    <View style={styles.linkedRowLeft}>
-                      <View style={[styles.linkedIconWrap, { backgroundColor: '#000000' }]}>
-                        <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.linkedProviderName}>Apple ID</Text>
-                        <Text style={styles.linkedProviderStatus} numberOfLines={1}>
-                          {isAppleLinked ? (appleEmail || 'Đã liên kết') : 'Chưa liên kết'}
-                        </Text>
-                      </View>
-                    </View>
-                    {isAppleLinked ? (
-                      <View style={styles.linkedActiveBadge}>
-                        <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
-                        <Text style={styles.linkedActiveText}>Đã nối</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.btnLinkAction}
-                        activeOpacity={0.8}
-                        onPress={() => {
-                          dialog.alert('Liên kết Apple', 'Tính năng liên kết Apple khả dụng trên thiết bị iOS.');
-                        }}
-                      >
-                        <Text style={styles.btnLinkActionText}>Liên kết</Text>
-                      </TouchableOpacity>
-                    )}
+              <View style={styles.linkedRow}>
+                <View style={styles.linkedRowLeft}>
+                  <View style={[styles.linkedIconWrap, { backgroundColor: '#000000' }]}>
+                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
                   </View>
-                );
-              })()}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.linkedProviderName}>Apple ID</Text>
+                    <Text style={styles.linkedProviderStatus} numberOfLines={1}>
+                      {isAppleLinked ? (appleEmail || t('linkedStatusConnected')) : t('linkedStatusNotConnected')}
+                    </Text>
+                  </View>
+                </View>
+                {isAppleLinked ? (
+                  <View style={styles.linkedActiveBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                    <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.btnLinkAction}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      dialog.alert(t('linkAppleTitle'), t('linkAppleIosOnly'));
+                    }}
+                  >
+                    <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
               {/* THÔNG TIN THAM GIA */}
               {(() => {
-                const createdTimestamp =
-                  user?.metadata?.creationTime ||
-                  userProfile?.createdAt ||
-                  userProfile?.metadata?.creationTime;
-                let joinDateFormatted = '';
-                if (createdTimestamp) {
-                  try {
-                    const pDate = new Date(createdTimestamp);
-                    if (!isNaN(pDate.getTime())) {
-                      joinDateFormatted = pDate.toLocaleDateString('vi-VN');
-                    }
-                  } catch {
-                    // ignore
-                  }
-                }
+                const joinedAt = resolveMemberJoinDate(userProfile, user);
+                const joinDateFormatted = joinedAt ? joinedAt.toLocaleDateString('vi-VN') : '';
 
                 if (!joinDateFormatted) return null;
 
@@ -740,7 +773,8 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        )}
+          );
+        })()}
 
         <TouchableOpacity
           style={styles.versionContainer}
@@ -773,14 +807,12 @@ const getStyles = (Colors: any) => {
       marginBottom: 24,
     },
     settingsGroupTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary,
       marginBottom: 4,
     },
     settingsGroupSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: Colors.textMuted || '#7A827E',
       marginBottom: 12,
@@ -825,7 +857,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'transparent' : '#E5E7EB',
     },
     settingOptionName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: Colors.textPrimary || '#2B2928',
@@ -835,7 +866,6 @@ const getStyles = (Colors: any) => {
       fontWeight: '700',
     },
     settingOptionDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#888888',
       marginTop: 2,
@@ -879,7 +909,6 @@ const getStyles = (Colors: any) => {
       backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : '#2B2928',
     },
     fontSizeChipLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: Colors.textPrimary || '#333333',
@@ -889,7 +918,6 @@ const getStyles = (Colors: any) => {
       fontWeight: '700',
     },
     fontSizeChipSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       color: Colors.textMuted || '#888888',
       marginTop: 2,
@@ -911,13 +939,11 @@ const getStyles = (Colors: any) => {
       marginBottom: 8,
     },
     previewHeaderLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: Colors.textSecondary,
     },
     previewSampleText: {
-      fontFamily: 'ElleGaborStd',
       color: Colors.textPrimary,
       lineHeight: 22,
     },
@@ -952,13 +978,11 @@ const getStyles = (Colors: any) => {
       justifyContent: 'center',
     },
     cacheBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary || '#231B15',
       fontWeight: '600',
     },
     cacheSubText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11.5,
       color: Colors.textMuted || '#9E968D',
       marginTop: 2,
@@ -976,7 +1000,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'transparent' : '#E8E1D8',
     },
     cacheSizeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1015,13 +1038,11 @@ const getStyles = (Colors: any) => {
       justifyContent: 'center',
     },
     linkedProviderName: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '700',
       color: Colors.textPrimary || '#2B2928',
     },
     linkedProviderStatus: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted || '#6E665D',
       marginTop: 2,
@@ -1038,7 +1059,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     linkedActiveText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '600',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1052,7 +1072,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'transparent' : '#E8CCB2',
     },
     btnLinkActionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1070,13 +1089,11 @@ const getStyles = (Colors: any) => {
       gap: 8,
     },
     joinDateLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textSecondary || '#6E665D',
       fontWeight: '600',
     },
     joinDateValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: isDark ? '#E8CCB2' : '#9C7156',
       fontWeight: '700',
@@ -1102,7 +1119,6 @@ const getStyles = (Colors: any) => {
       elevation: isDark ? 0 : 2,
     },
     logoutBtnText: {
-      fontFamily: 'ElleGaborStd',
       color: Colors.textPrimary || '#333333',
       fontWeight: '600',
       fontSize: 14.5,
@@ -1119,7 +1135,6 @@ const getStyles = (Colors: any) => {
       borderColor: isDark ? 'rgba(211, 47, 47, 0.3)' : '#FFCDD2',
     },
     deleteBtnText: {
-      fontFamily: 'ElleGaborStd',
       color: '#EF5350',
       fontWeight: '700',
       fontSize: 14.5,
@@ -1130,7 +1145,6 @@ const getStyles = (Colors: any) => {
       paddingBottom: 20,
     },
     versionText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: '#A0A5A2',
       letterSpacing: 0.5,

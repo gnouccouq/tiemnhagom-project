@@ -116,7 +116,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   navHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -124,7 +123,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontFamily: 'ElleGaborStd',
     fontSize: 14.5,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -147,7 +145,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: Colors.background,
   },
   loadingText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: isDark ? '#888888' : '#8E8E93',
   },

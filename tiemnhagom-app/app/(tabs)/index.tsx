@@ -53,6 +53,40 @@ import { trimImageMemory } from '../../src/utils/memoryManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Đọc thời gian tạo sản phẩm (Timestamp / number / string) → ms, đồng bộ Web main.js
+function parseCreatedTimeMs(p: any): number {
+  const v = p?.createdAt ?? p?.created_at ?? p?.createdTime ?? p?.dateCreated;
+  if (!v) return 0;
+  try {
+    if (typeof v === 'number') return v < 1e12 ? v * 1000 : v;
+    if (typeof v === 'string') {
+      const n = Date.parse(v);
+      return isNaN(n) ? 0 : n;
+    }
+    if (typeof v.toMillis === 'function') return v.toMillis();
+    if (typeof v.toDate === 'function') return v.toDate().getTime();
+    if (typeof v.seconds === 'number') return v.seconds * 1000;
+    if (typeof v._seconds === 'number') return v._seconds * 1000;
+  } catch {}
+  return 0;
+}
+
+// Ionicons cho 6 danh mục cha
+const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  'Dining Decor': 'restaurant-outline',
+  'Teatime & Drinks': 'cafe-outline',
+  'Home Decor': 'flower-outline',
+  'Kitchenware': 'flame-outline',
+  'Lifestyle': 'sparkles-outline',
+  'Value Packs': 'gift-outline',
+  'Bàn ăn': 'restaurant-outline',
+  'Trà & Cà phê': 'cafe-outline',
+  'Trang trí': 'flower-outline',
+  'Dụng cụ': 'flame-outline',
+  'Phong cách': 'sparkles-outline',
+  'Combo': 'gift-outline',
+};
+
 // Icon → emoji mapping đồng bộ từ tab danh mục
 const CATEGORY_EMOJI: Record<string, string> = {
   'all': '🏷️',
@@ -110,6 +144,7 @@ export default function HomeScreen() {
   const { products, news: realtimeNews, loadingProducts } = useRealtimeData();
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -225,8 +260,18 @@ export default function HomeScreen() {
   useEffect(() => {
     // Derive bestSellers and featuredProducts from realtime products
     if (products.length > 0) {
-      const sortedByPopular = [...products].sort((a, b) => (b.sold || 0) - (a.sold || 0));
-      setBestSellers(sortedByPopular.slice(0, 10));
+      const inStock = products.filter((p: any) => {
+        const stock = Number(p.stock ?? 0);
+        return stock > 0 && !p.manualOutOfStock && !p.isOutOfStock;
+      });
+      const best = inStock
+        .filter((p: any) => Number(p.sold || 0) >= 5 || Boolean(p.isBestSeller))
+        .sort((a, b) => Number(b.sold || 0) - Number(a.sold || 0));
+      setBestSellers(best.slice(0, 14));
+      const newest = [...inStock].sort(
+        (a: any, b: any) => parseCreatedTimeMs(b) - parseCreatedTimeMs(a)
+      );
+      setNewArrivals(newest.slice(0, 14));
       
       const feat = products.filter((p) => (p.sale && p.sale > 0) || p.salePrice).slice(0, 6);
       setFeaturedProducts(feat.length > 0 ? feat : products.slice(0, 6));
@@ -404,16 +449,127 @@ export default function HomeScreen() {
 
         {/* ================= 2. NỘI DUNG CHÍNH (MAIN SHEET TRƯỢT LÊN TRÊN BANNER) ================= */}
         <View style={[styles.mainContentSheet, { backgroundColor: Colors.background }]}>
+          {/* 01. SẢN PHẨM BÁN CHẠY (đồng bộ Web: còn hàng, sold>=5 hoặc isBestSeller, top 14) */}
+          <View style={styles.sectionWrap}>
+            <View style={styles.editorialSectionHeader}>
+              <View style={styles.editorialHeaderLeft}>
+                {/* Thanh dọc màu nhấn nghệ thuật (Warm Terracotta Bar) */}
+                <View style={styles.editorialAccentBar} />
+
+                {/* Chữ số mờ Watermark phía sau (01) */}
+                <Text style={styles.editorialWatermark} pointerEvents="none">
+                  01
+                </Text>
+
+                {/* Badge Tag bo tròn màu ấm (TOP 10) */}
+                <View style={styles.secTagBadge}>
+                  <Text style={styles.secTagText}>TOP 10</Text>
+                </View>
+
+                {/* Tiêu đề chính lớn */}
+                <Text style={styles.editorialTitleText}>{t('bestSellers')}</Text>
+
+                {/* Phụ đề thanh lịch */}
+                <Text style={styles.editorialSubtitleText}>
+                  {t('bestSellersSubtitle') || 'Top sản phẩm được khách hàng yêu thích và tin dùng nhiều nhất'}
+                </Text>
+              </View>
+
+              <ScalePressable
+                onPress={() =>
+                  router.push({ pathname: '/(tabs)/products', params: { sortBy: 'popular' } })
+                }
+                activeScale={0.92}
+                accessibilityLabel={t('viewAll')}
+              >
+                <LiquidGlass style={styles.seeAllBtn}>
+                  <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+                  <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+                </LiquidGlass>
+              </ScalePressable>
+            </View>
+            {loading ? (
+              <View style={styles.gridContainer}>
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalProducts}
+              >
+                {bestSellers.map((p) => (
+                  <View key={p.id} style={styles.productHorizontalItem}>
+                    <ProductCard product={p} cardWidth={160} />
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* 02. MỚI LÊN KỆ (còn hàng, sắp xếp theo thời gian tạo mới nhất, top 14) */}
+          {newArrivals.length > 0 && (
+            <View style={styles.sectionWrap}>
+              <View style={styles.editorialSectionHeader}>
+                <View style={styles.editorialHeaderLeft}>
+                  <View style={styles.editorialAccentBar} />
+                  <Text style={styles.editorialWatermark} pointerEvents="none">
+                    02
+                  </Text>
+                  <View style={styles.secTagBadge}>
+                    <Text style={styles.secTagText}>NEW DROP</Text>
+                  </View>
+                  <Text style={styles.editorialTitleText}>{t('homeNewArrivalsTitle') || 'Mới lên kệ'}</Text>
+                  <Text style={styles.editorialSubtitleText}>
+                    {t('newArrivalsSubtitle') || 'Sản phẩm và mẫu thiết kế mới nhất tại Tiệm Nhà Gốm'}
+                  </Text>
+                </View>
+                <ScalePressable
+                  onPress={() =>
+                    router.push({ pathname: '/(tabs)/products', params: { sortBy: 'newest' } })
+                  }
+                  activeScale={0.92}
+                  accessibilityLabel={t('viewAll')}
+                >
+                  <LiquidGlass style={styles.seeAllBtn}>
+                    <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+                    <Ionicons name="arrow-forward" size={12} color="#9C7156" />
+                  </LiquidGlass>
+                </ScalePressable>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalProducts}
+              >
+                {newArrivals.map((p) => (
+                  <View key={p.id} style={styles.productHorizontalItem}>
+                    <ProductCard product={p} cardWidth={160} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           {/* 2. BỘ SƯU TẬP TÂM ĐẮC (Lấy từ Firestore settings/collections) */}
         {collections.length > 0 && (
           <View style={styles.sectionWrap}>
-            <View style={styles.sectionHeader}>
-              <View>
-                <View style={styles.overlineBadgeRow}>
-                  <View style={styles.accentDot} />
-                  <Text style={styles.sectionOverline}>{t('featuredThemes')}</Text>
+            <View style={styles.editorialSectionHeader}>
+              <View style={styles.editorialHeaderLeft}>
+                <View style={styles.editorialAccentBar} />
+                <Text style={styles.editorialWatermark} pointerEvents="none">
+                  03
+                </Text>
+                <View style={styles.secTagBadge}>
+                  <Text style={styles.secTagText}>COLLECTIONS</Text>
                 </View>
-                <Text style={styles.sectionTitle}>{t('favoriteCollections')}</Text>
+                <Text style={styles.editorialTitleText}>{t('favoriteCollections')}</Text>
+                <Text style={styles.editorialSubtitleText}>
+                  {t('collectionsSubtitle') || 'Các bộ sưu tập gốm tuyển chọn, phối ghép hoàn hảo cho không gian'}
+                </Text>
               </View>
               <ScalePressable
                 onPress={() => router.push('/collections' as any)}
@@ -464,13 +620,19 @@ export default function HomeScreen() {
 
         {/* 3. DANH MỤC SẢN PHẨM (Đầy đủ cả danh mục cha và con từ Firestore) */}
         <View style={styles.sectionWrap}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <View style={styles.overlineBadgeRow}>
-                <View style={styles.accentDot} />
-                <Text style={styles.sectionOverline}>{t('ceramicCategories')}</Text>
+          <View style={styles.editorialSectionHeader}>
+            <View style={styles.editorialHeaderLeft}>
+              <View style={styles.editorialAccentBar} />
+              <Text style={styles.editorialWatermark} pointerEvents="none">
+                04
+              </Text>
+              <View style={styles.secTagBadge}>
+                <Text style={styles.secTagText}>CATEGORIES</Text>
               </View>
-              <Text style={styles.sectionTitle}>{t('curatedSpace')}</Text>
+              <Text style={styles.editorialTitleText}>{t('curatedSpace')}</Text>
+              <Text style={styles.editorialSubtitleText}>
+                {t('curatedSpaceSubtitle') || 'Khám phá các sản phẩm gốm theo từng không gian sống'}
+              </Text>
             </View>
             <ScalePressable
               onPress={() =>
@@ -498,11 +660,11 @@ export default function HomeScreen() {
             <View style={styles.curatedGrid}>
               {categories
                 .filter((cat) => cat.id !== 'all' && cat.name.toLowerCase() !== 'tất cả')
-                .slice(0, 9)
+                .slice(0, 6)
                 .map((cat) => {
                   const isSelected = selectedCategory === cat.id;
-                  const emoji = CATEGORY_EMOJI[cat.id] || '🏺';
-                  const bg = CATEGORY_BG[cat.id] || '#F3ECE3';
+                  const iconName = (CATEGORY_ICON[cat.id] || (cat.icon as any) || 'grid-outline') as keyof typeof Ionicons.glyphMap;
+                  const bg = isDark ? Colors.cardBackground : (CATEGORY_BG[cat.id] || '#F3ECE3');
                   const displayName = getCategoryDisplayName(cat.name);
 
                   return (
@@ -519,17 +681,7 @@ export default function HomeScreen() {
                           isSelected ? styles.curatedIconCircleActive : styles.curatedIconCircleInactive,
                         ]}
                       >
-                        {cat.imageUrl ? (
-                          <Image
-                            source={{ uri: cat.imageUrl }}
-                            style={styles.curatedImage}
-                            contentFit="cover"
-                            allowDownscaling={true}
-                            decodeFormat={Platform.OS === 'android' ? 'rgb' : 'argb'}
-                          />
-                        ) : (
-                          <Text style={styles.curatedEmoji}>{emoji}</Text>
-                        )}
+                        <Ionicons name={iconName} size={26} color="#9C7156" />
                       </View>
                       <Text
                         style={[
@@ -587,49 +739,6 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
         )}
-
-        {/* 5. SẢN PHẨM BÁN CHẠY (Lấy từ Firestore products) */}
-        <View style={styles.sectionWrap}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <View style={styles.overlineBadgeRow}>
-                <View style={styles.accentDot} />
-                <Text style={styles.sectionOverline}>{t('mostLoved')}</Text>
-              </View>
-              <Text style={styles.sectionTitle}>{t('bestSellers')}</Text>
-            </View>
-            <ScalePressable
-              onPress={() =>
-                router.push({
-                  pathname: '/(tabs)/products',
-                  params: { sortBy: 'popular' },
-                })
-              }
-              activeScale={0.92}
-              accessibilityLabel={t('viewAll')}
-            >
-              <LiquidGlass style={styles.seeAllBtn}>
-                <Text style={styles.seeAllText}>{t('viewAll')}</Text>
-                <Ionicons name="arrow-forward" size={12} color="#9C7156" />
-              </LiquidGlass>
-            </ScalePressable>
-          </View>
-
-          {loading ? (
-            <View style={styles.gridContainer}>
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-            </View>
-          ) : (
-            <View style={styles.gridContainer}>
-              {bestSellers.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </View>
-          )}
-        </View>
 
         {/* 6. HOA NHÀ GỐM (Phong cách Card tiêu chuẩn của Deals Tab) */}
         <View style={styles.editorialCard}>
@@ -760,13 +869,19 @@ export default function HomeScreen() {
         {/* 9. TIN TỨC BÀI VIẾT (Lấy từ Firestore news) */}
         {newsArticles.length > 0 && (
           <View style={styles.sectionWrap}>
-            <View style={styles.sectionHeader}>
-              <View>
-                <View style={styles.overlineBadgeRow}>
-                  <View style={styles.accentDot} />
-                  <Text style={styles.sectionOverline}>{t('sharingCorner')}</Text>
+            <View style={styles.editorialSectionHeader}>
+              <View style={styles.editorialHeaderLeft}>
+                <View style={styles.editorialAccentBar} />
+                <Text style={styles.editorialWatermark} pointerEvents="none">
+                  05
+                </Text>
+                <View style={styles.secTagBadge}>
+                  <Text style={styles.secTagText}>STORIES</Text>
                 </View>
-                <Text style={styles.sectionTitle}>{t('latestArticles')}</Text>
+                <Text style={styles.editorialTitleText}>{t('latestArticles')}</Text>
+                <Text style={styles.editorialSubtitleText}>
+                  {t('articlesSubtitle') || 'Góc chia sẻ kiến thức, nghệ thuật gốm và phong cách sống'}
+                </Text>
               </View>
             </View>
 
@@ -996,6 +1111,81 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 14,
   },
+
+  // TIÊU ĐỀ NGHỆ THUẬT TIỆM NHÀ GỐM (Accent Bar + Watermark 01/02/03 + Tag + Subtitle)
+  editorialSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  editorialHeaderLeft: {
+    position: 'relative',
+    flex: 1,
+    paddingLeft: 16,
+    justifyContent: 'center',
+    minHeight: 74,
+  },
+  editorialAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 2,
+    bottom: 2,
+    width: 3.5,
+    borderRadius: 2,
+    backgroundColor: '#9C7156',
+    zIndex: 3,
+  },
+  editorialWatermark: {
+    position: 'absolute',
+    left: 10,
+    top: -4,
+    fontSize: 72,
+    fontWeight: '900',
+    color: isDark ? 'rgba(232, 204, 178, 0.07)' : 'rgba(156, 113, 86, 0.11)',
+    lineHeight: 72,
+    zIndex: 1,
+    letterSpacing: -2,
+    includeFontPadding: false,
+  },
+  secTagBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: isDark ? 'rgba(232, 204, 178, 0.15)' : '#FEF3C7',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(232, 204, 178, 0.28)' : '#FDE68A',
+    marginBottom: 4,
+    zIndex: 2,
+  },
+  secTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: isDark ? '#E8CCB2' : '#92400E',
+    textTransform: 'uppercase',
+  },
+  editorialTitleText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    letterSpacing: -0.4,
+    lineHeight: 28,
+    zIndex: 2,
+    marginTop: 2,
+  },
+  editorialSubtitleText: {
+    fontSize: 12.5,
+    fontWeight: '400',
+    color: Colors.textMuted,
+    lineHeight: 18,
+    marginTop: 3,
+    zIndex: 2,
+  },
+
   overlineBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1009,7 +1199,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginRight: 6,
   },
   sectionOverline: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.4,
@@ -1017,7 +1206,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     textTransform: 'uppercase',
   },
   sectionTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
     color: Colors.textPrimary,
@@ -1034,7 +1222,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 16,
   },
   seeAllText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: '#9C7156',
     fontWeight: '700',
@@ -1074,7 +1261,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderTopColor: isDark ? '#2A2A2A' : '#F0ECE6',
   },
   collectionName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1087,7 +1273,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 4,
   },
   collectionActionText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#9C7156',
@@ -1156,7 +1341,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 28,
   },
   curatedItemName: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     fontWeight: '600',
     color: Colors.textPrimary,
@@ -1211,14 +1395,12 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dealBadgeFireText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '800',
     letterSpacing: 1.2,
     color: '#9C7156',
   },
   dealMainTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 20,
     fontWeight: '800',
     color: Colors.textPrimary,
@@ -1247,7 +1429,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   loadingText: {
-    fontFamily: 'ElleGaborStd',
     color: Colors.textMuted,
     fontSize: 12,
   },
@@ -1287,7 +1468,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 10,
   },
   editorialTagBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1297,7 +1477,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     padding: 18,
   },
   editorialOverline: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.4,
@@ -1306,7 +1485,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 4,
   },
   editorialTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 21,
     fontWeight: '800',
     color: Colors.textPrimary,
@@ -1314,7 +1492,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6,
   },
   editorialDesc: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     lineHeight: 20,
     color: Colors.textSecondary,
@@ -1335,7 +1512,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 16,
   },
   pillTagText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: isDark ? '#E8CCB2' : '#6E665D',
     fontWeight: '600',
@@ -1356,7 +1532,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     elevation: isDark ? 0 : 3,
   },
   primaryDarkBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -1374,7 +1549,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 26,
   },
   secondaryOutlineBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 14,
     fontWeight: '700',
     color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1418,7 +1592,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   newsBadgeText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9,
     fontWeight: '800',
     color: '#FFFFFF',
@@ -1428,13 +1601,11 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     padding: 14,
   },
   newsDate: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10.5,
     color: Colors.textMuted,
     marginBottom: 4,
   },
   newsTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1442,7 +1613,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 5,
   },
   newsExcerpt: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11.5,
     color: Colors.textSecondary,
     lineHeight: 16,
@@ -1454,7 +1624,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 4,
   },
   newsReadMoreText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '700',
     color: '#9C7156',
@@ -1477,20 +1646,17 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6,
   },
   footerBrand: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     fontWeight: '800',
     color: Colors.textPrimary,
     letterSpacing: 1.5,
   },
   footerInfo: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 11,
     color: Colors.textMuted,
     textAlign: 'center',
   },
   footerCopyright: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 10,
     color: Colors.textMuted,
     marginTop: 4,
@@ -1528,7 +1694,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: 12,
   },
   modalBrandTag: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 1.5,
@@ -1536,7 +1701,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 2,
   },
   modalHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -1553,7 +1717,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     maxHeight: 380,
   },
   modalDesc: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     lineHeight: 22,
     color: Colors.textPrimary,
@@ -1573,7 +1736,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   modalFeatureText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12.5,
     color: Colors.textPrimary,
     flex: 1,
@@ -1590,7 +1752,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'transparent' : Colors.border,
   },
   modalStoreText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 12,
     color: Colors.textPrimary,
     flex: 1,
@@ -1608,7 +1769,6 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 22,
   },
   modalCallBtnText: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',

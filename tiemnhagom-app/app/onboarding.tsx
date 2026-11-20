@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   bottomGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: height * 0.5 },
   safeArea: { flex: 1, justifyContent: 'flex-end' },
   content: { paddingHorizontal: 24, paddingBottom: 100 },
-  title: { fontFamily: 'ElleGaborStd', fontSize: 36, fontWeight: '700', color: '#FFFFFF', marginBottom: 12, letterSpacing: 0.5 },
+  title: { fontSize: 36, fontWeight: '700', color: '#FFFFFF', marginBottom: 12, letterSpacing: 0.5 },
   description: { fontSize: 16, color: '#E0E0E0', lineHeight: 24, paddingRight: 20 },
   footerContainer: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 24 },

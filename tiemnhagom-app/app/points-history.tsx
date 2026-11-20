@@ -861,7 +861,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       shadowOpacity: 0,
     },
     navHeaderTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -872,7 +871,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: Platform.OS === 'ios' ? 0 : 4,
     },
     headerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#111827'),
@@ -909,7 +907,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : 'rgba(156, 113, 86, 0.1)',
     },
     filterPillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       fontWeight: '600',
       color: isDark ? Colors.textMuted : '#4B5563',
@@ -930,7 +927,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginLeft: 'auto',
     },
     datePillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '500',
       color: isDark ? Colors.textPrimary : '#374151',
@@ -971,20 +967,17 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 8,
     },
     pendingPointsTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#2B2928'),
       flex: 1,
     },
     pendingPointsBadge: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
     },
     pendingPointsDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       lineHeight: 19,
       color: isDark ? Colors.textMuted : '#6E665D',
@@ -1013,13 +1006,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 10,
     },
     cardTypeTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '800',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#111827'),
     },
     cardPointsValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '800',
       letterSpacing: 0.2,
@@ -1036,14 +1027,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 4,
     },
     cardInfoLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: isDark ? Colors.textMuted : '#6B7280',
       width: 124,
       lineHeight: 20,
     },
     cardInfoValue: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textPrimary || (isDark ? '#E5E7EB' : '#1F2937'),
       flex: 1,
@@ -1051,7 +1040,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       fontWeight: '500',
     },
     cardOrderValueHighlight: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       fontWeight: '700',
       color: isDark ? '#E8CCB2' : '#9C7156',
@@ -1072,7 +1060,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingHorizontal: 30,
     },
     emptyTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#1F2937'),
@@ -1080,7 +1067,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textAlign: 'center',
     },
     emptyDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? Colors.textMuted : '#6B7280',
       textAlign: 'center',
@@ -1119,7 +1105,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderBottomColor: isDark ? (Colors.divider || '#2A2A2A') : '#E5E7EB',
     },
     modalTitleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 17,
       fontWeight: '700',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#111827'),
@@ -1143,7 +1128,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? (Colors.surface || '#2C2C2C') : 'rgba(156, 113, 86, 0.1)',
     },
     presetItemLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14.5,
       color: Colors.textPrimary || (isDark ? '#E5E7EB' : '#1F2937'),
       fontWeight: '500',
@@ -1187,21 +1171,18 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 16,
     },
     pointsBigNumber: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 42,
       fontWeight: '800',
       color: isDark ? '#E8CCB2' : '#9C7156',
       lineHeight: 48,
     },
     pointsUnitLabel: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       fontWeight: '600',
       color: isDark ? Colors.textMuted : '#6B7280',
       marginTop: 2,
     },
     pointsEquivText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: isDark ? '#D4D4D8' : '#4B5563',
       marginTop: 8,
@@ -1216,7 +1197,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 10,
     },
     ruleText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13,
       color: isDark ? Colors.textSecondary : '#4B5563',
       lineHeight: 19,

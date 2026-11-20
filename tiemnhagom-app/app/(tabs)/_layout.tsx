@@ -73,13 +73,11 @@ export default function TabLayout() {
         labelStyle={{
           default: {
             color: isDark ? '#9E968D' : '#6E665D',
-            fontFamily: 'ElleGaborStd',
             fontSize: 11,
             fontWeight: '600',
           },
           selected: {
             color: '#9C7156',
-            fontFamily: 'ElleGaborStd',
             fontSize: 11,
             fontWeight: '700',
           },

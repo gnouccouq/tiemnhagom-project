@@ -226,13 +226,11 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: Spacing.md,
     },
     recentTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.lg,
       fontWeight: '700',
       color: Colors.textPrimary,
     },
     recentClearBtn: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: '#9C7156',
     },
@@ -252,12 +250,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : Colors.borderLight,
     },
     recentChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: Colors.textPrimary,
     },
     recentEmptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: Colors.textMuted,
       fontStyle: 'italic',
@@ -276,7 +272,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? '#9C7156' : '#E8CCB2',
     },
     suggestionChipText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: isDark ? '#E8CCB2' : '#2B2928',
       fontWeight: '500',
@@ -293,7 +288,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       width: '48%',
     },
     resultCountText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: Typography.fontSize.sm,
       color: Colors.textSecondary,
       marginBottom: Spacing.md,

@@ -359,7 +359,6 @@ export const Header: React.FC<HeaderProps> = ({
 
 const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) => StyleSheet.create({
   navHeaderTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
@@ -469,7 +468,6 @@ const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) =
     paddingRight: 12,
   },
   searchPlaceholder: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
     color: isDark ? '#F5F5F5' : '#2B2928',
@@ -477,7 +475,6 @@ const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) =
     marginRight: 6,
   },
   searchInputInline: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 13.5,
     fontWeight: '600',
     color: isDark ? '#F5F5F5' : '#2B2928',
@@ -566,7 +563,6 @@ const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) =
     alignItems: 'center',
   },
   screenTitle: {
-    fontFamily: 'ElleGaborStd',
     fontSize: 19,
     fontWeight: '700',
     color: Colors.textPrimary,

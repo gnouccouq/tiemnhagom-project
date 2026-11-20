@@ -158,7 +158,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
         ListEmptyComponent={
           <View style={{ paddingVertical: 30, alignItems: 'center' }}>
             <Ionicons name="search" size={32} color={isDark ? '#333333' : '#D1C7BD'} style={{ marginBottom: 8 }} />
-            <Text style={{ fontFamily: 'ElleGaborStd', fontSize: 14, color: isDark ? '#888888' : '#9E968D' }}>
+            <Text style={{ fontSize: 14, color: isDark ? '#888888' : '#9E968D' }}>
               {t('noResultsFound') || 'Không tìm thấy kết quả phù hợp'}
             </Text>
           </View>
@@ -189,7 +189,6 @@ const getStyles = (Colors: any, insets: any, isDark: boolean) => {
       borderBottomColor: isDark ? '#222222' : '#F0ECE6',
     },
     title: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: isDark ? '#F5F5F5' : '#18181B',
@@ -215,7 +214,6 @@ const getStyles = (Colors: any, insets: any, isDark: boolean) => {
     },
     searchInput: {
       flex: 1,
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: isDark ? '#F5F5F5' : '#2B2928',
       paddingVertical: 0,
@@ -233,7 +231,6 @@ const getStyles = (Colors: any, insets: any, isDark: boolean) => {
       borderBottomColor: isDark ? '#222222' : '#F0ECE6',
     },
     itemText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       color: isDark ? '#CCCCCC' : '#2D3B34',
     },

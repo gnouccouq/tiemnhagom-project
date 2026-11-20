@@ -231,7 +231,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginBottom: 6,
     },
     badgeText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 11,
       fontWeight: '700',
       color: '#E8CCB2',
@@ -239,7 +238,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textTransform: 'uppercase',
     },
     heroBannerTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 24,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -248,7 +246,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textShadowRadius: 6,
     },
     heroBannerSub: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       color: '#E8CCB2',
       marginTop: 2,
@@ -261,7 +258,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       paddingTop: 18,
     },
     pageSubtitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       lineHeight: 20,
       color: isDark ? '#A09890' : '#6E665D',
@@ -274,7 +270,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 12,
     },
     loadingText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 13.5,
       color: Colors.textSecondary,
     },
@@ -290,7 +285,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginTop: 20,
     },
     emptyText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 14,
       color: Colors.textSecondary,
     },
@@ -325,7 +319,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       padding: 18,
     },
     collectionCardTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 20,
       fontWeight: '800',
       color: '#FFFFFF',
@@ -335,7 +328,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       textShadowRadius: 4,
     },
     collectionCardDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12.5,
       lineHeight: 18,
       color: '#F0ECE6',
@@ -354,7 +346,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       gap: 6,
     },
     explorePillText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       fontWeight: '700',
       color: '#FFFFFF',

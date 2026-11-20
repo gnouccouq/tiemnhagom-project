@@ -172,7 +172,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderColor: isDark ? 'transparent' : '#E8E1D8',
     },
     modalTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 18,
       fontWeight: '700',
       color: Colors.textPrimary,
@@ -220,14 +219,12 @@ const getStyles = (Colors: any, isDark: boolean) =>
       marginRight: 12,
     },
     optionTitle: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 15,
       fontWeight: '700',
       color: Colors.textPrimary,
       marginBottom: 3,
     },
     optionDesc: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 12,
       color: Colors.textMuted,
     },
@@ -265,7 +262,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       elevation: 4,
     },
     confirmBtnText: {
-      fontFamily: 'ElleGaborStd',
       fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',

@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { syncOrderNotificationsForUser } from '../services/orderNotificationService';
 import { syncUserLoyaltyAndVouchers } from '../services/loyaltyService';
 import { getUserOrders } from '../services/orderService';
-import { seedProductCache, extractProductImages } from '../services/productService';
+import { seedProductCache, extractProductImages, isNewsPublished, mapNewsArticle } from '../services/productService';
 
 interface RealtimeDataContextProps {
   products: Product[];
@@ -184,25 +184,8 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
       let items: any[] = [];
       snapshot.forEach((d) => {
         const data = d.data();
-        let dateStr = '';
-        if (data.createdAt) {
-          try {
-            dateStr = typeof data.createdAt.toDate === 'function'
-              ? data.createdAt.toDate().toLocaleDateString('vi-VN')
-              : new Date(data.createdAt).toLocaleDateString('vi-VN');
-          } catch {}
-        }
-        const plainText = (data.content || '').replace(/<[^>]*>?/gm, '');
-        const excerpt = plainText.length > 90 ? plainText.substring(0, 90) + '...' : plainText;
-
-        items.push({
-          id: d.id,
-          title: data.title || 'Bài viết từ Tiệm',
-          imageUrl: data.imageUrl || 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
-          content: data.content || '',
-          excerpt,
-          dateStr,
-        });
+        if (!isNewsPublished(data)) return;
+        items.push(mapNewsArticle(d.id, data));
       });
       setNews(items);
     });
