@@ -51,7 +51,7 @@ class NoelThemeEngine {
             const link = document.createElement('link');
             link.id = 'noel-theme-styles';
             link.rel = 'stylesheet';
-            link.href = `${this.pathPrefix}css/noel.css?v=9`;
+            link.href = `${this.pathPrefix}css/noel.css?v=12`;
             document.head.appendChild(link);
         }
     }
@@ -92,15 +92,16 @@ class NoelThemeEngine {
         const navbar = document.querySelector('.navbar');
         if (navbar && !navbar.querySelector('.noel-fairy-lights')) {
             const lights = document.createElement('div');
-            lights.className = 'noel-fairy-lights';
+            lights.className = 'noel-fairy-lights style-1';
             lights.setAttribute('aria-hidden', 'true');
 
-            // Chuỗi bóng đèn giáng sinh xen kẽ 5 màu
-            const colors = ['b-red', 'b-gold', 'b-green', 'b-blue', 'b-warm'];
+            // Chuỗi bóng đèn giáng sinh men gốm hoài niệm xen kẽ màu ấm
+            const colors = ['b-amber', 'b-terracotta', 'b-warm-cream', 'b-pine', 'b-amber', 'b-candle'];
             let bulbsHtml = '';
-            for (let i = 0; i < 24; i++) {
+            for (let i = 0; i < 28; i++) {
                 const color = colors[i % colors.length];
-                bulbsHtml += `<span class="noel-light-bulb ${color}"></span>`;
+                const animDelay = ((i * 0.17) % 2.1).toFixed(2);
+                bulbsHtml += `<span class="noel-light-bulb ${color}" style="animation-delay:${animDelay}s;"><span class="bulb-glow"></span></span>`;
             }
             lights.innerHTML = bulbsHtml;
             navbar.appendChild(lights);

@@ -1,0 +1,516 @@
+/* ==========================================================================
+   FLASH SALE — EDITORIAL FLASH DROP (MONOCHROME CERAMIC THEME)
+   ========================================================================== */
+
+body.flash-sale-page {
+    background-color: #f7f6f2;
+    color: #111111;
+}
+
+.fs-main {
+    padding-top: 80px;
+}
+
+/* 1. Editorial Split Hero */
+.fs-hero {
+    background: #f7f6f2;
+    border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+    padding: 36px 24px 44px;
+    margin-bottom: 0;
+}
+
+.fs-hero-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.fs-hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.fs-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+
+.fs-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: fsPulseDot 1.6s infinite;
+}
+
+.fs-live-pill.is-upcoming .fs-live-dot {
+    background: #f59e0b;
+    animation: none;
+}
+
+.fs-live-pill.is-normal .fs-live-dot {
+    background: #ffffff;
+    animation: none;
+}
+
+@keyframes fsPulseDot {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.75); }
+    70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.fs-hero-title {
+    font-family: inherit;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: #111111;
+    margin: 0 0 12px;
+}
+
+.fs-hero-subtitle {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #52525b;
+    max-width: 520px;
+    margin: 0 0 26px;
+}
+
+/* Minimalist Black Flip/Tile Countdown */
+.fs-countdown-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.fs-countdown-caption {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #71717a;
+}
+
+.fs-countdown-grid {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fs-cd-tile {
+    min-width: 68px;
+    padding: 12px 10px;
+    border-radius: 16px;
+    background: #111111;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.fs-cd-num {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.fs-cd-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.68);
+    margin-top: 5px;
+}
+
+.fs-cd-sep {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #a1a1aa;
+}
+
+.fs-ticker-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, 0.1);
+    color: #27272a;
+    font-size: 0.84rem;
+    font-weight: 500;
+}
+
+/* Right Showcase Image */
+.fs-hero-right {
+    position: relative;
+}
+
+.fs-hero-media {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: #e7e5df;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+}
+
+.fs-hero-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.fs-hero-media-badge {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #111111;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* 2. Sticky Glass Filter & Mini Countdown Bar */
+.fs-sticky-bar {
+    position: sticky;
+    top: 80px;
+    z-index: 90;
+    background: rgba(247, 246, 242, 0.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+    padding: 12px 24px;
+}
+
+.fs-sticky-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.fs-price-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 2px 0;
+    flex: 1;
+}
+
+.fs-price-pills::-webkit-scrollbar {
+    display: none;
+}
+
+.fs-price-pills .price-tab {
+    flex-shrink: 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, 0.12);
+    color: #27272a;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.fs-price-pills .price-tab:hover {
+    border-color: #111111;
+    color: #111111;
+}
+
+.fs-price-pills .price-tab.active {
+    background: #111111;
+    border-color: #111111;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.fs-sticky-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.fs-mini-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-sort-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, 0.12);
+    border-radius: 999px;
+    padding: 6px 14px;
+}
+
+.fs-sort-pill label {
+    font-size: 0.8rem;
+    color: #71717a;
+    font-weight: 600;
+}
+
+.fs-sort-pill select {
+    border: none;
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111111;
+    outline: none;
+    cursor: pointer;
+}
+
+/* 3. Main Content Container & Category Pills */
+.fs-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+}
+
+.fs-category-bar {
+    margin-bottom: 28px;
+}
+
+.fs-category-bar .minimal-category-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+}
+
+.fs-category-bar .minimal-cat-item {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, 0.1);
+    color: #3f3f46;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-transform: capitalize;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fs-category-bar .minimal-cat-item:hover {
+    border-color: #111111;
+    color: #111111;
+}
+
+.fs-category-bar .minimal-cat-item.active {
+    background: #111111;
+    border-color: #111111;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.fs-category-bar .minimal-cat-item .cat-count {
+    font-size: 0.78rem;
+    opacity: 0.72;
+}
+
+/* 4. Full-width 4-Column Product Grid */
+.fs-sections-container {
+    width: 100%;
+}
+
+.fs-sections-container .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    padding: 0;
+}
+
+.fs-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(17, 17, 17, 0.12);
+}
+
+.fs-section-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+}
+
+.fs-section-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #111111;
+    background: #ffffff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(17, 17, 17, 0.14);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fs-upcoming-banner {
+    background: #ffffff;
+    border: 1.5px dashed rgba(17, 17, 17, 0.22);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.fs-upcoming-banner h2 {
+    color: #111111;
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.fs-upcoming-banner p {
+    color: #52525b;
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+/* Empty & Pagination */
+.fs-empty-state {
+    text-align: center;
+    padding: 64px 20px;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(17, 17, 17, 0.08);
+    display: none;
+}
+
+.fs-empty-state p {
+    font-size: 1.05rem;
+    color: #52525b;
+    margin: 0 0 18px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .fs-hero-inner {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .fs-hero-right {
+        order: -1;
+    }
+
+    .fs-hero-media {
+        aspect-ratio: 16 / 9;
+    }
+
+    .fs-sections-container .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .fs-main {
+        padding-top: 70px;
+    }
+
+    .fs-hero {
+        padding: 22px 16px 28px;
+    }
+
+    .fs-cd-tile {
+        min-width: 56px;
+        padding: 10px 8px;
+        border-radius: 14px;
+    }
+
+    .fs-cd-num {
+        font-size: 1.3rem;
+    }
+
+    .fs-sticky-bar {
+        top: 70px;
+        padding: 10px 16px;
+    }
+
+    .fs-sticky-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .fs-sticky-right {
+        justify-content: space-between;
+    }
+
+    .fs-container {
+        padding: 20px 14px 48px;
+    }
+
+    .fs-sections-container .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .fs-section-title {
+        font-size: 1.12rem;
+    }
+}

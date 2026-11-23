@@ -141,7 +141,7 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
           }
       }
 
-      // 2. Compute stock updates
+      // 2. Compute stock updates & validate real-time stock inside transaction (chống bán âm kho)
       const productUpdatesMap: any = {};
       for (const { item, productRef, productData, isChild } of productSnapshots) {
          const pId = item.id;
@@ -179,6 +179,39 @@ export async function createOrder(orderData: Omit<Order, 'orderCode' | 'orderDat
 
       for (const pId of Object.keys(productUpdatesMap)) {
          const { productRef, productData, totalSold, comboQtyMap, colorQtyMap, patternQtyMap } = productUpdatesMap[pId];
+
+         // Kiểm tra tồn kho thực tế trước khi ghi để chống 2 người đặt trùng sản phẩm cuối cùng
+         const baseStock = (productData.isOutOfStock || productData.manualOutOfStock) ? 0 : Number(productData.stock || 0);
+         if (!productData.isCombo && baseStock < totalSold) {
+            throw new Error(`Sản phẩm "${productData.name || pId}" đã hết hàng hoặc chỉ còn ${Math.max(0, baseStock)} sản phẩm.`);
+         }
+         if (Array.isArray(productData.colorVariants)) {
+            for (const [vName, qty] of Object.entries(colorQtyMap)) {
+               const v = productData.colorVariants.find((cv: any) => cv.name === vName);
+               const vStock = (!v || v.isOutOfStock || v.manualOutOfStock) ? 0 : Number(v.stock ?? baseStock);
+               if (vStock < Number(qty)) {
+                  throw new Error(`Sản phẩm "${productData.name || pId}" (${vName}) đã hết hàng hoặc chỉ còn ${Math.max(0, vStock)} sản phẩm.`);
+               }
+            }
+         }
+         if (Array.isArray(productData.patternVariants)) {
+            for (const [vName, qty] of Object.entries(patternQtyMap)) {
+               const v = productData.patternVariants.find((pv: any) => pv.name === vName);
+               const vStock = (!v || v.isOutOfStock || v.manualOutOfStock) ? 0 : Number(v.stock ?? baseStock);
+               if (vStock < Number(qty)) {
+                  throw new Error(`Sản phẩm "${productData.name || pId}" (${vName}) đã hết hàng hoặc chỉ còn ${Math.max(0, vStock)} sản phẩm.`);
+               }
+            }
+         }
+         if (Array.isArray(productData.comboVariants)) {
+            for (const [vName, qty] of Object.entries(comboQtyMap)) {
+               const v = productData.comboVariants.find((cv: any) => cv.name === vName);
+               if (v && (v.isOutOfStock || (v.stock !== undefined && v.stock !== null && Number(v.stock) < Number(qty)))) {
+                  const vStock = v.isOutOfStock ? 0 : Number(v.stock || 0);
+                  throw new Error(`Combo "${productData.name || pId}" (${vName}) đã hết hàng hoặc chỉ còn ${Math.max(0, vStock)} sản phẩm.`);
+               }
+            }
+         }
          
          let updatePayload: any = {
             sold: increment(totalSold)

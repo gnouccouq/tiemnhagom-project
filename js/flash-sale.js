@@ -33,10 +33,13 @@ async function fetchFlashSaleProducts(navigation = 'init') {
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
     const bannerTitle = document.querySelector('.banner-title');
-    const bannerSub = document.querySelector('.flash-sale-banner p');
+    const bannerSub = document.getElementById('fs-hero-subtitle') || document.querySelector('.flash-sale-banner p');
     const countdownEl = document.getElementById('flash-sale-countdown');
-    const sidebarEl = document.querySelector('.price-tabs-sidebar');
-    const layoutEl = document.querySelector('.flash-sale-layout');
+    const countdownCaption = document.getElementById('fs-countdown-caption');
+    const statusPill = document.getElementById('fs-status-pill');
+    const statusText = document.getElementById('fs-status-text');
+    const miniCountdownEl = document.getElementById('fs-mini-countdown');
+    const priceTabsEl = document.getElementById('price-tabs-container');
 
     // 1. Nạp cấu hình Flash Sale (buộc làm mới nếu là khởi tạo hoặc timer kết thúc)
     flashSaleSettings = await fetchFlashSaleSettings(navigation === 'init');
@@ -53,38 +56,53 @@ async function fetchFlashSaleProducts(navigation = 'init') {
 
     const isUpcoming = flashSaleSettings?.isActive && startTime && now < startTime;
     
-    // Cập nhật UI Banner & Sidebar dựa trên trạng thái chương trình
+    // Cập nhật UI Banner & Sticky Bar dựa trên trạng thái chương trình
     if (isFsRunning) {
         if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale";
         if (bannerSub) {
             bannerSub.style.display = 'block';
             bannerSub.innerText = flashSaleSettings.subtitle || "Nhanh tay sở hữu những món gốm độc bản với ưu đãi tốt nhất.";
         }
+        if (statusPill) {
+            statusPill.classList.remove('is-upcoming', 'is-normal');
+        }
+        if (statusText) statusText.innerText = "LIVE DROP • ƯU ĐÃI CÓ HẠN";
+        if (countdownCaption) countdownCaption.innerText = "Kết thúc sau";
         if (countdownEl) countdownEl.style.display = 'flex';
-        if (sidebarEl) sidebarEl.style.display = 'block';
-        if (layoutEl) layoutEl.style.display = 'grid';
+        if (miniCountdownEl) miniCountdownEl.style.display = 'inline-flex';
+        if (priceTabsEl) priceTabsEl.style.display = 'flex';
         initDynamicCountdown(endTime);
         renderPriceTabs();
     } else if (isUpcoming) {
-        if (bannerTitle) bannerTitle.innerHTML = `<i class="ti ti-alarm"></i> ${flashSaleSettings.title || "Siêu Sale 9.9"} - Sắp Diễn Ra!`;
+        if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale — Sắp Diễn Ra";
         if (bannerSub) {
             bannerSub.style.display = 'block';
-            bannerSub.innerText = `Chương trình sẽ chính thức mở bán vào lúc ${startTime.toLocaleString('vi-VN')}. Hãy thêm sản phẩm vào giỏ trước!`;
+            bannerSub.innerText = `Chương trình sẽ chính thức mở bán vào lúc ${startTime.toLocaleString('vi-VN')}. Hãy thêm sản phẩm vào danh sách yêu thích trước!`;
         }
+        if (statusPill) {
+            statusPill.classList.remove('is-normal');
+            statusPill.classList.add('is-upcoming');
+        }
+        if (statusText) statusText.innerText = "SẮP MỞ BÁN • COMING SOON";
+        if (countdownCaption) countdownCaption.innerText = "Mở bán sau";
         if (countdownEl) countdownEl.style.display = 'flex';
-        if (sidebarEl) sidebarEl.style.display = 'none';
-        if (layoutEl) layoutEl.style.display = 'block';
+        if (miniCountdownEl) miniCountdownEl.style.display = 'inline-flex';
+        if (priceTabsEl) priceTabsEl.style.display = 'none';
         initDynamicCountdown(startTime); // Đếm ngược đến giờ bắt đầu
     } else {
         if (bannerTitle) bannerTitle.innerText = "Ưu Đãi Đặc Biệt";
         if (bannerSub) {
             bannerSub.style.display = 'block';
-            bannerSub.innerText = "Khám phá các sản phẩm đang có giá tốt nhất tại Tiệm.";
+            bannerSub.innerText = "Khám phá các sản phẩm gốm thủ công đang có mức giá tốt nhất tại Tiệm Nhà Gốm.";
         }
+        if (statusPill) {
+            statusPill.classList.remove('is-upcoming');
+            statusPill.classList.add('is-normal');
+        }
+        if (statusText) statusText.innerText = "SELECTED DEALS • GIÁ TỐT MỖI NGÀY";
         if (countdownEl) countdownEl.style.display = 'none';
-        if (sidebarEl) sidebarEl.style.display = 'none';
-        // Chuyển layout sang 1 cột nếu không có sidebar lọc giá
-        if (layoutEl) layoutEl.style.display = 'block';
+        if (miniCountdownEl) miniCountdownEl.style.display = 'none';
+        if (priceTabsEl) priceTabsEl.style.display = 'none';
         if (window.fsTimer) clearInterval(window.fsTimer);
     }
 
@@ -280,9 +298,9 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             if (upcomingProducts.length > 0) {
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div style="background: #fffaf5; border: 1.5px dashed #E8CCB2; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 2.5rem;">
-                            <h2 style="color: #9C7156; margin-bottom: 8px; font-size: 1.35rem; font-family: 'Playfair Display', serif;"><i class="ti ti-gift"></i> Danh Sách Sản Phẩm Flash Sale 20/10</h2>
-                            <p style="color: #6E665D; font-size: 0.92rem; margin: 0;">Các deal Mua 1 Tặng 1 & Giảm giá sốc có hạn dưới đây sẽ chính thức mở bán khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
+                        <div class="fs-upcoming-banner">
+                            <h2><i class="ti ti-alarm"></i> ${flashSaleSettings?.title || "Danh Sách Sản Phẩm Flash Sale"}</h2>
+                            <p>Các deal ưu đãi số lượng có hạn dưới đây sẽ chính thức mở bán khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
                         </div>
                         <div class="grid" style="padding: 0;">
                             ${upcomingProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
@@ -292,23 +310,23 @@ async function fetchFlashSaleProducts(navigation = 'init') {
             } else {
                 htmlContent += `
                     <div style="text-align: center; padding: 4rem 1rem;">
-                        <p style="font-size: 1.15rem; color: #6E665D;">Chương trình <strong>${flashSaleSettings?.title || "Flash Sale 20/10"}</strong> đang được chuẩn bị và sẽ sớm mở bán!</p>
+                        <p style="font-size: 1.15rem; color: #52525b;">Chương trình <strong>${flashSaleSettings?.title || "Flash Sale"}</strong> đang được chuẩn bị và sẽ sớm mở bán!</p>
                         <p style="margin-top: 1rem;"><a href="../products/" class="btn-dark">Khám phá các sản phẩm khác</a></p>
                     </div>
                 `;
             }
         } else {
             // TRƯỜNG HỢP 2: ĐANG DIỄN RA HOẶC BÌNH THƯỜNG
-            // 1. Render nhóm Mua 1 Tặng 1 (20/10 ĐẶC QUYỀN)
+            // 1. Render nhóm Mua 1 Tặng 1
             if (isFsRunning && bogoProducts.length > 0 && selectedPriceGroup === null) {
                 sortProducts(bogoProducts);
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
-                            <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
-                                <i class="ti ti-gift"></i> ĐẶC QUYỀN 20/10 — MUA 1 TẶNG 1
+                        <div class="fs-section-header">
+                            <h2 class="fs-section-title">
+                                <i class="ti ti-gift"></i> ĐẶC QUYỀN — MUA 1 TẶNG 1
                             </h2>
-                            <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
+                            <span class="fs-section-badge">
                                 <i class="ti ti-sparkles"></i> Số lượng quà tặng có hạn
                             </span>
                         </div>
@@ -324,11 +342,11 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 sortProducts(flashSaleCampaignProducts);
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #E8CCB2; padding-bottom: 12px;">
-                            <h2 class="shimmer-title" style="margin: 0; text-align: left; display: flex; align-items: center; gap: 8px; color: #2B2928;">
-                                <i class="ti ti-bolt-filled"></i> ${flashSaleSettings?.title || "Flash Sale 20/10 — Giá Sốc"}
+                        <div class="fs-section-header">
+                            <h2 class="fs-section-title">
+                                <i class="ti ti-bolt-filled"></i> ${flashSaleSettings?.title || "Flash Sale — Giá Sốc"}
                             </h2>
-                            <span style="font-size: 0.85rem; color: #9C7156; font-weight: 700; background: #fffaf5; padding: 5px 14px; border-radius: 20px; border: 1px solid #E8CCB2;">
+                            <span class="fs-section-badge">
                                 <i class="ti ti-flame-filled"></i> Giá ưu đãi có hạn
                             </span>
                         </div>
@@ -348,7 +366,10 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                     sortProducts(products);
                     htmlContent += `
                         <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                            <h2 class="shimmer-title" style="margin-bottom: 2rem; text-align: left; color: #2B2928;"><i class="ti ti-bolt-filled"></i> Đồng giá ${price/1000}k</h2>
+                            <div class="fs-section-header">
+                                <h2 class="fs-section-title"><i class="ti ti-bolt-filled"></i> Đồng giá ${price/1000}k</h2>
+                                <span class="fs-section-badge">${products.length} sản phẩm</span>
+                            </div>
                             <div class="grid" style="padding: 0;">
                                 ${products.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                             </div>
@@ -363,7 +384,10 @@ async function fetchFlashSaleProducts(navigation = 'init') {
                 const sectionTitle = isFsRunning ? "<i class='ti ti-teapot'></i> Ưu đãi gốm sứ khác" : "Sản phẩm ưu đãi";
                 htmlContent += `
                     <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <h2 style="margin-bottom: 2rem; text-align: left; border-bottom: 2px solid #E8CCB2; padding-bottom: 10px; color: #2B2928;">${sectionTitle}</h2>
+                        <div class="fs-section-header">
+                            <h2 class="fs-section-title">${sectionTitle}</h2>
+                            <span class="fs-section-badge">${otherSales.length} sản phẩm</span>
+                        </div>
                         <div class="grid" style="padding: 0;">
                             ${otherSales.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
                         </div>
@@ -535,6 +559,12 @@ function initDynamicCountdown(endTime) {
         if(document.getElementById('hours')) document.getElementById('hours').innerText = h.toString().padStart(2, '0');
         if(document.getElementById('minutes')) document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
         if(document.getElementById('seconds')) document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
+
+        const miniTimerText = document.getElementById('fs-mini-timer-text');
+        if (miniTimerText) {
+            const totalHours = d * 24 + h;
+            miniTimerText.innerText = `${totalHours.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
     };
     if (window.fsTimer) clearInterval(window.fsTimer);
     window.fsTimer = setInterval(update, 1000);

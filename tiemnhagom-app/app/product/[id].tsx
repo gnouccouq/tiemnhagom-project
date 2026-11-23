@@ -22,7 +22,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColor, Typography, Spacing, BorderRadius, Shadows } from '../../src/constants/theme';
-import { getProductById, getProducts, getCachedProductById } from '../../src/services/productService';
+import { getProductById, getProducts, getCachedProductById, incrementProductViews } from '../../src/services/productService';
 import { getActiveCoupons, CouponItem } from '../../src/services/couponService';
 import { Product, ProductVariant } from '../../src/types';
 import { formatCurrency, checkOutOfStock } from '../../src/utils/format';
@@ -108,8 +108,9 @@ export default function ProductDetailScreen() {
         .then((res) => {
           setProduct(res);
           if (res) {
-            // Lưu vào danh sách đã xem gần đây
+            // Lưu vào danh sách đã xem gần đây & ghi nhận lượt xem thật lên Firestore
             addRecentlyViewed(res);
+            incrementProductViews(res.id);
 
             // Tìm và chọn biến thể: Nếu được mở từ card biến thể (có variantParam) thì chọn đúng biến thể đó
             if (variantParam) {

@@ -89,6 +89,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/ai-chat",
+        "function": "aiChat"
+      },
+      {
         "source": "/share",
         "function": "shareRedirect"
       },
@@ -131,6 +135,26 @@
       {
         "source": "/blog/**",
         "function": "articleDetail"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css|html)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
       }
     ]
   },

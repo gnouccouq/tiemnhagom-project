@@ -2,6 +2,7 @@ const functions = require('firebase-functions/v1');
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const admin = require('firebase-admin');
 const kiotviet = require('./kiotviet');
+const { createAiChatHandler } = require('./aiChat');
 const axios = require('axios');
 const crypto = require('crypto');
 const querystring = require('querystring');
@@ -2691,3 +2692,16 @@ exports.syncComboSoldHistory = onRequest({ cors: true, timeoutSeconds: 300, memo
         return res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// ==========================================
+// TRỢ LÝ AI TƯ VẤN MUA GỐM (BẢO MẬT GEMINI API KEY PHÍA SERVER)
+// ==========================================
+exports.aiChat = onRequest(
+    {
+        region: 'us-central1',
+        cors: true,
+        timeoutSeconds: 30,
+        memory: '256MiB'
+    },
+    createAiChatHandler(db)
+);

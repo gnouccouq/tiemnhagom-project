@@ -1,5 +1,10 @@
 // src/services/productService.ts
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, increment, limit, orderBy, query, updateDoc, where } from 'firebase/firestore';
+
+export function incrementProductViews(productId: string): void {
+  if (!productId) return;
+  updateDoc(doc(db, 'products', productId), { views: increment(1) }).catch(() => {});
+}
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { removeVietnameseTones } from '../utils/format';
@@ -119,18 +124,26 @@ export interface BannerSlide {
   subtitle?: string;
 }
 
+export interface HeroBannerConfig {
+  slides: BannerSlide[];
+  videoUrl?: string | null;
+}
+
 /**
- * Lấy danh sách banner trang chủ từ Firestore (settings/banners)
- * Ưu tiên mobileImageUrl cho phiên bản ứng dụng di động
+ * Lấy cấu hình banner trang chủ và video hero từ Firestore (settings/banners)
  */
-export async function getHeroBanners(): Promise<BannerSlide[]> {
+export async function getHeroBannerConfig(): Promise<HeroBannerConfig> {
+  let slides: BannerSlide[] = [];
+  let videoUrl: string | null = null;
+
   try {
     const snap = await getDoc(doc(db, 'settings', 'banners'));
     if (snap.exists()) {
       const data = snap.data();
-      const slides: any[] = data.slides || [];
-      if (slides.length > 0) {
-        return slides.map((s, idx) => ({
+      videoUrl = typeof data.videoUrl === 'string' && data.videoUrl.trim().length > 0 ? data.videoUrl.trim() : null;
+      const rawSlides: any[] = data.slides || [];
+      if (rawSlides.length > 0) {
+        slides = rawSlides.map((s, idx) => ({
           id: String(idx),
           imageUrl: s.imageUrl || '',
           mobileImageUrl: s.mobileImageUrl || '',
@@ -144,39 +157,51 @@ export async function getHeroBanners(): Promise<BannerSlide[]> {
     console.warn('Lỗi đọc banner từ settings/banners:', e);
   }
 
-  // Danh sách banner mobile chính thức từ tiệm
-  return [
-    {
-      id: '0',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1789473604739_trungthutng2026.webp?alt=media&token=3738531e-4c85-4aba-ae0f-1370947b22dd',
-      mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1789473606465_trungthutng2026_916.webp?alt=media&token=862e84ee-289c-46b4-aeaf-fe69c97d5e9e',
-      link: '',
-    },
-    {
-      id: '1',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
-      mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1787036957985__MG_2519.webp?alt=media&token=c9abcb3b-8409-438d-9ee9-2081d2071387',
-      link: '',
-    },
-    {
-      id: '2',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036647258_ChatGPT%20Image%2014_03_47%2018%20thg%208%2C%202026.webp?alt=media&token=e5da360e-338f-43b9-9056-cab7610500c2',
-      mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1787036648751__MG_2842.webp?alt=media&token=6d37aca3-3542-4dd9-b42f-4e78546225b9',
-      link: '',
-    },
-    {
-      id: '3',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1784352576732_L%C3%B3t%20ly%20(1920%20x%201080%20px)%20(2).webp?alt=media&token=07e7c680-ebf7-48ea-8ef0-6313124ab082',
-      mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1784352578090_L%C3%B3t%20ly%20(1080%20x%201920%20px)%20(1).webp?alt=media&token=019cec6d-dc0d-491a-9bb6-835f261c0a94',
-      link: 'TNGCB01',
-    },
-    {
-      id: '4',
-      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1788589788688_TNGHANDMADE.webp?alt=media&token=9890f8cf-a2e0-436b-88b8-98ed7b894fb0',
-      mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1788589788688_TNGHANDMADE.webp?alt=media&token=9890f8cf-a2e0-436b-88b8-98ed7b894fb0',
-      link: '',
-    },
-  ];
+  if (slides.length === 0) {
+    slides = [
+      {
+        id: '0',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1789473604739_trungthutng2026.webp?alt=media&token=3738531e-4c85-4aba-ae0f-1370947b22dd',
+        mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1789473606465_trungthutng2026_916.webp?alt=media&token=862e84ee-289c-46b4-aeaf-fe69c97d5e9e',
+        link: '',
+      },
+      {
+        id: '1',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
+        mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1787036957985__MG_2519.webp?alt=media&token=c9abcb3b-8409-438d-9ee9-2081d2071387',
+        link: '',
+      },
+      {
+        id: '2',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036647258_ChatGPT%20Image%2014_03_47%2018%20thg%208%2C%202026.webp?alt=media&token=e5da360e-338f-43b9-9056-cab7610500c2',
+        mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1787036648751__MG_2842.webp?alt=media&token=6d37aca3-3542-4dd9-b42f-4e78546225b9',
+        link: '',
+      },
+      {
+        id: '3',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1784352576732_L%C3%B3t%20ly%20(1920%20x%201080%20px)%20(2).webp?alt=media&token=07e7c680-ebf7-48ea-8ef0-6313124ab082',
+        mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fmb_1784352578090_L%C3%B3t%20ly%20(1080%20x%201920%20px)%20(1).webp?alt=media&token=019cec6d-dc0d-491a-9bb6-835f261c0a94',
+        link: 'TNGCB01',
+      },
+      {
+        id: '4',
+        imageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1788589788688_TNGHANDMADE.webp?alt=media&token=9890f8cf-a2e0-436b-88b8-98ed7b894fb0',
+        mobileImageUrl: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1788589788688_TNGHANDMADE.webp?alt=media&token=9890f8cf-a2e0-436b-88b8-98ed7b894fb0',
+        link: '',
+      },
+    ];
+  }
+
+  return { slides, videoUrl };
+}
+
+/**
+ * Lấy danh sách banner trang chủ từ Firestore (settings/banners)
+ * Ưu tiên mobileImageUrl cho phiên bản ứng dụng di động
+ */
+export async function getHeroBanners(): Promise<BannerSlide[]> {
+  const config = await getHeroBannerConfig();
+  return config.slides;
 }
 
 export interface CollectionItem {

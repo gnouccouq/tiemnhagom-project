@@ -44,6 +44,13 @@ service cloud.firestore {
         request.resource.data.stock >= 0 &&
         // Số lượng bán mới phải lớn hơn hoặc bằng cũ
         request.resource.data.sold >= resource.data.sold
+      ) || (
+        // Cho phép khách hàng tăng lượt xem sản phẩm (+1) an toàn
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+        request.resource.data.views is number && (
+          ((!('views' in resource.data) || resource.data.views == null) && request.resource.data.views == 1) ||
+          (resource.data.views is number && resource.data.views >= 0 && request.resource.data.views == resource.data.views + 1)
+        )
       );
     }
     
@@ -155,8 +162,13 @@ service cloud.firestore {
     }
 
     // 6. Cấu hình hệ thống (Danh mục động, Banners, Sự kiện...)
+    // Bảo mật riêng tài liệu ai_config: chỉ Admin mới được đọc/ghi (không lộ Gemini API Key ra trình duyệt)
+    match /settings/ai_config {
+      allow read, write: if isAdmin();
+    }
+
     match /settings/{settingId} {
-      allow read: if true;
+      allow read: if settingId != 'ai_config';
       allow write: if isAdmin(); // Cho phép Admin quản lý các cấu hình cài đặt
     }
 

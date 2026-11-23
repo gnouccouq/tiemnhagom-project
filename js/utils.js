@@ -14,7 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import * as emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
 import { initGeminiAssistant } from "./gemini-assistant.js";
-import { initNoelTheme, noelEngine } from "./noel-theme.js";
+import { initNoelTheme, noelEngine } from "./noel-theme.js?v=12";
 export { initNoelTheme, noelEngine };
 import { initWebNotifications } from "./notifications.js";
 export { initWebNotifications };
@@ -3896,25 +3896,59 @@ export async function renderDrawerCart() {
             if (!pSnap.exists()) continue;
             const pData = pSnap.data();
 
+            // Kiểm tra tồn kho thực tế theo sản phẩm / biến thể
+            let availableStock = (pData.isOutOfStock || pData.manualOutOfStock) ? 0 : Number(pData.stock ?? 0);
+            if (item.color && Array.isArray(pData.colorVariants)) {
+                const cv = pData.colorVariants.find(v => v.name === item.color);
+                if (cv) {
+                    availableStock = (cv.isOutOfStock || cv.manualOutOfStock) ? 0 : Number(cv.stock ?? availableStock);
+                }
+            } else if (item.pattern && Array.isArray(pData.patternVariants)) {
+                const pv = pData.patternVariants.find(v => v.name === item.pattern);
+                if (pv) {
+                    availableStock = (pv.isOutOfStock || pv.manualOutOfStock) ? 0 : Number(pv.stock ?? availableStock);
+                }
+            } else if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                const comboName = item.comboVariant || item.combo;
+                const combov = comboName
+                    ? pData.comboVariants.find(v => v.name === comboName)
+                    : (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                if (combov) {
+                    if (combov.isOutOfStock) availableStock = 0;
+                    else if (combov.stock !== undefined && combov.stock !== null) availableStock = Number(combov.stock);
+                }
+            }
+
+            const isItemOutOfStock = availableStock <= 0;
+            const isOverStock = !isItemOutOfStock && item.quantity > availableStock;
+            const stockBadgeHtml = isItemOutOfStock
+                ? `<div style="display:inline-block; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca;">Đã hết hàng</div>`
+                : (isOverStock
+                    ? `<div style="display:inline-block; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; background:#fffbeb; color:#b45309; border:1px solid #fde68a;">Chỉ còn ${availableStock} sản phẩm</div>`
+                    : (availableStock <= 5
+                        ? `<div style="font-size:0.72rem; color:#b45309; margin-top:3px;">Chỉ còn ${availableStock} sản phẩm</div>`
+                        : ''));
+
             const hasSale = pData.sale > 0;
             const currentPrice = hasSale ? (pData.salePrice || Math.round(pData.price * (1 - pData.sale / 100))) : pData.price;
 
-            const itemTotal = currentPrice * item.quantity;
+            const itemTotal = isItemOutOfStock ? 0 : currentPrice * item.quantity;
             totalAmount += itemTotal;
 
             const variantText = (item.color || item.pattern) ? ` - ${item.color || ''} ${item.pattern || ''}`.trim() : '';
 
             html += `
-                <div class="drawer-cart-item">
+                <div class="drawer-cart-item" style="${isItemOutOfStock ? 'opacity: 0.72;' : ''}">
                     <img src="${pData.imageUrl}" alt="${escapeHTML(pData.name)}">
                     <div class="drawer-cart-item-info">
                         <a href="${baseUrl}/product/index.html?id=${item.id}" class="drawer-cart-item-title">${escapeHTML(pData.name)}${variantText}</a>
                         <div class="drawer-cart-item-price">${new Intl.NumberFormat('vi-VN').format(currentPrice)}đ</div>
+                        ${stockBadgeHtml}
                         <div class="drawer-cart-actions">
                             <div class="drawer-cart-qty">
                                 <button type="button" aria-label="Giảm số lượng" onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', -1)">-</button>
                                 <input type="number" value="${item.quantity}" readonly>
-                                <button type="button" aria-label="Tăng số lượng" onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', 1)">+</button>
+                                <button type="button" aria-label="Tăng số lượng" ${isItemOutOfStock || item.quantity >= availableStock ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="window.updateDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', 1)">+</button>
                             </div>
                             <button type="button" class="btn-remove-item" onclick="window.removeDrawerCartItem('${item.id}', '${item.color || ''}', '${item.pattern || ''}', this)"><i class="ti ti-trash"></i> Xóa</button>
                         </div>

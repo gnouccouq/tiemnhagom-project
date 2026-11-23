@@ -299,6 +299,8 @@
                                         giá</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn"
                                     data-target="push-notification-section"><span>Gửi thông báo (App)</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn"
+                                    data-target="contact-messages-section"><span>Tin nhắn liên hệ</span></button>
                             </div>
                         </div>
                     </nav>
@@ -958,20 +960,76 @@
 
                     <!-- 2. Danh sách Slide Bên Phải (Right Main Area) -->
                     <div class="kiot-product-main">
-                        <!-- Top Toolbar -->
+                        <!-- Card Cấu hình Video Hero Trang Chủ (Phương án B: Nổi bật, Rộng rãi, Chuẩn KiotViet) -->
+                        <div class="admin-card" style="margin-bottom: 16px; padding: 18px 20px; background: #ffffff; border-radius: 10px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="display: inline-flex; width: 32px; height: 32px; border-radius: 8px; background: rgba(156, 113, 86, 0.12); color: #9C7156; align-items: center; justify-content: center; font-size: 1.15rem;">
+                                            <i class="ti ti-video"></i>
+                                        </span>
+                                        <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0;">Video Hero Trang Chủ (App & Web)</h3>
+                                    </div>
+                                    <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 40px;">
+                                        Phát video toàn màn hình ở đầu trang chủ. Nếu xóa hoặc để trống, hệ thống sẽ tự động hiển thị Slider Banner ảnh bên dưới.
+                                    </p>
+                                </div>
+                                <div id="banner-video-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.76rem; font-weight: 600; background: #f1f5f9; color: #64748b;">
+                                    <span style="width: 8px; height: 8px; border-radius: 4px; background: #94a3b8;"></span>
+                                    <span>Chưa có video</span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                                <!-- Khung Xem Trước Video 16:9 Hoặc 9:16 -->
+                                <div style="flex: 0 0 260px; max-width: 100%;">
+                                    <div id="banner-video-preview" style="width: 100%; height: 160px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; position: relative;">
+                                        <!-- JS render video preview hoặc placeholder -->
+                                    </div>
+                                </div>
+
+                                <!-- Form Tải lên & Nhập URL Video -->
+                                <div style="flex: 1; min-width: 280px;">
+                                    <form id="banner-video-form" style="display: flex; flex-direction: column; gap: 12px;">
+                                        <div>
+                                            <label style="font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px; display: block;">
+                                                1. Tải lên video mới từ máy tính (.mp4, .mov - tự động lưu vào Firebase Storage):
+                                            </label>
+                                            <input type="file" id="banner-video-file" class="kiot-filter-input" accept="video/mp4,video/quicktime,video/*" style="padding: 6px 10px; width: 100%;">
+                                        </div>
+
+                                        <div>
+                                            <label style="font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px; display: block;">
+                                                2. Hoặc dán đường dẫn link URL Video trực tiếp:
+                                            </label>
+                                            <input type="text" id="banner-video-url" class="kiot-filter-input" placeholder="https://firebasestorage.googleapis.com/.../video.mp4" style="width: 100%;">
+                                        </div>
+
+                                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+                                            <button type="submit" class="kiot-btn-primary" id="btn-save-banner-video" style="padding: 8px 18px; font-size: 0.85rem;">
+                                                <i class="ti ti-device-floppy"></i> Lưu & Kích hoạt Video
+                                            </button>
+                                            <button type="button" class="btn-delete" id="btn-delete-banner-video" style="display: none; padding: 8px 14px; font-size: 0.85rem; border-radius: 6px;" title="Xóa video để chuyển sang Slider Banner ảnh">
+                                                <i class="ti ti-trash"></i> Xóa Video
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Toolbar Danh sách Slide Banner -->
                         <div class="kiot-table-toolbar">
                             <div class="search-box-wrapper">
                                 <span class="search-icon"><i class="ti ti-photo"></i></span>
-                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Slide
-                                    Banner Trang chủ</span>
+                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Slide Banner Ảnh Trang chủ</span>
                             </div>
                         </div>
 
                         <!-- Summary Banner -->
                         <div
                             style="padding: 8px 14px; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; font-size: 0.85rem; color: #0369a1; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                            <span><i class="ti ti-sparkles"></i> Banner sẽ tự động luân chuyển trên màn hình trang
-                                chủ</span>
+                            <span><i class="ti ti-sparkles"></i> Banner ảnh sẽ tự động luân chuyển khi không có video hero hoặc khi người dùng bấm chuyển chế độ xem ảnh.</span>
                         </div>
 
                         <!-- Container danh sách slide cuộn độc lập -->
@@ -1365,6 +1423,79 @@
                                     <tr>
                                         <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">Đang
                                             tải dữ liệu...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Quản lý Tin nhắn liên hệ (contact_messages) -->
+            <div id="contact-messages-section" class="admin-section">
+                <div class="kiot-product-layout">
+                    <!-- 1. Bộ Lọc Bên Trái -->
+                    <div class="kiot-filter-sidebar">
+                        <div class="filter-header">
+                            <h3 class="filter-title">Tin nhắn liên hệ</h3>
+                            <button type="button" class="filter-reset-link"
+                                onclick="window.fetchContactMessagesAdmin()">Làm mới</button>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Trạng thái xử lý</label>
+                            <select id="contact-status-filter" class="kiot-filter-select"
+                                onchange="window.renderFilteredContactMessages()">
+                                <option value="all">Tất cả tin nhắn</option>
+                                <option value="new">Mới (Chưa đọc)</option>
+                                <option value="read">Đã đọc</option>
+                                <option value="replied">Đã phản hồi</option>
+                            </select>
+                        </div>
+
+                        <div id="contact-summary-counts"
+                            style="margin-top: 14px; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.82rem; color: #475569; line-height: 1.6;">
+                            Đang tải thống kê...
+                        </div>
+                    </div>
+
+                    <!-- 2. Bảng Danh Sách Bên Phải -->
+                    <div class="kiot-product-main">
+                        <div class="kiot-table-toolbar">
+                            <div class="search-box-wrapper">
+                                <span class="search-icon"><i class="ti ti-search"></i></span>
+                                <input type="text" id="contact-search-input"
+                                    placeholder="Tìm theo tên khách, SĐT, nội dung tin nhắn..."
+                                    onkeyup="window.renderFilteredContactMessages()">
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="kiot-btn-outline"
+                                    onclick="window.fetchContactMessagesAdmin()">
+                                    <i class="ti ti-refresh"></i> Tải lại dữ liệu
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            style="padding: 8px 14px; background: #eff6ff; border: 1px solid #dbeafe; border-radius: 6px; font-size: 0.85rem; color: #1e40af; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="ti ti-mail"></i> Danh sách tin nhắn khách hàng gửi từ trang Liên hệ (contact_messages)</span>
+                        </div>
+
+                        <div class="kiot-table-scroll-container">
+                            <table class="kiot-product-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 130px;">Thời gian</th>
+                                        <th style="width: 150px;">Khách hàng</th>
+                                        <th style="width: 120px;">SĐT / Zalo</th>
+                                        <th>Nội dung tin nhắn</th>
+                                        <th style="width: 120px; text-align: center;">Trạng thái</th>
+                                        <th style="width: 150px; text-align: center;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contact-messages-tbody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Đang tải dữ liệu...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -3844,297 +3975,530 @@
 
                     <!-- 2. Nội dung Báo cáo Bên Phải (Right Main Area - Cuộn độc lập) -->
                     <div class="kiot-product-main"
-                        style="flex: 1 !important; height: 100% !important; min-height: 0 !important; overflow-y: auto !important; display: flex; flex-direction: column; gap: 20px; background: transparent; border: none; box-shadow: none; padding: 0 8px 30px 0;">
-                        <!-- Thẻ tóm tắt trong kỳ -->
-                        <div class="overview-grid" style="margin-bottom: 0;">
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #e8f5e9; color: #2e7d32;"><i
-                                        class="ti ti-coin"></i></div>
-                                <div class="stat-info">
-                                    <h3>Doanh thu kỳ này</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-revenue" style="margin: 0;">0 VND</p>
-                                        <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
+                        style="flex: 1 !important; height: 100% !important; min-height: 0 !important; overflow-y: auto !important; display: flex; flex-direction: column; gap: 16px; background: transparent; border: none; box-shadow: none; padding: 0 8px 30px 0;">
+
+                        <!-- Thanh điều hướng 7 Tab Báo Cáo (Chuẩn UI/UX Tiệm Nhà Gốm: Không màu xanh, bo góc 6px Dashboard) -->
+                        <style>
+                            .stats-report-tabs-bar {
+                                position: sticky;
+                                top: 0;
+                                z-index: 25;
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                                overflow-x: auto;
+                                scrollbar-width: none;
+                                background: #FAF8F5;
+                                border: 1px solid #E8E1D8;
+                                border-radius: 8px;
+                                padding: 6px;
+                                flex-shrink: 0;
+                            }
+                            .stats-report-tabs-bar::-webkit-scrollbar { display: none; }
+                            .stats-report-tab-btn {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                padding: 8px 14px;
+                                border-radius: 6px;
+                                border: 1px solid transparent;
+                                background: transparent;
+                                color: #6E665D;
+                                font-size: 0.83rem;
+                                font-weight: 600;
+                                white-space: nowrap;
+                                cursor: pointer;
+                                transition: all 0.18s ease;
+                                flex-shrink: 0;
+                            }
+                            .stats-report-tab-btn:hover {
+                                background: #F0ECE6;
+                                color: #2B2928;
+                            }
+                            .stats-report-tab-btn.active {
+                                background: #2B2928;
+                                color: #FFFFFF;
+                                border-color: #2B2928;
+                                box-shadow: 0 2px 6px rgba(43, 41, 40, 0.16);
+                            }
+                            .stats-tab-panel {
+                                display: none;
+                                flex-direction: column;
+                                gap: 18px;
+                                animation: statsTabFadeIn 0.2s ease;
+                            }
+                            .stats-tab-panel.active {
+                                display: flex;
+                            }
+                            @keyframes statsTabFadeIn {
+                                from { opacity: 0; transform: translateY(4px); }
+                                to { opacity: 1; transform: translateY(0); }
+                            }
+                            .stats-kpi-num {
+                                font-variant-numeric: tabular-nums;
+                            }
+                        </style>
+                        <div class="stats-report-tabs-bar" id="stats-report-tabs-bar" role="tablist">
+                            <button type="button" class="stats-report-tab-btn active" data-stats-tab="overview" onclick="window.switchStatsReportTab('overview')">
+                                <i class="ti ti-layout-dashboard"></i> <span>Tổng quan</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="revenue" onclick="window.switchStatsReportTab('revenue')">
+                                <i class="ti ti-coin"></i> <span>Doanh thu &amp; Thuế</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="products" onclick="window.switchStatsReportTab('products')">
+                                <i class="ti ti-teapot"></i> <span>Sản phẩm &amp; Tồn kho</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="channels" onclick="window.switchStatsReportTab('channels')">
+                                <i class="ti ti-world"></i> <span>Kênh bán hàng</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="cancellations" onclick="window.switchStatsReportTab('cancellations')">
+                                <i class="ti ti-alert-triangle"></i> <span>Đơn hủy &amp; Rủi ro</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="pos" onclick="window.switchStatsReportTab('pos')">
+                                <i class="ti ti-building-store"></i> <span>Kết ca &amp; Thu ngân</span>
+                            </button>
+                            <button type="button" class="stats-report-tab-btn" data-stats-tab="customers" onclick="window.switchStatsReportTab('customers')">
+                                <i class="ti ti-users"></i> <span>Khách hàng &amp; Mã giảm giá</span>
+                            </button>
+                        </div>
+
+                        <!-- ==================== TAB 1: BÁO CÁO TỔNG QUAN ==================== -->
+                        <div id="stats-panel-overview" class="stats-tab-panel active">
+                            <!-- 6 Thẻ KPI cốt lõi (Bảng màu men gốm — Zero Green) -->
+                            <div class="overview-grid" style="margin-bottom: 0;">
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FAF3EB; color: #9C7156;"><i class="ti ti-coin"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Doanh thu kỳ này</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-revenue" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0 VND</p>
+                                            <span id="period-revenue-growth" style="font-size: 0.75rem;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #F4EFEA; color: #2B2928;"><i class="ti ti-chart-bar"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Doanh thu thuần</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-net-revenue" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0 VND</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FAF3EB; color: #9C7156;"><i class="ti ti-shopping-cart"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Đơn hoàn thành</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-orders" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0</p>
+                                            <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #FECACA;">
+                                    <div class="stat-icon" style="background: #FEF2F2; color: #B91C1C;"><i class="ti ti-alert-triangle-filled"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Tỷ lệ hủy / hoàn</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-cancel-rate" class="stats-kpi-num" style="margin: 0; color: #B91C1C;">0%</p>
+                                            <span id="period-lost-revenue" style="font-size: 0.72rem; color: #B91C1C; font-weight: 600;">(Mất 0đ)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FAF3EB; color: #9C7156;"><i class="ti ti-trending-up"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Lợi nhuận dự tính</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-profit" class="stats-kpi-num" style="margin: 0; color: #9C7156;">0 VND</p>
+                                            <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FFF7ED; color: #C2410C;"><i class="ti ti-sparkles"></i></div>
+                                    <div class="stat-info">
+                                        <h3>TB đơn hàng (AOV)</h3>
+                                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                                            <p id="period-avg-order" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0 VND</p>
+                                            <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #fce4ec; color: #c2185b;"><i
-                                        class="ti ti-chart-bar"></i></div>
-                                <div class="stat-info">
-                                    <h3>Doanh thu thuần</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-net-revenue" style="margin: 0;">0 VND</p>
+
+                            <!-- Biểu đồ biến động doanh thu -->
+                            <div class="admin-card">
+                                <h3><i class="ti ti-trending-up"></i> Biểu đồ biến động doanh thu theo chu kỳ</h3>
+                                <div style="height: 360px;"><canvas id="revenueMainChart"></canvas></div>
+                            </div>
+
+                            <!-- Khung giờ vàng mua sắm 24h -->
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <h3 style="margin: 0;"><i class="ti ti-clock"></i> Khung giờ vàng mua sắm trong ngày (Phân bổ 24h)</h3>
+                                        <div style="font-size: 0.82rem; color: #6E665D; margin-top: 3px;">Phân tích thời điểm khách đặt hàng nhiều nhất để tối ưu LiveStream, Flash Sale &amp; Quảng cáo</div>
+                                    </div>
+                                    <div id="peak-hour-insight-badge" style="background: #FAF3EB; color: #9C7156; padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 0.84rem; border: 1px solid #E8CCB2; display: flex; align-items: center; gap: 6px;">
+                                        <i class="ti ti-flame-filled"></i> Đang phân tích khung giờ...
                                     </div>
                                 </div>
+                                <div style="height: 280px;"><canvas id="hourlyShoppingChart"></canvas></div>
+                                <div id="hourly-periods-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #F0ECE6;"></div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #e3f2fd; color: #1565c0;"><i
-                                        class="ti ti-shopping-cart"></i></div>
-                                <div class="stat-info">
-                                    <h3>Đơn hoàn thành</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-orders" style="margin: 0;">0</p>
-                                        <span id="period-orders-growth" style="font-size: 0.75rem;"></span>
-                                    </div>
+                        </div>
+
+                        <!-- ==================== TAB 2: BÁO CÁO DOANH THU & SỔ THUẾ ==================== -->
+                        <div id="stats-panel-revenue" class="stats-tab-panel">
+                            <div class="admin-grid" style="grid-template-columns: 1.4fr 1fr; gap: 1.25rem;">
+                                <div class="admin-card">
+                                    <h3><i class="ti ti-chart-bar"></i> So sánh doanh thu cùng kỳ với năm trước (YoY)</h3>
+                                    <div style="height: 320px;"><canvas id="revenueComparisonChart"></canvas></div>
+                                </div>
+                                <div class="admin-card">
+                                    <h3><i class="ti ti-credit-card"></i> Phân bổ theo phương thức thanh toán</h3>
+                                    <div style="height: 320px;"><canvas id="paymentMethodChart"></canvas></div>
                                 </div>
                             </div>
-                            <div class="stat-card" style="border: 1px solid #ffcdd2;">
-                                <div class="stat-icon" style="background: #ffebee; color: #c62828;"><i
-                                        class="ti ti-alert-triangle-filled"></i></div>
-                                <div class="stat-info">
-                                    <h3>Tỷ lệ hủy / hoàn</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-cancel-rate" style="margin: 0; color: #c62828;">0%</p>
-                                        <span id="period-lost-revenue"
-                                            style="font-size: 0.72rem; color: #d32f2f; font-weight: 600;">(Mất
-                                            0đ)</span>
+
+                            <div class="admin-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                                    <div>
+                                        <h3 style="margin: 0;"><i class="ti ti-clipboard-list"></i> Bảng kê chi tiết doanh thu &amp; sổ thuế Hộ Kinh Doanh (1.5%)</h3>
+                                        <div style="font-size: 0.82rem; color: #6E665D; margin-top: 2px;">Thuế GTGT (VAT) 1.0% + Thuế TNCN 0.5% trên doanh thu tính thuế</div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #f1f8e9; color: #1b5e20;"><i
-                                        class="ti ti-trending-up"></i></div>
-                                <div class="stat-info">
-                                    <h3>Lợi nhuận dự tính</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-profit" style="margin: 0;">0 VND</p>
-                                        <span id="period-profit-growth" style="font-size: 0.75rem;"></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon" style="background: #fff3e0; color: #ef6c00;"><i
-                                        class="ti ti-sparkles"></i></div>
-                                <div class="stat-info">
-                                    <h3>TB đơn hàng (AOV)</h3>
-                                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                                        <p id="period-avg-order" style="margin: 0;">0 VND</p>
-                                        <span id="period-avg-growth" style="font-size: 0.75rem;"></span>
-                                    </div>
+                                <div class="table-responsive">
+                                    <div id="stats-detail-loading" style="text-align: center; padding: 2rem; display: none;"><span class="spinner"></span> Đang tải dữ liệu...</div>
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Thời gian</th>
+                                                <th>Số đơn</th>
+                                                <th>DT Thuần (Net)</th>
+                                                <th>VAT (1%)</th>
+                                                <th>TNCN (0.5%)</th>
+                                                <th>Tổng Thuế</th>
+                                                <th>Tổng DT (Gross)</th>
+                                                <th>Lợi nhuận (Est)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stats-detail-table"></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Hàng Kênh Bán Hàng: Báo cáo doanh thu theo từng kênh (Web/App • POS • Mạng xã hội) -->
-                        <div class="admin-card" id="stats-channel-report-card"
-                            style="border: 1.5px solid #E8CCB2; background: #FFFFFF;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #F0ECE6;">
-                                <div>
-                                    <h3
-                                        style="margin: 0; display: flex; align-items: center; gap: 8px; color: #2B2928;">
-                                        <span><i class="ti ti-world"></i></span> Báo cáo Doanh thu theo Kênh bán hàng
-                                        (Web/App • POS • Mạng xã
-                                        hội)
-                                    </h3>
-                                    <div style="font-size: 0.82rem; color: #6E665D; margin-top: 3px;">
-                                        So sánh tỷ trọng doanh thu, số lượng đơn, lợi nhuận và thuế giữa Website &amp;
-                                        App (gộp chung), Bán tại quầy (POS) và Mạng xã hội
-                                    </div>
-                                </div>
-                                <div id="stats-channel-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                    <button type="button" class="stats-channel-pill active" data-channel="all"
-                                        onclick="window.selectStatsChannelFilter('all')"
-                                        style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #2B2928; background: #2B2928; color: #ffffff; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
-                                        <i class="ti ti-world"></i> Tất cả kênh
-                                    </button>
-                                    <button type="button" class="stats-channel-pill" data-channel="web_app"
-                                        onclick="window.selectStatsChannelFilter('web_app')"
-                                        style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E8CCB2; background: #FFFBF7; color: #B45309; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
-                                        <i class="ti ti-devices"></i> Web &amp; App (Chung)
-                                    </button>
-                                    <button type="button" class="stats-channel-pill" data-channel="pos"
-                                        onclick="window.selectStatsChannelFilter('pos')"
-                                        style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E9D5FF; background: #FAF7FF; color: #7E22CE; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
-                                        <i class="ti ti-building-store"></i> Bán tại quầy (POS)
-                                    </button>
-                                    <button type="button" class="stats-channel-pill" data-channel="social"
-                                        onclick="window.selectStatsChannelFilter('social')"
-                                        style="padding: 6px 12px; border-radius: 6px; border: 1px solid #FBCFE8; background: #FFF5F8; color: #BE185D; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
-                                        <i class="ti ti-message-circle"></i> Mạng xã hội (FB/IG/Zalo)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 3 Thẻ Scorecard cho 3 Kênh Bán Hàng -->
-                            <div id="stats-channel-cards-grid"
-                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px;">
-                                <!-- Điền động bằng JS -->
-                            </div>
-
-                            <!-- 2 Biểu đồ Kênh Bán Hàng: Biểu đồ cột theo chu kỳ & Biểu đồ tỷ trọng -->
-                            <div class="admin-grid"
-                                style="grid-template-columns: 1.45fr 1fr; gap: 1.25rem; margin-bottom: 18px;">
-                                <div
-                                    style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
-                                    <div
-                                        style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;">
-                                        <i class="ti ti-chart-bar"></i> Biến động doanh thu 3 Kênh bán hàng theo chu kỳ
-                                    </div>
-                                    <div style="height: 290px;"><canvas id="channelRevenueTrendChart"></canvas></div>
-                                </div>
-                                <div
-                                    style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
-                                    <div
-                                        style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;">
-                                        <i class="ti ti-chart-donut"></i> Cơ cấu tỷ trọng doanh thu theo Kênh bán
-                                    </div>
-                                    <div style="height: 290px;"><canvas id="channelShareDoughnutChart"></canvas></div>
-                                </div>
-                            </div>
-
-                            <!-- Bảng kê chi tiết Doanh thu, Lợi nhuận & Thuế theo từng Kênh bán hàng -->
-                            <div class="table-responsive">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Kênh bán hàng</th>
-                                            <th style="text-align: center;">Đơn hoàn tất</th>
-                                            <th style="text-align: center;">Đơn hủy</th>
-                                            <th style="text-align: center;">Tỷ trọng DT</th>
-                                            <th style="text-align: right;">DT Thuần (Net)</th>
-                                            <th style="text-align: right;">Thuế (1.5%)</th>
-                                            <th style="text-align: right;">Tổng DT (Gross)</th>
-                                            <th style="text-align: right;">Lợi nhuận (Est)</th>
-                                            <th style="text-align: right;">TB / Đơn (AOV)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="stats-channel-breakdown-table">
-                                        <tr>
-                                            <td colspan="9" style="text-align: center; color: #888;">Đang tổng hợp dữ
-                                                liệu kênh bán hàng...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Hàng 1: Doanh thu & Bán chạy / Phân loại -->
-                        <div class="admin-grid" style="grid-template-columns: 1.4fr 1.1fr; gap: 1.5rem;">
+                        <!-- ==================== TAB 3: BÁO CÁO SẢN PHẨM & TỒN KHO ==================== -->
+                        <div id="stats-panel-products" class="stats-tab-panel">
                             <div class="admin-card">
-                                <h3><i class="ti ti-trending-up"></i> Biểu đồ biến động doanh thu</h3>
-                                <div style="height: 380px;"><canvas id="revenueMainChart"></canvas></div>
-                            </div>
-                            <div class="admin-card">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 6px;">
-                                    <h3 style="margin: 0;"><i class="ti ti-trophy"></i> Top Phân loại & Bán chạy</h3>
-                                    <div style="display: flex; gap: 6px; align-items: center;">
-                                        <select id="topSoldMetric" class="status-select"
-                                            style="font-size: 0.75rem; padding: 4px 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 8px;">
+                                    <h3 style="margin: 0;"><i class="ti ti-trophy"></i> Top Sản phẩm, Phân loại &amp; Danh mục bán chạy</h3>
+                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                        <select id="topSoldMetric" class="status-select" style="font-size: 0.78rem; padding: 5px 10px;">
                                             <option value="revenue">Doanh thu (VND)</option>
                                             <option value="quantity">Số lượng bán</option>
                                         </select>
-                                        <select id="topSoldGroupBy" class="status-select"
-                                            style="font-size: 0.75rem; padding: 4px 8px;">
+                                        <select id="topSoldGroupBy" class="status-select" style="font-size: 0.78rem; padding: 5px 10px;">
                                             <option value="product">Theo Sản phẩm</option>
                                             <option value="variant">Theo Phân loại</option>
                                             <option value="category">Theo Danh mục</option>
                                         </select>
-                                        <select id="topSoldType" class="status-select"
-                                            style="font-size: 0.75rem; padding: 4px 8px;">
-                                            <option value="bar">Cột</option>
-                                            <option value="pie">Tròn</option>
+                                        <select id="topSoldType" class="status-select" style="font-size: 0.78rem; padding: 5px 10px;">
+                                            <option value="bar">Biểu đồ Cột</option>
+                                            <option value="pie">Biểu đồ Tròn</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div style="height: 380px;"><canvas id="topSoldPeriodChart"></canvas></div>
                             </div>
-                        </div>
 
-                        <!-- Hàng 2: <i class="ti ti-clock"></i> Khung giờ vàng mua sắm trong ngày (Peak Shopping Hours / 24h) -->
-                        <div class="admin-card">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                                <div>
-                                    <h3 style="margin: 0;"><i class="ti ti-clock"></i> Khung giờ vàng mua sắm trong ngày
-                                        (Phân bổ 24h)</h3>
-                                    <div style="font-size: 0.82rem; color: #666; margin-top: 3px;">Phân tích thời điểm
-                                        khách đặt hàng nhiều nhất để tối ưu thời gian LiveStream, Flash Sale & Quảng cáo
+                            <!-- Cảnh báo tồn kho: Sắp hết hàng & Tồn cao bán chậm -->
+                            <div class="admin-grid" style="grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                                <div class="admin-card">
+                                    <h3 style="margin: 0 0 6px;"><i class="ti ti-alert-circle"></i> Sản phẩm sắp hết hàng (Tồn &le; 5)</h3>
+                                    <div style="font-size: 0.82rem; color: #6E665D; margin-bottom: 12px;">Cần ưu tiên nhập thêm hoặc sản xuất bổ sung sớm</div>
+                                    <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sản phẩm</th>
+                                                    <th style="text-align: center;">Tồn kho</th>
+                                                    <th style="text-align: right;">Đã bán</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stats-low-stock-tbody">
+                                                <tr><td colspan="3" style="text-align: center; color: #6E665D;">Đang tải dữ liệu tồn kho...</td></tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                                <div id="peak-hour-insight-badge"
-                                    style="background: #fff3cd; color: #856404; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 6px;">
-                                    <i class="ti ti-flame-filled"></i> Đang phân tích khung giờ...
+                                <div class="admin-card">
+                                    <h3 style="margin: 0 0 6px;"><i class="ti ti-package"></i> Hàng tồn cao bán chậm (Tồn &ge; 10)</h3>
+                                    <div style="font-size: 0.82rem; color: #6E665D; margin-bottom: 12px;">Gợi ý đưa vào chương trình Flash Sale hoặc Combo</div>
+                                    <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sản phẩm</th>
+                                                    <th style="text-align: center;">Tồn kho</th>
+                                                    <th style="text-align: right;">Bán trong kỳ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stats-slow-moving-tbody">
+                                                <tr><td colspan="3" style="text-align: center; color: #6E665D;">Đang tải dữ liệu tồn kho...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
-                            <div style="height: 280px;"><canvas id="hourlyShoppingChart"></canvas></div>
-                            <div id="hourly-periods-summary"
-                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
-                                <!-- Sẽ được điền động bằng JS: Sáng, Trưa/Chiều, Tối, Đêm -->
                             </div>
                         </div>
 
-                        <!-- Hàng 3: <i class="ti ti-alert-triangle-filled"></i> Phân tích Tỷ lệ Hoàn / Hủy Đơn Hàng & Thất Thoát Doanh Thu -->
-                        <div class="admin-grid" style="grid-template-columns: 1.1fr 1.4fr; gap: 1.5rem;">
-                            <div class="admin-card">
-                                <h3><i class="ti ti-alert-triangle-filled"></i> Phân bổ trạng thái & Tỷ lệ hủy đơn</h3>
-                                <div style="height: 280px;"><canvas id="orderStatusFunnelChart"></canvas></div>
-                                <div id="cancellation-summary-box"
-                                    style="margin-top: 12px; padding: 12px; background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 8px; font-size: 0.88rem;">
-                                    <!-- Thống kê tỷ lệ hủy -->
+                        <!-- ==================== TAB 4: BÁO CÁO KÊNH BÁN HÀNG (OMNICHANNEL) ==================== -->
+                        <div id="stats-panel-channels" class="stats-tab-panel">
+                            <div class="admin-card" id="stats-channel-report-card" style="border: 1px solid #E8CCB2; background: #FFFFFF;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #F0ECE6;">
+                                    <div>
+                                        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; color: #2B2928;">
+                                            <span><i class="ti ti-world"></i></span> Báo cáo Doanh thu theo Kênh bán hàng (Web/App • POS • Mạng xã hội)
+                                        </h3>
+                                        <div style="font-size: 0.82rem; color: #6E665D; margin-top: 3px;">So sánh tỷ trọng doanh thu, số lượng đơn, lợi nhuận và thuế giữa Website &amp; App, Bán tại quầy (POS) và Mạng xã hội</div>
+                                    </div>
+                                    <div id="stats-channel-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                        <button type="button" class="stats-channel-pill active" data-channel="all" onclick="window.selectStatsChannelFilter('all')" style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #2B2928; background: #2B2928; color: #ffffff; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                                            <i class="ti ti-world"></i> Tất cả kênh
+                                        </button>
+                                        <button type="button" class="stats-channel-pill" data-channel="web_app" onclick="window.selectStatsChannelFilter('web_app')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E8CCB2; background: #FFFBF7; color: #9C7156; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                            <i class="ti ti-devices"></i> Web &amp; App (Chung)
+                                        </button>
+                                        <button type="button" class="stats-channel-pill" data-channel="pos" onclick="window.selectStatsChannelFilter('pos')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #E9D5FF; background: #FAF7FF; color: #7E22CE; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                            <i class="ti ti-building-store"></i> Bán tại quầy (POS)
+                                        </button>
+                                        <button type="button" class="stats-channel-pill" data-channel="social" onclick="window.selectStatsChannelFilter('social')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #FBCFE8; background: #FFF5F8; color: #BE185D; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                            <i class="ti ti-message-circle"></i> Mạng xã hội (FB/IG/Zalo)
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="admin-card">
-                                <h3><i class="ti ti-circle-x-filled"></i> Top sản phẩm / Phân loại có tỷ lệ hủy cao</h3>
-                                <div style="font-size: 0.82rem; color: #666; margin-bottom: 10px;">Những mặt hàng hay bị
-                                    hủy để rà soát lại thông tin mô tả, kích thước hoặc tư vấn</div>
-                                <div class="table-responsive" style="max-height: 330px; overflow-y: auto;">
+
+                                <div id="stats-channel-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px;"></div>
+
+                                <div class="admin-grid" style="grid-template-columns: 1.45fr 1fr; gap: 1.25rem; margin-bottom: 18px;">
+                                    <div style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
+                                        <div style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;"><i class="ti ti-chart-bar"></i> Biến động doanh thu 3 Kênh bán hàng theo chu kỳ</div>
+                                        <div style="height: 290px;"><canvas id="channelRevenueTrendChart"></canvas></div>
+                                    </div>
+                                    <div style="background: #FAF8F5; border: 1px solid #E8E1D8; border-radius: 8px; padding: 14px;">
+                                        <div style="font-weight: 700; font-size: 0.9rem; color: #2B2928; margin-bottom: 10px;"><i class="ti ti-chart-donut"></i> Cơ cấu tỷ trọng doanh thu theo Kênh bán</div>
+                                        <div style="height: 290px;"><canvas id="channelShareDoughnutChart"></canvas></div>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
                                     <table class="admin-table">
                                         <thead>
                                             <tr>
-                                                <th>Sản phẩm / Phân loại</th>
-                                                <th style="text-align: center;">SL Hủy</th>
-                                                <th style="text-align: right;">Giá trị hủy</th>
-                                                <th style="text-align: center;">Tỷ lệ hủy</th>
+                                                <th>Kênh bán hàng</th>
+                                                <th style="text-align: center;">Đơn hoàn tất</th>
+                                                <th style="text-align: center;">Đơn hủy</th>
+                                                <th style="text-align: center;">Tỷ trọng DT</th>
+                                                <th style="text-align: right;">DT Thuần (Net)</th>
+                                                <th style="text-align: right;">Thuế (1.5%)</th>
+                                                <th style="text-align: right;">Tổng DT (Gross)</th>
+                                                <th style="text-align: right;">Lợi nhuận (Est)</th>
+                                                <th style="text-align: right;">TB / Đơn (AOV)</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="top-canceled-products-body">
-                                            <tr>
-                                                <td colspan="4" style="text-align: center; color: #888;">Đang tổng hợp
-                                                    dữ liệu...</td>
-                                            </tr>
+                                        <tbody id="stats-channel-breakdown-table">
+                                            <tr><td colspan="9" style="text-align: center; color: #888;">Đang tổng hợp dữ liệu kênh bán hàng...</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Hàng 4: So sánh 2 năm & Phương thức thanh toán -->
-                        <div class="admin-grid" style="grid-template-columns: 1.4fr 1fr; gap: 1.5rem;">
-                            <div class="admin-card">
-                                <h3><i class="ti ti-chart-bar"></i> So sánh doanh thu cùng kỳ với năm trước</h3>
-                                <div style="height: 320px;"><canvas id="revenueComparisonChart"></canvas></div>
+                        <!-- ==================== TAB 5: BÁO CÁO ĐƠN HỦY & RỦI RO ==================== -->
+                        <div id="stats-panel-cancellations" class="stats-tab-panel">
+                            <div class="admin-grid" style="grid-template-columns: 1.1fr 1.4fr; gap: 1.25rem;">
+                                <div class="admin-card">
+                                    <h3><i class="ti ti-alert-triangle-filled"></i> Phân bổ trạng thái &amp; Tỷ lệ hủy đơn</h3>
+                                    <div style="height: 280px;"><canvas id="orderStatusFunnelChart"></canvas></div>
+                                    <div id="cancellation-summary-box" style="margin-top: 12px; padding: 12px; background: #FFF8F8; border: 1px solid #FECACA; border-radius: 8px; font-size: 0.88rem;"></div>
+                                </div>
+                                <div class="admin-card">
+                                    <h3><i class="ti ti-circle-x-filled"></i> Top sản phẩm / Phân loại có tỷ lệ hủy cao</h3>
+                                    <div style="font-size: 0.82rem; color: #6E665D; margin-bottom: 10px;">Những mặt hàng hay bị hủy để rà soát lại thông tin mô tả, kích thước hoặc tư vấn</div>
+                                    <div class="table-responsive" style="max-height: 330px; overflow-y: auto;">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sản phẩm / Phân loại</th>
+                                                    <th style="text-align: center;">SL Hủy</th>
+                                                    <th style="text-align: right;">Giá trị hủy</th>
+                                                    <th style="text-align: center;">Tỷ lệ hủy</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="top-canceled-products-body">
+                                                <tr><td colspan="4" style="text-align: center; color: #888;">Đang tổng hợp dữ liệu...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
+
                             <div class="admin-card">
-                                <h3><i class="ti ti-credit-card"></i> Phân bổ theo phương thức thanh toán</h3>
-                                <div style="height: 320px;"><canvas id="paymentMethodChart"></canvas></div>
+                                <h3 style="margin: 0 0 6px;"><i class="ti ti-shield-exclamation"></i> Phân tích tỷ lệ hủy theo Phương thức thanh toán</h3>
+                                <div style="font-size: 0.82rem; color: #6E665D; margin-bottom: 12px;">So sánh rủi ro hủy đơn giữa COD, Chuyển khoản và Thanh toán tại quầy</div>
+                                <div class="table-responsive">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Phương thức thanh toán</th>
+                                                <th style="text-align: center;">Tổng đơn</th>
+                                                <th style="text-align: center;">Đơn hủy</th>
+                                                <th style="text-align: center;">Tỷ lệ hủy</th>
+                                                <th style="text-align: right;">Giá trị thất thoát</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stats-cancel-payment-tbody">
+                                            <tr><td colspan="5" style="text-align: center; color: #6E665D;">Đang phân tích...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Hàng 5: Bảng kê chi tiết theo kỳ -->
-                        <div class="admin-card">
-                            <h3><i class="ti ti-clipboard-list"></i> Bảng kê chi tiết doanh thu & thuế theo kỳ</h3>
-                            <div class="table-responsive">
-                                <div id="stats-detail-loading"
-                                    style="text-align: center; padding: 2rem; display: none;"><span
-                                        class="spinner"></span> Đang tải dữ liệu...</div>
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Thời gian</th>
-                                            <th>Số đơn</th>
-                                            <th>DT Thuần (Net)</th>
-                                            <th>VAT (1%)</th>
-                                            <th>TNCN (0.5%)</th>
-                                            <th>Tổng Thuế</th>
-                                            <th>Tổng DT (Gross)</th>
-                                            <th>Lợi nhuận (Est)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="stats-detail-table"></tbody>
-                                </table>
+                        <!-- ==================== TAB 6: BÁO CÁO KẾT CA & THU NGÂN (POS) ==================== -->
+                        <div id="stats-panel-pos" class="stats-tab-panel">
+                            <div class="overview-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0;">
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FAF3EB; color: #9C7156;"><i class="ti ti-clipboard-check"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Tổng số ca đã kết</h3>
+                                        <p id="stats-pos-shifts-count" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #F4EFEA; color: #2B2928;"><i class="ti ti-cash"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Tổng tiền mặt kiểm đếm</h3>
+                                        <p id="stats-pos-cash-actual" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0đ</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8CCB2;">
+                                    <div class="stat-icon" style="background: #FFF7ED; color: #C2410C;"><i class="ti ti-scale"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Tổng chênh lệch két tiền</h3>
+                                        <p id="stats-pos-cash-diff" class="stats-kpi-num" style="margin: 0; color: #9C7156;">0đ</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="admin-card">
+                                <h3 style="margin: 0 0 10px;"><i class="ti ti-user-check"></i> Doanh thu bán tại quầy (POS) theo nhân viên</h3>
+                                <div class="table-responsive">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nhân viên / Thu ngân</th>
+                                                <th style="text-align: center;">Số đơn POS</th>
+                                                <th style="text-align: right;">Tổng doanh thu</th>
+                                                <th style="text-align: right;">TB / Đơn (AOV)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stats-pos-cashier-tbody">
+                                            <tr><td colspan="4" style="text-align: center; color: #6E665D;">Đang tổng hợp...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="admin-card">
+                                <h3 style="margin: 0 0 10px;"><i class="ti ti-report-money"></i> Lịch sử kết ca &amp; Đối soát két tiền (shift_reports)</h3>
+                                <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Thời gian kết ca</th>
+                                                <th>Thu ngân</th>
+                                                <th style="text-align: right;">Đầu ca</th>
+                                                <th style="text-align: right;">Thu tiền mặt</th>
+                                                <th style="text-align: right;">Thực tế két</th>
+                                                <th style="text-align: right;">Chênh lệch</th>
+                                                <th>Ghi chú bàn giao</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stats-shift-reports-tbody">
+                                            <tr><td colspan="7" style="text-align: center; color: #6E665D;">Đang tải lịch sử kết ca...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ==================== TAB 7: BÁO CÁO KHÁCH HÀNG & MÃ GIẢM GIÁ ==================== -->
+                        <div id="stats-panel-customers" class="stats-tab-panel">
+                            <div class="overview-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0;">
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FAF3EB; color: #9C7156;"><i class="ti ti-users"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Khách mua trong kỳ</h3>
+                                        <p id="stats-unique-customers" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #F4EFEA; color: #2B2928;"><i class="ti ti-repeat"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Khách quay lại (&ge; 2 đơn)</h3>
+                                        <p id="stats-repeat-customers" class="stats-kpi-num" style="margin: 0; color: #9C7156;">0 (0%)</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card" style="border: 1px solid #E8E1D8;">
+                                    <div class="stat-icon" style="background: #FFF7ED; color: #C2410C;"><i class="ti ti-ticket"></i></div>
+                                    <div class="stat-info">
+                                        <h3>Tổng tiền giảm qua Coupon</h3>
+                                        <p id="stats-coupon-total-discount" class="stats-kpi-num" style="margin: 0; color: #2B2928;">0đ</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr; gap: 1.25rem;">
+                                <div class="admin-card">
+                                    <h3 style="margin: 0 0 10px;"><i class="ti ti-crown"></i> Top 10 Khách hàng chi tiêu cao nhất trong kỳ</h3>
+                                    <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Khách hàng</th>
+                                                    <th style="text-align: center;">Số đơn</th>
+                                                    <th style="text-align: right;">Tổng chi tiêu</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stats-top-customers-tbody">
+                                                <tr><td colspan="3" style="text-align: center; color: #6E665D;">Đang tổng hợp...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="admin-card">
+                                    <h3 style="margin: 0 0 10px;"><i class="ti ti-discount-2"></i> Hiệu quả Mã giảm giá (Coupon)</h3>
+                                    <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Mã giảm giá</th>
+                                                    <th style="text-align: center;">Lượt dùng</th>
+                                                    <th style="text-align: right;">Tiền đã giảm</th>
+                                                    <th style="text-align: right;">Doanh thu đơn</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stats-coupon-perf-tbody">
+                                                <tr><td colspan="4" style="text-align: center; color: #6E665D;">Đang tổng hợp...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5699,19 +6063,446 @@
 
         #create-online-order-modal .modal-content {
             margin: auto !important;
+            padding: 0 !important;
             width: 100% !important;
-            max-width: 980px !important;
-            max-height: calc(100vh - 40px) !important;
+            max-width: 1080px !important;
+            max-height: calc(100vh - 32px) !important;
             background: #FAF8F5 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 24px 60px rgba(43, 41, 40, 0.28) !important;
             position: relative !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
-            border: 1px solid #E8CCB2 !important;
+            border: 1px solid #E8E1D8 !important;
             animation: editModalZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
             box-sizing: border-box !important;
+        }
+
+        /* Online Create Order (OCO) Refined Ceramic UI */
+        #create-online-order-modal .oco-header {
+            background: linear-gradient(135deg, #8F654B 0%, #6D4934 100%);
+            padding: 15px 22px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        #create-online-order-modal .oco-header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #FFFFFF;
+            flex-shrink: 0;
+        }
+
+        #create-online-order-modal .oco-close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            font-size: 1.35rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: background 0.16s ease, transform 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-close-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        #create-online-order-modal .oco-body {
+            background: #F6F2EC !important;
+            padding: 18px 22px !important;
+        }
+
+        #create-online-order-modal .online-order-grid-layout {
+            display: grid;
+            grid-template-columns: 1.04fr 1.14fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        #create-online-order-modal .oco-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        #create-online-order-modal .oco-card {
+            background: #FFFFFF;
+            border: 1px solid #E8E1D8;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 8px rgba(43, 41, 40, 0.035);
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+
+        #create-online-order-modal .oco-card--flush {
+            padding: 0;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        #create-online-order-modal .oco-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #F2ECE4;
+        }
+
+        #create-online-order-modal .oco-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: #2B2928;
+            letter-spacing: -0.01em;
+            margin: 0;
+        }
+
+        #create-online-order-modal .oco-card-title i {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: #F4EAE0;
+            color: #9C7156 !important;
+            opacity: 1 !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.92rem;
+            flex-shrink: 0;
+        }
+
+        #create-online-order-modal .oco-card-meta {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #7C7267;
+            background: #FAF8F5;
+            border: 1px solid #ECE5DC;
+            padding: 2px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #create-online-order-modal .oco-field-label {
+            display: block;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #5E564E;
+            margin-bottom: 5px;
+        }
+
+        #create-online-order-modal .oco-field-label .oco-req {
+            color: #B45309;
+            margin-left: 2px;
+        }
+
+        #create-online-order-modal .kiot-filter-input,
+        #create-online-order-modal .kiot-filter-select {
+            border: 1px solid #DDD4C8 !important;
+            border-radius: 8px !important;
+            background: #FFFFFF !important;
+            color: #2B2928 !important;
+            font-size: 0.85rem !important;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease !important;
+            box-sizing: border-box !important;
+            width: 100%;
+        }
+
+        #create-online-order-modal .kiot-filter-input:focus,
+        #create-online-order-modal .kiot-filter-select:focus {
+            border-color: #9C7156 !important;
+            box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.14) !important;
+            outline: none !important;
+        }
+
+        #create-online-order-modal .oco-channel-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        #create-online-order-modal .online-channel-pill {
+            padding: 8px 6px;
+            border-radius: 8px;
+            border: 1px solid #E2D9CE;
+            background: #FFFFFF;
+            color: #5E564E;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .online-channel-pill:hover {
+            border-color: #C4A48D;
+            background: #FCF9F5;
+        }
+
+        #create-online-order-modal .online-channel-pill.active {
+            border: 1.5px solid #9C7156 !important;
+            background: #F7F1EB !important;
+            color: #7D563D !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 6px rgba(156, 113, 86, 0.12);
+        }
+
+        /* Hình thức giao hàng (Shipping Method Cards) */
+        #create-online-order-modal .oco-shipping-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        #create-online-order-modal .oco-shipping-card {
+            position: relative;
+            text-align: left;
+            padding: 10px 11px;
+            border-radius: 8px;
+            border: 1px solid #E2D9CE;
+            background: #FFFFFF;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-shipping-card:hover {
+            border-color: #C4A48D;
+            background: #FCF9F5;
+        }
+
+        #create-online-order-modal .oco-shipping-card.active {
+            border: 1.5px solid #9C7156;
+            background: #F7F1EB;
+            box-shadow: 0 3px 10px rgba(156, 113, 86, 0.13);
+        }
+
+        #create-online-order-modal .oco-shipping-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        #create-online-order-modal .oco-shipping-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #F5EFE8;
+            color: #6E665D;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-shipping-card.active .oco-shipping-icon {
+            background: #9C7156;
+            color: #FFFFFF;
+        }
+
+        #create-online-order-modal .oco-shipping-check {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid #D5C9BC;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.68rem;
+            color: transparent;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-shipping-card.active .oco-shipping-check {
+            border-color: #9C7156;
+            background: #9C7156;
+            color: #FFFFFF;
+        }
+
+        #create-online-order-modal .oco-shipping-name {
+            font-size: 0.81rem;
+            font-weight: 700;
+            color: #2B2928;
+            margin-top: 2px;
+            line-height: 1.25;
+        }
+
+        #create-online-order-modal .oco-shipping-card.active .oco-shipping-name {
+            color: #7D563D;
+        }
+
+        #create-online-order-modal .oco-shipping-desc {
+            font-size: 0.71rem;
+            color: #7C7267;
+            line-height: 1.25;
+        }
+
+        /* Quick Shipping Fee Chips */
+        #create-online-order-modal .oco-fee-chip {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #DDD4C8;
+            background: #FAF8F5;
+            color: #5E564E;
+            cursor: pointer;
+            transition: all 0.14s ease;
+        }
+
+        #create-online-order-modal .oco-fee-chip:hover {
+            border-color: #9C7156;
+            background: #F7F1EB;
+            color: #7D563D;
+        }
+
+        /* Summary Receipt Box */
+        #create-online-order-modal .oco-summary-box {
+            background: #FAF7F2;
+            border: 1px solid #E5D9CC;
+            border-radius: 8px;
+            padding: 13px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        #create-online-order-modal .oco-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.84rem;
+            color: #6E665D;
+        }
+
+        #create-online-order-modal .oco-summary-total {
+            border-top: 1px dashed #D8C7B6;
+            margin-top: 4px;
+            padding-top: 9px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #create-online-order-modal .oco-footer {
+            justify-content: space-between !important;
+            background: #FFFFFF !important;
+            border-top: 1px solid #E8E1D8 !important;
+            padding: 13px 22px !important;
+        }
+
+        #create-online-order-modal .oco-footer-summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.84rem;
+            color: #6E665D;
+        }
+
+        #create-online-order-modal .oco-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #create-online-order-modal .oco-btn-cancel {
+            border: 1px solid #DDD4C8;
+            background: #FFFFFF;
+            color: #5E564E;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-btn-cancel:hover {
+            background: #FAF8F5;
+            border-color: #C4A48D;
+            color: #2B2928;
+        }
+
+        #create-online-order-modal .oco-btn-submit {
+            background: #9C7156;
+            border: 1px solid #9C7156;
+            color: #FFFFFF;
+            border-radius: 8px;
+            padding: 9px 22px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.16s ease;
+        }
+
+        #create-online-order-modal .oco-btn-submit:hover {
+            background: #7D563D;
+            border-color: #7D563D;
+            transform: translateY(-1px);
+        }
+
+        #create-online-order-modal .oco-btn-submit:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 960px) {
+            #create-online-order-modal .online-order-grid-layout {
+                grid-template-columns: 1fr !important;
+            }
+
+            #create-online-order-modal .modal-content {
+                max-height: calc(100vh - 16px) !important;
+                border-radius: 10px !important;
+            }
+
+            #create-online-order-modal .oco-footer {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 10px !important;
+            }
+
+            #create-online-order-modal .oco-footer-actions {
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 540px) {
+            #create-online-order-modal .oco-shipping-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         #online-order-variant-modal .modal-content {
@@ -6120,174 +6911,200 @@
         onclick="if(event.target === this) window.closeCreateOnlineOrderModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <!-- Header -->
-            <div class="edit-modal-header" style="background: linear-gradient(135deg, #9C7156, #7D563D);">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.3rem;"><i class="ti ti-device-mobile"></i></span>
+            <div class="edit-modal-header oco-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="oco-header-icon"><i class="ti ti-device-mobile"></i></div>
                     <div>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff;">Tạo đơn hàng Online
-                            (Facebook / Instagram)</h3>
-                        <div style="font-size: 0.76rem; color: #f5ebe1; margin-top: 2px;">
-                            Mã đơn dự kiến: <strong id="online-order-code-preview"
-                                style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px;">TNG-...</strong>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em;">
+                            Tạo đơn hàng Online
+                        </h3>
+                        <div style="font-size: 0.76rem; color: rgba(255, 255, 255, 0.88); margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span>Mã đơn dự kiến:</span>
+                            <strong id="online-order-code-preview"
+                                style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.22); padding: 1px 8px; border-radius: 6px; letter-spacing: 0.4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem;">TNG-...</strong>
                         </div>
                     </div>
                 </div>
-                <span class="close" onclick="window.closeCreateOnlineOrderModal()"
-                    style="color: #fff; font-size: 1.6rem; cursor: pointer; line-height: 1; opacity: 0.9; transition: opacity 0.2s;"
-                    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">&times;</span>
+                <button type="button" class="oco-close-btn" onclick="window.closeCreateOnlineOrderModal()"
+                    aria-label="Đóng modal">&times;</button>
             </div>
 
-            <!-- Body: Grid 2 cột KiotViet/POS Style (Hỗ trợ cuộn mượt mà trên mọi màn hình) -->
-            <div class="edit-modal-body"
-                style="background: #FAF8F5; flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 18px 20px;">
-                <div class="online-order-grid-layout"
-                    style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 18px; align-items: start;">
+            <!-- Body: Grid 2 cột tinh gọn chuẩn gốm -->
+            <div class="edit-modal-body oco-body">
+                <div class="online-order-grid-layout">
 
-                    <!-- Cột 1: Thông tin khách hàng & Vận chuyển & Thanh toán -->
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Cột 1: Kênh bán, Khách hàng, Hình thức giao hàng & Thanh toán -->
+                    <div class="oco-col">
 
-                        <!-- Chọn Kênh bán hàng -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px;">
-                            <label class="filter-label"
-                                style="font-weight: 700; color: #9C7156; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                                <span><i class="ti ti-world"></i> Kênh bán hàng</span>
-                                <span style="font-size: 0.74rem; font-weight: normal; color: #6E665D;">Nguồn:
-                                    Online</span>
-                            </label>
-                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <!-- 1. Chọn Kênh bán hàng -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-world"></i> Kênh bán hàng</h4>
+                                <span class="oco-card-meta">Nguồn: Online</span>
+                            </div>
+
+                            <div class="oco-channel-grid">
                                 <button type="button" class="online-channel-pill active" id="btn-channel-fb"
-                                    onclick="window.selectOnlineOrderChannel('Facebook')"
-                                    style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #9C7156; background: #FAF7F2; color: #9C7156; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <span><i class="ti ti-brand-facebook"></i></span> Facebook
+                                    onclick="window.selectOnlineOrderChannel('Facebook')">
+                                    <i class="ti ti-brand-facebook"></i> Facebook
                                 </button>
                                 <button type="button" class="online-channel-pill" id="btn-channel-ig"
-                                    onclick="window.selectOnlineOrderChannel('Instagram')"
-                                    style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #E8CCB2; background: #fff; color: #6E665D; font-weight: 600; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <span><i class="ti ti-camera"></i></span> Instagram
+                                    onclick="window.selectOnlineOrderChannel('Instagram')">
+                                    <i class="ti ti-camera"></i> Instagram
                                 </button>
                                 <button type="button" class="online-channel-pill" id="btn-channel-zalo"
-                                    onclick="window.selectOnlineOrderChannel('Zalo / Khác')"
-                                    style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #E8CCB2; background: #fff; color: #6E665D; font-weight: 600; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <span><i class="ti ti-message-circle"></i></span> Khác
+                                    onclick="window.selectOnlineOrderChannel('Zalo / Khác')">
+                                    <i class="ti ti-message-circle"></i> Zalo / Khác
                                 </button>
                             </div>
+
                             <div>
-                                <label class="filter-label" style="font-size: 0.78rem;">Tên tài khoản / Link chat khách
-                                    (FB / IG)</label>
+                                <label class="oco-field-label" for="online-order-social-user">Tài khoản / Link chat khách (đối chiếu tin nhắn)</label>
                                 <input type="text" id="online-order-social-user" class="kiot-filter-input"
-                                    placeholder="Ví dụ: fb.com/nguyenvana hoặc @anhthu_gom (để đối chiếu tin nhắn)">
+                                    placeholder="Ví dụ: fb.com/nguyenvana hoặc @anhthu_gom">
                             </div>
                         </div>
 
-                        <!-- Thông tin khách hàng & Gợi ý tài khoản app (Chuẩn POS) -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <label class="filter-label"
-                                    style="font-weight: 700; color: #9C7156; margin: 0; display: flex; align-items: center; gap: 6px;">
-                                    <span><i class="ti ti-user"></i> Khách hàng & Địa chỉ nhận</span>
-                                </label>
-                                <span style="font-size: 0.72rem; color: #6E665D;">Đồng bộ data POS & App</span>
+                        <!-- 2. Thông tin khách hàng & Địa chỉ -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-user"></i> Khách hàng & Địa chỉ</h4>
+                                <span class="oco-card-meta">Đồng bộ POS & App</span>
                             </div>
 
-                            <!-- Khối tìm kiếm khách hàng kiểu POS -->
+                            <!-- Tìm kiếm khách hàng kiểu POS -->
                             <div class="online-customer-search-section" style="position: relative;">
-                                <!-- Hộp tìm kiếm khách hàng -->
                                 <div id="online-customer-search-box"
                                     style="display: flex; align-items: center; position: relative;">
-                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156;"><i
+                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156; pointer-events: none;"><i
                                             class="ti ti-search"></i></span>
                                     <input type="text" id="online-customer-search" class="kiot-filter-input"
-                                        style="padding-left: 36px; padding-right: 32px; height: 42px; font-size: 0.88rem; font-weight: 500;"
-                                        placeholder="Tìm khách hàng (Tên, SĐT, Email, ID)..."
+                                        style="padding-left: 36px; padding-right: 32px; height: 40px; font-weight: 500;"
+                                        placeholder="Tìm khách quen theo Tên, SĐT, Email..."
                                         oninput="window.handleOnlineCustomerSearchInput(this.value)" autocomplete="off">
                                     <button type="button" id="online-customer-search-clear-btn"
                                         onclick="window.clearOnlineCustomerSearchInput()"
-                                        style="display: none; position: absolute; right: 10px; background: none; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer; padding: 2px;"><i
+                                        style="display: none; position: absolute; right: 10px; background: none; border: none; color: #8A7F75; font-size: 0.9rem; cursor: pointer; padding: 2px;"><i
                                             class="ti ti-x"></i></button>
                                 </div>
 
-                                <!-- Dropdown gợi ý khách hàng (POS style) -->
                                 <div id="online-customer-suggestions" class="search-suggestions"
-                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff; border: 1.5px solid #E8CCB2; border-radius: 8px; box-shadow: 0 14px 35px rgba(0,0,0,0.16); z-index: 9999; max-height: 280px; overflow-y: auto;">
+                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff; border: 1.5px solid #DDD4C8; border-radius: 8px; box-shadow: 0 14px 35px rgba(43, 41, 40, 0.14); z-index: 9999; max-height: 260px; overflow-y: auto;">
                                 </div>
 
-                                <!-- Thẻ khách hàng đã chọn (Selected Customer Card) -->
+                                <!-- Thẻ khách hàng đã chọn -->
                                 <div id="online-selected-customer"
-                                    style="display: none; margin-top: 2px; padding: 10px 12px; background: #FAF7F2; border: 1.5px solid #9C7156; border-radius: 8px; align-items: center; justify-content: space-between; gap: 10px;">
+                                    style="display: none; margin-top: 4px; padding: 10px 12px; background: #F7F1EB; border: 1.5px solid #9C7156; border-radius: 8px; align-items: center; justify-content: space-between; gap: 10px;">
                                     <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #E8CCB2; color: #2B2928; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;"
+                                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #9C7156; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;"
                                             id="online-cust-avatar-letter"><i class="ti ti-user"></i></div>
                                         <div style="min-width: 0; flex: 1;">
                                             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                                 <span id="online-cust-name-display"
-                                                    style="font-weight: 700; font-size: 0.9rem; color: #2B2928; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                                                    style="font-weight: 700; font-size: 0.88rem; color: #2B2928; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
                                                 <span id="online-cust-membership-badge"
-                                                    style="display: none; font-size: 0.7rem; font-weight: 700; background: #9C7156; color: #fff; padding: 1px 6px; border-radius: 10px;"></span>
+                                                    style="display: none; font-size: 0.69rem; font-weight: 700; background: #7D563D; color: #fff; padding: 1px 6px; border-radius: 6px;"></span>
                                             </div>
                                             <div
-                                                style="font-size: 0.76rem; color: #6E665D; margin-top: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                style="font-size: 0.75rem; color: #6E665D; margin-top: 2px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
                                                 <span>SĐT: <strong id="online-cust-phone-display"
-                                                        style="color: #9C7156;"></strong></span>
+                                                        style="color: #7D563D;"></strong></span>
                                                 <span>•</span>
                                                 <span>Điểm: <strong id="online-cust-points-display"
                                                         style="color: #2B2928;">0</strong></span>
                                                 <span>•</span>
-                                                <span>Đã mua: <strong id="online-cust-orders-display">0</strong>
-                                                    đơn</span>
+                                                <span>Đã mua: <strong id="online-cust-orders-display">0</strong> đơn</span>
                                             </div>
                                         </div>
                                     </div>
                                     <button type="button" onclick="window.posClearOnlineCustomer()"
-                                        style="background: #fff; border: 1px solid #E8CCB2; color: #dc2626; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: all 0.15s;"
-                                        title="Bỏ chọn để tìm khách khác hoặc nhập khách mới"><i class="ti ti-x"></i> Bỏ
-                                        chọn</button>
+                                        style="background: #fff; border: 1px solid #DDD4C8; color: #B91C1C; border-radius: 6px; padding: 5px 9px; font-size: 0.74rem; font-weight: 600; cursor: pointer; flex-shrink: 0;"
+                                        title="Bỏ chọn để tìm khách khác hoặc nhập khách mới"><i class="ti ti-x"></i> Bỏ chọn</button>
                                 </div>
                             </div>
 
-                            <!-- 3 ô chi tiết (tự động điền khi chọn, hoặc gõ tay nếu là khách mới) -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
-                                    <label class="filter-label">Số điện thoại khách (*)</label>
+                                    <label class="oco-field-label" for="online-order-phone">Số điện thoại <span class="oco-req">*</span></label>
                                     <input type="tel" id="online-order-phone" class="kiot-filter-input"
-                                        placeholder="09xxxxxxxxx"
+                                        placeholder="09xxxxxxxx"
                                         oninput="window.handleOnlineOrderPhoneInput(this.value)">
                                 </div>
                                 <div>
-                                    <label class="filter-label">Họ và tên khách hàng (*)</label>
+                                    <label class="oco-field-label" for="online-order-name">Họ và tên <span class="oco-req">*</span></label>
                                     <input type="text" id="online-order-name" class="kiot-filter-input"
-                                        placeholder="Tên khách nhận hàng">
+                                        placeholder="Tên người nhận hàng">
                                 </div>
                             </div>
 
                             <div>
-                                <label class="filter-label">Địa chỉ giao hàng (*)</label>
+                                <label class="oco-field-label" for="online-order-address" id="online-order-address-label">
+                                    Địa chỉ giao hàng <span class="oco-req">*</span>
+                                </label>
                                 <textarea id="online-order-address" class="kiot-filter-input"
-                                    style="height: 52px; resize: vertical;"
+                                    style="height: 54px; resize: vertical; padding-top: 8px;"
                                     placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành..."></textarea>
                             </div>
                         </div>
 
-                        <!-- Thanh toán, Trạng thái & Ngày tạo -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
-                            <label class="filter-label" style="font-weight: 700; color: #9C7156; margin: 0;">
-                                <i class="ti ti-credit-card"></i> Thanh toán & Trạng thái xử lý
-                            </label>
+                        <!-- 3. Hình thức giao hàng (MỚI) -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-truck-delivery"></i> Hình thức giao hàng</h4>
+                                <span class="oco-card-meta" id="online-shipping-method-meta">Giao tiêu chuẩn</span>
+                            </div>
+
+                            <div class="oco-shipping-grid" role="radiogroup" aria-label="Chọn hình thức giao hàng">
+                                <button type="button" class="oco-shipping-card active" id="btn-ship-delivery"
+                                    onclick="window.selectOnlineShippingMethod('delivery')">
+                                    <div class="oco-shipping-card-top">
+                                        <span class="oco-shipping-icon"><i class="ti ti-truck-delivery"></i></span>
+                                        <span class="oco-shipping-check"><i class="ti ti-check"></i></span>
+                                    </div>
+                                    <div class="oco-shipping-name">Giao thường</div>
+                                    <div class="oco-shipping-desc">Tiêu chuẩn · 1–3 ngày</div>
+                                </button>
+
+                                <button type="button" class="oco-shipping-card" id="btn-ship-express_2h"
+                                    onclick="window.selectOnlineShippingMethod('express_2h')">
+                                    <div class="oco-shipping-card-top">
+                                        <span class="oco-shipping-icon"><i class="ti ti-bolt-filled"></i></span>
+                                        <span class="oco-shipping-check"><i class="ti ti-check"></i></span>
+                                    </div>
+                                    <div class="oco-shipping-name">Giao hỏa tốc</div>
+                                    <div class="oco-shipping-desc">Nội thành · 2–4 giờ</div>
+                                </button>
+
+                                <button type="button" class="oco-shipping-card" id="btn-ship-pickup"
+                                    onclick="window.selectOnlineShippingMethod('pickup')">
+                                    <div class="oco-shipping-card-top">
+                                        <span class="oco-shipping-icon"><i class="ti ti-building-store"></i></span>
+                                        <span class="oco-shipping-check"><i class="ti ti-check"></i></span>
+                                    </div>
+                                    <div class="oco-shipping-name">Lấy tại shop</div>
+                                    <div class="oco-shipping-desc">Tự đến lấy · 0đ ship</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4. Thanh toán, Trạng thái & Ghi chú -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-credit-card"></i> Thanh toán & Xử lý</h4>
+                            </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
-                                    <label class="filter-label">Phương thức thanh toán</label>
+                                    <label class="oco-field-label" for="online-order-payment-method">Phương thức thanh toán</label>
                                     <select id="online-order-payment-method" class="kiot-filter-select"
                                         onchange="window.handleOnlinePaymentMethodChange(this.value)">
                                         <option value="Chuyển khoản">Chuyển khoản / QR</option>
-                                        <option value="COD" selected>COD (Thanh toán khi nhận)</option>
+                                        <option value="COD" selected>COD (Thu hộ khi giao)</option>
                                         <option value="Tiền mặt">Tiền mặt</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="filter-label">Trạng thái thanh toán</label>
+                                    <label class="oco-field-label" for="online-order-payment-status">Trạng thái thanh toán</label>
                                     <select id="online-order-payment-status" class="kiot-filter-select">
                                         <option value="pending" selected>Chờ thanh toán (Chưa thu)</option>
                                         <option value="Đã thanh toán">Đã thanh toán</option>
@@ -6297,7 +7114,7 @@
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
-                                    <label class="filter-label">Trạng thái đơn hàng</label>
+                                    <label class="oco-field-label" for="online-order-status">Trạng thái đơn hàng</label>
                                     <select id="online-order-status" class="kiot-filter-select">
                                         <option value="Đang xử lý" selected>Đang xử lý (Mặc định)</option>
                                         <option value="Chờ xác nhận">Chờ xác nhận</option>
@@ -6306,166 +7123,150 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="filter-label">Thời gian tạo đơn</label>
+                                    <label class="oco-field-label" for="online-order-date">Thời gian tạo đơn</label>
                                     <input type="datetime-local" id="online-order-date" class="kiot-filter-input"
-                                        style="font-size: 0.82rem;">
+                                        style="font-size: 0.81rem !important;">
                                 </div>
                             </div>
 
                             <div>
-                                <label class="filter-label">Ghi chú đơn hàng & Dặn dò đóng gói</label>
+                                <label class="oco-field-label" for="online-order-note">Ghi chú đóng gói & giao nhận</label>
                                 <textarea id="online-order-note" class="kiot-filter-input"
-                                    style="height: 48px; resize: vertical;"
-                                    placeholder="Bọc xốp dày, giao giờ hành chính, đóng hộp quà..."></textarea>
+                                    style="height: 48px; resize: vertical; padding-top: 8px;"
+                                    placeholder="Bọc xốp dày, giao giờ hành chính, đóng hộp quà, thiệp viết tay..."></textarea>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- Cột 2: Chọn sản phẩm (POS-style) & Bảng Giỏ hàng & Tính tiền -->
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Cột 2: Sản phẩm & Giỏ hàng & Thanh toán -->
+                    <div class="oco-col">
 
-                        <!-- Ô tìm kiếm sản phẩm kiểu POS -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px;">
-                            <label class="filter-label"
-                                style="font-weight: 700; color: #9C7156; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                                <span><i class="ti ti-teapot"></i> Tìm & Thêm sản phẩm gốm (F3)</span>
-                                <span style="font-size: 0.74rem; font-weight: normal; color: #6E665D;">Kho realtime
-                                    (Enter / Quét mã)</span>
-                            </label>
+                        <!-- 1. Tìm kiếm sản phẩm kiểu POS -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-teapot"></i> Thêm sản phẩm gốm (F3)</h4>
+                                <span class="oco-card-meta">Kho realtime · Quét mã</span>
+                            </div>
 
                             <div style="position: relative;">
                                 <div style="display: flex; align-items: center; position: relative;">
-                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156;"><i
+                                    <span style="position: absolute; left: 12px; font-size: 0.95rem; color: #9C7156; pointer-events: none;"><i
                                             class="ti ti-search"></i></span>
                                     <input type="text" id="online-order-search-prod" class="kiot-filter-input"
-                                        style="padding-left: 36px; padding-right: 32px; height: 42px; font-size: 0.9rem;"
-                                        placeholder="Tìm hàng hóa (Tên, Mã SP, Barcode, SKU...)"
+                                        style="padding-left: 36px; padding-right: 32px; height: 42px; font-size: 0.88rem !important;"
+                                        placeholder="Tìm theo Tên sản phẩm, Mã SP, Barcode, SKU..."
                                         oninput="window.handleOnlineOrderProdSearch(this.value)" autocomplete="off">
                                     <button type="button" id="online-order-search-prod-clear-btn"
                                         onclick="window.clearOnlineProdSearchInput()"
-                                        style="display: none; position: absolute; right: 10px; background: none; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer; padding: 2px;"><i
+                                        style="display: none; position: absolute; right: 10px; background: none; border: none; color: #8A7F75; font-size: 0.9rem; cursor: pointer; padding: 2px;"><i
                                             class="ti ti-x"></i></button>
                                 </div>
 
-                                <!-- Dropdown kết quả tìm kiếm sản phẩm kiểu POS -->
                                 <div id="online-order-prod-dropdown" class="search-suggestions"
-                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 290px; overflow-y: auto; background: #ffffff; border: 1.5px solid #E8CCB2; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.18); z-index: 9999;">
+                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 290px; overflow-y: auto; background: #ffffff; border: 1.5px solid #DDD4C8; border-radius: 8px; box-shadow: 0 15px 35px rgba(43, 41, 40, 0.16); z-index: 9999;">
                                     <!-- Dynamic search items -->
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Bảng danh sách sản phẩm trong giỏ -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;">
+                        <!-- 2. Danh sách sản phẩm đã chọn -->
+                        <div class="oco-card oco-card--flush">
                             <div
-                                style="background: #FAF8F5; padding: 9px 12px; font-weight: 700; font-size: 0.84rem; color: #9C7156; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8CCB2;">
-                                <span><i class="ti ti-shopping-bag"></i> Danh sách món đã chọn (<strong
-                                        id="online-order-cart-count">0</strong>)</span>
+                                style="background: #FAF7F2; padding: 10px 14px; font-weight: 700; font-size: 0.84rem; color: #2B2928; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ECE5DC;">
+                                <span style="display: flex; align-items: center; gap: 7px;">
+                                    <i class="ti ti-shopping-bag" style="color: #9C7156;"></i>
+                                    Danh sách món đã chọn
+                                    <span style="background: #9C7156; color: #FFFFFF; font-size: 0.72rem; padding: 1px 7px; border-radius: 6px; font-weight: 700;"
+                                        id="online-order-cart-count">0</span>
+                                </span>
                                 <button type="button"
-                                    style="border: none; background: none; color: #dc2626; font-size: 0.76rem; cursor: pointer; text-decoration: underline;"
-                                    onclick="window.clearOnlineOrderCart()">Xóa tất cả</button>
+                                    style="border: none; background: none; color: #B91C1C; font-size: 0.76rem; font-weight: 600; cursor: pointer;"
+                                    onclick="window.clearOnlineOrderCart()"><i class="ti ti-trash" style="font-size: 0.82rem;"></i> Xóa tất cả</button>
                             </div>
 
-                            <div style="max-height: 240px; overflow-y: auto;">
+                            <div style="max-height: 265px; overflow-y: auto;">
                                 <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                                     <thead>
                                         <tr
-                                            style="background: #f8fafc; color: #475569; text-align: left; border-bottom: 1px solid #e2e8f0;">
-                                            <th style="padding: 8px 10px;">Sản phẩm & Phân loại</th>
-                                            <th style="padding: 8px 10px; text-align: center; width: 105px;">Số lượng
-                                            </th>
-                                            <th style="padding: 8px 10px; text-align: right; width: 95px;">Đơn giá</th>
-                                            <th style="padding: 8px 10px; text-align: right; width: 100px;">Thành tiền
-                                            </th>
-                                            <th style="padding: 8px 8px; text-align: center; width: 35px;"></th>
+                                            style="background: #FBF9F6; color: #6E665D; text-align: left; border-bottom: 1px solid #ECE5DC;">
+                                            <th style="padding: 9px 12px; font-weight: 600;">Sản phẩm & Phân loại</th>
+                                            <th style="padding: 9px 8px; text-align: center; width: 104px; font-weight: 600;">SL</th>
+                                            <th style="padding: 9px 10px; text-align: right; width: 95px; font-weight: 600;">Đơn giá</th>
+                                            <th style="padding: 9px 10px; text-align: right; width: 102px; font-weight: 600;">Thành tiền</th>
+                                            <th style="padding: 9px 8px; text-align: center; width: 34px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="online-order-cart-tbody">
                                         <tr>
                                             <td colspan="5"
-                                                style="text-align: center; padding: 25px 12px; color: #94a3b8;">
-                                                Chưa có sản phẩm nào trong giỏ.<br>
-                                                <span style="font-size: 0.76rem;">Tìm kiếm và bấm chọn món gốm ở ô bên
-                                                    trên.</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                                style="text-align: center; padding: 30px 14px; color: #8A7F75;">
+                                                <div style="font-size: 1.5rem; color: #D4C6B8; margin-bottom: 4px;"><i class="ti ti-teapot"></i></div>
+                                                <div style="font-weight: 600; color: #5E564E; font-size: 0.84rem;">Chưa có sản phẩm nào trong đơn</div>
+                                                <div style="font-size: 0.75rem; margin-top: 2px;">Tìm kiếm hoặc quét mã vạch ở ô bên trên để thêm món gốm.</div>
                         </div>
 
-                        <!-- Khối Chiết khấu & Phí vận chuyển & Tổng tiền -->
-                        <div
-                            style="background: #fff; border: 1px solid #E8CCB2; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+                        <!-- 3. Phí vận chuyển, Giảm giá & Tổng cộng -->
+                        <div class="oco-card">
+                            <div class="oco-card-header">
+                                <h4 class="oco-card-title"><i class="ti ti-receipt"></i> Chi phí & Thanh toán</h4>
+                            </div>
 
                             <!-- Phí vận chuyển -->
                             <div>
                                 <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                    <label class="filter-label" style="margin: 0;">Phí vận chuyển (VNĐ)</label>
-                                    <div style="display: flex; gap: 4px;">
-                                        <button type="button" class="kiot-btn-outline"
-                                            style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;"
-                                            onclick="window.setOnlineShippingFee(0)">Freeship</button>
-                                        <button type="button" class="kiot-btn-outline"
-                                            style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;"
-                                            onclick="window.setOnlineShippingFee(25000)">25k</button>
-                                        <button type="button" class="kiot-btn-outline"
-                                            style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;"
-                                            onclick="window.setOnlineShippingFee(30000)">30k</button>
-                                        <button type="button" class="kiot-btn-outline"
-                                            style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px;"
-                                            onclick="window.setOnlineShippingFee(35000)">35k</button>
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                                    <label class="oco-field-label" for="online-order-shipping-fee" style="margin: 0;">Phí vận chuyển (VNĐ)</label>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                        <button type="button" class="oco-fee-chip" onclick="window.setOnlineShippingFee(0)">Freeship</button>
+                                        <button type="button" class="oco-fee-chip" onclick="window.setOnlineShippingFee(25000)">25k</button>
+                                        <button type="button" class="oco-fee-chip" onclick="window.setOnlineShippingFee(30000)">30k</button>
+                                        <button type="button" class="oco-fee-chip" onclick="window.setOnlineShippingFee(35000)">35k</button>
+                                        <button type="button" class="oco-fee-chip" onclick="window.setOnlineShippingFee(45000)">45k</button>
                                     </div>
                                 </div>
                                 <input type="number" id="online-order-shipping-fee" class="kiot-filter-input" value="0"
                                     min="0" step="1000" oninput="window.recalculateOnlineOrderTotal()">
                             </div>
 
-                            <!-- Giảm giá / Chiết khấu & Mã voucher -->
+                            <!-- Giảm giá & Voucher -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
-                                    <label class="filter-label">Giảm giá / Chiết khấu (VNĐ)</label>
+                                    <label class="oco-field-label" for="online-order-discount">Giảm giá / Chiết khấu (VNĐ)</label>
                                     <input type="number" id="online-order-discount" class="kiot-filter-input" value="0"
                                         min="0" step="1000" oninput="window.recalculateOnlineOrderTotal()">
                                 </div>
                                 <div>
-                                    <label class="filter-label">Mã voucher (nếu có)</label>
+                                    <label class="oco-field-label" for="online-order-coupon">Mã voucher (nếu có)</label>
                                     <input type="text" id="online-order-coupon" class="kiot-filter-input"
                                         placeholder="Nhập mã voucher...">
                                 </div>
                             </div>
 
                             <!-- Bảng tóm tắt thanh toán -->
-                            <div
-                                style="background: #FAF8F5; border: 1.2px solid #E8CCB2; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;">
-                                <div
-                                    style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
-                                    <span>Tiền hàng:</span>
+                            <div class="oco-summary-box">
+                                <div class="oco-summary-row">
+                                    <span>Tiền hàng</span>
                                     <strong id="online-order-subtotal" style="color: #2B2928;">0 đ</strong>
                                 </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
-                                    <span>Phí giao hàng:</span>
+                                <div class="oco-summary-row">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                        Phí giao hàng
+                                        <span id="online-order-shipping-summary-tag"
+                                            style="font-size: 0.7rem; font-weight: 600; background: #EFE7DD; color: #7D563D; padding: 1px 6px; border-radius: 5px;">Giao thường</span>
+                                    </span>
                                     <strong id="online-order-display-shipping" style="color: #2B2928;">0 đ</strong>
                                 </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6E665D;">
-                                    <span>Giảm giá / Chiết khấu:</span>
+                                <div class="oco-summary-row">
+                                    <span>Giảm giá / Chiết khấu</span>
                                     <strong id="online-order-display-discount" style="color: #9C7156;">- 0 đ</strong>
                                 </div>
-                                <div
-                                    style="border-top: 1px dashed #E8CCB2; margin-top: 4px; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 700; font-size: 0.95rem; color: #2B2928;">Khách cần
-                                        trả:</span>
-                                    <span style="font-size: 1.25rem; font-weight: 800; color: #9C7156;"
+                                <div class="oco-summary-total">
+                                    <span style="font-weight: 700; font-size: 0.94rem; color: #2B2928;">Khách cần trả</span>
+                                    <span style="font-size: 1.3rem; font-weight: 800; color: #9C7156; letter-spacing: -0.02em;"
                                         id="online-order-calc-total">0 đ</span>
                                 </div>
                             </div>
-
                         </div>
 
                     </div>
@@ -6474,14 +7275,20 @@
             </div>
 
             <!-- Footer -->
-            <div class="edit-modal-footer">
-                <button type="button" class="kiot-btn-outline"
-                    style="border: 1.2px solid #E8CCB2; background: #fff; color: #6E665D; border-radius: 20px; padding: 8px 20px; font-weight: 600; cursor: pointer;"
-                    onclick="window.closeCreateOnlineOrderModal()">Bỏ qua</button>
-                <button type="button" id="btn-submit-online-order" class="kiot-btn-primary"
-                    style="background: #9C7156; border-color: #9C7156; border-radius: 20px; padding: 9px 26px; font-weight: 700; box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25); cursor: pointer;"
-                    onclick="window.submitCreateOnlineOrder()"><i class="ti ti-device-floppy"></i> Hoàn tất tạo đơn
-                    Online (TNG)</button>
+            <div class="edit-modal-footer oco-footer">
+                <div class="oco-footer-summary">
+                    <span><strong id="online-order-footer-count" style="color: #2B2928;">0</strong> sản phẩm</span>
+                    <span style="color: #D4C6B8;">•</span>
+                    <span>Tổng thu: <strong id="online-order-footer-total" style="color: #9C7156; font-size: 0.98rem;">0 đ</strong></span>
+                </div>
+                <div class="oco-footer-actions">
+                    <button type="button" class="oco-btn-cancel"
+                        onclick="window.closeCreateOnlineOrderModal()">Bỏ qua</button>
+                    <button type="button" id="btn-submit-online-order" class="oco-btn-submit"
+                        onclick="window.submitCreateOnlineOrder()">
+                        <i class="ti ti-device-floppy"></i> Hoàn tất tạo đơn Online
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -6894,8 +7701,8 @@
                     let imageHtml = `<div style="width: 44px; height: 44px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #cbd5e1; margin: 0 auto;" title="Không có ảnh"><i class="ti ti-file-text"></i></div>`;
                     if (data.imageUrl) {
                         imageHtml = `
-                            <a href="${data.imageUrl}" target="_blank" rel="noopener noreferrer" title="Bấm để xem ảnh gốc" style="display: block; width: 44px; height: 44px; margin: 0 auto;">
-                                <img src="${data.imageUrl}" class="push-thumb-hover" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; display: block;" onerror="this.src=''; this.parentElement.innerHTML='<i class=\'ti ti-alert-triangle-filled\'></i>';">
+                            <a href="${data.imageUrl}" target="_blank" rel="noopener noreferrer" title="Bấm để xem ảnh gốc" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 0 auto; border-radius: 8px; background: #f8fafc;">
+                                <img src="${data.imageUrl}" class="push-thumb-hover" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; display: block;" onerror="this.onerror=null; if(this.parentElement){ this.parentElement.innerHTML='<i class=\'ti ti-alert-triangle-filled\' style=\'color:#c2410c; font-size:1.1rem;\'></i>'; }">
                             </a>
                         `;
                     }
@@ -6961,7 +7768,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=83"></script>
+    <script type="module" src="../js/DashBoard.js?v=84"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">

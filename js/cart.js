@@ -131,13 +131,56 @@ async function renderCart() {
     cartGrid.style.display = 'block';
     emptyMsg.style.display = 'none';
 
+    // Đối chiếu tồn kho thực tế mới nhất từ Firestore cho toàn bộ sản phẩm trong giỏ
+    const liveProductsMap = {};
+    const uniqueIds = [...new Set(cart.map(i => i.id).filter(Boolean))];
+    await Promise.all(uniqueIds.map(async (pid) => {
+        try {
+            const pSnap = await getDoc(doc(db, "products", pid));
+            if (pSnap.exists()) liveProductsMap[pid] = pSnap.data();
+        } catch (e) { }
+    }));
+
+    let hasStockIssue = false;
     let total = 0;
-    cartItemsContainer.innerHTML = cart.map((item, index) => {
-        const subtotal = item.price * item.quantity;
-        total += subtotal;
+    const itemsHtml = cart.map((item, index) => {
+        const pData = liveProductsMap[item.id];
+        let availableStock = Infinity;
+        if (pData) {
+            availableStock = (pData.isOutOfStock || pData.manualOutOfStock) ? 0 : Number(pData.stock ?? 0);
+            if (item.color && Array.isArray(pData.colorVariants)) {
+                const cv = pData.colorVariants.find(v => v.name === item.color);
+                if (cv) availableStock = (cv.isOutOfStock || cv.manualOutOfStock) ? 0 : Number(cv.stock ?? availableStock);
+            } else if (item.pattern && Array.isArray(pData.patternVariants)) {
+                const pv = pData.patternVariants.find(v => v.name === item.pattern);
+                if (pv) availableStock = (pv.isOutOfStock || pv.manualOutOfStock) ? 0 : Number(pv.stock ?? availableStock);
+            } else if (pData.isCombo && Array.isArray(pData.comboVariants)) {
+                const comboName = item.comboVariant || item.combo;
+                const combov = comboName
+                    ? pData.comboVariants.find(v => v.name === comboName)
+                    : (pData.comboVariants.length === 1 ? pData.comboVariants[0] : null);
+                if (combov) {
+                    if (combov.isOutOfStock) availableStock = 0;
+                    else if (combov.stock !== undefined && combov.stock !== null) availableStock = Number(combov.stock);
+                }
+            }
+        }
+
         const isGift = Boolean(item.isGift);
+        const isItemOutOfStock = !isGift && pData && availableStock <= 0;
+        const isOverStock = !isGift && pData && !isItemOutOfStock && item.quantity > availableStock;
+        if (isItemOutOfStock || isOverStock) hasStockIssue = true;
+
+        const subtotal = isItemOutOfStock ? 0 : item.price * item.quantity;
+        total += subtotal;
+        const stockNoticeHtml = isItemOutOfStock
+            ? `<div style="display:inline-block; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:0.74rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca;">Sản phẩm này đã hết hàng</div>`
+            : (isOverStock
+                ? `<div style="display:inline-block; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:0.74rem; font-weight:700; background:#fffbeb; color:#b45309; border:1px solid #fde68a;">Kho chỉ còn ${availableStock} sản phẩm</div>`
+                : '');
+
         return `
-            <div class="summary-item ${isGift ? 'is-bogo-gift-item' : ''}" style="${isGift ? 'background: #fffaf5; border: 1px dashed #E8CCB2; border-radius: 8px; padding: 10px; margin-bottom: 8px;' : ''}">
+            <div class="summary-item ${isGift ? 'is-bogo-gift-item' : ''}" style="${isGift ? 'background: #fffaf5; border: 1px dashed #E8CCB2; border-radius: 8px; padding: 10px; margin-bottom: 8px;' : (isItemOutOfStock ? 'opacity: 0.72;' : '')}">
                 <img src="${item.image}" alt="${item.name}" class="summary-item-img" style="border-radius: 6px;">
                 <div class="summary-item-details">
                     <h4 style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -145,13 +188,14 @@ async function renderCart() {
                         ${isGift ? '<span style="font-size: 0.68rem; background: #9C7156; color: #fff; padding: 1px 6px; border-radius: 4px; font-weight: 700;">QUÀ TẶNG 20/10</span>' : ''}
                     </h4>
                     <p class="summary-item-variant">${item.variant || 'Mặc định'}</p>
+                    ${stockNoticeHtml}
                     <div class="quantity-controls">
                         ${isGift ? `
                             <span class="qty-value" style="font-size: 0.82rem; color: #9C7156; font-weight: 700;">SL: ${item.quantity} (Tặng kèm)</span>
                         ` : `
                             <button class="q-btn" onclick="window.changeQty(${index}, -1)">-</button>
                             <span class="qty-value">${item.quantity}</span>
-                            <button class="q-btn" onclick="window.changeQty(${index}, 1)">+</button>
+                            <button class="q-btn" ${isItemOutOfStock || item.quantity >= availableStock ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="window.changeQty(${index}, 1)">+</button>
                         `}
                     </div>
                 </div>
@@ -162,6 +206,11 @@ async function renderCart() {
             </div>
         `;
     }).join('');
+
+    const stockWarningBanner = hasStockIssue
+        ? `<div style="padding: 10px 14px; margin-bottom: 12px; border-radius: 10px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 0.85rem; font-weight: 600;">Có sản phẩm trong giỏ đã hết hàng hoặc vượt quá số lượng còn lại. Vui lòng điều chỉnh hoặc xóa trước khi đặt hàng.</div>`
+        : '';
+    cartItemsContainer.innerHTML = stockWarningBanner + itemsHtml;
 
     let discountAmount = 0;
     if (appliedCoupon) {

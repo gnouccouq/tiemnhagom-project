@@ -257,7 +257,8 @@ const PERMISSION_GROUPS = [
             { id: 'user-section', label: 'Khách hàng & Hội viên' },
             { id: 'customer-analytics-section', label: 'Khách tiềm năng & Lượt xem' },
             { id: 'coupon-section', label: 'Mã giảm giá Voucher' },
-            { id: 'push-notification-section', label: 'Gửi thông báo đẩy App' }
+            { id: 'push-notification-section', label: 'Gửi thông báo đẩy App' },
+            { id: 'contact-messages-section', label: 'Tin nhắn liên hệ' }
         ]
     },
     {
@@ -312,7 +313,8 @@ const SECTION_HASH_MAP = {
     'maintenance-section': '#/Settings',
     'pos-section': '#/POS',
     'stats-section': '#/Reports',
-    'customer-analytics-section': '#/CustomerAnalytics'
+    'customer-analytics-section': '#/CustomerAnalytics',
+    'contact-messages-section': '#/ContactMessages'
 };
 
 function getSectionIdFromHash(hash) {
@@ -404,6 +406,10 @@ function setupAdminTabs() {
 
             if (targetId === 'restock-alerts-section') {
                 window.fetchRestockAlertsAdmin();
+            }
+
+            if (targetId === 'contact-messages-section') {
+                window.fetchContactMessagesAdmin();
             }
 
             if (targetId === 'maintenance-section') {
@@ -3833,8 +3839,114 @@ async function initBannerManagement() {
     };
 
     const snap = await getDoc(bannerRef);
-    if (snap.exists()) currentBanners = snap.data().slides || [];
+    let bannerDocData = {};
+    if (snap.exists()) {
+        bannerDocData = snap.data() || {};
+        currentBanners = bannerDocData.slides || [];
+    }
     renderBanners();
+
+    // --- Quản lý Video Hero Trang Chủ ---
+    const videoForm = document.getElementById('banner-video-form');
+    const videoPreview = document.getElementById('banner-video-preview');
+    const videoUrlInput = document.getElementById('banner-video-url');
+    const deleteVideoBtn = document.getElementById('btn-delete-banner-video');
+    const videoBadge = document.getElementById('banner-video-badge');
+
+    const updateVideoUI = (videoUrl) => {
+        if (!videoPreview) return;
+        if (videoUrl) {
+            videoPreview.innerHTML = `
+                <video src="${videoUrl}" controls style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 8px;"></video>
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.7rem; display: flex; justify-content: space-between;">
+                    <span>Video Hero</span>
+                    <a href="${videoUrl}" target="_blank" style="color: #38bdf8; text-decoration: none;">Xem link</a>
+                </div>
+            `;
+            if (videoUrlInput) videoUrlInput.value = videoUrl;
+            if (deleteVideoBtn) deleteVideoBtn.style.display = 'inline-flex';
+            if (videoBadge) {
+                videoBadge.style.background = '#ecfdf5';
+                videoBadge.style.color = '#047857';
+                videoBadge.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 4px; background: #10b981;"></span><span>Đang kích hoạt Video</span>`;
+            }
+        } else {
+            videoPreview.innerHTML = `
+                <div style="padding: 16px; text-align: center; color: #94a3b8; font-size: 0.8rem;">
+                    <div style="font-size: 1.8rem; margin-bottom: 6px; opacity: 0.6;"><i class="ti ti-movie-off"></i></div>
+                    <div>Chưa có video</div>
+                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Đang hiển thị Slider ảnh</div>
+                </div>
+            `;
+            if (videoUrlInput) videoUrlInput.value = '';
+            if (deleteVideoBtn) deleteVideoBtn.style.display = 'none';
+            if (videoBadge) {
+                videoBadge.style.background = '#f1f5f9';
+                videoBadge.style.color = '#64748b';
+                videoBadge.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 4px; background: #94a3b8;"></span><span>Chưa có video</span>`;
+            }
+        }
+    };
+
+    updateVideoUI(bannerDocData.videoUrl || '');
+
+    if (videoForm) {
+        videoForm.onsubmit = async (ev) => {
+            ev.preventDefault();
+            const videoFile = document.getElementById('banner-video-file')?.files?.[0];
+            const manualUrl = videoUrlInput?.value?.trim() || '';
+            const saveBtn = document.getElementById('btn-save-banner-video');
+
+            try {
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<span class="spinner-small"></span> Đang tải video...';
+                }
+
+                let finalVideoUrl = manualUrl;
+                if (videoFile) {
+                    // Upload video file trực tiếp lên Firebase Storage
+                    const ext = videoFile.name.split('.').pop() || 'mp4';
+                    const storageRef = ref(storage, `banners/videos/hero_video_${Date.now()}.${ext}`);
+                    const snapshot = await uploadBytes(storageRef, videoFile);
+                    finalVideoUrl = await getDownloadURL(snapshot.ref);
+                }
+
+                if (!finalVideoUrl) {
+                    throw new Error("Vui lòng chọn file video hoặc nhập đường link video URL.");
+                }
+
+                await setDoc(bannerRef, { videoUrl: finalVideoUrl, updatedAt: new Date().toISOString() }, { merge: true });
+                showToast("Đã lưu Video Hero Trang chủ thành công!");
+                updateVideoUI(finalVideoUrl);
+                const fileInput = document.getElementById('banner-video-file');
+                if (fileInput) fileInput.value = '';
+            } catch (vErr) {
+                showToast("Lỗi: " + vErr.message, "error");
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="ti ti-device-floppy"></i> Lưu Video';
+                }
+            }
+        };
+    }
+
+    if (deleteVideoBtn) {
+        deleteVideoBtn.onclick = async () => {
+            if (!confirm("Bạn có chắc chắn muốn xóa video này? Khi xóa, App và Web sẽ tự động chuyển sang hiển thị Slider Banner ảnh.")) return;
+            try {
+                deleteVideoBtn.disabled = true;
+                await setDoc(bannerRef, { videoUrl: null, updatedAt: new Date().toISOString() }, { merge: true });
+                showToast("Đã xóa video! Trang chủ sẽ hiển thị Slider Banner ảnh.");
+                updateVideoUI('');
+            } catch (dErr) {
+                showToast("Lỗi khi xóa video: " + dErr.message, "error");
+            } finally {
+                deleteVideoBtn.disabled = false;
+            }
+        };
+    }
 
     window.editBanner = (idx) => {
         const b = currentBanners[idx];
@@ -8188,9 +8300,10 @@ window.getOrderShippingMethodInfo = function (order) {
         };
     }
 
-    // 2. Giao nhanh / Giao hỏa tốc 2H
+    // 2. Giao nhanh / Giao hỏa tốc 2H - 4H
     if (
         rawMethod === 'express_2h' ||
+        rawMethod === 'express_4h' ||
         rawMethod === 'express' ||
         rawMethod.includes('nhanh') ||
         rawMethod.includes('hỏa tốc') ||
@@ -10012,6 +10125,7 @@ window.openCreateOnlineOrderModal = function () {
     window.onlineOrderCart = [];
     window.onlineOrderMatchedUser = null;
     window.selectOnlineOrderChannel('Facebook');
+    window.selectOnlineShippingMethod('delivery', { skipAutoFee: true });
 
     const phoneInput = document.getElementById('online-order-phone');
     const nameInput = document.getElementById('online-order-name');
@@ -10076,28 +10190,64 @@ window.selectOnlineOrderChannel = function (channel) {
     const igBtn = document.getElementById('btn-channel-ig');
     const zaloBtn = document.getElementById('btn-channel-zalo');
 
-    const resetStyle = (btn) => {
-        if (!btn) return;
-        btn.style.border = '1px solid #E8CCB2';
-        btn.style.background = '#fff';
-        btn.style.color = '#6E665D';
-        btn.style.fontWeight = '600';
-    };
-    const activeStyle = (btn) => {
-        if (!btn) return;
-        btn.style.border = '1.5px solid #9C7156';
-        btn.style.background = '#FAF7F2';
-        btn.style.color = '#9C7156';
-        btn.style.fontWeight = '700';
-    };
+    [fbBtn, igBtn, zaloBtn].forEach(btn => {
+        if (btn) btn.classList.remove('active');
+    });
 
-    resetStyle(fbBtn);
-    resetStyle(igBtn);
-    resetStyle(zaloBtn);
+    if (channel === 'Facebook' && fbBtn) fbBtn.classList.add('active');
+    else if (channel === 'Instagram' && igBtn) igBtn.classList.add('active');
+    else if (zaloBtn) zaloBtn.classList.add('active');
+};
 
-    if (channel === 'Facebook') activeStyle(fbBtn);
-    else if (channel === 'Instagram') activeStyle(igBtn);
-    else activeStyle(zaloBtn);
+window.selectOnlineShippingMethod = function (method, options = {}) {
+    const validMethods = ['delivery', 'express_2h', 'pickup'];
+    const normalized = validMethods.includes(method) ? method : 'delivery';
+    window.onlineOrderSelectedShippingMethod = normalized;
+
+    validMethods.forEach(m => {
+        const card = document.getElementById(`btn-ship-${m}`);
+        if (card) card.classList.toggle('active', m === normalized);
+    });
+
+    const metaMap = {
+        delivery: { meta: 'Giao tiêu chuẩn', tag: 'Giao thường' },
+        express_2h: { meta: 'Giao hỏa tốc 2H–4H', tag: 'Hỏa tốc 2H' },
+        pickup: { meta: 'Nhận tại cửa hàng', tag: 'Lấy tại shop' }
+    };
+    const info = metaMap[normalized];
+
+    const metaEl = document.getElementById('online-shipping-method-meta');
+    if (metaEl) metaEl.textContent = info.meta;
+
+    const tagEl = document.getElementById('online-order-shipping-summary-tag');
+    if (tagEl) tagEl.textContent = info.tag;
+
+    const addrLabel = document.getElementById('online-order-address-label');
+    const addrInput = document.getElementById('online-order-address');
+    if (addrLabel) {
+        addrLabel.innerHTML = normalized === 'pickup'
+            ? 'Địa chỉ giao hàng <span style="font-weight:500; color:#8A7F75;">(Không bắt buộc khi lấy tại shop)</span>'
+            : 'Địa chỉ giao hàng <span class="oco-req">*</span>';
+    }
+    if (addrInput) {
+        addrInput.placeholder = normalized === 'pickup'
+            ? 'Khách tự đến tiệm nhận hàng (có thể để trống hoặc ghi chú thời gian ghé)...'
+            : 'Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành...';
+    }
+
+    if (!options.skipAutoFee) {
+        const shipInput = document.getElementById('online-order-shipping-fee');
+        if (shipInput) {
+            if (normalized === 'pickup') {
+                shipInput.value = '0';
+            } else if (normalized === 'express_2h' && (parseFloat(shipInput.value) || 0) === 0) {
+                shipInput.value = '35000';
+            } else if (normalized === 'delivery' && (parseFloat(shipInput.value) || 0) === 0) {
+                shipInput.value = '25000';
+            }
+            window.recalculateOnlineOrderTotal();
+        }
+    }
 };
 
 window.handleOnlinePaymentMethodChange = function (method) {
@@ -10497,7 +10647,7 @@ window.handleOnlineOrderProdSearch = function (keyword) {
                      onclick="window.chooseOnlineOrderProduct('${pIdEscaped}')" 
                      style="cursor: pointer; padding: 8px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;"
                      onmouseover="this.style.background='#FAF7F2'" onmouseout="this.style.background='#ffffff'">
-                    <img src="${imgUrl}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #E8CCB2; flex-shrink: 0;" onerror="this.src='../Asset/icons/favicon.png'">
+                    <img src="${imgUrl}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #E8CCB2; flex-shrink: 0;" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png'">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 0.86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #2B2928;">
                             ${escapeHTML(p.name)}
@@ -10826,6 +10976,12 @@ window.recalculateOnlineOrderTotal = function () {
     if (shipEl) shipEl.innerText = formatVND(shipFee) + ' đ';
     if (discountEl) discountEl.innerText = '- ' + formatVND(discountVal) + ' đ';
     if (totalEl) totalEl.innerText = formatVND(finalTotal) + ' đ';
+
+    const totalQty = (window.onlineOrderCart || []).reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+    const footerCountEl = document.getElementById('online-order-footer-count');
+    const footerTotalEl = document.getElementById('online-order-footer-total');
+    if (footerCountEl) footerCountEl.innerText = String(totalQty);
+    if (footerTotalEl) footerTotalEl.innerText = formatVND(finalTotal) + ' đ';
 };
 
 window.submitCreateOnlineOrder = async function () {
@@ -10858,6 +11014,12 @@ window.submitCreateOnlineOrder = async function () {
     try {
         const orderId = window.currentCreatingOnlineOrderId || window.generateOnlineOrderCode();
         const channel = window.onlineOrderSelectedChannel || 'Facebook';
+        const shippingMethod = window.onlineOrderSelectedShippingMethod || 'delivery';
+        const shippingMethodLabels = {
+            delivery: 'Giao bình thường (Tiêu chuẩn)',
+            express_2h: 'Giao nhanh (Hỏa tốc 2H)',
+            pickup: 'Lấy ở shop (Tự đến lấy)'
+        };
         const socialUser = document.getElementById('online-order-social-user')?.value.trim() || '';
         const paymentMethod = document.getElementById('online-order-payment-method')?.value || 'COD';
         const paymentStatus = document.getElementById('online-order-payment-status')?.value || 'pending';
@@ -10886,7 +11048,8 @@ window.submitCreateOnlineOrder = async function () {
             shippingAddress: {
                 fullName: custName,
                 phone: custPhone,
-                address: custAddress || 'Nhận tại shop / Chưa có địa chỉ'
+                address: custAddress || (shippingMethod === 'pickup' ? 'Nhận tại cửa hàng (Tự đến lấy)' : 'Chưa có địa chỉ'),
+                shippingMethod: shippingMethod
             },
             productNames: window.onlineOrderCart.map(i => i.name + (i.variantText ? ` (${i.variantText})` : '')),
             items: window.onlineOrderCart,
@@ -10906,8 +11069,9 @@ window.submitCreateOnlineOrder = async function () {
             channel: channel, // 'Facebook' / 'Instagram' / 'Zalo / Khác'
             socialUsername: socialUser,
             note: note,
-            shippingMethod: 'delivery',
-            deliveryStatus: 'Chờ giao',
+            shippingMethod: shippingMethod,
+            shippingMethodLabel: shippingMethodLabels[shippingMethod] || 'Giao bình thường (Tiêu chuẩn)',
+            deliveryStatus: shippingMethod === 'pickup' ? 'Chờ khách lấy tại shop' : 'Chờ giao',
             creatorName: typeof sellerDisplayName !== 'undefined' ? sellerDisplayName : 'Admin System',
             orderDate: Timestamp ? Timestamp.fromDate(orderDateObj) : orderDateObj,
             createdAt: serverTimestamp ? serverTimestamp() : new Date()
@@ -16527,6 +16691,26 @@ async function initFullReport() {
     const VAT_RATE = 0.01; // 1%
     const TNCN_RATE = 0.005; // 0.5%
 
+    // Chuẩn hóa tên phương thức thanh toán giữa POS (tiếng Việt) và Web/App (mã tiếng Anh)
+    const normalizePaymentMethodLabel = (raw) => {
+        const val = String(raw || '').trim();
+        const lower = val.toLowerCase();
+        if (!val) return 'Chưa xác định';
+        if (lower === 'bank_transfer' || lower === 'transfer' || lower.includes('chuyển khoản') || lower.includes('vietqr') || lower.includes('qr')) {
+            return 'Chuyển khoản';
+        }
+        if (lower === 'cod' || lower.includes('thu hộ') || lower.includes('nhận hàng')) {
+            return 'COD (Thu hộ)';
+        }
+        if (lower === 'cash' || lower.includes('tiền mặt')) {
+            return 'Tiền mặt (POS)';
+        }
+        if (lower === 'card' || lower.includes('thẻ') || lower.includes('quẹt')) {
+            return 'Quẹt thẻ';
+        }
+        return val;
+    };
+
     // 1. Nạp danh sách năm (3 năm gần đây)
     const currentYear = new Date().getFullYear();
     if (yearSelect.options.length === 0) {
@@ -16556,6 +16740,7 @@ async function initFullReport() {
             });
 
             renderAllAnalyticsViews();
+            renderExtendedReportTabs(selectedYear);
         } catch (err) {
             console.error("Lỗi tải báo cáo phân tích:", err);
             if (typeof showToast !== 'undefined') showToast("Lỗi tải báo cáo: " + err.message, "error");
@@ -16754,8 +16939,8 @@ async function initFullReport() {
                         });
                     }
 
-                    // Phương thức thanh toán
-                    const pMethod = o.paymentMethod || 'Tiền mặt / COD';
+                    // Phương thức thanh toán (chuẩn hóa & gộp bank_transfer với Chuyển khoản)
+                    const pMethod = normalizePaymentMethodLabel(o.paymentMethod);
                     if (!paymentMethodMap[pMethod]) paymentMethodMap[pMethod] = 0;
                     paymentMethodMap[pMethod] += revGross;
                 }
@@ -16896,7 +17081,9 @@ async function initFullReport() {
                 labels: pmLabels,
                 datasets: [{
                     data: pmData,
-                    backgroundColor: ['#2c3e50', '#27ae60', '#2980b9', '#e67e22', '#e74c3c', '#9b59b6']
+                    backgroundColor: ['#9C7156', '#2B2928', '#D97706', '#C2410C', '#B91C1C', '#E8CCB2'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
                 }]
             },
             options: {
@@ -17363,12 +17550,292 @@ async function initFullReport() {
         }
     };
 
+    // Chuyển đổi mượt giữa 7 tab báo cáo và tự động resize Chart.js khi tab hiện lên
+    window.switchStatsReportTab = (tabKey) => {
+        document.querySelectorAll('.stats-report-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-stats-tab') === tabKey);
+        });
+        document.querySelectorAll('.stats-tab-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.id === `stats-panel-${tabKey}`);
+        });
+        requestAnimationFrame(() => {
+            [
+                mainRevChart,
+                comparisonChart,
+                paymentMethodChart,
+                channelTrendChart,
+                channelShareChart,
+                periodSoldChart,
+                hourlyShoppingChart,
+                orderStatusFunnelChart
+            ].forEach(c => {
+                if (c && typeof c.resize === 'function') {
+                    try { c.resize(); } catch (e) { }
+                }
+            });
+        });
+    };
+
+    // Render dữ liệu chuyên sâu cho các tab mới: Tồn kho, Hủy theo PTTT, Kết ca & Thu ngân, Khách hàng & Mã giảm giá
+    const renderExtendedReportTabs = async (selectedYear) => {
+        const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(Number(n) || 0)) + 'đ';
+        const selectedChannel = channelSelect ? channelSelect.value : 'all';
+
+        const yearOrders = cachedReportOrders.filter(o => {
+            const d = getOrderDateObj(o);
+            if (!d || d.getFullYear() !== selectedYear) return false;
+            return selectedChannel === 'all' || window.getOrderSalesChannelGroup(o) === selectedChannel;
+        });
+
+        // 1. Phân tích tỷ lệ hủy theo Phương thức thanh toán (Tab 5)
+        const cancelPayTbody = document.getElementById('stats-cancel-payment-tbody');
+        if (cancelPayTbody) {
+            const pmMap = {};
+            yearOrders.forEach(o => {
+                const pm = normalizePaymentMethodLabel(o.paymentMethod);
+                if (!pmMap[pm]) pmMap[pm] = { total: 0, canceled: 0, lost: 0 };
+                pmMap[pm].total += 1;
+                const st = (o.status || '').toLowerCase();
+                const isCancel = st.includes('hủy') || st === 'cancelled';
+                if (isCancel) {
+                    pmMap[pm].canceled += 1;
+                    pmMap[pm].lost += Number(o.totalAmount) || 0;
+                }
+            });
+            const rows = Object.entries(pmMap).sort((a, b) => b[1].canceled - a[1].canceled);
+            cancelPayTbody.innerHTML = rows.length === 0
+                ? '<tr><td colspan="5" style="text-align:center; color:#6E665D;">Chưa có dữ liệu trong kỳ.</td></tr>'
+                : rows.map(([pm, s]) => {
+                    const rate = s.total > 0 ? ((s.canceled / s.total) * 100).toFixed(1) : '0.0';
+                    return `
+                        <tr>
+                            <td><strong>${escapeHTML(pm)}</strong></td>
+                            <td style="text-align:center;">${s.total}</td>
+                            <td style="text-align:center; color:#B91C1C; font-weight:700;">${s.canceled}</td>
+                            <td style="text-align:center;"><span style="padding:3px 8px; border-radius:6px; font-size:0.78rem; font-weight:700; background:${Number(rate) >= 15 ? '#FEF2F2' : '#FAF3EB'}; color:${Number(rate) >= 15 ? '#B91C1C' : '#9C7156'};">${rate}%</span></td>
+                            <td style="text-align:right; color:#B91C1C; font-weight:600;">${s.lost > 0 ? '-' + fmt(s.lost) : '0đ'}</td>
+                        </tr>`;
+                }).join('');
+        }
+
+        // 2. Doanh thu POS theo nhân viên thu ngân (Tab 6)
+        const cashierTbody = document.getElementById('stats-pos-cashier-tbody');
+        if (cashierTbody) {
+            const cashierMap = {};
+            cachedReportOrders.forEach(o => {
+                const d = getOrderDateObj(o);
+                if (!d || d.getFullYear() !== selectedYear) return;
+                if (window.getOrderSalesChannelGroup(o) !== 'pos') return;
+                const st = (o.status || '').toLowerCase();
+                if (st.includes('hủy') || st === 'cancelled') return;
+                const name = o.cashierName || o.createdByName || o.sellerName || 'Thu ngân quầy';
+                if (!cashierMap[name]) cashierMap[name] = { orders: 0, rev: 0 };
+                cashierMap[name].orders += 1;
+                cashierMap[name].rev += Number(o.totalAmount) || 0;
+            });
+            const cRows = Object.entries(cashierMap).sort((a, b) => b[1].rev - a[1].rev);
+            cashierTbody.innerHTML = cRows.length === 0
+                ? '<tr><td colspan="4" style="text-align:center; color:#6E665D;">Chưa có đơn bán tại quầy (POS) trong năm này.</td></tr>'
+                : cRows.map(([name, s]) => `
+                    <tr>
+                        <td><strong>${escapeHTML(name)}</strong></td>
+                        <td style="text-align:center;">${s.orders}</td>
+                        <td style="text-align:right; font-weight:700; color:#9C7156;">${fmt(s.rev)}</td>
+                        <td style="text-align:right;">${fmt(s.orders > 0 ? s.rev / s.orders : 0)}</td>
+                    </tr>`).join('');
+        }
+
+        // 3. Lịch sử kết ca & đối soát két tiền từ shift_reports (Tab 6)
+        const shiftTbody = document.getElementById('stats-shift-reports-tbody');
+        if (shiftTbody) {
+            try {
+                const shiftSnap = await getDocs(collection(db, "shift_reports"));
+                const shifts = shiftSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(sr => {
+                    const dt = sr.createdAt?.toDate ? sr.createdAt.toDate() : (sr.closedAt?.toDate ? sr.closedAt.toDate() : (sr.createdAt ? new Date(sr.createdAt) : null));
+                    return !dt || dt.getFullYear() === selectedYear;
+                }).sort((a, b) => {
+                    const da = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                    const dbTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                    return dbTime - da;
+                });
+
+                const totalActual = shifts.reduce((s, r) => s + (Number(r.actualCash ?? r.countedCash ?? 0)), 0);
+                const totalDiff = shifts.reduce((s, r) => {
+                    const expected = Number(r.expectedCash ?? ((Number(r.openingCash) || 0) + (Number(r.cashSales ?? r.cashRevenue) || 0)));
+                    const actual = Number(r.actualCash ?? r.countedCash ?? expected);
+                    const diff = r.difference !== undefined ? Number(r.difference) : (actual - expected);
+                    return s + diff;
+                }, 0);
+
+                const elCount = document.getElementById('stats-pos-shifts-count');
+                const elCash = document.getElementById('stats-pos-cash-actual');
+                const elDiff = document.getElementById('stats-pos-cash-diff');
+                if (elCount) elCount.innerText = String(shifts.length);
+                if (elCash) elCash.innerText = fmt(totalActual);
+                if (elDiff) {
+                    elDiff.innerText = (totalDiff > 0 ? '+' : '') + fmt(totalDiff);
+                    elDiff.style.color = totalDiff < 0 ? '#B91C1C' : '#9C7156';
+                }
+
+                shiftTbody.innerHTML = shifts.length === 0
+                    ? '<tr><td colspan="7" style="text-align:center; color:#6E665D;">Chưa có biên bản kết ca nào trong năm này.</td></tr>'
+                    : shifts.slice(0, 50).map(sr => {
+                        const dt = sr.createdAt?.toDate ? sr.createdAt.toDate().toLocaleString('vi-VN') : (sr.closedAt?.toDate ? sr.closedAt.toDate().toLocaleString('vi-VN') : '-');
+                        const openCash = Number(sr.openingCash || 0);
+                        const cashSales = Number(sr.cashSales ?? sr.cashRevenue ?? 0);
+                        const expected = Number(sr.expectedCash ?? (openCash + cashSales));
+                        const actual = Number(sr.actualCash ?? sr.countedCash ?? expected);
+                        const diff = sr.difference !== undefined ? Number(sr.difference) : (actual - expected);
+                        const diffColor = diff < 0 ? '#B91C1C' : (diff > 0 ? '#9C7156' : '#2B2928');
+                        return `
+                            <tr>
+                                <td style="font-size:0.8rem; color:#6E665D;">${dt}</td>
+                                <td><strong>${escapeHTML(sr.cashierName || sr.staffName || 'Thu ngân')}</strong></td>
+                                <td style="text-align:right;">${fmt(openCash)}</td>
+                                <td style="text-align:right;">${fmt(cashSales)}</td>
+                                <td style="text-align:right; font-weight:700;">${fmt(actual)}</td>
+                                <td style="text-align:right; font-weight:700; color:${diffColor};">${diff > 0 ? '+' : ''}${fmt(diff)}</td>
+                                <td style="font-size:0.82rem; color:#6E665D;">${escapeHTML(sr.note || sr.handoverNote || '-')}</td>
+                            </tr>`;
+                    }).join('');
+            } catch (e) {
+                shiftTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#6E665D;">Chưa có dữ liệu kết ca.</td></tr>';
+            }
+        }
+
+        // 4. Khách hàng quay lại, Top 10 Khách hàng & Hiệu quả Coupon (Tab 7)
+        const custMap = {};
+        const couponMap = {};
+        let totalCouponDiscount = 0;
+
+        yearOrders.forEach(o => {
+            const st = (o.status || '').toLowerCase();
+            if (st.includes('hủy') || st === 'cancelled') return;
+            const rev = Number(o.totalAmount) || 0;
+
+            const custKey = (o.customerPhone || o.phone || o.userId || o.customerEmail || '').trim();
+            const custName = o.customerName || o.shippingAddress?.name || o.name || 'Khách lẻ';
+            if (custKey) {
+                if (!custMap[custKey]) custMap[custKey] = { name: custName, phone: o.customerPhone || o.phone || '', orders: 0, spent: 0 };
+                custMap[custKey].orders += 1;
+                custMap[custKey].spent += rev;
+            }
+
+            if (o.couponCode) {
+                const code = String(o.couponCode).trim().toUpperCase();
+                const disc = Number(o.discountAmount || o.couponDiscount || 0);
+                totalCouponDiscount += disc;
+                if (!couponMap[code]) couponMap[code] = { uses: 0, discount: 0, rev: 0 };
+                couponMap[code].uses += 1;
+                couponMap[code].discount += disc;
+                couponMap[code].rev += rev;
+            }
+        });
+
+        const custArr = Object.values(custMap);
+        const repeatCount = custArr.filter(c => c.orders >= 2).length;
+        const repeatPct = custArr.length > 0 ? ((repeatCount / custArr.length) * 100).toFixed(1) : '0.0';
+
+        const elUnique = document.getElementById('stats-unique-customers');
+        const elRepeat = document.getElementById('stats-repeat-customers');
+        const elCoupTotal = document.getElementById('stats-coupon-total-discount');
+        if (elUnique) elUnique.innerText = String(custArr.length);
+        if (elRepeat) elRepeat.innerText = `${repeatCount} (${repeatPct}%)`;
+        if (elCoupTotal) elCoupTotal.innerText = fmt(totalCouponDiscount);
+
+        const topCustTbody = document.getElementById('stats-top-customers-tbody');
+        if (topCustTbody) {
+            const topCusts = custArr.sort((a, b) => b.spent - a.spent).slice(0, 10);
+            topCustTbody.innerHTML = topCusts.length === 0
+                ? '<tr><td colspan="3" style="text-align:center; color:#6E665D;">Chưa có dữ liệu khách hàng.</td></tr>'
+                : topCusts.map(c => `
+                    <tr>
+                        <td><strong>${escapeHTML(c.name)}</strong>${c.phone ? `<div style="font-size:0.76rem; color:#6E665D;">${escapeHTML(c.phone)}</div>` : ''}</td>
+                        <td style="text-align:center;">${c.orders}</td>
+                        <td style="text-align:right; font-weight:700; color:#9C7156;">${fmt(c.spent)}</td>
+                    </tr>`).join('');
+        }
+
+        const coupTbody = document.getElementById('stats-coupon-perf-tbody');
+        if (coupTbody) {
+            const coupRows = Object.entries(couponMap).sort((a, b) => b[1].uses - a[1].uses);
+            coupTbody.innerHTML = coupRows.length === 0
+                ? '<tr><td colspan="4" style="text-align:center; color:#6E665D;">Chưa có đơn hàng nào sử dụng mã giảm giá trong kỳ.</td></tr>'
+                : coupRows.map(([code, s]) => `
+                    <tr>
+                        <td><span style="padding:3px 8px; border-radius:6px; background:#FAF3EB; color:#9C7156; font-weight:700; border:1px solid #E8CCB2;">${escapeHTML(code)}</span></td>
+                        <td style="text-align:center; font-weight:700;">${s.uses}</td>
+                        <td style="text-align:right; color:#B91C1C;">-${fmt(s.discount)}</td>
+                        <td style="text-align:right; font-weight:700; color:#2B2928;">${fmt(s.rev)}</td>
+                    </tr>`).join('');
+        }
+
+        // 5. Cảnh báo Tồn kho: Sắp hết hàng (<= 5) & Tồn cao bán chậm (>= 10) (Tab 3)
+        const lowTbody = document.getElementById('stats-low-stock-tbody');
+        const slowTbody = document.getElementById('stats-slow-moving-tbody');
+        if (lowTbody || slowTbody) {
+            try {
+                const soldInYearMap = {};
+                yearOrders.forEach(o => {
+                    const st = (o.status || '').toLowerCase();
+                    if (st.includes('hủy') || st === 'cancelled') return;
+                    (o.items || []).forEach(it => {
+                        if (it.id) soldInYearMap[it.id] = (soldInYearMap[it.id] || 0) + (Number(it.quantity) || 1);
+                    });
+                });
+
+                const prodSnap = await getDocs(collection(db, "products"));
+                const allProds = prodSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => !p.isHidden && !p.isCombo);
+
+                if (lowTbody) {
+                    const lowStock = allProds
+                        .filter(p => Number(p.stock ?? 0) <= 5)
+                        .sort((a, b) => Number(a.stock ?? 0) - Number(b.stock ?? 0))
+                        .slice(0, 15);
+                    lowTbody.innerHTML = lowStock.length === 0
+                        ? '<tr><td colspan="3" style="text-align:center; color:#6E665D;">Tất cả sản phẩm đều đủ tồn kho.</td></tr>'
+                        : lowStock.map(p => {
+                            const stk = Number(p.stock ?? 0);
+                            return `
+                                <tr>
+                                    <td><strong>${escapeHTML(p.name || p.id)}</strong></td>
+                                    <td style="text-align:center;"><span style="padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.78rem; background:${stk <= 0 ? '#FEF2F2' : '#FFF7ED'}; color:${stk <= 0 ? '#B91C1C' : '#C2410C'};">${stk <= 0 ? 'Hết hàng' : stk}</span></td>
+                                    <td style="text-align:right; color:#6E665D;">${Number(p.sold || 0)}</td>
+                                </tr>`;
+                        }).join('');
+                }
+
+                if (slowTbody) {
+                    const slowMoving = allProds
+                        .filter(p => Number(p.stock ?? 0) >= 10)
+                        .map(p => ({ ...p, periodSold: soldInYearMap[p.id] || 0 }))
+                        .sort((a, b) => a.periodSold - b.periodSold || Number(b.stock ?? 0) - Number(a.stock ?? 0))
+                        .slice(0, 15);
+                    slowTbody.innerHTML = slowMoving.length === 0
+                        ? '<tr><td colspan="3" style="text-align:center; color:#6E665D;">Không có sản phẩm tồn cao bán chậm.</td></tr>'
+                        : slowMoving.map(p => `
+                            <tr>
+                                <td><strong>${escapeHTML(p.name || p.id)}</strong></td>
+                                <td style="text-align:center; font-weight:700; color:#2B2928;">${Number(p.stock ?? 0)}</td>
+                                <td style="text-align:right; color:#9C7156; font-weight:600;">${p.periodSold}</td>
+                            </tr>`).join('');
+                }
+            } catch (e) {
+                if (lowTbody) lowTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#6E665D;">Lỗi tải dữ liệu tồn kho.</td></tr>';
+                if (slowTbody) slowTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#6E665D;">Lỗi tải dữ liệu tồn kho.</td></tr>';
+            }
+        }
+    };
+
     // Gắn sự kiện chuyển đổi linh hoạt không cần fetch lại Firebase
     btnRefresh.onclick = updateReport;
     document.getElementById('btn-export-stats-excel').onclick = exportStatsToExcel;
     if (yearSelect) yearSelect.onchange = updateReport;
     if (periodSelect) periodSelect.onchange = renderAllAnalyticsViews;
-    if (channelSelect) channelSelect.onchange = renderAllAnalyticsViews;
+    if (channelSelect) channelSelect.onchange = () => {
+        renderAllAnalyticsViews();
+        renderExtendedReportTabs(parseInt(yearSelect.value));
+    };
 
     // Tự động vẽ lại Top Bán chạy khi thay đổi metric/groupBy/type
     const topSoldMetricEl = document.getElementById('topSoldMetric');
@@ -20075,7 +20542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         return `
                         <div class="suggestion-item ${idx === posHighlightedIndex ? 'highlighted' : ''}" onclick="${clickRowAction}" style="cursor: pointer; padding: 8px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-                            <img src="${imgUrl}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0;" onerror="this.src='../Asset/icons/favicon.png'">
+                            <img src="${imgUrl}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0;" onerror="this.onerror=null; this.src='../Asset/icons/favicon.png'">
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1e293b;">
                                     ${p.name}
@@ -21033,6 +21500,135 @@ window.deleteRestockAlert = async (id) => {
     }
 };
 
+// --- Quản lý Tin nhắn liên hệ (contact_messages) ---
+let allContactMessages = [];
+
+window.fetchContactMessagesAdmin = async () => {
+    const tbody = document.getElementById('contact-messages-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;"><span class="spinner"></span></td></tr>';
+
+    try {
+        const q = query(collection(db, "contact_messages"), orderBy("timestamp", "desc"), limit(200));
+        const querySnapshot = await getDocs(q);
+        allContactMessages = querySnapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        }));
+        window.renderFilteredContactMessages();
+    } catch (err) {
+        console.error("Lỗi lấy danh sách contact_messages:", err);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444;">Lỗi khi tải dữ liệu. Vui lòng thử lại!</td></tr>';
+    }
+};
+
+window.renderFilteredContactMessages = () => {
+    const tbody = document.getElementById('contact-messages-tbody');
+    const summaryEl = document.getElementById('contact-summary-counts');
+    if (!tbody) return;
+
+    const statusFilter = document.getElementById('contact-status-filter')?.value || 'all';
+    const searchKeyword = (document.getElementById('contact-search-input')?.value || '').trim().toLowerCase();
+
+    const newCount = allContactMessages.filter(m => !m.status || m.status === 'new').length;
+    const repliedCount = allContactMessages.filter(m => m.status === 'replied').length;
+    if (summaryEl) {
+        summaryEl.innerHTML = `
+            <div>Tổng tin nhắn: <strong>${allContactMessages.length}</strong></div>
+            <div>Chưa đọc: <strong style="color: #b45309;">${newCount}</strong></div>
+            <div>Đã phản hồi: <strong style="color: #15803d;">${repliedCount}</strong></div>
+        `;
+    }
+
+    const filtered = allContactMessages.filter(m => {
+        const st = m.status || 'new';
+        if (statusFilter !== 'all' && st !== statusFilter) return false;
+        if (searchKeyword) {
+            const haystack = `${m.name || ''} ${m.phone || ''} ${m.message || ''}`.toLowerCase();
+            if (!haystack.includes(searchKeyword)) return false;
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Không có tin nhắn liên hệ nào phù hợp.</td></tr>';
+        return;
+    }
+
+    const statusBadgeMap = {
+        new: { label: 'Mới', bg: '#fef3c7', color: '#b45309' },
+        read: { label: 'Đã đọc', bg: '#e0f2fe', color: '#0369a1' },
+        replied: { label: 'Đã phản hồi', bg: '#dcfce7', color: '#15803d' }
+    };
+
+    tbody.innerHTML = filtered.map(msg => {
+        const dateStr = msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleString('vi-VN') : 'Vừa gửi';
+        const st = msg.status || 'new';
+        const badge = statusBadgeMap[st] || statusBadgeMap.new;
+        const nextStatus = st === 'new' ? 'read' : (st === 'read' ? 'replied' : 'new');
+        const nextLabel = st === 'new' ? 'Đánh dấu Đã đọc' : (st === 'read' ? 'Đã phản hồi' : 'Đánh dấu Mới');
+
+        return `
+            <tr>
+                <td style="font-size: 0.8rem; color: #64748b;">${dateStr}</td>
+                <td><strong>${escapeHTML(msg.name || 'Khách')}</strong></td>
+                <td><a href="tel:${escapeHTML(msg.phone || '')}" style="color: #0066cc; font-weight: 600;">${escapeHTML(msg.phone || '')}</a></td>
+                <td style="white-space: pre-wrap; line-height: 1.45; color: #1e293b; max-width: 420px;">${escapeHTML(msg.message || '')}</td>
+                <td style="text-align: center;">
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: ${badge.bg}; color: ${badge.color};">
+                        ${badge.label}
+                    </span>
+                </td>
+                <td style="text-align: center;">
+                    <div style="display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;">
+                        <button type="button" class="btn-minimal" style="padding: 4px 10px; font-size: 0.75rem;" onclick="window.updateContactMessageStatus('${msg.id}', '${nextStatus}')">
+                            ${nextLabel}
+                        </button>
+                        <button type="button" class="btn-minimal text-danger" style="padding: 4px 7px; font-size: 0.75rem;" onclick="window.deleteContactMessage('${msg.id}')" title="Xóa tin nhắn">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+window.updateContactMessageStatus = async (id, newStatus) => {
+    try {
+        await updateDoc(doc(db, "contact_messages", id), {
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        });
+        const target = allContactMessages.find(m => m.id === id);
+        if (target) target.status = newStatus;
+        window.renderFilteredContactMessages();
+        showToast("Đã cập nhật trạng thái tin nhắn");
+    } catch (e) {
+        console.error("Lỗi cập nhật trạng thái tin nhắn:", e);
+        showToast("Lỗi khi cập nhật trạng thái", "error");
+    }
+};
+
+window.deleteContactMessage = async (id) => {
+    const ok = await showModalConfirm(
+        "Bạn có chắc chắn muốn xóa tin nhắn liên hệ này không?",
+        "Xóa tin nhắn liên hệ",
+        { confirmText: "Xóa tin nhắn", cancelText: "Hủy", type: "warning" }
+    );
+    if (!ok) return;
+    try {
+        await deleteDoc(doc(db, "contact_messages", id));
+        allContactMessages = allContactMessages.filter(m => m.id !== id);
+        window.renderFilteredContactMessages();
+        showToast("Đã xóa tin nhắn liên hệ");
+    } catch (e) {
+        console.error("Lỗi xóa tin nhắn liên hệ:", e);
+        showToast("Lỗi khi xóa tin nhắn", "error");
+    }
+};
+
 // --- Gemini AI Settings Management ---
 document.addEventListener('DOMContentLoaded', () => {
     const aiForm = document.getElementById('ai-settings-form');
@@ -21180,9 +21776,12 @@ async function loadCustomerAnalyticsData(forceRefresh = false) {
     }
 }
 
-function parseLocationDetails(addressStr) {
-    if (!addressStr || typeof addressStr !== 'string') {
-        return { province: 'TP. Hồ Chí Minh', district: 'Quận 1', isHCM: true, isInnerHCM: true };
+function parseLocationDetails(addressStr, isPos = false) {
+    if (isPos && (!addressStr || typeof addressStr !== 'string' || !addressStr.trim())) {
+        return { province: 'Mua tại cửa hàng (POS)', district: 'Tại quầy POS', isHCM: false, isInnerHCM: false };
+    }
+    if (!addressStr || typeof addressStr !== 'string' || !addressStr.trim()) {
+        return { province: 'Chưa có địa chỉ', district: 'Không rõ', isHCM: false, isInnerHCM: false };
     }
 
     const norm = addressStr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -21283,10 +21882,29 @@ function renderCustomerAnalytics() {
     let totalLocationPoints = 0;
     let totalHcmInnerPoints = 0;
 
-    // Phân tích từ Đơn hàng
+    // Phân tích từ Đơn hàng (loại bỏ đơn đã hủy, ghép đủ các trường địa chỉ)
     filteredOrders.forEach(order => {
-        const addr = order.shippingAddress?.address || order.shippingAddress?.city || order.shippingAddress?.province || order.address || '';
-        const loc = parseLocationDetails(addr);
+        const st = String(order.status || '').toLowerCase();
+        if (st.includes('hủy') || st === 'cancelled') return;
+
+        const isPos = (typeof window.getOrderSalesChannelGroup === 'function' && window.getOrderSalesChannelGroup(order) === 'pos')
+            || String(order.id || '').toUpperCase().startsWith('POS-')
+            || order.source === 'pos';
+
+        const addrParts = [
+            order.shippingAddress?.address,
+            order.shippingAddress?.ward,
+            order.shippingAddress?.district,
+            order.shippingAddress?.province,
+            order.shippingAddress?.city,
+            order.address,
+            order.ward,
+            order.district,
+            order.province,
+            order.city
+        ].filter(Boolean);
+        const fullAddr = addrParts.join(', ');
+        const loc = parseLocationDetails(fullAddr, isPos);
 
         // Filter Region
         if (regionFilter === 'hcm_inner' && !loc.isInnerHCM) return;
@@ -21296,7 +21914,7 @@ function renderCustomerAnalytics() {
 
         provinceMap[loc.province] = (provinceMap[loc.province] || { visitors: 0, orders: 0, revenue: 0 });
         provinceMap[loc.province].orders += 1;
-        provinceMap[loc.province].visitors += Math.floor(Math.random() * 3) + 2; // Hệ số khách truy cập ước tính
+        provinceMap[loc.province].visitors += 1;
         provinceMap[loc.province].revenue += Number(order.totalAmount || 0);
 
         if (loc.isHCM) {
@@ -21306,11 +21924,12 @@ function renderCustomerAnalytics() {
         totalLocationPoints += 1;
     });
 
-    // Phân tích từ Danh sách Khách hàng đăng ký (Users)
+    // Phân tích từ Danh sách Khách hàng đăng ký có khai báo địa chỉ thật
     analyticsCache.users.forEach(user => {
-        const addr = user.address || user.city || user.province || '';
-        if (!addr) return;
-        const loc = parseLocationDetails(addr);
+        const addrParts = [user.address, user.ward, user.district, user.province, user.city].filter(Boolean);
+        const fullAddr = addrParts.join(', ');
+        if (!fullAddr) return;
+        const loc = parseLocationDetails(fullAddr, false);
 
         if (regionFilter === 'hcm_inner' && !loc.isInnerHCM) return;
         if (regionFilter === 'hcm_all' && !loc.isHCM) return;
@@ -21318,7 +21937,7 @@ function renderCustomerAnalytics() {
         if (regionFilter === 'other' && (loc.isHCM || loc.province === 'Hà Nội')) return;
 
         provinceMap[loc.province] = (provinceMap[loc.province] || { visitors: 0, orders: 0, revenue: 0 });
-        provinceMap[loc.province].visitors += 3;
+        provinceMap[loc.province].visitors += 1;
 
         if (loc.isHCM) {
             hcmDistrictMap[loc.district] = (hcmDistrictMap[loc.district] || 0) + 1;
@@ -21327,37 +21946,13 @@ function renderCustomerAnalytics() {
         totalLocationPoints += 1;
     });
 
-    // Fallback dữ liệu trực quan sinh động nếu shop mới khởi tạo
-    if (Object.keys(provinceMap).length === 0) {
-        provinceMap['TP. Hồ Chí Minh'] = { visitors: 2840, orders: 142, revenue: 68500000 };
-        provinceMap['Hà Nội'] = { visitors: 890, orders: 38, revenue: 21200000 };
-        provinceMap['Đà Nẵng'] = { visitors: 420, orders: 19, revenue: 9800000 };
-        provinceMap['Bình Dương'] = { visitors: 360, orders: 16, revenue: 7600000 };
-        provinceMap['Đồng Nai'] = { visitors: 290, orders: 12, revenue: 5400000 };
-        provinceMap['Cần Thơ'] = { visitors: 180, orders: 8, revenue: 3900000 };
-        provinceMap['Tỉnh thành khác'] = { visitors: 510, orders: 21, revenue: 11500000 };
-
-        hcmDistrictMap['Quận 1'] = 34;
-        hcmDistrictMap['Quận 3'] = 28;
-        hcmDistrictMap['Bình Thạnh'] = 25;
-        hcmDistrictMap['Gò Vấp'] = 22;
-        hcmDistrictMap['Tân Bình'] = 19;
-        hcmDistrictMap['TP. Thủ Đức'] = 18;
-        hcmDistrictMap['Quận 7'] = 15;
-        hcmDistrictMap['Quận 10'] = 12;
-        hcmDistrictMap['Ngoại thành (Củ Chi, Hóc Môn, Bình Chánh)'] = 9;
-
-        totalLocationPoints = 256;
-        totalHcmInnerPoints = 173;
-    }
-
-    // Tính toán Top location
-    const sortedProvinces = Object.entries(provinceMap).sort((a, b) => (b[1].visitors + b[1].orders * 5) - (a[1].visitors + a[1].orders * 5));
+    // Tính toán Top location hoàn toàn từ dữ liệu thật (không bơm dữ liệu giả)
+    const sortedProvinces = Object.entries(provinceMap).sort((a, b) => (b[1].orders - a[1].orders) || (b[1].visitors - a[1].visitors));
     const totalAllVisitors = sortedProvinces.reduce((sum, [, data]) => sum + data.visitors, 0);
 
-    const topProvince = sortedProvinces[0] || ['TP. Hồ Chí Minh', { visitors: 100, orders: 10 }];
+    const topProvince = sortedProvinces[0] || ['Chưa có dữ liệu', { visitors: 0, orders: 0, revenue: 0 }];
     const topProvincePct = totalAllVisitors > 0 ? ((topProvince[1].visitors / totalAllVisitors) * 100).toFixed(1) : '0.0';
-    const hcmInnerRate = totalLocationPoints > 0 ? ((totalHcmInnerPoints / totalLocationPoints) * 100).toFixed(1) : '68.5';
+    const hcmInnerRate = totalLocationPoints > 0 ? ((totalHcmInnerPoints / totalLocationPoints) * 100).toFixed(1) : '0.0';
 
     // Cập nhật thẻ KPIs
     const kpiTopLoc = document.getElementById('kpi-top-location');
@@ -21481,17 +22076,20 @@ function renderLocationTable(sortedProvinces, totalAllVisitors) {
         const rankBadge = idx === 0 ? '<i class="ti ti-medal"></i>' : (idx === 1 ? '<i class="ti ti-medal-2"></i>' : (idx === 2 ? '<i class="ti ti-award"></i>' : `#${idx + 1}`));
         const pct = totalAllVisitors > 0 ? ((data.visitors / totalAllVisitors) * 100).toFixed(1) : '0.0';
         const isHCM = province === 'TP. Hồ Chí Minh';
-        const expressTag = isHCM ?
-            '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700;"><i class="ti ti-bolt-filled"></i> Hỗ trợ 4 Giờ</span>' :
-            '<span style="color: #64748b; font-size: 0.75rem;"><i class="ti ti-truck-delivery"></i> Tiêu chuẩn</span>';
-        const keyArea = isHCM ? 'Nội thành TP.HCM (Q1, Q3, Bình Thạnh...)' : (province === 'Hà Nội' ? 'Hoàn Kiếm, Cầu Giấy, Đống Đa' : 'Khu vực trung tâm');
+        const isPOS = province === 'Mua tại cửa hàng (POS)';
+        const expressTag = isPOS
+            ? '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #faf5ef; color: #7d563d; border: 1px solid #e5d5c5; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.2;"><i class="ti ti-building-store"></i> Tại cửa hàng</span>'
+            : (isHCM
+                ? '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.2;"><i class="ti ti-bolt-filled"></i> Hỗ trợ 4 Giờ</span>'
+                : '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; line-height: 1.2;"><i class="ti ti-truck-delivery"></i> Tiêu chuẩn</span>');
+        const keyArea = isPOS ? 'Khách mua trực tiếp tại tiệm' : (isHCM ? 'Nội thành TP.HCM (Q1, Q3, Bình Thạnh...)' : (province === 'Hà Nội' ? 'Hoàn Kiếm, Cầu Giấy, Đống Đa' : 'Khu vực trung tâm'));
 
         rowsHtml += `
             <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; transition: background 0.15s ease;" onmouseover="this.style.background='#fafaf9'" onmouseout="this.style.background='transparent'">
-                <td style="padding: 10px 12px; font-weight: 700;">${rankBadge}</td>
+                <td style="padding: 10px 12px; font-weight: 700; white-space: nowrap;">${rankBadge}</td>
                 <td style="padding: 10px 12px; font-weight: 600; color: #1c1917;">${province}</td>
                 <td style="padding: 10px 12px; color: #64748b; font-size: 0.8rem;">${keyArea}</td>
-                <td style="padding: 10px 12px; text-align: center;">${expressTag}</td>
+                <td style="padding: 10px 12px; text-align: center; white-space: nowrap;">${expressTag}</td>
                 <td style="padding: 10px 12px; text-align: right; font-weight: 600;">${data.visitors.toLocaleString()}</td>
                 <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #0284c7;">${data.orders.toLocaleString()}</td>
                 <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #c2410c;">${pct}%</td>
@@ -21507,8 +22105,8 @@ function renderProductViewsSection(categoryFilter = 'all') {
         const sold = Number(p.sold || 0);
         const stock = Number(p.stock || 0);
         const price = Number(p.price || 0);
-        // Lấy lượt xem thực tế hoặc nội suy nếu chưa ghi vết
-        const views = Number(p.views) || Math.max(sold * 8 + Math.floor((p.name ? p.name.length * 17 : 20) % 90) + 25, 18);
+        // Chỉ lấy lượt xem thực tế từ Firestore (không nội suy số ảo)
+        const views = Math.max(0, Number(p.views) || 0);
         const conversionRate = views > 0 ? ((sold / views) * 100) : 0;
 
         return {
@@ -21529,8 +22127,8 @@ function renderProductViewsSection(categoryFilter = 'all') {
         prods = prods.filter(p => p.category === categoryFilter);
     }
 
-    // Sắp xếp theo lượt xem giảm dần
-    prods.sort((a, b) => b.views - a.views);
+    // Sắp xếp theo lượt xem thật giảm dần (ưu tiên bán chạy nếu cùng lượt xem)
+    prods.sort((a, b) => (b.views - a.views) || (b.sold - a.sold));
     filteredAnalyticsProducts = prods;
 
     // Cập nhật KPIs
@@ -21649,11 +22247,11 @@ function filterAnalyticsProductTable(query = '') {
     let rowsHtml = '';
     list.slice(0, 30).forEach(p => {
         const rate = p.conversionRate.toFixed(1);
-        let badgeHtml = '<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem;"><i class="ti ti-star-filled"></i> Ổn định</span>';
+        let badgeHtml = '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; line-height: 1.2;"><i class="ti ti-star-filled"></i> Ổn định</span>';
         if (p.conversionRate >= 14) {
-            badgeHtml = '<span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;"><i class="ti ti-flame-filled"></i> Siêu Hot</span>';
+            badgeHtml = '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.2;"><i class="ti ti-flame-filled"></i> Siêu Hot</span>';
         } else if (p.views >= 100 && p.conversionRate < 8) {
-            badgeHtml = '<span style="background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600;"><i class="ti ti-bolt-filled"></i> Cần đẩy Sale</span>';
+            badgeHtml = '<span style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 3px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; line-height: 1.2;"><i class="ti ti-bolt-filled"></i> Cần đẩy Sale</span>';
         }
 
         rowsHtml += `
@@ -21666,12 +22264,12 @@ function filterAnalyticsProductTable(query = '') {
                     </div>
                 </td>
                 <td style="padding: 10px 12px; color: #475569; font-size: 0.8rem;">${p.category}</td>
-                <td style="padding: 10px 12px; text-align: right; font-weight: 600;">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
-                <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #c2410c;">${p.views.toLocaleString()}</td>
-                <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #0284c7;">${p.sold.toLocaleString()}</td>
-                <td style="padding: 10px 12px; text-align: right; color: ${p.stock <= 5 ? '#e11d48' : '#334155'}; font-weight: ${p.stock <= 5 ? '700' : '500'};">${p.stock}</td>
-                <td style="padding: 10px 12px; text-align: center; font-weight: 700;">${rate}%</td>
-                <td style="padding: 10px 12px; text-align: center;">${badgeHtml}</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 600; white-space: nowrap;">${new Intl.NumberFormat('vi-VN').format(p.price)}đ</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #c2410c; white-space: nowrap;">${p.views.toLocaleString()}</td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #0284c7; white-space: nowrap;">${p.sold.toLocaleString()}</td>
+                <td style="padding: 10px 12px; text-align: right; color: ${p.stock <= 5 ? '#e11d48' : '#334155'}; font-weight: ${p.stock <= 5 ? '700' : '500'}; white-space: nowrap;">${p.stock}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 700; white-space: nowrap;">${rate}%</td>
+                <td style="padding: 10px 12px; text-align: center; white-space: nowrap;">${badgeHtml}</td>
             </tr>
         `;
     });

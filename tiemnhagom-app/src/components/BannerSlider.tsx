@@ -16,8 +16,9 @@ import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useFocusEffect, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { BannerSlide, getHeroBanners } from '../services/productService';
+import { BannerSlide, getHeroBannerConfig } from '../services/productService';
 import { useSettings } from '../context/SettingsContext';
+import { getLocalCachedVideoUri, cacheVideoOffline } from '../utils/videoCacheManager';
 import { LiquidGlass } from './LiquidGlass';
 import { ScalePressable } from './ScalePressable';
 import { BlurButton } from './BlurButton';
@@ -27,7 +28,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Chiều cao banner full màn hình chuẩn theo giao diện mobile web (chiếm trọn khung nhìn)
 export const HERO_BANNER_HEIGHT = Math.min(SCREEN_HEIGHT * 0.82, 680);
 
-const videoSource = require('../../assets/videos/video_banner_xmas.mp4');
+const localFallbackVideo = require('../../assets/videos/video_banner_xmas.mp4');
 
 interface BannerSliderProps {
   onBannerPress?: (slide: BannerSlide) => void;
@@ -38,13 +39,15 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
   const { t } = useSettings();
   const pathname = usePathname();
   const [slides, setSlides] = useState<BannerSlide[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [hasValidVideo, setHasValidVideo] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const currentIndexRef = useRef(0);
   const scrollViewRef = useRef<any>(null);
   const autoPlayTimer = useRef<any>(null);
 
-  // Video mặc định theo yêu cầu người dùng
-  const [bannerMode, setBannerMode] = useState<'image' | 'video'>('video');
+  // Mặc định ở chế độ 'image' trừ khi Firestore có cấu hình video hợp lệ
+  const [bannerMode, setBannerMode] = useState<'image' | 'video'>('image');
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const userPausedRef = useRef(false);
@@ -55,29 +58,71 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
   bannerModeRef.current = bannerMode;
 
   // Khởi tạo Video Player tự động chạy lặp (loop) và tắt tiếng (muted) mặc định
-  const player = useVideoPlayer(videoSource, (p) => {
+  const currentVideoSource = videoUrl ? { uri: videoUrl } : localFallbackVideo;
+  const player = useVideoPlayer(currentVideoSource, (p) => {
     p.loop = true;
     p.muted = true;
-    p.play();
+    if (bannerMode === 'video') {
+      p.play();
+    }
   });
 
   // Animated value theo dõi vị trí cuộn x (cho animation mượt mà theo cử chỉ ngón tay)
   const scrollX = useRef(new Animated.Value(0)).current;
 
-  // Nạp danh sách banner từ Firestore (ưu tiên mobileImageUrl)
+  // Nạp cấu hình Banner và Video trực tiếp từ Firestore (settings/banners)
   useEffect(() => {
     let isMounted = true;
-    getHeroBanners().then((data) => {
-      if (isMounted && data.length > 0) {
-        setSlides(data);
+    getHeroBannerConfig().then(async (config) => {
+      if (!isMounted) return;
+      if (config.slides && config.slides.length > 0) {
+        setSlides(config.slides);
         setActiveIndex(0);
         currentIndexRef.current = 0;
       }
+      if (config.videoUrl) {
+        setVideoUrl(config.videoUrl);
+        setHasValidVideo(true);
+        setBannerMode('video');
+        bannerModeRef.current = 'video';
+
+        // 1. Kiểm tra video đã tải offline trong máy chưa để phát tức thì 0ms (không cần tốn mạng load lại)
+        const cachedLocalUri = await getLocalCachedVideoUri(config.videoUrl);
+        const playUri = cachedLocalUri || config.videoUrl;
+
+        // Dùng replaceAsync trên iOS để giải phóng main thread, chống khựng UI
+        if (typeof (player as any).replaceAsync === 'function') {
+          await (player as any).replaceAsync({ uri: playUri });
+        } else {
+          player.replace({ uri: playUri });
+        }
+        player.loop = true;
+        player.muted = true;
+        player.play();
+        setIsPlaying(true);
+
+        // 2. Nếu chưa có file offline trong máy, tự động tải ngầm vào máy người dùng
+        if (!cachedLocalUri) {
+          cacheVideoOffline(config.videoUrl, (downloadedUri) => {
+            if (isMounted) {
+              console.log('Đã tải xong video offline vào máy:', downloadedUri);
+            }
+          });
+        }
+      } else {
+        setVideoUrl(null);
+        setHasValidVideo(false);
+        setBannerMode('image');
+        bannerModeRef.current = 'image';
+        try { player.pause(); } catch {}
+        setIsPlaying(false);
+      }
     });
+
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [player]);
 
   const stopAutoPlay = () => {
     if (autoPlayTimer.current) {
@@ -228,9 +273,16 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
 
   // Bật / Tắt âm thanh video
   const toggleMute = () => {
-    const next = !isMuted;
-    player.muted = next;
-    setIsMuted(next);
+    try {
+      const next = !isMuted;
+      player.muted = next;
+      if (!next) {
+        player.volume = 1.0;
+      }
+      setIsMuted(next);
+    } catch (e) {
+      console.warn('Lỗi khi bật/tắt âm thanh:', e);
+    }
   };
 
   // Tạm dừng / Tiếp tục phát video khi chạm vào màn hình
@@ -273,7 +325,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
               zIndex: 10,
             },
           ]}
-          pointerEvents="auto"
+          pointerEvents="box-none"
         >
           <TouchableOpacity
             activeOpacity={0.96}
@@ -286,6 +338,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
               nativeControls={false}
               contentFit="cover"
               allowsPictureInPicture={false}
+              allowsVideoFrameAnalysis={false}
             />
           </TouchableOpacity>
         </View>
@@ -414,6 +467,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
           style={styles.circleBtnInner}
           containerStyle={styles.circleBtnWrapLeft}
           onPress={toggleMute}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
           accessibilityLabel={isMuted ? (t('unmuteVideo') || 'Bật âm thanh') : (t('muteVideo') || 'Tắt âm thanh')}
         >
           <Ionicons
@@ -476,6 +530,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
           style={styles.circleBtnInner}
           containerStyle={styles.circleBtnWrapRightTop}
           onPress={togglePlayPause}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           accessibilityLabel={
             isPlaying
               ? (t('pauseVideo') || 'Tạm dừng video')
@@ -491,23 +546,26 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({ onBannerPress, scrol
         </BlurButton>
       )}
 
-      {/* ================= 6. NÚT CHUYỂN ĐỔI CHẾ ĐỘ TRÒN (GÓC PHẢI DƯỚI) ================= */}
-      <BlurButton
-        style={styles.circleBtnInner}
-        containerStyle={styles.circleBtnWrapRight}
-        onPress={handleToggleMode}
-        accessibilityLabel={
-          bannerMode === 'video'
-            ? (t('bannerModeImage') || 'Chuyển sang xem ảnh')
-            : (t('bannerModeVideo') || 'Chuyển sang xem video')
-        }
-      >
-        <Ionicons
-          name={bannerMode === 'video' ? 'images-outline' : 'videocam'}
-          size={20}
-          color="#FFFFFF"
-        />
-      </BlurButton>
+      {/* ================= 6. NÚT CHUYỂN ĐỔI CHẾ ĐỘ TRÒN (GÓC PHẢI DƯỚI - CHỈ HIỂN THỊ KHI CÓ VIDEO CẤU HÌNH TỪ ADMIN) ================= */}
+      {hasValidVideo && (
+        <BlurButton
+          style={styles.circleBtnInner}
+          containerStyle={styles.circleBtnWrapRight}
+          onPress={handleToggleMode}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel={
+            bannerMode === 'video'
+              ? (t('bannerModeImage') || 'Chuyển sang xem ảnh')
+              : (t('bannerModeVideo') || 'Chuyển sang xem video')
+          }
+        >
+          <Ionicons
+            name={bannerMode === 'video' ? 'images-outline' : 'videocam'}
+            size={20}
+            color="#FFFFFF"
+          />
+        </BlurButton>
+      )}
     </View>
   );
 };
@@ -533,12 +591,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 84,
     right: 16,
-    zIndex: 30,
+    zIndex: 99,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 5,
-    elevation: 4,
+    elevation: 8,
   },
   dotsWrap: {
     position: 'absolute',
@@ -566,24 +624,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 34,
     left: 16,
-    zIndex: 30,
+    zIndex: 99,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 5,
-    elevation: 4,
+    elevation: 8,
   },
   // Nút tròn chuyển đổi bên phải (Liquid Glass 40x40 tròn)
   circleBtnWrapRight: {
     position: 'absolute',
     bottom: 34,
     right: 16,
-    zIndex: 30,
+    zIndex: 99,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 5,
-    elevation: 4,
+    elevation: 8,
   },
   circleBtnInner: {
     width: 40,
