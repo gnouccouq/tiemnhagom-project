@@ -624,27 +624,68 @@ export default function SettingsScreen() {
 
           const googleProviderInfo = currentProviders.find((p) => p?.providerId === 'google.com') || null;
           const hasGoogleOnCurrentAuth = Boolean(googleProviderInfo);
-          const isGoogleLinked = isDirectPrimarySession
-            ? hasGoogleOnCurrentAuth
-            : userProfile?.googleLinked === true;
+          const isGoogleLinked = hasGoogleOnCurrentAuth || userProfile?.googleLinked === true;
           const googleEmail = isGoogleLinked
             ? (googleProviderInfo?.email || userProfile?.googleEmail || (isDirectPrimarySession ? user?.email : null) || userProfile?.email || null)
             : null;
 
           const appleProviderInfo = currentProviders.find((p) => p?.providerId === 'apple.com') || null;
           const hasAppleOnCurrentAuth = Boolean(appleProviderInfo);
-          const isAppleLinked = isDirectPrimarySession
-            ? hasAppleOnCurrentAuth
-            : userProfile?.appleLinked === true;
+          const isAppleLinked = hasAppleOnCurrentAuth || userProfile?.appleLinked === true;
           const appleEmail = isAppleLinked
             ? (appleProviderInfo?.email || userProfile?.appleEmail || null)
             : null;
+
+          const linkedPhoneVal = (userProfile?.phone || user?.phoneNumber || '').trim();
+          const linkedEmailVal = (userProfile?.email || user?.email || '').trim();
 
           return (
             <View style={styles.sectionBlock}>
               <Text style={styles.sectionKicker}>{t('linkedAccountsTitle') || 'Tài khoản liên kết'}</Text>
 
               <View style={styles.groupCard}>
+                {/* SỐ ĐIỆN THOẠI */}
+                <View style={styles.settingRow}>
+                  <View style={[styles.iconCircle, { backgroundColor: isDark ? '#33281D' : '#F4E4CE' }]}>
+                    <Ionicons name="call" size={19} color={isDark ? '#E8CCB2' : '#7C5332'} />
+                  </View>
+                  <View style={styles.rowTextCol}>
+                    <Text style={styles.rowTitle}>{t('phoneLabel') || 'Số điện thoại'}</Text>
+                    <Text style={styles.rowSubtitle} numberOfLines={1}>
+                      {linkedPhoneVal || t('linkedStatusNotConnected')}
+                    </Text>
+                  </View>
+                  {linkedPhoneVal ? (
+                    <View style={styles.linkedActiveBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                      <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <View style={styles.rowDivider} />
+
+                {/* EMAIL */}
+                <View style={styles.settingRow}>
+                  <View style={[styles.iconCircle, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+                    <Ionicons name="mail" size={19} color={isDark ? '#F0D095' : '#96681B'} />
+                  </View>
+                  <View style={styles.rowTextCol}>
+                    <Text style={styles.rowTitle}>{t('emailLabel') || 'Email'}</Text>
+                    <Text style={styles.rowSubtitle} numberOfLines={1}>
+                      {linkedEmailVal || t('linkedStatusNotConnected')}
+                    </Text>
+                  </View>
+                  {linkedEmailVal ? (
+                    <View style={styles.linkedActiveBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                      <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <View style={styles.rowDivider} />
+
                 {/* GOOGLE */}
                 <View style={styles.settingRow}>
                   <View style={[styles.iconCircle, { backgroundColor: isDark ? '#2B2B2B' : '#F4EFEA' }]}>
@@ -667,15 +708,6 @@ export default function SettingsScreen() {
                       activeOpacity={0.8}
                       disabled={linkingGoogle}
                       onPress={async () => {
-                        if (!isDirectPrimarySession) {
-                          dialog.alert(
-                            t('notification'),
-                            userProfile?.email
-                              ? t('linkGoogleUsePrimaryEmail').replace('{email}', userProfile.email)
-                              : t('linkGoogleUsePrimaryAccount')
-                          );
-                          return;
-                        }
                         setLinkingGoogle(true);
                         try {
                           if (NativeGoogleSignin) {

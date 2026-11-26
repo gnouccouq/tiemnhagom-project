@@ -117,15 +117,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Nếu tài khoản hiện tại không có email nhưng có SĐT, kiểm tra xem có tài khoản Email nào đã đăng ký SĐT này trước đó không
-        if (!rawData.email && rawData.phone) {
-          const variants = getPhoneVariants(rawData.phone);
+        const currentPhone = rawData.phone || rawData.phoneNumber || auth.currentUser?.phoneNumber;
+        if (!rawData.email && currentPhone) {
+          const variants = getPhoneVariants(currentPhone);
           let primaryDocSnap: any = null;
           for (const p of variants) {
             const qP = query(collection(db, 'users'), where('phone', '==', p));
             const sP = await getDocs(qP);
-            const foundEmail = sP.docs.find(d => d.id !== uid && d.data().email);
+            const foundEmail = sP.docs.find(d => d.id !== uid && d.data().email && !d.data().isMerged);
             if (foundEmail) {
               primaryDocSnap = foundEmail;
+              break;
+            }
+            const qId = query(collection(db, 'users'), where('identifiers', 'array-contains', p));
+            const sId = await getDocs(qId);
+            const foundById = sId.docs.find(d => d.id !== uid && d.data().email && !d.data().isMerged);
+            if (foundById) {
+              primaryDocSnap = foundById;
               break;
             }
           }
@@ -1225,15 +1233,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const linkGoogleAccount = async (idToken: string) => {
     if (!auth.currentUser) throw new Error('Vui lòng đăng nhập trước khi liên kết tài khoản');
     const effectiveUid = userProfile?.uid || auth.currentUser.uid;
-    if (effectiveUid !== auth.currentUser.uid) {
-      const blockedErr: any = new Error(
-        userProfile?.email
-          ? `Bạn đang đăng nhập bằng SĐT gắn với tài khoản ${userProfile.email}. Vui lòng đăng nhập trực tiếp bằng ${userProfile.email} để liên kết Google cho tài khoản chính.`
-          : 'Vui lòng đăng nhập trực tiếp vào tài khoản chính để liên kết Google.'
-      );
-      blockedErr.code = 'auth/merged-session-link-blocked';
-      throw blockedErr;
-    }
 
     const credential = GoogleAuthProvider.credential(idToken);
     try {
@@ -1242,7 +1241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const linkedGoogleEmail = linkedGoogleInfo?.email || linkResult?.user?.email || null;
 
       await setDoc(
-        doc(db, 'users', auth.currentUser.uid),
+        doc(db, 'users', effectiveUid),
         {
           googleLinked: true,
           ...(linkedGoogleEmail ? { googleEmail: linkedGoogleEmail } : {}),
@@ -1251,7 +1250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         { merge: true }
       );
-      await fetchUserProfile(auth.currentUser.uid);
+      await fetchUserProfile(effectiveUid);
     } catch (err: any) {
       if (err.code === 'auth/credential-already-in-use') {
         throw new Error('Tài khoản Google này đã được liên kết với một tài khoản khác');
