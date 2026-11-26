@@ -851,10 +851,6 @@ const getStyles = (Colors: any, isDark: boolean) =>
       backgroundColor: isDark ? (Colors.background || '#121212') : '#FAF8F5',
     },
     headerSafeArea: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
       zIndex: 50,
       backgroundColor: 'transparent',
       elevation: 0,

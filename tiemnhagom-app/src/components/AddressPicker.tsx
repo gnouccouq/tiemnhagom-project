@@ -24,6 +24,15 @@ const stripAdminPrefix = (name: string) =>
     .replace(/^(Thành phố|TP\.?|Tỉnh|Quận|Huyện|Thị xã|Phường|Xã|Thị trấn|Đặc khu)\s+/i, '')
     .trim();
 
+const getWardGroupOrder = (name: string): number => {
+  const n = (name || '').trim().toLowerCase();
+  if (n.startsWith('phường')) return 1;
+  if (n.startsWith('thị trấn')) return 2;
+  if (n.startsWith('xã')) return 3;
+  if (n.startsWith('đặc khu')) return 4;
+  return 5;
+};
+
 const sortVietnameseAlpha = <T extends { name?: string }>(list: T[]): T[] =>
   [...list].sort((a, b) =>
     stripAdminPrefix(a.name || '').localeCompare(stripAdminPrefix(b.name || ''), 'vi', {
@@ -31,6 +40,16 @@ const sortVietnameseAlpha = <T extends { name?: string }>(list: T[]): T[] =>
       numeric: true,
     })
   );
+
+const sortWardsGrouped = <T extends { name?: string }>(list: T[]): T[] =>
+  [...list].sort((a, b) => {
+    const groupDiff = getWardGroupOrder(a.name || '') - getWardGroupOrder(b.name || '');
+    if (groupDiff !== 0) return groupDiff;
+    return stripAdminPrefix(a.name || '').localeCompare(stripAdminPrefix(b.name || ''), 'vi', {
+      sensitivity: 'base',
+      numeric: true,
+    });
+  });
 
 const SORTED_PROVINCES = sortVietnameseAlpha(provincesData);
 
@@ -104,7 +123,7 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
   }, [step, visible]);
 
   const rawData: any[] = React.useMemo(
-    () => (step === 'PROVINCE' ? SORTED_PROVINCES : sortVietnameseAlpha(selectedProv?.wards || [])),
+    () => (step === 'PROVINCE' ? SORTED_PROVINCES : sortWardsGrouped(selectedProv?.wards || [])),
     [step, selectedProv]
   );
   const filteredData = React.useMemo(() => {
