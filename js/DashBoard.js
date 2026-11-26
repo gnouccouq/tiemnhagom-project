@@ -268,7 +268,8 @@ const PERMISSION_GROUPS = [
             { id: 'news-section', label: 'Tin tức & Blog' },
             { id: 'collections-section', label: 'Bộ sưu tập' },
             { id: 'lookbook-section', label: 'Lookbook không gian' },
-            { id: 'events-section', label: 'Dự án & Sự kiện' }
+            { id: 'events-section', label: 'Album Dự án Decor' },
+            { id: 'flowers-section', label: 'Hoa Nhà Gốm (Mẫu hoa)' }
         ]
     },
     {
@@ -310,6 +311,8 @@ const SECTION_HASH_MAP = {
     'news-section': '#/News',
     'collections-section': '#/Collections',
     'lookbook-section': '#/Lookbook',
+    'events-section': '#/DecorAlbums',
+    'flowers-section': '#/Flowers',
     'maintenance-section': '#/Settings',
     'pos-section': '#/POS',
     'stats-section': '#/Reports',
@@ -435,6 +438,10 @@ function setupAdminTabs() {
 
             if (targetId === 'events-section') {
                 initEventManagement();
+            }
+
+            if (targetId === 'flowers-section') {
+                initFlowerManagement();
             }
 
             if (targetId === 'flash-sale-settings-section') {
@@ -701,6 +708,9 @@ async function checkAdminRights(user) {
             currentAdminPermissions = allSectionIds;
         } else {
             currentAdminPermissions = adminData.permissions || ROLE_PERMISSIONS[currentAdminRole] || ROLE_PERMISSIONS['staff'];
+            if (Array.isArray(currentAdminPermissions) && currentAdminPermissions.includes('events-section') && !currentAdminPermissions.includes('flowers-section')) {
+                currentAdminPermissions = [...currentAdminPermissions, 'flowers-section'];
+            }
         }
 
         // Cập nhật tên Thu ngân hiển thị trên POS
@@ -4675,134 +4685,896 @@ window.seedDefaultLookbookScenes = async () => {
     }
 };
 
-// --- Logic Quản lý Dự Án Sự Kiện ---
-async function initEventManagement() {
+// --- Logic Quản lý Dự Án Sự Kiện (Studio Cuốn Album Decor) ---
+let decorAdminFilterCat = 'all';
+let decorAdminSearchQuery = '';
+let pendingDecorGalleryFiles = [];
+
+function slugifyDecorAlbum(str) {
+    return String(str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function getDecorAlbumShareUrl(albumName, idx = 0) {
+    const slug = slugifyDecorAlbum(albumName) || `album-${idx + 1}`;
+    return new URL(`../trang-tri-su-kien/?album=${encodeURIComponent(slug)}`, window.location.href).href;
+}
+
+function getTaggedProductCountForEvent(eventName) {
+    if (!eventName || !Array.isArray(posProductsLocal)) return 0;
+    return posProductsLocal.filter(p => Array.isArray(p.events) && p.events.includes(eventName)).length;
+}
+
+function updateDecorStudioKpis() {
+    const total = adminEvents.length;
+    const visible = adminEvents.filter(e => !e.hidden).length;
+    const totalPhotos = adminEvents.reduce((sum, c) => {
+        const gallery = Array.isArray(c.galleryUrls) ? c.galleryUrls.filter(u => u && u !== c.imageUrl) : [];
+        return sum + (c.imageUrl ? 1 : 0) + gallery.length;
+    }, 0);
+    const richMedia = adminEvents.filter(c => c.videoUrl || c.beforeImageUrl).length;
+    const eventNames = new Set(adminEvents.map(c => c.name).filter(Boolean));
+    const taggedProducts = Array.isArray(posProductsLocal)
+        ? posProductsLocal.filter(p => Array.isArray(p.events) && p.events.some(ev => eventNames.has(ev))).length
+        : 0;
+
+    const elTotal = document.getElementById('admin-event-total-count');
+    const elVis = document.getElementById('decor-kpi-visible');
+    const elPhotos = document.getElementById('decor-kpi-photos');
+    const elMedia = document.getElementById('decor-kpi-media');
+    const elProds = document.getElementById('decor-kpi-products');
+    if (elTotal) elTotal.textContent = String(total);
+    if (elVis) elVis.textContent = String(visible);
+    if (elPhotos) elPhotos.textContent = String(totalPhotos);
+    if (elMedia) elMedia.textContent = String(richMedia);
+    if (elProds) elProds.textContent = String(taggedProducts);
+}
+
+window.switchEventEditorTab = (tabName) => {
+    document.querySelectorAll('#events-section .decor-step-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.decorTab === tabName);
+    });
+    document.querySelectorAll('#events-section .decor-tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.dataset.decorPane === tabName);
+    });
+};
+
+window.syncDecorEditorBadges = () => {
+    const form = document.getElementById('event-form');
+    if (!form) return;
+    const hasCover = Boolean(
+        document.getElementById('event-image')?.files?.[0] ||
+        document.getElementById('event-image-url')?.value.trim() ||
+        form.dataset.currentImageUrl
+    );
+    let savedGallery = [];
+    try { savedGallery = JSON.parse(form.dataset.currentGalleryUrls || '[]'); } catch (_) { savedGallery = []; }
+    const countPhotos = (hasCover ? 1 : 0) + savedGallery.length + pendingDecorGalleryFiles.length;
+    const photoPill = document.getElementById('decor-tab-photo-count');
+    if (photoPill) photoPill.textContent = String(countPhotos);
+
+    const hasMedia = Boolean(
+        document.getElementById('event-video-file')?.files?.[0] ||
+        document.getElementById('event-video-url')?.value.trim() ||
+        document.getElementById('event-before-file')?.files?.[0] ||
+        document.getElementById('event-before-url')?.value.trim()
+    );
+    const mediaPill = document.getElementById('decor-tab-media-count');
+    if (mediaPill) {
+        mediaPill.style.display = hasMedia ? 'inline-block' : 'none';
+        mediaPill.textContent = 'Đã gắn';
+    }
+};
+
+function renderDecorCoverPreview(srcUrl) {
+    const box = document.getElementById('event-image-preview');
+    if (!box) return;
+    if (!srcUrl) {
+        box.innerHTML = '';
+        return;
+    }
+    box.innerHTML = `
+        <div class="decor-cover-preview-card">
+            <img src="${escapeHTML(srcUrl)}" alt="Ảnh bìa preview" onerror="this.onerror=null;this.style.opacity='0.3';">
+            <div class="decor-thumb-actions">
+                <span class="decor-mini-tag">Ảnh bìa chính</span>
+                <button type="button" class="decor-mini-del" title="Gỡ ảnh bìa" onclick="window.clearDecorCoverPreview()">&times;</button>
+            </div>
+        </div>
+    `;
+}
+
+window.clearDecorCoverPreview = () => {
+    const form = document.getElementById('event-form');
+    const fileEl = document.getElementById('event-image');
+    const urlEl = document.getElementById('event-image-url');
+    if (fileEl) fileEl.value = '';
+    if (urlEl) urlEl.value = '';
+    if (form) delete form.dataset.currentImageUrl;
+    renderDecorCoverPreview('');
+    window.syncDecorEditorBadges();
+};
+
+function renderDecorBaPreview(slot, srcUrl) {
+    const box = document.getElementById(slot === 'before' ? 'event-before-preview' : 'event-after-preview');
+    if (!box) return;
+    if (!srcUrl) {
+        box.innerHTML = '';
+        return;
+    }
+    box.innerHTML = `
+        <div class="decor-thumb-card" style="aspect-ratio:16/10; width:100%;">
+            <img src="${escapeHTML(srcUrl)}" alt="${slot}" onerror="this.onerror=null;this.style.opacity='0.3';">
+            <div class="decor-thumb-actions">
+                <span class="decor-mini-tag">${slot === 'before' ? 'Trước' : 'Sau'}</span>
+                <button type="button" class="decor-mini-del" onclick="window.clearDecorBaSlot('${slot}')">&times;</button>
+            </div>
+        </div>
+    `;
+}
+
+window.clearDecorBaSlot = (slot) => {
+    const fileEl = document.getElementById(slot === 'before' ? 'event-before-file' : 'event-after-file');
+    const urlEl = document.getElementById(slot === 'before' ? 'event-before-url' : 'event-after-url');
+    if (fileEl) fileEl.value = '';
+    if (urlEl) urlEl.value = '';
+    renderDecorBaPreview(slot, '');
+    window.syncDecorEditorBadges();
+};
+
+function renderDecorGalleryEditorGrid() {
+    const container = document.getElementById('event-gallery-preview');
+    const form = document.getElementById('event-form');
+    if (!container || !form) return;
+
+    let savedUrls = [];
+    try { savedUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]'); } catch (_) { savedUrls = []; }
+    const editIdx = parseInt(document.getElementById('event-edit-index')?.value || '-1', 10);
+
+    const savedHtml = savedUrls.map((url, gIdx) => `
+        <div class="decor-thumb-card">
+            <img src="${escapeHTML(url)}" alt="Ảnh góc decor ${gIdx + 1}">
+            <div class="decor-thumb-actions">
+                <button type="button" class="decor-mini-tag" title="Đặt ảnh này làm Ảnh bìa" onclick="window.promoteGalleryToCover(${gIdx})">Đặt bìa</button>
+                <button type="button" class="decor-mini-del" title="Xóa ảnh này" onclick="window.removeEventGalleryImage(${editIdx}, ${gIdx})">&times;</button>
+            </div>
+        </div>
+    `).join('');
+
+    const pendingHtml = pendingDecorGalleryFiles.map((item, pIdx) => `
+        <div class="decor-thumb-card" style="border-color:#9C7156;">
+            <img src="${item.previewUrl}" alt="Ảnh mới chọn">
+            <div class="decor-thumb-actions">
+                <span class="decor-mini-tag" style="background:#9C7156; color:#fff;">Mới</span>
+                <button type="button" class="decor-mini-del" title="Bỏ ảnh vừa chọn" onclick="window.removePendingDecorGallery(${pIdx})">&times;</button>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = savedHtml + pendingHtml;
+    window.syncDecorEditorBadges();
+}
+
+window.promoteGalleryToCover = (gIdx) => {
+    const form = document.getElementById('event-form');
+    if (!form) return;
+    let savedUrls = [];
+    try { savedUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]'); } catch (_) { savedUrls = []; }
+    const chosen = savedUrls[gIdx];
+    if (!chosen) return;
+    form.dataset.currentImageUrl = chosen;
+    const urlEl = document.getElementById('event-image-url');
+    if (urlEl) urlEl.value = chosen;
+    const fileEl = document.getElementById('event-image');
+    if (fileEl) fileEl.value = '';
+    renderDecorCoverPreview(chosen);
+    showToast("Đã chọn làm Ảnh bìa chính (nhớ bấm Lưu Album để áp dụng)");
+};
+
+window.removePendingDecorGallery = (pIdx) => {
+    const removed = pendingDecorGalleryFiles.splice(pIdx, 1)[0];
+    if (removed && removed.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+    renderDecorGalleryEditorGrid();
+};
+
+window.startNewEventAlbum = () => {
+    if (typeof window.resetEventAlbumForm === 'function') window.resetEventAlbumForm();
+    window.switchEventEditorTab('info');
+    document.getElementById('event-name')?.focus();
+};
+
+let eventUnsubscribe = null;
+
+function initEventManagement() {
     const listContainer = document.getElementById('admin-event-list');
     const form = document.getElementById('event-form');
-    if (!listContainer || !form) return;
+    if (!listContainer || !form || !db) return;
 
-    onSnapshot(doc(db, "settings", "events"), (snapshot) => {
-        if (snapshot.exists()) {
-            adminEvents = snapshot.data().items || [];
-        } else {
-            adminEvents = [];
+    if (!eventUnsubscribe) {
+        eventUnsubscribe = onSnapshot(doc(db, "settings", "events"), (snapshot) => {
+            adminEvents = snapshot.exists() ? (snapshot.data().items || []) : [];
+            updateDecorStudioKpis();
+            renderEventList(listContainer);
+            populateEventCheckboxes();
+        });
+    }
+
+    const searchInput = document.getElementById('decor-admin-search');
+    if (searchInput && !searchInput.dataset.bound) {
+        searchInput.dataset.bound = '1';
+        searchInput.addEventListener('input', () => {
+            decorAdminSearchQuery = searchInput.value.trim().toLowerCase();
+            renderEventList(listContainer);
+        });
+    }
+
+    const catPillsWrap = document.getElementById('decor-admin-cat-pills');
+    if (catPillsWrap && !catPillsWrap.dataset.bound) {
+        catPillsWrap.dataset.bound = '1';
+        catPillsWrap.addEventListener('click', (ev) => {
+            const pill = ev.target.closest('.decor-cat-pill');
+            if (!pill) return;
+            decorAdminFilterCat = pill.dataset.cat || 'all';
+            catPillsWrap.querySelectorAll('.decor-cat-pill').forEach(b => b.classList.toggle('active', b === pill));
+            renderEventList(listContainer);
+        });
+    }
+
+    const nameInput = document.getElementById('event-name');
+    if (nameInput && !nameInput.dataset.bound) {
+        nameInput.dataset.bound = '1';
+        nameInput.addEventListener('input', () => {
+            const slugHint = document.getElementById('event-slug-hint');
+            const s = slugifyDecorAlbum(nameInput.value);
+            if (slugHint) slugHint.textContent = s ? `?album=${s}` : '';
+        });
+    }
+
+    const coverFileInput = document.getElementById('event-image');
+    const coverUrlInput = document.getElementById('event-image-url');
+    if (coverFileInput && !coverFileInput.dataset.bound) {
+        coverFileInput.dataset.bound = '1';
+        coverFileInput.addEventListener('change', () => {
+            const f = coverFileInput.files?.[0];
+            if (f) renderDecorCoverPreview(URL.createObjectURL(f));
+            window.syncDecorEditorBadges();
+        });
+    }
+    if (coverUrlInput && !coverUrlInput.dataset.bound) {
+        coverUrlInput.dataset.bound = '1';
+        coverUrlInput.addEventListener('input', () => {
+            if (!coverFileInput?.files?.[0]) {
+                renderDecorCoverPreview(coverUrlInput.value.trim() || form.dataset.currentImageUrl || '');
+            }
+            window.syncDecorEditorBadges();
+        });
+    }
+
+    const galleryInput = document.getElementById('event-gallery');
+    if (galleryInput && !galleryInput.dataset.bound) {
+        galleryInput.dataset.bound = '1';
+        galleryInput.addEventListener('change', () => {
+            Array.from(galleryInput.files || []).forEach(file => {
+                pendingDecorGalleryFiles.push({ file, previewUrl: URL.createObjectURL(file) });
+            });
+            galleryInput.value = '';
+            renderDecorGalleryEditorGrid();
+        });
+    }
+
+    const videoFileInput = document.getElementById('event-video-file');
+    const videoUrlInput = document.getElementById('event-video-url');
+    if (videoFileInput && !videoFileInput.dataset.bound) {
+        videoFileInput.dataset.bound = '1';
+        videoFileInput.addEventListener('change', () => {
+            const f = videoFileInput.files?.[0];
+            const lbl = document.getElementById('event-video-file-label');
+            if (lbl) lbl.textContent = f ? `Đã chọn: ${f.name} (${(f.size / (1024 * 1024)).toFixed(1)} MB)` : 'Chọn file video (.mp4 / .mov / .webm)';
+            window.syncDecorEditorBadges();
+        });
+    }
+    if (videoUrlInput && !videoUrlInput.dataset.bound) {
+        videoUrlInput.dataset.bound = '1';
+        videoUrlInput.addEventListener('input', () => window.syncDecorEditorBadges());
+    }
+
+    ['before', 'after'].forEach(slot => {
+        const fInput = document.getElementById(`event-${slot}-file`);
+        const uInput = document.getElementById(`event-${slot}-url`);
+        if (fInput && !fInput.dataset.bound) {
+            fInput.dataset.bound = '1';
+            fInput.addEventListener('change', () => {
+                const f = fInput.files?.[0];
+                if (f) renderDecorBaPreview(slot, URL.createObjectURL(f));
+                window.syncDecorEditorBadges();
+            });
         }
-        renderEventList(listContainer);
-        populateEventCheckboxes();
+        if (uInput && !uInput.dataset.bound) {
+            uInput.dataset.bound = '1';
+            uInput.addEventListener('input', () => {
+                if (!fInput?.files?.[0]) renderDecorBaPreview(slot, uInput.value.trim());
+                window.syncDecorEditorBadges();
+            });
+        }
     });
+
+    window.resetEventAlbumForm = () => {
+        form.reset();
+        document.getElementById('event-edit-index').value = "-1";
+        const heading = document.getElementById('event-form-heading');
+        if (heading) heading.textContent = "Thêm Album Decor mới";
+        const badge = document.getElementById('event-editor-mode-badge');
+        if (badge) { badge.textContent = "Tạo dự án mới"; badge.classList.remove('is-editing'); }
+        const cancelBtn = document.getElementById('btn-cancel-event-edit');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        const slugHint = document.getElementById('event-slug-hint');
+        if (slugHint) slugHint.textContent = '';
+        const vidLbl = document.getElementById('event-video-file-label');
+        if (vidLbl) vidLbl.textContent = 'Chọn file video (.mp4 / .mov / .webm)';
+        pendingDecorGalleryFiles.forEach(it => it.previewUrl && URL.revokeObjectURL(it.previewUrl));
+        pendingDecorGalleryFiles = [];
+        ['event-image-preview', 'event-gallery-preview', 'event-before-preview', 'event-after-preview'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = "";
+        });
+        delete form.dataset.currentImageUrl;
+        delete form.dataset.currentGalleryUrls;
+        window.syncDecorEditorBadges();
+        renderEventList(listContainer);
+    };
 
     form.onsubmit = async (e) => {
         e.preventDefault();
         const name = document.getElementById('event-name').value.trim();
+        const category = document.getElementById('event-category')?.value || 'Bàn tiệc & Sinh nhật';
+        const isHidden = document.getElementById('event-visibility')?.value === 'hidden';
+        const location = document.getElementById('event-location')?.value.trim() || '';
+        const eventDate = document.getElementById('event-date-label')?.value.trim() || '';
+        const toneStyle = document.getElementById('event-tone')?.value.trim() || '';
+        const guestScale = document.getElementById('event-scale')?.value.trim() || '';
+        const budgetRange = document.getElementById('event-budget')?.value.trim() || '';
         const description = document.getElementById('event-description').value.trim();
+
+        const manualCoverUrl = document.getElementById('event-image-url')?.value.trim() || '';
+        const manualVideoUrl = document.getElementById('event-video-url')?.value.trim() || '';
+        const manualBeforeUrl = document.getElementById('event-before-url')?.value.trim() || '';
+        const manualAfterUrl = document.getElementById('event-after-url')?.value.trim() || '';
+
         const file = document.getElementById('event-image').files[0];
-        const galleryFiles = document.getElementById('event-gallery').files;
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const editIndex = parseInt(document.getElementById('event-edit-index').value);
+        const videoFile = document.getElementById('event-video-file')?.files?.[0];
+        const beforeFile = document.getElementById('event-before-file')?.files?.[0];
+        const afterFile = document.getElementById('event-after-file')?.files?.[0];
+
+        const submitBtn = document.getElementById('btn-save-event-album') || form.querySelector('button[type="submit"]');
+        const editIndex = parseInt(document.getElementById('event-edit-index').value, 10);
 
         if (!name) return;
 
         try {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu...';
-            let imageUrl = form.dataset.currentImageUrl || '';
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang tải media & lưu...';
+            let imageUrl = manualCoverUrl || form.dataset.currentImageUrl || '';
             let galleryUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]');
+            let videoUrl = manualVideoUrl;
+            let beforeImageUrl = manualBeforeUrl;
+            let afterImageUrl = manualAfterUrl;
 
-            if (file) {
-                imageUrl = await uploadOrConvertImage(file, `events/${Date.now()}_${file.name}`, 1200);
+            if (file) imageUrl = await uploadOrConvertImage(file, `events/${Date.now()}_${file.name}`, 1400);
+            if (pendingDecorGalleryFiles.length > 0) {
+                const newUrls = await Promise.all(pendingDecorGalleryFiles.map((item, idx) =>
+                    uploadOrConvertImage(item.file, `events/gallery/${Date.now()}_${idx}_${item.file.name}`, 1400)
+                ));
+                galleryUrls = [...galleryUrls, ...newUrls];
+            }
+            if (videoFile) {
+                if (videoFile.size > 45 * 1024 * 1024) throw new Error("Video vượt quá 45MB, vui lòng nén nhẹ hoặc dán link video!");
+                const cleanVidName = videoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const vidRef = ref(storage, `events/videos/${Date.now()}_${cleanVidName}`);
+                const vidSnap = await uploadBytes(vidRef, videoFile);
+                videoUrl = await getDownloadURL(vidSnap.ref);
+            }
+            if (beforeFile) beforeImageUrl = await uploadOrConvertImage(beforeFile, `events/before_after/${Date.now()}_before_${beforeFile.name}`, 1400);
+            if (afterFile) afterImageUrl = await uploadOrConvertImage(afterFile, `events/before_after/${Date.now()}_after_${afterFile.name}`, 1400);
+            if (!imageUrl && galleryUrls.length > 0) imageUrl = galleryUrls[0];
+            if (!imageUrl && editIndex === -1) {
+                window.switchEventEditorTab('photos');
+                throw new Error("Vui lòng chọn Ảnh bìa (hoặc thêm ảnh vào Bộ ảnh) cho Album dự án!");
             }
 
-            if (galleryFiles.length > 0) {
-                const galleryPromises = Array.from(galleryFiles).map(async (f, idx) => {
-                    return await uploadOrConvertImage(f, `events/gallery/${Date.now()}_${idx}_${f.name}`, 1200);
-                });
-                const newGalleryUrls = await Promise.all(galleryPromises);
-                galleryUrls = [...galleryUrls, ...newGalleryUrls];
-            }
-
-            if (!imageUrl && editIndex === -1) throw new Error("Vui lòng chọn ảnh cho dự án");
-
+            const existing = editIndex > -1 ? (adminEvents[editIndex] || {}) : {};
             const eventData = {
-                name,
-                imageUrl,
-                description,
-                galleryUrls,
-                order: editIndex > -1 ? adminEvents[editIndex].order : (adminEvents.length + 1)
+                ...existing, name, category, hidden: isHidden, location, eventDate, toneStyle, guestScale, budgetRange,
+                imageUrl, description, galleryUrls, videoUrl, beforeImageUrl, afterImageUrl,
+                order: editIndex > -1 ? (existing.order || editIndex + 1) : 1,
+                updatedAt: new Date().toISOString()
             };
 
             if (editIndex > -1) adminEvents[editIndex] = eventData;
-            else adminEvents.push(eventData);
+            else adminEvents.unshift(eventData);
+            adminEvents = adminEvents.map((item, idx) => ({ ...item, order: idx + 1 }));
 
             await setDoc(doc(db, "settings", "events"), { items: adminEvents });
-            showToast("Đã lưu dự án thành công!");
-            form.reset();
-            document.getElementById('event-edit-index').value = "-1";
-            document.getElementById('event-image-preview').innerHTML = "";
-            document.getElementById('event-gallery-preview').innerHTML = "";
-            delete form.dataset.currentImageUrl;
-            delete form.dataset.currentGalleryUrls;
+            showToast(editIndex > -1 ? "Đã cập nhật Album dự án!" : "Đã thêm Album dự án mới thành công!");
+            window.resetEventAlbumForm();
         } catch (err) {
             showToast("Lỗi: " + err.message, "error");
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerText = "Lưu dự án";
+            submitBtn.textContent = "Lưu Album Dự Án";
         }
     };
 }
 
 function renderEventList(container) {
-    container.innerHTML = adminEvents.map((c, idx) => `
-        <div class="admin-card" style="margin-bottom: 10px; padding: 15px; display: flex; gap: 15px; align-items: center;">
-            <img src="${c.imageUrl}" style="width: 100px; height: 60px; object-fit: cover; border-radius: 4px;">
-            <div style="flex: 1;">
-                <h4 style="margin: 0;">${c.name}</h4>
+    if (!container) container = document.getElementById('admin-event-list');
+    if (!container) return;
+    updateDecorStudioKpis();
+
+    const activeEditIdx = parseInt(document.getElementById('event-edit-index')?.value || '-1', 10);
+    const indexed = (adminEvents || []).map((item, idx) => ({ item, idx }));
+    const filtered = indexed.filter(({ item }) => {
+        if (decorAdminFilterCat !== 'all' && (item.category || '') !== decorAdminFilterCat) return false;
+        if (decorAdminSearchQuery) {
+            const hay = [item.name, item.category, item.location, item.toneStyle, item.description].filter(Boolean).join(' ').toLowerCase();
+            if (!hay.includes(decorAdminSearchQuery)) return false;
+        }
+        return true;
+    });
+
+    const countLabel = document.getElementById('decor-filtered-count-label');
+    if (countLabel) countLabel.textContent = filtered.length === indexed.length ? `${indexed.length} dự án` : `${filtered.length} / ${indexed.length} dự án`;
+
+    if (indexed.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:48px 20px; background:#FAF8F5; border:1.5px dashed #DDD3C6; border-radius:10px; color:#7A7168;">Chưa có Album dự án decor nào. Hãy tạo album đầu tiên ở khung Studio bên trái nhé!</div>`;
+        return;
+    }
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:38px 16px; color:#7A7168;">Không tìm thấy dự án nào khớp với bộ lọc hiện tại.</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(({ item: c, idx }) => {
+        const totalPhotos = (c.imageUrl ? 1 : 0) + (Array.isArray(c.galleryUrls) ? c.galleryUrls.filter(u => u && u !== c.imageUrl).length : 0);
+        const cat = c.category || 'Không gian Decor';
+        const taggedCount = getTaggedProductCountForEvent(c.name);
+        const shareUrl = getDecorAlbumShareUrl(c.name, idx);
+        const isEditing = idx === activeEditIdx;
+        const isHidden = c.hidden === true;
+        const chips = [c.location, c.eventDate, c.guestScale, c.budgetRange].filter(Boolean).map(v => `<span>${escapeHTML(v)}</span>`).join('<span style="opacity:0.4;">·</span>');
+
+        return `
+            <div class="decor-project-card ${isEditing ? 'is-editing' : ''} ${isHidden ? 'is-hidden' : ''}">
+                <div>
+                    <div class="decor-card-media">
+                        <img src="${escapeHTML(c.imageUrl || '../Asset/images/banner_decor.jpg')}" alt="${escapeHTML(c.name || '')}" onerror="this.onerror=null;this.src='../Asset/images/banner_decor.jpg';">
+                        <span style="position:absolute; top:9px; left:9px; background:rgba(43,41,40,0.84); color:#FAF8F5; font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:6px;">#${idx + 1} · ${escapeHTML(cat)}</span>
+                        <button type="button" onclick="window.toggleEventAlbumVisibility(${idx})" style="position:absolute; top:9px; right:9px; border:none; cursor:pointer; font-size:0.69rem; font-weight:700; padding:3px 8px; border-radius:6px; background:${isHidden ? 'rgba(43,41,40,0.85)' : 'rgba(255,255,255,0.94)'}; color:${isHidden ? '#E8CCB2' : '#7D563D'};">${isHidden ? 'Đang ẩn nháp' : 'Đang hiển thị'}</button>
+                        <div style="position:absolute; bottom:8px; left:9px; right:9px; display:flex; justify-content:space-between; align-items:center; pointer-events:none;">
+                            <div style="display:flex; gap:4px;">
+                                ${c.videoUrl ? `<span style="background:rgba(156,113,86,0.94); color:#fff; font-size:0.68rem; font-weight:700; padding:2px 7px; border-radius:5px;">Video</span>` : ''}
+                                ${c.beforeImageUrl ? `<span style="background:rgba(43,41,40,0.86); color:#FAF8F5; font-size:0.68rem; font-weight:700; padding:2px 7px; border-radius:5px;">Trước/Sau</span>` : ''}
+                                ${taggedCount > 0 ? `<span style="background:rgba(250,248,245,0.94); color:#7D563D; font-size:0.68rem; font-weight:700; padding:2px 7px; border-radius:5px;">${taggedCount} SP</span>` : ''}
+                            </div>
+                            <span style="background:rgba(255,255,255,0.94); color:#2B2928; font-size:0.71rem; font-weight:700; padding:2px 8px; border-radius:5px;">${totalPhotos} ảnh</span>
+                        </div>
+                    </div>
+                    <div style="padding:13px 15px 11px;">
+                        <h4 style="margin:0 0 5px; font-size:0.98rem; font-weight:700; color:#2B2928;">${escapeHTML(c.name || '')}</h4>
+                        ${chips ? `<div style="display:flex; gap:5px; flex-wrap:wrap; font-size:0.76rem; color:#6E665D; margin-bottom:6px;">${chips}</div>` : ''}
+                        <p style="margin:0; font-size:0.8rem; color:#5C544D; line-height:1.48; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${escapeHTML(c.description || 'Chưa có mô tả concept.')}</p>
+                    </div>
+                </div>
+                <div style="padding:9px 13px; background:#FAF8F5; border-top:1px solid #EFE8DF; display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" class="decor-card-icon-btn" ${idx === 0 ? 'disabled style="opacity:0.38;"' : ''} onclick="window.moveEventAlbumStep(${idx}, -1)">&uarr;</button>
+                        <button type="button" class="decor-card-icon-btn" ${idx === adminEvents.length - 1 ? 'disabled style="opacity:0.38;"' : ''} onclick="window.moveEventAlbumStep(${idx}, 1)">&darr;</button>
+                        ${idx > 1 ? `<button type="button" class="decor-card-icon-btn" onclick="window.moveEventAlbumTop(${idx})">Đầu</button>` : ''}
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" class="decor-card-icon-btn" onclick="window.copyDecorAlbumLink(${idx})">Link</button>
+                        <a href="${escapeHTML(shareUrl)}" target="_blank" class="decor-card-icon-btn">Xem</a>
+                        <button type="button" class="decor-card-icon-btn" onclick="window.editEvent(${idx})">Sửa</button>
+                        <button type="button" class="decor-card-icon-btn decor-card-icon-btn--danger" onclick="window.deleteEvent(${idx})">Xóa</button>
+                    </div>
+                </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-minimal" onclick="window.editEvent(${idx})">Sửa</button>
-                <button class="btn-delete" onclick="window.deleteEvent(${idx})">Xóa</button>
-            </div>
-        </div>
-    `).join('') || '<p style="text-align:center; color:#999;">Chưa có dự án nào.</p>';
+        `;
+    }).join('');
 }
+
+window.copyDecorAlbumLink = async (idx) => {
+    const c = adminEvents[idx];
+    if (!c) return;
+    const url = getDecorAlbumShareUrl(c.name, idx);
+    try { await navigator.clipboard.writeText(url); showToast(`Đã sao chép link Album "${c.name}"!`); } catch (_) { showToast(url); }
+};
+window.toggleEventAlbumVisibility = async (idx) => {
+    const c = adminEvents[idx];
+    if (!c) return;
+    c.hidden = !c.hidden;
+    await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+    showToast(c.hidden ? `Đã tạm ẩn "${c.name}"` : `Đã hiển thị "${c.name}"`);
+};
+window.moveEventAlbumStep = async (idx, delta) => {
+    const target = idx + delta;
+    if (target < 0 || target >= adminEvents.length) return;
+    [adminEvents[idx], adminEvents[target]] = [adminEvents[target], adminEvents[idx]];
+    adminEvents = adminEvents.map((it, i) => ({ ...it, order: i + 1 }));
+    await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+};
+window.moveEventAlbumTop = async (idx) => {
+    if (idx <= 0 || idx >= adminEvents.length) return;
+    const [picked] = adminEvents.splice(idx, 1);
+    adminEvents.unshift(picked);
+    adminEvents = adminEvents.map((it, i) => ({ ...it, order: i + 1 }));
+    await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+    showToast("Đã đưa Album lên vị trí đầu tiên!");
+};
 
 window.editEvent = (idx) => {
     const c = adminEvents[idx];
+    if (!c) return;
+    pendingDecorGalleryFiles.forEach(it => it.previewUrl && URL.revokeObjectURL(it.previewUrl));
+    pendingDecorGalleryFiles = [];
     document.getElementById('event-edit-index').value = idx;
-    document.getElementById('event-name').value = c.name;
-    document.getElementById('event-description').value = c.description || '';
-    document.getElementById('event-image-preview').innerHTML = `<img src="${c.imageUrl}" style="width: 150px; border-radius: 4px;">`;
-
-    const galleryPreview = document.getElementById('event-gallery-preview');
-    galleryPreview.innerHTML = (c.galleryUrls || []).map((url, gIdx) => `
-        <div class="preview-item">
-            <img src="${url}">
-            <button type="button" class="remove-preview" onclick="window.removeEventGalleryImage(${idx}, ${gIdx})">&times;</button>
-        </div>
-    `).join('');
-
+    const heading = document.getElementById('event-form-heading');
+    if (heading) heading.textContent = c.name || ("Album #" + (idx + 1));
+    const badge = document.getElementById('event-editor-mode-badge');
+    if (badge) { badge.textContent = `Đang sửa Album #${idx + 1}`; badge.classList.add('is-editing'); }
+    const cancelBtn = document.getElementById('btn-cancel-event-edit');
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+    document.getElementById('event-name').value = c.name || '';
+    const slugHint = document.getElementById('event-slug-hint');
+    if (slugHint) slugHint.textContent = c.name ? `?album=${slugifyDecorAlbum(c.name)}` : '';
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    setVal('event-category', c.category || 'Bàn tiệc & Sinh nhật');
+    setVal('event-visibility', c.hidden ? 'hidden' : 'visible');
+    setVal('event-location', c.location);
+    setVal('event-date-label', c.eventDate);
+    setVal('event-tone', c.toneStyle);
+    setVal('event-scale', c.guestScale);
+    setVal('event-budget', c.budgetRange);
+    setVal('event-image-url', c.imageUrl);
+    setVal('event-video-url', c.videoUrl);
+    setVal('event-before-url', c.beforeImageUrl);
+    setVal('event-after-url', c.afterImageUrl);
+    setVal('event-description', c.description);
     const form = document.getElementById('event-form');
-    form.dataset.currentImageUrl = c.imageUrl;
+    form.dataset.currentImageUrl = c.imageUrl || '';
     form.dataset.currentGalleryUrls = JSON.stringify(c.galleryUrls || []);
-    window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+    renderDecorCoverPreview(c.imageUrl || '');
+    renderDecorBaPreview('before', c.beforeImageUrl || '');
+    renderDecorBaPreview('after', c.afterImageUrl || '');
+    renderDecorGalleryEditorGrid();
+    renderEventList();
 };
 
 window.removeEventGalleryImage = async (eventIdx, imgIdx) => {
-    if (!confirm("Xóa ảnh này khỏi gallery?")) return;
-    const ev = adminEvents[eventIdx];
-    ev.galleryUrls.splice(imgIdx, 1);
-
-    try {
-        await setDoc(doc(db, "settings", "events"), { items: adminEvents });
-        showToast("Đã xóa ảnh gallery");
-        window.editEvent(eventIdx);
-    } catch (e) { showToast("Lỗi: " + e.message, "error"); }
+    if (eventIdx < 0 || !adminEvents[eventIdx]) return;
+    if (!confirm("Xóa ảnh này khỏi bộ ảnh của Album?")) return;
+    adminEvents[eventIdx].galleryUrls.splice(imgIdx, 1);
+    await setDoc(doc(db, "settings", "events"), { items: adminEvents });
+    const form = document.getElementById('event-form');
+    if (form && parseInt(document.getElementById('event-edit-index')?.value || '-1', 10) === eventIdx) {
+        form.dataset.currentGalleryUrls = JSON.stringify(adminEvents[eventIdx].galleryUrls);
+        renderDecorGalleryEditorGrid();
+    }
+    showToast("Đã xóa ảnh khỏi bộ ảnh Album");
 };
 
 window.deleteEvent = async (idx) => {
-    if (!confirm("Xóa dự án này?")) return;
+    const target = adminEvents[idx];
+    if (!target || !confirm(`Xóa Album dự án "${target.name}"?`)) return;
+    const currentEdit = parseInt(document.getElementById('event-edit-index')?.value || '-1', 10);
     adminEvents.splice(idx, 1);
+    adminEvents = adminEvents.map((it, i) => ({ ...it, order: i + 1 }));
     await setDoc(doc(db, "settings", "events"), { items: adminEvents });
-    showToast("Đã xóa dự án");
+    if (currentEdit === idx && typeof window.resetEventAlbumForm === 'function') window.resetEventAlbumForm();
+    showToast("Đã xóa Album dự án");
+};
+
+// --- Logic Quản lý Studio Hoa Nhà Gốm ---
+let adminFlowers = [];
+let flowerUnsubscribe = null;
+let flowerAdminFilterCat = 'all';
+let flowerAdminSearchQuery = '';
+let pendingFlowerGalleryFiles = [];
+
+const DEFAULT_FLOWER_SAMPLES = [
+    { name: "Giỏ Hoa Mây Nắng Sớm", category: "Giỏ hoa & Lẵng hoa", price: 650000, priceLabel: "650.000đ", badge: "Mẫu yêu thích", toneColor: "Cam đào · Trắng kem", flowersUsed: "Hồng kem, Cát tường, Cúc mẫu đơn & Giỏ mây đan", sizeInfo: "Cao 42cm · Sinh nhật, Khai trương", leadTime: "Đặt trước 1 ngày", imageUrl: "../Asset/images/483488913_952567577001292_8906787465398018074_n_11zon.webp", galleryUrls: ["../Asset/images/484553531_1826427508158100_7349739148316959480_n.webp"], description: "Giỏ mây đan thủ công kết hợp hồng kem và hoa theo mùa bồng bềnh tự nhiên." },
+    { name: "Bó Hoa Nghệ Thuật Dịu Dàng", category: "Bó hoa nghệ thuật", price: 480000, priceLabel: "480.000đ", badge: "Tone nhẹ nhàng", toneColor: "Hồng phấn · Kem sữa", flowersUsed: "Hồng Ohara, Cát tường kép, Thảo mộc theo mùa", sizeInfo: "Cỡ vừa ôm tay · Kỷ niệm, Tốt nghiệp", leadTime: "Giao nhanh nội thành", imageUrl: "../Asset/images/482217280_952466933678023_578750406849519694_n_11zon.webp", galleryUrls: ["../Asset/images/484868330_1826427514824766_8625074595315080182_n.webp"], description: "Bó hoa gói giấy mỹ thuật tối giản tôn trọn đường nét mềm mại của cánh hoa tươi." },
+    { name: "Bình Gốm Mộc Cắm Hoa Theo Mùa", category: "Bình hoa gốm", price: 790000, priceLabel: "790.000đ · Gồm bình", badge: "Cắm bình Tiệm", toneColor: "Men gốm trầm · Hoa tươi theo mùa", flowersUsed: "Hoa tươi tuyển theo mùa cắm trực tiếp trên bình gốm Tiệm", sizeInfo: "Cao 45cm · Tân gia, Bàn ăn", leadTime: "Đặt trước 1 ngày", imageUrl: "../Asset/images/484868330_1826427514824766_8625074595315080182_n.webp", galleryUrls: ["../Asset/images/571999609_1127437962847585_7258469604952219356_n.webp"], description: "Sự giao hòa trọn vẹn giữa cốt bình gốm mộc của Tiệm và sắc hoa tươi phóng khoáng." },
+    { name: "Hoa Cưới Cầm Tay Tinh Khôi", category: "Hoa cưới cầm tay", price: 850000, priceLabel: "Từ 850.000đ", badge: "Thiết kế riêng", toneColor: "Trắng tinh khôi · Kem ngà", flowersUsed: "Rum trắng / Hồng trắng nhập, Lan hồ điệp", sizeInfo: "Dáng tự nhiên · Hôn lễ & Pre-wedding", leadTime: "Đặt trước 3 – 5 ngày", imageUrl: "../Asset/images/571999609_1127437962847585_7258469604952219356_n.webp", galleryUrls: [], description: "Thiết kế riêng theo phom váy cưới, tặng kèm hoa cài áo chú rể." },
+    { name: "Bó Hoa Vườn Chiều Thơ Mộng", category: "Bó hoa nghệ thuật", price: 550000, priceLabel: "550.000đ", badge: "Hoa theo mùa", toneColor: "Pastel trong trẻo", flowersUsed: "Hoa cánh bướm, Cát tường xoăn, Hoa đồng nội", sizeInfo: "Cỡ lớn · Quà cảm ơn, Chúc mừng", leadTime: "Đặt trước 1 ngày", imageUrl: "../Asset/images/484553531_1826427508158100_7349739148316959480_n.webp", galleryUrls: [], description: "Lấy cảm hứng từ khu vườn lộng gió buổi chiều, giàu cảm xúc nghệ thuật." },
+    { name: "Lẵng Hoa Chúc Mừng Thanh Lịch", category: "Giỏ hoa & Lẵng hoa", price: 1150000, priceLabel: "1.150.000đ", badge: "Khai trương", toneColor: "Vàng nắng · Cam ấm", flowersUsed: "Hồng ngoại, Lan vũ nữ, Mõm sói", sizeInfo: "Cao 55cm · Khai trương, Kỷ niệm", leadTime: "Đặt trước 1 – 2 ngày", imageUrl: "../Asset/images/484869461_1826429688157882_2795403903228853036_n.webp", galleryUrls: ["../Asset/images/484868330_1826427514824766_8625074595315080182_n.webp"], description: "Lẵng hoa thiết kế sang trọng, tinh tế cho dịp khai trương." }
+];
+
+function getFlowerShareUrl(name, idx = 0) {
+    return new URL(`../hoa-nha-gom/?mau=${encodeURIComponent(slugifyDecorAlbum(name) || `mau-hoa-${idx + 1}`)}`, window.location.href).href;
+}
+
+function updateFlowerStudioKpis() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+    set('flw-kpi-total', adminFlowers.length);
+    set('flw-kpi-visible', adminFlowers.filter(f => !f.hidden).length);
+    set('flw-kpi-baskets', adminFlowers.filter(f => (f.category || '').includes('Giỏ hoa')).length);
+    set('flw-kpi-bouquets', adminFlowers.filter(f => ['Bó hoa nghệ thuật', 'Bình hoa gốm'].includes(f.category || '')).length);
+}
+
+window.switchFlowerEditorTab = (tabName) => {
+    document.querySelectorAll('#flowers-section .flw-step-tab').forEach(b => b.classList.toggle('active', b.dataset.flwTab === tabName));
+    document.querySelectorAll('#flowers-section .flw-tab-pane').forEach(p => p.classList.toggle('active', p.dataset.flwPane === tabName));
+};
+window.syncFlowerPhotoBadge = () => {
+    const form = document.getElementById('flower-form');
+    if (!form) return;
+    const hasCover = Boolean(document.getElementById('flower-image')?.files?.[0] || document.getElementById('flower-image-url')?.value.trim() || form.dataset.currentImageUrl);
+    let saved = []; try { saved = JSON.parse(form.dataset.currentGalleryUrls || '[]'); } catch (_) {}
+    const el = document.getElementById('flw-tab-photo-count');
+    if (el) el.textContent = String((hasCover ? 1 : 0) + saved.length + pendingFlowerGalleryFiles.length);
+};
+
+function renderFlowerCoverPreview(srcUrl) {
+    const box = document.getElementById('flower-image-preview');
+    if (!box) return;
+    box.innerHTML = srcUrl ? `<div style="position:relative; width:170px; aspect-ratio:4/5; border-radius:8px; overflow:hidden; border:1px solid #E5DDD2;"><img src="${escapeHTML(srcUrl)}" style="width:100%; height:100%; object-fit:cover; display:block;"><button type="button" onclick="window.clearFlowerCoverPreview()" style="position:absolute; top:6px; right:6px; width:22px; height:22px; border:none; border-radius:5px; background:rgba(185,28,28,0.92); color:#fff; cursor:pointer;">&times;</button></div>` : '';
+}
+window.clearFlowerCoverPreview = () => {
+    const form = document.getElementById('flower-form');
+    if (document.getElementById('flower-image')) document.getElementById('flower-image').value = '';
+    if (document.getElementById('flower-image-url')) document.getElementById('flower-image-url').value = '';
+    if (form) delete form.dataset.currentImageUrl;
+    renderFlowerCoverPreview('');
+    window.syncFlowerPhotoBadge();
+};
+function renderFlowerGalleryEditorGrid() {
+    const container = document.getElementById('flower-gallery-preview');
+    const form = document.getElementById('flower-form');
+    if (!container || !form) return;
+    let savedUrls = []; try { savedUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]'); } catch (_) {}
+    const editIdx = parseInt(document.getElementById('flower-edit-index')?.value || '-1', 10);
+    container.innerHTML = savedUrls.map((url, gIdx) => `<div style="position:relative; aspect-ratio:4/5; border-radius:7px; overflow:hidden; border:1px solid #E2D9CE;"><img src="${escapeHTML(url)}" style="width:100%; height:100%; object-fit:cover; display:block;"><div style="position:absolute; inset:auto 0 0 0; padding:4px; background:linear-gradient(to top, rgba(28,25,23,0.82), transparent); display:flex; justify-content:space-between;"><button type="button" onclick="window.promoteFlowerGalleryToCover(${gIdx})" style="font-size:0.65rem; font-weight:700; padding:2px 5px; border-radius:4px; border:none; background:#fff; cursor:pointer;">Đặt chính</button><button type="button" onclick="window.removeFlowerGalleryImage(${editIdx}, ${gIdx})" style="width:20px; height:20px; border:none; border-radius:5px; background:#B91C1C; color:#fff; cursor:pointer;">&times;</button></div></div>`).join('')
+        + pendingFlowerGalleryFiles.map((item, pIdx) => `<div style="position:relative; aspect-ratio:4/5; border-radius:7px; overflow:hidden; border:1px solid #9C7156;"><img src="${item.previewUrl}" style="width:100%; height:100%; object-fit:cover; display:block;"><div style="position:absolute; inset:auto 0 0 0; padding:4px; background:linear-gradient(to top, rgba(28,25,23,0.82), transparent); display:flex; justify-content:space-between;"><span style="font-size:0.65rem; font-weight:700; padding:2px 5px; border-radius:4px; background:#9C7156; color:#fff;">Mới</span><button type="button" onclick="window.removePendingFlowerGallery(${pIdx})" style="width:20px; height:20px; border:none; border-radius:5px; background:#B91C1C; color:#fff; cursor:pointer;">&times;</button></div></div>`).join('');
+    window.syncFlowerPhotoBadge();
+}
+window.promoteFlowerGalleryToCover = (gIdx) => {
+    const form = document.getElementById('flower-form');
+    let saved = []; try { saved = JSON.parse(form?.dataset.currentGalleryUrls || '[]'); } catch (_) {}
+    if (!saved[gIdx]) return;
+    form.dataset.currentImageUrl = saved[gIdx];
+    if (document.getElementById('flower-image-url')) document.getElementById('flower-image-url').value = saved[gIdx];
+    renderFlowerCoverPreview(saved[gIdx]);
+    showToast("Đã đặt làm ảnh chính!");
+};
+window.removePendingFlowerGallery = (pIdx) => {
+    const r = pendingFlowerGalleryFiles.splice(pIdx, 1)[0];
+    if (r?.previewUrl) URL.revokeObjectURL(r.previewUrl);
+    renderFlowerGalleryEditorGrid();
+};
+window.startNewFlowerSample = () => {
+    if (typeof window.resetFlowerSampleForm === 'function') window.resetFlowerSampleForm();
+    window.switchFlowerEditorTab('info');
+    document.getElementById('flower-name')?.focus();
+};
+window.seedDefaultFlowerSamples = async () => {
+    const seeded = DEFAULT_FLOWER_SAMPLES.map((it, idx) => ({ ...it, hidden: false, order: idx + 1, updatedAt: new Date().toISOString() }));
+    await setDoc(doc(db, "settings", "flowers"), { items: seeded });
+    showToast("Đã nạp 6 mẫu Hoa Nhà Gốm mặc định!");
+};
+
+function initFlowerManagement() {
+    const listContainer = document.getElementById('admin-flower-list');
+    const form = document.getElementById('flower-form');
+    if (!listContainer || !form || !db) return;
+
+    if (!flowerUnsubscribe) {
+        flowerUnsubscribe = onSnapshot(doc(db, "settings", "flowers"), (snapshot) => {
+            adminFlowers = (snapshot.exists() && Array.isArray(snapshot.data().items)) ? snapshot.data().items : [];
+            updateFlowerStudioKpis();
+            renderFlowerList(listContainer);
+        });
+    }
+
+    const searchInput = document.getElementById('flw-admin-search');
+    if (searchInput && !searchInput.dataset.bound) {
+        searchInput.dataset.bound = '1';
+        searchInput.addEventListener('input', () => { flowerAdminSearchQuery = searchInput.value.trim().toLowerCase(); renderFlowerList(listContainer); });
+    }
+    const catWrap = document.getElementById('flw-admin-cat-pills');
+    if (catWrap && !catWrap.dataset.bound) {
+        catWrap.dataset.bound = '1';
+        catWrap.addEventListener('click', (ev) => {
+            const p = ev.target.closest('.flw-cat-pill');
+            if (!p) return;
+            flowerAdminFilterCat = p.dataset.cat || 'all';
+            catWrap.querySelectorAll('.flw-cat-pill').forEach(b => b.classList.toggle('active', b === p));
+            renderFlowerList(listContainer);
+        });
+    }
+    const coverFile = document.getElementById('flower-image');
+    const coverUrl = document.getElementById('flower-image-url');
+    if (coverFile && !coverFile.dataset.bound) {
+        coverFile.dataset.bound = '1';
+        coverFile.addEventListener('change', () => { if (coverFile.files?.[0]) renderFlowerCoverPreview(URL.createObjectURL(coverFile.files[0])); window.syncFlowerPhotoBadge(); });
+    }
+    if (coverUrl && !coverUrl.dataset.bound) {
+        coverUrl.dataset.bound = '1';
+        coverUrl.addEventListener('input', () => { if (!coverFile?.files?.[0]) renderFlowerCoverPreview(coverUrl.value.trim() || form.dataset.currentImageUrl || ''); window.syncFlowerPhotoBadge(); });
+    }
+    const galInput = document.getElementById('flower-gallery');
+    if (galInput && !galInput.dataset.bound) {
+        galInput.dataset.bound = '1';
+        galInput.addEventListener('change', () => {
+            Array.from(galInput.files || []).forEach(file => pendingFlowerGalleryFiles.push({ file, previewUrl: URL.createObjectURL(file) }));
+            galInput.value = '';
+            renderFlowerGalleryEditorGrid();
+        });
+    }
+
+    window.resetFlowerSampleForm = () => {
+        form.reset();
+        document.getElementById('flower-edit-index').value = '-1';
+        if (document.getElementById('flower-form-heading')) document.getElementById('flower-form-heading').textContent = 'Thêm mẫu Hoa Nhà Gốm';
+        const badge = document.getElementById('flower-editor-mode-badge');
+        if (badge) { badge.textContent = 'Tạo mẫu mới'; badge.classList.remove('is-editing'); }
+        if (document.getElementById('btn-cancel-flower-edit')) document.getElementById('btn-cancel-flower-edit').style.display = 'none';
+        pendingFlowerGalleryFiles.forEach(it => it.previewUrl && URL.revokeObjectURL(it.previewUrl));
+        pendingFlowerGalleryFiles = [];
+        renderFlowerCoverPreview('');
+        if (document.getElementById('flower-gallery-preview')) document.getElementById('flower-gallery-preview').innerHTML = '';
+        delete form.dataset.currentImageUrl;
+        delete form.dataset.currentGalleryUrls;
+        window.syncFlowerPhotoBadge();
+        renderFlowerList(listContainer);
+    };
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('flower-name').value.trim();
+        if (!name) return;
+        const submitBtn = document.getElementById('btn-save-flower-sample') || form.querySelector('button[type="submit"]');
+        const editIndex = parseInt(document.getElementById('flower-edit-index').value, 10);
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-small"></span> Đang lưu mẫu...';
+            let imageUrl = document.getElementById('flower-image-url')?.value.trim() || form.dataset.currentImageUrl || '';
+            let galleryUrls = JSON.parse(form.dataset.currentGalleryUrls || '[]');
+            const f = document.getElementById('flower-image')?.files?.[0];
+            if (f) imageUrl = await uploadOrConvertImage(f, `flowers/${Date.now()}_${f.name}`, 1300);
+            if (pendingFlowerGalleryFiles.length > 0) {
+                const ups = await Promise.all(pendingFlowerGalleryFiles.map((it, i) => uploadOrConvertImage(it.file, `flowers/gallery/${Date.now()}_${i}_${it.file.name}`, 1300)));
+                galleryUrls = [...galleryUrls, ...ups];
+            }
+            if (!imageUrl && galleryUrls.length > 0) imageUrl = galleryUrls[0];
+            if (!imageUrl && editIndex === -1) { window.switchFlowerEditorTab('photos'); throw new Error("Vui lòng chọn Ảnh đại diện!"); }
+            const price = Number(document.getElementById('flower-price')?.value) || 0;
+            const rawLbl = document.getElementById('flower-price-label')?.value.trim() || '';
+            const item = {
+                ...(editIndex > -1 ? (adminFlowers[editIndex] || {}) : {}),
+                name,
+                category: document.getElementById('flower-category')?.value || 'Giỏ hoa & Lẵng hoa',
+                hidden: document.getElementById('flower-visibility')?.value === 'hidden',
+                price,
+                priceLabel: rawLbl || (price > 0 ? price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ theo mùa'),
+                toneColor: document.getElementById('flower-tone')?.value.trim() || '',
+                badge: document.getElementById('flower-badge')?.value.trim() || '',
+                flowersUsed: document.getElementById('flower-materials')?.value.trim() || '',
+                sizeInfo: document.getElementById('flower-size')?.value.trim() || '',
+                leadTime: document.getElementById('flower-lead-time')?.value.trim() || '',
+                description: document.getElementById('flower-description')?.value.trim() || '',
+                imageUrl, galleryUrls,
+                order: editIndex > -1 ? (adminFlowers[editIndex]?.order || editIndex + 1) : 1,
+                updatedAt: new Date().toISOString()
+            };
+            if (editIndex > -1) adminFlowers[editIndex] = item;
+            else adminFlowers.unshift(item);
+            adminFlowers = adminFlowers.map((it, i) => ({ ...it, order: i + 1 }));
+            await setDoc(doc(db, "settings", "flowers"), { items: adminFlowers });
+            showToast("Đã lưu mẫu Hoa Nhà Gốm!");
+            window.resetFlowerSampleForm();
+        } catch (err) {
+            showToast("Lỗi: " + err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Lưu Mẫu Hoa Nhà Gốm";
+        }
+    };
+}
+
+function renderFlowerList(container) {
+    if (!container) container = document.getElementById('admin-flower-list');
+    if (!container) return;
+    updateFlowerStudioKpis();
+    const activeEditIdx = parseInt(document.getElementById('flower-edit-index')?.value || '-1', 10);
+    const indexed = (adminFlowers || []).map((item, idx) => ({ item, idx }));
+    const filtered = indexed.filter(({ item }) => {
+        if (flowerAdminFilterCat !== 'all' && (item.category || '') !== flowerAdminFilterCat) return false;
+        if (flowerAdminSearchQuery && ![item.name, item.category, item.toneColor, item.flowersUsed].filter(Boolean).join(' ').toLowerCase().includes(flowerAdminSearchQuery)) return false;
+        return true;
+    });
+    const countLbl = document.getElementById('flw-filtered-count-label');
+    if (countLbl) countLbl.textContent = `${filtered.length} mẫu`;
+    if (indexed.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:44px 20px; background:#FAF8F5; border:1.5px dashed #DDD3C6; border-radius:10px;"><h4 style="margin:0 0 8px;">Chưa có mẫu hoa trong Database</h4><button type="button" class="flw-btn flw-btn--primary" onclick="window.seedDefaultFlowerSamples()">Nạp 6 mẫu hoa mặc định vào kệ quản lý</button></div>`;
+        return;
+    }
+    container.innerHTML = filtered.map(({ item: f, idx }) => {
+        const totalPhotos = (f.imageUrl ? 1 : 0) + (Array.isArray(f.galleryUrls) ? f.galleryUrls.filter(u => u && u !== f.imageUrl).length : 0);
+        const priceDisplay = f.priceLabel || (Number(f.price) > 0 ? Number(f.price).toLocaleString('vi-VN') + 'đ' : 'Liên hệ');
+        return `
+            <div class="flw-sample-card ${idx === activeEditIdx ? 'is-editing' : ''} ${f.hidden ? 'is-hidden' : ''}">
+                <div>
+                    <div style="position:relative; aspect-ratio:4/5; background:#F3EDE4; overflow:hidden;">
+                        <img src="${escapeHTML(f.imageUrl || '')}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        <span style="position:absolute; top:9px; left:9px; background:rgba(43,41,40,0.84); color:#FAF8F5; font-size:0.69rem; font-weight:700; padding:3px 8px; border-radius:6px;">#${idx + 1} · ${escapeHTML(f.category || 'Mẫu hoa')}</span>
+                        <button type="button" onclick="window.toggleFlowerSampleVisibility(${idx})" style="position:absolute; top:9px; right:9px; border:none; cursor:pointer; font-size:0.69rem; font-weight:700; padding:3px 8px; border-radius:6px; background:${f.hidden ? 'rgba(43,41,40,0.86)' : 'rgba(255,255,255,0.94)'}; color:${f.hidden ? '#E8CCB2' : '#7D563D'};">${f.hidden ? 'Đang ẩn' : 'Hiển thị'}</button>
+                        <span style="position:absolute; bottom:8px; right:9px; background:rgba(255,255,255,0.94); color:#2B2928; font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:5px;">${totalPhotos} ảnh</span>
+                    </div>
+                    <div style="padding:12px 14px 10px;">
+                        <h4 style="margin:0 0 4px; font-size:0.95rem; font-weight:700; color:#2B2928;">${escapeHTML(f.name || '')}</h4>
+                        <div style="font-size:0.84rem; font-weight:700; color:#7D563D; margin-bottom:5px;">${escapeHTML(priceDisplay)}</div>
+                        ${f.toneColor ? `<div style="font-size:0.74rem; color:#6E665D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Tone: ${escapeHTML(f.toneColor)}</div>` : ''}
+                    </div>
+                </div>
+                <div style="padding:9px 12px; background:#FAF8F5; border-top:1px solid #EFE8DF; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" class="flw-card-icon-btn" ${idx === 0 ? 'disabled style="opacity:0.38;"' : ''} onclick="window.moveFlowerSampleStep(${idx}, -1)">&uarr;</button>
+                        <button type="button" class="flw-card-icon-btn" ${idx === adminFlowers.length - 1 ? 'disabled style="opacity:0.38;"' : ''} onclick="window.moveFlowerSampleStep(${idx}, 1)">&darr;</button>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" class="flw-card-icon-btn" onclick="window.copyFlowerSampleLink(${idx})">Link</button>
+                        <a href="${escapeHTML(getFlowerShareUrl(f.name, idx))}" target="_blank" class="flw-card-icon-btn">Xem</a>
+                        <button type="button" class="flw-card-icon-btn" onclick="window.editFlowerSample(${idx})">Sửa</button>
+                        <button type="button" class="flw-card-icon-btn" style="color:#B91C1C;" onclick="window.deleteFlowerSample(${idx})">Xóa</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.copyFlowerSampleLink = async (idx) => { const f = adminFlowers[idx]; if (!f) return; try { await navigator.clipboard.writeText(getFlowerShareUrl(f.name, idx)); showToast(`Đã sao chép link "${f.name}"!`); } catch (_) {} };
+window.toggleFlowerSampleVisibility = async (idx) => { const f = adminFlowers[idx]; if (!f) return; f.hidden = !f.hidden; await setDoc(doc(db, "settings", "flowers"), { items: adminFlowers }); showToast(f.hidden ? "Đã tạm ẩn mẫu hoa" : "Đã hiển thị mẫu hoa"); };
+window.moveFlowerSampleStep = async (idx, delta) => { const t = idx + delta; if (t < 0 || t >= adminFlowers.length) return; [adminFlowers[idx], adminFlowers[t]] = [adminFlowers[t], adminFlowers[idx]]; adminFlowers = adminFlowers.map((it, i) => ({ ...it, order: i + 1 })); await setDoc(doc(db, "settings", "flowers"), { items: adminFlowers }); };
+window.editFlowerSample = (idx) => {
+    const f = adminFlowers[idx]; if (!f) return;
+    pendingFlowerGalleryFiles.forEach(it => it.previewUrl && URL.revokeObjectURL(it.previewUrl));
+    pendingFlowerGalleryFiles = [];
+    document.getElementById('flower-edit-index').value = idx;
+    if (document.getElementById('flower-form-heading')) document.getElementById('flower-form-heading').textContent = f.name || `Mẫu #${idx + 1}`;
+    const badge = document.getElementById('flower-editor-mode-badge');
+    if (badge) { badge.textContent = `Đang sửa mẫu #${idx + 1}`; badge.classList.add('is-editing'); }
+    if (document.getElementById('btn-cancel-flower-edit')) document.getElementById('btn-cancel-flower-edit').style.display = 'inline-flex';
+    const setV = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    setV('flower-name', f.name); setV('flower-category', f.category || 'Giỏ hoa & Lẵng hoa'); setV('flower-visibility', f.hidden ? 'hidden' : 'visible');
+    setV('flower-price', f.price || ''); setV('flower-price-label', f.priceLabel); setV('flower-tone', f.toneColor); setV('flower-badge', f.badge);
+    setV('flower-materials', f.flowersUsed); setV('flower-size', f.sizeInfo); setV('flower-lead-time', f.leadTime); setV('flower-description', f.description); setV('flower-image-url', f.imageUrl);
+    const form = document.getElementById('flower-form');
+    form.dataset.currentImageUrl = f.imageUrl || ''; form.dataset.currentGalleryUrls = JSON.stringify(f.galleryUrls || []);
+    renderFlowerCoverPreview(f.imageUrl || ''); renderFlowerGalleryEditorGrid(); renderFlowerList();
+};
+window.removeFlowerGalleryImage = async (sIdx, iIdx) => {
+    if (sIdx < 0 || !adminFlowers[sIdx] || !confirm("Xóa ảnh phụ này?")) return;
+    adminFlowers[sIdx].galleryUrls.splice(iIdx, 1);
+    await setDoc(doc(db, "settings", "flowers"), { items: adminFlowers });
+    const form = document.getElementById('flower-form');
+    if (form && parseInt(document.getElementById('flower-edit-index')?.value || '-1', 10) === sIdx) {
+        form.dataset.currentGalleryUrls = JSON.stringify(adminFlowers[sIdx].galleryUrls);
+        renderFlowerGalleryEditorGrid();
+    }
+};
+window.deleteFlowerSample = async (idx) => {
+    const t = adminFlowers[idx]; if (!t || !confirm(`Xóa mẫu hoa "${t.name}"?`)) return;
+    const cur = parseInt(document.getElementById('flower-edit-index')?.value || '-1', 10);
+    adminFlowers.splice(idx, 1); adminFlowers = adminFlowers.map((it, i) => ({ ...it, order: i + 1 }));
+    await setDoc(doc(db, "settings", "flowers"), { items: adminFlowers });
+    if (cur === idx && typeof window.resetFlowerSampleForm === 'function') window.resetFlowerSampleForm();
+    showToast("Đã xóa mẫu hoa");
 };
 
 // --- Logic Quản lý Danh mục Động ---
@@ -4818,6 +5590,7 @@ function initCategoryManagement() {
     // Thiết lập lắng nghe bộ sưu tập và sự kiện để hiện checkbox trong form sản phẩm
     initCollectionManagement();
     initEventManagement();
+    initFlowerManagement();
     initLookbookManagement();
 
     if (!categoryUnsubscribe) {
@@ -18297,6 +19070,32 @@ async function populateFlashSaleGroupSelect() {
 let fsSelectedItemsMap = {}; // { [productId]: { salePrice: number, limit: number, sold: number } }
 let fsPickerSelectedIds = new Set();
 
+function toLocalDatetimeInputStr(dateObj) {
+    if (!dateObj || isNaN(dateObj.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+}
+
+window.applyPreset1212 = () => {
+    const now = new Date();
+    let year = now.getFullYear();
+    if (now > new Date(year, 11, 12, 23, 59, 59)) year += 1;
+    const toggle = document.getElementById('fs-active-toggle');
+    if (toggle) {
+        toggle.checked = true;
+        toggle.dispatchEvent(new Event('change'));
+    }
+    const titleEl = document.getElementById('fs-title');
+    const subEl = document.getElementById('fs-subtitle');
+    const startEl = document.getElementById('fs-start-time');
+    const endEl = document.getElementById('fs-end-time');
+    if (titleEl) titleEl.value = `Ngày Đôi 12.12 — Siêu Sale Gốm Thủ Công`;
+    if (subEl) subEl.value = `Đại tiệc ưu đãi duy nhất 24h ngày 12/12 — Giới hạn số suất trên từng mẫu gốm`;
+    if (startEl) startEl.value = `${year}-12-12T00:00`;
+    if (endEl) endEl.value = `${year}-12-12T23:59`;
+    showToast("Đã điền khung giờ Ngày Đôi 12.12 (00:00 – 23:59). Bấm 'Lưu chiến dịch' để áp dụng!");
+};
+
 async function initFlashSaleSettings() {
     const form = document.getElementById('flash-sale-settings-form');
     if (!form || !db) return;
@@ -18309,10 +19108,10 @@ async function initFlashSaleSettings() {
         if (!statusHint) return;
         if (activeToggle && activeToggle.checked) {
             statusHint.innerText = "(ĐANG BẬT CHIẾN DỊCH)";
-            statusHint.style.color = "#27ae60";
+            statusHint.style.color = "#9C7156";
         } else {
             statusHint.innerText = "(Chưa kích hoạt)";
-            statusHint.style.color = "#e74c3c";
+            statusHint.style.color = "#B91C1C";
         }
     };
     activeToggle?.addEventListener('change', updateStatusHint);
@@ -18328,11 +19127,11 @@ async function initFlashSaleSettings() {
             document.getElementById('fs-groups').value = (s.priceGroups || []).join(', ');
             if (s.startTime) {
                 const startD = s.startTime.toDate ? s.startTime.toDate() : new Date(s.startTime);
-                document.getElementById('fs-start-time').value = startD.toISOString().slice(0, 16);
+                document.getElementById('fs-start-time').value = toLocalDatetimeInputStr(startD);
             }
             if (s.endTime) {
                 const endD = s.endTime.toDate ? s.endTime.toDate() : new Date(s.endTime);
-                document.getElementById('fs-end-time').value = endD.toISOString().slice(0, 16);
+                document.getElementById('fs-end-time').value = toLocalDatetimeInputStr(endD);
             }
 
             fsSelectedItemsMap = s.items || {};

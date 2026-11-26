@@ -286,9 +286,8 @@
                                 <button class="kiot-dropdown-item admin-tab-btn"
                                     data-target="collections-section"><span>Bộ
                                         sưu tập</span></button>
-                                <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Dự
-                                        án sự
-                                        kiện</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="events-section"><span>Album Dự án Decor</span></button>
+                                <button class="kiot-dropdown-item admin-tab-btn" data-target="flowers-section"><span>Hoa Nhà Gốm (Mẫu hoa)</span></button>
                                 <button class="kiot-dropdown-item admin-tab-btn" data-target="news-section"><span>Bài
                                         viết &
                                         Tin tức</span></button>
@@ -709,7 +708,7 @@
                                 <button type="button" id="fs-tab-btn-99" class="filter-radio-btn active"
                                     onclick="window.switchFsTab('99')"
                                     style="justify-content: space-between; padding: 10px 12px; font-weight: 700; color: #9C7156; background: #fffaf5; border-color: #E8CCB2;">
-                                    <span><i class="ti ti-gift"></i> Flash Sale 20/10</span>
+                                    <span><i class="ti ti-gift"></i> Chiến dịch 12.12</span>
                                     <span
                                         style="font-size: 0.7rem; background: #9C7156; color: #fff; padding: 1px 6px; border-radius: 8px;">HOT</span>
                                 </button>
@@ -740,15 +739,20 @@
                                     kích hoạt)</div>
                             </div>
 
+                            <button type="button" onclick="window.applyPreset1212()"
+                                style="width: 100%; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #9C7156; background: #FAF5EF; color: #7D563D; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                                Thiết lập nhanh Ngày Đôi 12.12 (24h)
+                            </button>
+
                             <div class="filter-group">
                                 <label class="filter-label">Tên chiến dịch</label>
                                 <input type="text" id="fs-title" class="kiot-filter-input"
-                                    placeholder="VD: Flash Sale 20/10 - Mua 1 Tặng 1">
+                                    placeholder="VD: Ngày Đôi 12.12 — Siêu Sale Gốm Thủ Công">
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Phụ đề / Thông điệp</label>
                                 <input type="text" id="fs-subtitle" class="kiot-filter-input"
-                                    placeholder="VD: Mừng Ngày Phụ Nữ Việt Nam 20/10">
+                                    placeholder="VD: Duy nhất 24h ngày 12/12 — Suất giới hạn">
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Bắt đầu</label>
@@ -797,12 +801,13 @@
 
                             <!-- Summary Banner -->
                             <div
-                                style="padding: 8px 14px; background: #fffaf5; border: 1px solid #E8CCB2; border-radius: 6px; font-size: 0.85rem; color: #9C7156; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                                <span><i class="ti ti-gift"></i> Danh sách sản phẩm <strong>Flash Sale 20/10</strong>
-                                    (Hỗ trợ <strong>Mua 1 Tặng
-                                        1</strong> & Giảm giá sốc độc lập)</span>
-                                <span id="fs-total-items-badge" style="font-weight: 700; color: #9C7156;">0 sản
-                                    phẩm</span>
+                                style="padding: 8px 14px; background: #fffaf5; border: 1px solid #E8CCB2; border-radius: 6px; font-size: 0.85rem; color: #9C7156; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span><i class="ti ti-gift"></i> Danh sách sản phẩm <strong>Chiến dịch Flash Sale (12.12)</strong>
+                                    — Tự động xuất hiện ở Khối Tâm Điểm &amp; các Khối Phân Loại trên trang Flash Sale</span>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span id="fs-total-items-badge" style="font-weight: 700; color: #9C7156;">0 sản phẩm</span>
+                                    <a href="../flash-sale/" target="_blank" style="font-size:0.78rem; font-weight:700; color:#2B2928; text-decoration:none; background:#fff; border:1px solid #DDD3C6; padding:3px 10px; border-radius:6px;">Xem trang 12.12 &nearr;</a>
+                                </div>
                             </div>
 
                             <!-- Table Scroll Container (Không bị cuộn toàn trang) -->
@@ -1912,64 +1917,1473 @@
                 </div>
             </div>
 
-            <!-- Section Quản lý Dự Án Sự Kiện (KiotViet 2-Column Layout) -->
+            <!-- Section Quản lý Studio Cuốn Album Decor -->
             <div id="events-section" class="admin-section">
-                <div class="kiot-product-layout">
-                    <!-- 1. Bộ Lọc & Form Bên Trái (Left Filter Sidebar) -->
-                    <div class="kiot-filter-sidebar" style="width: 350px; flex: 0 0 350px;">
-                        <div class="filter-header">
-                            <h3 class="filter-title">Dự Án Sự Kiện</h3>
+                <style>
+                    #events-section.active {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        gap: 14px !important;
+                        height: 100% !important;
+                        max-height: 100% !important;
+                        overflow: hidden !important;
+                        padding: 2px 2px 6px !important;
+                        box-sizing: border-box !important;
+                    }
+                    #events-section .decor-cms-shell {
+                        width: 100% !important;
+                        max-width: 1720px !important;
+                        margin: 0 auto !important;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 14px;
+                        flex: 1;
+                        min-height: 0;
+                        box-sizing: border-box;
+                    }
+                    /* Top Header Banner */
+                    #events-section .decor-cms-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 16px;
+                        flex-wrap: wrap;
+                        background: linear-gradient(135deg, #FAF7F2 0%, #FFFFFF 65%, #F6F1EA 100%);
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        padding: 13px 18px;
+                        box-shadow: 0 2px 8px rgba(43, 41, 40, 0.03);
+                        flex-shrink: 0;
+                    }
+                    #events-section .decor-cms-brand {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        min-width: 0;
+                    }
+                    #events-section .decor-cms-icon {
+                        width: 42px;
+                        height: 42px;
+                        border-radius: 10px;
+                        background: #2B2928;
+                        color: #FAF8F5;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                        box-shadow: 0 3px 8px rgba(43, 41, 40, 0.16);
+                    }
+                    #events-section .decor-cms-title {
+                        margin: 0;
+                        font-size: 1.06rem;
+                        font-weight: 700;
+                        color: #2B2928;
+                        line-height: 1.25;
+                    }
+                    #events-section .decor-cms-sub {
+                        margin: 2px 0 0;
+                        font-size: 0.8rem;
+                        color: #6E665D;
+                        line-height: 1.35;
+                    }
+                    #events-section .decor-cms-kpis {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                    }
+                    #events-section .decor-kpi-chip {
+                        background: #FFFFFF;
+                        border: 1px solid #E8E1D8;
+                        border-radius: 8px;
+                        padding: 6px 12px;
+                        display: flex;
+                        flex-direction: column;
+                        min-width: 104px;
+                    }
+                    #events-section .decor-kpi-chip span {
+                        font-size: 0.69rem;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.03em;
+                        color: #8A7F75;
+                    }
+                    #events-section .decor-kpi-chip strong {
+                        font-size: 0.95rem;
+                        font-weight: 700;
+                        color: #2B2928;
+                        margin-top: 1px;
+                    }
+                    #events-section .decor-cms-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                    }
+                    #events-section .decor-btn {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        height: 36px;
+                        padding: 0 14px;
+                        border-radius: 8px !important;
+                        font-size: 0.82rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        text-decoration: none;
+                        transition: all 0.18s ease;
+                        border: 1px solid #DDD3C6;
+                        background: #FFFFFF;
+                        color: #2B2928;
+                        white-space: nowrap;
+                    }
+                    #events-section .decor-btn:hover {
+                        border-color: #9C7156;
+                        color: #7D563D;
+                        background: #FAF8F5;
+                    }
+                    #events-section .decor-btn--primary {
+                        background: #9C7156;
+                        border-color: #9C7156;
+                        color: #FFFFFF;
+                        box-shadow: 0 2px 6px rgba(156, 113, 86, 0.24);
+                    }
+                    #events-section .decor-btn--primary:hover {
+                        background: #875E44;
+                        border-color: #875E44;
+                        color: #FFFFFF;
+                    }
+                    #events-section .decor-btn--dark {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #events-section .decor-btn--dark:hover {
+                        background: #3F3B39;
+                        border-color: #3F3B39;
+                        color: #FFFFFF;
+                    }
+
+                    /* Main 2-Column Studio Body */
+                    #events-section .decor-cms-body {
+                        display: grid;
+                        grid-template-columns: 470px minmax(0, 1fr);
+                        gap: 16px;
+                        flex: 1;
+                        min-height: 0;
+                    }
+
+                    /* Left Studio Editor Panel */
+                    #events-section .decor-editor-panel {
+                        background: #FFFFFF;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        display: flex;
+                        flex-direction: column;
+                        min-height: 0;
+                        overflow: hidden;
+                        box-shadow: 0 2px 10px rgba(43, 41, 40, 0.04);
+                    }
+                    #events-section .decor-editor-top {
+                        padding: 13px 16px 11px;
+                        border-bottom: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        flex-shrink: 0;
+                    }
+                    #events-section .decor-mode-badge {
+                        display: inline-block;
+                        font-size: 0.68rem;
+                        font-weight: 700;
+                        letter-spacing: 0.05em;
+                        text-transform: uppercase;
+                        padding: 2px 8px;
+                        border-radius: 6px;
+                        background: #EFE7DC;
+                        color: #7D563D;
+                        margin-bottom: 3px;
+                    }
+                    #events-section .decor-mode-badge.is-editing {
+                        background: #9C7156;
+                        color: #FFFFFF;
+                    }
+                    #events-section .decor-editor-heading {
+                        margin: 0;
+                        font-size: 0.98rem;
+                        font-weight: 700;
+                        color: #2B2928;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 310px;
+                    }
+
+                    /* Step Tabs inside Editor */
+                    #events-section .decor-editor-tabs {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 6px;
+                        padding: 8px 14px;
+                        background: #FFFFFF;
+                        border-bottom: 1px solid #F0EAE1;
+                        flex-shrink: 0;
+                    }
+                    #events-section .decor-step-tab {
+                        border: 1px solid #E8E1D8;
+                        background: #FAF8F5;
+                        color: #6E665D;
+                        border-radius: 7px !important;
+                        padding: 7px 8px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 5px;
+                        transition: all 0.16s ease;
+                    }
+                    #events-section .decor-step-tab:hover {
+                        border-color: #CBB8A4;
+                        color: #2B2928;
+                    }
+                    #events-section .decor-step-tab.active {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #events-section .decor-tab-pill {
+                        font-size: 0.68rem;
+                        padding: 1px 6px;
+                        border-radius: 5px;
+                        background: rgba(156, 113, 86, 0.18);
+                        color: #7D563D;
+                        font-weight: 700;
+                    }
+                    #events-section .decor-step-tab.active .decor-tab-pill {
+                        background: #9C7156;
+                        color: #FFFFFF;
+                    }
+
+                    /* Form Scrollable Area */
+                    #events-section #event-form {
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                        min-height: 0;
+                        margin: 0;
+                    }
+                    #events-section .decor-form-scroll {
+                        flex: 1;
+                        min-height: 0;
+                        overflow-y: auto;
+                        padding: 14px 16px 18px;
+                    }
+                    #events-section .decor-tab-pane {
+                        display: none;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    #events-section .decor-tab-pane.active {
+                        display: flex;
+                    }
+                    #events-section .decor-field-row {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }
+                    #events-section .decor-field label {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        font-size: 0.79rem;
+                        font-weight: 600;
+                        color: #3F3A36;
+                        margin-bottom: 5px;
+                    }
+                    #events-section .decor-field input[type="text"],
+                    #events-section .decor-field select,
+                    #events-section .decor-field textarea {
+                        width: 100%;
+                        box-sizing: border-box;
+                        padding: 9px 11px;
+                        border: 1px solid #DDD3C6;
+                        border-radius: 7px !important;
+                        background: #FAF8F5;
+                        color: #2B2928;
+                        font-size: 0.85rem;
+                        transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+                    }
+                    #events-section .decor-field input[type="text"]:focus,
+                    #events-section .decor-field select:focus,
+                    #events-section .decor-field textarea:focus {
+                        outline: none;
+                        background: #FFFFFF;
+                        border-color: #9C7156;
+                        box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.12);
+                    }
+                    #events-section .decor-field textarea {
+                        resize: vertical;
+                        min-height: 96px;
+                        line-height: 1.5;
+                    }
+
+                    /* Custom Dropzones */
+                    #events-section .decor-dropzone {
+                        position: relative;
+                        border: 1.5px dashed #CBB8A4;
+                        border-radius: 8px;
+                        background: #FAF8F5;
+                        padding: 14px;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all 0.18s ease;
+                    }
+                    #events-section .decor-dropzone:hover {
+                        border-color: #9C7156;
+                        background: #F6F1EA;
+                    }
+                    #events-section .decor-dropzone input[type="file"] {
+                        position: absolute;
+                        inset: 0;
+                        width: 100%;
+                        height: 100%;
+                        opacity: 0;
+                        cursor: pointer;
+                    }
+                    #events-section .decor-dropzone-title {
+                        font-size: 0.83rem;
+                        font-weight: 700;
+                        color: #2B2928;
+                        margin-top: 4px;
+                    }
+                    #events-section .decor-dropzone-hint {
+                        font-size: 0.74rem;
+                        color: #7A7168;
+                        margin-top: 2px;
+                    }
+                    #events-section .decor-cover-preview-card {
+                        position: relative;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        border: 1px solid #E5DDD2;
+                        aspect-ratio: 16 / 10;
+                        background: #F3EDE4;
+                        margin-top: 8px;
+                    }
+                    #events-section .decor-cover-preview-card img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                    }
+                    #events-section .decor-gallery-grid-admin {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 8px;
+                        margin-top: 8px;
+                    }
+                    #events-section .decor-thumb-card {
+                        position: relative;
+                        aspect-ratio: 4 / 3;
+                        border-radius: 7px;
+                        overflow: hidden;
+                        border: 1px solid #E2D9CE;
+                        background: #F3EDE4;
+                    }
+                    #events-section .decor-thumb-card img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                    }
+                    #events-section .decor-thumb-actions {
+                        position: absolute;
+                        inset: auto 0 0 0;
+                        padding: 4px 5px;
+                        background: linear-gradient(to top, rgba(28,25,23,0.82), transparent);
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    #events-section .decor-mini-tag {
+                        font-size: 0.65rem;
+                        font-weight: 700;
+                        padding: 2px 5px;
+                        border-radius: 4px;
+                        background: rgba(255,255,255,0.92);
+                        color: #2B2928;
+                        border: none;
+                        cursor: pointer;
+                    }
+                    #events-section .decor-mini-del {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 5px;
+                        border: none;
+                        background: rgba(185, 28, 28, 0.92);
+                        color: #FFFFFF;
+                        font-size: 0.8rem;
+                        line-height: 1;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    #events-section .decor-ba-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }
+                    #events-section .decor-ba-slot {
+                        background: #FAF8F5;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 8px;
+                        padding: 9px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                    }
+                    #events-section .decor-editor-footer {
+                        padding: 11px 16px;
+                        border-top: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        gap: 8px;
+                        flex-shrink: 0;
+                    }
+
+                    /* Right Portfolio Showcase Panel */
+                    #events-section .decor-gallery-panel {
+                        background: #FFFFFF;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        display: flex;
+                        flex-direction: column;
+                        min-height: 0;
+                        overflow: hidden;
+                        box-shadow: 0 2px 10px rgba(43, 41, 40, 0.04);
+                    }
+                    #events-section .decor-gallery-toolbar {
+                        padding: 12px 16px;
+                        border-bottom: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                        flex-shrink: 0;
+                    }
+                    #events-section .decor-toolbar-top {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                    }
+                    #events-section .decor-search-wrap {
+                        position: relative;
+                        flex: 1;
+                        min-width: 220px;
+                        max-width: 360px;
+                    }
+                    #events-section .decor-search-wrap svg {
+                        position: absolute;
+                        left: 11px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #8A7F75;
+                        pointer-events: none;
+                    }
+                    #events-section .decor-search-wrap input {
+                        width: 100%;
+                        box-sizing: border-box;
+                        height: 35px;
+                        padding: 0 12px 0 34px;
+                        border: 1px solid #DDD3C6;
+                        border-radius: 7px !important;
+                        background: #FFFFFF;
+                        font-size: 0.83rem;
+                        color: #2B2928;
+                    }
+                    #events-section .decor-search-wrap input:focus {
+                        outline: none;
+                        border-color: #9C7156;
+                    }
+                    #events-section .decor-cat-pills {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        flex-wrap: wrap;
+                    }
+                    #events-section .decor-cat-pill {
+                        border: 1px solid #E2D9CE;
+                        background: #FFFFFF;
+                        color: #5C544D;
+                        font-size: 0.76rem;
+                        font-weight: 600;
+                        padding: 5px 11px;
+                        border-radius: 7px !important;
+                        cursor: pointer;
+                        transition: all 0.16s ease;
+                    }
+                    #events-section .decor-cat-pill:hover {
+                        border-color: #9C7156;
+                        color: #2B2928;
+                    }
+                    #events-section .decor-cat-pill.active {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #events-section .decor-cards-scroll {
+                        flex: 1;
+                        min-height: 0;
+                        overflow-y: auto;
+                        padding: 16px;
+                        background: #FCFBF9;
+                    }
+                    #events-section #admin-event-list {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                        gap: 16px;
+                    }
+                    #events-section .decor-project-card {
+                        background: #FFFFFF;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+                        box-shadow: 0 2px 8px rgba(43, 41, 40, 0.04);
+                    }
+                    #events-section .decor-project-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 20px rgba(43, 41, 40, 0.08);
+                        border-color: #D0C0AE;
+                    }
+                    #events-section .decor-project-card.is-editing {
+                        border-color: #9C7156;
+                        box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.18);
+                    }
+                    #events-section .decor-project-card.is-hidden {
+                        opacity: 0.72;
+                    }
+                    #events-section .decor-card-media {
+                        position: relative;
+                        aspect-ratio: 16 / 10;
+                        background: #F3EDE4;
+                        overflow: hidden;
+                    }
+                    #events-section .decor-card-media img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                        transition: transform 0.35s ease;
+                    }
+                    #events-section .decor-project-card:hover .decor-card-media img {
+                        transform: scale(1.03);
+                    }
+                    #events-section .decor-card-icon-btn {
+                        height: 30px;
+                        padding: 0 9px;
+                        border-radius: 6px !important;
+                        border: 1px solid #E2D9CE;
+                        background: #FFFFFF;
+                        color: #3F3A36;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        text-decoration: none;
+                        transition: all 0.16s ease;
+                    }
+                    #events-section .decor-card-icon-btn:hover {
+                        border-color: #9C7156;
+                        color: #7D563D;
+                        background: #FAF8F5;
+                    }
+                    #events-section .decor-card-icon-btn--danger:hover {
+                        border-color: #DC2626;
+                        color: #B91C1C;
+                        background: #FEF2F2;
+                    }
+
+                    @media (max-width: 1120px) {
+                        #events-section.active {
+                            overflow-y: auto !important;
+                            height: auto !important;
+                            max-height: none !important;
+                        }
+                        #events-section .decor-cms-body {
+                            grid-template-columns: 1fr;
+                        }
+                        #events-section .decor-editor-panel,
+                        #events-section .decor-gallery-panel {
+                            max-height: none;
+                            overflow: visible;
+                        }
+                        #events-section .decor-form-scroll,
+                        #events-section .decor-cards-scroll {
+                            max-height: none;
+                            overflow: visible;
+                        }
+                    }
+                </style>
+
+                <div class="decor-cms-shell">
+                    <!-- 1. Top Studio Header & Live KPIs -->
+                    <div class="decor-cms-header">
+                        <div class="decor-cms-brand">
+                            <div class="decor-cms-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="decor-cms-title">Studio Cuốn Album Decor</h3>
+                                <p class="decor-cms-sub">Quản lý các không gian Tiệm đã decor — đồng bộ trực tiếp với Cuốn Album mở phẳng trên trang khách</p>
+                            </div>
                         </div>
 
-                        <form id="event-form">
-                            <input type="hidden" id="event-edit-index" value="-1">
-                            <div class="filter-group">
-                                <label class="filter-label">Tên dự án</label>
-                                <input type="text" id="event-name" class="kiot-filter-input" required
-                                    placeholder="VD: Tiệc sinh nhật ngoài trời">
+                        <div class="decor-cms-kpis">
+                            <div class="decor-kpi-chip">
+                                <span>Dự án Album</span>
+                                <strong><span id="decor-kpi-visible">0</span> / <span id="admin-event-total-count">0</span></strong>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Ảnh Banner (Đại diện)</label>
-                                <input type="file" id="event-image" class="kiot-filter-input" accept="image/*"
-                                    style="padding: 4px;">
-                                <div id="event-image-preview" style="margin-top: 6px;"></div>
+                            <div class="decor-kpi-chip">
+                                <span>Tổng ảnh góc decor</span>
+                                <strong><span id="decor-kpi-photos">0</span> ảnh</strong>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Mô tả / Concept</label>
-                                <textarea id="event-description" class="kiot-filter-input" rows="3"
-                                    placeholder="Kể về quá trình setup, concept..."></textarea>
+                            <div class="decor-kpi-chip">
+                                <span>Video &amp; Trước/Sau</span>
+                                <strong><span id="decor-kpi-media">0</span> album</strong>
                             </div>
-                            <div class="filter-group">
-                                <label class="filter-label">Ảnh Gallery (Chọn nhiều)</label>
-                                <input type="file" id="event-gallery" class="kiot-filter-input" accept="image/*"
-                                    multiple style="padding: 4px;">
-                                <div id="event-gallery-preview" class="image-preview-grid" style="margin-top: 6px;">
-                                </div>
+                            <div class="decor-kpi-chip">
+                                <span>Gốm gắn kèm</span>
+                                <strong><span id="decor-kpi-products">0</span> SP</strong>
                             </div>
-                            <button type="submit" class="kiot-btn-primary"
-                                style="width: 100%; margin-top: 10px; justify-content: center;">
-                                <i class="ti ti-device-floppy"></i> Lưu dự án
+                        </div>
+
+                        <div class="decor-cms-actions">
+                            <button type="button" class="decor-btn decor-btn--dark" onclick="window.startNewEventAlbum()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Tạo Album Mới
                             </button>
-                        </form>
+                            <a href="../trang-tri-su-kien/" target="_blank" class="decor-btn">
+                                Mở trang Cuốn Album
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            </a>
+                        </div>
                     </div>
 
-                    <!-- 2. Danh Sách Dự Án Bên Phải (Right Main Area) -->
-                    <div class="kiot-product-main">
-                        <!-- Top Toolbar -->
-                        <div class="kiot-table-toolbar">
-                            <div class="search-box-wrapper">
-                                <span class="search-icon"><i class="ti ti-confetti"></i></span>
-                                <span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">Danh sách Dự Án Sự
-                                    Kiện đã thực hiện</span>
+                    <!-- 2. Main 2-Column Studio Body -->
+                    <div class="decor-cms-body">
+                        <!-- CỘT TRÁI: TRÌNH BIÊN TẬP ALBUM 3 BƯỚC RỘNG RÃI -->
+                        <div class="decor-editor-panel">
+                            <div class="decor-editor-top">
+                                <div style="min-width: 0;">
+                                    <span class="decor-mode-badge" id="event-editor-mode-badge">Tạo dự án mới</span>
+                                    <h4 class="decor-editor-heading" id="event-form-heading">Thêm Album Decor mới</h4>
+                                </div>
+                                <button type="button" class="decor-btn" onclick="window.resetEventAlbumForm()" style="height: 31px; padding: 0 10px; font-size: 0.76rem;">
+                                    Làm mới
+                                </button>
+                            </div>
+
+                            <div class="decor-editor-tabs" role="tablist">
+                                <button type="button" class="decor-step-tab active" data-decor-tab="info" onclick="window.switchEventEditorTab('info')">
+                                    1. Thông tin
+                                </button>
+                                <button type="button" class="decor-step-tab" data-decor-tab="photos" onclick="window.switchEventEditorTab('photos')">
+                                    2. Bộ ảnh <span class="decor-tab-pill" id="decor-tab-photo-count">0</span>
+                                </button>
+                                <button type="button" class="decor-step-tab" data-decor-tab="media" onclick="window.switchEventEditorTab('media')">
+                                    3. Video &amp; T/S <span class="decor-tab-pill" id="decor-tab-media-count" style="display:none;">+</span>
+                                </button>
+                            </div>
+
+                            <form id="event-form">
+                                <input type="hidden" id="event-edit-index" value="-1">
+
+                                <div class="decor-form-scroll">
+                                    <!-- TAB 1: THÔNG TIN & CÂU CHUYỆN -->
+                                    <div class="decor-tab-pane active" data-decor-pane="info">
+                                        <div class="decor-field">
+                                            <label for="event-name">
+                                                <span>Tên dự án / Album <span style="color:#B91C1C;">*</span></span>
+                                                <span id="event-slug-hint" style="font-size:0.7rem; color:#8A7F75; font-weight:500;"></span>
+                                            </label>
+                                            <input type="text" id="event-name" required placeholder="VD: Bàn tiệc sinh nhật sân vườn Thảo Điền">
+                                        </div>
+
+                                        <div class="decor-field-row">
+                                            <div class="decor-field">
+                                                <label for="event-category">Phân loại không gian</label>
+                                                <select id="event-category">
+                                                    <option value="Bàn tiệc & Sinh nhật">Bàn tiệc &amp; Sinh nhật</option>
+                                                    <option value="Backdrop & Sự kiện">Backdrop &amp; Sự kiện</option>
+                                                    <option value="Giáng Sinh & Lễ Tết">Giáng Sinh &amp; Lễ Tết</option>
+                                                    <option value="Không gian Quán / Cửa hàng">Quán / Cửa hàng / Studio</option>
+                                                    <option value="Hoa nghệ thuật">Hoa nghệ thuật</option>
+                                                </select>
+                                            </div>
+                                            <div class="decor-field">
+                                                <label for="event-visibility">Trạng thái hiển thị</label>
+                                                <select id="event-visibility">
+                                                    <option value="visible">Hiển thị trên web</option>
+                                                    <option value="hidden">Ẩn nháp (Tạm ẩn)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="decor-field-row">
+                                            <div class="decor-field">
+                                                <label for="event-location">Địa điểm thực hiện</label>
+                                                <input type="text" id="event-location" placeholder="VD: Quận 1, TP.HCM">
+                                            </div>
+                                            <div class="decor-field">
+                                                <label for="event-date-label">Thời gian thực hiện</label>
+                                                <input type="text" id="event-date-label" placeholder="VD: Tháng 11/2026">
+                                            </div>
+                                        </div>
+
+                                        <div class="decor-field">
+                                            <label for="event-tone">Tone màu &amp; Chất liệu chủ đạo</label>
+                                            <input type="text" id="event-tone" placeholder="VD: Gốm men mộc, Mây tre đan &amp; Hoa nhiệt đới">
+                                        </div>
+
+                                        <div class="decor-field-row">
+                                            <div class="decor-field">
+                                                <label for="event-scale">Quy mô / Số khách</label>
+                                                <input type="text" id="event-scale" placeholder="VD: 30 – 50 khách">
+                                            </div>
+                                            <div class="decor-field">
+                                                <label for="event-budget">Ngân sách tham khảo</label>
+                                                <input type="text" id="event-budget" placeholder="VD: Từ 4.500.000đ">
+                                            </div>
+                                        </div>
+
+                                        <div class="decor-field">
+                                            <label for="event-description">
+                                                <span>Câu chuyện &amp; Cảm hứng Concept</span>
+                                                <span style="font-size:0.7rem; color:#8A7F75; font-weight:500;">Xuống dòng để tách đoạn</span>
+                                            </label>
+                                            <textarea id="event-description" rows="5" placeholder="Chia sẻ cảm hứng sắp đặt, chất liệu gốm &amp; hoa tươi được Tiệm phối hợp trong không gian này..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 2: ẢNH BÌA & BỘ ẢNH GÓC DECOR -->
+                                    <div class="decor-tab-pane" data-decor-pane="photos">
+                                        <div class="decor-field">
+                                            <label>
+                                                <span>Ảnh bìa chính của Album <span style="color:#B91C1C;">*</span></span>
+                                                <span style="font-size:0.7rem; color:#8A7F75;">Tỷ lệ đẹp nhất 16:10 hoặc 4:3</span>
+                                            </label>
+                                            <div class="decor-dropzone">
+                                                <input type="file" id="event-image" accept="image/*">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                                <div class="decor-dropzone-title">Bấm chọn hoặc kéo thả Ảnh bìa vào đây</div>
+                                                <div class="decor-dropzone-hint">Tự động nén nét chuẩn Web (JPG, PNG, WebP)</div>
+                                            </div>
+                                            <input type="text" id="event-image-url" placeholder="Hoặc dán trực tiếp link ảnh bìa (https://...)" style="margin-top: 7px;">
+                                            <div id="event-image-preview"></div>
+                                        </div>
+
+                                        <div class="decor-field" style="padding-top: 6px; border-top: 1px solid #EFE8DF;">
+                                            <label>
+                                                <span>Bộ ảnh các góc Decor (Gallery nhiều ảnh)</span>
+                                                <span style="font-size:0.7rem; color:#7D563D; font-weight:600;">Chọn nhiều ảnh cùng lúc</span>
+                                            </label>
+                                            <div class="decor-dropzone">
+                                                <input type="file" id="event-gallery" accept="image/*" multiple>
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                <div class="decor-dropzone-title">+ Thêm các góc chụp chi tiết vào cuốn Album</div>
+                                                <div class="decor-dropzone-hint">Bấm "Đặt bìa" trên ảnh bất kỳ để chọn làm ảnh đại diện</div>
+                                            </div>
+                                            <div id="event-gallery-preview" class="decor-gallery-grid-admin"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 3: VIDEO & TRƯỚC / SAU -->
+                                    <div class="decor-tab-pane" data-decor-pane="media">
+                                        <div class="decor-field" style="background:#FAF8F5; border:1px solid #E5DDD2; border-radius:8px; padding:12px;">
+                                            <label style="color:#2B2928; font-weight:700;">
+                                                <span>Video thực tế / Hậu trường</span>
+                                                <span style="font-size:0.7rem; color:#7D563D;">Tối đa 45MB hoặc YouTube</span>
+                                            </label>
+                                            <div class="decor-dropzone" style="padding: 10px; background:#FFFFFF;">
+                                                <input type="file" id="event-video-file" accept="video/mp4,video/webm,video/quicktime">
+                                                <div class="decor-dropzone-title" id="event-video-file-label" style="font-size:0.8rem;">Chọn file video (.mp4 / .mov / .webm)</div>
+                                                <div class="decor-dropzone-hint">Hoặc dán link YouTube / MP4 ở ô bên dưới</div>
+                                            </div>
+                                            <div style="display:flex; gap:6px; margin-top:7px;">
+                                                <input type="text" id="event-video-url" placeholder="https://youtube.com/watch?v=... hoặc link .mp4" style="flex:1;">
+                                                <button type="button" class="decor-btn" onclick="document.getElementById('event-video-url').value=''; document.getElementById('event-video-file').value=''; document.getElementById('event-video-file-label').textContent='Chọn file video (.mp4 / .mov / .webm)'; window.syncDecorEditorBadges();" style="height:36px; padding:0 10px;" title="Xóa video">Xóa</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="decor-field" style="background:#FAF8F5; border:1px solid #E5DDD2; border-radius:8px; padding:12px;">
+                                            <label style="color:#2B2928; font-weight:700; margin-bottom:2px;">
+                                                <span>Thanh kéo Trước &amp; Sau Setup (Before / After)</span>
+                                            </label>
+                                            <div style="font-size:0.74rem; color:#6E665D; margin-bottom:9px;">
+                                                Tải ảnh không gian trống lúc chưa setup để khách kéo xem sự lột xác trước &amp; sau.
+                                            </div>
+
+                                            <div class="decor-ba-grid">
+                                                <!-- Cột TRƯỚC -->
+                                                <div class="decor-ba-slot" style="background:#FFFFFF;">
+                                                    <div style="font-size:0.74rem; font-weight:700; color:#5C544D;">1. TRƯỚC KHI SETUP</div>
+                                                    <div class="decor-dropzone" style="padding:10px 8px;">
+                                                        <input type="file" id="event-before-file" accept="image/*">
+                                                        <div style="font-size:0.75rem; font-weight:600; color:#7D563D;">+ Chọn ảnh Trước</div>
+                                                    </div>
+                                                    <input type="text" id="event-before-url" placeholder="Hoặc dán link ảnh Trước..." style="font-size:0.76rem; padding:6px 8px;">
+                                                    <div id="event-before-preview"></div>
+                                                </div>
+
+                                                <!-- Cột SAU -->
+                                                <div class="decor-ba-slot" style="background:#FFFFFF;">
+                                                    <div style="font-size:0.74rem; font-weight:700; color:#7D563D;">2. SAU KHI DECOR</div>
+                                                    <div class="decor-dropzone" style="padding:10px 8px;">
+                                                        <input type="file" id="event-after-file" accept="image/*">
+                                                        <div style="font-size:0.75rem; font-weight:600; color:#7D563D;">+ Chọn ảnh Sau</div>
+                                                    </div>
+                                                    <input type="text" id="event-after-url" placeholder="Trống = tự lấy Ảnh bìa" style="font-size:0.76rem; padding:6px 8px;">
+                                                    <div id="event-after-preview"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="decor-editor-footer">
+                                    <button type="button" id="btn-cancel-event-edit" class="decor-btn" onclick="window.resetEventAlbumForm()" style="display:none; height:40px;">
+                                        Hủy sửa
+                                    </button>
+                                    <button type="submit" id="btn-save-event-album" class="decor-btn decor-btn--primary" style="flex:1; height:40px; font-size:0.87rem; font-weight:700;">
+                                        Lưu Album Dự Án
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- CỘT PHẢI: KỆ TRƯNG BÀY & SẮP XẾP CÁC ALBUM ĐÃ ĐĂNG -->
+                        <div class="decor-gallery-panel">
+                            <div class="decor-gallery-toolbar">
+                                <div class="decor-toolbar-top">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="font-weight:700; color:#2B2928; font-size:0.95rem;">Kệ Album Không Gian</span>
+                                        <span id="decor-filtered-count-label" style="font-size:0.78rem; color:#7D563D; background:#EFE7DC; padding:2px 8px; border-radius:6px; font-weight:600;">0 dự án</span>
+                                    </div>
+
+                                    <div class="decor-search-wrap">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                        <input type="text" id="decor-admin-search" placeholder="Tìm tên dự án, địa điểm, tone màu...">
+                                    </div>
+                                </div>
+
+                                <div class="decor-cat-pills" id="decor-admin-cat-pills">
+                                    <button type="button" class="decor-cat-pill active" data-cat="all">Tất cả</button>
+                                    <button type="button" class="decor-cat-pill" data-cat="Bàn tiệc & Sinh nhật">Bàn tiệc &amp; Sinh nhật</button>
+                                    <button type="button" class="decor-cat-pill" data-cat="Backdrop & Sự kiện">Backdrop &amp; Sự kiện</button>
+                                    <button type="button" class="decor-cat-pill" data-cat="Giáng Sinh & Lễ Tết">Giáng Sinh &amp; Lễ Tết</button>
+                                    <button type="button" class="decor-cat-pill" data-cat="Không gian Quán / Cửa hàng">Quán / Studio</button>
+                                    <button type="button" class="decor-cat-pill" data-cat="Hoa nghệ thuật">Hoa nghệ thuật</button>
+                                </div>
+                            </div>
+
+                            <div class="decor-cards-scroll">
+                                <div id="admin-event-list">
+                                    <div style="text-align:center; padding: 2.5rem; grid-column: 1/-1;"><span class="spinner"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Quản lý Studio Hoa Nhà Gốm (Mẫu Giỏ Hoa, Bó Hoa & Bình Hoa Gốm) -->
+            <div id="flowers-section" class="admin-section">
+                <style>
+                    #flowers-section.active {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        gap: 14px !important;
+                        height: 100% !important;
+                        max-height: 100% !important;
+                        overflow: hidden !important;
+                        padding: 2px 2px 6px !important;
+                        box-sizing: border-box !important;
+                    }
+                    #flowers-section .flw-cms-shell {
+                        width: 100% !important;
+                        max-width: 1720px !important;
+                        margin: 0 auto !important;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 14px;
+                        flex: 1;
+                        min-height: 0;
+                        box-sizing: border-box;
+                    }
+                    #flowers-section .flw-cms-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 16px;
+                        flex-wrap: wrap;
+                        background: linear-gradient(135deg, #FAF7F2 0%, #FFFFFF 65%, #F6F1EA 100%);
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        padding: 13px 18px;
+                        box-shadow: 0 2px 8px rgba(43, 41, 40, 0.03);
+                        flex-shrink: 0;
+                    }
+                    #flowers-section .flw-cms-brand {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    #flowers-section .flw-cms-icon {
+                        width: 42px;
+                        height: 42px;
+                        border-radius: 10px;
+                        background: #9C7156;
+                        color: #FFFFFF;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                        box-shadow: 0 3px 8px rgba(156, 113, 86, 0.24);
+                    }
+                    #flowers-section .flw-cms-kpis {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                    }
+                    #flowers-section .flw-kpi-chip {
+                        background: #FFFFFF;
+                        border: 1px solid #E8E1D8;
+                        border-radius: 8px;
+                        padding: 6px 12px;
+                        display: flex;
+                        flex-direction: column;
+                        min-width: 105px;
+                    }
+                    #flowers-section .flw-kpi-chip span {
+                        font-size: 0.69rem;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.03em;
+                        color: #8A7F75;
+                    }
+                    #flowers-section .flw-kpi-chip strong {
+                        font-size: 0.95rem;
+                        font-weight: 700;
+                        color: #2B2928;
+                        margin-top: 1px;
+                    }
+                    #flowers-section .flw-btn {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        height: 36px;
+                        padding: 0 14px;
+                        border-radius: 8px !important;
+                        font-size: 0.82rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        text-decoration: none;
+                        transition: all 0.18s ease;
+                        border: 1px solid #DDD3C6;
+                        background: #FFFFFF;
+                        color: #2B2928;
+                        white-space: nowrap;
+                    }
+                    #flowers-section .flw-btn:hover {
+                        border-color: #9C7156;
+                        color: #7D563D;
+                        background: #FAF8F5;
+                    }
+                    #flowers-section .flw-btn--primary {
+                        background: #9C7156;
+                        border-color: #9C7156;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section .flw-btn--primary:hover {
+                        background: #875E44;
+                        border-color: #875E44;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section .flw-btn--dark {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section .flw-cms-body {
+                        display: grid;
+                        grid-template-columns: 460px minmax(0, 1fr);
+                        gap: 16px;
+                        flex: 1;
+                        min-height: 0;
+                    }
+                    #flowers-section .flw-editor-panel,
+                    #flowers-section .flw-gallery-panel {
+                        background: #FFFFFF;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        display: flex;
+                        flex-direction: column;
+                        min-height: 0;
+                        overflow: hidden;
+                        box-shadow: 0 2px 10px rgba(43, 41, 40, 0.04);
+                    }
+                    #flowers-section .flw-editor-top {
+                        padding: 13px 16px 11px;
+                        border-bottom: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 10px;
+                        flex-shrink: 0;
+                    }
+                    #flowers-section .flw-mode-badge {
+                        display: inline-block;
+                        font-size: 0.68rem;
+                        font-weight: 700;
+                        letter-spacing: 0.05em;
+                        text-transform: uppercase;
+                        padding: 2px 8px;
+                        border-radius: 6px;
+                        background: #EFE7DC;
+                        color: #7D563D;
+                        margin-bottom: 3px;
+                    }
+                    #flowers-section .flw-mode-badge.is-editing {
+                        background: #9C7156;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section .flw-editor-tabs {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 6px;
+                        padding: 8px 14px;
+                        background: #FFFFFF;
+                        border-bottom: 1px solid #F0EAE1;
+                        flex-shrink: 0;
+                    }
+                    #flowers-section .flw-step-tab {
+                        border: 1px solid #E8E1D8;
+                        background: #FAF8F5;
+                        color: #6E665D;
+                        border-radius: 7px !important;
+                        padding: 7px 10px;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                    }
+                    #flowers-section .flw-step-tab.active {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section #flower-form {
+                        display: flex;
+                        flex-direction: column;
+                        flex: 1;
+                        min-height: 0;
+                        margin: 0;
+                    }
+                    #flowers-section .flw-form-scroll {
+                        flex: 1;
+                        min-height: 0;
+                        overflow-y: auto;
+                        padding: 14px 16px 18px;
+                    }
+                    #flowers-section .flw-tab-pane {
+                        display: none;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    #flowers-section .flw-tab-pane.active {
+                        display: flex;
+                    }
+                    #flowers-section .flw-field-row {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }
+                    #flowers-section .flw-field label {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        font-size: 0.79rem;
+                        font-weight: 600;
+                        color: #3F3A36;
+                        margin-bottom: 5px;
+                    }
+                    #flowers-section .flw-field input[type="text"],
+                    #flowers-section .flw-field input[type="number"],
+                    #flowers-section .flw-field select,
+                    #flowers-section .flw-field textarea {
+                        width: 100%;
+                        box-sizing: border-box;
+                        padding: 9px 11px;
+                        border: 1px solid #DDD3C6;
+                        border-radius: 7px !important;
+                        background: #FAF8F5;
+                        color: #2B2928;
+                        font-size: 0.85rem;
+                    }
+                    #flowers-section .flw-field input:focus,
+                    #flowers-section .flw-field select:focus,
+                    #flowers-section .flw-field textarea:focus {
+                        outline: none;
+                        background: #FFFFFF;
+                        border-color: #9C7156;
+                        box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.12);
+                    }
+                    #flowers-section .flw-dropzone {
+                        position: relative;
+                        border: 1.5px dashed #CBB8A4;
+                        border-radius: 8px;
+                        background: #FAF8F5;
+                        padding: 14px;
+                        text-align: center;
+                        cursor: pointer;
+                    }
+                    #flowers-section .flw-dropzone:hover {
+                        border-color: #9C7156;
+                        background: #F6F1EA;
+                    }
+                    #flowers-section .flw-dropzone input[type="file"] {
+                        position: absolute;
+                        inset: 0;
+                        width: 100%;
+                        height: 100%;
+                        opacity: 0;
+                        cursor: pointer;
+                    }
+                    #flowers-section .flw-editor-footer {
+                        padding: 11px 16px;
+                        border-top: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        gap: 8px;
+                        flex-shrink: 0;
+                    }
+                    #flowers-section .flw-gallery-toolbar {
+                        padding: 12px 16px;
+                        border-bottom: 1px solid #EFE8DF;
+                        background: #FAF8F5;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                        flex-shrink: 0;
+                    }
+                    #flowers-section .flw-cat-pills {
+                        display: flex;
+                        gap: 6px;
+                        flex-wrap: wrap;
+                    }
+                    #flowers-section .flw-cat-pill {
+                        border: 1px solid #E2D9CE;
+                        background: #FFFFFF;
+                        color: #5C544D;
+                        font-size: 0.76rem;
+                        font-weight: 600;
+                        padding: 5px 11px;
+                        border-radius: 7px !important;
+                        cursor: pointer;
+                    }
+                    #flowers-section .flw-cat-pill.active {
+                        background: #2B2928;
+                        border-color: #2B2928;
+                        color: #FFFFFF;
+                    }
+                    #flowers-section .flw-cards-scroll {
+                        flex: 1;
+                        min-height: 0;
+                        overflow-y: auto;
+                        padding: 16px;
+                        background: #FCFBF9;
+                    }
+                    #flowers-section #admin-flower-list {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+                        gap: 16px;
+                    }
+                    #flowers-section .flw-sample-card {
+                        background: #FFFFFF;
+                        border: 1px solid #E5DDD2;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        box-shadow: 0 2px 8px rgba(43, 41, 40, 0.04);
+                        transition: transform 0.2s ease, border-color 0.2s ease;
+                    }
+                    #flowers-section .flw-sample-card:hover {
+                        transform: translateY(-2px);
+                        border-color: #D0C0AE;
+                    }
+                    #flowers-section .flw-sample-card.is-editing {
+                        border-color: #9C7156;
+                        box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.18);
+                    }
+                    #flowers-section .flw-sample-card.is-hidden {
+                        opacity: 0.72;
+                    }
+                    #flowers-section .flw-card-icon-btn {
+                        height: 30px;
+                        padding: 0 8px;
+                        border-radius: 6px !important;
+                        border: 1px solid #E2D9CE;
+                        background: #FFFFFF;
+                        color: #3F3A36;
+                        font-size: 0.74rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        text-decoration: none;
+                    }
+                    #flowers-section .flw-card-icon-btn:hover {
+                        border-color: #9C7156;
+                        color: #7D563D;
+                        background: #FAF8F5;
+                    }
+                    @media (max-width: 1120px) {
+                        #flowers-section.active {
+                            overflow-y: auto !important;
+                            height: auto !important;
+                            max-height: none !important;
+                        }
+                        #flowers-section .flw-cms-body {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+                </style>
+
+                <div class="flw-cms-shell">
+                    <!-- Top Header -->
+                    <div class="flw-cms-header">
+                        <div class="flw-cms-brand">
+                            <div class="flw-cms-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5a4.5 4.5 0 1 1 4.5 4.5M12 7.5A4.5 4.5 0 1 0 7.5 12M12 7.5V9m-4.5 3a4.5 4.5 0 1 0 4.5 4.5M7.5 12H9m7.5 0a4.5 4.5 0 1 1-4.5 4.5m4.5-4.5H15m-3 4.5V15"/><circle cx="12" cy="12" r="2.2"/><path d="M12 16.5V22"/></svg>
+                            </div>
+                            <div>
+                                <h3 style="margin:0; font-size:1.06rem; font-weight:700; color:#2B2928;">Studio Hoa Nhà Gốm — Sổ Mẫu Giỏ Hoa &amp; Bó Hoa</h3>
+                                <p style="margin:2px 0 0; font-size:0.8rem; color:#6E665D;">Đăng các mẫu giỏ hoa, bó hoa, bình hoa gốm và hoa cưới bên Tiệm thực hiện để khách xem mẫu &amp; đặt hoa</p>
                             </div>
                         </div>
 
-                        <!-- Table Scroll Container -->
-                        <div class="kiot-table-scroll-container"
-                            style="padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <div id="admin-event-list" style="display: flex; flex-direction: column; gap: 12px;">
-                                <!-- JS render -->
-                                <div style="text-align:center; padding: 2rem;"><span class="spinner"></span></div>
+                        <div class="flw-cms-kpis">
+                            <div class="flw-kpi-chip">
+                                <span>Mẫu hiển thị</span>
+                                <strong><span id="flw-kpi-visible">0</span> / <span id="flw-kpi-total">0</span></strong>
+                            </div>
+                            <div class="flw-kpi-chip">
+                                <span>Giỏ &amp; Lẵng hoa</span>
+                                <strong><span id="flw-kpi-baskets">0</span> mẫu</strong>
+                            </div>
+                            <div class="flw-kpi-chip">
+                                <span>Bó hoa &amp; Bình gốm</span>
+                                <strong><span id="flw-kpi-bouquets">0</span> mẫu</strong>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="flw-btn flw-btn--dark" onclick="window.startNewFlowerSample()">
+                                + Thêm Mẫu Hoa Mới
+                            </button>
+                            <a href="../hoa-nha-gom/" target="_blank" class="flw-btn">
+                                Mở trang Hoa Nhà Gốm &nearr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 2-Column Studio Body -->
+                    <div class="flw-cms-body">
+                        <!-- Left Editor -->
+                        <div class="flw-editor-panel">
+                            <div class="flw-editor-top">
+                                <div style="min-width:0;">
+                                    <span class="flw-mode-badge" id="flower-editor-mode-badge">Tạo mẫu mới</span>
+                                    <h4 id="flower-form-heading" style="margin:0; font-size:0.98rem; font-weight:700; color:#2B2928; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;">Thêm mẫu Hoa Nhà Gốm</h4>
+                                </div>
+                                <button type="button" class="flw-btn" onclick="window.resetFlowerSampleForm()" style="height:31px; padding:0 10px; font-size:0.76rem;">Làm mới</button>
+                            </div>
+
+                            <div class="flw-editor-tabs">
+                                <button type="button" class="flw-step-tab active" data-flw-tab="info" onclick="window.switchFlowerEditorTab('info')">
+                                    1. Thông tin mẫu hoa
+                                </button>
+                                <button type="button" class="flw-step-tab" data-flw-tab="photos" onclick="window.switchFlowerEditorTab('photos')">
+                                    2. Ảnh mẫu (<span id="flw-tab-photo-count">0</span>)
+                                </button>
+                            </div>
+
+                            <form id="flower-form">
+                                <input type="hidden" id="flower-edit-index" value="-1">
+                                <div class="flw-form-scroll">
+                                    <!-- TAB 1 -->
+                                    <div class="flw-tab-pane active" data-flw-pane="info">
+                                        <div class="flw-field">
+                                            <label for="flower-name">
+                                                <span>Tên mẫu hoa <span style="color:#B91C1C;">*</span></span>
+                                                <span id="flower-slug-hint" style="font-size:0.7rem; color:#8A7F75;"></span>
+                                            </label>
+                                            <input type="text" id="flower-name" required placeholder="VD: Giỏ Hoa Mây Nắng Sớm, Bó Hoa Hồng Kem...">
+                                        </div>
+
+                                        <div class="flw-field-row">
+                                            <div class="flw-field">
+                                                <label for="flower-category">Phân loại mẫu</label>
+                                                <select id="flower-category">
+                                                    <option value="Giỏ hoa & Lẵng hoa">Giỏ hoa &amp; Lẵng hoa</option>
+                                                    <option value="Bó hoa nghệ thuật">Bó hoa nghệ thuật</option>
+                                                    <option value="Bình hoa gốm">Bình hoa gốm</option>
+                                                    <option value="Hoa cưới cầm tay">Hoa cưới cầm tay</option>
+                                                    <option value="Hoa bàn tiệc & Sự kiện">Hoa bàn tiệc &amp; Sự kiện</option>
+                                                </select>
+                                            </div>
+                                            <div class="flw-field">
+                                                <label for="flower-visibility">Trạng thái</label>
+                                                <select id="flower-visibility">
+                                                    <option value="visible">Hiển thị trên web</option>
+                                                    <option value="hidden">Ẩn nháp (Tạm ẩn)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="flw-field-row">
+                                            <div class="flw-field">
+                                                <label for="flower-price">Giá số (VNĐ để lọc)</label>
+                                                <input type="number" id="flower-price" min="0" step="10000" placeholder="VD: 550000">
+                                            </div>
+                                            <div class="flw-field">
+                                                <label for="flower-price-label">Nhãn giá hiển thị</label>
+                                                <input type="text" id="flower-price-label" placeholder="VD: 550.000đ hoặc Từ 450.000đ">
+                                            </div>
+                                        </div>
+
+                                        <div class="flw-field-row">
+                                            <div class="flw-field">
+                                                <label for="flower-tone">Tone màu chủ đạo</label>
+                                                <input type="text" id="flower-tone" placeholder="VD: Hồng phấn · Trắng kem">
+                                            </div>
+                                            <div class="flw-field">
+                                                <label for="flower-badge">Nhãn nổi bật (Tùy chọn)</label>
+                                                <input type="text" id="flower-badge" placeholder="VD: Mẫu yêu thích / Cắm bình gốm">
+                                            </div>
+                                        </div>
+
+                                        <div class="flw-field">
+                                            <label for="flower-materials">Các loại hoa &amp; Phụ liệu sử dụng</label>
+                                            <input type="text" id="flower-materials" placeholder="VD: Hồng Ohara, Cát tường kép, Thảo mộc &amp; Giỏ mây đan">
+                                        </div>
+
+                                        <div class="flw-field-row">
+                                            <div class="flw-field">
+                                                <label for="flower-size">Kích thước &amp; Dịp tặng</label>
+                                                <input type="text" id="flower-size" placeholder="VD: Cao ~42cm · Sinh nhật, Khai trương">
+                                            </div>
+                                            <div class="flw-field">
+                                                <label for="flower-lead-time">Thời gian chuẩn bị</label>
+                                                <input type="text" id="flower-lead-time" placeholder="VD: Đặt trước 1 ngày / Giao trong ngày">
+                                            </div>
+                                        </div>
+
+                                        <div class="flw-field">
+                                            <label for="flower-description">Mô tả cảm hứng &amp; Gợi ý chăm hoa</label>
+                                            <textarea id="flower-description" rows="4" placeholder="Mô tả vẻ đẹp của mẫu hoa, phụ kiện đi kèm (thiệp viết tay, bình gốm)..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB 2 -->
+                                    <div class="flw-tab-pane" data-flw-pane="photos">
+                                        <div class="flw-field">
+                                            <label>
+                                                <span>Ảnh đại diện chính của mẫu hoa <span style="color:#B91C1C;">*</span></span>
+                                                <span style="font-size:0.7rem; color:#8A7F75;">Tỷ lệ dọc 4:5 hiển thị đẹp nhất</span>
+                                            </label>
+                                            <div class="flw-dropzone">
+                                                <input type="file" id="flower-image" accept="image/*">
+                                                <div style="font-size:0.83rem; font-weight:700; color:#2B2928;">+ Bấm chọn hoặc kéo thả Ảnh chính mẫu hoa</div>
+                                                <div style="font-size:0.74rem; color:#7A7168; margin-top:2px;">Tự động tối ưu độ nét cho trang khách</div>
+                                            </div>
+                                            <input type="text" id="flower-image-url" placeholder="Hoặc dán trực tiếp link ảnh (https://...)" style="margin-top:7px;">
+                                            <div id="flower-image-preview" style="margin-top:8px;"></div>
+                                        </div>
+
+                                        <div class="flw-field" style="padding-top:8px; border-top:1px solid #EFE8DF;">
+                                            <label>
+                                                <span>Ảnh chụp các góc khác (Chọn nhiều ảnh)</span>
+                                                <span style="font-size:0.7rem; color:#7D563D; font-weight:600;">Cận bông hoa, dáng giỏ, lúc cầm tay...</span>
+                                            </label>
+                                            <div class="flw-dropzone">
+                                                <input type="file" id="flower-gallery" accept="image/*" multiple>
+                                                <div style="font-size:0.82rem; font-weight:700; color:#2B2928;">+ Thêm nhiều góc chụp cho mẫu hoa</div>
+                                            </div>
+                                            <div id="flower-gallery-preview" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:8px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flw-editor-footer">
+                                    <button type="button" id="btn-cancel-flower-edit" class="flw-btn" onclick="window.resetFlowerSampleForm()" style="display:none; height:40px;">Hủy sửa</button>
+                                    <button type="submit" id="btn-save-flower-sample" class="flw-btn flw-btn--primary" style="flex:1; height:40px; font-size:0.87rem; font-weight:700;">Lưu Mẫu Hoa Nhà Gốm</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right Showcase Grid -->
+                        <div class="flw-gallery-panel">
+                            <div class="flw-gallery-toolbar">
+                                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="font-weight:700; color:#2B2928; font-size:0.95rem;">Kệ Mẫu Hoa Đã Đăng</span>
+                                        <span id="flw-filtered-count-label" style="font-size:0.78rem; color:#7D563D; background:#EFE7DC; padding:2px 8px; border-radius:6px; font-weight:600;">0 mẫu</span>
+                                    </div>
+
+                                    <input type="text" id="flw-admin-search" placeholder="Tìm tên mẫu hoa, loại hoa, tone màu..."
+                                        style="height:35px; width:290px; max-width:100%; padding:0 12px; border:1px solid #DDD3C6; border-radius:7px; background:#FFFFFF; font-size:0.83rem;">
+                                </div>
+
+                                <div class="flw-cat-pills" id="flw-admin-cat-pills">
+                                    <button type="button" class="flw-cat-pill active" data-cat="all">Tất cả</button>
+                                    <button type="button" class="flw-cat-pill" data-cat="Giỏ hoa & Lẵng hoa">Giỏ hoa &amp; Lẵng hoa</button>
+                                    <button type="button" class="flw-cat-pill" data-cat="Bó hoa nghệ thuật">Bó hoa nghệ thuật</button>
+                                    <button type="button" class="flw-cat-pill" data-cat="Bình hoa gốm">Bình hoa gốm</button>
+                                    <button type="button" class="flw-cat-pill" data-cat="Hoa cưới cầm tay">Hoa cưới cầm tay</button>
+                                    <button type="button" class="flw-cat-pill" data-cat="Hoa bàn tiệc & Sự kiện">Hoa bàn tiệc</button>
+                                </div>
+                            </div>
+
+                            <div class="flw-cards-scroll">
+                                <div id="admin-flower-list">
+                                    <div style="text-align:center; padding: 2.5rem; grid-column: 1/-1;"><span class="spinner"></span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5786,761 +7200,6 @@
                                 <!-- Card 3: Cài đặt xuất bản -->
                                 <div class="news-side-card">
                                     <div class="news-side-card-head">
-                                        <span><i class="ti ti-settings"></i> Cài đặt xuất bản</span>
-                                    </div>
-                                    <div class="news-side-field">
-                                        <label for="news-status">Trạng thái</label>
-                                        <select id="news-status" class="news-side-input">
-                                            <option value="published">Xuất bản ngay</option>
-                                            <option value="draft">Bản nháp</option>
-                                        </select>
-                                    </div>
-                                    <div class="news-side-field" style="margin-bottom: 0;">
-                                        <label for="news-author">Tác giả</label>
-                                        <input type="text" id="news-author" class="news-side-input"
-                                            placeholder="Tiệm Nhà Gốm" value="Tiệm Nhà Gốm">
-                                    </div>
-                                </div>
-
-                                <!-- Card 4: Sản phẩm gợi ý trong bài -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span><i class="ti ti-shopping-bag"></i> Sản phẩm gợi ý trong bài</span>
-                                        <span id="news-related-count" class="news-char-counter">0/4</span>
-                                    </div>
-                                    <div class="news-side-field" style="margin-bottom: 8px;">
-                                        <input type="text" id="news-related-product-search" class="news-side-input"
-                                            placeholder="Tìm sản phẩm theo tên hoặc mã SP...">
-                                    </div>
-                                    <div id="news-related-selected" class="news-related-selected"></div>
-                                    <div id="news-related-results" class="news-related-results"></div>
-                                    <p class="news-side-hint">Chọn tối đa 4 sản phẩm liên quan. Để trống sẽ tự gợi ý sản phẩm mới nhất đang mở bán.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 2: TỐI ƯU SEO & XEM TRƯỚC GOOGLE / SOCIAL -->
-                    <div id="tab-news-seo" class="news-tab-pane">
-                        <div class="news-seo-grid">
-                            <!-- Cột Trái: Form cấu hình SEO -->
-                            <div class="news-seo-form-col">
-                                <!-- Card 1: Cấu hình SEO Google & Đường dẫn -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span><i class="ti ti-world"></i> Cấu hình SEO Google &amp; Đường dẫn</span>
-                                        <button type="button" id="btn-auto-fill-seo" class="news-action-btn">
-                                            <i class="ti ti-sparkles"></i> Tự động điền
-                                        </button>
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <label for="news-seo-focus-keyword">Từ khóa chính (Focus Keyword)</label>
-                                        <input type="text" id="news-seo-focus-keyword" class="news-side-input"
-                                            placeholder="VD: cách bảo quản gốm sứ thủ công">
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <div class="news-seo-label-row">
-                                            <label for="news-seo-title" style="margin-bottom: 0;">SEO Title (Tiêu đề Google)</label>
-                                            <span id="news-seo-title-count" class="news-char-counter">0/60</span>
-                                        </div>
-                                        <input type="text" id="news-seo-title" class="news-side-input"
-                                            placeholder="Để trống sẽ tự động dùng: Tiêu đề bài viết | Tiệm Nhà Gốm">
-                                        <div class="news-seo-meter">
-                                            <div id="news-seo-title-meter" class="news-seo-meter-fill"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <div class="news-seo-label-row">
-                                            <label for="news-seo-description" style="margin-bottom: 0;">SEO Description (Mô tả tìm kiếm)</label>
-                                            <span id="news-seo-desc-count" class="news-char-counter">0/160</span>
-                                        </div>
-                                        <textarea id="news-seo-description" class="news-side-textarea" rows="3"
-                                            placeholder="Để trống sẽ tự động dùng Mô tả ngắn (Excerpt) hoặc 155 ký tự đầu nội dung..."></textarea>
-                                        <div class="news-seo-meter">
-                                            <div id="news-seo-desc-meter" class="news-seo-meter-fill"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <label for="news-slug">Đường dẫn thân thiện (URL Slug)</label>
-                                        <div class="news-slug-input-group">
-                                            <span class="news-slug-prefix">?id=</span>
-                                            <input type="text" id="news-slug" class="news-side-input"
-                                                placeholder="vd: cach-bao-quan-gom-su">
-                                        </div>
-                                        <p id="news-slug-hint" class="news-side-hint">Tự động tạo từ tiêu đề khi đăng mới. Chỉ dùng chữ thường không dấu và dấu gạch ngang.</p>
-                                    </div>
-
-                                    <div class="news-side-field" style="margin-bottom: 0;">
-                                        <label for="news-seo-keywords">Từ khóa phụ / Meta Keywords</label>
-                                        <input type="text" id="news-seo-keywords" class="news-side-input"
-                                            placeholder="VD: gốm sứ thủ công, bảo quản gốm, tiệm nhà gốm (ngăn cách bằng dấu phẩy)">
-                                    </div>
-                                </div>
-
-                                <!-- Card 2: Hình ảnh & Lập chỉ mục nâng cao -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span><i class="ti ti-settings"></i> Hình ảnh &amp; Lập chỉ mục (Robots / Canonical)</span>
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <label for="news-cover-alt">Văn bản thay thế ảnh bìa (Cover Alt Text)</label>
-                                        <input type="text" id="news-cover-alt" class="news-side-input"
-                                            placeholder="Mô tả nội dung ảnh bìa cho Google Images (mặc định dùng Tiêu đề bài viết)">
-                                    </div>
-
-                                    <div class="news-side-field">
-                                        <label for="news-seo-canonical">Canonical URL (Tùy chọn)</label>
-                                        <input type="url" id="news-seo-canonical" class="news-side-input"
-                                            placeholder="Mặc định: https://tiemnhagom.vn/blog/article.html?id=...">
-                                    </div>
-
-                                    <label class="news-seo-checkbox-row" for="news-seo-noindex">
-                                        <input type="checkbox" id="news-seo-noindex">
-                                        <span>Chặn công cụ tìm kiếm lập chỉ mục bài viết này (<code>noindex, nofollow</code>)</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Cột Phải: Google SERP, Open Graph & Checklist SEO -->
-                            <div class="news-seo-preview-col">
-                                <!-- Card 1: Xem trước trên Google (SERP Preview) -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span>Xem trước tìm kiếm Google</span>
-                                        <div class="news-serp-toggle-group">
-                                            <button type="button" id="btn-serp-desktop" class="news-serp-toggle-btn active"
-                                                title="Xem trước trên máy tính">
-                                                <i class="ti ti-device-laptop"></i>
-                                            </button>
-                                            <button type="button" id="btn-serp-mobile" class="news-serp-toggle-btn"
-                                                title="Xem trước trên điện thoại">
-                                                <i class="ti ti-device-mobile"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div id="news-serp-preview" class="news-serp-card">
-                                        <div class="news-serp-site-row">
-                                            <span class="news-serp-favicon">G</span>
-                                            <div class="news-serp-site-meta">
-                                                <div class="news-serp-site-name">Tiệm Nhà Gốm</div>
-                                                <div id="news-serp-url" class="news-serp-url">https://tiemnhagom.vn &rsaquo; blog &rsaquo; bai-viet-moi</div>
-                                            </div>
-                                        </div>
-                                        <div id="news-serp-title" class="news-serp-title">Tiêu đề bài viết | Tiệm Nhà Gốm</div>
-                                        <div id="news-serp-desc" class="news-serp-desc">Mô tả tìm kiếm sẽ hiển thị tại đây...</div>
-                                    </div>
-                                    <div id="news-serp-noindex-warn" class="news-serp-noindex-warn" style="display: none;">
-                                        <i class="ti ti-alert-circle"></i> Bài viết đang bật <code>noindex</code> — Google sẽ không lập chỉ mục trang này.
-                                    </div>
-                                </div>
-
-                                <!-- Card 2: Xem trước chia sẻ Facebook / Zalo (Open Graph) -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span>Xem trước chia sẻ Facebook / Zalo (Open Graph)</span>
-                                    </div>
-                                    <div id="news-og-preview" class="news-og-card">
-                                        <div id="news-og-image-wrap" class="news-og-image-wrap">
-                                            <span class="news-og-image-empty"><i class="ti ti-photo"></i> Chưa chọn ảnh bìa</span>
-                                        </div>
-                                        <div class="news-og-meta">
-                                            <div class="news-og-domain">TIEMNHAGOM.VN</div>
-                                            <div id="news-og-title" class="news-og-title">Tiêu đề bài viết | Tiệm Nhà Gốm</div>
-                                            <div id="news-og-desc" class="news-og-desc">Mô tả chia sẻ mạng xã hội sẽ hiển thị tại đây...</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Card 3: Đánh giá chuẩn SEO tự động -->
-                                <div class="news-side-card">
-                                    <div class="news-side-card-head">
-                                        <span>Kiểm tra chuẩn SEO</span>
-                                        <span id="news-seo-score-badge" class="news-seo-score-badge is-warn">0/100</span>
-                                    </div>
-                                    <ul id="news-seo-checklist" class="news-seo-checklist"></ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 3: XEM TRƯỚC BÀI VIẾT -->
-                    <div id="tab-news-preview" class="news-tab-pane">
-                        <div id="news-preview-container" class="news-preview-sheet"></div>
-                    </div>
-                </div>
-
-                <!-- Sticky Footer -->
-                <div class="news-modal-footer">
-                    <div class="news-modal-footer-left">
-                        <button type="button" id="btn-delete-news-modal" class="news-btn-danger" style="display: none;">
-                            <i class="ti ti-trash"></i> Xóa bài viết
-                        </button>
-                        <span id="news-editor-metrics" class="news-editor-metrics">
-                            <i class="ti ti-file-text"></i> 0 từ · ~1 phút đọc
-                        </span>
-                    </div>
-                    <div class="footer-btn-group">
-                        <button type="button" class="kiot-btn-secondary" id="btn-close-news-modal-footer">Bỏ qua</button>
-                        <button type="button" class="kiot-btn-outline" id="btn-save-news-draft">
-                            <i class="ti ti-file-text"></i> Lưu nháp
-                        </button>
-                        <button type="submit" class="kiot-btn-primary" id="btn-submit-news">
-                            <i class="ti ti-device-floppy"></i> Đăng bài viết
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Style tối ưu căn giữa & chống tràn cho Modal Chỉnh sửa đơn hàng Tiệm Nhà Gốm -->
-    <style>
-        #edit-order-modal.modal,
-        #edit-rental-order-modal.modal,
-        #create-online-order-modal.modal,
-        #online-order-variant-modal.modal,
-        #edit-order-modal[style*="display: block"],
-        #edit-rental-order-modal[style*="display: block"],
-        #create-online-order-modal[style*="display: block"],
-        #edit-order-modal[style*="display: flex"],
-        #edit-rental-order-modal[style*="display: flex"],
-        #create-online-order-modal[style*="display: flex"] {
-            position: fixed !important;
-            inset: 0 !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(15, 23, 42, 0.65) !important;
-            backdrop-filter: blur(5px) !important;
-            -webkit-backdrop-filter: blur(5px) !important;
-            z-index: 99999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 16px !important;
-            box-sizing: border-box !important;
-        }
-
-        #edit-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
-        #edit-rental-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
-        #create-online-order-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active),
-        #online-order-variant-modal.modal:not([style*="display: flex"]):not([style*="display: block"]):not(.active) {
-            display: none !important;
-        }
-
-        #edit-order-modal[style*="display: none"],
-        #edit-rental-order-modal[style*="display: none"],
-        #create-online-order-modal[style*="display: none"],
-        #online-order-variant-modal[style*="display: none"] {
-            display: none !important;
-        }
-
-        #edit-order-modal .modal-content,
-        #edit-rental-order-modal .modal-content {
-            margin: auto !important;
-            width: 100% !important;
-            max-width: 780px !important;
-            max-height: calc(100vh - 40px) !important;
-            background: #FAF8F5 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
-            position: relative !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            border: 1px solid #E8CCB2 !important;
-            animation: editModalZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            box-sizing: border-box !important;
-        }
-
-        #create-online-order-modal .modal-content {
-            margin: auto !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 1080px !important;
-            max-height: calc(100vh - 32px) !important;
-            background: #FAF8F5 !important;
-            border-radius: 12px !important;
-            box-shadow: 0 24px 60px rgba(43, 41, 40, 0.28) !important;
-            position: relative !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            border: 1px solid #E8E1D8 !important;
-            animation: editModalZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            box-sizing: border-box !important;
-        }
-
-        /* Online Create Order (OCO) Refined Ceramic UI */
-        #create-online-order-modal .oco-header {
-            background: linear-gradient(135deg, #8F654B 0%, #6D4934 100%);
-            padding: 15px 22px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        #create-online-order-modal .oco-header-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.16);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: #FFFFFF;
-            flex-shrink: 0;
-        }
-
-        #create-online-order-modal .oco-close-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: #FFFFFF;
-            font-size: 1.35rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            transition: background 0.16s ease, transform 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-close-btn:hover {
-            background: rgba(255, 255, 255, 0.22);
-        }
-
-        #create-online-order-modal .oco-body {
-            background: #F6F2EC !important;
-            padding: 18px 22px !important;
-        }
-
-        #create-online-order-modal .online-order-grid-layout {
-            display: grid;
-            grid-template-columns: 1.04fr 1.14fr;
-            gap: 18px;
-            align-items: start;
-        }
-
-        #create-online-order-modal .oco-col {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            min-width: 0;
-        }
-
-        #create-online-order-modal .oco-card {
-            background: #FFFFFF;
-            border: 1px solid #E8E1D8;
-            border-radius: 10px;
-            padding: 14px 16px;
-            box-shadow: 0 2px 8px rgba(43, 41, 40, 0.035);
-            display: flex;
-            flex-direction: column;
-            gap: 11px;
-        }
-
-        #create-online-order-modal .oco-card--flush {
-            padding: 0;
-            gap: 0;
-            overflow: hidden;
-        }
-
-        #create-online-order-modal .oco-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #F2ECE4;
-        }
-
-        #create-online-order-modal .oco-card-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.86rem;
-            font-weight: 700;
-            color: #2B2928;
-            letter-spacing: -0.01em;
-            margin: 0;
-        }
-
-        #create-online-order-modal .oco-card-title i {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            background: #F4EAE0;
-            color: #9C7156 !important;
-            opacity: 1 !important;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.92rem;
-            flex-shrink: 0;
-        }
-
-        #create-online-order-modal .oco-card-meta {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: #7C7267;
-            background: #FAF8F5;
-            border: 1px solid #ECE5DC;
-            padding: 2px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        #create-online-order-modal .oco-field-label {
-            display: block;
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: #5E564E;
-            margin-bottom: 5px;
-        }
-
-        #create-online-order-modal .oco-field-label .oco-req {
-            color: #B45309;
-            margin-left: 2px;
-        }
-
-        #create-online-order-modal .kiot-filter-input,
-        #create-online-order-modal .kiot-filter-select {
-            border: 1px solid #DDD4C8 !important;
-            border-radius: 8px !important;
-            background: #FFFFFF !important;
-            color: #2B2928 !important;
-            font-size: 0.85rem !important;
-            transition: border-color 0.16s ease, box-shadow 0.16s ease !important;
-            box-sizing: border-box !important;
-            width: 100%;
-        }
-
-        #create-online-order-modal .kiot-filter-input:focus,
-        #create-online-order-modal .kiot-filter-select:focus {
-            border-color: #9C7156 !important;
-            box-shadow: 0 0 0 3px rgba(156, 113, 86, 0.14) !important;
-            outline: none !important;
-        }
-
-        #create-online-order-modal .oco-channel-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        #create-online-order-modal .online-channel-pill {
-            padding: 8px 6px;
-            border-radius: 8px;
-            border: 1px solid #E2D9CE;
-            background: #FFFFFF;
-            color: #5E564E;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            white-space: nowrap;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .online-channel-pill:hover {
-            border-color: #C4A48D;
-            background: #FCF9F5;
-        }
-
-        #create-online-order-modal .online-channel-pill.active {
-            border: 1.5px solid #9C7156 !important;
-            background: #F7F1EB !important;
-            color: #7D563D !important;
-            font-weight: 700 !important;
-            box-shadow: 0 2px 6px rgba(156, 113, 86, 0.12);
-        }
-
-        /* Hình thức giao hàng (Shipping Method Cards) */
-        #create-online-order-modal .oco-shipping-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        #create-online-order-modal .oco-shipping-card {
-            position: relative;
-            text-align: left;
-            padding: 10px 11px;
-            border-radius: 8px;
-            border: 1px solid #E2D9CE;
-            background: #FFFFFF;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-shipping-card:hover {
-            border-color: #C4A48D;
-            background: #FCF9F5;
-        }
-
-        #create-online-order-modal .oco-shipping-card.active {
-            border: 1.5px solid #9C7156;
-            background: #F7F1EB;
-            box-shadow: 0 3px 10px rgba(156, 113, 86, 0.13);
-        }
-
-        #create-online-order-modal .oco-shipping-card-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-        }
-
-        #create-online-order-modal .oco-shipping-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            background: #F5EFE8;
-            color: #6E665D;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-shipping-card.active .oco-shipping-icon {
-            background: #9C7156;
-            color: #FFFFFF;
-        }
-
-        #create-online-order-modal .oco-shipping-check {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 1.5px solid #D5C9BC;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.68rem;
-            color: transparent;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-shipping-card.active .oco-shipping-check {
-            border-color: #9C7156;
-            background: #9C7156;
-            color: #FFFFFF;
-        }
-
-        #create-online-order-modal .oco-shipping-name {
-            font-size: 0.81rem;
-            font-weight: 700;
-            color: #2B2928;
-            margin-top: 2px;
-            line-height: 1.25;
-        }
-
-        #create-online-order-modal .oco-shipping-card.active .oco-shipping-name {
-            color: #7D563D;
-        }
-
-        #create-online-order-modal .oco-shipping-desc {
-            font-size: 0.71rem;
-            color: #7C7267;
-            line-height: 1.25;
-        }
-
-        /* Quick Shipping Fee Chips */
-        #create-online-order-modal .oco-fee-chip {
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid #DDD4C8;
-            background: #FAF8F5;
-            color: #5E564E;
-            cursor: pointer;
-            transition: all 0.14s ease;
-        }
-
-        #create-online-order-modal .oco-fee-chip:hover {
-            border-color: #9C7156;
-            background: #F7F1EB;
-            color: #7D563D;
-        }
-
-        /* Summary Receipt Box */
-        #create-online-order-modal .oco-summary-box {
-            background: #FAF7F2;
-            border: 1px solid #E5D9CC;
-            border-radius: 8px;
-            padding: 13px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        #create-online-order-modal .oco-summary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.84rem;
-            color: #6E665D;
-        }
-
-        #create-online-order-modal .oco-summary-total {
-            border-top: 1px dashed #D8C7B6;
-            margin-top: 4px;
-            padding-top: 9px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #create-online-order-modal .oco-footer {
-            justify-content: space-between !important;
-            background: #FFFFFF !important;
-            border-top: 1px solid #E8E1D8 !important;
-            padding: 13px 22px !important;
-        }
-
-        #create-online-order-modal .oco-footer-summary {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.84rem;
-            color: #6E665D;
-        }
-
-        #create-online-order-modal .oco-footer-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #create-online-order-modal .oco-btn-cancel {
-            border: 1px solid #DDD4C8;
-            background: #FFFFFF;
-            color: #5E564E;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-size: 0.86rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-btn-cancel:hover {
-            background: #FAF8F5;
-            border-color: #C4A48D;
-            color: #2B2928;
-        }
-
-        #create-online-order-modal .oco-btn-submit {
-            background: #9C7156;
-            border: 1px solid #9C7156;
-            color: #FFFFFF;
-            border-radius: 8px;
-            padding: 9px 22px;
-            font-size: 0.88rem;
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(156, 113, 86, 0.25);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            transition: all 0.16s ease;
-        }
-
-        #create-online-order-modal .oco-btn-submit:hover {
-            background: #7D563D;
-            border-color: #7D563D;
-            transform: translateY(-1px);
-        }
-
-        #create-online-order-modal .oco-btn-submit:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        @media (max-width: 960px) {
-            #create-online-order-modal .online-order-grid-layout {
-                grid-template-columns: 1fr !important;
-            }
-
-            #create-online-order-modal .modal-content {
-                max-height: calc(100vh - 16px) !important;
-                border-radius: 10px !important;
-            }
-
-            #create-online-order-modal .oco-footer {
-                flex-direction: column;
-                align-items: stretch !important;
-                gap: 10px !important;
-            }
-
-            #create-online-order-modal .oco-footer-actions {
-                justify-content: flex-end;
-            }
-        }
-
-        @media (max-width: 540px) {
-            #create-online-order-modal .oco-shipping-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        #online-order-variant-modal .modal-content {
-            margin: auto !important;
-            width: 100% !important;
-            max-width: 480px !important;
-            background: #FAF8F5 !important;
-            border-radius: 12px !important;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4) !important;
-            border: 1px solid #E8CCB2 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            animation: editModalZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-
-        @keyframes editModalZoomIn {
-            0% {
-                opacity: 0;
-                transform: scale(0.95) translateY(12px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        #edit-order-modal .edit-modal-header,
-        #edit-rental-order-modal .edit-modal-header,
-        #create-online-order-modal .edit-modal-header {
-            flex-shrink: 0 !important;
-            padding: 14px 20px !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            color: #ffffff !important;
-        }
-
         #edit-order-modal .edit-modal-body,
         #edit-rental-order-modal .edit-modal-body,
         #create-online-order-modal .edit-modal-body {
@@ -6939,7 +7598,10 @@
                         <!-- 1. Chọn Kênh bán hàng -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-world"></i> Kênh bán hàng</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                                    Kênh bán hàng
+                                </h4>
                                 <span class="oco-card-meta">Nguồn: Online</span>
                             </div>
 
@@ -6968,7 +7630,10 @@
                         <!-- 2. Thông tin khách hàng & Địa chỉ -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-user"></i> Khách hàng & Địa chỉ</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                                    Khách hàng & Địa chỉ
+                                </h4>
                                 <span class="oco-card-meta">Đồng bộ POS & App</span>
                             </div>
 
@@ -7050,7 +7715,10 @@
                         <!-- 3. Hình thức giao hàng (MỚI) -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-truck-delivery"></i> Hình thức giao hàng</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+                                    Hình thức giao hàng
+                                </h4>
                                 <span class="oco-card-meta" id="online-shipping-method-meta">Giao tiêu chuẩn</span>
                             </div>
 
@@ -7090,7 +7758,10 @@
                         <!-- 4. Thanh toán, Trạng thái & Ghi chú -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-credit-card"></i> Thanh toán & Xử lý</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+                                    Thanh toán & Xử lý
+                                </h4>
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -7145,7 +7816,10 @@
                         <!-- 1. Tìm kiếm sản phẩm kiểu POS -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-teapot"></i> Thêm sản phẩm gốm (F3)</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+                                    Thêm sản phẩm gốm (F3)
+                                </h4>
                                 <span class="oco-card-meta">Kho realtime · Quét mã</span>
                             </div>
 
@@ -7201,15 +7875,22 @@
                                         <tr>
                                             <td colspan="5"
                                                 style="text-align: center; padding: 30px 14px; color: #8A7F75;">
-                                                <div style="font-size: 1.5rem; color: #D4C6B8; margin-bottom: 4px;"><i class="ti ti-teapot"></i></div>
                                                 <div style="font-weight: 600; color: #5E564E; font-size: 0.84rem;">Chưa có sản phẩm nào trong đơn</div>
                                                 <div style="font-size: 0.75rem; margin-top: 2px;">Tìm kiếm hoặc quét mã vạch ở ô bên trên để thêm món gốm.</div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- 3. Phí vận chuyển, Giảm giá & Tổng cộng -->
                         <div class="oco-card">
                             <div class="oco-card-header">
-                                <h4 class="oco-card-title"><i class="ti ti-receipt"></i> Chi phí & Thanh toán</h4>
+                                <h4 class="oco-card-title">
+                                    <span class="oco-title-svg"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C7156" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg></span>
+                                    Chi phí & Thanh toán
+                                </h4>
                             </div>
 
                             <!-- Phí vận chuyển -->
@@ -7286,7 +7967,8 @@
                         onclick="window.closeCreateOnlineOrderModal()">Bỏ qua</button>
                     <button type="button" id="btn-submit-online-order" class="oco-btn-submit"
                         onclick="window.submitCreateOnlineOrder()">
-                        <i class="ti ti-device-floppy"></i> Hoàn tất tạo đơn Online
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Hoàn tất tạo đơn Online
                     </button>
                 </div>
             </div>
@@ -7768,7 +8450,7 @@
             });
         });
     </script>
-    <script type="module" src="../js/DashBoard.js?v=84"></script>
+    <script type="module" src="../js/DashBoard.js?v=89"></script>
     <!-- Modal Thêm khách hàng POS -->
     <div id="pos-add-customer-modal" class="modal">
         <div class="modal-content" style="max-width: 800px; padding: 0;">
@@ -8121,7 +8803,11 @@
                 </button>
                 <button type="button" class="drawer-link-btn admin-tab-btn" data-target="events-section">
                     <span class="drawer-icon"><i class="ti ti-tent"></i></span>
-                    <span>Dự án & Sự kiện workshop</span>
+                    <span>Album Dự án Decor</span>
+                </button>
+                <button type="button" class="drawer-link-btn admin-tab-btn" data-target="flowers-section">
+                    <span class="drawer-icon"><i class="ti ti-flower"></i></span>
+                    <span>Hoa Nhà Gốm (Mẫu hoa)</span>
                 </button>
                 <button type="button" class="drawer-link-btn admin-tab-btn" data-target="news-section">
                     <span class="drawer-icon"><i class="ti ti-news"></i></span>

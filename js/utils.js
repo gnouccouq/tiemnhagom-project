@@ -1359,8 +1359,8 @@ export function setupHeaderScroll() {
     const bottomNav = document.querySelector('.mobile-bottom-nav');
     if (!nav) return;
 
-    // Kiểm tra xem trang có Hero Section (như trang chủ, trang Noel,...) không
-    const hasHero = document.querySelector('.hero-carousel, .hero, #col-hero, .noel-landing-hero, .app-hero, .lookbook-hero');
+    // Kiểm tra xem trang có Hero Section (như trang chủ, trang Noel, trang Giới thiệu,...) không
+    const hasHero = document.querySelector('.hero-carousel, .hero, #col-hero, .noel-landing-hero, .app-hero, .lookbook-hero, .about-hero');
 
     const handleScroll = () => {
         if (window.scrollY > 40) {
@@ -2288,8 +2288,8 @@ export function renderProductCard(product, id, favsList = [], linkBase = 'produc
     } else if (fsInfo && fsInfo.isUpcoming) {
         flashSaleBarHtml = `
             <div class="flashsale-progress-wrapper">
-                <div class="flashsale-progress-bar" style="background: #e0f2fe; border-color: #bae6fd;">
-                    <span class="flashsale-progress-text" style="color: #0369a1; text-shadow: none;"><i class="ti ti-alarm"></i> Sắp mở bán 9.9 (${fsInfo.limit} suất)</span>
+                <div class="flashsale-progress-bar" style="background: #FAF5EF; border-color: #E8CCB2;">
+                    <span class="flashsale-progress-text" style="color: #7D563D; text-shadow: none;"><i class="ti ti-alarm"></i> Sắp mở bán 12.12 (${fsInfo.limit} suất)</span>
                 </div>
             </div>
         `;

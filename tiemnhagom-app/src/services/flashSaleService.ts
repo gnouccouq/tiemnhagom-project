@@ -1,8 +1,8 @@
 // src/services/flashSaleService.ts
-import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
-import { DEFAULT_CATEGORIES, ProductCategoryItem } from './productService';
+import { DEFAULT_CATEGORIES } from './productService';
 
 export interface FlashSaleItemConfig {
   salePrice?: number;
@@ -48,11 +48,24 @@ export interface ProductWithFlashSale extends Product {
   };
   effectivePrice: number;
   effectiveSalePercent: number;
+  dealLabel?: string;
+  variantKey?: string;
+}
+
+export interface FlashSaleStage {
+  id: string;
+  shortNav: string;
+  crownTitle: string;
+  theme: 'terracotta' | 'kiln';
+  subCategories: string[];
+  products: ProductWithFlashSale[];
+  note: string;
 }
 
 export interface FlashSaleData {
   settings: FlashSaleSettings | null;
   status: FlashSaleStatus;
+  stages: FlashSaleStage[];
   bogoProducts: ProductWithFlashSale[];
   shockCampaignProducts: ProductWithFlashSale[];
   priceGroupProducts: Record<number, ProductWithFlashSale[]>;
@@ -64,7 +77,17 @@ export interface FlashSaleData {
 
 let cachedSettings: FlashSaleSettings | null = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 30000; // 30s cache
+const CACHE_TTL = 30000;
+
+function getDefault1212Window() {
+  const now = new Date();
+  let year = now.getFullYear();
+  if (now > new Date(year, 11, 12, 23, 59, 59)) year += 1;
+  return {
+    start: new Date(year, 11, 12, 0, 0, 0),
+    end: new Date(year, 11, 12, 23, 59, 59),
+  };
+}
 
 export async function fetchFlashSaleSettings(forceRefresh = false): Promise<FlashSaleSettings | null> {
   const now = Date.now();
@@ -88,49 +111,42 @@ export async function fetchFlashSaleSettings(forceRefresh = false): Promise<Flas
 
 export function parseDate(val: any): Date | null {
   if (!val) return null;
-  if (typeof val.toDate === 'function') {
-    return val.toDate();
-  }
-  if (val.seconds) {
-    return new Date(val.seconds * 1000);
-  }
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
   const d = new Date(val);
   return isNaN(d.getTime()) ? null : d;
 }
 
 export function getFlashSaleStatus(settings: FlashSaleSettings | null): FlashSaleStatus {
-  if (!settings || !settings.isActive) {
-    return {
-      isRunning: false,
-      isUpcoming: false,
-      isEnded: true,
-      startTime: null,
-      endTime: null,
-      title: settings?.title || 'Flash Sale',
-      subtitle: settings?.subtitle || 'Ưu đãi gốm sứ độc bản có hạn.',
-    };
+  const now = new Date();
+  const def1212 = getDefault1212Window();
+
+  let startTime = parseDate(settings?.startTime);
+  let endTime = parseDate(settings?.endTime);
+
+  const hasValidCampaign = Boolean(settings?.isActive && endTime && endTime > now);
+  if (!hasValidCampaign) {
+    startTime = def1212.start;
+    endTime = def1212.end;
   }
 
-  const now = new Date();
-  const startTime = parseDate(settings.startTime);
-  const endTime = parseDate(settings.endTime);
-
-  const isRunning =
-    Boolean(settings.isActive) &&
-    (!startTime || now >= startTime) &&
-    (!endTime || now <= endTime);
-
-  const isUpcoming = Boolean(settings.isActive) && Boolean(startTime && now < startTime);
-  const isEnded = !isRunning && !isUpcoming;
+  const isRunning = Boolean(startTime && endTime && now >= startTime && now <= endTime);
+  const isUpcoming = Boolean(startTime && now < startTime);
 
   return {
     isRunning,
     isUpcoming,
-    isEnded,
+    isEnded: !isRunning && !isUpcoming,
     startTime,
     endTime,
-    title: settings.title || 'Flash Sale',
-    subtitle: settings.subtitle || 'Nhanh tay sở hữu những món gốm độc bản với ưu đãi tốt nhất.',
+    title:
+      hasValidCampaign && settings?.title
+        ? settings.title
+        : 'Ngày Đôi 12.12 — Siêu Sale Gốm Thủ Công',
+    subtitle:
+      hasValidCampaign && settings?.subtitle
+        ? settings.subtitle
+        : 'Đại tiệc ưu đãi duy nhất 1 ngày 12/12 tại Tiệm Nhà Gốm. Lưu món yêu thích để sẵn sàng săn deal lúc 00:00!',
   };
 }
 
@@ -139,20 +155,20 @@ export function getProductFlashSaleInfo(
   settings: FlashSaleSettings | null,
   status: FlashSaleStatus
 ): ProductWithFlashSale['flashSaleInfo'] | undefined {
-  if (!settings || !settings.isActive) return undefined;
+  const pid = product.parentProductId || product.id;
+  const itemConfig = settings?.items?.[pid];
 
-  const itemConfig = settings.items?.[product.id];
   if (!itemConfig) {
-    if (status.isRunning && (product as any).flashSaleGroup) {
-      const price = Number((product as any).flashSaleGroup);
+    const groupPrice = Number((product as any).flashSaleGroup) || 0;
+    if (groupPrice > 0) {
       return {
-        isRunning: true,
-        isUpcoming: false,
+        isRunning: status.isRunning,
+        isUpcoming: status.isUpcoming,
         dealType: 'sale',
         isBogo: false,
-        salePrice: price,
-        limit: product.stock || 999,
-        sold: 0,
+        salePrice: groupPrice,
+        limit: Math.max(5, Math.min(20, product.stock || 10)),
+        sold: Math.min(product.sold || 0, 5),
         isSoldOut: false,
         soldRatio: 0,
       };
@@ -166,7 +182,7 @@ export function getProductFlashSaleInfo(
   const salePrice = Number(itemConfig.salePrice) || 0;
   const dealType = itemConfig.dealType || 'sale';
   const isBogo = dealType === 'bogo_same' || dealType === 'bogo_custom';
-  const giftProductId = itemConfig.giftProductId || (dealType === 'bogo_same' ? product.id : '');
+  const giftProductId = itemConfig.giftProductId || (dealType === 'bogo_same' ? pid : '');
   const soldRatio = limit > 0 ? Math.min(1, sold / limit) : 0;
 
   return {
@@ -183,157 +199,222 @@ export function getProductFlashSaleInfo(
   };
 }
 
-export async function fetchFlashSaleData(selectedCategory = 'all', forceRefresh = false): Promise<FlashSaleData> {
+function expandIndependentVariants(products: Product[]): Product[] {
+  const result: Product[] = [];
+  products.forEach((p) => {
+    result.push(p);
+
+    const pushVariant = (v: any, type: string, idx: number) => {
+      if (!v || !v.showOnProductPage) return;
+      const label = v.name || v.color || v.pattern || v.label || `Mẫu ${idx + 1}`;
+      const vImg = v.imageUrl || v.image || p.imageUrl;
+      const vPrice = v.price !== undefined && v.price !== null && v.price !== '' && Number(v.price) > 0
+        ? Number(v.price)
+        : p.price;
+      const vSalePrice = v.salePrice !== undefined && v.salePrice !== null && v.salePrice !== '' && Number(v.salePrice) > 0
+        ? Number(v.salePrice)
+        : p.salePrice;
+      const vSale = v.sale !== undefined && v.sale !== null && v.sale !== '' ? Number(v.sale) : p.sale;
+
+      result.push({
+        ...p,
+        id: `${p.id}__${type}_${idx}`,
+        parentProductId: p.id,
+        selectedVariant: { name: label, ...v },
+        name: `${p.name} - ${label}`,
+        imageUrl: vImg,
+        price: vPrice,
+        salePrice: vSalePrice,
+        sale: vSale,
+        stock: v.stock !== undefined && v.stock !== null && v.stock !== '' ? Number(v.stock) : p.stock,
+      } as Product);
+    };
+
+    const anyP = p as any;
+    if (Array.isArray(anyP.colorVariants)) anyP.colorVariants.forEach((v: any, i: number) => pushVariant(v, 'color', i));
+    if (Array.isArray(anyP.patternVariants)) anyP.patternVariants.forEach((v: any, i: number) => pushVariant(v, 'pattern', i));
+    if (Array.isArray(anyP.comboVariants)) anyP.comboVariants.forEach((v: any, i: number) => pushVariant(v, 'combo', i));
+  });
+  return result;
+}
+
+export async function fetchFlashSaleData(_selectedCategory = 'all', forceRefresh = false): Promise<FlashSaleData> {
   const settings = await fetchFlashSaleSettings(forceRefresh);
   const status = getFlashSaleStatus(settings);
 
-  const fsItemIds =
-    (status.isRunning || status.isUpcoming) && settings?.items
-      ? Object.keys(settings.items)
-      : [];
-
-  const fsProductsMap: Record<string, Product> = {};
-
-  // 1. Fetch chi tiết các sản phẩm cấu hình trong flashSaleSettings.items
-  if (fsItemIds.length > 0) {
-    const fsPromises = fsItemIds.map(async (pid) => {
-      try {
-        const snap = await getDoc(doc(db, 'products', pid));
-        if (snap.exists()) {
-          const data = snap.data() as Product;
-          if (!data.isHidden && !data.isOnlyEvent) {
-            fsProductsMap[snap.id] = { ...data, id: snap.id };
-          }
-        }
-      } catch (err) {
-        console.warn(`Lỗi fetch fs product ${pid}:`, err);
-      }
-    });
-    await Promise.all(fsPromises);
-  }
-
-  // 2. Fetch danh sách sản phẩm có sale > 0 thông thường
-  const allFetchedProducts: Product[] = [];
+  const collected: Product[] = [];
   const seenIds = new Set<string>();
 
-  // Ưu tiên sản phẩm trong Campaign
-  Object.values(fsProductsMap).forEach((p) => {
-    allFetchedProducts.push(p);
-    seenIds.add(p.id);
-  });
-
-  try {
-    const qAll = query(
-      collection(db, 'products'),
-      where('sale', '>', 0),
-      orderBy('sale', 'desc')
-    );
-    const snap = await getDocs(qAll);
-    snap.docs.forEach((d) => {
-      if (!seenIds.has(d.id)) {
-        const p = { id: d.id, ...d.data() } as Product;
-        if (!p.isHidden && !p.isOnlyEvent) {
-          allFetchedProducts.push(p);
-          seenIds.add(p.id);
+  // 1. CHỈ LẤY sản phẩm thuộc chiến dịch 12.12 (settings.items + đồng giá priceGroups), không trộn sale thường ngày
+  const fsItemIds = settings?.items ? Object.keys(settings.items) : [];
+  if (fsItemIds.length > 0) {
+    await Promise.all(
+      fsItemIds.map(async (pid) => {
+        try {
+          const snap = await getDoc(doc(db, 'products', pid));
+          if (snap.exists()) {
+            const data = snap.data() as Product;
+            if (!data.isHidden && !data.isOnlyEvent && !seenIds.has(snap.id)) {
+              collected.push({ ...data, id: snap.id });
+              seenIds.add(snap.id);
+            }
+          }
+        } catch (err) {
+          console.warn(`Lỗi fetch fs product ${pid}:`, err);
         }
-      }
-    });
-  } catch (err) {
-    console.warn('Lỗi fetch sản phẩm sale > 0:', err);
+      })
+    );
   }
 
-  // 3. Đếm số lượng sản phẩm sale theo từng danh mục
-  const categoryCounts: Record<string, number> = { all: allFetchedProducts.length };
-  DEFAULT_CATEGORIES.forEach((cat) => {
-    if (cat.id === 'all') return;
-    const count = allFetchedProducts.filter((p) => {
-      if (cat.subs && cat.subs.length > 0) {
-        return cat.subs.includes(p.category || '') || p.category === cat.name;
-      }
-      return p.category === cat.name;
-    }).length;
-    categoryCounts[cat.name] = count;
-  });
+  const priceGroups = Array.isArray(settings?.priceGroups)
+    ? settings!.priceGroups.map(Number).filter((n) => n > 0).sort((a, b) => a - b)
+    : [];
 
-  // 4. Lọc theo danh mục được chọn
-  let filteredList = allFetchedProducts;
-  if (selectedCategory !== 'all') {
-    const catObj = DEFAULT_CATEGORIES.find(
-      (c) => c.name.toLowerCase() === selectedCategory.toLowerCase() || c.id === selectedCategory
-    );
-    if (catObj && catObj.subs && catObj.subs.length > 0) {
-      filteredList = allFetchedProducts.filter(
-        (p) => catObj.subs!.includes(p.category || '') || p.category === catObj.name
-      );
-    } else {
-      filteredList = allFetchedProducts.filter(
-        (p) => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
-      );
+  if (priceGroups.length > 0) {
+    try {
+      const qGroup = query(collection(db, 'products'), where('flashSaleGroup', '>', 0));
+      const groupSnap = await getDocs(qGroup);
+      groupSnap.docs.forEach((d) => {
+        if (!seenIds.has(d.id)) {
+          const p = { id: d.id, ...d.data() } as Product;
+          if (!p.isHidden && !p.isOnlyEvent && priceGroups.includes(Number((p as any).flashSaleGroup))) {
+            collected.push(p);
+            seenIds.add(d.id);
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('Lỗi fetch đồng giá flashSaleGroup:', err);
     }
   }
 
-  // 5. Chuẩn hóa & Phân loại sản phẩm
+  // 2. Tách biến thể hiển thị độc lập (showOnProductPage) giống bản Web
+  const expandedProducts = expandIndependentVariants(collected);
+
+  // 3. Nâng cấp metadata Flash Sale cho từng sản phẩm
   const bogoProducts: ProductWithFlashSale[] = [];
   const shockCampaignProducts: ProductWithFlashSale[] = [];
   const priceGroupProducts: Record<number, ProductWithFlashSale[]> = {};
   const otherSaleProducts: ProductWithFlashSale[] = [];
   const allEnhancedProducts: ProductWithFlashSale[] = [];
 
-  const priceGroups = settings?.priceGroups || [];
   priceGroups.forEach((pg) => {
     priceGroupProducts[pg] = [];
   });
 
-  filteredList.forEach((p) => {
+  expandedProducts.forEach((p) => {
     const fsInfo = getProductFlashSaleInfo(p, settings, status);
+    const basePrice = Number(p.price) || 0;
+    let effectivePrice = basePrice;
+    let dealLabel = 'ƯU ĐÃI NGÀY ĐÔI 12.12';
 
-    let effectivePrice = p.price;
-    if (fsInfo && fsInfo.isRunning && !fsInfo.isSoldOut && fsInfo.salePrice > 0) {
-      effectivePrice = fsInfo.salePrice;
+    if (fsInfo) {
+      if (fsInfo.isBogo) {
+        effectivePrice = basePrice;
+        dealLabel = 'MUA 1 TẶNG 1';
+      } else if (fsInfo.salePrice > 0) {
+        effectivePrice = fsInfo.salePrice;
+        const pct = basePrice > 0 ? Math.max(1, Math.round(((basePrice - effectivePrice) / basePrice) * 100)) : 0;
+        dealLabel = `DEAL SỐC 12.12 • -${pct}%`;
+      }
     } else if (p.salePrice && p.salePrice > 0) {
       effectivePrice = p.salePrice;
     } else if (p.sale && p.sale > 0) {
-      effectivePrice = Math.round(p.price * (1 - p.sale / 100));
+      effectivePrice = Math.round(basePrice * (1 - p.sale / 100));
     }
 
-    const effectiveSalePercent =
-      p.price > 0 && effectivePrice < p.price
-        ? Math.round(((p.price - effectivePrice) / p.price) * 100)
-        : p.sale || 0;
+    const effectiveSalePercent = fsInfo?.isBogo
+      ? 50
+      : basePrice > 0 && effectivePrice < basePrice
+      ? Math.round(((basePrice - effectivePrice) / basePrice) * 100)
+      : p.sale || 0;
 
     const enhanced: ProductWithFlashSale = {
       ...p,
       flashSaleInfo: fsInfo,
       effectivePrice,
       effectiveSalePercent,
+      dealLabel,
+      variantKey: p.id,
     };
 
     allEnhancedProducts.push(enhanced);
 
-    if (fsInfo) {
-      if (fsInfo.dealType === 'bogo_same' || fsInfo.dealType === 'bogo_custom') {
-        bogoProducts.push(enhanced);
-      } else {
-        shockCampaignProducts.push(enhanced);
-      }
-    } else if (status.isRunning && (p as any).flashSaleGroup && priceGroups.includes((p as any).flashSaleGroup)) {
-      const g = (p as any).flashSaleGroup;
-      if (!priceGroupProducts[g]) priceGroupProducts[g] = [];
-      priceGroupProducts[g].push(enhanced);
-    } else {
-      otherSaleProducts.push(enhanced);
+    if (fsInfo?.isBogo) bogoProducts.push(enhanced);
+    else if (fsInfo) shockCampaignProducts.push(enhanced);
+    else otherSaleProducts.push(enhanced);
+
+    const gVal = Number((p as any).flashSaleGroup) || effectivePrice;
+    if (priceGroups.includes(gVal)) {
+      if (!priceGroupProducts[gVal]) priceGroupProducts[gVal] = [];
+      priceGroupProducts[gVal].push(enhanced);
     }
+  });
+
+  // 4. Xây dựng các Khối Kệ Phân Loại giống bản Web (Tâm điểm 12.12 + Nhóm danh mục)
+  const stages: FlashSaleStage[] = [];
+  const heroItems = allEnhancedProducts.filter((p) => {
+    const rootId = p.parentProductId || p.id;
+    return Boolean(settings?.items?.[rootId]);
+  });
+
+  if (heroItems.length > 0) {
+    const subSet = new Set<string>();
+    heroItems.forEach((p) => {
+      if (p.category) subSet.add(p.category);
+    });
+    stages.push({
+      id: 'stage-hero-1212',
+      shortNav: 'Tâm điểm 12.12',
+      crownTitle: 'FLASH SALE • TÂM ĐIỂM 12.12',
+      theme: 'terracotta',
+      subCategories: Array.from(subSet),
+      products: heroItems,
+      note: 'Suất ưu đãi đặc quyền Ngày Đôi 12.12 — Miễn phí gói quà & thiệp viết tay',
+    });
+  }
+
+  const assignedIds = new Set<string>();
+  DEFAULT_CATEGORIES.forEach((cat, idx) => {
+    if (cat.id === 'all') return;
+    const subs = cat.subs || [];
+    const matched = allEnhancedProducts.filter((p) => {
+      const c = (p.category || '').trim();
+      return c === cat.name || subs.includes(c);
+    });
+    if (matched.length > 0) {
+      matched.forEach((p) => assignedIds.add(p.id));
+      const activeSubs = subs.filter((s) => matched.some((p) => (p.category || '').trim() === s));
+      stages.push({
+        id: `stage-cat-${idx}`,
+        shortNav: cat.name,
+        crownTitle: `FLASH SALE • ${cat.name.toUpperCase()}`,
+        theme: stages.length % 2 === 1 ? 'kiln' : 'terracotta',
+        subCategories: activeSubs,
+        products: matched,
+        note: `Ưu đãi chuyên mục ${cat.name} duy nhất ngày 12.12 — Đóng gói chống sốc 3 lớp`,
+      });
+    }
+  });
+
+  const categoryCounts: Record<string, number> = { all: allEnhancedProducts.length };
+  DEFAULT_CATEGORIES.forEach((cat) => {
+    if (cat.id === 'all') return;
+    categoryCounts[cat.name] = allEnhancedProducts.filter((p) =>
+      cat.subs && cat.subs.length > 0 ? cat.subs.includes(p.category || '') || p.category === cat.name : p.category === cat.name
+    ).length;
   });
 
   return {
     settings,
     status,
+    stages,
     bogoProducts,
     shockCampaignProducts,
     priceGroupProducts,
     otherSaleProducts,
     allProducts: allEnhancedProducts,
     categoryCounts,
-    totalCount: allFetchedProducts.length,
+    totalCount: allEnhancedProducts.length,
   };
 }

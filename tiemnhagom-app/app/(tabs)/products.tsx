@@ -1302,9 +1302,10 @@ const getStyles = (Colors: any, isDark: boolean) =>
       borderRadius: 4,
     },
     headerTitleText: {
-      fontSize: 18,
-      fontWeight: '700',
+      fontSize: 24,
+      fontWeight: '800',
       color: Colors.textPrimary,
+      letterSpacing: -0.3,
     },
     headerActions: {
       flexDirection: 'row',

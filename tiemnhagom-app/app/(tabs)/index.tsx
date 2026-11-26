@@ -23,6 +23,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../src/components/Header';
 import { BannerSlider, HERO_BANNER_HEIGHT } from '../../src/components/BannerSlider';
 import { ProductCard } from '../../src/components/ProductCard';
+import { FlashSaleCard } from '../../src/components/FlashSaleCard';
+import { fetchFlashSaleData, FlashSaleData } from '../../src/services/flashSaleService';
 import { ProductCardSkeleton } from '../../src/components/ShimmerSkeleton';
 import { CategoryChip } from '../../src/components/CategoryChip';
 import { AnimatedCenterModal } from '../../src/components/AnimatedCenterModal';
@@ -180,6 +182,42 @@ export default function HomeScreen() {
       isCancelled = true;
     };
   }, [effectiveUid, userProfile]);
+
+  // Nạp dữ liệu Flash Sale 12.12 & Đồng hồ đếm ngược trực tiếp cho khối Trang chủ
+  const [homeFlashSale, setHomeFlashSale] = useState<FlashSaleData | null>(null);
+  const [homeFsSubCat, setHomeFsSubCat] = useState<string>('all');
+  const [homeFsTime, setHomeFsTime] = useState({ d: '00', h: '00', m: '00', s: '00' });
+
+  useEffect(() => {
+    let mounted = true;
+    fetchFlashSaleData('all')
+      .then((data) => {
+        if (mounted) setHomeFlashSale(data);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const st = homeFlashSale?.status;
+    const target = st ? (st.isUpcoming ? st.startTime : st.endTime) : null;
+    if (!target) return;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const tick = () => {
+      const diff = Math.max(0, target.getTime() - Date.now());
+      setHomeFsTime({
+        d: pad(Math.floor(diff / (1000 * 60 * 60 * 24))),
+        h: pad(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
+        m: pad(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))),
+        s: pad(Math.floor((diff % (1000 * 60)) / 1000)),
+      });
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [homeFlashSale]);
 
   // Xác định hạng hội viên theo chi tiêu tích lũy thực tế
   let currentTier = MEMBERSHIP_TIERS[0];
@@ -449,6 +487,88 @@ export default function HomeScreen() {
 
         {/* ================= 2. NỘI DUNG CHÍNH (MAIN SHEET TRƯỢT LÊN TRÊN BANNER) ================= */}
         <View style={[styles.mainContentSheet, { backgroundColor: Colors.background }]}>
+          {/* 00. CỤM SIÊU SALE 12.12 TRÊN TRANG CHỦ — ĐỒNG BỘ 100% GIAO DIỆN EDITORIAL BẢN WEB */}
+          {(() => {
+            const fsProducts = homeFlashSale?.allProducts || [];
+            if (fsProducts.length === 0) return null;
+            const isUpcomingFs = Boolean(homeFlashSale?.status?.isUpcoming);
+            const startTimeText = homeFlashSale?.status?.startTime
+              ? `Chính thức mở bán lúc ${homeFlashSale.status.startTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ${homeFlashSale.status.startTime.toLocaleDateString('vi-VN')} · Săn deal số lượng có hạn!`
+              : 'Săn deal gốm thủ công số lượng có hạn duy nhất Ngày Đôi 12.12!';
+
+            return (
+              <View style={styles.homeFsEditorialWrap}>
+                {/* Header: Thanh dọc đất nung + HOT DEAL + Tiêu đề & Phụ đề */}
+                <View style={styles.homeFsEditorialHeader}>
+                  <View style={styles.homeFsAccentBar} />
+                  <View style={styles.homeFsTitleCol}>
+                    <View style={styles.homeFsHotTag}>
+                      <Text style={styles.homeFsHotTagText}>HOT DEAL</Text>
+                    </View>
+                    <ScalePressable onPress={() => router.push('/flash-sale')} activeScale={0.98}>
+                      <View style={styles.homeFsHeadlineRow}>
+                        <Ionicons
+                          name={isUpcomingFs ? 'alarm-outline' : 'flash'}
+                          size={18}
+                          color={isDark ? '#E8CCB2' : '#2B2928'}
+                        />
+                        <Text style={styles.homeFsHeadline} numberOfLines={2}>
+                          {isUpcomingFs
+                            ? 'SIÊU SALE GỐM THỦ CÔNG - SẮP DIỄN RA!'
+                            : 'SIÊU SALE GỐM THỦ CÔNG - ĐANG MỞ BÁN!'}
+                        </Text>
+                      </View>
+                    </ScalePressable>
+                    <Text style={styles.homeFsSubline} numberOfLines={2}>
+                      {startTimeText}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Hàng 4 ô đồng hồ đen than chì + Nút Xem tất cả ↗ */}
+                <View style={styles.homeFsMetaRow}>
+                  <View style={styles.homeFsDarkTimerRow}>
+                    {[
+                      { v: homeFsTime.d, u: 'NGÀY' },
+                      { v: homeFsTime.h, u: 'GIỜ' },
+                      { v: homeFsTime.m, u: 'PHÚT' },
+                      { v: homeFsTime.s, u: 'GIÂY' },
+                    ].map((tile) => (
+                      <View key={tile.u} style={styles.homeFsDarkTile}>
+                        <Text style={styles.homeFsDarkNum}>{tile.v}</Text>
+                        <Text style={styles.homeFsDarkUnit}>{tile.u}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <ScalePressable
+                    style={styles.homeFsOutlineAllBtn}
+                    onPress={() => router.push('/flash-sale')}
+                    activeScale={0.94}
+                  >
+                    <Text style={styles.homeFsOutlineAllText}>Xem tất cả</Text>
+                    <Ionicons name="arrow-up-outline" size={13} color="#9C7156" style={{ transform: [{ rotate: '45deg' }] }} />
+                  </ScalePressable>
+                </View>
+
+                {/* Dải thẻ sản phẩm trắng cuộn ngang trực tiếp trên nền kem thoáng của Trang chủ */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  decelerationRate="fast"
+                  snapToInterval={172}
+                  contentContainerStyle={styles.horizontalProducts}
+                >
+                  {fsProducts.map((p) => (
+                    <View key={p.id} style={styles.homeFsCardWrap}>
+                      <FlashSaleCard product={p} cardWidth={160} />
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            );
+          })()}
+
           {/* 01. SẢN PHẨM BÁN CHẠY (đồng bộ Web: còn hàng, sold>=5 hoặc isBestSeller, top 14) */}
           <View style={styles.sectionWrap}>
             <View style={styles.editorialSectionHeader}>
@@ -699,47 +819,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 4. FLASH SALE / ƯU ĐÃI HÔM NAY (Phong cách thẻ Deals đồng bộ màu gốm) */}
-        {featuredProducts.length > 0 && (
-          <View style={styles.dealContainer}>
-            <View style={styles.dealHeader}>
-              <ScalePressable
-                style={styles.dealTitleWrap}
-                onPress={() => router.push('/flash-sale')}
-                activeScale={0.97}
-              >
-                <View style={styles.dealBadgeFire}>
-                  <Ionicons name="flash" size={14} color="#9C7156" />
-                  <Text style={styles.dealBadgeFireText}>{t('todayDeals')}</Text>
-                </View>
-                <Text style={styles.dealMainTitle}>{t('flashSaleAndGifts')}</Text>
-              </ScalePressable>
-              <ScalePressable
-                onPress={() => router.push('/flash-sale')}
-                activeScale={0.92}
-                accessibilityLabel={t('seeAll')}
-              >
-                <LiquidGlass style={styles.seeAllBtn}>
-                  <Text style={styles.seeAllText}>{t('seeAll')}</Text>
-                  <Ionicons name="arrow-forward" size={12} color="#9C7156" />
-                </LiquidGlass>
-              </ScalePressable>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalProducts}
-            >
-              {featuredProducts.map((p) => (
-                <View key={p.id} style={styles.productHorizontalItem}>
-                  <ProductCard product={p} cardWidth={160} />
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
         {/* 6. HOA NHÀ GỐM (Phong cách Card tiêu chuẩn của Deals Tab) */}
         <View style={styles.editorialCard}>
           <View style={styles.editorialImageWrap}>
@@ -778,7 +857,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.primaryDarkBtn}
               activeOpacity={0.88}
-              onPress={() => setServiceModal({ visible: true, type: 'flower' })}
+              onPress={() => router.push('/hoa-nha-gom' as any)}
             >
               <Text style={styles.primaryDarkBtnText}>{t('exploreFlowerService')}</Text>
               <Ionicons name="arrow-forward" size={15} color={Colors.textInverse} />
@@ -1772,5 +1851,112 @@ const getStyles = (Colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  /* Cụm Siêu Sale 12.12 Editorial trên Trang chủ đồng bộ bản Web */
+  homeFsEditorialWrap: {
+    paddingTop: 18,
+    paddingBottom: 10,
+  },
+  homeFsEditorialHeader: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 12,
+  },
+  homeFsAccentBar: {
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: '#9C7156',
+  },
+  homeFsTitleCol: {
+    flex: 1,
+    gap: 4,
+  },
+  homeFsHotTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: isDark ? '#2B221B' : '#F6EFE6',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  homeFsHotTagText: {
+    color: '#9C7156',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  homeFsHeadlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  homeFsHeadline: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#C26D47',
+    letterSpacing: 0.2,
+    lineHeight: 21,
+  },
+  homeFsSubline: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 16.5,
+  },
+  homeFsMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    gap: 10,
+  },
+  homeFsDarkTimerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  homeFsDarkTile: {
+    width: 42,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#221E1B' : '#181615',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeFsDarkNum: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  homeFsDarkUnit: {
+    color: 'rgba(255, 255, 255, 0.72)',
+    fontSize: 8,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  homeFsOutlineAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: isDark ? '#332C27' : '#E5DDD2',
+    backgroundColor: isDark ? '#141210' : '#FFFFFF',
+  },
+  homeFsOutlineAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: isDark ? '#E8CCB2' : '#2B2928',
+  },
+  homeFsCardWrap: {
+    marginRight: 12,
+    borderRadius: 16,
+    borderWidth: isDark ? 0 : 1,
+    borderColor: '#EAE3D9',
   },
 });

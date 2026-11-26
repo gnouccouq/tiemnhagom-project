@@ -11,7 +11,12 @@ import {
   Platform,
   ActivityIndicator,
   Animated,
+  Linking,
+  AppState,
 } from 'react-native';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
+import * as FileSystem from 'expo-file-system';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +26,7 @@ import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { Header } from '../src/components/Header';
+import { AnimatedBottomSheetModal } from '../src/components/AnimatedBottomSheetModal';
 import { auth } from '../src/config/firebase';
 import { useAuth } from '../src/context/AuthContext';
 import { useThemeColor } from '../src/constants/theme';
@@ -168,28 +174,78 @@ export default function SettingsScreen() {
     }
   };
 
-  const [cacheSize, setCacheSize] = useState<string>('0 MB');
+  const [cacheSize, setCacheSize] = useState<string>('0 KB');
+  const [dataSize, setDataSize] = useState<string>('0 KB');
+  const [totalStorageSize, setTotalStorageSize] = useState<string>('0 MB');
   const [isClearingCache, setIsClearingCache] = useState(false);
 
-  // Tính toán dung lượng bộ nhớ đệm thực tế
+  const formatBytes = (bytes: number): string => {
+    if (!bytes || bytes <= 0) return '0 KB';
+    if (bytes < 1024 * 1024) {
+      return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getDirSizeBytes = async (dirUri: string | null | undefined, depth = 0): Promise<number> => {
+    if (!dirUri || depth > 3) return 0;
+    try {
+      const entries = await FileSystem.readDirectoryAsync(dirUri);
+      let sum = 0;
+      for (const name of entries) {
+        const uri = dirUri.endsWith('/') ? `${dirUri}${name}` : `${dirUri}/${name}`;
+        try {
+          const info = await FileSystem.getInfoAsync(uri);
+          if (!info.exists) continue;
+          if (info.isDirectory) {
+            sum += await getDirSizeBytes(uri, depth + 1);
+          } else if (typeof (info as any).size === 'number') {
+            sum += (info as any).size;
+          }
+        } catch {}
+      }
+      return sum;
+    } catch {
+      return 0;
+    }
+  };
+
+  // Tính toán dung lượng bộ nhớ đệm & dữ liệu tải xuống thực tế
   const calculateCacheSize = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      let totalBytes = 0;
+      let asyncDataBytes = 0;
+      let asyncTempBytes = 0;
       if (keys.length > 0) {
         const stores = await AsyncStorage.multiGet(keys);
         stores.forEach(([k, val]) => {
           if (val) {
-            totalBytes += k.length + val.length * 2; // ước tính byte UTF-16
+            const b = k.length + val.length * 2;
+            if (k.includes('recent_searches') || k.includes('temp') || k.includes('cache')) {
+              asyncTempBytes += b;
+            } else {
+              asyncDataBytes += b;
+            }
           }
         });
       }
-      // Ước tính thêm cache ảnh thực tế đã tải (từ 5MB đến 25MB tùy theo duyệt ảnh)
-      const estimatedImageCache = Math.max(8.4 * 1024 * 1024, totalBytes * 12);
-      const totalMB = ((totalBytes + estimatedImageCache) / (1024 * 1024)).toFixed(1);
-      setCacheSize(`${totalMB} MB`);
+
+      const [cacheDirBytes, docDirBytes] = await Promise.all([
+        getDirSizeBytes((FileSystem as any).cacheDirectory),
+        getDirSizeBytes((FileSystem as any).documentDirectory),
+      ]);
+
+      const totalCacheBytes = cacheDirBytes + asyncTempBytes;
+      const totalDataBytes = docDirBytes + asyncDataBytes;
+      const grandTotalBytes = totalCacheBytes + totalDataBytes;
+
+      setCacheSize(formatBytes(totalCacheBytes));
+      setDataSize(formatBytes(totalDataBytes));
+      setTotalStorageSize(formatBytes(grandTotalBytes));
     } catch {
-      setCacheSize('12.5 MB');
+      setCacheSize('0 KB');
+      setDataSize('0 KB');
+      setTotalStorageSize('0 KB');
     }
   };
 
@@ -210,6 +266,20 @@ export default function SettingsScreen() {
           if (Image.clearDiskCache) {
             await Image.clearDiskCache();
           }
+          const cacheDir = (FileSystem as any).cacheDirectory;
+          if (cacheDir) {
+            try {
+              const entries = await FileSystem.readDirectoryAsync(cacheDir);
+              await Promise.all(
+                entries.map((name) =>
+                  FileSystem.deleteAsync(
+                    cacheDir.endsWith('/') ? `${cacheDir}${name}` : `${cacheDir}/${name}`,
+                    { idempotent: true }
+                  ).catch(() => {})
+                )
+              );
+            } catch {}
+          }
           const allKeys = await AsyncStorage.getAllKeys();
           const tempKeys = allKeys.filter((k) =>
             k.includes('recent_searches') ||
@@ -219,13 +289,13 @@ export default function SettingsScreen() {
           if (tempKeys.length > 0) {
             await AsyncStorage.multiRemove(tempKeys);
           }
-          setCacheSize('0.0 MB');
+          await calculateCacheSize();
           dialog.alert(
             t('clearCacheTitle') || 'Xóa bộ nhớ đệm',
             t('cacheCleared') || 'Đã giải phóng bộ nhớ đệm thành công!'
           );
         } catch {
-          setCacheSize('0.0 MB');
+          await calculateCacheSize();
           dialog.alert(
             t('clearCacheTitle') || 'Xóa bộ nhớ đệm',
             t('cacheCleared') || 'Đã giải phóng bộ nhớ đệm thành công!'
@@ -287,316 +357,266 @@ export default function SettingsScreen() {
   };
 
   const [scrollY, setScrollY] = React.useState(0);
+  const [pickerSheet, setPickerSheet] = useState<'theme' | 'language' | 'fontSize' | null>(null);
+  const [locationPermLabel, setLocationPermLabel] = useState<string>('Chưa cấp quyền');
+  const [notifPermLabel, setNotifPermLabel] = useState<string>('Tắt');
 
-  const { pageStyle, getItemStyle } = usePageAnimation({ itemCount: 20 });
+  const refreshSystemPermissions = React.useCallback(async () => {
+    try {
+      const bg = await Location.getBackgroundPermissionsAsync().catch(() => null);
+      const fg = await Location.getForegroundPermissionsAsync().catch(() => null);
+      if (bg?.status === 'granted') {
+        setLocationPermLabel('Luôn cho phép');
+      } else if (fg?.status === 'granted') {
+        setLocationPermLabel('Khi dùng app');
+      } else if (fg?.status === 'denied') {
+        setLocationPermLabel('Đang tắt');
+      } else {
+        setLocationPermLabel('Chưa cấp quyền');
+      }
+    } catch {
+      setLocationPermLabel('Chưa cấp quyền');
+    }
+
+    try {
+      const notif = await Notifications.getPermissionsAsync();
+      setNotifPermLabel(notif.granted ? 'Bật' : 'Tắt');
+    } catch {
+      setNotifPermLabel(isPushNotificationEnabled ? 'Bật' : 'Tắt');
+    }
+  }, [isPushNotificationEnabled]);
+
+  useEffect(() => {
+    refreshSystemPermissions();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        refreshSystemPermissions();
+      }
+    });
+    return () => sub.remove();
+  }, [refreshSystemPermissions]);
+
+  const openSystemAppSettings = () => {
+    Linking.openSettings().catch(() => {
+      dialog.alert(t('notification') || 'Thông báo', 'Không thể mở cài đặt hệ thống.');
+    });
+  };
+
+  const { pageStyle } = usePageAnimation({ itemCount: 20 });
 
   const isDark = Colors.cardBackground !== '#FFFFFF';
 
+  const themeLabel =
+    themeMode === 'light'
+      ? (t('lightTheme') || 'Sáng')
+      : themeMode === 'dark'
+      ? (t('darkTheme') || 'Tối')
+      : (t('systemTheme') || 'Hệ thống');
+
+  const languageLabel =
+    language === 'en'
+      ? (t('english') || 'English')
+      : language === 'zh'
+      ? (t('chinese') || '中文')
+      : (t('vietnamese') || 'Tiếng Việt');
+
+  const fontSizeLabel =
+    fontSize === 'small'
+      ? (t('small') || 'Nhỏ')
+      : fontSize === 'large'
+      ? (t('large') || 'Lớn')
+      : (t('medium') || 'Vừa');
+
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={Colors.background} />
-      <Header 
-        title={t('settingsTitle')} 
-        showBack={true} 
-        showSearch={false} 
-        showCart={false} 
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <Header
+        title={t('settingsTitle')}
+        showBack={true}
+        showSearch={false}
+        showCart={false}
         transparent
         scrollY={scrollY}
       />
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 54 + 14 }]}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 56 + 10, paddingBottom: Math.max(insets.bottom, 24) + 32 },
+        ]}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
       >
-        
-        {/* GIAO DIỆN */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('appTheme') || 'Giao diện'}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('chooseTheme') || 'Chọn chế độ hiển thị sáng/tối'}
-          </Text>
-          <View style={styles.optionsList}>
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, themeMode === 'system' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setThemeMode('system')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Ionicons name="phone-portrait-outline" size={20} color={themeMode === 'system' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
-                <View>
-                  <Text style={[styles.settingOptionName, themeMode === 'system' && styles.settingOptionNameActive]}>{t('systemTheme') || 'Theo hệ thống'}</Text>
-                </View>
+        {/* 1. QUYỀN RIÊNG TƯ & TIỆN ÍCH */}
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionKicker}>{t('security') || 'Quyền riêng tư & Tiện ích'}</Text>
+
+          <View style={styles.groupCard}>
+            {/* Khóa app */}
+            <View style={styles.settingRow}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#33281D' : '#F4E4CE' }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={isDark ? '#E8CCB2' : '#7C5332'} />
               </View>
-              <View style={[styles.radioCircle, themeMode === 'system' && styles.radioCircleActive]}>
-                {themeMode === 'system' && <View style={styles.radioDot} />}
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('appLockFeature') || 'Khóa app'}</Text>
+                <Text style={styles.rowSubtitle} numberOfLines={1}>{t('lockAppDesc') || 'Mở bằng sinh trắc học / mã máy'}</Text>
+              </View>
+              <Switch
+                value={isAppLockEnabled}
+                onValueChange={handleToggleAppLock}
+                trackColor={{ false: isDark ? '#383430' : '#DED8D0', true: '#9C7156' }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            {(user || userProfile) && (
+              <>
+                <View style={styles.rowDivider} />
+                <TouchableOpacity
+                  style={styles.settingRow}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/change-password' as any)}
+                >
+                  <View style={[styles.iconCircle, { backgroundColor: isDark ? '#362722' : '#F3DFD6' }]}>
+                    <Ionicons name="key-outline" size={20} color={isDark ? '#E8B8A2' : '#8F4D32'} />
+                  </View>
+                  <View style={styles.rowTextCol}>
+                    <Text style={styles.rowTitle} numberOfLines={1}>{t('pwdChangeTitle') || 'Đổi mật khẩu'}</Text>
+                    <Text style={styles.rowSubtitle} numberOfLines={1}>Cập nhật mật khẩu đăng nhập</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
+                </TouchableOpacity>
+              </>
+            )}
+
+            <View style={styles.rowDivider} />
+
+            {/* Vị trí (mở Cài đặt hệ thống) */}
+            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7} onPress={openSystemAppSettings}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#33281D' : '#F2E2D5' }]}>
+                <Ionicons name="location" size={20} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('locationPermissionTitle') || 'Vị trí'}</Text>
+              </View>
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText} numberOfLines={1}>{locationPermLabel}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, themeMode === 'light' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setThemeMode('light')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
-                <View>
-                  <Text style={[styles.settingOptionName, themeMode === 'light' && styles.settingOptionNameActive]}>{t('lightTheme') || 'Sáng (Light)'}</Text>
-                </View>
+            <View style={styles.rowDivider} />
+
+            {/* Thông báo (mở Cài đặt hệ thống) */}
+            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7} onPress={openSystemAppSettings}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#382522' : '#F6DDD7' }]}>
+                <Ionicons name="notifications" size={20} color={isDark ? '#EEA898' : '#A64430'} />
               </View>
-              <View style={[styles.radioCircle, themeMode === 'light' && styles.radioCircleActive]}>
-                {themeMode === 'light' && <View style={styles.radioDot} />}
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('notificationsTab') || 'Thông báo'}</Text>
+              </View>
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText} numberOfLines={1}>{notifPermLabel}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, themeMode === 'dark' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setThemeMode('dark')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? Colors.primary : Colors.textMuted} style={styles.themeIcon} />
-                <View>
-                  <Text style={[styles.settingOptionName, themeMode === 'dark' && styles.settingOptionNameActive]}>{t('darkTheme') || 'Tối (Dark)'}</Text>
-                </View>
+            <View style={styles.rowDivider} />
+
+            {/* Phản hồi xúc giác */}
+            <View style={styles.settingRow}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#2D2A27' : '#EAE4DC' }]}>
+                <Ionicons name="finger-print-outline" size={20} color={isDark ? '#D5CBC0' : '#5E554C'} />
               </View>
-              <View style={[styles.radioCircle, themeMode === 'dark' && styles.radioCircleActive]}>
-                {themeMode === 'dark' && <View style={styles.radioDot} />}
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('hapticFeedbackFeature') || 'Phản hồi xúc giác'}</Text>
+                <Text style={styles.rowSubtitle} numberOfLines={1}>{t('hapticFeedbackDesc') || 'Rung nhẹ khi thao tác nút bấm'}</Text>
               </View>
-            </TouchableOpacity>
+              <Switch
+                value={isHapticEnabled}
+                onValueChange={handleToggleHaptic}
+                trackColor={{ false: isDark ? '#383430' : '#DED8D0', true: '#9C7156' }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
           </View>
         </View>
 
-        {/* 1. BẢO MẬT */}
+        {/* 2. HIỂN THỊ & BỘ NHỚ */}
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionKicker}>{t('appTheme') || 'Hiển thị & Hệ thống'}</Text>
 
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('security')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('lockAppDesc')}
-          </Text>
-          <View style={styles.cacheActionBtn}>
-            <View style={styles.cacheLeft}>
-              <Ionicons name="scan-outline" size={18} color={Colors.primary} />
-              <Text style={styles.cacheBtnText}>
-                {t('appLockFeature')}
-              </Text>
-            </View>
-            <Switch
-              value={isAppLockEnabled}
-              onValueChange={handleToggleAppLock}
-              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
-              thumbColor={Colors.textInverse}
-            />
-          </View>
-          {(user || userProfile) && (
+          <View style={styles.groupCard}>
+            {/* Giao diện */}
+            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7} onPress={() => router.push('/settings-theme' as any)}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+                <Ionicons name="contrast-outline" size={20} color={isDark ? '#F0D095' : '#96681B'} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('appTheme') || 'Giao diện'}</Text>
+              </View>
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText} numberOfLines={1}>{themeLabel}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* Ngôn ngữ */}
+            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7} onPress={() => router.push('/settings-language' as any)}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#33281D' : '#F2E2D5' }]}>
+                <Ionicons name="globe-outline" size={20} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('appLanguage') || 'Ngôn ngữ'}</Text>
+              </View>
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText} numberOfLines={1}>{languageLabel}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* Cỡ chữ */}
+            <TouchableOpacity style={styles.settingRow} activeOpacity={0.7} onPress={() => router.push('/settings-fontsize' as any)}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#2F2A26' : '#EDE5DC' }]}>
+                <Ionicons name="text-outline" size={20} color={isDark ? '#DCD0C4' : '#66584A'} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('fontSizeTitle') || 'Kích thước chữ'}</Text>
+              </View>
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText} numberOfLines={1}>{fontSizeLabel}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            {/* Bộ nhớ đệm & Dữ liệu tải xuống */}
             <TouchableOpacity
-              style={[styles.cacheActionBtn, { marginTop: 10 }]}
-              activeOpacity={0.8}
-              onPress={() => router.push('/change-password' as any)}
+              style={styles.settingRow}
+              activeOpacity={0.7}
+              onPress={() => router.push('/settings-storage' as any)}
             >
-              <View style={styles.cacheLeft}>
-                <Ionicons name="key-outline" size={18} color={Colors.textPrimary} />
-                <Text style={styles.cacheBtnText}>{t('pwdChangeTitle')}</Text>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#382522' : '#F6DDD7' }]}>
+                <Ionicons name="server-outline" size={20} color={isDark ? '#EEA898' : '#B5482B'} />
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* 2. THÔNG BÁO */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('pushNotifications')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('receivePromotions')}
-          </Text>
-          <View style={styles.cacheActionBtn}>
-            <View style={styles.cacheLeft}>
-              <Ionicons name="notifications-outline" size={18} color={Colors.textPrimary} />
-              <Text style={styles.cacheBtnText}>
-                {t('receivePush')}
-              </Text>
-            </View>
-            <Switch
-              value={isPushNotificationEnabled}
-              onValueChange={handleTogglePushNotification}
-              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
-              thumbColor={Colors.textInverse}
-            />
-          </View>
-        </View>
-
-        {/* 3. PHẢN HỒI XÚC GIÁC (RUNG) */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('hapticFeedback')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('hapticFeedbackDesc')}
-          </Text>
-          <View style={styles.cacheActionBtn}>
-            <View style={styles.cacheLeft}>
-              <Ionicons name="finger-print-outline" size={18} color={Colors.textPrimary} />
-              <Text style={styles.cacheBtnText}>
-                {t('hapticFeedbackFeature')}
-              </Text>
-            </View>
-            <Switch
-              value={isHapticEnabled}
-              onValueChange={handleToggleHaptic}
-              trackColor={{ false: Colors.borderLight, true: Colors.primary }}
-              thumbColor={Colors.textInverse}
-            />
-          </View>
-        </View>
-
-        {/* 4. NGÔN NGỮ */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('appLanguage')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('chooseLanguage')}
-          </Text>
-          <View style={styles.optionsList}>
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, language === 'vi' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setLanguage('vi')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Image source={{ uri: 'https://flagcdn.com/w80/vn.png' }} style={styles.langFlagImage} />
-                <View>
-                  <Text style={[styles.settingOptionName, language === 'vi' && styles.settingOptionNameActive]}>{t('vietnamese')}</Text>
-                </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{t('appCache') || 'Bộ nhớ'}</Text>
               </View>
-              <View style={[styles.radioCircle, language === 'vi' && styles.radioCircleActive]}>
-                {language === 'vi' && <View style={styles.radioDot} />}
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, language === 'en' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setLanguage('en')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Image source={{ uri: 'https://flagcdn.com/w80/gb.png' }} style={styles.langFlagImage} />
-                <View>
-                  <Text style={[styles.settingOptionName, language === 'en' && styles.settingOptionNameActive]}>{t('english')}</Text>
-                </View>
-              </View>
-              <View style={[styles.radioCircle, language === 'en' && styles.radioCircleActive]}>
-                {language === 'en' && <View style={styles.radioDot} />}
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.settingOptionCard, language === 'zh' && styles.settingOptionCardActive]} 
-              activeOpacity={0.8}
-              onPress={() => setLanguage('zh')}
-            >
-              <View style={styles.settingOptionLeft}>
-                <Image source={{ uri: 'https://flagcdn.com/w80/cn.png' }} style={styles.langFlagImage} />
-                <View>
-                  <Text style={[styles.settingOptionName, language === 'zh' && styles.settingOptionNameActive]}>{t('chinese') || '中文 (Chinese)'}</Text>
-                </View>
-              </View>
-              <View style={[styles.radioCircle, language === 'zh' && styles.radioCircleActive]}>
-                {language === 'zh' && <View style={styles.radioDot} />}
+              <View style={styles.rowRightValue}>
+                <Text style={styles.rowValueText}>{totalStorageSize}</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
               </View>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 4. KÍCH THƯỚC CHỮ */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('fontSizeTitle')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('adjustTextSize')}
-          </Text>
-          
-          <View style={styles.fontSizeGrid}>
-            <TouchableOpacity 
-              style={[styles.fontSizeChip, fontSize === 'small' && styles.fontSizeChipActive]} 
-              activeOpacity={0.8}
-              onPress={() => setFontSize('small')}
-            >
-              <Text style={[styles.fontSizeChipLabel, fontSize === 'small' && styles.fontSizeChipLabelActive, { fontSize: 11 }]}>Aa</Text>
-              <Text style={[styles.fontSizeChipSub, fontSize === 'small' && styles.fontSizeChipSubActive]}>
-                {t('small')}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.fontSizeChip, fontSize === 'normal' && styles.fontSizeChipActive]} 
-              activeOpacity={0.8}
-              onPress={() => setFontSize('normal')}
-            >
-              <Text style={[styles.fontSizeChipLabel, fontSize === 'normal' && styles.fontSizeChipLabelActive, { fontSize: 13 }]}>Aa</Text>
-              <Text style={[styles.fontSizeChipSub, fontSize === 'normal' && styles.fontSizeChipSubActive]}>
-                {t('medium')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.fontSizeChip, fontSize === 'large' && styles.fontSizeChipActive]} 
-              activeOpacity={0.8}
-              onPress={() => setFontSize('large')}
-            >
-              <Text style={[styles.fontSizeChipLabel, fontSize === 'large' && styles.fontSizeChipLabelActive, { fontSize: 15 }]}>Aa</Text>
-              <Text style={[styles.fontSizeChipSub, fontSize === 'large' && styles.fontSizeChipSubActive]}>
-                {t('large')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.previewBox}>
-            <View style={styles.previewHeaderRow}>
-              <Ionicons name="eye-outline" size={14} color={Colors.textSecondary} />
-              <Text style={styles.previewHeaderLabel}>{t('previewText')}</Text>
-            </View>
-            <Text style={[
-              styles.previewSampleText, 
-              { fontSize: fontSize === 'small' ? 12 : fontSize === 'large' ? 16 : 14 }
-            ]}>
-              {t('sampleText')}
-            </Text>
-          </View>
-        </View>
-
-        {/* 5. BỘ NHỚ ĐỆM */}
-        <View style={styles.settingsGroup}>
-          <Text style={styles.settingsGroupTitle}>{t('appCache')}</Text>
-          <Text style={styles.settingsGroupSubtitle}>
-            {t('freeStorage')}
-          </Text>
-          <TouchableOpacity 
-            style={styles.cacheActionBtn} 
-            onPress={handleClearCache} 
-            activeOpacity={0.8}
-            disabled={isClearingCache}
-          >
-            <View style={styles.cacheLeft}>
-              <View style={styles.cacheIconWrap}>
-                <Ionicons name="trash-bin-outline" size={18} color="#C86432" />
-              </View>
-              <View>
-                <Text style={styles.cacheBtnText}>{t('clearAppCache')}</Text>
-                <Text style={styles.cacheSubText}>
-                  {t('cachedDataDesc') || 'Hình ảnh gốm sứ & Dữ liệu tải tạm'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.cacheRight}>
-              {isClearingCache ? (
-                <ActivityIndicator size="small" color="#C86432" />
-              ) : (
-                <View style={styles.cacheSizeBadge}>
-                  <Text style={styles.cacheSizeText}>{cacheSize}</Text>
-                </View>
-              )}
-              <Ionicons name="chevron-forward" size={16} color="#9E968D" style={{ marginLeft: 6 }} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
+        {/* 3. TÀI KHOẢN LIÊN KẾT */}
         {(user || userProfile) && (() => {
           const effectiveUid = userProfile?.uid || user?.uid || null;
           const isDirectPrimarySession = Boolean(user?.uid && effectiveUid && effectiveUid === user.uid);
@@ -621,158 +641,113 @@ export default function SettingsScreen() {
             : null;
 
           return (
-          <View style={[styles.settingsGroup, { marginTop: 10 }]}>
-            <Text style={styles.settingsGroupTitle}>{t('linkedAccountsTitle')}</Text>
-            <Text style={styles.settingsGroupSubtitle}>
-              {t('linkedAccountsSubtitle')}
-            </Text>
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionKicker}>{t('linkedAccountsTitle') || 'Tài khoản liên kết'}</Text>
 
-            <View style={styles.linkedAccountsCard}>
-              {/* GOOGLE LINK */}
-              <View style={styles.linkedRow}>
-                <View style={styles.linkedRowLeft}>
-                  <View style={[styles.linkedIconWrap, { backgroundColor: '#F2F2F2' }]}>
+              <View style={styles.groupCard}>
+                {/* GOOGLE */}
+                <View style={styles.settingRow}>
+                  <View style={[styles.iconCircle, { backgroundColor: isDark ? '#2B2B2B' : '#F4EFEA' }]}>
                     <Ionicons name="logo-google" size={20} color="#EA4335" />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.linkedProviderName}>Google</Text>
-                    <Text style={styles.linkedProviderStatus} numberOfLines={1}>
+                  <View style={styles.rowTextCol}>
+                    <Text style={styles.rowTitle}>Google</Text>
+                    <Text style={styles.rowSubtitle} numberOfLines={1}>
                       {isGoogleLinked ? (googleEmail || t('linkedStatusConnected')) : t('linkedStatusNotConnected')}
                     </Text>
                   </View>
-                </View>
-                {isGoogleLinked ? (
-                  <View style={styles.linkedActiveBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
-                    <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.btnLinkAction, linkingGoogle && { opacity: 0.6 }]}
-                    activeOpacity={0.8}
-                    disabled={linkingGoogle}
-                    onPress={async () => {
-                      if (!isDirectPrimarySession) {
-                        dialog.alert(
-                          t('notification'),
-                          userProfile?.email
-                            ? t('linkGoogleUsePrimaryEmail').replace('{email}', userProfile.email)
-                            : t('linkGoogleUsePrimaryAccount')
-                        );
-                        return;
-                      }
-                      setLinkingGoogle(true);
-                      try {
-                        // 1. Thử qua Native Google SDK nếu khả dụng
-                        if (NativeGoogleSignin) {
-                          try {
-                            await NativeGoogleSignin.hasPlayServices();
-                            const response = await NativeGoogleSignin.signIn();
-                            const idToken = response.data?.idToken;
-                            if (idToken) {
-                              await linkGoogleAccount(idToken);
-                              dialog.alert(t('success'), t('linkGoogleSuccess'));
-                              return;
+                  {isGoogleLinked ? (
+                    <View style={styles.linkedActiveBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                      <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.btnLinkAction, linkingGoogle && { opacity: 0.6 }]}
+                      activeOpacity={0.8}
+                      disabled={linkingGoogle}
+                      onPress={async () => {
+                        if (!isDirectPrimarySession) {
+                          dialog.alert(
+                            t('notification'),
+                            userProfile?.email
+                              ? t('linkGoogleUsePrimaryEmail').replace('{email}', userProfile.email)
+                              : t('linkGoogleUsePrimaryAccount')
+                          );
+                          return;
+                        }
+                        setLinkingGoogle(true);
+                        try {
+                          if (NativeGoogleSignin) {
+                            try {
+                              await NativeGoogleSignin.hasPlayServices();
+                              const response = await NativeGoogleSignin.signIn();
+                              const idToken = response.data?.idToken;
+                              if (idToken) {
+                                await linkGoogleAccount(idToken);
+                                dialog.alert(t('success'), t('linkGoogleSuccess'));
+                                return;
+                              }
+                            } catch (nativeErr: any) {
+                              if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
+                                return;
+                              }
                             }
-                          } catch (nativeErr: any) {
-                            if (nativeStatusCodes && nativeErr.code === nativeStatusCodes.SIGN_IN_CANCELLED) {
-                              return;
-                            }
-                            console.log('Native GoogleSignin link attempt error, fallback to browser:', nativeErr);
                           }
+                          if (googleRequest) {
+                            await promptGoogleAsync();
+                          } else {
+                            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent('https://auth.expo.io/@gnouccouq/tiemnhagom')}&nonce=${Math.random().toString(36).substring(7)}`;
+                            await WebBrowser.openAuthSessionAsync(authUrl);
+                          }
+                        } catch (err: any) {
+                          dialog.alert(t('linkGoogleErrorTitle'), err.message || t('linkGoogleErrorMsg'));
+                        } finally {
+                          setLinkingGoogle(false);
                         }
-
-                        // 2. Dự phòng bằng Expo AuthSession
-                        if (googleRequest) {
-                          await promptGoogleAsync();
-                        } else {
-                          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent('https://auth.expo.io/@gnouccouq/tiemnhagom')}&nonce=${Math.random().toString(36).substring(7)}`;
-                          await WebBrowser.openAuthSessionAsync(authUrl);
-                        }
-                      } catch (err: any) {
-                        console.log('Error linking Google account:', err);
-                        dialog.alert(t('linkGoogleErrorTitle'), err.message || t('linkGoogleErrorMsg'));
-                      } finally {
-                        setLinkingGoogle(false);
-                      }
-                    }}
-                  >
-                    {linkingGoogle ? (
-                      <ActivityIndicator size="small" color="#9C7156" />
-                    ) : (
-                      <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
-                    )}
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.linkedDivider} />
-
-              {/* APPLE LINK */}
-              <View style={styles.linkedRow}>
-                <View style={styles.linkedRowLeft}>
-                  <View style={[styles.linkedIconWrap, { backgroundColor: '#000000' }]}>
-                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.linkedProviderName}>Apple ID</Text>
-                    <Text style={styles.linkedProviderStatus} numberOfLines={1}>
-                      {isAppleLinked ? (appleEmail || t('linkedStatusConnected')) : t('linkedStatusNotConnected')}
-                    </Text>
-                  </View>
+                      }}
+                    >
+                      {linkingGoogle ? (
+                        <ActivityIndicator size="small" color="#9C7156" />
+                      ) : (
+                        <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {isAppleLinked ? (
-                  <View style={styles.linkedActiveBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
-                    <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.btnLinkAction}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      dialog.alert(t('linkAppleTitle'), t('linkAppleIosOnly'));
-                    }}
-                  >
-                    <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
 
-              {/* THÔNG TIN THAM GIA */}
-              {(() => {
-                const joinedAt = resolveMemberJoinDate(userProfile, user);
-                const joinDateFormatted = joinedAt ? joinedAt.toLocaleDateString('vi-VN') : '';
-
-                if (!joinDateFormatted) return null;
-
-                return (
+                {Platform.OS === 'ios' && (
                   <>
-                    <View style={styles.linkedDivider} />
-                    <View style={styles.joinDateCardRow}>
-                      <View style={styles.joinDateLeft}>
-                        <Ionicons name="calendar-outline" size={17} color="#9C7156" />
-                        <Text style={styles.joinDateLabel}>Ngày tham gia Tiệm</Text>
+                    <View style={styles.rowDivider} />
+                    <View style={styles.settingRow}>
+                      <View style={[styles.iconCircle, { backgroundColor: '#1E1B18' }]}>
+                        <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
                       </View>
-                      <Text style={styles.joinDateValue}>{joinDateFormatted}</Text>
+                      <View style={styles.rowTextCol}>
+                        <Text style={styles.rowTitle}>Apple ID</Text>
+                        <Text style={styles.rowSubtitle} numberOfLines={1}>
+                          {isAppleLinked ? (appleEmail || t('linkedStatusConnected')) : t('linkedStatusNotConnected')}
+                        </Text>
+                      </View>
+                      {isAppleLinked ? (
+                        <View style={styles.linkedActiveBadge}>
+                          <Ionicons name="checkmark-circle" size={14} color="#9C7156" />
+                          <Text style={styles.linkedActiveText}>{t('linkedBadgeConnected')}</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.btnLinkAction}
+                          activeOpacity={0.8}
+                          onPress={() => dialog.alert(t('linkAppleTitle'), t('linkAppleIosOnly'))}
+                        >
+                          <Text style={styles.btnLinkActionText}>{t('linkActionBtn')}</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </>
-                );
-              })()}
+                )}
+              </View>
             </View>
-
-            <View style={{ gap: 12, marginTop: 16 }}>
-              <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut} activeOpacity={0.85}>
-                <Ionicons name="log-out-outline" size={20} color={isDark ? Colors.textPrimary : "#333333"} />
-                <Text style={styles.logoutBtnText}>{t('signOutAccount')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} activeOpacity={0.85}>
-                <Ionicons name="trash-outline" size={20} color="#D32F2F" />
-                <Text style={styles.deleteBtnText}>{t('reqDeleteAccount')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
           );
         })()}
 
@@ -786,6 +761,109 @@ export default function SettingsScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* BOTTOM SHEET: GIAO DIỆN */}
+      <AnimatedBottomSheetModal
+        visible={pickerSheet === 'theme'}
+        onClose={() => setPickerSheet(null)}
+        contentStyle={styles.sheetContent}
+        showHandle={true}
+      >
+        <Text style={styles.sheetTitle}>{t('appTheme') || 'Giao diện'}</Text>
+        {[
+          { id: 'system' as const, label: t('systemTheme') || 'Theo hệ thống', icon: 'phone-portrait-outline' as const },
+          { id: 'light' as const, label: t('lightTheme') || 'Sáng (Light)', icon: 'sunny-outline' as const },
+          { id: 'dark' as const, label: t('darkTheme') || 'Tối (Dark)', icon: 'moon-outline' as const },
+        ].map((item) => {
+          const active = themeMode === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.sheetOptionRow, active && styles.sheetOptionRowActive]}
+              activeOpacity={0.75}
+              onPress={() => {
+                setThemeMode(item.id);
+                setPickerSheet(null);
+              }}
+            >
+              <View style={styles.sheetOptionLeft}>
+                <Ionicons name={item.icon} size={20} color={active ? '#9C7156' : Colors.textMuted} />
+                <Text style={[styles.sheetOptionLabel, active && styles.sheetOptionLabelActive]}>{item.label}</Text>
+              </View>
+              {active && <Ionicons name="checkmark-circle" size={20} color="#9C7156" />}
+            </TouchableOpacity>
+          );
+        })}
+      </AnimatedBottomSheetModal>
+
+      {/* BOTTOM SHEET: NGÔN NGỮ */}
+      <AnimatedBottomSheetModal
+        visible={pickerSheet === 'language'}
+        onClose={() => setPickerSheet(null)}
+        contentStyle={styles.sheetContent}
+        showHandle={true}
+      >
+        <Text style={styles.sheetTitle}>{t('appLanguage') || 'Ngôn ngữ'}</Text>
+        {[
+          { id: 'vi' as const, label: t('vietnamese') || 'Tiếng Việt', flag: 'https://flagcdn.com/w80/vn.png' },
+          { id: 'en' as const, label: t('english') || 'English', flag: 'https://flagcdn.com/w80/gb.png' },
+          { id: 'zh' as const, label: t('chinese') || '中文 (Chinese)', flag: 'https://flagcdn.com/w80/cn.png' },
+        ].map((item) => {
+          const active = language === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.sheetOptionRow, active && styles.sheetOptionRowActive]}
+              activeOpacity={0.75}
+              onPress={() => {
+                setLanguage(item.id);
+                setPickerSheet(null);
+              }}
+            >
+              <View style={styles.sheetOptionLeft}>
+                <Image source={{ uri: item.flag }} style={styles.langFlagImage} />
+                <Text style={[styles.sheetOptionLabel, active && styles.sheetOptionLabelActive]}>{item.label}</Text>
+              </View>
+              {active && <Ionicons name="checkmark-circle" size={20} color="#9C7156" />}
+            </TouchableOpacity>
+          );
+        })}
+      </AnimatedBottomSheetModal>
+
+      {/* BOTTOM SHEET: KÍCH THƯỚC CHỮ */}
+      <AnimatedBottomSheetModal
+        visible={pickerSheet === 'fontSize'}
+        onClose={() => setPickerSheet(null)}
+        contentStyle={styles.sheetContent}
+        showHandle={true}
+      >
+        <Text style={styles.sheetTitle}>{t('fontSizeTitle') || 'Kích thước chữ'}</Text>
+        <View style={styles.fontSizeGrid}>
+          {[
+            { id: 'small' as const, label: t('small') || 'Nhỏ', sz: 12 },
+            { id: 'normal' as const, label: t('medium') || 'Vừa', sz: 15 },
+            { id: 'large' as const, label: t('large') || 'Lớn', sz: 18 },
+          ].map((item) => {
+            const active = fontSize === item.id;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.fontSizeChip, active && styles.fontSizeChipActive]}
+                activeOpacity={0.8}
+                onPress={() => setFontSize(item.id)}
+              >
+                <Text style={[styles.fontSizeChipLabel, active && styles.fontSizeChipLabelActive, { fontSize: item.sz }]}>Aa</Text>
+                <Text style={[styles.fontSizeChipSub, active && styles.fontSizeChipSubActive]}>{item.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.previewBox}>
+          <Text style={[styles.previewSampleText, { fontSize: fontSize === 'small' ? 12 : fontSize === 'large' ? 16 : 14 }]}>
+            {t('sampleText')}
+          </Text>
+        </View>
+      </AnimatedBottomSheetModal>
     </Animated.View>
   );
 }
@@ -799,9 +877,108 @@ const getStyles = (Colors: any) => {
       backgroundColor: Colors.background,
     },
     scrollContent: {
+      paddingHorizontal: 16,
+    },
+    sectionBlock: {
+      marginBottom: 22,
+    },
+    sectionKicker: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: isDark ? '#E8CCB2' : '#7C5332',
+      marginBottom: 10,
+      marginLeft: 6,
+    },
+    groupCard: {
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
+      borderRadius: 22,
+      overflow: 'hidden',
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? 'transparent' : '#EFEAE2',
+    },
+    settingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      gap: 14,
+    },
+    iconCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowTextCol: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    rowTitle: {
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    rowSubtitle: {
+      fontSize: 12.5,
+      color: Colors.textMuted || '#7D756C',
+      marginTop: 2,
+    },
+    rowRightValue: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    rowValueText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: Colors.textMuted || '#7D756C',
+    },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#EFEAE2',
+      marginLeft: 16,
+    },
+    sheetContent: {
+      backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
+      borderTopLeftRadius: 26,
+      borderTopRightRadius: 26,
       paddingHorizontal: 20,
-      paddingTop: 20,
-      paddingBottom: 40,
+      paddingTop: 8,
+      paddingBottom: Platform.OS === 'ios' ? 32 : 24,
+    },
+    sheetTitle: {
+      fontSize: 19,
+      fontWeight: '800',
+      color: Colors.textPrimary,
+      marginBottom: 14,
+    },
+    sheetOptionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 14,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      marginBottom: 8,
+      backgroundColor: isDark ? '#252525' : '#FAF8F5',
+    },
+    sheetOptionRowActive: {
+      backgroundColor: isDark ? '#33281D' : '#F4E8DC',
+    },
+    sheetOptionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    sheetOptionLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: Colors.textPrimary,
+    },
+    sheetOptionLabelActive: {
+      color: isDark ? '#E8CCB2' : '#7C5332',
+      fontWeight: '700',
     },
     settingsGroup: {
       marginBottom: 24,

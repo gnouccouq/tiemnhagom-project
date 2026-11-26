@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -73,6 +74,7 @@ const validatePasswordRules = (pw: string = '') => ({
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const {
     signIn,
     signUp,
@@ -90,7 +92,7 @@ export default function LoginScreen() {
 
   // Chế độ: false = Đăng nhập (Sign In), true = Đăng ký (Sign Up)
   const [isSignUpMode, setIsSignUpMode] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
 
   // Phone OTP ref & states
   const phoneAuthRef = useRef<FirebasePhoneAuthWebViewHandle>(null);
@@ -1090,19 +1092,6 @@ export default function LoginScreen() {
                   </ScalePressable>
                 )}
 
-                {/* FACEBOOK */}
-                <ScalePressable
-                  style={styles.socialCircleBtn}
-                  onPress={handleFacebookLogin}
-                  accessibilityLabel="Login with Facebook"
-                >
-                  <Image
-                    source={require('../../assets/images/logo-facebook.png')}
-                    style={styles.socialIconFb}
-                    contentFit="contain"
-                  />
-                </ScalePressable>
-
                 {/* GOOGLE */}
                 <ScalePressable
                   style={styles.socialCircleBtn}
@@ -1121,24 +1110,49 @@ export default function LoginScreen() {
                   )}
                 </ScalePressable>
 
-                {/* APPLE */}
-                <ScalePressable
-                  style={styles.socialCircleBtn}
-                  onPress={handleAppleLogin}
-                  disabled={appleLoading}
-                  accessibilityLabel="Login with Apple"
-                >
-                  {appleLoading ? (
-                    <ActivityIndicator color="#000" size="small" />
-                  ) : (
-                    <Ionicons name="logo-apple" size={26} color="#000" style={styles.socialIconApple} />
-                  )}
-                </ScalePressable>
+                {/* APPLE — Chỉ hiển thị trên iOS, ẩn hoàn toàn trên Android */}
+                {Platform.OS === 'ios' && (
+                  <ScalePressable
+                    style={styles.socialCircleBtn}
+                    onPress={handleAppleLogin}
+                    disabled={appleLoading}
+                    accessibilityLabel="Login with Apple"
+                  >
+                    {appleLoading ? (
+                      <ActivityIndicator color="#000" size="small" />
+                    ) : (
+                      <Ionicons name="logo-apple" size={26} color="#000" style={styles.socialIconApple} />
+                    )}
+                  </ScalePressable>
+                )}
               </View>
             </Animated.View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* NÚT QUAY LẠI TRANG GIỚI THIỆU (Đặt sau KeyboardAvoidingView để luôn nhận chạm trên cùng) */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: Math.max(insets.top, Platform.OS === 'android' ? 28 : 44) + 8,
+          left: 16,
+          zIndex: 99,
+          elevation: 12,
+          width: 42,
+          height: 42,
+          borderRadius: 21,
+          backgroundColor: 'rgba(24, 22, 21, 0.56)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        activeOpacity={0.75}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        onPress={() => router.replace('/onboarding')}
+        accessibilityLabel="Quay lại trang giới thiệu"
+      >
+        <Ionicons name="chevron-back" size={22} color="#FFFFFF" style={{ marginLeft: -2 }} />
+      </TouchableOpacity>
 
       {/* MODAL QUÊN MẬT KHẨU */}
       <AnimatedCenterModal

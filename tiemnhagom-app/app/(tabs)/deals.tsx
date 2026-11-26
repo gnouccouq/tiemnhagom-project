@@ -354,7 +354,15 @@ export default function DealsScreen() {
 
         <View style={styles.qrModalBody}>
           <View style={styles.qrBox}>
-            <Ionicons name="qr-code" size={140} color="#2B2928" />
+            <Image
+              source={{
+                uri: `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&color=231B15&bgcolor=FFFFFF&data=${encodeURIComponent(
+                  userProfile?.phone || user?.phoneNumber || memberCode
+                )}`,
+              }}
+              style={{ width: 168, height: 168 }}
+              contentFit="contain"
+            />
           </View>
 
           <Text style={styles.qrCodeLabel}>{memberCode}</Text>
@@ -362,19 +370,16 @@ export default function DealsScreen() {
             {userProfile?.displayName || user?.displayName || t('guest')} • {t('tier') || 'Hạng'} {getTierName(currentTier.id)} • {points} {t('pointsUnit')}
           </Text>
 
-          {/* Barcode giả lập */}
           <View style={styles.barcodePlaceholder}>
-            <View style={styles.barcodeLinesRow}>
-              {Array.from({ length: 32 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.barcodeBar,
-                    { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
-                  ]}
-                />
-              ))}
-            </View>
+            <Image
+              source={{
+                uri: `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(
+                  memberCode
+                )}&scale=3&height=12&includetext=false&barcolor=231B15&backgroundcolor=FFFFFF`,
+              }}
+              style={{ width: 220, height: 48 }}
+              contentFit="contain"
+            />
           </View>
 
           <Text style={styles.qrModalHint}>

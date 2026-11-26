@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Location from 'expo-location';
 import {
   View,
   Text,
@@ -32,9 +33,31 @@ interface StoreBranch {
   defaultHours: string;
   phone: string;
   mapUrl: string;
-  image: string;
+  lat: number;
+  lng: number;
+  image: any;
   features: { icon: keyof typeof Ionicons.glyphMap; labelKey: string; defaultLabel: string }[];
 }
+
+const calcDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const formatDistance = (km: number): string => {
+  if (km < 1) {
+    return `${Math.max(50, Math.round(km * 1000))} m`;
+  }
+  return `${km.toFixed(1)} km`;
+};
 
 const STORE_BRANCHES: StoreBranch[] = [
   {
@@ -46,16 +69,39 @@ const STORE_BRANCHES: StoreBranch[] = [
     district: 'Bình Thạnh / Gia Định',
     city: 'Hồ Chí Minh',
     hoursKey: 'dailyHoursText',
-    defaultHours: '09:00 — 21:00 (Hàng ngày)',
-    phone: '0777709662',
+    defaultHours: '10:30 — 21:00 (Hàng ngày)',
+    phone: '0777 709 662',
     mapUrl: 'https://maps.app.goo.gl/7Jxw7yJyaQG8wkHeA',
-    image: 'https://firebasestorage.googleapis.com/v0/b/tiemnhagom-project.firebasestorage.app/o/banners%2Fpc_1787036956318__MG_2524.webp?alt=media&token=a5fe7e87-ac93-4183-b7a4-88040ccb686d',
+    lat: 10.8035,
+    lng: 106.6952,
+    image: require('../assets/images/hero-bg.webp'),
     features: [
       { icon: 'diamond-outline', labelKey: 'featUniqueWorks', defaultLabel: 'Trưng bày tác phẩm độc bản' },
       { icon: 'flower-outline', labelKey: 'featFlowerArranging', defaultLabel: 'Cắm hoa nghệ thuật theo yêu cầu' },
       { icon: 'gift-outline', labelKey: 'featFreeGiftWrap', defaultLabel: 'Gói quà & Viết thiệp tay miễn phí' },
       { icon: 'card-outline', labelKey: 'featMultiplePayment', defaultLabel: 'Thanh toán thẻ / Chuyển khoản / Tiền mặt' },
       { icon: 'bicycle-outline', labelKey: 'featParkingConvenient', defaultLabel: 'Chỗ đỗ xe máy thuận tiện' },
+    ],
+  },
+  {
+    id: 'store-joy-hai-ba-trung',
+    name: 'Joy Cooking Class & Homestore',
+    badgeKey: 'consignmentStoreBadge',
+    defaultBadge: 'Cửa hàng ký gửi',
+    address: '74/10A Hai Bà Trưng, Phường Sài Gòn, TP. Hồ Chí Minh',
+    district: 'Quận 1 / Sài Gòn',
+    city: 'Hồ Chí Minh',
+    hoursKey: 'joyHoursText',
+    defaultHours: '08:00 — 22:00 (Hàng ngày)',
+    phone: '0283 825 1676',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=74%2F10a+Hai+Ba+Trung+Sai+Gon+Ho+Chi+Minh',
+    lat: 10.7782,
+    lng: 106.7042,
+    image: require('../assets/images/store2.png'),
+    features: [
+      { icon: 'storefront-outline', labelKey: 'featConsignmentDisplay', defaultLabel: 'Trưng bày & bán gốm thủ công Tiệm Nhà Gốm' },
+      { icon: 'gift-outline', labelKey: 'featFreeGiftWrap', defaultLabel: 'Gói quà & Viết thiệp tay miễn phí' },
+      { icon: 'card-outline', labelKey: 'featMultiplePayment', defaultLabel: 'Thanh toán thẻ / Chuyển khoản / Tiền mặt' },
     ],
   },
 ];
@@ -67,6 +113,31 @@ export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useSettings();
   const [scrollY, setScrollY] = useState(0);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const perm = await Location.getForegroundPermissionsAsync();
+        let granted = perm.granted;
+        if (!granted && perm.canAskAgain) {
+          const req = await Location.requestForegroundPermissionsAsync();
+          granted = req.granted;
+        }
+        if (!granted || !active) return;
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (active && pos?.coords) {
+          setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        }
+      } catch {}
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleOpenMap = (url: string) => {
     Linking.openURL(url).catch(() => { });
@@ -134,7 +205,7 @@ export default function StoresScreen() {
             {/* Ảnh đại diện chi nhánh */}
             <View style={styles.imageContainer}>
               <Image
-                source={{ uri: branch.image }}
+                source={typeof branch.image === 'string' ? { uri: branch.image } : branch.image}
                 style={styles.storeImage}
                 contentFit="cover"
                 transition={200}
@@ -161,12 +232,18 @@ export default function StoresScreen() {
                   <Ionicons name="location" size={18} color="#9C7156" />
                 </View>
                 <View style={styles.infoTextCol}>
-                  <Text style={styles.infoLabel}>
-                    {t('visitAddressLabel') || 'Địa chỉ ghé thăm'}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                    <Text style={styles.infoLabel}>
+                      {t('visitAddressLabel') || 'Địa chỉ ghé thăm'}
+                    </Text>
+                    {userCoords && (
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: isDark ? '#E8CCB2' : '#9C7156' }}>
+                        · Cách bạn {formatDistance(calcDistanceKm(userCoords.lat, userCoords.lng, branch.lat, branch.lng))}
+                      </Text>
+                    )}
+                  </View>
                   <Text style={styles.infoValue}>{branch.address}</Text>
                 </View>
-                <Ionicons name="navigate-outline" size={18} color="#9C7156" />
               </TouchableOpacity>
 
               {/* Hàng Giờ mở cửa */}
@@ -309,6 +386,22 @@ const getStyles = (Colors: any) => {
       letterSpacing: 0.8,
       marginBottom: 12,
       marginLeft: 4,
+    },
+    distancePill: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(24, 22, 21, 0.78)',
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+    },
+    distancePillText: {
+      color: '#FFFFFF',
+      fontSize: 11.5,
+      fontWeight: '700',
     },
     storeCard: {
       backgroundColor: Colors.cardBackground || '#FFFFFF',

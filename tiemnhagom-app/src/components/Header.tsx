@@ -302,7 +302,7 @@ export const Header: React.FC<HeaderProps> = ({
             {showBack ? (
               <HeaderBackButton onPress={() => router.back()} />
             ) : null}
-            <Text style={styles.screenTitle} numberOfLines={1}>
+            <Text style={[styles.screenTitle, !showBack && styles.screenTitleTab]} numberOfLines={1}>
               {title}
             </Text>
           </View>
@@ -563,10 +563,17 @@ const getStyles = (Colors: any, isDark: boolean, transparent: boolean = false) =
     alignItems: 'center',
   },
   screenTitle: {
+    flex: 1,
+    flexShrink: 1,
     fontSize: 19,
     fontWeight: '700',
     color: Colors.textPrimary,
     letterSpacing: 0.5,
+  },
+  screenTitleTab: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   titleContainer: {
     position: 'absolute',

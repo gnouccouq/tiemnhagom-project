@@ -48,6 +48,9 @@ interface EventProject {
   description?: string;
   tags?: string[];
   dateStr?: string;
+  guestScale?: string;
+  budgetRange?: string;
+  location?: string;
 }
 
 // Interface cho Sản phẩm gốm cho thuê (đọc từ Firestore products)
@@ -136,8 +139,27 @@ export default function EventDecorScreen() {
         const docSnap = await getDoc(doc(db, 'settings', 'events'));
         if (docSnap.exists() && isMounted) {
           const data = docSnap.data();
-          const items = Array.isArray(data.items) ? data.items : [];
-          setProjects(items);
+          const rawItems = Array.isArray(data.items) ? data.items : [];
+          const normalized = rawItems
+            .filter((it: any) => it && it.hidden !== true)
+            .map((it: any, idx: number) => ({
+              id: it.id || it.slug || `decor-${idx}`,
+              name: it.name || it.title || 'Dự án Decor',
+              imageUrl:
+                it.imageUrl ||
+                it.coverImage ||
+                (Array.isArray(it.gallery) && it.gallery[0]) ||
+                (Array.isArray(it.images) && it.images[0]) ||
+                '',
+              category: it.category || 'Sự kiện',
+              description: it.description || it.summary || '',
+              tags: Array.isArray(it.tags) ? it.tags : [],
+              dateStr: it.dateStr || it.date || '',
+              guestScale: it.guestScale || it.guests || '',
+              budgetRange: it.budgetRange || it.budget || '',
+              location: it.location || '',
+            }));
+          setProjects(normalized);
         } else if (isMounted) {
           // Fallback dự án nổi bật nếu chưa cấu hình trên Firestore
           setProjects([

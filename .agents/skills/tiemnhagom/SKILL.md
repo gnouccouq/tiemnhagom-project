@@ -183,9 +183,8 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
 * **Không nhân đôi nút chuyển đổi Đăng nhập / Đăng ký:**
   * Tuyệt đối không vừa đặt badge chuyển đổi trên header vừa đặt nút chuyển đổi dưới chân form.
   * Chỉ giữ lại duy nhất 1 liên kết chuyển chế độ trang nhã ở cuối form (`switchModeRow`).
-* **Bảo lưu thiết lập Onboarding khi Đăng xuất (Logout UX):**
-  * Khi người dùng đăng xuất (`signOut`), **tuyệt đối không xóa cờ `has_seen_onboarding` khỏi `AsyncStorage`**.
-  * Các tùy chọn cài đặt trên thiết bị (ngôn ngữ, cỡ chữ, chủ đề sáng/tối, quyền hệ thống đã cấp) phải luôn được bảo lưu; sau khi đăng xuất người dùng chỉ được chuyển hướng về màn hình đăng nhập (`auth/login`), tuyệt đối không bắt người dùng phải làm lại quy trình giới thiệu, chọn ngôn ngữ/cỡ chữ hay cấp quyền lại.
+* **Hiển thị lại màn hình giới thiệu khi Đăng xuất (Logout UX):**
+  * Khi người dùng đăng xuất (`signOut`), xóa cờ `has_seen_onboarding` khỏi `AsyncStorage` và điều hướng về màn hình giới thiệu (`/onboarding`).
 
 ---
 
@@ -338,3 +337,25 @@ Giao diện Dark Mode phải được thiết kế rõ ràng, tương phản t�
   * Khi người dùng chỉnh sửa bất kỳ trường nào khác với dữ liệu gốc: nút Lưu tự động kích hoạt (`disabled = false`) và chuyển sang nền Đen chữ Trắng (`#000000` / `#ffffff`) cho phép bấm lưu.
 * **Quy chuẩn Gói Quà Miễn Phí Quanh Năm trong Giỏ Hàng (Always-On Free Gift Wrap):**
   * Tiệm Nhà Gốm hỗ trợ gói hộp quà và kèm thiệp viết tay miễn phí quanh năm cho mọi đơn hàng (không phụ thuộc dịp lễ), hộp chọn gói quà sử dụng bảng màu gốm mộc ấm áp (`#FAF8F5` / `#E8E1D8` / `#2B2928` / `#9C7156`), và toàn bộ nút thao tác trong Drawer Giỏ hàng (tăng/giảm số lượng, nút Xóa, nút đóng) đều bo tròn dạng viên thuốc (`border-radius: 999px`).
+
+
+---
+
+## 19. Quy chuẩn Thiết kế UI/UX Hiện Đại cho Mobile App (Tài khoản, Cài đặt, Danh sách & Icon Men Gốm)
+Áp dụng đồng bộ cho toàn bộ các màn hình tài khoản, cài đặt, hỗ trợ, chính sách, liên hệ và lịch sử cập nhật trên `tiemnhagom-app`:
+
+* **Tiêu đề Header đồng nhất cho các Tab chính (`Tài khoản`, `Danh mục`, `Ưu đãi`, `Thông báo`):**
+  * Sử dụng cỡ chữ lớn `fontSize: 24`, in đậm `fontWeight: '800'`, `letterSpacing: -0.3` (không dùng font serif). Các trang con có nút quay lại giữ cỡ `19px` gọn gàng kèm `flex: 1, flexShrink: 1` để chống đè nút bên phải.
+* **Thẻ Thành viên gộp 2 tầng (`borderRadius: 24`):**
+  * Đặt cụm Avatar tròn (`54×54` ảnh hoặc chữ cái đầu trên nền gốm kem `#E8CCB2`) + Tên + SĐT/Email ở nửa trên thẻ thành viên, ngăn cách bằng đường kẻ mảnh (`hairline`) với nửa dưới hiển thị Hạng hội viên, Điểm gốm, Đặc quyền và mã QR.
+* **Bố cục Thẻ Danh sách Bo tròn (`borderRadius: 22`, `overflow: 'hidden'`, không padding ngoài trùng lặp):**
+  * Phía trên mỗi thẻ là tiêu đề nhóm nhỏ gọn (`fontSize: 14`, `fontWeight: '700'`, màu đất nung `#7C5332` / `#E8CCB2`).
+  * Các dòng bên trong cách nhau bằng đường kẻ mảnh `StyleSheet.hairlineWidth`, có tiêu đề đậm `15.5px`, dòng phụ màu dịu `12.5px` (nếu có), và bên phải là công tắc `Switch` màu `#9C7156` hoặc giá trị hiện tại kèm mũi tên `>`.
+* **Hệ thống Icon Đặc (Filled) + Nền Pastel Men Gốm Ấm (Tuyệt đối KHÔNG dùng màu xanh/tím):**
+  * Mọi icon trong danh sách (Cài đặt, Hỗ trợ, Chính sách, Liên hệ, Có gì mới) và lưới tiện ích 8 mục ở trang Tài khoản sử dụng **icon đặc (filled)** nằm trong huy hiệu tròn `42×42` (hoặc vuông bo góc `40×40`, `borderRadius: 12` cho trang *Có gì mới*) với các tông pastel men gốm ấm:
+    * Cát kem (`#F4E4CE` / dark `#33281D`), Hổ phách (`#F5E4C4` / dark `#352B1E`), Đất nung nhạt (`#F6DDD7` / dark `#382522`), Đá ấm (`#EAE4DC` / dark `#2D2A27`), Gốm hồng đất (`#F3DFD6` / dark `#362722`).
+* **Trang con chuyên biệt & Bottom Sheet chỉnh sửa từng mục:**
+  * Trang **Tài khoản (`edit-profile.tsx`):** Avatar căn giữa + tên + SĐT ở đầu trang; thông tin cá nhân xếp trong thẻ danh sách (chạm từng dòng mở Bottom Sheet viền nổi nhãn + nút pill **Lưu** ngay); tách riêng thẻ **Đăng xuất** và **Xóa tài khoản**.
+  * Trang **Cài đặt (`settings.tsx`):** Tách thành các trang con riêng cho *Giao diện* (`settings-theme.tsx`), *Ngôn ngữ* (`settings-language.tsx`), *Kích thước chữ* (`settings-fontsize.tsx`), *Bộ nhớ & Dữ liệu* (`settings-storage.tsx`); mục *Vị trí* & *Thông báo* đọc quyền thực tế và mở thẳng Cài đặt hệ thống (`Linking.openSettings()`).
+  * Trang **Liên hệ & Mạng xã hội (`contact.tsx`)** và **Có gì mới (`version.tsx`)**: tách riêng sạch sẽ, tối giản, đồng bộ hoàn toàn ngôn ngữ thiết kế trên.
+* **Hiệu ứng chuyển trang Android:** Sử dụng `fade` (mờ dần) thay vì `slide_from_right`; iOS giữ nguyên hiệu ứng native mặc định.

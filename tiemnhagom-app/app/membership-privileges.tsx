@@ -854,7 +854,7 @@ const getStyles = (Colors: any, isDark: boolean) =>
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.25,
       shadowRadius: 10,
-      elevation: 6,
+      elevation: 0,
     },
     heroSlideCard: {
       width: '100%',

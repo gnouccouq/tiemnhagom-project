@@ -19,6 +19,21 @@ import { useSettings } from '../context/SettingsContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const stripAdminPrefix = (name: string) =>
+  (name || '')
+    .replace(/^(Thành phố|TP\.?|Tỉnh|Quận|Huyện|Thị xã|Phường|Xã|Thị trấn|Đặc khu)\s+/i, '')
+    .trim();
+
+const sortVietnameseAlpha = <T extends { name?: string }>(list: T[]): T[] =>
+  [...list].sort((a, b) =>
+    stripAdminPrefix(a.name || '').localeCompare(stripAdminPrefix(b.name || ''), 'vi', {
+      sensitivity: 'base',
+      numeric: true,
+    })
+  );
+
+const SORTED_PROVINCES = sortVietnameseAlpha(provincesData);
+
 interface AddressPickerProps {
   visible: boolean;
   onClose: () => void;
@@ -88,7 +103,10 @@ export const AddressPicker: React.FC<AddressPickerProps> = ({
     setSearchQuery('');
   }, [step, visible]);
 
-  const rawData = step === 'PROVINCE' ? provincesData : selectedProv?.wards || [];
+  const rawData: any[] = React.useMemo(
+    () => (step === 'PROVINCE' ? SORTED_PROVINCES : sortVietnameseAlpha(selectedProv?.wards || [])),
+    [step, selectedProv]
+  );
   const filteredData = React.useMemo(() => {
     if (!searchQuery.trim()) return rawData;
     const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

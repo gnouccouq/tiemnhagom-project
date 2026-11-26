@@ -1,5 +1,5 @@
 // app/flash-sale.tsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,10 @@ import {
   RefreshControl,
   Dimensions,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,16 +20,15 @@ import { Header } from '../src/components/Header';
 import { ScalePressable } from '../src/components/ScalePressable';
 import { FlashSaleCard } from '../src/components/FlashSaleCard';
 import { useSettings } from '../src/context/SettingsContext';
-import { useThemeColor } from '../src/constants/theme';
 import {
   fetchFlashSaleData,
   FlashSaleData,
+  FlashSaleStage,
   ProductWithFlashSale,
 } from '../src/services/flashSaleService';
-import { DEFAULT_CATEGORIES } from '../src/services/productService';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 32 - 12) / 2;
+const { width, height } = Dimensions.get('window');
+const STAGE_CARD_WIDTH = Math.floor((width - 28 - 20 - 10) / 2);
 
 interface TimeLeft {
   days: number;
@@ -38,36 +40,35 @@ interface TimeLeft {
 export default function FlashSaleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
   const { t } = useSettings();
-  const Colors = useThemeColor();
-  const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const stageYMap = useRef<Record<string, number>>({});
+  const showcaseYRef = useRef<number>(screenHeight);
 
   const [scrollY, setScrollY] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [flashSaleData, setFlashSaleData] = useState<FlashSaleData | null>(null);
 
-  // Bộ lọc & Sắp xếp
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPriceGroup, setSelectedPriceGroup] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<'sale-desc' | 'price-asc' | 'price-desc' | 'rating-desc'>('sale-desc');
-
-  // Đếm ngược thời gian
+  const [sortBy, setSortBy] = useState<'sale-desc' | 'price-asc' | 'price-desc'>('sale-desc');
+  const [stageSubCat, setStageSubCat] = useState<Record<string, string>>({});
+  const [expandedStages, setExpandedStages] = useState<Record<string, boolean>>({});
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Tải dữ liệu Flash Sale
   const loadData = useCallback(async (forceRefresh = false) => {
     try {
-      const data = await fetchFlashSaleData(selectedCategory, forceRefresh);
+      const data = await fetchFlashSaleData('all', forceRefresh);
       setFlashSaleData(data);
     } catch (error) {
-      console.error('Lỗi nạp dữ liệu Flash Sale:', error);
+      console.error('Lỗi nạp dữ liệu Flash Sale 12.12:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedCategory]);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -78,87 +79,145 @@ export default function FlashSaleScreen() {
     loadData(true);
   }, [loadData]);
 
-  // Cập nhật Countdown Timer
+  // Live Countdown Timer
   useEffect(() => {
     if (!flashSaleData) return;
     const { status } = flashSaleData;
-    const targetDate = status.isRunning
-      ? status.endTime
-      : status.isUpcoming
-      ? status.startTime
-      : null;
-
-    if (!targetDate) {
-      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      return;
-    }
+    const targetDate = status.isUpcoming ? status.startTime : status.endTime;
+    if (!targetDate) return;
 
     const updateCountdown = () => {
-      const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
-
-      if (distance <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        // Kích hoạt nạp lại khi chuyển trạng thái (bắt đầu hoặc kết thúc)
-        loadData(true);
-        return;
-      }
-
+      const distance = Math.max(0, targetDate.getTime() - Date.now());
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
       setTimeLeft({ days, hours, minutes, seconds });
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [flashSaleData, loadData]);
+  }, [flashSaleData]);
 
-  // Hàm sắp xếp
-  const sortProducts = useCallback((list: ProductWithFlashSale[]) => {
-    const copy = [...list];
-    copy.sort((a, b) => {
-      switch (sortBy) {
-        case 'price-asc':
-          return a.effectivePrice - b.effectivePrice;
-        case 'price-desc':
-          return b.effectivePrice - a.effectivePrice;
-        case 'rating-desc':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'sale-desc':
-        default:
-          return b.effectiveSalePercent - a.effectiveSalePercent;
-      }
-    });
-    return copy;
-  }, [sortBy]);
+  const sortProducts = useCallback(
+    (list: ProductWithFlashSale[]) => {
+      const copy = [...list];
+      copy.sort((a, b) => {
+        if (sortBy === 'price-asc') return a.effectivePrice - b.effectivePrice;
+        if (sortBy === 'price-desc') return b.effectivePrice - a.effectivePrice;
+        return b.effectiveSalePercent - a.effectiveSalePercent;
+      });
+      return copy;
+    },
+    [sortBy]
+  );
 
-  // Lọc sản phẩm theo priceGroup nếu chọn
-  const filteredAllProducts = useMemo(() => {
+  const priceGroups = useMemo(
+    () =>
+      (flashSaleData?.settings?.priceGroups || [])
+        .map(Number)
+        .filter((n) => n > 0)
+        .sort((a, b) => a - b),
+    [flashSaleData]
+  );
+
+  const visibleStages: FlashSaleStage[] = useMemo(() => {
     if (!flashSaleData) return [];
-    let list = flashSaleData.allProducts;
-    if (selectedPriceGroup !== null) {
-      list = list.filter((p) => (p as any).flashSaleGroup === selectedPriceGroup);
-    }
-    return sortProducts(list);
+    return flashSaleData.stages
+      .map((stage) => {
+        let prods = stage.products;
+        if (selectedPriceGroup !== null) {
+          prods = prods.filter(
+            (p) => Number((p as any).flashSaleGroup) === selectedPriceGroup || p.effectivePrice === selectedPriceGroup
+          );
+        }
+        return { ...stage, products: sortProducts(prods) };
+      })
+      .filter((s) => s.products.length > 0);
   }, [flashSaleData, selectedPriceGroup, sortProducts]);
 
-  const priceGroups = flashSaleData?.settings?.priceGroups || [];
   const status = flashSaleData?.status;
-  const isRunning = status?.isRunning;
-  const isUpcoming = status?.isUpcoming;
+  const isRunning = Boolean(status?.isRunning);
+  const isUpcoming = Boolean(status?.isUpcoming);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const dStr = pad(timeLeft.days);
+  const hStr = pad(timeLeft.hours);
+  const mStr = pad(timeLeft.minutes);
+  const sStr = pad(timeLeft.seconds);
+
+  const scrollToShowcase = () => {
+    scrollRef.current?.scrollTo({ y: showcaseYRef.current - (insets.top + 56), animated: true });
+  };
+
+  const scrollToStage = (stageId: string) => {
+    const y = stageYMap.current[stageId];
+    if (typeof y === 'number') {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - (insets.top + 64)), animated: true });
+    }
+  };
+
+  const isStickyBarVisible = scrollY >= Math.max(200, showcaseYRef.current - (insets.top + 58));
+
+  const renderFilterStripContent = () => (
+    <>
+      {visibleStages.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickJumpScroll}
+        >
+          {visibleStages.map((stage, i) => (
+            <ScalePressable
+              key={stage.id}
+              style={[styles.jumpPill, i === 0 && styles.jumpPillActive]}
+              onPress={() => scrollToStage(stage.id)}
+            >
+              <Text style={[styles.jumpPillText, i === 0 && styles.jumpPillTextActive]}>
+                {stage.shortNav} ({stage.products.length})
+              </Text>
+            </ScalePressable>
+          ))}
+        </ScrollView>
+      )}
+
+      <View style={styles.sortRow}>
+        <View style={styles.miniTimerPill}>
+          <Ionicons name="time-outline" size={13} color="#E8CCB2" />
+          <Text style={styles.miniTimerText}>
+            {isUpcoming ? 'Mở bán:' : 'Còn lại:'} {timeLeft.days > 0 ? `${dStr}n ` : ''}
+            {hStr}:{mStr}:{sStr}
+          </Text>
+        </View>
+
+        <View style={styles.sortChipsWrap}>
+          {(
+            [
+              { id: 'sale-desc', label: 'Giảm sâu' },
+              { id: 'price-asc', label: 'Giá ↑' },
+              { id: 'price-desc', label: 'Giá ↓' },
+            ] as const
+          ).map((opt) => (
+            <ScalePressable
+              key={opt.id}
+              style={[styles.sortChip, sortBy === opt.id && styles.sortChipActive]}
+              onPress={() => setSortBy(opt.id)}
+            >
+              <Text style={[styles.sortChipText, sortBy === opt.id && styles.sortChipTextActive]}>
+                {opt.label}
+              </Text>
+            </ScalePressable>
+          ))}
+        </View>
+      </View>
+    </>
+  );
 
   return (
-    <View style={styles.safeArea}>
-      <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={Colors.background}
-      />
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
 
-      {/* Header chuẩn GEMINI.md: Nút Back tròn 40x40, tiêu đề, nút giỏ hàng */}
       <Header
         title={t('flashSaleTitle')}
         showBack={true}
@@ -168,434 +227,324 @@ export default function FlashSaleScreen() {
         scrollY={scrollY}
       />
 
+      {/* Thanh danh mục dính cố định ngay dưới Header khi người dùng lướt qua Hero */}
+      {isStickyBarVisible && (
+        <View
+          style={[
+            styles.filterStrip,
+            styles.stickyFilterOverlay,
+            { top: insets.top + 56 },
+          ]}
+        >
+          {renderFilterStripContent()}
+        </View>
+      )}
+
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 8 }]}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) + 36 }}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#9C7156"
+            tintColor="#E8CCB2"
             colors={['#9C7156']}
           />
         }
       >
-        {/* ================= HERO BANNER & COUNTDOWN TIMER ================= */}
-        <View style={styles.heroBanner}>
-          <View style={styles.heroContent}>
-            {/* Huy hiệu trạng thái */}
-            <View style={styles.statusBadgeRow}>
-              <View
-                style={[
-                  styles.statusBadge,
-                  isRunning
-                    ? styles.statusBadgeRunning
-                    : isUpcoming
-                    ? styles.statusBadgeUpcoming
-                    : styles.statusBadgeEnded,
-                ]}
-              >
-                <Ionicons
-                  name={isRunning ? 'flash' : isUpcoming ? 'time' : 'checkmark-circle'}
-                  size={13}
-                  color="#FFFFFF"
-                />
-                <Text style={styles.statusBadgeText}>
-                  {isRunning
-                    ? t('flashSaleRunning')
-                    : isUpcoming
-                    ? t('flashSaleUpcoming')
-                    : t('flashSaleEnded')}
-                </Text>
-              </View>
+        {/* 1. MÀN HÌNH ĐẾM NGƯỢC FULL-SCREEN 100% MÀN HÌNH IPHONE/ANDROID KÈM ẢNH NỀN GIỐNG BẢN WEB */}
+        <View
+          style={[
+            styles.fullscreenHero,
+            { height: screenHeight, paddingTop: insets.top + 64, paddingBottom: Math.max(insets.bottom, 24) + 24 },
+          ]}
+        >
+          <Image
+            source={{
+              uri:
+                flashSaleData?.settings?.bannerUrl ||
+                'https://tiemnhagom.vn/Asset/images/848763692_122118089709333721_8694091963918561225_n.jpg',
+            }}
+            style={styles.heroBgImage}
+            contentFit="cover"
+            transition={250}
+            cachePolicy="disk"
+          />
+          <LinearGradient
+            colors={['rgba(20, 14, 11, 0.62)', 'rgba(38, 22, 16, 0.72)', 'rgba(26, 19, 16, 0.96)']}
+            locations={[0, 0.5, 1]}
+            style={styles.heroVignette}
+          />
+
+          <View style={styles.heroInner}>
+            <View style={styles.kickerRow}>
+              <View style={[styles.liveDot, isRunning && styles.liveDotActive]} />
+              <Text style={styles.kickerText}>
+                {isRunning ? 'ĐANG MỞ BÁN • DUY NHẤT NGÀY 12.12' : 'SỰ KIỆN NGÀY ĐÔI 12.12 • SẮP MỞ BÁN'}
+              </Text>
             </View>
 
-            {/* Tiêu đề & phụ đề */}
-            <Text style={styles.heroTitle}>{status?.title || t('flashSaleTitle')}</Text>
+            <Text style={styles.dateEmblem}>12.12</Text>
+
+            <Text style={styles.heroTitle}>{status?.title || 'Ngày Đôi 12.12 — Siêu Sale Gốm'}</Text>
             <Text style={styles.heroSubtitle}>
-              {status?.subtitle || t('flashSaleSubtitle')}
+              {status?.subtitle ||
+                'Đại tiệc ưu đãi duy nhất 24h ngày 12/12. Lưu mẫu gốm yêu thích để săn deal đúng giờ mở bán!'}
             </Text>
 
-            {/* Bộ đếm ngược thời gian */}
-            {(isRunning || isUpcoming) && (
-              <View style={styles.countdownContainer}>
-                <Text style={styles.countdownPrompt}>
-                  {isRunning ? t('endsIn') : t('startsIn')}
-                </Text>
-                <View style={styles.timerRow}>
-                  {timeLeft.days > 0 && (
-                    <>
-                      <View style={styles.timerBox}>
-                        <Text style={styles.timerNum}>
-                          {String(timeLeft.days).padStart(2, '0')}
-                        </Text>
-                        <Text style={styles.timerUnit}>{t('days')}</Text>
-                      </View>
-                      <Text style={styles.timerColon}>:</Text>
-                    </>
-                  )}
-                  <View style={styles.timerBox}>
-                    <Text style={styles.timerNum}>
-                      {String(timeLeft.hours).padStart(2, '0')}
-                    </Text>
-                    <Text style={styles.timerUnit}>{t('hours')}</Text>
+            {/* Đồng hồ đếm ngược 4 ô trắng lớn */}
+            <Text style={styles.countdownCaption}>
+              {isRunning ? 'CHƯƠNG TRÌNH KẾT THÚC SAU' : 'ĐẾM NGƯỢC TỚI GIỜ MỞ BÁN'}
+            </Text>
+            <View style={styles.countdownGrid}>
+              {[
+                { val: dStr, lbl: t('days') || 'Ngày' },
+                { val: hStr, lbl: t('hours') || 'Giờ' },
+                { val: mStr, lbl: t('minutes') || 'Phút' },
+                { val: sStr, lbl: t('seconds') || 'Giây' },
+              ].map((unit, idx) => (
+                <React.Fragment key={unit.lbl}>
+                  <View style={styles.cdTile}>
+                    <Text style={styles.cdNum}>{unit.val}</Text>
+                    <Text style={styles.cdLbl}>{unit.lbl}</Text>
                   </View>
-                  <Text style={styles.timerColon}>:</Text>
-                  <View style={styles.timerBox}>
-                    <Text style={styles.timerNum}>
-                      {String(timeLeft.minutes).padStart(2, '0')}
-                    </Text>
-                    <Text style={styles.timerUnit}>{t('minutes')}</Text>
-                  </View>
-                  <Text style={styles.timerColon}>:</Text>
-                  <View style={styles.timerBox}>
-                    <Text style={styles.timerNum}>
-                      {String(timeLeft.seconds).padStart(2, '0')}
-                    </Text>
-                    <Text style={styles.timerUnit}>{t('seconds')}</Text>
-                  </View>
-                </View>
-              </View>
-            )}
+                  {idx < 3 && <Text style={styles.cdSep}>:</Text>}
+                </React.Fragment>
+              ))}
+            </View>
+
+            {/* Dòng đặc quyền tối giản không khung viền */}
+            <Text style={styles.perksLine}>
+              Duy nhất 24h ngày 12/12  ·  Suất giới hạn  ·  Miễn phí gói quà
+            </Text>
+
+            {/* Nút CTA chính cuộn xuống kệ sản phẩm */}
+            <ScalePressable style={styles.heroPrimaryBtn} onPress={scrollToShowcase}>
+              <Text style={styles.heroPrimaryBtnText}>Xem kệ sản phẩm Sale 12.12</Text>
+              <Ionicons name="arrow-down" size={16} color="#111111" />
+            </ScalePressable>
           </View>
         </View>
 
-        {/* ================= BỘ LỌC DANH MỤC CUỘN NGANG (KÈM SỐ LƯỢNG) ================= */}
-        <View style={styles.categoryFilterSection}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScrollContent}
-          >
-            {DEFAULT_CATEGORIES.map((cat) => {
-              const isSelected =
-                (cat.id === 'all' && selectedCategory === 'all') ||
-                selectedCategory.toLowerCase() === cat.name.toLowerCase();
-              const count =
-                flashSaleData?.categoryCounts[cat.id === 'all' ? 'all' : cat.name] || 0;
-
-              return (
-                <ScalePressable
-                  key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    isSelected ? styles.categoryChipActive : styles.categoryChipInactive,
-                  ]}
-                  onPress={() => setSelectedCategory(cat.id === 'all' ? 'all' : cat.name)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryChipText,
-                      isSelected ? styles.categoryChipTextActive : styles.categoryChipTextInactive,
-                    ]}
-                  >
-                    {cat.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.countBadge,
-                      isSelected ? styles.countBadgeActive : styles.countBadgeInactive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.countBadgeText,
-                        isSelected
-                          ? styles.countBadgeTextActive
-                          : styles.countBadgeTextInactive,
-                      ]}
-                    >
-                      {count}
-                    </Text>
-                  </View>
-                </ScalePressable>
-              );
-            })}
-          </ScrollView>
+        {/* 2. THANH CHUYỂN NHANH DANH MỤC & SẮP XẾP */}
+        <View
+          onLayout={(e) => {
+            showcaseYRef.current = e.nativeEvent.layout.y;
+          }}
+          style={[styles.filterStrip, isStickyBarVisible && { opacity: 0 }]}
+        >
+          {renderFilterStripContent()}
         </View>
 
-        {/* ================= BỘ LỌC ĐỒNG GIÁ (NẾU CÓ PRICE GROUPS) ================= */}
-        {isRunning && priceGroups.length > 0 && (
-          <View style={styles.priceGroupSection}>
+        {/* 3. BANNER KỆ ĐỒNG GIÁ 12.12 */}
+        {priceGroups.length > 0 && (
+          <LinearGradient
+            colors={['#2A211C', '#56291D', '#7E3524']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.tierBanner}
+          >
+            <Text style={styles.tierKicker}>SĂN GỐM ĐỒNG GIÁ • NGÀY ĐÔI 12.12</Text>
+            <Text style={styles.tierTitle}>
+              {selectedPriceGroup !== null
+                ? `Kệ Đồng Giá ${selectedPriceGroup.toLocaleString('vi-VN')}đ`
+                : 'Chọn nhanh Kệ Đồng Giá yêu thích'}
+            </Text>
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.priceGroupScrollContent}
+              contentContainerStyle={styles.tierTicketsRow}
             >
-              <ScalePressable
-                style={[
-                  styles.priceChip,
-                  selectedPriceGroup === null ? styles.priceChipActive : styles.priceChipInactive,
-                ]}
-                onPress={() => setSelectedPriceGroup(null)}
-              >
-                <Text
-                  style={[
-                    styles.priceChipText,
-                    selectedPriceGroup === null
-                      ? styles.priceChipTextActive
-                      : styles.priceChipTextInactive,
-                  ]}
-                >
-                  {t('allPrices')}
-                </Text>
-              </ScalePressable>
-
               {priceGroups.map((price) => {
-                const isSelected = selectedPriceGroup === price;
-                const label = `⚡ Đồng giá ${price / 1000}k`;
+                const isAct = selectedPriceGroup === price;
+                const count =
+                  flashSaleData?.allProducts.filter(
+                    (p) => Number((p as any).flashSaleGroup) === price || p.effectivePrice === price
+                  ).length || 0;
                 return (
                   <ScalePressable
                     key={price}
-                    style={[
-                      styles.priceChip,
-                      isSelected ? styles.priceChipActive : styles.priceChipInactive,
-                    ]}
-                    onPress={() => setSelectedPriceGroup(isSelected ? null : price)}
+                    style={[styles.tierTicket, isAct && styles.tierTicketActive]}
+                    onPress={() => setSelectedPriceGroup(isAct ? null : price)}
                   >
-                    <Text
-                      style={[
-                        styles.priceChipText,
-                        isSelected ? styles.priceChipTextActive : styles.priceChipTextInactive,
-                      ]}
-                    >
-                      {label}
+                    <Text style={[styles.tierTicketPrice, isAct && styles.tierTicketPriceActive]}>
+                      {Math.round(price / 1000)}K
+                    </Text>
+                    <Text style={[styles.tierTicketMeta, isAct && styles.tierTicketMetaActive]}>
+                      {count > 0 ? `${count} mẫu` : 'Săn deal'}
                     </Text>
                   </ScalePressable>
                 );
               })}
+
+              {selectedPriceGroup !== null && (
+                <ScalePressable
+                  style={styles.tierResetBtn}
+                  onPress={() => setSelectedPriceGroup(null)}
+                >
+                  <Text style={styles.tierResetBtnText}>Tất cả giá</Text>
+                </ScalePressable>
+              )}
             </ScrollView>
-          </View>
+          </LinearGradient>
         )}
 
-        {/* ================= THANH TỔNG SỐ LƯỢNG & SẮP XẾP ================= */}
-        <View style={styles.sortBar}>
-          <Text style={styles.totalCountText}>
-            {filteredAllProducts.length} {t('ceramicCategories').toLowerCase()}
-          </Text>
-          <View style={styles.sortOptionsRow}>
-            <ScalePressable
-              style={[
-                styles.sortChip,
-                sortBy === 'sale-desc' && styles.sortChipActive,
-              ]}
-              onPress={() => setSortBy('sale-desc')}
-            >
-              <Text
-                style={[
-                  styles.sortChipText,
-                  sortBy === 'sale-desc' && styles.sortChipTextActive,
-                ]}
-              >
-                {t('sortBySaleDesc')}
-              </Text>
-            </ScalePressable>
-            <ScalePressable
-              style={[
-                styles.sortChip,
-                sortBy === 'price-asc' && styles.sortChipActive,
-              ]}
-              onPress={() => setSortBy('price-asc')}
-            >
-              <Ionicons
-                name="arrow-up"
-                size={12}
-                color={sortBy === 'price-asc' ? '#FFFFFF' : '#9C7156'}
-              />
-              <Text
-                style={[
-                  styles.sortChipText,
-                  sortBy === 'price-asc' && styles.sortChipTextActive,
-                ]}
-              >
-                {t('priceLowToHigh') || 'Giá tăng'}
-              </Text>
-            </ScalePressable>
-            <ScalePressable
-              style={[
-                styles.sortChip,
-                sortBy === 'price-desc' && styles.sortChipActive,
-              ]}
-              onPress={() => setSortBy('price-desc')}
-            >
-              <Ionicons
-                name="arrow-down"
-                size={12}
-                color={sortBy === 'price-desc' ? '#FFFFFF' : '#9C7156'}
-              />
-              <Text
-                style={[
-                  styles.sortChipText,
-                  sortBy === 'price-desc' && styles.sortChipTextActive,
-                ]}
-              >
-                {t('priceHighToLow') || 'Giá giảm'}
-              </Text>
-            </ScalePressable>
-          </View>
-        </View>
-
-        {/* ================= DANH SÁCH SẢN PHẨM ================= */}
+        {/* 4. CÁC KHỐI KỆ FLASH SALE PHÂN LOẠI SẢN PHẨM */}
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#9C7156" />
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#E8CCB2" />
             <Text style={styles.loadingText}>{t('loadingCeramics')}</Text>
           </View>
-        ) : filteredAllProducts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="pricetags-outline" size={38} color="#9C7156" />
-            </View>
+        ) : visibleStages.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Ionicons name="pricetags-outline" size={38} color="#E8CCB2" />
             <Text style={styles.emptyTitle}>{t('noFlashSale')}</Text>
-            <Text style={styles.emptySubtitle}>
-              {t('flashSaleSubtitle')}
+            <Text style={styles.emptySub}>
+              Các sản phẩm ưu đãi Ngày Đôi 12.12 đang được Tiệm cập nhật lên kệ.
             </Text>
             <ScalePressable
-              style={styles.exploreButton}
+              style={styles.heroPrimaryBtn}
               onPress={() => router.push('/(tabs)/products')}
             >
-              <Text style={styles.exploreButtonText}>{t('exploreOtherProducts')}</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              <Text style={styles.heroPrimaryBtnText}>{t('exploreOtherProducts')}</Text>
             </ScalePressable>
           </View>
-        ) : isUpcoming ? (
-          /* TRƯỜNG HỢP SẮP DIỄN RA: Đếm ngược tới giờ mở bán */
-          <View style={styles.sectionContainer}>
-            <View style={styles.upcomingNoticeBox}>
-              <Text style={styles.upcomingNoticeTitle}>
-                🎁 {status?.title || t('flashSaleTitle')}
-              </Text>
-              <Text style={styles.upcomingNoticeDesc}>
-                {status?.startTime
-                  ? `Chương trình sẽ chính thức mở bán vào lúc ${status.startTime.toLocaleString(
-                      'vi-VN'
-                    )}. Hãy lưu vào danh sách yêu thích trước!`
-                  : 'Chương trình sắp chính thức mở bán. Hãy sẵn sàng săn deal!'}
-              </Text>
-            </View>
-            <View style={styles.productGrid}>
-              {filteredAllProducts.map((product) => (
-                <FlashSaleCard
-                  key={product.id}
-                  product={product}
-                  cardWidth={CARD_WIDTH}
-                />
-              ))}
-            </View>
-          </View>
-        ) : selectedPriceGroup !== null || selectedCategory !== 'all' ? (
-          /* KHI NGƯỜI DÙNG ĐÃ CHỌN LỌC: Hiển thị lưới sản phẩm đã lọc */
-          <View style={styles.sectionContainer}>
-            <View style={styles.productGrid}>
-              {filteredAllProducts.map((product) => (
-                <FlashSaleCard
-                  key={product.id}
-                  product={product}
-                  cardWidth={CARD_WIDTH}
-                />
-              ))}
-            </View>
-          </View>
         ) : (
-          /* CHẾ ĐỘ HIỂN THỊ ĐẦY ĐỦ 4 PHÂN NHÓM CHUẨN BẢN WEB */
-          <View style={styles.sectionsWrapper}>
-            {/* Nhóm 1: Mua 1 Tặng 1 (BOGO) */}
-            {flashSaleData && flashSaleData.bogoProducts.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>
-                    🎁 {t('bogoSectionTitle')}
-                  </Text>
-                  <View style={styles.sectionBadgePill}>
-                    <Text style={styles.sectionBadgeText}>
-                      ✨ {t('bogoSectionBadge')}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.productGrid}>
-                  {sortProducts(flashSaleData.bogoProducts).map((product) => (
-                    <FlashSaleCard
-                      key={product.id}
-                      product={product}
-                      cardWidth={CARD_WIDTH}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
+          <View style={styles.stagesList}>
+            {visibleStages.map((stage) => {
+              const activeSub = stageSubCat[stage.id] || 'all';
+              const isExpanded = Boolean(expandedStages[stage.id]);
+              const filteredProds =
+                activeSub === 'all'
+                  ? stage.products
+                  : stage.products.filter((p) => (p.category || '').trim() === activeSub);
 
-            {/* Nhóm 2: Flash Sale Campaign (Giá Sốc Độc Quyền) */}
-            {flashSaleData && flashSaleData.shockCampaignProducts.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>
-                    ⚡ {t('shockPriceSectionTitle')}
-                  </Text>
-                  <View style={styles.sectionBadgePill}>
-                    <Text style={styles.sectionBadgeText}>
-                      🔥 {t('shockPriceBadge')}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.productGrid}>
-                  {sortProducts(flashSaleData.shockCampaignProducts).map((product) => (
-                    <FlashSaleCard
-                      key={product.id}
-                      product={product}
-                      cardWidth={CARD_WIDTH}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
+              const boxColors: [string, string] =
+                stage.theme === 'kiln' ? ['#352923', '#241C18'] : ['#7E3524', '#5F2417'];
 
-            {/* Nhóm 3: Các nhóm đồng giá */}
-            {flashSaleData &&
-              priceGroups.map((price) => {
-                const groupProducts = flashSaleData.priceGroupProducts[price] || [];
-                if (groupProducts.length === 0) return null;
-                return (
-                  <View key={price} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeaderRow}>
-                      <Text style={styles.sectionTitle}>
-                        ⚡ {t('fixedPriceSectionTitle')} {price / 1000}k
+              return (
+                <View
+                  key={stage.id}
+                  onLayout={(e) => {
+                    stageYMap.current[stage.id] = e.nativeEvent.layout.y + showcaseYRef.current;
+                  }}
+                  style={styles.stageSection}
+                >
+                  {/* Tiêu đề viên thuốc nổi gối lên viền trên khối */}
+                  <View style={styles.stageCrownWrap}>
+                    <View
+                      style={[
+                        styles.stageCrownPill,
+                        stage.theme === 'kiln' && styles.stageCrownPillKiln,
+                      ]}
+                    >
+                      <Text style={styles.stageCrownText} numberOfLines={1}>
+                        {stage.crownTitle}
                       </Text>
                     </View>
-                    <View style={styles.productGrid}>
-                      {sortProducts(groupProducts).map((product) => (
-                        <FlashSaleCard
-                          key={product.id}
-                          product={product}
-                          cardWidth={CARD_WIDTH}
-                        />
-                      ))}
-                    </View>
                   </View>
-                );
-              })}
 
-            {/* Nhóm 4: Các sản phẩm giảm giá khác */}
-            {flashSaleData && flashSaleData.otherSaleProducts.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>
-                    🏺 {t('otherSaleSectionTitle')}
-                  </Text>
+                  <LinearGradient colors={boxColors} style={styles.stageBox}>
+                    {/* Thanh lọc danh mục con cuộn ngang */}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.stageSubPillsRow}
+                    >
+                      <ScalePressable
+                        style={[styles.subPill, activeSub === 'all' && styles.subPillActive]}
+                        onPress={() => setStageSubCat((prev) => ({ ...prev, [stage.id]: 'all' }))}
+                      >
+                        <Text
+                          style={[
+                            styles.subPillText,
+                            activeSub === 'all' && styles.subPillTextActive,
+                          ]}
+                        >
+                          Tất cả ({stage.products.length})
+                        </Text>
+                      </ScalePressable>
+
+                      {stage.subCategories.map((sub) => {
+                        const isAct = activeSub === sub;
+                        const cnt = stage.products.filter((p) => (p.category || '').trim() === sub).length;
+                        return (
+                          <ScalePressable
+                            key={sub}
+                            style={[styles.subPill, isAct && styles.subPillActive]}
+                            onPress={() => setStageSubCat((prev) => ({ ...prev, [stage.id]: sub }))}
+                          >
+                            <Text style={[styles.subPillText, isAct && styles.subPillTextActive]}>
+                              {sub} ({cnt})
+                            </Text>
+                          </ScalePressable>
+                        );
+                      })}
+                    </ScrollView>
+
+                    {/* Cụm đồng hồ đếm ngược bo tròn trong khối */}
+                    <View style={styles.stageTimerPill}>
+                      <Text style={styles.stageTimerLbl}>
+                        {isUpcoming ? 'MỞ BÁN SAU' : 'KẾT THÚC SAU'}
+                      </Text>
+                      <View style={styles.stageTimerBoxes}>
+                        {[dStr, hStr, mStr, sStr].map((v, i) => (
+                          <React.Fragment key={i}>
+                            <View style={styles.stageTBox}>
+                              <Text style={styles.stageTBoxText}>{v}</Text>
+                            </View>
+                            {i < 3 && <Text style={styles.stageTSep}>:</Text>}
+                          </React.Fragment>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Khay sản phẩm: Cuộn ngang mượt mà hoặc Bung lưới 2 cột */}
+                    {isExpanded ? (
+                      <View style={styles.stageGridExpanded}>
+                        {filteredProds.map((p) => (
+                          <FlashSaleCard key={p.id} product={p} cardWidth={STAGE_CARD_WIDTH} />
+                        ))}
+                      </View>
+                    ) : (
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        decelerationRate="fast"
+                        snapToInterval={STAGE_CARD_WIDTH + 10}
+                        contentContainerStyle={styles.stageHorizontalTrack}
+                      >
+                        {filteredProds.map((p) => (
+                          <FlashSaleCard key={p.id} product={p} cardWidth={STAGE_CARD_WIDTH} />
+                        ))}
+                      </ScrollView>
+                    )}
+
+                    {/* Chân khối: Ghi chú & Nút xem toàn bộ */}
+                    <View style={styles.stageFooter}>
+                      <Text style={styles.stageNote}>{stage.note}</Text>
+                      {filteredProds.length > 2 && (
+                        <ScalePressable
+                          style={styles.expandBtn}
+                          onPress={() =>
+                            setExpandedStages((prev) => ({ ...prev, [stage.id]: !isExpanded }))
+                          }
+                        >
+                          <Text style={styles.expandBtnText}>
+                            {isExpanded ? 'Thu gọn cuộn ngang' : `Xem toàn bộ ${filteredProds.length} mẫu`}
+                          </Text>
+                        </ScalePressable>
+                      )}
+                    </View>
+                  </LinearGradient>
                 </View>
-                <View style={styles.productGrid}>
-                  {sortProducts(flashSaleData.otherSaleProducts).map((product) => (
-                    <FlashSaleCard
-                      key={product.id}
-                      product={product}
-                      cardWidth={CARD_WIDTH}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -603,372 +552,483 @@ export default function FlashSaleScreen() {
   );
 }
 
-const getStyles = (Colors: any, isDark: boolean) =>
-  StyleSheet.create({
-    safeArea: {
-      flex: 1,
-      backgroundColor: Colors.background,
-    },
-    scrollContent: {
-      paddingBottom: 40,
-    },
-    heroBanner: {
-      marginHorizontal: 16,
-      marginBottom: 16,
-      borderRadius: 24,
-      backgroundColor: isDark ? '#141210' : '#FFF9F2',
-      borderWidth: isDark ? 0 : 1,
-      borderColor: '#E8CCB2',
-      overflow: 'hidden',
-      shadowColor: '#9C7156',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDark ? 0 : 0.08,
-      shadowRadius: 10,
-      elevation: 3,
-    },
-    heroContent: {
-      padding: 20,
-      alignItems: 'center',
-    },
-    statusBadgeRow: {
-      marginBottom: 10,
-    },
-    statusBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 14,
-    },
-    statusBadgeRunning: {
-      backgroundColor: '#9C7156',
-    },
-    statusBadgeUpcoming: {
-      backgroundColor: '#2B2928',
-    },
-    statusBadgeEnded: {
-      backgroundColor: '#6E665D',
-    },
-    statusBadgeText: {
-      color: '#FFFFFF',
-      fontSize: 11.5,
-      fontWeight: '700',
-      letterSpacing: 0.3,
-    },
-    heroTitle: {
-      fontSize: 22,
-      fontWeight: '700',
-      color: isDark ? '#F5F5F5' : '#2B2928',
-      textAlign: 'center',
-      marginBottom: 6,
-    },
-    heroSubtitle: {
-      fontSize: 13,
-      color: isDark ? '#B0B0B0' : '#6E665D',
-      textAlign: 'center',
-      lineHeight: 18,
-      paddingHorizontal: 8,
-      marginBottom: 16,
-    },
-    countdownContainer: {
-      alignItems: 'center',
-      width: '100%',
-    },
-    countdownPrompt: {
-      fontSize: 11.5,
-      fontWeight: '600',
-      color: '#9C7156',
-      marginBottom: 8,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    timerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    timerBox: {
-      width: 48,
-      height: 52,
-      borderRadius: 14,
-      backgroundColor: isDark ? '#23201D' : '#FFFFFF',
-      borderWidth: isDark ? 0 : 1,
-      borderColor: '#E8CCB2',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 3,
-      elevation: 2,
-    },
-    timerNum: {
-      fontSize: 18,
-      fontWeight: '800',
-      color: '#9C7156',
-      lineHeight: 22,
-    },
-    timerUnit: {
-      fontSize: 9.5,
-      fontWeight: '600',
-      color: isDark ? '#A0988F' : '#6E665D',
-      marginTop: 1,
-    },
-    timerColon: {
-      fontSize: 18,
-      fontWeight: '800',
-      color: '#9C7156',
-    },
-    categoryFilterSection: {
-      marginBottom: 12,
-    },
-    categoryScrollContent: {
-      paddingHorizontal: 16,
-      gap: 8,
-    },
-    categoryChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 22,
-      borderWidth: 1,
-    },
-    categoryChipActive: {
-      backgroundColor: '#9C7156',
-      borderColor: '#9C7156',
-    },
-    categoryChipInactive: {
-      backgroundColor: isDark ? '#1C1A18' : '#FFFFFF',
-      borderColor: isDark ? '#2A2622' : '#E8E1D8',
-    },
-    categoryChipText: {
-      fontSize: 13,
-      fontWeight: '600',
-      marginRight: 6,
-    },
-    categoryChipTextActive: {
-      color: '#FFFFFF',
-    },
-    categoryChipTextInactive: {
-      color: isDark ? '#E0DDD8' : '#2B2928',
-    },
-    countBadge: {
-      paddingHorizontal: 6,
-      paddingVertical: 1.5,
-      borderRadius: 10,
-    },
-    countBadgeActive: {
-      backgroundColor: 'rgba(255,255,255,0.22)',
-    },
-    countBadgeInactive: {
-      backgroundColor: isDark ? '#2B2724' : '#F0ECE6',
-    },
-    countBadgeText: {
-      fontSize: 10.5,
-      fontWeight: '700',
-    },
-    countBadgeTextActive: {
-      color: '#FFFFFF',
-    },
-    countBadgeTextInactive: {
-      color: '#9C7156',
-    },
-    priceGroupSection: {
-      marginBottom: 14,
-    },
-    priceGroupScrollContent: {
-      paddingHorizontal: 16,
-      gap: 8,
-    },
-    priceChip: {
-      paddingHorizontal: 14,
-      paddingVertical: 6.5,
-      borderRadius: 18,
-      borderWidth: 1,
-    },
-    priceChipActive: {
-      backgroundColor: isDark ? '#2C221A' : '#FBF3EC',
-      borderColor: '#9C7156',
-    },
-    priceChipInactive: {
-      backgroundColor: isDark ? '#161413' : '#FFFFFF',
-      borderColor: isDark ? '#26221E' : '#E8E1D8',
-    },
-    priceChipText: {
-      fontSize: 12,
-      fontWeight: '600',
-    },
-    priceChipTextActive: {
-      color: '#9C7156',
-      fontWeight: '700',
-    },
-    priceChipTextInactive: {
-      color: isDark ? '#B0B0B0' : '#6E665D',
-    },
-    sortBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      marginBottom: 14,
-    },
-    totalCountText: {
-      fontSize: 12.5,
-      color: isDark ? '#B0B0B0' : '#6E665D',
-      fontWeight: '600',
-    },
-    sortOptionsRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    sortChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 3,
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 14,
-      backgroundColor: isDark ? '#1C1A18' : '#FAF8F5',
-      borderWidth: 1,
-      borderColor: isDark ? '#2A2622' : '#E8E1D8',
-    },
-    sortChipActive: {
-      backgroundColor: '#9C7156',
-      borderColor: '#9C7156',
-    },
-    sortChipText: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: isDark ? '#B0B0B0' : '#6E665D',
-    },
-    sortChipTextActive: {
-      color: '#FFFFFF',
-    },
-    sectionsWrapper: {
-      gap: 8,
-    },
-    sectionContainer: {
-      paddingHorizontal: 16,
-      marginBottom: 18,
-    },
-    sectionHeaderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-      paddingBottom: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: isDark ? '#222222' : '#E8CCB2',
-      flexWrap: 'wrap',
-      gap: 8,
-    },
-    sectionTitle: {
-      fontSize: 15.5,
-      fontWeight: '700',
-      color: isDark ? '#F5F5F5' : '#2B2928',
-    },
-    sectionBadgePill: {
-      backgroundColor: isDark ? '#231B16' : '#FFF9F2',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#E8CCB2',
-    },
-    sectionBadgeText: {
-      fontSize: 11,
-      color: '#9C7156',
-      fontWeight: '700',
-    },
-    productGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-    upcomingNoticeBox: {
-      backgroundColor: isDark ? '#1A1816' : '#FFF9F2',
-      borderWidth: 1.5,
-      borderColor: '#E8CCB2',
-      borderStyle: 'dashed',
-      borderRadius: 18,
-      padding: 18,
-      alignItems: 'center',
-      marginBottom: 18,
-    },
-    upcomingNoticeTitle: {
-      fontSize: 15.5,
-      fontWeight: '700',
-      color: '#9C7156',
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    upcomingNoticeDesc: {
-      fontSize: 12.5,
-      color: isDark ? '#B0B0B0' : '#6E665D',
-      textAlign: 'center',
-      lineHeight: 18,
-    },
-    loadingContainer: {
-      paddingVertical: 60,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    loadingText: {
-      fontSize: 13,
-      color: '#9C7156',
-      marginTop: 12,
-    },
-    emptyContainer: {
-      paddingVertical: 50,
-      paddingHorizontal: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    emptyIconCircle: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: isDark ? '#1E1E1E' : '#F6F4EC',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: '#E8CCB2',
-    },
-    emptyTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: isDark ? '#F5F5F5' : '#2B2928',
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    emptySubtitle: {
-      fontSize: 13,
-      color: isDark ? '#A0988F' : '#6E665D',
-      textAlign: 'center',
-      lineHeight: 18,
-      marginBottom: 20,
-    },
-    exploreButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      height: 48,
-      paddingHorizontal: 24,
-      borderRadius: 24,
-      backgroundColor: '#9C7156',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
-      elevation: 3,
-    },
-    exploreButtonText: {
-      color: '#FFFFFF',
-      fontSize: 14,
-      fontWeight: '700',
-    },
-  });
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#1A1310',
+  },
+  fullscreenHero: {
+    position: 'relative',
+    width: '100%',
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: '#1A1310',
+  },
+  heroBgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroVignette: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroInner: {
+    position: 'relative',
+    zIndex: 2,
+    width: '100%',
+    alignItems: 'center',
+  },
+  kickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#E8CCB2',
+  },
+  liveDotActive: {
+    backgroundColor: '#EF4444',
+  },
+  kickerText: {
+    color: '#E8CCB2',
+    fontSize: 11.5,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+  },
+  dateEmblem: {
+    fontSize: 58,
+    fontWeight: '800',
+    color: '#FAF0E4',
+    letterSpacing: 3,
+    lineHeight: 64,
+    marginBottom: 6,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 13.5,
+    color: 'rgba(250, 248, 245, 0.82)',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 22,
+    paddingHorizontal: 6,
+  },
+  countdownCaption: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#E8CCB2',
+    letterSpacing: 1.6,
+    marginBottom: 10,
+  },
+  countdownGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 20,
+  },
+  cdTile: {
+    width: 66,
+    paddingVertical: 11,
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E8CCB2',
+    alignItems: 'center',
+  },
+  cdNum: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#231B15',
+    lineHeight: 30,
+  },
+  cdLbl: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#7D563D',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  cdSep: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#E8CCB2',
+    marginTop: -10,
+  },
+  perksLine: {
+    fontSize: 12,
+    color: 'rgba(232, 204, 178, 0.9)',
+    textAlign: 'center',
+    marginBottom: 22,
+  },
+  heroPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    height: 48,
+    paddingHorizontal: 26,
+    borderRadius: 24,
+  },
+  heroPrimaryBtnText: {
+    color: '#111111',
+    fontSize: 14.5,
+    fontWeight: '700',
+  },
+
+  /* Filter Strip */
+  filterStrip: {
+    paddingVertical: 12,
+    backgroundColor: '#211814',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.16)',
+    gap: 10,
+  },
+  stickyFilterOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 45,
+    backgroundColor: 'rgba(28, 20, 16, 0.96)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  quickJumpScroll: {
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  jumpPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.32)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  jumpPillActive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
+  },
+  jumpPillText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#FAF8F5',
+  },
+  jumpPillTextActive: {
+    color: '#1F1B18',
+    fontWeight: '700',
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  miniTimerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(156, 81, 59, 0.34)',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.36)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  miniTimerText: {
+    color: '#F6DFC6',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  sortChipsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sortChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.25)',
+  },
+  sortChipActive: {
+    backgroundColor: '#9C7156',
+    borderColor: '#9C7156',
+  },
+  sortChipText: {
+    color: '#E8CCB2',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  sortChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  /* Banner Đồng Giá */
+  tierBanner: {
+    marginHorizontal: 14,
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#E8CCB2',
+    padding: 16,
+  },
+  tierKicker: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    color: '#E8CCB2',
+    marginBottom: 4,
+  },
+  tierTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  tierTicketsRow: {
+    gap: 8,
+    alignItems: 'center',
+  },
+  tierTicket: {
+    minWidth: 74,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 13,
+    borderWidth: 1.2,
+    borderColor: 'rgba(232, 204, 178, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+  },
+  tierTicketActive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
+  },
+  tierTicketPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  tierTicketPriceActive: {
+    color: '#7E3524',
+  },
+  tierTicketMeta: {
+    fontSize: 10.5,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  tierTicketMetaActive: {
+    color: '#7E3524',
+  },
+  tierResetBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  tierResetBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  /* Categorized Stages */
+  stagesList: {
+    paddingHorizontal: 14,
+    paddingTop: 28,
+    gap: 34,
+  },
+  stageSection: {
+    position: 'relative',
+  },
+  stageCrownWrap: {
+    alignItems: 'center',
+    zIndex: 5,
+    marginBottom: -15,
+  },
+  stageCrownPill: {
+    backgroundColor: '#5B1F14',
+    borderWidth: 1.5,
+    borderColor: '#E8CCB2',
+    paddingHorizontal: 18,
+    paddingVertical: 7,
+    borderRadius: 999,
+    maxWidth: '88%',
+  },
+  stageCrownPillKiln: {
+    backgroundColor: '#231B16',
+  },
+  stageCrownText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  stageBox: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#E8CCB2',
+    paddingTop: 26,
+    paddingBottom: 14,
+  },
+  stageSubPillsRow: {
+    paddingHorizontal: 12,
+    gap: 6,
+    marginBottom: 10,
+  },
+  subPill: {
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+  },
+  subPillActive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
+  },
+  subPillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  subPillTextActive: {
+    color: '#7E3524',
+  },
+  stageTimerPill: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.22)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    marginBottom: 14,
+  },
+  stageTimerLbl: {
+    color: '#FAF8F5',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  stageTimerBoxes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  stageTBox: {
+    minWidth: 26,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  stageTBoxText: {
+    color: '#1F1B18',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  stageTSep: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  stageHorizontalTrack: {
+    paddingHorizontal: 10,
+    gap: 10,
+  },
+  stageGridExpanded: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
+    gap: 10,
+  },
+  stageFooter: {
+    marginTop: 12,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stageNote: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 11.5,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  expandBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  expandBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  loadingBox: {
+    paddingVertical: 64,
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: '#E8CCB2',
+    fontSize: 13.5,
+  },
+  emptyBox: {
+    margin: 16,
+    padding: 32,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 204, 178, 0.22)',
+    alignItems: 'center',
+    gap: 10,
+  },
+  emptyTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptySub: {
+    color: 'rgba(250, 248, 245, 0.78)',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+});

@@ -297,39 +297,11 @@ export default function ProfileScreen() {
             style={StyleSheet.absoluteFill}
           />
         </View>
-        <TouchableOpacity
-          style={styles.userInfoRow}
-          activeOpacity={0.8}
-          onPress={() => (user ? router.push('/edit-profile') : router.push('/auth/login'))}
-        >
-          <View style={styles.avatarWrap}>
-            {userProfile?.photoURL || userProfile?.avatar || user?.photoURL ? (
-              <Image
-                source={{ uri: userProfile?.photoURL || userProfile?.avatar || user?.photoURL || '' }}
-                style={styles.avatarImg}
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={22} color="#A1A1AA" />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.userNameBlock}>
-            <Text style={styles.userNameText} numberOfLines={1}>
-              {(user || userProfile) ? displayName : (t('loginRegister') || `${t('login')} / ${t('register')}`)}
-            </Text>
-            {(user || userProfile) ? (
-              <Text style={styles.userTierSubText}>
-                {getTierName(currentTier)} • {points} {t('pointUnit') || 'Điểm'}
-              </Text>
-            ) : (
-              <Text style={styles.userTierSubText}>
-                {t('exploreMemberPerks')}
-              </Text>
-            )}
-          </View>
-        </TouchableOpacity>
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerScreenTitle} numberOfLines={1}>
+            {t('profileTab') || 'Tài khoản'}
+          </Text>
+        </View>
 
         {/* Nút icon tròn: Giỏ hàng trước, Cài đặt sau */}
         <LiquidGlassContainerView spacing={20} style={styles.headerRightButtons}>
@@ -368,52 +340,79 @@ export default function ProfileScreen() {
         scrollEventThrottle={16}
       >
         {/* ========================================================================= */}
-        {/* 2. PRIMARY HERO CARD: VIP MEMBERSHIP CARD (2-COLUMN HIGHLANDS LAYOUT)     */}
+        {/* 2. PRIMARY HERO CARD: UNIFIED PROFILE + VIP MEMBERSHIP CARD               */}
         {/* ========================================================================= */}
         <View style={[styles.cardShadowWrap, { shadowColor: currentTier.gradientColors[0] }]}>
           <GlazeFluidCard
             gradientColors={currentTier.gradientColors}
             blobs={currentTier.watercolorBlobs}
-            borderRadius={20}
+            borderRadius={24}
             style={styles.membershipCard}
           >
-            <View style={styles.cardTwoColumns}>
-              {/* CỘT TRÁI: LOGO/EMBLEM + TÊN HẠNG */}
-              <View style={styles.cardLeftCol}>
-                <View style={styles.emblemContainer}>
+            {/* NỬA TRÊN: AVATAR + TÊN + SĐT/EMAIL + MŨI TÊN */}
+            <TouchableOpacity
+              style={styles.cardProfileSection}
+              activeOpacity={0.82}
+              onPress={() => ((user || userProfile) ? router.push('/edit-profile') : router.push('/auth/login'))}
+            >
+              <View style={styles.cardAvatarWrap}>
+                {userProfile?.photoURL || userProfile?.avatar || user?.photoURL ? (
                   <Image
-                    source={require('../../assets/images/textlogo.webp')}
-                    style={styles.emblemImg}
-                    contentFit="contain"
-                    tintColor={currentTier.logoTint}
+                    source={{ uri: userProfile?.photoURL || userProfile?.avatar || user?.photoURL || '' }}
+                    style={styles.cardAvatarImg}
+                    contentFit="cover"
                   />
-                </View>
-                <Text style={styles.tierNameUnderEmblem} numberOfLines={1}>
-                  {t('tierPrefix')} {getTierName(currentTier)}
-                </Text>
-                {!!memberSince && (
-                  <Text style={styles.memberSinceText}>
-                    {t('memberSince') || 'Từ'} {memberSince}
-                  </Text>
+                ) : (user || userProfile) && displayName ? (
+                  <View style={styles.cardAvatarInitialCircle}>
+                    <Text style={styles.cardAvatarInitialText}>
+                      {displayName.trim().charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.cardAvatarInitialCircle}>
+                    <Ionicons name="person" size={24} color="#231B15" />
+                  </View>
                 )}
               </View>
 
-              {/* CỘT PHẢI: ĐIỂM, QR, THANH TIẾN ĐỘ & DẢI THĂNG HẠNG */}
-              <View style={styles.cardRightCol}>
-                {/* 1. Điểm & Icon QR */}
-                <View style={styles.rightTopRow}>
+              <View style={styles.cardProfileTextCol}>
+                <Text style={styles.cardProfileName} numberOfLines={1}>
+                  {(user || userProfile) ? displayName : (t('loginRegister') || `${t('login')} / ${t('register')}`)}
+                </Text>
+                <Text style={styles.cardProfileSub} numberOfLines={1}>
+                  {(user || userProfile)
+                    ? (userProfile?.phone || user?.phoneNumber || userProfile?.email || user?.email || memberCode)
+                    : t('exploreMemberPerks')}
+                </Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.72)" />
+            </TouchableOpacity>
+
+            {/* ĐƯỜNG KẺ MẢNH NGĂN CÁCH */}
+            <View style={styles.cardHairlineDivider} />
+
+            {/* NỬA DƯỚI: HẠNG THÀNH VIÊN + ĐIỂM + ĐẶC QUYỀN */}
+            <TouchableOpacity
+              style={styles.cardMemberSection}
+              activeOpacity={0.85}
+              onPress={() => router.push('/membership-privileges')}
+            >
+              <View style={styles.cardMemberTopRow}>
+                <Text style={styles.cardMemberKicker}>
+                  {t('tierPrefix') || 'Hạng thành viên'}{memberSince ? ` · ${memberSince}` : ''}
+                </Text>
+
+                <View style={styles.cardMemberRightActions}>
                   <TouchableOpacity
-                    style={styles.pointsGroup}
-                    activeOpacity={0.8}
-                    onPress={() => router.push('/points-history')}
+                    style={styles.cardPerksLink}
+                    activeOpacity={0.75}
+                    onPress={() => router.push('/membership-privileges')}
                   >
-                    <Text style={styles.pointsNumber}>{points}</Text>
-                    <Ionicons
-                      name="flame"
-                      size={17}
-                      color={currentTier.flameColor || '#FDE68A'}
-                      style={{ marginLeft: 3 }}
-                    />
+                    <Text style={styles.cardPerksLinkText}>
+                      {t('memberPrivilegesUtility') || 'Đặc quyền'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color="#E8CCB2" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -422,49 +421,49 @@ export default function ProfileScreen() {
                     onPress={() => setQrModalVisible(true)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="scan-outline" size={23} color="#FFFFFF" />
+                    <Ionicons name="qr-code-outline" size={18} color="rgba(255, 255, 255, 0.88)" />
                   </TouchableOpacity>
                 </View>
+              </View>
 
-                {/* 2. Thanh tiến độ */}
-                <View style={styles.progressBarTrack}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${progressPercent}%`,
-                        backgroundColor: currentTier.accentColor || '#FCD34D',
-                      },
-                    ]}
-                  />
-                </View>
+              <View style={styles.cardMemberTitleRow}>
+                <Text style={styles.cardTierTitle} numberOfLines={1}>
+                  {getTierName(currentTier)}
+                </Text>
 
-                {/* 3. Chi tiêu / Mục tiêu & Tên hạng tiếp theo */}
-                <View style={styles.spendRow}>
-                  <Text style={styles.spendText}>
-                    {nextTier
-                      ? `${formatNumberOnly(totalSpent)} / ${formatD(nextTier.min)}`
-                      : `${formatD(totalSpent)} / ${t('maxLabel')}`}
-                  </Text>
-                  <Text style={styles.nextTierName}>
-                    {nextTier ? getTierName(nextTier) : t('topTierLabel')}
-                  </Text>
-                </View>
-
-                {/* 4. Dải thông báo thăng hạng */}
                 <TouchableOpacity
-                  style={styles.calloutStrip}
+                  style={styles.pointsPill}
                   activeOpacity={0.8}
-                  onPress={() => router.push('/membership-privileges')}
+                  onPress={() => router.push('/points-history')}
                 >
-                  <Text style={styles.calloutText} numberOfLines={2}>
-                    {nextTier
-                      ? `${t('spendMoreToUpgrade')} ${formatD(Math.max(0, nextTier.min - totalSpent))} ${t('toUpgradeTo')} ${getTierName(nextTier)}.`
-                      : t('highestTierReached')}
-                  </Text>
+                  <Text style={styles.pointsNumber}>{points}</Text>
+                  <Ionicons
+                    name="flame"
+                    size={14}
+                    color={currentTier.flameColor || '#FDE68A'}
+                    style={{ marginLeft: 3 }}
+                  />
                 </TouchableOpacity>
               </View>
-            </View>
+
+              <Text style={styles.cardMemberSubDesc} numberOfLines={2}>
+                {nextTier
+                  ? `${t('spendMoreToUpgrade')} ${formatD(Math.max(0, nextTier.min - totalSpent))} ${t('toUpgradeTo')} ${getTierName(nextTier)}`
+                  : t('highestTierReached')}
+              </Text>
+
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${progressPercent}%`,
+                      backgroundColor: currentTier.accentColor || '#E8CCB2',
+                    },
+                  ]}
+                />
+              </View>
+            </TouchableOpacity>
           </GlazeFluidCard>
         </View>
 
@@ -531,10 +530,10 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => (user ? router.push('/edit-profile') : router.push('/auth/login'))}
+              onPress={() => ((user || userProfile) ? router.push('/edit-profile') : router.push('/auth/login'))}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="person-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#33281D' : '#F4E4CE' }]}>
+                <Ionicons name="person" size={22} color={isDark ? '#E8CCB2' : '#7C5332'} />
               </View>
               <Text style={styles.gridLabel}>{t('profileUtility')}</Text>
             </TouchableOpacity>
@@ -544,8 +543,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/membership-privileges')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="ribbon-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+                <Ionicons name="ribbon" size={22} color={isDark ? '#F0D095' : '#96681B'} />
               </View>
               <Text style={styles.gridLabel} numberOfLines={2}>
                 {t('memberPrivilegesUtility')}
@@ -557,8 +556,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/vouchers')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="gift-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#382522' : '#F6DDD7' }]}>
+                <Ionicons name="gift" size={22} color={isDark ? '#EEA898' : '#B5482B'} />
                 {vouchersCount > 0 && (
                   <View style={styles.gridBadge}>
                     <Text style={styles.gridBadgeText}>
@@ -575,8 +574,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/favorites')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="heart-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#362722' : '#F3DFD6' }]}>
+                <Ionicons name="heart" size={22} color={isDark ? '#E8B8A2' : '#A64430'} />
                 {favorites.length > 0 && (
                   <View style={styles.gridBadge}>
                     <Text style={styles.gridBadgeText}>{favorites.length}</Text>
@@ -594,8 +593,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/orders')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="receipt-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#2D2A27' : '#EAE4DC' }]}>
+                <Ionicons name="receipt" size={22} color={isDark ? '#D5CBC0' : '#5E554C'} />
                 {shippingCount > 0 && (
                   <View
                     pointerEvents="none"
@@ -615,8 +614,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/points-history')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="flame-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+                <Ionicons name="flame" size={22} color={isDark ? '#F0D095' : '#96681B'} />
               </View>
               <Text style={styles.gridLabel} numberOfLines={2}>
                 {t('pointsHistoryUtility')}
@@ -628,8 +627,8 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => router.push('/stores')}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="storefront-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#33281D' : '#F2E2D5' }]}>
+                <Ionicons name="storefront" size={22} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
               </View>
               <Text style={styles.gridLabel}>{t('storeLocationsUtility')}</Text>
             </TouchableOpacity>
@@ -637,10 +636,10 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.gridItem}
               activeOpacity={0.7}
-              onPress={() => (user ? router.push('/address-book' as any) : router.push('/auth/login'))}
+              onPress={() => ((user || userProfile) ? router.push('/address-book' as any) : router.push('/auth/login'))}
             >
-              <View style={styles.gridIconWrap}>
-                <Ionicons name="location-outline" size={24} color="#8A5A2B" />
+              <View style={[styles.gridIconWrap, { backgroundColor: isDark ? '#2F2A26' : '#EDE5DC' }]}>
+                <Ionicons name="location" size={22} color={isDark ? '#DCD0C4' : '#66584A'} />
               </View>
               <Text style={styles.gridLabel}>{t('addressBookUtility')}</Text>
             </TouchableOpacity>
@@ -656,131 +655,71 @@ export default function ProfileScreen() {
 
         <View style={styles.supportListCard}>
           <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
             onPress={() => openWebLink('https://tiemnhagom.vn/about/', t('aboutTiemNhaGom'))}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="information-circle-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('aboutTiemNhaGom')}</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#33281D' : '#F4E4CE' }]}>
+              <Ionicons name="information-circle" size={20} color={isDark ? '#E8CCB2' : '#7C5332'} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle}>{t('aboutTiemNhaGom')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
 
-          <View style={styles.itemDivider} />
+          <View style={styles.modernRowDivider} />
 
           <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
             onPress={() => openWebLink('https://tiemnhagom.vn/faq.html', t('faqSupport'))}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="help-circle-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('faqSupport')}</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+              <Ionicons name="help-circle" size={20} color={isDark ? '#F0D095' : '#96681B'} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle}>{t('faqSupport')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
 
-          <View style={styles.itemDivider} />
+          <View style={styles.modernRowDivider} />
 
           <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
-            onPress={() =>
-              Linking.openURL('https://www.facebook.com/tiemnhagom.vn')
-            }
+            onPress={() => router.push('/contact' as any)}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="logo-facebook" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>Fanpage</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#382522' : '#F6DDD7' }]}>
+              <Ionicons name="chatbubbles" size={20} color={isDark ? '#EEA898' : '#B5482B'} />
             </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle}>{t('contactAndSocialTitle')}</Text>
+              <Text style={styles.modernRowSub} numberOfLines={1}>{t('contactAndSocialSub')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
 
-          <View style={styles.itemDivider} />
+          <View style={styles.modernRowDivider} />
 
           <TouchableOpacity
-            style={styles.supportListItem}
-            activeOpacity={0.7}
-            onPress={() =>
-              Linking.openURL('https://www.instagram.com/tiemnhagom.vn')
-            }
-          >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="logo-instagram" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>Instagram</Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
-          </TouchableOpacity>
-
-          <View style={styles.itemDivider} />
-
-          <TouchableOpacity
-            style={styles.supportListItem}
-            activeOpacity={0.7}
-            onPress={() =>
-              Linking.openURL('https://www.tiktok.com/@tiemnhagom.vn')
-            }
-          >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="logo-tiktok" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>Tik Tok</Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
-          </TouchableOpacity>
-
-          <View style={styles.itemDivider} />
-
-          <TouchableOpacity
-            style={styles.supportListItem}
-            activeOpacity={0.7}
-            onPress={() => Linking.openURL('mailto:tiemnhagom.contact@gmail.com')}
-          >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="mail-open-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>
-                tiemnhagom.contact@gmail.com
-              </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
-          </TouchableOpacity>
-
-          <View style={styles.itemDivider} />
-
-          <TouchableOpacity
-            style={styles.supportListItem}
-            activeOpacity={0.7}
-            onPress={openHotline}
-          >
-            <View style={styles.hotlineLeft}>
-              <Ionicons name="call-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('hotlineSupport')}</Text>
-              <Text style={styles.hotlineNumber}>0777 709 662</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
-          </TouchableOpacity>
-
-          <View style={styles.itemDivider} />
-
-          <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
             onPress={() => router.push('/version' as any)}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="information-circle-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('appVersionTitle') || 'Phiên bản'}</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#352B1E' : '#F5E4C4' }]}>
+              <Ionicons name="sparkles" size={20} color={isDark ? '#F0D095' : '#96681B'} />
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 13, color: '#9E968D' }}>
-                v{getFullAppVersionString()}
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle} numberOfLines={1}>
+                {t('whatsNewTitle')}
               </Text>
-              <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+              <Text style={styles.modernRowSub} numberOfLines={1}>
+                {t('versionPrefix')} v{getFullAppVersionString()}
+              </Text>
             </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
         </View>
 
@@ -790,29 +729,33 @@ export default function ProfileScreen() {
 
         <View style={styles.supportListCard}>
           <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
             onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/privacy-policy.html', t('termsAndPolicies'))}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('privacyText')}</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#33281D' : '#F2E2D5' }]}>
+              <Ionicons name="shield-checkmark" size={20} color={isDark ? '#E8CCB2' : '#8A5A2B'} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle}>{t('privacyText')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
 
-          <View style={styles.itemDivider} />
+          <View style={styles.modernRowDivider} />
 
           <TouchableOpacity
-            style={styles.supportListItem}
+            style={styles.modernListRow}
             activeOpacity={0.7}
             onPress={() => openWebLink('https://tiemnhagom.vn/chinh-sach/terms-of-service.html', t('termsAndPolicies'))}
           >
-            <View style={styles.supportItemLeft}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#8A5A2B" />
-              <Text style={styles.supportItemTitle}>{t('termsText')}</Text>
+            <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#2F2A26' : '#EDE5DC' }]}>
+              <Ionicons name="document-text" size={20} color={isDark ? '#DCD0C4' : '#66584A'} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#9E968D" />
+            <View style={styles.modernRowTextCol}>
+              <Text style={styles.modernRowTitle}>{t('termsText')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={Colors.textMuted || '#9E968D'} />
           </TouchableOpacity>
         </View>
 
@@ -846,7 +789,15 @@ export default function ProfileScreen() {
 
         <View style={styles.qrModalBody}>
           <View style={styles.qrBox}>
-            <Ionicons name="qr-code" size={140} color="#2D3B34" />
+            <Image
+              source={{
+                uri: `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&color=231B15&bgcolor=FFFFFF&data=${encodeURIComponent(
+                  userProfile?.phone || user?.phoneNumber || memberCode
+                )}`,
+              }}
+              style={{ width: 168, height: 168 }}
+              contentFit="contain"
+            />
           </View>
 
           <Text style={styles.qrCodeLabel}>{memberCode}</Text>
@@ -860,17 +811,15 @@ export default function ProfileScreen() {
           )}
 
           <View style={styles.barcodePlaceholder}>
-            <View style={styles.barcodeLinesRow}>
-              {Array.from({ length: 32 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.barcodeBar,
-                    { width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1, height: 38 },
-                  ]}
-                />
-              ))}
-            </View>
+            <Image
+              source={{
+                uri: `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(
+                  memberCode
+                )}&scale=3&height=12&includetext=false&barcolor=231B15&backgroundcolor=FFFFFF`,
+              }}
+              style={{ width: 220, height: 48 }}
+              contentFit="contain"
+            />
           </View>
 
           <Text style={styles.qrHelpText}>
@@ -1019,48 +968,15 @@ const getStyles = (Colors: any) => {
       paddingBottom: Platform.OS === 'android' ? 8 : 4,
       backgroundColor: 'transparent',
     },
-    userInfoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    headerTitleWrap: {
       flex: 1,
-      gap: 10,
-      marginRight: 10,
+      marginRight: 12,
     },
-    avatarWrap: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      overflow: 'hidden',
-      backgroundColor: isDark ? '#2C2C2C' : '#E4E4E7',
-      borderWidth: isDark ? 0 : 1.5,
-      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatarImg: {
-      width: 44,
-      height: 44,
-      resizeMode: 'cover',
-    },
-    avatarPlaceholder: {
-      width: 44,
-      height: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: isDark ? '#2C2C2C' : '#E4E4E7',
-    },
-    userNameBlock: {
-      flex: 1,
-    },
-    userNameText: {
-      fontSize: 17,
-      fontWeight: '700',
+    headerScreenTitle: {
+      fontSize: 24,
+      fontWeight: '800',
       color: Colors.textPrimary || (isDark ? '#F5F5F5' : '#231B15'),
-    },
-    userTierSubText: {
-      fontSize: 11.5,
-      color: Colors.textMuted || '#9E968D',
-      marginTop: 2,
+      letterSpacing: -0.3,
     },
     headerRightButtons: {
       flexDirection: 'row',
@@ -1097,121 +1013,155 @@ const getStyles = (Colors: any) => {
       fontWeight: '800',
     },
 
-    // 2. Primary Hero Card (VIP Member Card)
+    // 2. Primary Hero Card (Unified Profile + VIP Member Card)
     cardShadowWrap: {
-      borderRadius: 20,
+      borderRadius: 24,
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: isDark ? 0.15 : 0.28,
-      shadowRadius: 12,
+      shadowOpacity: isDark ? 0.15 : 0.24,
+      shadowRadius: 14,
       elevation: isDark ? 2 : 6,
       marginBottom: 16,
     },
     membershipCard: {
-      borderRadius: 20,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      borderRadius: 24,
       overflow: 'hidden',
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? 'transparent' : 'rgba(255, 255, 255, 0.14)',
     },
-    cardTwoColumns: {
+    cardProfileSection: {
       flexDirection: 'row',
-      alignItems: 'stretch',
-    },
-    cardLeftCol: {
-      width: 105,
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 2,
+      paddingHorizontal: 18,
+      paddingVertical: 18,
+      gap: 14,
     },
-    emblemContainer: {
-      width: '100%',
+    cardAvatarWrap: {
+      width: 54,
       height: 54,
+      borderRadius: 27,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#E8CCB2',
+    },
+    cardAvatarImg: {
+      width: 54,
+      height: 54,
+      borderRadius: 27,
+    },
+    cardAvatarInitialCircle: {
+      width: 54,
+      height: 54,
+      borderRadius: 27,
+      backgroundColor: '#E8CCB2',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    emblemImg: {
-      width: '100%',
-      height: '100%',
-    },
-    tierNameUnderEmblem: {
-      fontSize: 12.8,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      textAlign: 'center',
-      marginTop: 6,
-      letterSpacing: 0.2,
-    },
-    memberSinceText: {
-      fontSize: 10,
-      color: 'rgba(255, 255, 255, 0.75)',
-      textAlign: 'center',
-      marginTop: 2,
-      letterSpacing: 0.2,
-    },
-    cardRightCol: {
-      flex: 1,
-      paddingLeft: 14,
-      justifyContent: 'space-between',
-    },
-    rightTopRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    pointsGroup: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    pointsNumber: {
+    cardAvatarInitialText: {
       fontSize: 22,
       fontWeight: '800',
+      color: '#231B15',
+    },
+    cardProfileTextCol: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    cardProfileName: {
+      fontSize: 18,
+      fontWeight: '700',
       color: '#FFFFFF',
+      letterSpacing: -0.2,
+    },
+    cardProfileSub: {
+      fontSize: 13.5,
+      color: 'rgba(255, 255, 255, 0.72)',
+      marginTop: 3,
+    },
+    cardHairlineDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: 'rgba(255, 255, 255, 0.16)',
+      width: '100%',
+    },
+    cardMemberSection: {
+      paddingHorizontal: 18,
+      paddingTop: 15,
+      paddingBottom: 17,
+    },
+    cardMemberTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
+    cardMemberKicker: {
+      fontSize: 12.5,
+      fontWeight: '600',
+      color: 'rgba(255, 255, 255, 0.72)',
+    },
+    cardMemberRightActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    cardPerksLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    cardPerksLinkText: {
+      fontSize: 13.5,
+      fontWeight: '700',
+      color: '#E8CCB2',
     },
     qrScanIconBtn: {
       padding: 2,
     },
+    cardMemberTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 2,
+    },
+    cardTierTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: '#FFFFFF',
+      letterSpacing: -0.3,
+      flex: 1,
+      marginRight: 10,
+    },
+    pointsPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.22)',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.12)',
+    },
+    pointsNumber: {
+      fontSize: 14,
+      fontWeight: '800',
+      color: '#FFFFFF',
+    },
+    cardMemberSubDesc: {
+      fontSize: 12.5,
+      color: 'rgba(255, 255, 255, 0.78)',
+      marginTop: 6,
+      lineHeight: 17,
+    },
     progressBarTrack: {
-      height: 4,
-      backgroundColor: 'rgba(255, 255, 255, 0.28)',
+      height: 3.5,
+      backgroundColor: 'rgba(255, 255, 255, 0.22)',
       borderRadius: 2,
-      marginTop: 8,
-      marginBottom: 5,
+      marginTop: 10,
       overflow: 'hidden',
     },
     progressBarFill: {
-      height: 4,
-      backgroundColor: '#FFFFFF',
+      height: 3.5,
+      backgroundColor: '#E8CCB2',
       borderRadius: 2,
-    },
-    spendRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    spendText: {
-      fontSize: 10.5,
-      color: 'rgba(255, 255, 255, 0.9)',
-      fontWeight: '600',
-    },
-    nextTierName: {
-      fontSize: 10.5,
-      color: '#FFFFFF',
-      fontWeight: '700',
-    },
-    calloutStrip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.22)',
-      borderRadius: 8,
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.08)',
-    },
-    calloutText: {
-      fontSize: 10,
-      color: 'rgba(255, 255, 255, 0.92)',
-      lineHeight: 14,
     },
 
     // 3. Secondary Card (Thẻ Tiệm Nhà Gốm)
@@ -1415,12 +1365,11 @@ const getStyles = (Colors: any) => {
     },
     supportListCard: {
       backgroundColor: Colors.cardBackground || (isDark ? '#1E1E1E' : '#FFFFFF'),
-      borderRadius: 20,
-      paddingVertical: 6,
-      paddingHorizontal: 16,
+      borderRadius: 22,
+      overflow: 'hidden',
       marginBottom: 20,
       borderWidth: isDark ? 0 : 1,
-      borderColor: isDark ? 'transparent' : (Colors.border || '#E8E1D8'),
+      borderColor: isDark ? 'transparent' : (Colors.border || '#EFEAE2'),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: isDark ? 0 : 0.04,
@@ -1488,6 +1437,49 @@ const getStyles = (Colors: any) => {
     },
 
     // Footer
+    modernListRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      gap: 14,
+    },
+    modernIconCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modernRowTextCol: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    modernRowTitle: {
+      fontSize: 15.5,
+      fontWeight: '700',
+      color: Colors.textPrimary,
+    },
+    modernRowSub: {
+      fontSize: 12.5,
+      color: Colors.textMuted || '#7D756C',
+      marginTop: 2,
+    },
+    modernRowRightVal: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    modernRowValText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: Colors.textMuted || '#7D756C',
+    },
+    modernRowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#EFEAE2',
+      marginLeft: 16,
+    },
     footerWrap: {
       alignItems: 'center',
       marginVertical: 14,

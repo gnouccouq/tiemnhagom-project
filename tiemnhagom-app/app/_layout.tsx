@@ -210,7 +210,7 @@ function AuthGate() {
 
       if (!seenOnboarding && !inOnboarding) {
         router.replace('/onboarding');
-      } else if (seenOnboarding && !isAuth && !inAuthGroup) {
+      } else if (seenOnboarding && !isAuth && !inAuthGroup && !inOnboarding) {
         router.replace('/auth/login');
       } else if (isAuth && (inAuthGroup || inOnboarding)) {
         router.replace('/(tabs)');
@@ -262,7 +262,7 @@ function NavigationRoot() {
 
   // Trên iOS: Dùng hoạt ảnh native UIKit 'default' mượt mà 120Hz, không delay và hỗ trợ swipe-back gốc.
   // Trên Android: Dùng 'slide_from_right' để giữ trải nghiệm trượt ngang hiện đại.
-  const stackAnimation = Platform.OS === 'ios' ? 'default' : 'slide_from_right';
+  const stackAnimation = Platform.OS === 'ios' ? 'default' : 'fade';
 
   return (
     <ThemeProvider value={navigationTheme}>

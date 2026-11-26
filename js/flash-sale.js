@@ -1,608 +1,777 @@
-import { 
-    db, auth, toggleFavoriteLogic, initHeader, renderProductCard, renderProductCardWithVariants, updateSEO, fetchFlashSaleSettings, dynamicCategories, DEFAULT_PRODUCT_CATEGORIES
+import {
+    db, auth, toggleFavoriteLogic, initHeader, updateSEO, fetchFlashSaleSettings,
+    dynamicCategories, DEFAULT_PRODUCT_CATEGORIES, escapeHTML
 } from "./utils.js";
-import { 
-    collection, getDocs, doc, getDoc, query, where, orderBy, limit, startAfter, limitToLast, endBefore, onSnapshot
+import {
+    collection, getDocs, doc, getDoc, query, where, orderBy, onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Cấu hình phân trang & lọc
-const PAGE_SIZE = 10; // Hiển thị 10 sản phẩm mỗi trang
-let lastVisible = null; // Document cuối cùng của trang hiện tại
-let firstVisible = null; // Document đầu tiên của trang hiện tại
-let currentPage = 1;
-let selectedPriceGroup = null; // Mức giá đồng giá đang chọn
-let selectedCategory = 'all'; // Danh mục sản phẩm đang lọc ('all' hoặc tên group)
-let flashSaleSettings = null; // Cấu hình từ database
-let categoriesInitialized = false;
+// Cấu hình mặc định cho Sự kiện Ngày Đôi 12.12 (tự động áp dụng nếu Admin chưa đặt ngày mới)
+function getDefault1212Window() {
+    const now = new Date();
+    let year = now.getFullYear();
+    const endThisYear = new Date(year, 11, 12, 23, 59, 59);
+    if (now > endThisYear) year += 1;
+    return {
+        start: new Date(year, 11, 12, 0, 0, 0),
+        end: new Date(year, 11, 12, 23, 59, 59)
+    };
+}
 
-// Hàm toggle yêu thích (dùng chung cho các trang hiển thị sản phẩm)
-window.toggleFavorite = async (event, productId) => {
+let flashSaleSettings = null;
+let allSaleProducts = [];
+let userFavIds = [];
+let activePriceGroup = null;
+let currentSort = 'sale-desc';
+
+// Trạng thái riêng của từng Khối Kệ (sub-category đang chọn, trang carousel, hoặc xem tất cả)
+const stageStateMap = {}; // { [stageId]: { subCat: 'all', page: 0, expanded: false } }
+
+function getCardsPerRow() {
+    const w = window.innerWidth;
+    if (w <= 768) return 4;   // 2 cột x 2 hàng trên điện thoại
+    if (w <= 1024) return 3;
+    if (w <= 1320) return 4;
+    return 5;                 // Chuẩn 5 thẻ trắng ngang giống khối mẫu tham khảo
+}
+
+// Toggle yêu thích ngay trên thẻ Flash Sale
+window.toggleFsCardFav = async (event, productId) => {
     event.preventDefault();
     event.stopPropagation();
     const btn = event.currentTarget;
-    btn.classList.add('heartbeat-anim');
-    setTimeout(() => btn.classList.remove('heartbeat-anim'), 400);
-    await toggleFavoriteLogic(productId, fetchFlashSaleProducts); // Cập nhật lại danh sách sau khi toggle
+    btn.classList.toggle('is-fav');
+    await toggleFavoriteLogic(productId, () => refreshFavoritesOnly());
 };
 
-// Hàm chính để lấy và hiển thị sản phẩm Flash Sale
-async function fetchFlashSaleProducts(navigation = 'init') {
-    const productGrid = document.getElementById('flash-sale-grid');
-    const noProductsMsg = document.getElementById('no-flash-sale-products');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-    const pageInfo = document.getElementById('page-info');
-    const bannerTitle = document.querySelector('.banner-title');
-    const bannerSub = document.getElementById('fs-hero-subtitle') || document.querySelector('.flash-sale-banner p');
-    const countdownEl = document.getElementById('flash-sale-countdown');
-    const countdownCaption = document.getElementById('fs-countdown-caption');
-    const statusPill = document.getElementById('fs-status-pill');
-    const statusText = document.getElementById('fs-status-text');
-    const miniCountdownEl = document.getElementById('fs-mini-countdown');
-    const priceTabsEl = document.getElementById('price-tabs-container');
-
-    // 1. Nạp cấu hình Flash Sale (buộc làm mới nếu là khởi tạo hoặc timer kết thúc)
-    flashSaleSettings = await fetchFlashSaleSettings(navigation === 'init');
-
-    // Kiểm tra trạng thái sale
-    const now = new Date();
-    const startTime = flashSaleSettings?.startTime?.toDate ? flashSaleSettings.startTime.toDate() : (flashSaleSettings?.startTime ? new Date(flashSaleSettings.startTime) : null);
-    const endTime = flashSaleSettings?.endTime?.toDate ? flashSaleSettings.endTime.toDate() : (flashSaleSettings?.endTime ? new Date(flashSaleSettings.endTime) : null);
-    
-    // Xác định chương trình sale có đang DIỄN RA hay không
-    const isFsRunning = flashSaleSettings?.isActive && 
-                        (!startTime || now >= startTime) && 
-                        (!endTime || now <= endTime);
-
-    const isUpcoming = flashSaleSettings?.isActive && startTime && now < startTime;
-    
-    // Cập nhật UI Banner & Sticky Bar dựa trên trạng thái chương trình
-    if (isFsRunning) {
-        if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale";
-        if (bannerSub) {
-            bannerSub.style.display = 'block';
-            bannerSub.innerText = flashSaleSettings.subtitle || "Nhanh tay sở hữu những món gốm độc bản với ưu đãi tốt nhất.";
-        }
-        if (statusPill) {
-            statusPill.classList.remove('is-upcoming', 'is-normal');
-        }
-        if (statusText) statusText.innerText = "LIVE DROP • ƯU ĐÃI CÓ HẠN";
-        if (countdownCaption) countdownCaption.innerText = "Kết thúc sau";
-        if (countdownEl) countdownEl.style.display = 'flex';
-        if (miniCountdownEl) miniCountdownEl.style.display = 'inline-flex';
-        if (priceTabsEl) priceTabsEl.style.display = 'flex';
-        initDynamicCountdown(endTime);
-        renderPriceTabs();
-    } else if (isUpcoming) {
-        if (bannerTitle) bannerTitle.innerText = flashSaleSettings.title || "Flash Sale — Sắp Diễn Ra";
-        if (bannerSub) {
-            bannerSub.style.display = 'block';
-            bannerSub.innerText = `Chương trình sẽ chính thức mở bán vào lúc ${startTime.toLocaleString('vi-VN')}. Hãy thêm sản phẩm vào danh sách yêu thích trước!`;
-        }
-        if (statusPill) {
-            statusPill.classList.remove('is-normal');
-            statusPill.classList.add('is-upcoming');
-        }
-        if (statusText) statusText.innerText = "SẮP MỞ BÁN • COMING SOON";
-        if (countdownCaption) countdownCaption.innerText = "Mở bán sau";
-        if (countdownEl) countdownEl.style.display = 'flex';
-        if (miniCountdownEl) miniCountdownEl.style.display = 'inline-flex';
-        if (priceTabsEl) priceTabsEl.style.display = 'none';
-        initDynamicCountdown(startTime); // Đếm ngược đến giờ bắt đầu
+async function refreshFavoritesOnly() {
+    if (auth.currentUser) {
+        const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
+        userFavIds = favSnap.exists() ? (favSnap.data().productIds || []) : [];
     } else {
-        if (bannerTitle) bannerTitle.innerText = "Ưu Đãi Đặc Biệt";
-        if (bannerSub) {
-            bannerSub.style.display = 'block';
-            bannerSub.innerText = "Khám phá các sản phẩm gốm thủ công đang có mức giá tốt nhất tại Tiệm Nhà Gốm.";
-        }
-        if (statusPill) {
-            statusPill.classList.remove('is-upcoming');
-            statusPill.classList.add('is-normal');
-        }
-        if (statusText) statusText.innerText = "SELECTED DEALS • GIÁ TỐT MỖI NGÀY";
-        if (countdownEl) countdownEl.style.display = 'none';
-        if (miniCountdownEl) miniCountdownEl.style.display = 'none';
-        if (priceTabsEl) priceTabsEl.style.display = 'none';
-        if (window.fsTimer) clearInterval(window.fsTimer);
+        userFavIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+    }
+    renderAllStages();
+}
+
+function getEffectiveCampaignState() {
+    const now = new Date();
+    const def1212 = getDefault1212Window();
+
+    let startTime = flashSaleSettings?.startTime?.toDate
+        ? flashSaleSettings.startTime.toDate()
+        : (flashSaleSettings?.startTime ? new Date(flashSaleSettings.startTime) : null);
+    let endTime = flashSaleSettings?.endTime?.toDate
+        ? flashSaleSettings.endTime.toDate()
+        : (flashSaleSettings?.endTime ? new Date(flashSaleSettings.endTime) : null);
+
+    const hasValidConfiguredCampaign = Boolean(
+        flashSaleSettings?.isActive && endTime && endTime > now
+    );
+
+    if (!hasValidConfiguredCampaign) {
+        // Mặc định hướng về sự kiện Ngày Đôi 12.12 duy nhất 1 ngày
+        startTime = def1212.start;
+        endTime = def1212.end;
     }
 
-    // Hiển thị skeleton loading ngay lập tức
-    productGrid.innerHTML = `
-        <div class="grid" style="padding: 0;">
-            ${Array(PAGE_SIZE).fill(0).map(() => `
-                <div class="skeleton-card">
-                    <div class="skeleton skeleton-img"></div>
-                    <div class="skeleton skeleton-text skeleton-title"></div>
-                    <div class="skeleton skeleton-text skeleton-small"></div>
-                    <div class="skeleton skeleton-text skeleton-price"></div>
-                </div>`).join('')}
-        </div>`;
-    noProductsMsg.style.display = 'none';
+    const isRunning = now >= startTime && now <= endTime;
+    const isUpcoming = now < startTime;
 
-    // Cập nhật SEO cho trang Flash Sale
-    const seoTitle = "Flash Sale - Ưu đãi gốm sứ cực sốc | Tiệm Nhà Gốm";
-    const seoDesc = "Khám phá các sản phẩm gốm sứ thủ công đang được giảm giá cực sốc tại Tiệm Nhà Gốm. Đừng bỏ lỡ cơ hội sở hữu đồ decor tinh tế với giá tốt nhất.";
-    const baseUrl = window.location.origin + window.location.pathname.split('/flash-sale/')[0];
-    const seoImg = `${baseUrl}/Asset/images/hero-bg.jpg`;
-    updateSEO(seoTitle, seoDesc, seoImg);
+    return {
+        isRunning,
+        isUpcoming,
+        startTime,
+        endTime,
+        hasConfiguredItems: Boolean(hasValidConfiguredCampaign && flashSaleSettings?.items && Object.keys(flashSaleSettings.items).length > 0),
+        title: (hasValidConfiguredCampaign && flashSaleSettings?.title)
+            ? flashSaleSettings.title
+            : "Ngày Đôi 12.12 — Siêu Sale Gốm Thủ Công",
+        subtitle: (hasValidConfiguredCampaign && flashSaleSettings?.subtitle)
+            ? flashSaleSettings.subtitle
+            : "Đại tiệc ưu đãi duy nhất 1 ngày 12/12 tại Tiệm Nhà Gốm. Tham khảo trước các kệ gốm phân loại theo không gian và lưu món yêu thích để sẵn sàng săn deal lúc 00:00!"
+    };
+}
 
-    try {
-        let productsQuery = collection(db, "products");
-        let currentSort = document.getElementById('sort-by')?.value || 'sale-desc';
+function computeProductDealMeta(product, campaignState) {
+    const pid = product.id;
+    const itemCfg = (flashSaleSettings?.items && flashSaleSettings.items[pid]) ? flashSaleSettings.items[pid] : null;
+    const basePrice = Number(product.price) || 0;
 
-        // Reset khi đổi bộ lọc hoặc khởi tạo
-        if (navigation === 'init') {
-            lastVisible = null;
-            firstVisible = null;
-            currentPage = 1;
+    let dealPrice = basePrice;
+    let discountPercent = 0;
+    let isBogo = false;
+    let dealLabel = '';
+    let limit = 0;
+    let sold = Number(product.sold) || 0;
+    let isCampaignHero = false;
+
+    if (itemCfg) {
+        isCampaignHero = true;
+        limit = itemCfg.limit !== undefined ? Number(itemCfg.limit) : 10;
+        sold = itemCfg.sold !== undefined ? Number(itemCfg.sold) : 0;
+        if (itemCfg.dealType === 'bogo_same' || itemCfg.dealType === 'bogo_custom') {
+            isBogo = true;
+            dealPrice = basePrice;
+            discountPercent = 50;
+            dealLabel = 'MUA 1 TẶNG 1';
+        } else if (Number(itemCfg.salePrice) > 0) {
+            dealPrice = Number(itemCfg.salePrice);
+            discountPercent = basePrice > 0 ? Math.max(1, Math.round((1 - dealPrice / basePrice) * 100)) : 0;
+            dealLabel = `DEAL SỐC 12.12 • -${discountPercent}%`;
         }
+    } else if (product.flashSaleGroup && Number(product.flashSaleGroup) > 0) {
+        dealPrice = Number(product.flashSaleGroup);
+        discountPercent = basePrice > 0 ? Math.max(1, Math.round((1 - dealPrice / basePrice) * 100)) : 0;
+        dealLabel = `ĐỒNG GIÁ ${Math.round(dealPrice / 1000)}K`;
+        limit = Math.max(5, Math.min(20, Number(product.stock) || 10));
+        sold = Math.min(limit - 1, Number(product.sold) || 0);
+    } else {
+        if (product.salePrice && Number(product.salePrice) > 0 && Number(product.salePrice) < basePrice) {
+            dealPrice = Number(product.salePrice);
+            discountPercent = basePrice > 0 ? Math.round((1 - dealPrice / basePrice) * 100) : (Number(product.sale) || 0);
+        } else if (Number(product.sale) > 0) {
+            discountPercent = Number(product.sale);
+            dealPrice = Math.round(basePrice * (1 - discountPercent / 100));
+        }
+        dealLabel = discountPercent > 0 ? `ƯU ĐÃI 12.12 • GIẢM ${discountPercent}%` : 'ƯU ĐÃI NGÀY ĐÔI';
+        const stockNum = Number(product.stock) || 8;
+        limit = Math.max(sold + Math.min(stockNum, 10), 5);
+    }
 
-        // LUÔN LUÔN LỌC SẢN PHẨM ĐANG SALE
-        productsQuery = query(productsQuery, where("sale", ">", 0));
+    const isSoldOut = Boolean(product.manualOutOfStock) || Boolean(product.isOutOfStock) || (Number(product.stock) <= 0 && !itemCfg) || (limit > 0 && sold >= limit && isCampaignHero);
 
-        // Lọc client side nên không cần query phức tạp
+    return {
+        basePrice,
+        dealPrice,
+        discountPercent,
+        isBogo,
+        dealLabel,
+        limit,
+        sold,
+        isSoldOut,
+        isCampaignHero
+    };
+}
 
-        // Lấy danh sách sản phẩm cấu hình trong Flash Sale Items
-        const fsItemIds = ((isFsRunning || isUpcoming) && flashSaleSettings?.items) ? Object.keys(flashSaleSettings.items) : [];
-        const fsProductsMap = {};
+function sortProductsList(arr, campaignState) {
+    return [...arr].sort((a, b) => {
+        const ma = computeProductDealMeta(a, campaignState);
+        const mb = computeProductDealMeta(b, campaignState);
+        switch (currentSort) {
+            case 'price-asc': return ma.dealPrice - mb.dealPrice;
+            case 'price-desc': return mb.dealPrice - ma.dealPrice;
+            case 'newest': return (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0);
+            case 'sale-desc':
+            default:
+                if (mb.isCampaignHero !== ma.isCampaignHero) return mb.isCampaignHero ? 1 : -1;
+                return mb.discountPercent - ma.discountPercent;
+        }
+    });
+}
 
-        // Fetch chi tiết các sản phẩm trong items
-        if (fsItemIds.length > 0) {
-            const fsItemPromises = fsItemIds.map(pid => getDoc(doc(db, "products", pid)));
-            const fsSnaps = await Promise.all(fsItemPromises);
-            fsSnaps.forEach(snap => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (!data.isHidden && !data.isOnlyEvent) {
-                        fsProductsMap[snap.id] = { id: snap.id, ...data };
-                    }
-                }
+function buildCategorizedStages(campaignState) {
+    const categories = dynamicCategories.length > 0 ? dynamicCategories : DEFAULT_PRODUCT_CATEGORIES;
+    let baseList = allSaleProducts;
+
+    if (activePriceGroup !== null) {
+        baseList = baseList.filter(p => Number(p.flashSaleGroup) === activePriceGroup || computeProductDealMeta(p, campaignState).dealPrice === activePriceGroup);
+    }
+
+    const stages = [];
+
+    // Khối 1: TÂM ĐIỂM FLASH SALE 12.12 (nếu có sản phẩm được ghim riêng trong chiến dịch Flash Sale)
+    const campaignHeroItems = baseList.filter(p => flashSaleSettings?.items && flashSaleSettings.items[p.id]);
+    if (campaignHeroItems.length > 0) {
+        const subSet = new Set();
+        campaignHeroItems.forEach(p => { if (p.category) subSet.add(p.category); });
+        stages.push({
+            id: 'stage-hero-1212',
+            shortNav: 'Tâm điểm 12.12',
+            crownTitle: 'FLASH SALE • TÂM ĐIỂM 12.12',
+            theme: 'terracotta',
+            subCategories: Array.from(subSet),
+            products: sortProductsList(campaignHeroItems, campaignState),
+            note: 'Suất ưu đãi đặc quyền Ngày Đôi 12.12 — Giá tự động áp dụng trong khung giờ mở bán — Tặng kèm hộp quà & thiệp viết tay'
+        });
+    }
+
+    // Các Khối Phân Loại Theo Nhóm Danh Mục Của Tiệm
+    const assignedIds = new Set();
+    categories.forEach((group, gIdx) => {
+        const subs = Array.isArray(group.subs) ? group.subs : [];
+        const matched = baseList.filter(p => {
+            const cat = (p.category || '').trim();
+            return cat === group.name || subs.includes(cat);
+        });
+
+        if (matched.length > 0) {
+            matched.forEach(p => assignedIds.add(p.id));
+            // Chỉ hiện các sub-category thực sự có sản phẩm sale
+            const activeSubs = [];
+            subs.forEach(s => {
+                if (matched.some(p => (p.category || '').trim() === s)) activeSubs.push(s);
+            });
+
+            stages.push({
+                id: `stage-cat-${gIdx}`,
+                shortNav: group.name,
+                crownTitle: `FLASH SALE • ${group.name.toUpperCase()}`,
+                theme: (stages.length % 2 === 1) ? 'kiln' : 'terracotta',
+                subCategories: activeSubs,
+                products: sortProductsList(matched, campaignState),
+                note: `Ưu đãi chuyên mục ${group.name} duy nhất ngày 12.12 — Kiểm tra kỹ chống sốc 3 lớp & miễn phí gói quà`
             });
         }
+    });
 
-        // Lấy các sản phẩm có sale > 0 thông thường
-        const qAll = query(collection(db, "products"), where("sale", ">", 0), orderBy("sale", "desc"));
-        const querySnapshot = await getDocs(qAll);
-        
-        const allFetchedProducts = [];
-        const seenIds = new Set();
-
-        // 1. Ưu tiên đưa các sản phẩm trong Flash Sale Campaign vào đầu
-        Object.values(fsProductsMap).forEach(p => {
-            allFetchedProducts.push(p);
-            seenIds.add(p.id);
+    // Khối gom các sản phẩm chưa khớp nhóm danh mục (nếu có) để không bỏ sót món nào
+    const leftovers = baseList.filter(p => !assignedIds.has(p.id) && !(stages.length > 0 && campaignHeroItems.some(h => h.id === p.id) && baseList.length === campaignHeroItems.length));
+    if (leftovers.length > 0) {
+        const subSet = new Set();
+        leftovers.forEach(p => { if (p.category) subSet.add(p.category); });
+        stages.push({
+            id: 'stage-other-deals',
+            shortNav: 'Gốm Ưu Đãi Khác',
+            crownTitle: 'FLASH SALE • TUYỂN CHỌN ĐẶC BIỆT',
+            theme: (stages.length % 2 === 1) ? 'kiln' : 'terracotta',
+            subCategories: Array.from(subSet),
+            products: sortProductsList(leftovers, campaignState),
+            note: 'Số lượng gốm thủ công giới hạn theo tồn kho thực tế tại 2 chi nhánh Tiệm Nhà Gốm'
         });
+    }
 
-        // 2. Thêm các sản phẩm sale thường ngày
-        querySnapshot.docs.forEach(docSnap => {
-            if (!seenIds.has(docSnap.id)) {
-                const p = { id: docSnap.id, ...docSnap.data() };
-                if (!p.isHidden && !p.isOnlyEvent) {
-                    allFetchedProducts.push(p);
-                    seenIds.add(p.id);
-                }
-            }
-        });
+    return stages;
+}
 
-        if (allFetchedProducts.length === 0) {
-            productGrid.innerHTML = '';
-            noProductsMsg.style.display = 'block';
-            return;
-        }
+function expandIndependentSaleProducts(products) {
+    const result = [];
+    (products || []).forEach(p => {
+        result.push(p);
 
-        // Lọc theo danh mục nếu người dùng chọn
-        let filteredProducts = allFetchedProducts;
-        if (selectedCategory !== 'all') {
-            const group = dynamicCategories.find(g => g.name === selectedCategory);
-            if (group) {
-                if (group.subs && group.subs.length > 0) {
-                    filteredProducts = allFetchedProducts.filter(p => group.subs.includes(p.category) || p.category === group.name);
-                } else {
-                    filteredProducts = allFetchedProducts.filter(p => p.category === group.name);
-                }
-            } else {
-                filteredProducts = allFetchedProducts.filter(p => p.category === selectedCategory);
-            }
-        }
-
-        if (filteredProducts.length === 0) {
-            productGrid.innerHTML = `
-                <div style="text-align: center; padding: 4rem 1rem; width: 100%;">
-                    <p style="font-size: 1.1rem; color: #666;">Không có sản phẩm Flash Sale nào thuộc danh mục <strong>${selectedCategory}</strong>.</p>
-                </div>`;
-            noProductsMsg.style.display = 'none';
-            // Vẫn cập nhật lại số lượng danh mục
-            fetchCategorySaleCounts(allFetchedProducts);
-            return;
-        }
-
-        // Cập nhật số lượng hiển thị trên các tab danh mục
-        fetchCategorySaleCounts(allFetchedProducts);
-
-        // PHÂN LOẠI SẢN PHẨM
-        const bogoProducts = []; // Sản phẩm Mua 1 Tặng 1 (20/10)
-        const flashSaleCampaignProducts = []; // Sản phẩm giảm giá sốc
-        const groupedProducts = {}; // { 39000: [...], 49000: [...] }
-        const otherSales = [];
-        const priceGroups = flashSaleSettings?.priceGroups || [];
-        const schemaItems = [];
-
-        filteredProducts.forEach((p, index) => {
-            const fsInfo = isFsRunning && flashSaleSettings?.items ? flashSaleSettings.items[p.id] : null;
-            const currentPrice = (fsInfo && fsInfo.salePrice) ? fsInfo.salePrice : ((isFsRunning && p.flashSaleGroup) ? p.flashSaleGroup : (p.salePrice || Math.round(p.price * (1 - (p.sale || 0) / 100))));
-
-            // Chuẩn bị dữ liệu cho Schema SEO
-            schemaItems.push({
-                "@type": "ListItem",
-                "position": index + 1,
-                "item": {
-                    "@type": "Product",
-                    "name": p.name,
-                    "image": p.imageUrl,
-                    "url": `${baseUrl}/product/index.html?id=${p.id}`,
-                    "offers": {
-                        "@type": "Offer",
-                        "priceCurrency": "VND",
-                        "price": currentPrice,
-                        "availability": (p.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-                    }
-                }
-            });
-            
-            if (fsInfo) {
-                if (fsInfo.dealType === 'bogo_same' || fsInfo.dealType === 'bogo_custom') {
-                    bogoProducts.push(p);
-                } else {
-                    flashSaleCampaignProducts.push(p);
-                }
-            } else if (isFsRunning && p.flashSaleGroup && priceGroups.includes(p.flashSaleGroup)) {
-                const group = p.flashSaleGroup;
-                if (!groupedProducts[group]) groupedProducts[group] = [];
-                groupedProducts[group].push(p);
-            } else {
-                otherSales.push(p);
-            }
-        });
-
-        let favs = [];
-        if (auth.currentUser) {
-            const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
-            if (favSnap.exists()) favs = favSnap.data().productIds || [];
-        } else {
-            favs = JSON.parse(localStorage.getItem('favorites')) || [];
-        }
-
-        // RENDER GIAO DIỆN THEO TỪNG CHƯƠNG TRÌNH
-        let htmlContent = '';
-        
-        // HÀM SẮP XẾP CLIENT-SIDE
-        const sortProducts = (productsArray) => {
-            productsArray.sort((a, b) => {
-                const priceA = (isFsRunning && a.flashSaleGroup) ? a.flashSaleGroup : (a.salePrice || Math.round(a.price * (1 - (a.sale || 0) / 100)));
-                const priceB = (isFsRunning && b.flashSaleGroup) ? b.flashSaleGroup : (b.salePrice || Math.round(b.price * (1 - (b.sale || 0) / 100)));
-                
-                switch (currentSort) {
-                    case 'price-asc': return priceA - priceB;
-                    case 'price-desc': return priceB - priceA;
-                    case 'rating-desc': return (b.rating || 0) - (a.rating || 0);
-                    case 'newest': return (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0);
-                    case 'sale-desc':
-                    default: return (b.sale || 0) - (a.sale || 0);
-                }
+        const pushVariant = (v, type, vIdx) => {
+            if (!v || !v.showOnProductPage) return;
+            const label = v.name || v.color || v.pattern || v.label || `Mẫu ${vIdx + 1}`;
+            const vImg = v.imageUrl || v.image || p.thumbUrl || p.imageUrl;
+            const vPrice = (v.price !== undefined && v.price !== null && v.price !== '' && Number(v.price) > 0) ? Number(v.price) : p.price;
+            const vSalePrice = (v.salePrice !== undefined && v.salePrice !== null && v.salePrice !== '' && Number(v.salePrice) > 0) ? Number(v.salePrice) : p.salePrice;
+            const vSale = (v.sale !== undefined && v.sale !== null && v.sale !== '') ? Number(v.sale) : p.sale;
+            result.push({
+                ...p,
+                _variantKey: `${p.id}__${type}_${vIdx}`,
+                _variantQuery: `${type}=${encodeURIComponent(label)}`,
+                name: `${p.name} - ${label}`,
+                imageUrl: vImg,
+                thumbUrl: vImg,
+                price: vPrice,
+                salePrice: vSalePrice,
+                sale: vSale,
+                stock: (v.stock !== undefined && v.stock !== null && v.stock !== '') ? Number(v.stock) : p.stock
             });
         };
-        
-        // 1. TRƯỜNG HỢP 1: FLASH SALE SẮP BẮT ĐẦU (ĐẾM NGƯỢC TỚI GIỜ MỞ BÁN)
-        if (isUpcoming) {
-            const upcomingProducts = filteredProducts.filter(p => fsProductsMap[p.id]);
-            if (upcomingProducts.length > 0) {
-                htmlContent += `
-                    <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div class="fs-upcoming-banner">
-                            <h2><i class="ti ti-alarm"></i> ${flashSaleSettings?.title || "Danh Sách Sản Phẩm Flash Sale"}</h2>
-                            <p>Các deal ưu đãi số lượng có hạn dưới đây sẽ chính thức mở bán khi đồng hồ đếm ngược về 00:00:00. Hãy thêm vào danh sách yêu thích trước!</p>
-                        </div>
-                        <div class="grid" style="padding: 0;">
-                            ${upcomingProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
-                        </div>
-                    </div>
-                `;
-            } else {
-                htmlContent += `
-                    <div style="text-align: center; padding: 4rem 1rem;">
-                        <p style="font-size: 1.15rem; color: #52525b;">Chương trình <strong>${flashSaleSettings?.title || "Flash Sale"}</strong> đang được chuẩn bị và sẽ sớm mở bán!</p>
-                        <p style="margin-top: 1rem;"><a href="../products/" class="btn-dark">Khám phá các sản phẩm khác</a></p>
-                    </div>
-                `;
-            }
-        } else {
-            // TRƯỜNG HỢP 2: ĐANG DIỄN RA HOẶC BÌNH THƯỜNG
-            // 1. Render nhóm Mua 1 Tặng 1
-            if (isFsRunning && bogoProducts.length > 0 && selectedPriceGroup === null) {
-                sortProducts(bogoProducts);
-                htmlContent += `
-                    <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div class="fs-section-header">
-                            <h2 class="fs-section-title">
-                                <i class="ti ti-gift"></i> ĐẶC QUYỀN — MUA 1 TẶNG 1
-                            </h2>
-                            <span class="fs-section-badge">
-                                <i class="ti ti-sparkles"></i> Số lượng quà tặng có hạn
-                            </span>
-                        </div>
-                        <div class="grid" style="padding: 0;">
-                            ${bogoProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
-                        </div>
-                    </div>
-                `;
-            }
 
-            // 2. Render nhóm Giảm Giá Sốc (Deal Độc Quyền)
-            if (isFsRunning && flashSaleCampaignProducts.length > 0 && selectedPriceGroup === null) {
-                sortProducts(flashSaleCampaignProducts);
-                htmlContent += `
-                    <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div class="fs-section-header">
-                            <h2 class="fs-section-title">
-                                <i class="ti ti-bolt-filled"></i> ${flashSaleSettings?.title || "Flash Sale — Giá Sốc"}
-                            </h2>
-                            <span class="fs-section-badge">
-                                <i class="ti ti-flame-filled"></i> Giá ưu đãi có hạn
-                            </span>
-                        </div>
-                        <div class="grid" style="padding: 0;">
-                            ${flashSaleCampaignProducts.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // 3. Render các nhóm đồng giá (nếu có)
-            if (isFsRunning) {
-                priceGroups.sort((a,b) => a-b).forEach(price => {
-                    if (selectedPriceGroup !== null && price !== selectedPriceGroup) return;
-                    const products = groupedProducts[price] || [];
-                    if (products.length === 0) return;
-                    sortProducts(products);
-                    htmlContent += `
-                        <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                            <div class="fs-section-header">
-                                <h2 class="fs-section-title"><i class="ti ti-bolt-filled"></i> Đồng giá ${price/1000}k</h2>
-                                <span class="fs-section-badge">${products.length} sản phẩm</span>
-                            </div>
-                            <div class="grid" style="padding: 0;">
-                                ${products.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            // 4. Render nhóm Sale khác (nếu đang chạy chiến dịch và chưa lọc)
-            if (otherSales.length > 0 && selectedPriceGroup === null) {
-                sortProducts(otherSales);
-                const sectionTitle = isFsRunning ? "<i class='ti ti-teapot'></i> Ưu đãi gốm sứ khác" : "Sản phẩm ưu đãi";
-                htmlContent += `
-                    <div class="sale-program-section" style="margin-bottom: 4rem; width: 100%;">
-                        <div class="fs-section-header">
-                            <h2 class="fs-section-title">${sectionTitle}</h2>
-                            <span class="fs-section-badge">${otherSales.length} sản phẩm</span>
-                        </div>
-                        <div class="grid" style="padding: 0;">
-                            ${otherSales.map(p => renderProductCardWithVariants(p, p.id, favs, '../product/index.html')).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        productGrid.innerHTML = htmlContent;
-        if (window.updateMembershipPrices) window.updateMembershipPrices();
-        // Ẩn phân trang vì đã hiện toàn bộ theo section
-        if (document.querySelector('.pagination-container')) document.querySelector('.pagination-container').style.display = 'none';
-
-        // Cập nhật Structured Data (Schema.org) cho Product Collection
-        let scriptTag = document.getElementById('flash-sale-schema');
-        if (!scriptTag) {
-            scriptTag = document.createElement('script');
-            scriptTag.id = 'flash-sale-schema';
-            scriptTag.type = 'application/ld+json';
-            document.head.appendChild(scriptTag);
-        }
-        scriptTag.textContent = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "name": "Danh sách sản phẩm Flash Sale - Tiệm Nhà Gốm",
-            "numberOfItems": filteredProducts.length,
-            "itemListElement": schemaItems
-        });
-        
-        // Cập nhật trạng thái nút phân trang
-        if (pageInfo) pageInfo.innerText = `Trang ${currentPage}`;
-        if (prevBtn) prevBtn.disabled = currentPage === 1;
-        if (nextBtn) nextBtn.disabled = querySnapshot.docs.length < PAGE_SIZE;
-
-    } catch (e) {
-        console.error("Lỗi fetch sản phẩm sale:", e);
-        if (productGrid) productGrid.innerHTML = '<p style="text-align:center; color:red;">Đã xảy ra lỗi khi tải danh sách sản phẩm.</p>';
-    }
+        if (Array.isArray(p.colorVariants)) p.colorVariants.forEach((v, i) => pushVariant(v, 'color', i));
+        if (Array.isArray(p.patternVariants)) p.patternVariants.forEach((v, i) => pushVariant(v, 'pattern', i));
+        if (Array.isArray(p.comboVariants)) p.comboVariants.forEach((v, i) => pushVariant(v, 'combo', i));
+    });
+    return result;
 }
 
-// Hàm render thanh danh mục tối giản
-function renderCategoryGrid() {
-    const container = document.getElementById('category-grid-display');
-    if (!container) return;
+function renderDealCardHtml(product, campaignState) {
+    const meta = computeProductDealMeta(product, campaignState);
+    const img = product.thumbUrl || product.imageUrl || (Array.isArray(product.images) && product.images[0]) || '../Asset/images/homedecor.jpg';
+    const isFav = userFavIds.includes(product.id);
+    const baseHref = `../product/index.html?id=${encodeURIComponent(product.slug || product.id)}`;
+    const href = product._variantQuery ? `${baseHref}&${product._variantQuery}` : baseHref;
+    const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.max(0, Math.round(n))) + 'đ';
 
-    const categories = dynamicCategories.length > 0 ? dynamicCategories : DEFAULT_PRODUCT_CATEGORIES;
+    const topTag = meta.isBogo
+        ? 'Mua 1 Tặng 1'
+        : (meta.discountPercent > 0 ? `-${meta.discountPercent}%` : '12.12');
 
-    let mainCatHtml = `
-        <div class="minimal-category-list">
-            <a href="javascript:void(0)" class="minimal-cat-item ${selectedCategory === 'all' ? 'active' : ''}" data-filter-category="all" id="fs-cat-all">
-                tất cả <span class="cat-count">(...)</span>
-            </a>
+    const subSpec = [product.category || 'Gốm thủ công', product.details?.material || 'Tuyển chọn'].filter(Boolean).slice(0, 2).join(' · ');
+
+    // Thanh tiến độ suất bán
+    let barClass = '';
+    let fillPct = 0;
+    let barText = '';
+    let barIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.5 3.5 4 5.5 4 9a4 4 0 1 1-8 0c0-2 1-3.5 2-5-.5 2 1 3 2 3 0-2.5-1-4.5 0-7z"/></svg>`;
+
+    if (meta.isSoldOut) {
+        barClass = 'is-soldout has-dark-fill';
+        fillPct = 100;
+        barText = `Đã hết suất (${meta.limit}/${meta.limit})`;
+    } else if (campaignState.isUpcoming) {
+        barClass = 'is-upcoming';
+        fillPct = 0;
+        barText = `Mở bán 12.12 · ${meta.limit} suất`;
+        barIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+    } else {
+        fillPct = meta.limit > 0 ? Math.min(100, Math.max(0, Math.round((meta.sold / meta.limit) * 100))) : 0;
+        if (fillPct >= 52) barClass = 'has-dark-fill';
+        barText = `Đã bán ${meta.sold}/${meta.limit} suất`;
+    }
+
+    return `
+        <a href="${escapeHTML(href)}" class="fs-deal-card">
+            <span class="fs-deal-discount-tag">${escapeHTML(topTag)}</span>
+            <button type="button" class="fs-deal-fav-btn ${isFav ? 'is-fav' : ''}" onclick="window.toggleFsCardFav(event, '${escapeHTML(product.id)}')" title="Lưu sản phẩm yêu thích">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+
+            <div class="fs-deal-img-box">
+                <img src="${escapeHTML(img)}" alt="${escapeHTML(product.name || '')}" loading="lazy" onerror="this.onerror=null;this.src='../Asset/images/homedecor.jpg';">
+            </div>
+
+            <div class="fs-deal-spec-block">
+                <div class="fs-deal-highlight-line">${escapeHTML(meta.dealLabel)}</div>
+                <div class="fs-deal-sub-line">${escapeHTML(subSpec)}</div>
+            </div>
+
+            <h3 class="fs-deal-title">${escapeHTML(product.name || 'Sản phẩm Tiệm Nhà Gốm')}</h3>
+
+            <div class="fs-deal-price-wrap">
+                <span class="fs-deal-sale-price">${fmt(meta.dealPrice)}</span>
+                ${meta.basePrice > meta.dealPrice ? `<span class="fs-deal-old-price">${fmt(meta.basePrice)}</span>` : ''}
+            </div>
+
+            <div class="fs-quota-bar ${barClass}">
+                ${fillPct > 0 ? `<div class="fs-quota-fill" style="width:${fillPct}%;"></div>` : ''}
+                <span class="fs-quota-text">
+                    ${barIcon}
+                    <span>${escapeHTML(barText)}</span>
+                </span>
+            </div>
+        </a>
     `;
-
-    categories.forEach(group => {
-        const isGroupActive = selectedCategory === group.name;
-        mainCatHtml += `
-            <a href="javascript:void(0)" class="minimal-cat-item ${isGroupActive ? 'active' : ''}" data-filter-category="${group.name}" id="fs-cat-${group.name.replace(/\s+/g, '-')}">
-                ${group.name.toLowerCase()} <span class="cat-count">(...)</span>
-            </a>
-        `;
-    });
-    mainCatHtml += `</div>`;
-
-    container.innerHTML = mainCatHtml;
-
-    // Gắn sự kiện click chọn danh mục
-    container.querySelectorAll('.minimal-cat-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const cat = item.getAttribute('data-filter-category');
-            selectedCategory = cat;
-            
-            container.querySelectorAll('.minimal-cat-item').forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
-
-            fetchFlashSaleProducts('init');
-        });
-    });
 }
 
-// Hàm đếm và hiển thị số lượng sản phẩm sale theo từng danh mục
-function fetchCategorySaleCounts(productsList) {
-    if (!productsList || !Array.isArray(productsList)) return;
+function renderSingleStageContent(stage, campaignState) {
+    const st = stageStateMap[stage.id] || { subCat: 'all', expanded: false };
+    stageStateMap[stage.id] = st;
 
-    const countCards = (docs) => {
-        let count = 0;
-        docs.forEach(p => {
-            count += 1;
-            if (p.comboVariants && Array.isArray(p.comboVariants)) {
-                count += p.comboVariants.filter(v => v.showOnProductPage).length;
-            }
-            if (p.colorVariants && Array.isArray(p.colorVariants)) {
-                count += p.colorVariants.filter(v => v.showOnProductPage).length;
-            }
-            if (p.patternVariants && Array.isArray(p.patternVariants)) {
-                count += p.patternVariants.filter(v => v.showOnProductPage).length;
-            }
-        });
-        return count;
-    };
+    const filtered = st.subCat === 'all'
+        ? stage.products
+        : stage.products.filter(p => (p.category || '').trim() === st.subCat);
 
-    // 1. Tổng tất cả
-    const elAll = document.getElementById('fs-cat-all');
-    if (elAll && elAll.querySelector('.cat-count')) {
-        elAll.querySelector('.cat-count').textContent = `(${countCards(productsList)})`;
+    const perPage = getCardsPerRow();
+    const timerCaption = campaignState.isUpcoming ? 'MỞ BÁN SAU' : 'KẾT THÚC SAU';
+
+    const pillsHtml = [
+        `<button type="button" class="fs-subpill-btn ${st.subCat === 'all' ? 'active' : ''}" onclick="window.selectFsStageSub('${stage.id}', 'all')">Tất cả (${stage.products.length})</button>`,
+        ...stage.subCategories.map(sub => {
+            const cnt = stage.products.filter(p => (p.category || '').trim() === sub).length;
+            const isAct = st.subCat === sub;
+            return `<button type="button" class="fs-subpill-btn ${isAct ? 'active' : ''}" onclick="window.selectFsStageSub('${stage.id}', '${escapeHTML(sub).replace(/'/g, "\\'")}')">${escapeHTML(sub)} (${cnt})</button>`;
+        })
+    ].join('');
+
+    const showArrows = !st.expanded && filtered.length > perPage;
+
+    return `
+        <div class="fs-stage-crown-wrap">
+            <div class="fs-stage-pedestal"></div>
+            <div class="fs-stage-crown-badge">
+                <h2>${escapeHTML(stage.crownTitle)}</h2>
+            </div>
+        </div>
+
+        <div class="fs-stage-box">
+            <div class="fs-stage-topbar">
+                <div class="fs-stage-subpills">
+                    ${pillsHtml}
+                </div>
+
+                <div class="fs-stage-timer-wrap">
+                    <span class="fs-stage-timer-label">${timerCaption}</span>
+                    <div class="fs-stage-timer-boxes">
+                        <span class="fs-stage-tbox js-stage-d">00</span>
+                        <span class="fs-stage-tsep">:</span>
+                        <span class="fs-stage-tbox js-stage-h">00</span>
+                        <span class="fs-stage-tsep">:</span>
+                        <span class="fs-stage-tbox js-stage-m">00</span>
+                        <span class="fs-stage-tsep">:</span>
+                        <span class="fs-stage-tbox js-stage-s">00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fs-stage-carousel-wrap">
+                ${showArrows ? `
+                    <button type="button" class="fs-stage-nav-btn fs-stage-nav-btn--prev" onclick="window.scrollFsStageTrack('${stage.id}', -1)" aria-label="Cuộn sang trái">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                ` : ''}
+
+                <div class="fs-stage-cards-grid ${st.expanded ? 'is-expanded' : ''}" id="track-${stage.id}">
+                    ${filtered.map(p => renderDealCardHtml(p, campaignState)).join('')}
+                </div>
+
+                ${showArrows ? `
+                    <button type="button" class="fs-stage-nav-btn fs-stage-nav-btn--next" onclick="window.scrollFsStageTrack('${stage.id}', 1)" aria-label="Cuộn sang phải">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                ` : ''}
+            </div>
+
+            <div class="fs-stage-bottom">
+                <p class="fs-stage-note">${escapeHTML(stage.note)}</p>
+                ${filtered.length > perPage ? `
+                    <button type="button" class="fs-stage-expand-btn" onclick="window.toggleFsStageExpand('${stage.id}')">
+                        ${st.expanded ? 'Thu gọn cuộn ngang' : `Xem toàn bộ ${filtered.length} mẫu`}
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+let cachedStages = [];
+
+function renderPriceGroupBanner(campaignState) {
+    const host = document.getElementById('fs-price-group-banner');
+    if (!host) return;
+    const groups = Array.isArray(flashSaleSettings?.priceGroups)
+        ? [...flashSaleSettings.priceGroups].map(Number).filter(n => n > 0).sort((a, b) => a - b)
+        : [];
+
+    if (groups.length === 0) {
+        host.style.display = 'none';
+        host.innerHTML = '';
+        return;
     }
 
-    // 2. Từng danh mục
-    const categories = dynamicCategories.length > 0 ? dynamicCategories : DEFAULT_PRODUCT_CATEGORIES;
-    categories.forEach(group => {
-        const el = document.getElementById(`fs-cat-${group.name.replace(/\s+/g, '-')}`);
-        if (el && el.querySelector('.cat-count')) {
-            let catDocs = [];
-            if (group.subs && group.subs.length > 0) {
-                catDocs = productsList.filter(p => group.subs.includes(p.category) || p.category === group.name);
-            } else {
-                catDocs = productsList.filter(p => p.category === group.name);
-            }
-            el.querySelector('.cat-count').textContent = `(${countCards(catDocs)})`;
-        }
-    });
+    host.style.display = 'block';
+
+    const countInTier = (price) => allSaleProducts.filter(
+        p => Number(p.flashSaleGroup) === price || computeProductDealMeta(p, campaignState).dealPrice === price
+    ).length;
+
+    const ticketsHtml = groups.map(price => {
+        const cnt = countInTier(price);
+        const isAct = activePriceGroup === price;
+        return `
+            <button type="button" class="fs-tier-ticket ${isAct ? 'active' : ''}" onclick="window.filterByPriceGroup(${price})">
+                <span class="fs-tier-ticket-price">${Math.round(price / 1000)}K</span>
+                <span class="fs-tier-ticket-meta">${cnt > 0 ? `${cnt} mẫu` : 'Săn deal'}</span>
+            </button>
+        `;
+    }).join('');
+
+    if (activePriceGroup !== null) {
+        const fmtTier = new Intl.NumberFormat('vi-VN').format(activePriceGroup) + 'đ';
+        const cnt = countInTier(activePriceGroup);
+        host.innerHTML = `
+            <div class="fs-tier-banner">
+                <div class="fs-tier-banner-left">
+                    <span class="fs-tier-kicker">KỆ ĐỒNG GIÁ NGÀY ĐÔI 12.12</span>
+                    <h2 class="fs-tier-title">Đồng Giá ${fmtTier} — ${cnt} mẫu gốm tuyển chọn</h2>
+                    <p class="fs-tier-sub">Tất cả sản phẩm bên dưới đều áp dụng mức giá ưu đãi đồng giá ${fmtTier} duy nhất trong khung giờ Flash Sale 12.12.</p>
+                </div>
+                <div class="fs-tier-tickets">
+                    ${ticketsHtml}
+                    <button type="button" class="fs-tier-reset-btn" onclick="window.filterByPriceGroup(null)">Xem tất cả mức giá</button>
+                </div>
+            </div>
+        `;
+    } else {
+        host.innerHTML = `
+            <div class="fs-tier-banner">
+                <div class="fs-tier-banner-left">
+                    <span class="fs-tier-kicker">SĂN GỐM ĐỒNG GIÁ • NGÀY ĐÔI 12.12</span>
+                    <h2 class="fs-tier-title">Chọn nhanh Kệ Đồng Giá yêu thích</h2>
+                    <p class="fs-tier-sub">Bấm vào từng mốc đồng giá bên cạnh để lọc ngay những món gốm thủ công đúng tầm ngân sách của bạn.</p>
+                </div>
+                <div class="fs-tier-tickets">
+                    ${ticketsHtml}
+                </div>
+            </div>
+        `;
+    }
 }
 
-// Hàm render các nút chọn mức giá đồng giá
-function renderPriceTabs() {
-    const container = document.getElementById('price-tabs-container');
-    if (!container || !flashSaleSettings || !flashSaleSettings.priceGroups) return;
+function renderAllStages() {
+    const gridContainer = document.getElementById('flash-sale-grid');
+    const emptyState = document.getElementById('no-flash-sale-products');
+    const quickJumpContainer = document.getElementById('category-grid-display');
+    if (!gridContainer) return;
 
-    const groups = flashSaleSettings.priceGroups.sort((a, b) => a - b);
-    
-    let html = `<div class="price-tab ${selectedPriceGroup === null ? 'active' : ''}" onclick="window.filterByPriceGroup(null)">Tất cả</div>`;
-    
-    html += groups.map(price => `
-        <div class="price-tab ${selectedPriceGroup === price ? 'active' : ''}" onclick="window.filterByPriceGroup(${price})">
-            Đồng giá ${price/1000}k
-        </div>
+    const campaignState = getEffectiveCampaignState();
+    renderPriceGroupBanner(campaignState);
+    cachedStages = buildCategorizedStages(campaignState);
+
+    if (cachedStages.length === 0) {
+        gridContainer.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        if (quickJumpContainer) quickJumpContainer.innerHTML = '';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    // Thanh chọn nhanh nhảy đến từng Khối Phân Loại
+    if (quickJumpContainer) {
+        quickJumpContainer.innerHTML = cachedStages.map((s, i) => `
+            <a href="#${s.id}" class="fs-jump-pill ${i === 0 ? 'active' : ''}" data-stage-jump="${s.id}">
+                ${escapeHTML(s.shortNav)} (${s.products.length})
+            </a>
+        `).join('');
+
+        quickJumpContainer.querySelectorAll('.fs-jump-pill').forEach(link => {
+            link.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                const targetId = link.dataset.stageJump;
+                quickJumpContainer.querySelectorAll('.fs-jump-pill').forEach(a => a.classList.toggle('active', a === link));
+                document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    }
+
+    gridContainer.innerHTML = cachedStages.map(stage => `
+        <section id="${stage.id}" class="fs-stage-section ${stage.theme === 'kiln' ? 'theme-kiln' : ''}">
+            ${renderSingleStageContent(stage, campaignState)}
+        </section>
     `).join('');
 
-    container.innerHTML = html;
+    tickAllCountdowns();
+}
+
+window.selectFsStageSub = (stageId, subCat) => {
+    const campaignState = getEffectiveCampaignState();
+    const stage = cachedStages.find(s => s.id === stageId);
+    if (!stage) return;
+    stageStateMap[stageId] = { ...(stageStateMap[stageId] || {}), subCat, page: 0 };
+    const el = document.getElementById(stageId);
+    if (el) {
+        el.innerHTML = renderSingleStageContent(stage, campaignState);
+        tickAllCountdowns();
+    }
+};
+
+window.scrollFsStageTrack = (stageId, direction) => {
+    const track = document.getElementById(`track-${stageId}`);
+    if (!track) return;
+    const distance = Math.max(260, Math.round(track.clientWidth * 0.82));
+    track.scrollBy({ left: direction * distance, behavior: 'smooth' });
+};
+
+window.toggleFsStageExpand = (stageId) => {
+    const campaignState = getEffectiveCampaignState();
+    const stage = cachedStages.find(s => s.id === stageId);
+    if (!stage) return;
+    const cur = stageStateMap[stageId] || { subCat: 'all', page: 0, expanded: false };
+    cur.expanded = !cur.expanded;
+    stageStateMap[stageId] = cur;
+    const el = document.getElementById(stageId);
+    if (el) {
+        el.innerHTML = renderSingleStageContent(stage, campaignState);
+        tickAllCountdowns();
+    }
+};
+
+function updateHeroBannerUI(campaignState) {
+    const bannerTitle = document.querySelector('.banner-title');
+    const bannerSub = document.getElementById('fs-hero-subtitle');
+    const statusPill = document.getElementById('fs-status-pill');
+    const statusText = document.getElementById('fs-status-text');
+    const caption = document.getElementById('fs-countdown-caption');
+    const miniPrefix = document.getElementById('fs-mini-timer-prefix');
+    const windowLbl = document.getElementById('fs-time-window-label');
+    const remindBtn = document.getElementById('btn-remind-1212');
+
+    if (bannerTitle) bannerTitle.textContent = campaignState.title;
+    if (bannerSub) bannerSub.textContent = campaignState.subtitle;
+
+    const fmtDate = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (windowLbl && campaignState.startTime && campaignState.endTime) {
+        const sameDay = fmtDate(campaignState.startTime) === fmtDate(campaignState.endTime);
+        windowLbl.textContent = sameDay
+            ? `Duy nhất 24h • Ngày ${fmtDate(campaignState.startTime)}`
+            : `${fmtDate(campaignState.startTime)} – ${fmtDate(campaignState.endTime)}`;
+    }
+
+    if (campaignState.isRunning) {
+        statusPill?.classList.remove('is-upcoming');
+        if (statusText) statusText.textContent = 'ĐANG MỞ BÁN • DUY NHẤT NGÀY HỘI 12.12';
+        if (caption) caption.textContent = 'CHƯƠNG TRÌNH KẾT THÚC SAU';
+        if (miniPrefix) miniPrefix.textContent = 'Kết thúc sau:';
+        if (remindBtn) remindBtn.style.display = 'none';
+    } else {
+        statusPill?.classList.add('is-upcoming');
+        if (statusText) statusText.textContent = 'SỰ KIỆN NGÀY ĐÔI 12.12 • SẮP MỞ BÁN';
+        if (caption) caption.textContent = 'ĐẾM NGƯỢC TỚI GIỜ MỞ BÁN';
+        if (miniPrefix) miniPrefix.textContent = 'Mở bán sau:';
+        if (remindBtn) remindBtn.style.display = 'inline-flex';
+    }
+
+    // Ẩn cụm nút đồng giá trên thanh dính vì đã có Banner Kệ Đồng Giá trực quan ngay bên dưới (tránh lặp UI)
+    const priceTabsEl = document.getElementById('price-tabs-container');
+    if (priceTabsEl) {
+        priceTabsEl.style.display = 'none';
+        priceTabsEl.innerHTML = '';
+    }
 }
 
 window.filterByPriceGroup = (price) => {
-    selectedPriceGroup = price;
-    // Hiệu ứng đổi màu banner nếu cần
-    const banner = document.querySelector('.flash-sale-banner');
-    if (banner) {
-        if (price) banner.classList.add('price-focused');
-        else banner.classList.remove('price-focused');
-    }
-    fetchFlashSaleProducts('init');
+    activePriceGroup = price;
+    updateHeroBannerUI(getEffectiveCampaignState());
+    renderAllStages();
 };
 
-function initDynamicCountdown(endTime) {
-    const update = () => {
-        const now = new Date();
-        const diff = endTime - now;
-        if (diff <= 0) {
-            if (window.fsTimer) clearInterval(window.fsTimer);
-            fetchFlashSaleProducts(); // Reload để hiện thông báo kết thúc
-            return;
-        }
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
+function tickAllCountdowns() {
+    const campaignState = getEffectiveCampaignState();
+    const target = campaignState.isUpcoming ? campaignState.startTime : campaignState.endTime;
+    if (!target) return;
 
-        if(document.getElementById('days')) document.getElementById('days').innerText = d.toString().padStart(2, '0');
-        if(document.getElementById('hours')) document.getElementById('hours').innerText = h.toString().padStart(2, '0');
-        if(document.getElementById('minutes')) document.getElementById('minutes').innerText = m.toString().padStart(2, '0');
-        if(document.getElementById('seconds')) document.getElementById('seconds').innerText = s.toString().padStart(2, '0');
+    const diff = Math.max(0, target.getTime() - Date.now());
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-        const miniTimerText = document.getElementById('fs-mini-timer-text');
-        if (miniTimerText) {
-            const totalHours = d * 24 + h;
-            miniTimerText.innerText = `${totalHours.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-    };
+    const ds = String(d).padStart(2, '0');
+    const hs = String(h).padStart(2, '0');
+    const ms = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+
+    // 1. Hero Fullscreen Countdown
+    const dEl = document.getElementById('days');
+    const hEl = document.getElementById('hours');
+    const mEl = document.getElementById('minutes');
+    const sEl = document.getElementById('seconds');
+    if (dEl) dEl.textContent = ds;
+    if (hEl) hEl.textContent = hs;
+    if (mEl) mEl.textContent = ms;
+    if (sEl) sEl.textContent = ss;
+
+    // 2. Sticky Mini Countdown
+    const miniEl = document.getElementById('fs-mini-timer-text');
+    if (miniEl) {
+        miniEl.textContent = d > 0 ? `${ds}n ${hs}:${ms}:${ss}` : `${hs}:${ms}:${ss}`;
+    }
+
+    // 3. Đồng hồ 4 ô trắng bên trong TẤT CẢ các Khối Kệ Phân Loại
+    document.querySelectorAll('.js-stage-d').forEach(el => { el.textContent = ds; });
+    document.querySelectorAll('.js-stage-h').forEach(el => { el.textContent = hs; });
+    document.querySelectorAll('.js-stage-m').forEach(el => { el.textContent = ms; });
+    document.querySelectorAll('.js-stage-s').forEach(el => { el.textContent = ss; });
+}
+
+async function loadFlashSalePage() {
+    const gridContainer = document.getElementById('flash-sale-grid');
+    if (gridContainer) {
+        gridContainer.innerHTML = `<div style="text-align:center; padding: 64px 20px; color:#6E665D;">Đang tải các kệ sản phẩm Flash Sale 12.12...</div>`;
+    }
+
+    flashSaleSettings = await fetchFlashSaleSettings(true);
+    const campaignState = getEffectiveCampaignState();
+    updateHeroBannerUI(campaignState);
+
     if (window.fsTimer) clearInterval(window.fsTimer);
-    window.fsTimer = setInterval(update, 1000);
-    update();
+    window.fsTimer = setInterval(tickAllCountdowns, 1000);
+    tickAllCountdowns();
+
+    // SEO
+    const baseUrl = window.location.origin + window.location.pathname.split('/flash-sale/')[0];
+    updateSEO(
+        `${campaignState.title} | Tiệm Nhà Gốm`,
+        campaignState.subtitle,
+        `${baseUrl}/Asset/images/bannercollection.jpg`
+    );
+
+    try {
+        // 1. Tải danh sách yêu thích
+        if (auth.currentUser) {
+            const favSnap = await getDoc(doc(db, "favorites", auth.currentUser.uid));
+            userFavIds = favSnap.exists() ? (favSnap.data().productIds || []) : [];
+        } else {
+            userFavIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+
+        // 2. CHỈ LẤY sản phẩm thuộc chiến dịch Flash Sale 12.12 (flashSaleSettings.items + đồng giá nếu có), KHÔNG trộn sản phẩm sale thường ngày
+        const seenIds = new Set();
+        const collected = [];
+
+        const itemIds = flashSaleSettings?.items ? Object.keys(flashSaleSettings.items) : [];
+        if (itemIds.length > 0) {
+            const snaps = await Promise.all(itemIds.map(pid => getDoc(doc(db, "products", pid))));
+            snaps.forEach(snap => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (!data.isHidden && !data.isOnlyEvent) {
+                        collected.push({ id: snap.id, ...data });
+                        seenIds.add(snap.id);
+                    }
+                }
+            });
+        }
+
+        const priceGroups = Array.isArray(flashSaleSettings?.priceGroups) ? flashSaleSettings.priceGroups.filter(n => Number(n) > 0) : [];
+        if (priceGroups.length > 0) {
+            const qGroup = query(collection(db, "products"), where("flashSaleGroup", ">", 0));
+            const groupSnap = await getDocs(qGroup);
+            groupSnap.docs.forEach(docSnap => {
+                if (!seenIds.has(docSnap.id)) {
+                    const p = { id: docSnap.id, ...docSnap.data() };
+                    if (!p.isHidden && !p.isOnlyEvent && priceGroups.includes(Number(p.flashSaleGroup))) {
+                        collected.push(p);
+                        seenIds.add(docSnap.id);
+                    }
+                }
+            });
+        }
+
+        allSaleProducts = expandIndependentSaleProducts(collected);
+        renderAllStages();
+    } catch (err) {
+        console.error("Lỗi tải kệ sản phẩm Flash Sale:", err);
+        if (gridContainer) {
+            gridContainer.innerHTML = `<div style="text-align:center; padding:48px 20px; color:#B91C1C;">Không thể tải danh sách sản phẩm. Vui lòng tải lại trang giúp Tiệm nhé!</div>`;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initHeader('../', (user) => {
-        fetchFlashSaleProducts();
+    initHeader('../', () => {
+        loadFlashSalePage();
     });
 
-    // Lắng nghe danh mục động từ Firestore
+    // Đồng bộ danh mục động từ Firestore để chia khối chính xác
     onSnapshot(doc(db, "settings", "product_categories"), (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data && data.groups) {
-                dynamicCategories.length = 0;
-                dynamicCategories.push(...data.groups);
-                renderCategoryGrid();
-            }
-        } else {
-            renderCategoryGrid();
+        if (snapshot.exists() && Array.isArray(snapshot.data().groups)) {
+            dynamicCategories.length = 0;
+            dynamicCategories.push(...snapshot.data().groups.sort((a, b) => (a.order || 0) - (b.order || 0)));
+            if (allSaleProducts.length > 0) renderAllStages();
         }
     });
 
-    // Gán sự kiện sắp xếp
-    document.getElementById('sort-by')?.addEventListener('change', () => fetchFlashSaleProducts('init'));
-
-    // Gán sự kiện phân trang
-    document.getElementById('prev-page')?.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            fetchFlashSaleProducts('prev');
-        }
+    document.getElementById('sort-by')?.addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderAllStages();
     });
 
-    document.getElementById('next-page')?.addEventListener('click', () => {
-        currentPage++;
-        fetchFlashSaleProducts('next');
+    document.getElementById('btn-scroll-to-deals')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('fs-showcase-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Nút Đặt lịch nhắc mở bán 12.12 trên Google Calendar
+    document.getElementById('btn-remind-1212')?.addEventListener('click', () => {
+        const st = getEffectiveCampaignState();
+        const start = st.startTime || getDefault1212Window().start;
+        const end = st.endTime || getDefault1212Window().end;
+        const pad = (n) => String(n).padStart(2, '0');
+        const toCal = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(st.title + ' - Tiệm Nhà Gốm')}&dates=${toCal(start)}/${toCal(end)}&details=${encodeURIComponent('Săn Flash Sale gốm thủ công tại ' + window.location.href)}`;
+        window.open(calUrl, '_blank', 'noopener');
+    });
+
+    // Tự cân chỉnh số thẻ mỗi hàng khi xoay màn hình / đổi kích thước cửa sổ
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (allSaleProducts.length > 0) renderAllStages();
+        }, 220);
     });
 });

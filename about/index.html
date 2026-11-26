@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Về Tiệm Nhà Gốm - Câu chuyện của Đất, Nước và Lửa</title>
     <meta name="description" content="Hành trình Tiệm Nhà Gốm từ con hẻm nhỏ Phan Xích Long (09/2023) đến không gian gốm thủ công, cắm hoa, decor và cho thuê đồ setup tiệc tại TP.HCM.">
-    <link rel="stylesheet" href="../css/style.css?v=16">
+    <link rel="stylesheet" href="../css/style.css?v=57">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
     <link rel="canonical" href="https://tiemnhagom.vn/about/">
@@ -85,11 +85,12 @@
             width: 100%;
             min-height: 76vh;
             margin-top: -80px;
-            padding: 150px 24px 72px;
+            padding: 150px 24px 28px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            gap: 32px;
             text-align: center;
             overflow: hidden;
             background: var(--tng-kiln);
@@ -125,27 +126,8 @@
             position: relative;
             z-index: 2;
             max-width: 820px;
-            margin: 0 auto;
-        }
-
-        .about-hero-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 7px 20px;
-            border-radius: 999px;
-            background: rgba(250, 248, 245, 0.12);
-            border: 1px solid rgba(250, 248, 245, 0.28);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #F4E9DE;
-            font-size: 0.76rem;
-            font-weight: 600;
-            letter-spacing: 2.8px;
-            text-transform: uppercase;
-            margin-bottom: 22px;
-            opacity: 0;
-            animation: heroFadeUp 0.8s var(--tng-ease) 0.1s forwards;
+            width: 100%;
+            margin: auto;
         }
 
         .about-hero-title {
@@ -158,7 +140,7 @@
             margin: 0 0 18px;
             text-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
             opacity: 0;
-            animation: heroFadeUp 0.9s var(--tng-ease) 0.22s forwards;
+            animation: heroFadeUp 0.9s var(--tng-ease) 0.12s forwards;
         }
 
         .about-hero-subtitle {
@@ -170,7 +152,7 @@
             max-width: 640px;
             margin: 0 auto 34px;
             opacity: 0;
-            animation: heroFadeUp 0.9s var(--tng-ease) 0.36s forwards;
+            animation: heroFadeUp 0.9s var(--tng-ease) 0.24s forwards;
         }
 
         /* Quick Section Nav Pills */
@@ -186,7 +168,7 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             opacity: 0;
-            animation: heroFadeUp 0.9s var(--tng-ease) 0.5s forwards;
+            animation: heroFadeUp 0.9s var(--tng-ease) 0.36s forwards;
         }
 
         .about-jump-nav a {
@@ -206,16 +188,14 @@
         }
 
         .about-scroll-cue {
-            position: absolute;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
             z-index: 2;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            color: rgba(250, 248, 245, 0.7);
+            color: rgba(250, 248, 245, 0.75);
             font-size: 0.7rem;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -977,7 +957,7 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .reveal, .about-hero-kicker, .about-hero-title, .about-hero-subtitle, .about-jump-nav {
+            .reveal, .about-hero-title, .about-hero-subtitle, .about-jump-nav {
                 opacity: 1 !important;
                 transform: none !important;
                 animation: none !important;
@@ -1018,13 +998,21 @@
 
         @media (max-width: 768px) {
             .about-hero {
-                min-height: 68vh;
-                padding: 130px 18px 64px;
+                min-height: 64vh;
+                padding: 132px 18px 24px;
+                gap: 24px;
+            }
+
+            .about-hero-subtitle {
+                margin-bottom: 26px;
             }
 
             .about-jump-nav {
                 border-radius: 16px;
-                padding: 8px;
+                padding: 8px 10px;
+                gap: 6px 8px;
+                max-width: 100%;
+                box-sizing: border-box;
             }
 
             .about-jump-nav a {
@@ -1096,7 +1084,6 @@
             <div class="about-hero-overlay" aria-hidden="true"></div>
 
             <div class="about-hero-content">
-                <span class="about-hero-kicker">Từ tháng 09 · 2023 · TP. Hồ Chí Minh</span>
                 <h1 class="about-hero-title">Về Tiệm Nhà Gốm</h1>
                 <p class="about-hero-subtitle">
                     "Gìn giữ nét mộc của đất Việt — thổi hồn thủ công, nghệ thuật hoa và bàn tiệc vào từng không gian sống."

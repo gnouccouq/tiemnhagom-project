@@ -380,6 +380,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.removeItem(STORAGE_KEY_PROFILE);
       await AsyncStorage.removeItem('@tiemnhagom_cart_guest');
       await AsyncStorage.removeItem('@tiemnhagom_wishlist_guest');
+      await AsyncStorage.removeItem('has_seen_onboarding');
     } catch (e) {
       console.warn('Lỗi xóa AsyncStorage khi logout:', e);
     }
