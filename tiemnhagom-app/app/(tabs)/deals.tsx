@@ -176,7 +176,7 @@ export default function DealsScreen() {
 
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+  const styles = React.useMemo(() => getStyles(Colors, isDark), [Colors, isDark]);
 
   const getTierName = (tierId: string) => {
     switch (tierId) {
@@ -204,7 +204,10 @@ export default function DealsScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 8 }]}
-        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          setScrollY((prev) => (y > 60 && prev > 60 ? prev : y));
+        }}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl

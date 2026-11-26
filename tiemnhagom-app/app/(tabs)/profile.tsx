@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -117,7 +117,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors);
+  const styles = useMemo(() => getStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { user, userProfile, refreshProfile, updateUserProfileData } = useAuth();
   const { favorites } = useWishlist();
@@ -146,49 +146,73 @@ export default function ProfileScreen() {
   const [pointsModalVisible, setPointsModalVisible] = useState(false);
   const [vouchersCount, setVouchersCount] = useState<number>(0);
 
-  // Tải số lượng voucher/quà tặng khả dụng trong Kho quà
+  // Tải số lượng voucher/quà tặng khả dụng trong Kho quà (hoãn sau animation chuyển tab & giới hạn tần suất 30s để không gây đơ iOS)
+  const lastFocusSyncRef = useRef<number>(0);
   useFocusEffect(
     useCallback(() => {
       let isMounted = true;
-      if (user?.uid) {
-        refreshProfile().catch(() => {});
+      const now = Date.now();
+      if (now - lastFocusSyncRef.current < 30000) {
+        return;
       }
-      getAllUserCoupons(user?.uid)
-        .then((res) => {
-          if (isMounted && res && Array.isArray(res.unused)) {
-            setVouchersCount(res.unused.length);
-          }
-        })
-        .catch(() => {});
+      lastFocusSyncRef.current = now;
+
+      const timer = setTimeout(() => {
+        if (!isMounted) return;
+        if (user?.uid) {
+          refreshProfile().catch(() => {});
+        }
+        getAllUserCoupons(user?.uid)
+          .then((res) => {
+            if (isMounted && res && Array.isArray(res.unused)) {
+              setVouchersCount(res.unused.length);
+            }
+          })
+          .catch(() => {});
+      }, 150);
+
       return () => {
         isMounted = false;
+        clearTimeout(timer);
       };
     }, [user?.uid])
   );
 
   // Tính toán chi tiêu thực tế từ các đơn hàng đã hoàn thành để đồng bộ chuẩn xác với web
+  const targetUid = userProfile?.uid || user?.uid || '';
+  const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
   useEffect(() => {
-    const profileSpent = Number(userProfile?.totalSpent || (userProfile as any)?.spentTotal || 0);
-    const targetUid = userProfile?.uid || user?.uid || '';
+    let isMounted = true;
     if (targetUid) {
-      setLoadingOrders(true);
-      syncUserLoyaltyAndVouchers(targetUid, userProfile)
-        .then((res) => {
-          setTotalSpent(res.totalSpent);
-          setRedeemedPoints(res.redeemedPoints);
-          setOrdersLoaded(true);
-        })
-        .catch(() => {
-          setTotalSpent(profileSpent);
-          setOrdersLoaded(true);
-        })
-        .finally(() => setLoadingOrders(false));
+      const timer = setTimeout(() => {
+        if (!isMounted) return;
+        setLoadingOrders(true);
+        syncUserLoyaltyAndVouchers(targetUid, userProfile)
+          .then((res) => {
+            if (!isMounted) return;
+            setTotalSpent(res.totalSpent);
+            setRedeemedPoints(res.redeemedPoints);
+            setOrdersLoaded(true);
+          })
+          .catch(() => {
+            if (!isMounted) return;
+            setTotalSpent(profileSpent);
+            setOrdersLoaded(true);
+          })
+          .finally(() => {
+            if (isMounted) setLoadingOrders(false);
+          });
+      }, 150);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
     } else {
       setTotalSpent(profileSpent);
       setRedeemedPoints(0);
       setOrdersLoaded(true);
     }
-  }, [user, userProfile]);
+  }, [targetUid, profileSpent]);
 
   // Xác định hạng hội viên theo chi tiêu (đồng bộ chuẩn xác 100% với hệ thống Web Tiệm Nhà Gốm)
   // Mốc phân hạng:
@@ -254,8 +278,6 @@ export default function ProfileScreen() {
     });
   };
 
-  const [scrollY, setScrollY] = useState(0);
-  const blurProgress = Math.min(1, Math.max(0, scrollY / 30));
   const { pageStyle } = usePageAnimation();
 
   return (
@@ -336,8 +358,6 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 56 + 4 }]}
-        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
       >
         {/* ========================================================================= */}
         {/* 2. PRIMARY HERO CARD: UNIFIED PROFILE + VIP MEMBERSHIP CARD               */}

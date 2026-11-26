@@ -250,9 +250,9 @@ export default function ProductsScreen() {
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
-  const modalStyles = getModalStyles(Colors, isDark);
-  const filterModalStyles = getFilterModalStyles(Colors, isDark);
+  const styles = React.useMemo(() => getStyles(Colors, isDark), [Colors, isDark]);
+  const modalStyles = React.useMemo(() => getModalStyles(Colors, isDark), [Colors, isDark]);
+  const filterModalStyles = React.useMemo(() => getFilterModalStyles(Colors, isDark), [Colors, isDark]);
   const params = useLocalSearchParams<{ category?: string; search?: string; collection?: string }>();
   const router = useRouter();
   const { t } = useSettings();
@@ -768,7 +768,10 @@ export default function ProductsScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{ paddingTop: insets.top + 56 + 4, paddingBottom: 110 }}
-        onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          setScrollY((prev) => (y > 60 && prev > 60 ? prev : y));
+        }}
         scrollEventThrottle={16}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}

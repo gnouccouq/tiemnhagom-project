@@ -54,7 +54,7 @@ export default function ProductDetailScreen() {
   const insets = useSafeAreaInsets();
   const Colors = useThemeColor();
   const isDark = Colors.cardBackground !== '#FFFFFF';
-  const styles = getStyles(Colors, isDark);
+  const styles = React.useMemo(() => getStyles(Colors, isDark), [Colors, isDark]);
   const { t } = useSettings();
   const { user } = useAuth();
   const { addToCart, cartCount, applyCoupon, flyToCart, memberTier } = useCart();

@@ -27,7 +27,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens, enableFreeze } from 'react-native-screens';
 
 enableScreens(true);
-enableFreeze(true);
+// Tắt enableFreeze trên iOS để tránh xung đột Suspense/Freeze với react-native-screens 4.x + NativeTabs gây đơ khi chuyển tab/mở trang
+enableFreeze(false);
 
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
@@ -44,6 +45,7 @@ import { initMemoryManager } from '../src/utils/memoryManager';
 import { auth } from '../src/config/firebase';
 import { preloadNotificationFeed } from '../src/services/notificationFeedService';
 import { preloadAccountData } from '../src/services/loyaltyService';
+import { getAllUserCoupons } from '../src/services/couponService';
 import { setupPushNotificationListeners } from '../src/services/notificationService';
 
 export {
@@ -68,6 +70,7 @@ import Animated, {
 
 // Component màn hình chờ với hiệu ứng logo mượt mà và thanh tải OTA khi có bản update mới
 function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
+  const { refreshProfile } = useAuth();
   // Logo đứng yên tĩnh lặng ở tỉ lệ chuẩn 1.0 lúc đang chờ
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -120,7 +123,9 @@ function AnimatedAppSplash({ onFinish }: { onFinish: () => void }) {
             }
           })(),
           preloadNotificationFeed(targetUid).catch(() => []),
+          targetUid ? refreshProfile().catch(() => null) : Promise.resolve(null),
           targetUid ? preloadAccountData(targetUid).catch(() => null) : Promise.resolve(null),
+          targetUid ? getAllUserCoupons(targetUid).catch(() => null) : Promise.resolve(null),
         ]);
 
         await Promise.race([tasksPromise, timeoutPromise]);
@@ -281,7 +286,7 @@ function NavigationRoot() {
           headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: themeColors.background },
           animation: stackAnimation,
-          freezeOnBlur: true,
+          freezeOnBlur: false,
         }}
       >
         <Stack.Screen

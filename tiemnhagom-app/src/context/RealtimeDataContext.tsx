@@ -192,17 +192,22 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const userProfileRef = React.useRef(userProfile);
+  userProfileRef.current = userProfile;
+
   // Listen to User Orders
+  const targetUid = userProfile?.uid || user?.uid || '';
+  const userPhone = userProfile?.phone || '';
+  const userEmail = user?.email || userProfile?.email || '';
+
   useEffect(() => {
-    const targetUid = userProfile?.uid || user?.uid;
-    const phone = userProfile?.phone;
-    if (!targetUid && !phone) {
+    if (!targetUid && !userPhone) {
       setOrders([]);
       return;
     }
 
     if (targetUid) {
-      getUserOrders(targetUid, phone, user?.email || userProfile?.email)
+      getUserOrders(targetUid, userPhone, userEmail)
         .then((linked) => {
           if (linked && linked.length > 0) {
             setOrders(linked);
@@ -213,8 +218,9 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
 
     const q = targetUid
       ? query(collection(db, 'orders'), where('userId', '==', targetUid))
-      : query(collection(db, 'orders'), where('customerInfo.phone', '==', phone));
+      : query(collection(db, 'orders'), where('customerInfo.phone', '==', userPhone));
 
+    let lastSyncTs = 0;
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -234,10 +240,12 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
           setOrders(items);
         }
 
-        // Tự động đồng bộ thông báo đơn hàng cho tài khoản người dùng
-        if (targetUid) {
+        // Tự động đồng bộ thông báo đơn hàng (giới hạn tần suất 30s để tránh nghẽn JS thread trên iOS)
+        const now = Date.now();
+        if (targetUid && now - lastSyncTs > 30000) {
+          lastSyncTs = now;
           syncOrderNotificationsForUser(targetUid, items).catch(() => {});
-          syncUserLoyaltyAndVouchers(targetUid, userProfile, true).catch(() => {});
+          syncUserLoyaltyAndVouchers(targetUid, userProfileRef.current, false).catch(() => {});
         }
       },
       (error) => {
@@ -245,7 +253,7 @@ export const RealtimeDataProvider = ({ children }: { children: ReactNode }) => {
       }
     );
     return () => unsubscribe();
-  }, [user, userProfile]);
+  }, [targetUid, userPhone, userEmail]);
 
   const value = useMemo(
     () => ({ products, orders, news, loadingProducts }),
