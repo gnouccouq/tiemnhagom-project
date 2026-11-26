@@ -657,7 +657,7 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.modernListRow}
             activeOpacity={0.7}
-            onPress={() => openWebLink('https://tiemnhagom.vn/about/', t('aboutTiemNhaGom'))}
+            onPress={() => router.push('/about' as any)}
           >
             <View style={[styles.modernIconCircle, { backgroundColor: isDark ? '#33281D' : '#F4E4CE' }]}>
               <Ionicons name="information-circle" size={20} color={isDark ? '#E8CCB2' : '#7C5332'} />
