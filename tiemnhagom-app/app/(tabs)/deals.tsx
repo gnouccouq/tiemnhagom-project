@@ -329,10 +329,15 @@ export default function DealsScreen() {
             onPress={() => router.push('/membership-privileges')}
           >
             <View style={styles.explorePrivilegesContent}>
-              <Text style={styles.explorePrivilegesText}>
+              <Text
+                style={styles.explorePrivilegesText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.82}
+              >
                 {t('exploreTierPrivileges', { tier: getTierName(currentTier.id) })}
               </Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ flexShrink: 0 }} />
             </View>
           </ScalePressable>
         </View>
@@ -668,12 +673,15 @@ const getStyles = (Colors: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      paddingHorizontal: 24,
+      paddingHorizontal: 18,
+      width: '100%',
     },
     explorePrivilegesText: {
-      fontSize: 15,
+      fontSize: 14.5,
       fontWeight: '700',
       color: '#FFFFFF',
+      textAlign: 'center',
+      flexShrink: 1,
     },
 
     // ================= MODAL QR CODE =================

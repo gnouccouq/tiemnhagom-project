@@ -19,6 +19,36 @@ export const CHANGELOG_HISTORY: ReleaseVersion[] = [
   {
     version: '1.0.1',
     buildNumber: '3',
+    otaVersion: '20261127.01',
+    releaseDate: '27/11/2026',
+    title: 'Flash Sale 12.12, Hoa Nhà Gốm, Giao Diện Tài Khoản & Cài Đặt Mới',
+    badge: 'Mới nhất',
+    changes: [
+      {
+        title: 'Siêu Sale 12.12 & Đếm ngược toàn màn hình',
+        description: 'Ra mắt trang Flash Sale 12.12 đồng bộ bản web với thanh danh mục dính khi cuộn và cụm ưu đãi nổi bật ngay đầu Trang chủ.',
+      },
+      {
+        title: 'Hoa Nhà Gốm, Decor Tiệc & Về Tiệm Nhà Gốm',
+        description: 'Bổ sung màn hình riêng cho Hoa Nhà Gốm, đồng bộ Album Decor sự kiện và trang Về Tiệm Nhà Gốm với 6 dấu mốc hành trình.',
+      },
+      {
+        title: 'Giao diện Tài khoản, Thẻ Thành Viên & Cài đặt mới',
+        description: 'Thẻ thành viên gộp 2 tầng hiệu ứng ánh men gốm lụa, mã QR & Barcode quét trực tiếp tại quầy, chỉnh sửa từng mục nhanh qua Bottom Sheet.',
+      },
+      {
+        title: 'Chi nhánh ký gửi & Khoảng cách GPS thực tế',
+        description: 'Thêm chi nhánh ký gửi Joy Cooking Class & Homestore (74/10A Hai Bà Trưng) và hiển thị khoảng cách thực tế từ vị trí của bạn.',
+      },
+      {
+        title: 'Sắp xếp địa chỉ A–Z & Tách trang Cài đặt riêng',
+        description: 'Phân nhóm Phường/Xã theo thứ tự bảng chữ cái, tách riêng trang Giao diện, Ngôn ngữ, Cỡ chữ, Bộ nhớ thực tế và mở thẳng quyền hệ thống.',
+      },
+    ],
+  },
+  {
+    version: '1.0.1',
+    buildNumber: '3',
     otaVersion: '20261106.01',
     releaseDate: '06/11/2026',
     title: 'Đổi Quà Điểm Gốm, Bộ Lọc Khoảng Giá & Trung Tâm Thông Báo Realtime',

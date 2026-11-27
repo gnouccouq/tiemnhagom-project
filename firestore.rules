@@ -18,7 +18,7 @@ service cloud.firestore {
       return request.auth != null && (
         request.auth.uid == userId ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.mergedTo == userId)
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('mergedTo', '') == userId)
       );
     }
 
@@ -90,10 +90,10 @@ service cloud.firestore {
           // Người dùng cập nhật tài khoản của chính mình hoặc tài khoản đã gộp
           isSelfOrMerged(userId) ||
           // Hoặc liên kết tài khoản / tài khoản phụ
-          (request.auth != null && resource.data.mergedTo == request.auth.uid) ||
-          (request.auth != null && request.resource.data.mergedTo == request.auth.uid) ||
+          (request.auth != null && resource.data.get('mergedTo', '') == request.auth.uid) ||
+          (request.auth != null && request.resource.data.get('mergedTo', '') == request.auth.uid) ||
           // Hoặc ghost account do hệ thống tạo khi mua hàng
-          (resource.data.isGhost == true) ||
+          (resource.data.get('isGhost', false) == true) ||
           // Hoặc hoàn điểm quà tặng giữa người dùng (chỉ được cập nhật giftPointsDeduction)
           (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['giftPointsDeduction', 'updatedAt']))
         ) && (
@@ -105,7 +105,7 @@ service cloud.firestore {
         )
       );
 
-      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.isGhost == true);
+      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.get('isGhost', false) == true);
 
       // Thông báo cá nhân của người dùng (users/{userId}/notifications)
       match /notifications/{notifId} {
@@ -167,6 +167,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    match /settings/flash_sale {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
+      );
+    }
+
     match /settings/{settingId} {
       allow read: if settingId != 'ai_config';
       allow write: if isAdmin(); // Cho phép Admin quản lý các cấu hình cài đặt
@@ -185,8 +193,10 @@ service cloud.firestore {
       );
       allow delete: if isAdmin() || isSuperAdmin();
       allow update: if isAdmin() || isSuperAdmin() || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
-        request.resource.data.usedCount == resource.data.usedCount + 1
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) && (
+          ((!('usedCount' in resource.data) || resource.data.usedCount == null) && request.resource.data.usedCount == 1) ||
+          (resource.data.usedCount is number && request.resource.data.usedCount == resource.data.usedCount + 1)
+        )
       );
     }
 
