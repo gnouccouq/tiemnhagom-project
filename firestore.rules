@@ -287,6 +287,12 @@ service cloud.firestore {
       allow update: if request.auth != null;
     }
 
+    // 18. Yêu cầu đặt mẫu Hoa Nhà Gốm (flower_inquiries)
+    match /flower_inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

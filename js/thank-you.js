@@ -49,7 +49,7 @@ async function initThankYouPage() {
             // Hiển thị nút xem đơn hàng nếu user đã login
             if (order.userId !== 'guest') {
                 const viewBtn = document.getElementById('view-orders-btn');
-                if (viewBtn) viewBtn.style.display = 'inline-block';
+                if (viewBtn) viewBtn.style.display = 'inline-flex';
             }
 
             // Xử lý mã QR nếu là thanh toán chuyển khoản

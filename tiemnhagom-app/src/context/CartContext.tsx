@@ -501,8 +501,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-  // Phí ship: Chuẩn hóa theo bản web
-  let shippingFee = calculateAppShippingFee(shippingMethod, isHCM, subtotal, memberTier.freeShipping);
+  // Phí ship: Chuẩn hóa theo bản web (Hỏa tốc <=6km từ 37 Nguyễn Duy: 30k, >6km: 40k)
+  const selectedAddressText = `${selectedAddress?.wardName || ''} ${selectedAddress?.address || ''}`.trim();
+  let shippingFee = calculateAppShippingFee(shippingMethod, isHCM, subtotal, memberTier.freeShipping, selectedAddressText);
 
   // Chiết khấu thành viên (Membership Discount): Chuẩn hóa theo bản web
   const memberDiscount = calculateMembershipDiscount(subtotal, memberTier);

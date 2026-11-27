@@ -162,7 +162,7 @@ export default function StoresScreen() {
 
   return (
     <Animated.View style={[styles.safeArea, pageStyle]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={Colors.background} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title={t('storesScreenTitle') || t('storeLocationsUtility') || 'Hệ thống Cửa hàng'}
         showBack={true}

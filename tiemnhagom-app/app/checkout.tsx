@@ -32,6 +32,7 @@ import { useSettings } from '../src/context/SettingsContext';
 import { useDialog } from '../src/context/DialogContext';
 import { usePageAnimation } from '../src/hooks/usePageAnimation';
 import { formatCurrency } from '../src/utils/format';
+import { isWithinExpress6km } from '../src/utils/shipping';
 import { getBestSellingProducts } from '../src/services/productService';
 import { createOrder } from '../src/services/orderService';
 import { createOrderPlacedNotification } from '../src/services/orderNotificationService';
@@ -225,7 +226,7 @@ export default function CheckoutScreen() {
 
   const getEstimatedDeliveryText = () => {
     if (shippingMethod === 'express_2h') {
-      return t('estimatedTime26m') || '26 phút';
+      return t('estimatedTime26m') || 'Sau 2 - 4 giờ';
     }
     if (shippingMethod === 'pickup') {
       return t('estimatedTimePickup') || 'Nhận ngay trong ngày';
@@ -437,7 +438,13 @@ export default function CheckoutScreen() {
                 </View>
               </View>
               <Text style={[styles.shippingPillPrice, { color: '#9C7156' }]}>
-                {memberTier.freeShipping ? t('free') || 'Miễn phí' : formatCurrency(30000)}
+                {memberTier.freeShipping
+                  ? t('free') || 'Miễn phí'
+                  : formatCurrency(
+                      isWithinExpress6km(`${selectedAddress?.wardName || ''} ${selectedAddress?.address || ''}`)
+                        ? 30000
+                        : 40000
+                    )}
               </Text>
             </TouchableOpacity>
           )}

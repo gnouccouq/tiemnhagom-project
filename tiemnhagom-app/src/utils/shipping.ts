@@ -105,18 +105,38 @@ export function calculateMembershipDiscount(subtotal: number, tier: MemberTierIn
  *    - Giao tiêu chuẩn: 40.000đ
  *    - Hỏa tốc 4 giờ: Không khả dụng (quay về tiêu chuẩn)
  */
+const EXPRESS_INNER_6KM_KEYWORDS = [
+  'gia dinh', 'binh thanh', 'binh loi trung', 'binh quoi', 'thanh my tay', 'binh hoa',
+  'phu nhuan', 'cau kieu', 'duc nhuan',
+  'go vap', 'hanh thong', 'an nhon',
+  'quan 1', 'sai gon', 'tan dinh', 'ben thanh', 'cau ong lanh',
+  'quan 3', 'ban co', 'xuan hoa', 'nhieu loc',
+  'thao dien', 'an khanh', 'tan son hoa', 'tan son nhat',
+];
+
+export function isWithinExpress6km(wardOrAddressText?: string): boolean {
+  const normalized = String(wardOrAddressText || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+  if (!normalized.trim()) return true;
+  return EXPRESS_INNER_6KM_KEYWORDS.some((k) => normalized.includes(k));
+}
+
 export function calculateAppShippingFee(
   method: 'standard' | 'express_2h' | 'pickup',
   isHCM: boolean,
   subtotal: number,
-  hasFreeShippingTier: boolean = false
+  hasFreeShippingTier: boolean = false,
+  wardOrAddressText?: string
 ): number {
   if (method === 'pickup') return 0;
   if (hasFreeShippingTier) return 0;
   if (subtotal >= 500000 && method === 'standard') return 0;
 
   if (isHCM) {
-    if (method === 'express_2h') return 30000;
+    if (method === 'express_2h') return isWithinExpress6km(wardOrAddressText) ? 30000 : 40000;
     return 20000;
   }
 

@@ -1269,7 +1269,7 @@ if (typeof window !== 'undefined') {
         img.onerror = null;
         const placeholder = document.createElement('div');
         placeholder.id = 'header-user-avatar-img';
-        placeholder.innerHTML = '<div class="header-user-avatar-placeholder"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>';
+        placeholder.innerHTML = '<div class="header-user-avatar-placeholder" style="width:30px;height:30px;border-radius:50%;background:rgba(156,113,86,0.22);border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>';
         img.replaceWith(placeholder);
     };
 }
@@ -2723,7 +2723,7 @@ export async function initHeader(pathPrefix = './', onAuthChangeCallback = null)
 
             // Lấy avatar từ hint lưu trước đó hoặc từ Firebase Auth user
             const cachedAvatar = userHint?.avatar || user.photoURL;
-            const defaultAvatarHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+            const defaultAvatarHTML = `<div class="header-user-avatar-placeholder" style="width:30px;height:30px;border-radius:50%;background:rgba(156,113,86,0.22);border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`;
             const avatarContentHTML = cachedAvatar ?
                 `<img id="header-user-avatar-img" src="${cachedAvatar}" alt="${displayName}" class="header-user-avatar" onerror="if(typeof window.handleHeaderAvatarError==='function'){window.handleHeaderAvatarError(this);}else{this.style.display='none';}">` :
                 `<div id="header-user-avatar-img">${defaultAvatarHTML}</div>`;

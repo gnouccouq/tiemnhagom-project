@@ -1302,8 +1302,9 @@ export const zh = {
   yourNameSheetTitle: '您的姓名',
   nameSheetHelper: '姓名将显示在您的会员卡和订单中',
   deleteAccountShortDesc: '永久删除账户、订单及全部陶艺积分。',
-  notUpdated: '未更新',
   saveBtn: '保存',
+  bankTransfer: '银行转账',
+  codPayment: '货到付款 (COD)',
 };
 
 

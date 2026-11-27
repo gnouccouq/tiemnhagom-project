@@ -750,11 +750,16 @@ export default function OrderDetailScreen() {
               </Text>
             </View>
 
-            <Text style={styles.expectedTimeTitle}>{t('expectedReceiveTitle') || 'Dự kiến nhận món'}</Text>
+            <Text style={styles.expectedTimeTitle}>{t('expectedReceiveTitle') || 'Dự kiến nhận hàng'}</Text>
             <View style={styles.expectedTimeRow}>
               <Ionicons name="time-outline" size={16} color={BRAND.textPrimary} style={{ marginRight: 5 }} />
               <Text style={styles.expectedTimeVal}>
-                {order.expectedTime || (isPickup ? `15 ${t('minutesUnit') || 'phút'}` : `2 - 3 ${t('businessDaysUnit') || 'ngày làm việc'}`)}
+                {order.expectedTime ||
+                  (isPickup
+                    ? `15 - 30 ${t('minutesUnit') || 'phút'}`
+                    : order.shippingMethod === 'express_2h' || order.shippingMethod === 'express_4h'
+                    ? (t('estimatedTime26m') || 'Sau 2 - 4 giờ')
+                    : `2 - 3 ${t('businessDaysUnit') || 'ngày làm việc'}`)}
               </Text>
             </View>
           </View>
@@ -838,9 +843,11 @@ export default function OrderDetailScreen() {
             <View style={styles.paymentIconWrap}>
               <Ionicons
                 name={
-                  String(order.paymentMethod).toLowerCase().includes('momo')
+                  String(order.paymentMethod || '').toLowerCase().includes('momo')
                     ? 'wallet-outline'
-                    : String(order.paymentMethod).toLowerCase().includes('chuyển khoản')
+                    : ['banking', 'bank', 'transfer', 'chuyển khoản', 'vnpay'].some((k) =>
+                        String(order.paymentMethod || '').toLowerCase().includes(k)
+                      )
                     ? 'qr-code-outline'
                     : 'cash-outline'
                 }
@@ -849,7 +856,19 @@ export default function OrderDetailScreen() {
               />
             </View>
             <Text style={styles.paymentMethodText}>
-              {order.paymentMethod || 'MoMo'}
+              {(() => {
+                const raw = String(order.paymentMethod || '').trim();
+                const lower = raw.toLowerCase();
+                if (lower === 'banking' || lower === 'bank_transfer' || lower === 'transfer' || lower.includes('chuyển khoản')) {
+                  return t('bankTransfer') || 'Chuyển khoản ngân hàng';
+                }
+                if (lower === 'cod' || lower.includes('nhận hàng') || lower === 'cash') {
+                  return t('codPayment') || 'Thanh toán khi nhận hàng (COD)';
+                }
+                if (lower === 'vnpay') return 'VNPay';
+                if (lower === 'momo') return 'MoMo';
+                return raw || (t('codPayment') || 'Thanh toán khi nhận hàng (COD)');
+              })()}
             </Text>
           </View>
         </View>

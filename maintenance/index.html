@@ -9,40 +9,40 @@
     <link rel="canonical" href="https://tiemnhagom.vn/maintenance/">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <link rel="icon" type="image/png" href="../Asset/icons/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
             flex-direction: column;
-            min-height: 100dvh; /* Sử dụng min-height thay vì height cố định */
+            min-height: 100dvh;
             overflow-x: hidden;
-            padding: 0 !important; /* Xóa bỏ padding mặc định từ style.css?v=16 */
+            padding: 0 !important;
             margin: 0 !important;
+            background: #0a0a0a;
         }
         main {
-            flex: 1; /* Đảm bảo main chiếm hết không gian còn lại */
+            flex: 1;
             display: flex;
-            align-items: flex-start; /* Cho phép nội dung bắt đầu từ đỉnh nếu dài hơn màn hình */
+            align-items: center;
             justify-content: center;
-            padding: 0; /* Bỏ padding mặc định của main */
+            padding: 0;
             width: 100%;
         }
         .countdown-hero {
             width: 100%;
             min-height: 100dvh;
             position: relative;
-            margin-top: 0 !important; /* Ghi đè margin-top: 2rem từ style.css?v=16 */
-            background: #000; /* Nền đen dự phòng */
+            margin-top: 0 !important;
+            background: #0a0a0a;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #fff;
             text-align: center;
-            padding: 3rem 5% !important; /* Tăng padding để tránh bị che bởi thanh công cụ trình duyệt */
+            padding: 3rem 5% !important;
         }
         .bg-video {
-            position: fixed; /* Giữ video nền cố định khi cuộn */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -50,15 +50,13 @@
             object-fit: cover;
             z-index: 1;
         }
-        /* Lớp phủ gradient đè lên video */
         .countdown-hero::after {
             content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0.56) 0%, rgba(0, 0, 0, 0.78) 100%);
             z-index: 2;
         }
-        /* Đẩy nội dung lên trên cùng */
         .countdown-hero > *:not(video) {
             position: relative;
             z-index: 3;
@@ -66,123 +64,148 @@
         .coming-soon-label {
             text-transform: uppercase;
             letter-spacing: 5px;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            opacity: 0.8;
-            font-weight: 400;
+            font-size: 0.8rem;
+            margin-bottom: 1.25rem;
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         .countdown-hero h1 {
             font-family: var(--font-serif);
-            font-size: 4.5rem; /* Tăng kích thước chữ */
-            margin-bottom: 1.8rem; /* Tăng khoảng cách */
+            font-size: clamp(2.3rem, 5.5vw, 4.4rem);
+            font-weight: 400;
+            margin: 0 0 1.25rem;
             color: #fff;
             border: none;
-            letter-spacing: -1px;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.4); /* Thêm đổ bóng cho chữ */
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            text-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
         }
         .countdown-hero p {
-            font-size: 1.1rem;
-            max-width: 800px; /* Tăng chiều rộng tối đa cho đoạn văn */
-            opacity: 0.9;
-            max-width: 700px;
-            margin-bottom: 3rem;
-            line-height: 1.8;
+            font-size: 1.05rem;
+            max-width: 620px;
+            color: rgba(255, 255, 255, 0.88);
+            margin: 0 auto 2.8rem;
+            line-height: 1.75;
             font-weight: 300;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
         }
         .countdown-timer {
             display: flex;
-            gap: 30px;
-            margin-bottom: 4rem; /* Tăng khoảng cách */
+            gap: 20px;
+            margin-bottom: 3rem;
         }
         .countdown-item {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 15px;
-            min-width: 140px; /* Tăng nhẹ chiều rộng */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 1.7rem 1.4rem;
+            border-radius: 16px;
+            min-width: 128px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+            transition: transform 0.28s ease, background 0.28s ease, border-color 0.28s ease;
         }
         .countdown-item:hover {
-            transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-6px);
+            background: rgba(255, 255, 255, 0.13);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         .countdown-item span {
             display: block;
-            font-size: 4rem; /* Tăng kích thước số */
+            font-size: clamp(2.2rem, 4.5vw, 3.6rem);
             font-weight: 300;
             line-height: 1;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.55rem;
             font-family: var(--font-serif);
+            color: #fff;
         }
         .countdown-item small {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
+            letter-spacing: 1.8px;
+            color: rgba(255, 255, 255, 0.75);
         }
-        .countdown-hero .btn-outline {
-            border-radius: 30px;
-            padding: 1.2rem 3.5rem; /* Tăng kích thước nút */
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
+        .follow-caption {
+            margin: 0 0 1rem !important;
+            font-size: 0.9rem !important;
+            color: rgba(255, 255, 255, 0.78) !important;
+            letter-spacing: 0.4px;
         }
         .social-links-maintenance {
             display: flex;
-            gap: 20px;
-            margin-top: 0rem;
+            gap: 14px;
+            align-items: center;
+            justify-content: center;
         }
         .social-btn {
-            width: 50px;
-            height: 50px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
             text-decoration: none;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
         .social-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: #ffffff;
+            color: #000000;
+            transform: translateY(-4px);
+            border-color: #ffffff;
         }
-        /* Class áp dụng hiệu ứng khi số thay đổi */
         .countdown-item span.number-change-animation {
-            animation: numberPop 0.4s ease-out;
+            animation: numberPop 0.35s ease-out;
         }
-        /* Keyframes cho hiệu ứng số nhảy */
         @keyframes numberPop {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.15); opacity: 0.8; }
+            50% { transform: scale(1.12); opacity: 0.85; }
             100% { transform: scale(1); opacity: 1; }
         }
         @media (max-width: 768px) {
-            .countdown-hero { padding: 4rem 5% 2rem !important; justify-content: flex-start; } /* Đẩy nội dung lên trên một chút */
-            .coming-soon-label { font-size: 0.75rem; letter-spacing: 3px; margin-bottom: 1rem; }
-            .countdown-hero h1 { font-size: 2.2rem; margin-bottom: 1.2rem; line-height: 1.2; }
-            .countdown-hero p { font-size: 0.9rem; margin-bottom: 2rem; padding: 0 10px; }
-            .countdown-timer { gap: 10px; margin-bottom: 2.5rem; }
-            .countdown-item { min-width: 75px; padding: 1rem 0.3rem; border-radius: 10px; }
-            .countdown-item span { font-size: 1.8rem; }
-            .countdown-item small { font-size: 0.65rem; }
-            .social-links-maintenance { margin-top: 1rem; padding-bottom: 2rem; } /* Thêm padding dưới cùng */
-            body { overflow-y: auto; } /* Cho phép cuộn trên mobile nếu nội dung vẫn dài hơn màn hình */
+            .countdown-hero {
+                padding: 3.5rem 5% 2.5rem !important;
+            }
+            .coming-soon-label {
+                font-size: 0.7rem;
+                letter-spacing: 3px;
+                margin-bottom: 1rem;
+            }
+            .countdown-hero p {
+                font-size: 0.92rem;
+                margin-bottom: 2rem;
+                padding: 0 8px;
+            }
+            .countdown-timer {
+                gap: 10px;
+                margin-bottom: 2.2rem;
+                width: 100%;
+                max-width: 360px;
+            }
+            .countdown-item {
+                flex: 1;
+                min-width: 0;
+                padding: 1rem 0.25rem;
+                border-radius: 12px;
+            }
+            .countdown-item small {
+                font-size: 0.62rem;
+                letter-spacing: 1px;
+            }
         }
     </style>
 </head>
 <body>
-
-
     <main>
         <section class="countdown-hero">
             <video autoplay muted loop playsinline poster="../Asset/images/hero-bg.webp" class="bg-video">
@@ -190,10 +213,9 @@
                 Trình duyệt của bạn không hỗ trợ video nền.
             </video>
 
-            <div class="coming-soon-label" id="maintenance-label">SẮP RA MẮT</div>
-            <h1 id="maintenance-h1">Tiệm Nhà Gốm Sắp Ra Mắt!</h1>
-            <p id="maintenance-p">Chúng tôi đang gấp rút hoàn thiện những khâu cuối cùng để mang đến cho bạn một trải nghiệm mua sắm tuyệt vời nhất với các sản phẩm gốm thủ công độc đáo. Hãy cùng đếm ngược và chờ đón nhé!</p>
-            
+            <h1 id="maintenance-h1">Tiệm Nhà Gốm Xin Chào!</h1>
+            <p id="maintenance-p">Website của Tiệm hiện đang tạm nghỉ để bảo trì và nâng cấp trải nghiệm mua sắm cho bạn.</p>
+
             <div class="countdown-timer">
                 <div class="countdown-item"><span id="days">00</span><small>Ngày</small></div>
                 <div class="countdown-item"><span id="hours">00</span><small>Giờ</small></div>
@@ -201,18 +223,20 @@
                 <div class="countdown-item"><span id="seconds">00</span><small>Giây</small></div>
             </div>
 
-            <p style="margin-top: -2rem; margin-bottom: 1rem; font-size: 1rem; opacity: 0.9;">Theo dõi chúng mình ở đây</p>
+            <p class="follow-caption">Theo dõi chúng mình ở đây</p>
             <div class="social-links-maintenance">
-                <a href="https://www.facebook.com/tiemnhagom.vn" target="_blank" class="social-btn" title="Facebook">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <a href="https://www.facebook.com/tiemnhagom.vn" target="_blank" rel="noopener noreferrer" class="social-btn" title="Facebook">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                 </a>
-                <a href="https://www.instagram.com/tiemnhagom.vn" target="_blank" class="social-btn" title="Instagram">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                <a href="https://www.instagram.com/tiemnhagom.vn" target="_blank" rel="noopener noreferrer" class="social-btn" title="Instagram">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+                <a href="tel:0777709662" class="social-btn" title="Hotline 0777 709 662">
+                    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                 </a>
             </div>
         </section>
     </main>
-
 
     <script type="module" src="../js/maintenance.js"></script>
 </body>

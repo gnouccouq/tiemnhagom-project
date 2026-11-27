@@ -502,7 +502,7 @@ export const en = {
   edit: 'Edit',
   deliveryNotePlaceholder: 'Note (0/120)',
   estimatedDelivery: 'Estimated delivery',
-  estimatedTime26m: '26 mins',
+  estimatedTime26m: 'In 2 - 4 hours',
   estimatedTime1_2d: '1 - 2 business days',
   estimatedTime3_5d: '3 - 5 business days',
   estimatedTimePickup: 'Ready for pickup today',
@@ -1324,8 +1324,9 @@ export const en = {
   yourNameSheetTitle: 'Your name',
   nameSheetHelper: 'Your name will appear on your membership card and orders',
   deleteAccountShortDesc: 'Permanently delete your account, orders, and all Pottery Points.',
-  notUpdated: 'Not updated',
   saveBtn: 'Save',
+  bankTransfer: 'Bank Transfer',
+  codPayment: 'Cash on Delivery (COD)',
 };
 
 

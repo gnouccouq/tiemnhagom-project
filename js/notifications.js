@@ -317,7 +317,7 @@ function generateOrderNotifications(orders, readIds, deletedIds, pathPrefix) {
                 } else if (statusRaw.includes('hủy')) {
                     title = `Hợp đồng thuê gốm #${orderCode} đã bị hủy`;
                     message = `Yêu cầu thuê đồ gốm sự kiện #${orderCode} đã được cập nhật trạng thái hủy bỏ trên hệ thống.`;
-                    icon = 'ti-circle-x';
+                    icon = 'ti-ban';
                 }
 
                 items.push({
@@ -365,7 +365,7 @@ function generateOrderNotifications(orders, readIds, deletedIds, pathPrefix) {
                 stage = 'cancelled';
                 title = `Đơn hàng #${orderCode} đã bị hủy`;
                 message = `Đơn hàng #${orderCode} đã được cập nhật trạng thái hủy. Nếu cần hỗ trợ thêm, bạn vui lòng liên hệ hotline Tiệm Nhà Gốm nhé.`;
-                icon = 'ti-circle-x';
+                icon = 'ti-ban';
             } else if (statusRaw.includes('hoàn tất') || statusRaw.includes('thành công') || statusRaw.includes('completed') || statusRaw.includes('delivered')) {
                 stage = 'completed';
                 title = `Giao hàng thành công #${orderCode}`;

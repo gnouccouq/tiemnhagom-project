@@ -43,7 +43,7 @@ export default function FlashSaleScreen() {
   const { height: screenHeight } = useWindowDimensions();
   const { t } = useSettings();
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const stageYMap = useRef<Record<string, number>>({});
   const showcaseYRef = useRef<number>(screenHeight);
 

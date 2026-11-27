@@ -43,14 +43,34 @@ export function isHCMProvince(provinceName) {
     return norm.includes('ho chi minh') || norm.includes('hcm') || norm.includes('sai gon') || norm.includes('saigon');
 }
 
-// Hàm hỗ trợ tính phí ship dựa trên phương thức và tỉnh thành
-export function calculateShippingFee(method, provinceName) {
+// Khu vực bán kính ~6km quanh tiệm 37 Nguyễn Duy, Phường Gia Định, TP.HCM
+const EXPRESS_INNER_6KM_KEYWORDS = [
+    'gia dinh', 'binh thanh', 'binh loi trung', 'binh quoi', 'thanh my tay', 'binh hoa',
+    'phu nhuan', 'cau kieu', 'duc nhuan',
+    'go vap', 'hanh thong', 'an nhon',
+    'quan 1', 'sai gon', 'tan dinh', 'ben thanh', 'cau ong lanh',
+    'quan 3', 'ban co', 'xuan hoa', 'nhieu loc',
+    'thao dien', 'an khanh', 'tan son hoa', 'tan son nhat'
+];
+
+export function isWithinExpress6km(wardOrAddressText = '') {
+    const normalized = String(wardOrAddressText || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+    if (!normalized.trim()) return true; // Mặc định 30k khi chưa chọn phường/xã
+    return EXPRESS_INNER_6KM_KEYWORDS.some(k => normalized.includes(k));
+}
+
+// Hàm hỗ trợ tính phí ship dựa trên phương thức, tỉnh thành và phường/xã (bán kính 6km từ 37 Nguyễn Duy)
+export function calculateShippingFee(method, provinceName, wardOrAddress = '') {
     if (method === 'pickup') return 0; // Nhận tại shop: 0đ
 
     const isHCM = isHCMProvince(provinceName);
     if (isHCM) {
         if (method === 'express_2h' || method === 'express_4h') {
-            return 30000; // Giao nhanh 4h nội thành TP.HCM: 30k
+            return isWithinExpress6km(wardOrAddress) ? 30000 : 40000; // ≤6km: 30k, >6km: 40k
         }
         return 20000; // Giao thông thường nội thành TP.HCM: 20k
     }
@@ -245,7 +265,14 @@ async function renderCart() {
         membershipDiscountVal = await calculateMembershipDiscount(cart, userTier);
     }
 
-    let shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName);
+    const wardSelectEl = document.getElementById('cart-ward') || document.getElementById('ward');
+    const selectedWardName = wardSelectEl && wardSelectEl.selectedIndex >= 0
+        ? (wardSelectEl.options[wardSelectEl.selectedIndex]?.text || '')
+        : '';
+    const addressInputEl = document.getElementById('cart-address') || document.getElementById('address');
+    const wardOrAddressText = `${selectedWardName} ${addressInputEl ? addressInputEl.value : ''}`.trim();
+
+    let shippingFee = calculateShippingFee(shippingMethod, selectedProvinceName, wardOrAddressText);
     if (userTier && userTier.freeShipping) {
         shippingFee = 0;
     }
@@ -317,10 +344,16 @@ export function updateShippingMethodOptions() {
                     </span>
                     <div>
                         <strong style="color: #c2410c; font-size: 0.92rem;"><i class="ti ti-bolt-filled"></i> Giao nhanh 4 Giờ (Hỏa tốc)</strong>
-                        <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Áp dụng nội thành TP.HCM (Khung giờ 10h - 19h)</div>
+                        <div style="font-size: 0.78rem; color: #9a3412; margin-top: 2px;">Bán kính ≤ 6km từ 37 Nguyễn Duy: 30k · Hơn 6km: 40k (10h - 19h)</div>
                     </div>
                 </div>
-                <div style="font-weight: 700; color: #c2410c; white-space: nowrap; font-size: 0.95rem;">30.000đ</div>
+                <div style="font-weight: 700; color: #c2410c; white-space: nowrap; font-size: 0.95rem;">${(() => {
+                    const wEl = document.getElementById('cart-ward') || document.getElementById('ward');
+                    const wName = wEl && wEl.selectedIndex >= 0 ? (wEl.options[wEl.selectedIndex]?.text || '') : '';
+                    const aEl = document.getElementById('cart-address') || document.getElementById('address');
+                    const fee = isWithinExpress6km(`${wName} ${aEl ? aEl.value : ''}`) ? 30000 : 40000;
+                    return `${new Intl.NumberFormat('vi-VN').format(fee)}đ`;
+                })()}</div>
                 <input type="radio" name="shipping-method" value="express_2h" ${newSelected === 'express_2h' ? 'checked' : ''} style="display: none;">
             </label>
 
